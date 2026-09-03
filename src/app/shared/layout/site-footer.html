@@ -1,0 +1,43 @@
+<footer class="pie">
+  <div class="contenido">
+    <div class="columna marca">
+      <p class="nombre">Acosta <span>IA &amp; Research</span></p>
+      <p class="descripcion">
+        Herramientas de investigación y redacción académica en español, hechas por y para
+        tesistas. Trujillo, Perú.
+      </p>
+    </div>
+
+    <div class="columna">
+      <h3>Productos</h3>
+      <a routerLink="/humanizador">Humanizador académico</a>
+      <a routerLink="/planes">Método de tesis · 9 capítulos</a>
+      <a routerLink="/planes">Precios</a>
+    </div>
+
+    <div class="columna">
+      <h3>Tu cuenta</h3>
+      <a routerLink="/auth/registro">Crear cuenta</a>
+      <a routerLink="/auth/login">Iniciar sesión</a>
+      <a routerLink="/panel">Mi panel</a>
+    </div>
+
+    <div class="columna">
+      <h3>Contacto</h3>
+      <a href="mailto:asesoriaprofesional599&#64;gmail.com">asesoriaprofesional599&#64;gmail.com</a>
+      @if (whatsappUrl) {
+        <a [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+      }
+      <span class="tenue">Atención de lunes a sábado</span>
+    </div>
+  </div>
+
+  <div class="legal">
+    <p>© {{ anio }} Acosta | IA &amp; Research. Todos los derechos reservados.</p>
+    <p class="aviso">
+      Nuestras herramientas asisten en la redacción y edición de textos académicos propios. El
+      trabajo, las decisiones metodológicas y la responsabilidad sobre lo entregado son siempre del
+      autor.
+    </p>
+  </div>
+</footer>

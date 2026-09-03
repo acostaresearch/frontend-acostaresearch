@@ -1,0 +1,110 @@
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.contenido {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+
+/* ── Marca ──────────────────────────────────────────────────────────────── */
+.marca {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.marca-nombre {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-texto);
+}
+
+.marca-cola {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-primario);
+}
+
+/* ── Navegación ─────────────────────────────────────────────────────────── */
+.navegacion {
+  display: flex;
+  gap: 22px;
+  margin-right: auto;
+}
+
+.navegacion a {
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  transition: color var(--transicion);
+}
+
+.navegacion a:hover {
+  color: var(--color-texto);
+}
+
+.navegacion a.activo {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+/* ── Acciones ───────────────────────────────────────────────────────────── */
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.enlace-entrar {
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+}
+
+.enlace-entrar:hover {
+  color: var(--color-texto);
+}
+
+.enlace-salir {
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.enlace-salir:hover {
+  color: var(--color-error);
+}
+
+.acciones .boton {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .navegacion {
+    display: none;
+  }
+
+  .contenido {
+    gap: 14px;
+    justify-content: space-between;
+  }
+}

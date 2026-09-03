@@ -1,0 +1,84 @@
+@if (verificado()) {
+  <app-auth-card titulo="Cuenta creada" subtitulo="Tu correo quedó confirmado.">
+    <p class="aviso exito">Ya puedes iniciar sesión con tu correo y contraseña.</p>
+    <button type="button" class="boton" (click)="irALogin()">Iniciar sesión</button>
+  </app-auth-card>
+} @else {
+  <app-auth-card
+    titulo="Verifica tu correo"
+    subtitulo="Tu cuenta se creará al escribir el código que te enviamos."
+  >
+    @if (correoNoEnviado) {
+      <p class="aviso info">
+        Guardamos tus datos, pero no pudimos enviar el correo. Pulsa «Reenviar código».
+      </p>
+    }
+
+    @if (errorGeneral(); as mensaje) {
+      <div class="aviso error" role="alert">
+        <span>{{ mensaje }}</span>
+        @if (codigoQuemado()) {
+          <span>Pide uno nuevo para continuar.</span>
+        }
+      </div>
+    }
+
+    @if (mensajeReenvio(); as mensaje) {
+      <p class="aviso exito">{{ mensaje }}</p>
+    }
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <div class="campo">
+        <label for="email">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          placeholder="tu@correo.com"
+        />
+      </div>
+
+      <div class="campo" [class.invalido]="errorCodigo">
+        <label for="code">Código de verificación</label>
+        <input
+          id="code"
+          class="codigo"
+          formControlName="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+          aria-describedby="ayuda-codigo"
+          (input)="alEscribirCodigo($event)"
+        />
+        @if (errorCodigo; as error) {
+          <span class="error">{{ error }}</span>
+        } @else {
+          <span class="ayuda" id="ayuda-codigo">Caduca a los 15 minutos.</span>
+        }
+      </div>
+
+      <button type="submit" class="boton" [disabled]="enviando()">
+        @if (enviando()) {
+          <span class="girando" aria-hidden="true"></span>
+          <span>Creando cuenta…</span>
+        } @else {
+          <span>Verificar y crear cuenta</span>
+        }
+      </button>
+    </form>
+
+    <div class="reenvio">
+      @if (esperaReenvio() > 0) {
+        <span class="tenue">Puedes pedir otro código en {{ esperaReenvio() }} s</span>
+      } @else {
+        <button type="button" class="boton enlace" [disabled]="reenviando()" (click)="reenviar()">
+          {{ reenviando() ? 'Reenviando…' : 'Reenviar código' }}
+        </button>
+      }
+    </div>
+
+    <p pie>¿Prefieres hacerlo luego? <a routerLink="/auth/login">Volver a iniciar sesión</a></p>
+  </app-auth-card>
+}

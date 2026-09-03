@@ -1,0 +1,273 @@
+.pagina {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.marca {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 650;
+}
+
+h2 {
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.salir {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.panel {
+  padding: 22px;
+  margin-bottom: 18px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+dt {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.nota {
+  margin: -6px 0 14px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.lista {
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-borde);
+  font-size: 14px;
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+}
+
+.lista li .tenue {
+  margin-right: auto;
+  font-size: 13px;
+}
+
+/* ── Acceso al humanizador ──────────────────────────────────────────────── */
+.acceso {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px;
+  margin-bottom: 18px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  transition:
+    background var(--transicion),
+    transform var(--transicion);
+}
+
+.acceso:hover {
+  background: var(--color-primario-suave);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.acceso-texto {
+  flex: 1;
+}
+
+.acceso-etiqueta {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+.acceso h2 {
+  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.acceso p {
+  max-width: 56ch;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+}
+
+.acceso-saldo {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.acceso-saldo.agotado {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.acceso-flecha {
+  flex-shrink: 0;
+  font-size: 22px;
+  color: var(--color-primario);
+}
+
+@media (max-width: 600px) {
+  .acceso-flecha {
+    display: none;
+  }
+}
+
+/* ── Enlace a la recarga ────────────────────────────────────────────────── */
+.recarga {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* ── Licencias del conector ─────────────────────────────────────────────── */
+.licencias {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.licencias li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 15px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.licencias strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.licencia-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.licencia-acciones .boton {
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+.etiqueta.revocada {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+/* ── URL recién generada ────────────────────────────────────────────────── */
+.url-nueva {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--color-exito-suave);
+  border: 1px solid var(--color-exito);
+  border-radius: var(--radio);
+}
+
+.url-titulo {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-exito);
+}
+
+.url-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.url-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.url-pie {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}

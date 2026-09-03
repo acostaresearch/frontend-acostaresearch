@@ -1,0 +1,159 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="cabecera">
+    <div>
+      <p class="marca">Acosta Research</p>
+      <h1>Hola, {{ nombre() }}</h1>
+    </div>
+  </header>
+
+  <a class="acceso" routerLink="/humanizador">
+    <div class="acceso-texto">
+      <span class="acceso-etiqueta">Herramienta</span>
+      <h2>Humanizador académico</h2>
+      <p>
+        Reescribe tu texto con claridad y registro académico, capítulo por capítulo. Respeta tus
+        citas, tus cifras y tus datos.
+      </p>
+      @if (saldo(); as s) {
+        <span class="acceso-saldo" [class.agotado]="s.wordsAvailable === 0">
+          {{ s.wordsAvailable | number }} palabras disponibles
+        </span>
+      }
+    </div>
+    <span class="acceso-flecha" aria-hidden="true">→</span>
+  </a>
+
+  <p class="recarga">
+    ¿Se te acaban las palabras? <a routerLink="/planes">Recarga tu plan</a> — bolsas de 30 días,
+    sin suscripción.
+  </p>
+
+  <!-- ── Método de tesis ─────────────────────────────────────────────────── -->
+  <section class="panel">
+    <h2>Método de tesis · conector de Claude</h2>
+
+    @if (errorLicencia(); as mensaje) {
+      <p class="aviso error">{{ mensaje }}</p>
+    }
+
+    @if (urlNueva(); as url) {
+      <div class="url-nueva">
+        <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
+        <div class="url-fila">
+          <input type="text" [value]="url" readonly />
+          <button type="button" class="boton" (click)="copiarUrlNueva()">
+            {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+          </button>
+        </div>
+        <p class="url-pie">Pégala en Claude: Configuración → Conectores → Añadir personalizado.</p>
+      </div>
+    }
+
+    @if (misLicencias().length > 0) {
+      <ul class="licencias">
+        @for (licencia of misLicencias(); track licencia.id) {
+          <li>
+            <div>
+              <strong>{{ licencia.productCode }}</strong>
+              <span class="tenue">
+                {{ licencia.callsTotal }} consultas ·
+                @if (licencia.expiresAt) {
+                  vence el {{ licencia.expiresAt | date: 'd MMM y' }}
+                } @else {
+                  sin caducidad
+                }
+              </span>
+            </div>
+            <div class="licencia-acciones">
+              <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
+                {{ licencia.status }}
+              </span>
+              @if (licencia.status === 'ACTIVE') {
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="rotando() === licencia.id"
+                  (click)="regenerarUrl(licencia)"
+                >
+                  {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="nota">
+        Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
+        funciona también en el plan gratuito.
+      </p>
+      <a class="boton" routerLink="/planes?plan=METODO_9_SKILLS">Ver el método</a>
+    }
+  </section>
+
+  @if (usuario(); as u) {
+    <section class="panel">
+      <h2>Tu sesión</h2>
+      <dl>
+        <div>
+          <dt>Correo</dt>
+          <dd>{{ u.email }}</dd>
+        </div>
+        <div>
+          <dt>Rol</dt>
+          <dd>
+            <span class="etiqueta">{{ u.role }}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            <span class="etiqueta">{{ u.status }}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Último acceso</dt>
+          <dd>{{ u.lastLoginAt ?? '—' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    @if (esAdmin()) {
+      <section class="panel">
+        <h2>Usuarios registrados</h2>
+        <p class="nota">Solo visible para el rol ADMIN, en cliente y en servidor.</p>
+
+        <button
+          type="button"
+          class="boton secundario"
+          [disabled]="cargandoListado()"
+          (click)="cargarUsuarios()"
+        >
+          {{ cargandoListado() ? 'Cargando…' : 'Cargar usuarios' }}
+        </button>
+
+        @if (errorListado(); as error) {
+          <p class="aviso error">{{ error }}</p>
+        }
+
+        @if (listado(); as usuarios) {
+          <ul class="lista">
+            @for (item of usuarios; track item.id) {
+              <li>
+                <span>{{ item.firstName }} {{ item.lastName }}</span>
+                <span class="tenue">{{ item.email }}</span>
+                <span class="etiqueta">{{ item.role }}</span>
+              </li>
+            } @empty {
+              <li class="tenue">No hay usuarios.</li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</main>
+
+<app-site-footer />

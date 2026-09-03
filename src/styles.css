@@ -1,1 +1,230 @@
-/* You can add global styles to this file, and also import other style files */
+/* ── Sistema de diseño ──────────────────────────────────────────────────── */
+:root {
+  --color-fondo: #f5f6f8;
+  --color-superficie: #ffffff;
+  --color-borde: #e2e5ea;
+  --color-borde-fuerte: #cbd2dc;
+  --color-texto: #1a2233;
+  --color-texto-suave: #5c6779;
+  --color-texto-tenue: #8b95a6;
+
+  --color-primario: #1a56db;
+  --color-primario-oscuro: #1544ae;
+  --color-primario-suave: #eaf0fd;
+
+  --color-error: #c22b2b;
+  --color-error-suave: #fdecec;
+  --color-exito: #12734b;
+  --color-exito-suave: #e7f6ef;
+  --color-aviso: #96590d;
+  --color-aviso-suave: #fdf3e3;
+
+  --radio: 10px;
+  --radio-sm: 8px;
+  --sombra: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --transicion: 150ms ease;
+
+  --fuente:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+a {
+  color: var(--color-primario);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ── Formularios ────────────────────────────────────────────────────────── */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.campo > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.campo input {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
+}
+
+.campo input::placeholder {
+  color: var(--color-texto-tenue);
+}
+
+.campo input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.campo input:disabled {
+  background: var(--color-fondo);
+  cursor: not-allowed;
+}
+
+.campo.invalido input {
+  border-color: var(--color-error);
+}
+.campo.invalido input:focus {
+  box-shadow: 0 0 0 3px var(--color-error-suave);
+}
+
+.campo .error {
+  font-size: 12.5px;
+  color: var(--color-error);
+}
+
+.campo .ayuda {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Botones ────────────────────────────────────────────────────────────── */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primario);
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition:
+    background var(--transicion),
+    opacity var(--transicion);
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--color-primario-oscuro);
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.boton.secundario {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border-color: var(--color-borde-fuerte);
+}
+.boton.secundario:hover:not(:disabled) {
+  background: var(--color-fondo);
+}
+
+.boton.enlace {
+  width: auto;
+  padding: 0;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: none;
+}
+.boton.enlace:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
+
+/* Indicador de carga dentro del botón */
+.girando {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: giro 0.7s linear infinite;
+}
+
+@keyframes giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .girando {
+    animation-duration: 2s;
+  }
+}
+
+/* ── Avisos ─────────────────────────────────────────────────────────────── */
+.aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 13.5px;
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+}
+
+.aviso.error {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-color: #f3c9c9;
+}
+
+.aviso.exito {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border-color: #bfe3d2;
+}
+
+.aviso.info {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-color: #f0dcb8;
+}

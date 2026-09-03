@@ -1,0 +1,26 @@
+<header class="cabecera">
+  <div class="contenido">
+    <a class="marca" routerLink="/">
+      <span class="marca-nombre">Acosta</span>
+      <span class="marca-cola">IA &amp; Research</span>
+    </a>
+
+    <nav class="navegacion">
+      <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">
+        Inicio
+      </a>
+      <a routerLink="/planes" routerLinkActive="activo">Precios</a>
+      <a routerLink="/humanizador" routerLinkActive="activo">Humanizador</a>
+    </nav>
+
+    <div class="acciones">
+      @if (auth.isAuthenticated()) {
+        <a class="boton secundario" routerLink="/panel">Mi panel</a>
+        <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
+      } @else {
+        <a class="enlace-entrar" routerLink="/auth/login">Iniciar sesión</a>
+        <a class="boton" routerLink="/auth/registro">Crear cuenta</a>
+      }
+    </div>
+  </div>
+</header>

@@ -1,0 +1,164 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="cabecera">
+    <div>
+      <h1>Humanizador académico</h1>
+      <p class="subtitulo">
+        Reescribe tu propio texto para que se lea con claridad y registro académico. Respeta tus
+        citas, tus cifras y tus datos.
+      </p>
+    </div>
+
+    @if (saldo(); as s) {
+      <div class="saldo" [class.agotado]="s.wordsAvailable === 0">
+        <span class="cifra">{{ s.wordsAvailable | number }}</span>
+        <span class="etiqueta">palabras disponibles</span>
+        @if (s.expiresAt) {
+          <span class="caduca">caduca el {{ s.expiresAt | date: 'd MMM' }}</span>
+        }
+      </div>
+    }
+  </header>
+
+  <div class="columnas">
+    <!-- ── Entrada ─────────────────────────────────────────────────────── -->
+    <section class="panel">
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+        <div class="campo">
+          <label for="chapter">¿De qué parte de tu tesis es este texto?</label>
+          <select id="chapter" formControlName="chapter">
+            @for (c of capitulos; track c.value) {
+              <option [value]="c.value">{{ c.label }}</option>
+            }
+          </select>
+          <span class="ayuda">{{ pistaCapitulo() }}</span>
+        </div>
+
+        <div class="campo">
+          <label>¿Cuánto quieres que intervenga?</label>
+          <div class="opciones">
+            @for (m of modos; track m.value) {
+              <label class="opcion" [class.activa]="formulario.controls.mode.value === m.value">
+                <input type="radio" formControlName="mode" [value]="m.value" />
+                <span class="titulo">{{ m.label }}</span>
+                <span class="detalle">{{ m.hint }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="text">Tu texto</label>
+          <textarea
+            id="text"
+            formControlName="text"
+            rows="16"
+            placeholder="Pega aquí el párrafo o la sección que quieres mejorar…"
+          ></textarea>
+
+          <div class="contador" [class.excedido]="excedeEnvio() || excedeSaldo()">
+            <span>{{ palabras() | number }} palabras</span>
+            @if (saldo(); as s) {
+              @if (excedeEnvio()) {
+                <span class="aviso-inline">
+                  Máximo {{ s.maxWordsPerRequest | number }} por envío: divídelo en partes.
+                </span>
+              } @else if (excedeSaldo()) {
+                <span class="aviso-inline">
+                  Te quedan {{ s.wordsAvailable | number }} palabras.
+                </span>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="acciones">
+          <button type="submit" class="boton" [disabled]="!puedeEnviar()">
+            @if (enviando()) {
+              <span class="girando" aria-hidden="true"></span>
+              <span>Reescribiendo…</span>
+            } @else {
+              <span>Reescribir</span>
+            }
+          </button>
+          <button type="button" class="boton secundario auto" (click)="limpiar()">Limpiar</button>
+        </div>
+
+        @if (enviando()) {
+          <p class="paciencia">Puede tardar hasta un minuto. No cierres esta pestaña.</p>
+        }
+      </form>
+    </section>
+
+    <!-- ── Resultado ───────────────────────────────────────────────────── -->
+    <section class="panel resultado">
+      @if (error(); as mensaje) {
+        <div class="aviso error" role="alert">
+          <span>{{ mensaje }}</span>
+        </div>
+      }
+
+      @if (sinSaldo()) {
+        <div class="recarga">
+          <h2>Recarga tu plan</h2>
+          <p class="nota">
+            Elige una bolsa y págala con PayPal, o escríbeme para pagarla por Yape o transferencia.
+          </p>
+
+          <ul class="planes">
+            @for (plan of planes(); track plan.id) {
+              @if (plan.priceCents > 0) {
+                <li>
+                  <div>
+                    <strong>{{ plan.name }}</strong>
+                    <span class="tenue"
+                      >{{ plan.words | number }} palabras · {{ plan.durationDays }} días</span
+                    >
+                  </div>
+                  <span class="precio">{{ precio(plan) }}</span>
+                </li>
+              }
+            }
+          </ul>
+
+          <div class="botones">
+            <a class="boton" routerLink="/planes">Recargar ahora</a>
+            @if (whatsappUrl) {
+              <a class="boton secundario auto" [href]="whatsappUrl" target="_blank" rel="noopener">
+                Escribir por WhatsApp
+              </a>
+            }
+          </div>
+        </div>
+      } @else if (resultado(); as texto) {
+        <div class="cabecera-resultado">
+          <h2>Texto reescrito</h2>
+          <div class="botones">
+            <button type="button" class="boton secundario auto" (click)="copiar()">
+              {{ copiado() ? '¡Copiado!' : 'Copiar' }}
+            </button>
+            <button type="button" class="boton secundario auto" (click)="usarResultado()">
+              Volver a pasar
+            </button>
+          </div>
+        </div>
+        <div class="texto">{{ texto }}</div>
+        <p class="recordatorio">
+          Léelo y ajústalo con tus palabras antes de entregarlo. El texto es tuyo y tienes que poder
+          defenderlo.
+        </p>
+      } @else {
+        <div class="vacio">
+          <p>Aquí aparecerá tu texto reescrito.</p>
+          <p class="tenue">
+            Elige el capítulo correcto: no es lo mismo reescribir unos resultados que una discusión,
+            y el humanizador lo tiene en cuenta.
+          </p>
+        </div>
+      }
+    </section>
+  </div>
+</main>
+
+<app-site-footer />

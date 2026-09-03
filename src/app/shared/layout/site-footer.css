@@ -1,0 +1,100 @@
+.pie {
+  margin-top: 72px;
+  padding: 48px 20px 28px;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border-top: 1px solid var(--color-borde);
+}
+
+.contenido {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 36px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+@media (max-width: 860px) {
+  .contenido {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 520px) {
+  .contenido {
+    grid-template-columns: 1fr;
+  }
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.columna h3 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto);
+}
+
+.columna a {
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+}
+
+.columna a:hover {
+  color: var(--color-primario);
+}
+
+.marca .nombre {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.marca .nombre span {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-primario);
+}
+
+.marca .descripcion {
+  max-width: 34ch;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.tenue {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Línea legal ────────────────────────────────────────────────────────── */
+.legal {
+  max-width: 1120px;
+  margin: 36px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.legal p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* El aviso no es relleno legal: es la promesa que sí se puede sostener. */
+.legal .aviso {
+  max-width: 78ch;
+  margin-top: 8px;
+  line-height: 1.6;
+}

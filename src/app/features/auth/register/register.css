@@ -1,0 +1,18 @@
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.nota {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 420px) {
+  .fila {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

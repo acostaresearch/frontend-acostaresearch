@@ -1,0 +1,20 @@
+.codigo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-align: center;
+  /* Compensa el espaciado de la última cifra para que el texto quede centrado. */
+  text-indent: 0.42em;
+  font-variant-numeric: tabular-nums;
+}
+
+.reenvio {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  font-size: 13.5px;
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+}

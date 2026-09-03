@@ -1,0 +1,17 @@
+<div class="envoltorio">
+  <main class="tarjeta">
+    <header>
+      <a class="marca" routerLink="/">← Acosta Research</a>
+      <h1>{{ titulo() }}</h1>
+      @if (subtitulo()) {
+        <p class="subtitulo">{{ subtitulo() }}</p>
+      }
+    </header>
+
+    <ng-content />
+  </main>
+
+  <footer class="pie">
+    <ng-content select="[pie]" />
+  </footer>
+</div>

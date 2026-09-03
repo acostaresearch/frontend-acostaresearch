@@ -1,0 +1,217 @@
+<app-site-header />
+
+<main>
+  <!-- ── Portada ──────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-texto">
+      <p class="eyebrow">Investigación y redacción académica en español</p>
+      <h1>Tu tesis avanza contigo al mando, no en piloto automático.</h1>
+      <p class="entrada">
+        Dos herramientas que trabajan sobre tu propio texto: un método que te acompaña capítulo
+        por capítulo y un editor que deja tu redacción clara y con registro académico, sin tocar
+        tus citas ni tus cifras.
+      </p>
+
+      <div class="hero-acciones">
+        <a class="boton grande" routerLink="/planes">Ver precios</a>
+        @if (!auth.isAuthenticated()) {
+          <a class="boton secundario grande" routerLink="/auth/registro">
+            Crear cuenta gratis
+          </a>
+        }
+      </div>
+
+      <p class="hero-nota">
+        Al crear tu cuenta recibes <strong>2 000 palabras gratis</strong> para probar el
+        humanizador. Sin tarjeta.
+      </p>
+    </div>
+
+    <!-- ── Prueba del humanizador ─────────────────────────────────────────── -->
+    <div class="prueba">
+      <div class="prueba-cabecera">
+        <span class="etiqueta-viva">Pruébalo ahora</span>
+        <h2>Pega un párrafo de tu tesis</h2>
+      </div>
+
+      <textarea
+        [formControl]="texto"
+        rows="7"
+        placeholder="Pega aquí un párrafo tuyo: la introducción, un antecedente, lo que tengas a mano…"
+      ></textarea>
+
+      <div class="prueba-pie">
+        <span class="contador">{{ palabras() | number }} palabras</span>
+        <button type="button" class="boton" (click)="probar()">
+          {{ auth.isAuthenticated() ? 'Reescribir' : 'Empezar' }}
+        </button>
+      </div>
+
+      <p class="prueba-nota">
+        No prometemos «indetectable» ni «0 % IA». Lo que hacemos es edición de estilo académico:
+        tu texto se lee mejor y sigue siendo tuyo.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Cómo funciona ────────────────────────────────────────────────────── -->
+  <section class="pasos">
+    <h2 class="titulo-seccion">Cómo funciona</h2>
+    <ol>
+      <li>
+        <span class="paso-numero">1</span>
+        <h3>Creas tu cuenta</h3>
+        <p>Confirmas tu correo con un código y entras. Te regalamos 2 000 palabras para probar.</p>
+      </li>
+      <li>
+        <span class="paso-numero">2</span>
+        <h3>Eliges tu herramienta</h3>
+        <p>
+          El humanizador, si necesitas pulir lo que ya escribiste. El método, si quieres que te
+          acompañe desde el tema hasta las conclusiones.
+        </p>
+      </li>
+      <li>
+        <span class="paso-numero">3</span>
+        <h3>Trabajas capítulo por capítulo</h3>
+        <p>
+          Cada capítulo tiene sus reglas y las respetamos: los resultados se describen, la
+          discusión se argumenta, las conclusiones no inventan datos nuevos.
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ── Productos ────────────────────────────────────────────────────────── -->
+  <section class="productos" id="productos">
+    <h2 class="titulo-seccion">Qué puedes comprar</h2>
+
+    <div class="rejilla">
+      <!-- Método de tesis -->
+      @if (metodo(); as plan) {
+        <article class="producto destacado">
+          <span class="cinta">Producto principal</span>
+          <h3>{{ plan.name }}</h3>
+          <p class="producto-precio">
+            {{ precio(plan) }}
+            <span class="periodo">· {{ plan.durationDays }} días de acceso</span>
+          </p>
+          <p class="producto-descripcion">{{ plan.description }}</p>
+
+          <ul class="lista-check">
+            <li>Los 9 capítulos del método, del tema a las conclusiones</li>
+            <li>Se conecta a <strong>tu propio Claude</strong> con una URL</li>
+            <li>Funciona también en el plan gratuito de Claude</li>
+            <li>Entregables en Word con formato APA 7</li>
+            <li>Citas y cifras protegidas: no se inventan fuentes</li>
+          </ul>
+
+          <a class="boton grande bloque" routerLink="/planes">Comprar con PayPal</a>
+        </article>
+      }
+
+      <!-- Humanizador -->
+      <article class="producto">
+        <h3>Humanizador académico</h3>
+        <p class="producto-precio">
+          Desde S/ 19.00
+          <span class="periodo">· bolsas de 30 días</span>
+        </p>
+        <p class="producto-descripcion">
+          Reescribe tu propio texto para que se lea con claridad y registro académico. Pagas por
+          palabras, no por suscripción.
+        </p>
+
+        <ul class="planes-mini">
+          @for (plan of bolsas(); track plan.code) {
+            <li>
+              <span>
+                <strong>{{ plan.name }}</strong>
+                <span class="tenue">{{ plan.words | number }} palabras</span>
+              </span>
+              <span class="mini-precio">
+                {{ precio(plan) }}
+                <span class="tenue">{{ porMil(plan) }}/mil</span>
+              </span>
+            </li>
+          }
+        </ul>
+
+        <a class="boton secundario grande bloque" routerLink="/planes">Ver bolsas</a>
+      </article>
+    </div>
+
+    <p class="nota-pago">
+      Puedes pagar con PayPal desde la web, o por Yape y transferencia escribiéndonos. La compra
+      se activa el mismo día.
+    </p>
+  </section>
+
+  <!-- ── Los 9 capítulos ──────────────────────────────────────────────────── -->
+  <section class="capitulos">
+    <h2 class="titulo-seccion">Los 9 capítulos del método</h2>
+    <p class="subtitulo-seccion">
+      Cada uno sabe qué se espera de él. No es el mismo trabajo describir unos resultados que
+      discutirlos.
+    </p>
+
+    <div class="rejilla-capitulos">
+      <div><span>1</span> Tema, variables y título</div>
+      <div><span>2</span> Capítulo I · Problema y objetivos</div>
+      <div><span>3</span> Capítulo II · Marco teórico</div>
+      <div><span>4</span> Capítulo III · Metodología</div>
+      <div><span>5</span> Instrumento y validez</div>
+      <div><span>6</span> Trabajo de campo</div>
+      <div><span>7</span> Capítulo IV · Resultados</div>
+      <div><span>8</span> Capítulo V · Discusión</div>
+      <div><span>9</span> Capítulo VI · Conclusiones y resumen</div>
+    </div>
+  </section>
+
+  <!-- ── Honestidad ───────────────────────────────────────────────────────── -->
+  <section class="franqueza">
+    <h2>Lo que no hacemos</h2>
+    <div class="rejilla-franqueza">
+      <div>
+        <h3>No escribimos tu tesis por ti</h3>
+        <p>
+          Te acompañamos y redactamos contigo, pero las decisiones son tuyas y tienes que poder
+          defender cada página en la sustentación.
+        </p>
+      </div>
+      <div>
+        <h3>No inventamos fuentes ni datos</h3>
+        <p>
+          Solo se cita lo que tú subes y se puede verificar. Si falta una fuente, se marca como
+          pendiente en vez de rellenarla.
+        </p>
+      </div>
+      <div>
+        <h3>No prometemos «0 % IA»</h3>
+        <p>
+          Nadie puede garantizar eso, y quien lo promete te está vendiendo humo. Lo que sí
+          hacemos es que tu texto se lea bien y en registro académico.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Cierre ───────────────────────────────────────────────────────────── -->
+  <section class="cierre">
+    <h2>Empieza por donde estés</h2>
+    <p>
+      Tanto si tienes un párrafo que no te convence como si todavía no sabes de qué hacer tu
+      tesis, hay una herramienta para ese punto.
+    </p>
+    <div class="cierre-acciones">
+      @if (auth.isAuthenticated()) {
+        <a class="boton grande" routerLink="/panel">Ir a mi panel</a>
+      } @else {
+        <a class="boton grande" routerLink="/auth/registro">Crear cuenta gratis</a>
+      }
+      <a class="boton secundario grande" routerLink="/planes">Ver precios</a>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />

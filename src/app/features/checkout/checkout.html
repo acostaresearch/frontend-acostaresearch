@@ -1,0 +1,207 @@
+<app-site-header />
+
+<main class="pagina">
+  @if (licenciaComprada(); as licencia) {
+    <!-- ── Licencia comprada ───────────────────────────────────────────────── -->
+    <section class="panel confirmacion">
+      <h1>¡Listo! Ya tienes el método</h1>
+      <p>
+        Tu acceso está activo
+        @if (licencia.expiresAt) {
+          hasta el {{ licencia.expiresAt | date: 'd MMM y' }}
+        }
+        . Ahora conéctalo a tu Claude en tres pasos.
+      </p>
+
+      @if (urlConector(); as url) {
+        <div class="url-conector">
+          <label for="url">Tu URL personal del conector</label>
+          <div class="url-fila">
+            <input id="url" type="text" [value]="url" readonly />
+            <button type="button" class="boton" (click)="copiarUrl()">
+              {{ copiada() ? '¡Copiada!' : 'Copiar' }}
+            </button>
+          </div>
+          <p class="aviso-url">
+            <strong>Guárdala ahora.</strong> Por seguridad no la almacenamos en claro, así que
+            no podemos volver a mostrártela. Si la pierdes, genera una nueva desde tu panel.
+          </p>
+        </div>
+
+        <ol class="instrucciones">
+          <li>Abre Claude y entra en <strong>Configuración → Conectores</strong>.</li>
+          <li>Pulsa <strong>Añadir conector personalizado</strong> y pega la URL de arriba.</li>
+          <li>
+            Escríbele a Claude «trabajemos mi tesis» y pídele que use el conector. Empieza por el
+            capítulo que te toque.
+          </li>
+        </ol>
+
+        <p class="nota">
+          La licencia es individual. Compartir esta URL puede provocar que se desactive.
+        </p>
+      }
+
+      <div class="botones">
+        <a class="boton secundario" routerLink="/panel">Ir a mi panel</a>
+      </div>
+    </section>
+  } @else if (bolsaComprada(); as pack) {
+    <!-- ── Bolsa comprada ──────────────────────────────────────────────────── -->
+    <section class="panel confirmacion">
+      <h1>Pago confirmado</h1>
+      <p>
+        Se han añadido <strong>{{ pack.wordsTotal | number }} palabras</strong> a tu cuenta con el
+        plan {{ pack.plan.name }}. Caducan el {{ pack.expiresAt | date: 'd MMM y' }}.
+      </p>
+      <div class="botones">
+        <a class="boton" routerLink="/humanizador">Ir al humanizador</a>
+      </div>
+    </section>
+  } @else {
+    <header class="cabecera">
+      <div>
+        <h1>Precios</h1>
+        <p class="subtitulo">
+          Sin suscripciones ni cobros automáticos. Compras lo que necesitas y punto.
+        </p>
+      </div>
+
+      @if (saldo(); as s) {
+        <div class="saldo" [class.agotado]="s.wordsAvailable === 0">
+          <span class="cifra">{{ s.wordsAvailable | number }}</span>
+          <span class="etiqueta">palabras disponibles</span>
+        </div>
+      }
+    </header>
+
+    @if (error(); as mensaje) {
+      <div class="aviso error" role="alert">{{ mensaje }}</div>
+    }
+
+    <div class="columnas">
+      <section class="planes">
+        @if (cargando()) {
+          <p class="tenue">Cargando precios…</p>
+        }
+
+        @if (metodo().length > 0) {
+          <h2 class="grupo">Método de tesis</h2>
+          @for (plan of metodo(); track plan.code) {
+            <button
+              type="button"
+              class="plan destacado"
+              [class.activo]="seleccionado()?.code === plan.code"
+              [attr.aria-pressed]="seleccionado()?.code === plan.code"
+              (click)="elegir(plan)"
+            >
+              <span class="plan-cabecera">
+                <strong>{{ plan.name }}</strong>
+                <span class="plan-precio">{{ precio(plan) }}</span>
+              </span>
+              <span class="plan-palabras">
+                Los 9 capítulos · {{ plan.durationDays }} días de acceso
+              </span>
+              @if (plan.description) {
+                <span class="plan-detalle">{{ plan.description }}</span>
+              }
+              <span class="plan-unitario">Se conecta a tu propio Claude con una URL</span>
+            </button>
+          }
+        }
+
+        @if (bolsas().length > 0) {
+          <h2 class="grupo">Humanizador · bolsas de palabras</h2>
+          @for (plan of bolsas(); track plan.code) {
+            <button
+              type="button"
+              class="plan"
+              [class.activo]="seleccionado()?.code === plan.code"
+              [attr.aria-pressed]="seleccionado()?.code === plan.code"
+              (click)="elegir(plan)"
+            >
+              <span class="plan-cabecera">
+                <strong>{{ plan.name }}</strong>
+                <span class="plan-precio">{{ precio(plan) }}</span>
+              </span>
+              <span class="plan-palabras">
+                {{ plan.words | number }} palabras · {{ plan.durationDays }} días
+              </span>
+              @if (plan.description) {
+                <span class="plan-detalle">{{ plan.description }}</span>
+              }
+              <span class="plan-unitario">{{ porMil(plan) }} por cada mil palabras</span>
+            </button>
+          }
+        }
+      </section>
+
+      <section class="panel pago">
+        @if (seleccionado(); as plan) {
+          <h2>Resumen</h2>
+          <dl class="resumen">
+            <div>
+              <dt>Producto</dt>
+              <dd>{{ plan.name }}</dd>
+            </div>
+            <div>
+              <dt>{{ esLicencia() ? 'Incluye' : 'Palabras' }}</dt>
+              <dd>{{ esLicencia() ? '9 capítulos' : (plan.words | number) }}</dd>
+            </div>
+            <div>
+              <dt>Vigencia</dt>
+              <dd>{{ plan.durationDays }} días</dd>
+            </div>
+            <div class="total">
+              <dt>Total</dt>
+              <dd>{{ precio(plan) }}</dd>
+            </div>
+          </dl>
+
+          @if (!auth.isAuthenticated()) {
+            <p class="nota">
+              Para comprar necesitas una cuenta: es donde queda registrado tu acceso y desde
+              donde lo recuperas si cambias de equipo.
+            </p>
+            <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
+            <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
+          } @else if (pagoEnLinea()) {
+            @if (precioDolares(plan); as dolares) {
+              <p class="nota">
+                PayPal no admite soles, así que el cobro sale en dólares:
+                <strong>{{ dolares }}</strong>. Tu banco te lo convertirá a soles.
+              </p>
+
+              <div class="boton-paypal" #paypalHost></div>
+
+              @if (procesando()) {
+                <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
+              }
+            } @else {
+              <p class="nota">
+                Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a
+                mano.
+              </p>
+            }
+          } @else {
+            <p class="nota">
+              El pago en línea aún no está activo. Escríbenos, confirmamos el Yape o la
+              transferencia y te activamos el acceso el mismo día.
+            </p>
+          }
+
+          <div class="alternativa">
+            <span class="tenue">¿Prefieres pagar por Yape o transferencia?</span>
+            @if (whatsappUrl) {
+              <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+                Escribir por WhatsApp
+              </a>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+</main>
+
+<app-site-footer />
