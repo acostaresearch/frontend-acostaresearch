@@ -3,41 +3,72 @@
     <div class="columna marca">
       <p class="nombre">Acosta <span>IA &amp; Research</span></p>
       <p class="descripcion">
-        Herramientas de investigación y redacción académica en español, hechas por y para
-        tesistas. Trujillo, Perú.
+        Benicio Gonzalo Acosta Enríquez · Trujillo, Perú. Investigador Renacyt Nivel II, docente
+        universitario y jurado de tesis.
       </p>
+
+      <ul class="redes" aria-label="Perfiles y redes">
+        @for (red of redes; track red.url) {
+          <li>
+            <a
+              [href]="red.url"
+              target="_blank"
+              rel="noopener"
+              [attr.aria-label]="red.nombre"
+              [title]="red.nombre"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                @if (red.linea) {
+                  <path
+                    [attr.d]="red.icono"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                } @else {
+                  <path [attr.d]="red.icono" fill="currentColor" />
+                }
+              </svg>
+            </a>
+          </li>
+        }
+      </ul>
     </div>
 
     <div class="columna">
-      <h3>Productos</h3>
-      <a routerLink="/humanizador">Humanizador académico</a>
-      <a routerLink="/planes">Método de tesis · 9 capítulos</a>
-      <a routerLink="/planes">Precios</a>
+      <h3>El método</h3>
+      <a routerLink="/metodo">Las 9 Skills</a>
+      <a routerLink="/en-accion">Míralo en acción</a>
+      <a routerLink="/como-funciona">Cómo funciona</a>
+      <a routerLink="/quien-soy">Quién te acompaña</a>
+      <a routerLink="/preguntas">Preguntas frecuentes</a>
+      <a routerLink="/planes">Precio y qué incluye</a>
     </div>
 
     <div class="columna">
       <h3>Tu cuenta</h3>
       <a routerLink="/auth/registro">Crear cuenta</a>
       <a routerLink="/auth/login">Iniciar sesión</a>
-      <a routerLink="/panel">Mi panel</a>
     </div>
 
     <div class="columna">
       <h3>Contacto</h3>
-      <a href="mailto:asesoriaprofesional599&#64;gmail.com">asesoriaprofesional599&#64;gmail.com</a>
       @if (whatsappUrl) {
-        <a [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+        <a [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp · +51 923 095 940</a>
       }
-      <span class="tenue">Atención de lunes a sábado</span>
+      <a href="mailto:asesoriaprofesional599&#64;gmail.com">asesoriaprofesional599&#64;gmail.com</a>
+      <span class="tenue">Te responde una persona, no un bot.</span>
     </div>
   </div>
 
   <div class="legal">
     <p>© {{ anio }} Acosta | IA &amp; Research. Todos los derechos reservados.</p>
     <p class="aviso">
-      Nuestras herramientas asisten en la redacción y edición de textos académicos propios. El
-      trabajo, las decisiones metodológicas y la responsabilidad sobre lo entregado son siempre del
-      autor.
+      Las Skills acompañan la redacción de tu propia tesis: preguntan, explican el criterio
+      metodológico y ordenan lo que tú decides. El trabajo, las decisiones y la responsabilidad
+      sobre lo entregado son siempre del autor.
     </p>
   </div>
 </footer>

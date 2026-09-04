@@ -1,0 +1,435 @@
+/* ── Estructura ─────────────────────────────────────────────────────────── */
+.perfil {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+/* Los botones del sistema ocupan el ancho completo; aquí casi siempre van
+   sueltos, así que se les devuelve su tamaño natural. */
+.perfil .boton {
+  width: auto;
+}
+
+.perfil .boton.peligro {
+  color: var(--color-error);
+  background: var(--color-superficie);
+  border-color: #f3c9c9;
+}
+
+.perfil .boton.peligro:hover:not(:disabled) {
+  background: var(--color-error-suave);
+}
+
+/* ── Cabecera de la cuenta ──────────────────────────────────────────────── */
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.identidad-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.marca {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+.identidad h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 650;
+}
+
+.correo {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.insignias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.identidad-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.identidad-acciones .boton {
+  width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .identidad {
+    flex-wrap: wrap;
+  }
+
+  .identidad-acciones {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .identidad-acciones .boton {
+    flex: 1;
+  }
+}
+
+/* ── Tarjetas ───────────────────────────────────────────────────────────── */
+.tarjeta {
+  display: block;
+  padding: 22px;
+  margin-top: 18px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.tarjeta > h2 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.tarjeta h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.nota {
+  margin: -6px 0 14px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.nota-pie {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+  font-size: 13px;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.etiqueta.buena {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.etiqueta.mala,
+.etiqueta.revocada {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+/* ── Datos de la cuenta ─────────────────────────────────────────────────── */
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 22px;
+  margin: 0;
+}
+
+.datos dt {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+.datos dd {
+  margin: 3px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* ── Saldo ──────────────────────────────────────────────────────────────── */
+.saldo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 16px 18px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.saldo-cifra {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.saldo-cifra strong {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-primario);
+}
+
+.saldo-cifra span {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.saldo-cifra.agotado strong {
+  color: var(--color-error);
+}
+
+.saldo-detalle p {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.saldo-detalle p + p {
+  margin-top: 4px;
+}
+
+.bolsas {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bolsa-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+
+.bolsa-cabecera strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.barra {
+  height: 6px;
+  background: var(--color-borde);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 999px;
+}
+
+/* ── Licencias del conector ─────────────────────────────────────────────── */
+.licencias {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.licencias li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 15px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.licencias strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.licencia-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.licencia-acciones .boton {
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .licencias li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── URL recién generada ────────────────────────────────────────────────── */
+.url-nueva {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--color-exito-suave);
+  border: 1px solid var(--color-exito);
+  border-radius: var(--radio);
+}
+
+.url-titulo {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-exito);
+}
+
+.url-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.url-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.url-pie {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+/* ── Canje de códigos ───────────────────────────────────────────────────── */
+.canje {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.canje .nota {
+  margin: 0 0 10px;
+}
+
+.canje-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.canje-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
+}
+
+.canje-fila input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+/* ── Compras ────────────────────────────────────────────────────────────── */
+.tabla-envoltura {
+  overflow-x: auto;
+}
+
+.compras {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.compras th {
+  padding: 0 12px 8px 0;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.compras td {
+  padding: 11px 12px 11px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.compras td .tenue {
+  display: block;
+}
+
+.compras tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Sesión ─────────────────────────────────────────────────────────────── */
+.acciones-sesion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

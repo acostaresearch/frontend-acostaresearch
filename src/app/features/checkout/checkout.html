@@ -43,7 +43,7 @@
       }
 
       <div class="botones">
-        <a class="boton secundario" routerLink="/panel">Ir a mi panel</a>
+        <a class="boton secundario" routerLink="/" fragment="mi-panel">Ir a mi panel</a>
       </div>
     </section>
   } @else if (bolsaComprada(); as pack) {
@@ -67,12 +67,12 @@
         </p>
       </div>
 
-      @if (saldo(); as s) {
+      <!-- @if (saldo(); as s) {
         <div class="saldo" [class.agotado]="s.wordsAvailable === 0">
           <span class="cifra">{{ s.wordsAvailable | number }}</span>
           <span class="etiqueta">palabras disponibles</span>
         </div>
-      }
+      } -->
     </header>
 
     @if (error(); as mensaje) {
@@ -99,9 +99,7 @@
                 <strong>{{ plan.name }}</strong>
                 <span class="plan-precio">{{ precio(plan) }}</span>
               </span>
-              <span class="plan-palabras">
-                Los 9 capítulos · {{ plan.durationDays }} días de acceso
-              </span>
+              <span class="plan-palabras">Los 9 capítulos · {{ vigencia(plan) }}</span>
               @if (plan.description) {
                 <span class="plan-detalle">{{ plan.description }}</span>
               }
@@ -110,7 +108,7 @@
           }
         }
 
-        @if (bolsas().length > 0) {
+        <!-- @if (bolsas().length > 0) {
           <h2 class="grupo">Humanizador · bolsas de palabras</h2>
           @for (plan of bolsas(); track plan.code) {
             <button
@@ -133,7 +131,7 @@
               <span class="plan-unitario">{{ porMil(plan) }} por cada mil palabras</span>
             </button>
           }
-        }
+        } -->
       </section>
 
       <section class="panel pago">
@@ -150,13 +148,62 @@
             </div>
             <div>
               <dt>Vigencia</dt>
-              <dd>{{ plan.durationDays }} días</dd>
+              <dd>{{ vigencia(plan) }}</dd>
             </div>
+
+            @if (descuento(); as promo) {
+              <div>
+                <dt>Precio</dt>
+                <dd class="tachado">{{ precio(plan) }}</dd>
+              </div>
+              <div class="rebaja">
+                <dt>Descuento {{ promo.code }}</dt>
+                <dd>− S/ {{ (promo.amountCents / 100).toFixed(2) }}</dd>
+              </div>
+            }
+
             <div class="total">
               <dt>Total</dt>
-              <dd>{{ precio(plan) }}</dd>
+              <dd>{{ precioFinal(plan) }}</dd>
             </div>
           </dl>
+
+          <!-- ── Código promocional ─────────────────────────────────────── -->
+          @if (auth.isAuthenticated()) {
+            @if (descuento(); as promo) {
+              <p class="promo-aplicada">
+                Código <strong>{{ promo.code }}</strong> aplicado.
+                <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
+                  Quitar
+                </button>
+              </p>
+            } @else {
+              <div class="promo">
+                <label for="promo">¿Tienes un código de descuento?</label>
+                <div class="promo-fila">
+                  <input
+                    id="promo"
+                    type="text"
+                    [formControl]="codigoPromo"
+                    placeholder="Escríbelo aquí"
+                    autocomplete="off"
+                    (keyup.enter)="aplicarDescuento()"
+                  />
+                  <button
+                    type="button"
+                    class="boton secundario"
+                    [disabled]="comprobandoPromo()"
+                    (click)="aplicarDescuento()"
+                  >
+                    {{ comprobandoPromo() ? '…' : 'Aplicar' }}
+                  </button>
+                </div>
+                @if (errorPromo(); as mensaje) {
+                  <p class="promo-error">{{ mensaje }}</p>
+                }
+              </div>
+            }
+          }
 
           @if (!auth.isAuthenticated()) {
             <p class="nota">
@@ -166,7 +213,7 @@
             <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
             <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
           } @else if (pagoEnLinea()) {
-            @if (precioDolares(plan); as dolares) {
+            @if (precioFinalDolares(plan); as dolares) {
               <p class="nota">
                 PayPal no admite soles, así que el cobro sale en dólares:
                 <strong>{{ dolares }}</strong>. Tu banco te lo convertirá a soles.

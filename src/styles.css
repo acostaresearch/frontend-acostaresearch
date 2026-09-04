@@ -228,3 +228,147 @@ a:hover {
   background: var(--color-aviso-suave);
   border-color: #f0dcb8;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Páginas públicas
+   ─────────────────────────────────────────────────────────────────────────
+   El sitio público son varias páginas —inicio, método, cómo funciona, quién
+   soy…— y todas comparten el mismo armazón: ancho, secciones, títulos y
+   listas. Vive aquí y no en cada componente porque replicarlo seis veces es
+   garantizar que un día dejen de parecerse entre sí.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.pagina {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.boton.grande {
+  padding: 13px 26px;
+  font-size: 15.5px;
+}
+
+.boton.bloque {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.seccion {
+  padding: 64px 0;
+}
+
+.seccion + .seccion {
+  border-top: 1px solid var(--color-borde);
+}
+
+.seccion-marca {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+.titulo-seccion {
+  max-width: 22ch;
+  margin: 0 0 14px;
+  font-size: clamp(26px, 3.4vw, 36px);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  color: var(--color-texto);
+}
+
+.titulo-seccion.ancho {
+  max-width: 26ch;
+}
+
+.seccion-entrada {
+  max-width: 62ch;
+  margin: 0 0 34px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--color-texto-suave);
+}
+
+/* Encabezado de una página interior: marca, título y entrada. */
+.encabezado-pagina {
+  padding: 56px 0 8px;
+}
+
+.lista-check {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-check li {
+  position: relative;
+  padding: 9px 0 9px 28px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.lista-check li:last-child {
+  border-bottom: 0;
+}
+
+.lista-check li::before {
+  content: '✓';
+  position: absolute;
+  top: 9px;
+  left: 2px;
+  font-weight: 700;
+  color: var(--color-exito);
+}
+
+/* Rejilla de cifras: se usa en el inicio y en la página del autor. */
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--color-borde);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.cifras li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 18px;
+  background: var(--color-superficie);
+}
+
+.cifra-valor {
+  font-size: 26px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-primario);
+}
+
+.cifra-pie {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 900px) {
+  .seccion {
+    padding: 48px 0;
+  }
+
+  .cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+}

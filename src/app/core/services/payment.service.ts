@@ -22,9 +22,17 @@ export class PaymentService {
    * Abre la orden. Se manda el código del plan, nunca el precio: el importe lo
    * calcula el servidor.
    */
-  createOrder(planCode: string, provider = 'PAYPAL'): Observable<PaymentOrder> {
+  createOrder(
+    planCode: string,
+    discountCode?: string,
+    provider = 'PAYPAL',
+  ): Observable<PaymentOrder> {
     return this.http
-      .post<ApiResponse<{ order: PaymentOrder }>>(`${this.base}/orders`, { planCode, provider })
+      .post<ApiResponse<{ order: PaymentOrder }>>(`${this.base}/orders`, {
+        planCode,
+        provider,
+        ...(discountCode ? { discountCode } : {}),
+      })
       .pipe(map((res) => res.data.order));
   }
 

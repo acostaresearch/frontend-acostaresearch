@@ -1,0 +1,32 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">Preguntas frecuentes</p>
+    <h1 class="titulo-seccion ancho">Lo que preguntan antes de decidirse</h1>
+    <p class="seccion-entrada">
+      Están respondidas con lo que de verdad pasa, incluido lo que el método hace peor. Es más
+      barato decírtelo ahora que después de que pagues.
+    </p>
+  </header>
+
+  <section class="seccion">
+    <div class="faq">
+      @for (p of faq; track p.pregunta) {
+        <details>
+          <summary>{{ p.pregunta }}</summary>
+          <p>{{ p.respuesta }}</p>
+        </details>
+      }
+    </div>
+  </section>
+
+  <app-paso-siguiente
+    titulo="El paquete completo"
+    texto="Las 9 Skills, un solo pago y acceso de por vida, con 30 minutos de asesoría conmigo."
+    enlace="/planes"
+    etiqueta="Ver el precio"
+  />
+</main>
+
+<app-site-footer />

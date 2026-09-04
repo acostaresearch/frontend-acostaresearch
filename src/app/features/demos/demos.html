@@ -1,0 +1,56 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">Demostración en vivo</p>
+    <h1 class="titulo-seccion ancho">Antes de decidir, siéntate a verme trabajar</h1>
+    <p class="seccion-entrada">
+      Dos demostraciones completas, en tiempo real y sin cortes. Prefiero que lo veas con tus
+      propios ojos antes de que gastes un sol.
+    </p>
+  </header>
+
+  <section class="seccion">
+    <div class="demos">
+      @for (demo of demos; track demo.titulo) {
+        <article class="demo">
+          @if (demo.video) {
+            <div class="demo-video">
+              <iframe
+                [src]="embed(demo.video)"
+                title="{{ demo.titulo }}"
+                loading="lazy"
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin"
+              ></iframe>
+            </div>
+          } @else {
+            <a class="demo-video vacio" [href]="redes.youtube" target="_blank" rel="noopener">
+              <span class="demo-play" aria-hidden="true">▶</span>
+              <span>Ver en YouTube</span>
+            </a>
+          }
+          <h2>{{ demo.titulo }}</h2>
+          <p>{{ demo.descripcion }}</p>
+        </article>
+      }
+    </div>
+
+    <p class="pie-demos">
+      <a class="boton" routerLink="/planes">Quiero avanzar así</a>
+      <span>
+        Y si algo se te atora, tienes 30 minutos conmigo para resolverlo. Hay más videos en
+        <a [href]="redes.youtube" target="_blank" rel="noopener">mi canal de YouTube</a>.
+      </span>
+    </p>
+  </section>
+
+  <app-paso-siguiente
+    titulo="Las 9 Skills"
+    texto="Qué hace cada una, en el orden en que se escribe una tesis, y con qué documento sales de cada fase."
+    enlace="/metodo"
+    etiqueta="Ver el método"
+  />
+</main>
+
+<app-site-footer />

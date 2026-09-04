@@ -1,0 +1,52 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">Quién te acompaña</p>
+    <h1 class="titulo-seccion ancho">Benicio Gonzalo Acosta Enríquez</h1>
+  </header>
+
+  <section class="seccion autor">
+    <div class="autor-texto">
+      <p>
+        Investigador Renacyt Nivel II y docente universitario, con más de 5 años de experiencia en
+        investigación y asesoría de tesis. Revisor científico y autor en numerosas publicaciones
+        científicas, y jurado de tesis.
+      </p>
+      <p>
+        Estas nueve Skills son, literalmente, el método que uso cuando asesoro: las mismas
+        preguntas, el mismo orden y los mismos criterios. Las escribí para que te acompañen a las
+        once de la noche, cuando yo no puedo estar en la reunión y tú sí tienes que avanzar.
+      </p>
+      <p class="autor-remate">Más de 500 tesistas ya trabajan con ellas.</p>
+
+      <div class="autor-enlaces">
+        <a [href]="redes.scholar" target="_blank" rel="noopener">Google Académico</a>
+        <a [href]="redes.ctivitae" target="_blank" rel="noopener">CTI Vitae</a>
+        <a [href]="redes.youtube" target="_blank" rel="noopener">YouTube</a>
+        <a [href]="redes.tiktok" target="_blank" rel="noopener">TikTok</a>
+      </div>
+    </div>
+
+    <figure class="autor-retrato">
+      <img
+        src="home-img/IMG-109.jpg"
+        alt="Benicio Gonzalo Acosta Enríquez"
+        width="2400"
+        height="3600"
+      />
+      <figcaption>
+        Benicio Gonzalo Acosta Enríquez · Trujillo, Perú
+      </figcaption>
+    </figure>
+  </section>
+
+  <app-paso-siguiente
+    titulo="Preguntas frecuentes"
+    texto="Si te queda alguna duda —Claude Pro, tesis cualitativa, tu universidad—, está respondida aquí."
+    enlace="/preguntas"
+    etiqueta="Ver las respuestas"
+  />
+</main>
+
+<app-site-footer />

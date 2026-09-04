@@ -1,6 +1,8 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // La portada es pública: un visitante tiene que poder ver qué se vende antes
@@ -11,15 +13,50 @@ export const routes: Routes = [
     title: 'Acosta | IA & Research · Tesis y redacción académica',
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
+  // El sitio público son páginas, no secciones de una portada infinita: cada
+  // una responde a una pregunta y se puede enlazar y compartir por separado.
+  {
+    path: 'en-accion',
+    title: 'Míralo en acción · Acosta Research',
+    loadComponent: () => import('./features/demos/demos').then((m) => m.Demos),
+  },
+  {
+    path: 'metodo',
+    title: 'Las 9 Skills · Acosta Research',
+    loadComponent: () => import('./features/metodo/metodo').then((m) => m.Metodo),
+  },
+  {
+    path: 'como-funciona',
+    title: 'Cómo funciona · Acosta Research',
+    loadComponent: () =>
+      import('./features/como-funciona/como-funciona').then((m) => m.ComoFunciona),
+  },
+  {
+    path: 'quien-soy',
+    title: 'Quién te acompaña · Acosta Research',
+    loadComponent: () => import('./features/quien-soy/quien-soy').then((m) => m.QuienSoy),
+  },
+  {
+    path: 'preguntas',
+    title: 'Preguntas frecuentes · Acosta Research',
+    loadComponent: () => import('./features/preguntas/preguntas').then((m) => m.Preguntas),
+  },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
   },
+  // El panel vive dentro de la portada. La ruta antigua se conserva para no
+  // romper enlaces ya repartidos: lleva a la misma sección en el inicio.
   {
     path: 'panel',
+    pathMatch: 'full',
+    redirectTo: () => inject(Router).parseUrl('/#mi-panel'),
+  },
+  {
+    path: 'perfil',
     canActivate: [authGuard],
-    title: 'Panel · Acosta Research',
-    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+    title: 'Mi perfil · Acosta Research',
+    loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
   },
   {
     path: 'humanizador',
@@ -31,6 +68,12 @@ export const routes: Routes = [
     path: 'planes',
     title: 'Precios · Acosta Research',
     loadComponent: () => import('./features/checkout/checkout').then((m) => m.Checkout),
+  },
+  {
+    path: 'admin',
+    canActivate: [authGuard, roleGuard('ADMIN')],
+    title: 'Administración · Acosta Research',
+    loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
   },
   { path: '**', redirectTo: '' },
 ];

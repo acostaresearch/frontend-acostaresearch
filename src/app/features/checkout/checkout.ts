@@ -9,12 +9,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
-import { License, PaymentProvider } from '../../core/models/payment.model';
+import { Descuento, License, PaymentProvider } from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
@@ -25,7 +26,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
 
 @Component({
   selector: 'app-checkout',
-  imports: [RouterLink, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
+  imports: [RouterLink, ReactiveFormsModule, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
 })
@@ -42,6 +43,12 @@ export class Checkout implements OnInit {
   readonly pasarelas = signal<PaymentProvider[]>([]);
   readonly saldo = signal<Balance | null>(null);
   readonly seleccionado = signal<Plan | null>(null);
+
+  // ── Código promocional ─────────────────────────────────────────────────
+  readonly codigoPromo = new FormControl('', { nonNullable: true });
+  readonly descuento = signal<Descuento | null>(null);
+  readonly errorPromo = signal<string | null>(null);
+  readonly comprobandoPromo = signal(false);
 
   readonly cargando = signal(true);
   readonly procesando = signal(false);
@@ -118,6 +125,55 @@ export class Checkout implements OnInit {
     if (this.procesando()) return;
     this.error.set(null);
     this.seleccionado.set(plan);
+    // Un código puede valer solo para un plan, así que al cambiar se suelta.
+    this.quitarDescuento();
+  }
+
+  aplicarDescuento(): void {
+    const codigo = this.codigoPromo.value.trim();
+    const plan = this.seleccionado();
+    if (!codigo || !plan || this.comprobandoPromo()) return;
+
+    this.comprobandoPromo.set(true);
+    this.errorPromo.set(null);
+
+    this.billing.validarDescuento(codigo, plan.code).subscribe({
+      next: (descuento) => {
+        this.descuento.set(descuento);
+        this.comprobandoPromo.set(false);
+        // No hace falta remontar el botón de PayPal: su `createOrder` lee el
+        // descuento en el momento del clic, así que siempre usa el vigente.
+      },
+      error: (error: unknown) => {
+        this.descuento.set(null);
+        this.errorPromo.set(toApiError(error).message);
+        this.comprobandoPromo.set(false);
+      },
+    });
+  }
+
+  quitarDescuento(): void {
+    if (!this.descuento() && !this.errorPromo()) return;
+    this.descuento.set(null);
+    this.errorPromo.set(null);
+    this.codigoPromo.reset();
+  }
+
+  /** Precio a pagar, ya con la rebaja si la hay. */
+  precioFinal(plan: Plan): string {
+    const rebajado = this.descuento()?.finalPriceCents;
+    return `S/ ${((rebajado ?? plan.priceCents) / 100).toFixed(2)}`;
+  }
+
+  precioFinalDolares(plan: Plan): string | null {
+    const rebajado = this.descuento()?.finalPriceUsdCents;
+    if (rebajado != null) return `$ ${(rebajado / 100).toFixed(2)}`;
+    return this.precioDolares(plan);
+  }
+
+  /** «30 días» o «permanente», según el plan. */
+  vigencia(plan: Plan): string {
+    return plan.durationDays > 0 ? `${plan.durationDays} días` : 'Acceso permanente';
   }
 
   precio(plan: Plan): string {
@@ -158,7 +214,10 @@ export class Checkout implements OnInit {
             this.procesando.set(true);
             try {
               const orden = await firstValueFrom(
-                this.payments.createOrder(this.seleccionado()!.code),
+                this.payments.createOrder(
+                  this.seleccionado()!.code,
+                  this.descuento()?.code,
+                ),
               );
               return orden.orderId;
             } catch (error: unknown) {

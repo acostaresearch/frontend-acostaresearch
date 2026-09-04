@@ -8,6 +8,17 @@ export interface PaymentProvider {
   currency: string;
 }
 
+/** Descuento ya resuelto por el servidor para un plan concreto. */
+export interface Descuento {
+  code: string;
+  /** Rebaja anunciada, en céntimos de sol. */
+  amountCents: number;
+  /** Rebaja equivalente en la moneda de la pasarela. */
+  discountUsdCents: number;
+  finalPriceCents: number;
+  finalPriceUsdCents: number | null;
+}
+
 /** Orden abierta en la pasarela. Todavía no se ha cobrado nada. */
 export interface PaymentOrder {
   paymentId: string;
@@ -15,6 +26,7 @@ export interface PaymentOrder {
   approveUrl: string | null;
   amountCents: number;
   currency: string;
+  discount: { code: string; amountCents: number } | null;
   plan: { code: string; name: string; words: number };
 }
 
@@ -28,6 +40,15 @@ export interface License {
   lastUsedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
+  /** Solo cuando está revocada o suspendida. */
+  revokedAt?: string | null;
+  revokedReason?: string | null;
+  /** Topes contratados. 0 = sin tope. */
+  callsPerDay?: number;
+  callsPerMonth?: number;
+  costCentsPerMonth?: number;
+  /** Consumo ya normalizado al día y mes en curso. */
+  usage?: { callsToday: number; callsMonth: number; costCentsMonth: number };
 }
 
 export interface PaymentResult {

@@ -344,3 +344,144 @@ h1 {
 .instrucciones strong {
   color: var(--color-texto);
 }
+
+/* ── Código promocional ─────────────────────────────────────────────────── */
+.promo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.promo label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-texto);
+  opacity: 0.85;
+}
+
+.promo-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.promo-fila input {
+  flex: 1 1 auto; /* Toma todo el espacio disponible */
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm, 8px);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.promo-fila input::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  opacity: 0.5;
+}
+
+.promo-fila input:hover {
+  border-color: var(--color-primario);
+}
+
+.promo-fila input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(29, 97, 231, 0.15);
+}
+
+.url-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.url-fila input {
+  flex: 1 1 auto; /* Ocupa todo el espacio disponible */
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  box-sizing: border-box;
+}
+
+/* Evita que el botón "Copiar" se expanda y aplaste al input */
+.url-fila .boton {
+  flex: 0 0 auto;
+  width: auto;
+  height: 42px;
+  padding: 0 18px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Solución del colapso: deshace el width:100% heredado del botón global */
+.promo-fila .boton.secundario {
+  flex: 0 0 auto; /* Evita que crezca o se encoja impredeciblemente */
+  width: auto;     /* Anula anchos globales */
+  height: 42px;
+  padding: 0 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-primario);
+  background-color: rgba(29, 97, 231, 0.08);
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm, 8px);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.promo-fila .boton.secundario:hover:not(:disabled) {
+  background-color: var(--color-primario);
+  color: #ffffff;
+}
+
+.promo-fila .boton.secundario:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.enlace-quitar {
+  margin-left: 6px;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* El precio original se tacha para que la rebaja se lea de un vistazo. */
+.resumen dd.tachado {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+}
+
+.resumen .rebaja dt,
+.resumen .rebaja dd {
+  color: var(--color-exito);
+}

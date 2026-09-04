@@ -1,0 +1,672 @@
+<app-site-header />
+
+<main class="panel-admin">
+  <header class="cabecera">
+    <div>
+      <p class="marca">Administración</p>
+      <h1>Panel de control</h1>
+    </div>
+    <button type="button" class="boton secundario" (click)="recargar()">Actualizar</button>
+  </header>
+
+  <!-- ── Resumen ────────────────────────────────────────────────────────── -->
+  <section class="resumen">
+    <div class="dato" [class.alarma]="alertasGraves() > 0">
+      <span class="cifra">{{ alertasGraves() }}</span>
+      <span class="etiqueta-dato">sospechas altas</span>
+    </div>
+    <div class="dato">
+      <span class="cifra">{{ licenciasActivas() }}</span>
+      <span class="etiqueta-dato">licencias activas</span>
+    </div>
+    <div class="dato" [class.apagado]="licenciasRevocadas() === 0">
+      <span class="cifra">{{ licenciasRevocadas() }}</span>
+      <span class="etiqueta-dato">revocadas</span>
+    </div>
+    <div class="dato">
+      <span class="cifra">{{ codigosSinUsar() }}</span>
+      <span class="etiqueta-dato">códigos sin canjear</span>
+    </div>
+  </section>
+
+  <nav class="pestanas">
+    <button type="button" [class.activa]="seccion() === 'ventas'" (click)="ir('ventas')">
+      Vender
+    </button>
+    <button type="button" [class.activa]="seccion() === 'skills'" (click)="ir('skills')">
+      Capítulos
+    </button>
+    <button type="button" [class.activa]="seccion() === 'descuentos'" (click)="ir('descuentos')">
+      Descuentos
+    </button>
+    <button type="button" [class.activa]="seccion() === 'licencias'" (click)="ir('licencias')">
+      Licencias
+    </button>
+    <button type="button" [class.activa]="seccion() === 'alertas'" (click)="ir('alertas')">
+      Alertas
+      @if (alertas().length > 0) {
+        <span class="contador-pestana">{{ alertas().length }}</span>
+      }
+    </button>
+    <button type="button" [class.activa]="seccion() === 'movimientos'" (click)="ir('movimientos')">
+      Movimientos
+    </button>
+  </nav>
+
+  @if (error(); as mensaje) {
+    <div class="aviso error" role="alert">{{ mensaje }}</div>
+  }
+  @if (aviso(); as mensaje) {
+    <div class="aviso exito" role="status">{{ mensaje }}</div>
+  }
+
+  <!-- ══ VENDER ═══════════════════════════════════════════════════════════ -->
+  @if (seccion() === 'ventas') {
+    <div class="columnas">
+      <!-- Códigos del método -->
+      <section class="tarjeta">
+        <h2>Vender el método (código de activación)</h2>
+        <p class="nota">
+          Para una venta por Yape o WhatsApp. Genera el código, se lo envías, y el comprador lo
+          canjea desde su perfil.
+        </p>
+
+        <form [formGroup]="formCodigos" (ngSubmit)="generarCodigos()" novalidate>
+          <div class="fila">
+            <div class="campo estrecho">
+              <label for="cantidad">Cantidad</label>
+              <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
+            </div>
+            <div class="campo">
+              <label for="producto">Producto</label>
+              <select id="producto" formControlName="productCode">
+                @for (plan of planesLicencia(); track plan.code) {
+                  <option [value]="plan.productCode ?? plan.code">{{ plan.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="comprador">Correo del comprador <span class="opcional">(opcional)</span></label>
+            <input id="comprador" type="email" formControlName="buyerEmail" placeholder="para tu registro" />
+          </div>
+
+          <div class="campo">
+            <label for="nota">Nota <span class="opcional">(opcional)</span></label>
+            <input id="nota" type="text" formControlName="note" placeholder="Yape 3 sep · Ana G." />
+          </div>
+
+          <button type="submit" class="boton" [disabled]="trabajando()">
+            {{ trabajando() ? 'Generando…' : 'Generar código' }}
+          </button>
+        </form>
+
+        @if (codigosNuevos().length > 0) {
+          <div class="codigos-nuevos">
+            <p class="codigos-titulo">
+              Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+            </p>
+            <ul>
+              @for (codigo of codigosNuevos(); track codigo) {
+                <li>{{ codigo }}</li>
+              }
+            </ul>
+            <button type="button" class="boton" (click)="copiarCodigos()">
+              {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Bolsas de palabras -->
+      <section class="tarjeta">
+        <h2>Activar palabras a mano</h2>
+        <p class="nota">
+          Para el humanizador, cuando el pago no pasó por PayPal. El usuario ya debe tener cuenta.
+        </p>
+
+        <form [formGroup]="formBolsa" (ngSubmit)="activarBolsa()" novalidate>
+          <div class="campo">
+            <label for="email">Correo de la cuenta</label>
+            <input id="email" type="email" formControlName="email" placeholder="tesista@correo.com" />
+          </div>
+
+          <div class="fila">
+            <div class="campo">
+              <label for="plan">Plan</label>
+              <select id="plan" formControlName="planCode">
+                @for (plan of planesPalabras(); track plan.code) {
+                  <option [value]="plan.code">
+                    {{ plan.name }} · {{ plan.words | number }} palabras
+                  </option>
+                }
+              </select>
+            </div>
+            <div class="campo">
+              <label for="metodo">Pagó por</label>
+              <select id="metodo" formControlName="paymentMethod">
+                @for (metodo of metodos; track metodo) {
+                  <option [value]="metodo">{{ metodo }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="operacion">Nº de operación <span class="opcional">(opcional)</span></label>
+            <input id="operacion" type="text" formControlName="paymentRef" placeholder="código del Yape" />
+          </div>
+
+          <button type="submit" class="boton" [disabled]="trabajando()">
+            {{ trabajando() ? 'Activando…' : 'Activar palabras' }}
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Códigos generados -->
+    <section class="tarjeta">
+      <h2>Códigos generados</h2>
+      @if (codigos().length === 0) {
+        <p class="nota">Todavía no has generado ninguno.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Comprador</th>
+                <th>Nota</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (codigo of codigos(); track codigo.id) {
+                <tr>
+                  <td class="mono">…{{ codigo.hint }}</td>
+                  <td>{{ codigo.productCode }}</td>
+                  <td>{{ codigo.buyerEmail ?? '—' }}</td>
+                  <td class="tenue">{{ codigo.note ?? '—' }}</td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="codigo.status === 'REDEEMED'"
+                      [class.espera]="codigo.status === 'AVAILABLE'"
+                      [class.mala]="codigo.status === 'VOID'"
+                    >
+                      {{ codigo.status }}
+                    </span>
+                  </td>
+                  <td class="derecha">
+                    @if (codigo.status === 'AVAILABLE') {
+                      <button type="button" class="enlace-peligro" (click)="anularCodigo(codigo)">
+                        Anular
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ══ CAPÍTULOS ════════════════════════════════════════════════════════ -->
+  @if (seccion() === 'skills') {
+    <section class="tarjeta">
+      <h2>{{ editando() ? 'Editar ficha' : 'Añadir o actualizar un capítulo' }}</h2>
+      <p class="nota">
+        Sube el <code>.skill</code> tal cual: es la carpeta de la skill comprimida, con su
+        <code>SKILL.md</code> dentro. No hay que convertirlo a nada — el conector lee ese mismo
+        archivo. Si el código ya existe, se reemplaza y los tesistas ven la versión nueva en su
+        siguiente consulta.
+      </p>
+
+      @if (!editando()) {
+        <div class="campo">
+          <label for="bundle">Archivo .skill</label>
+          <input
+            id="bundle"
+            type="file"
+            accept=".skill,.zip,application/zip"
+            (change)="elegirArchivo($event)"
+            [disabled]="trabajando()"
+          />
+          <span class="ayuda">Máximo 15 MB. Se comprueba antes de guardarse.</span>
+        </div>
+      }
+
+      @if (analisis(); as a) {
+        <div class="analisis" [class.reemplazo]="a.reemplaza">
+          <p class="analisis-titulo">
+            <code>{{ a.code }}</code>
+            @if (a.reemplaza) {
+              <span class="etiqueta aviso">Reemplaza a «{{ a.reemplaza.displayName }}»</span>
+            } @else {
+              <span class="etiqueta">Capítulo nuevo</span>
+            }
+          </p>
+          <ul class="analisis-datos">
+            <li><b>{{ a.pasos }}</b> pasos declarados</li>
+            <li><b>{{ a.archivos }}</b> archivos en el bundle</li>
+            <li><b>{{ a.skillMdBytes | number }}</b> bytes de método</li>
+          </ul>
+          @if (a.materiales.length > 0) {
+            <p class="nota">Materiales de apoyo: {{ a.materiales.join(', ') }}</p>
+          }
+        </div>
+      }
+
+      @if (analisis() || editando()) {
+        <form [formGroup]="formSkill" class="formulario">
+          <div class="campo">
+            <label for="s-nombre">Nombre visible</label>
+            <input id="s-nombre" type="text" formControlName="displayName" maxlength="120" />
+            <span class="ayuda">Es lo que lee el tesista en el listado de capítulos.</span>
+          </div>
+
+          <div class="campo">
+            <label for="s-resumen">Descripción</label>
+            <input id="s-resumen" type="text" formControlName="summary" maxlength="500" />
+            <span class="ayuda">
+              Una frase: qué hace y con qué sale. Es lo ÚNICO del contenido que ve el comprador.
+            </span>
+          </div>
+
+          <div class="fila-doble">
+            <div class="campo">
+              <label for="s-orden">Orden</label>
+              <input id="s-orden" type="number" formControlName="orden" min="0" />
+              <span class="ayuda">Posición en el método.</span>
+            </div>
+
+            <label class="casilla">
+              <input type="checkbox" formControlName="active" />
+              <span>Visible en el conector</span>
+            </label>
+          </div>
+
+          <div class="acciones-formulario">
+            @if (editando()) {
+              <button type="button" class="boton" (click)="guardarFicha()" [disabled]="trabajando()">
+                Guardar ficha
+              </button>
+              <button type="button" class="boton secundario" (click)="editando.set(null)">
+                Cancelar
+              </button>
+            } @else {
+              <button type="button" class="boton" (click)="subirSkill()" [disabled]="trabajando()">
+                {{ analisis()?.reemplaza ? 'Reemplazar capítulo' : 'Publicar capítulo' }}
+              </button>
+              <button type="button" class="boton secundario" (click)="cancelarSubida()">
+                Descartar
+              </button>
+            }
+          </div>
+        </form>
+      }
+    </section>
+
+    <section class="tarjeta">
+      <h2>Capítulos publicados</h2>
+      <p class="nota">
+        Los activos aparecen en <code>listar_capitulos</code> para todas las licencias, y en la
+        portada de la web.
+      </p>
+
+      @if (skills().length === 0) {
+        <p class="tenue">Todavía no hay ninguno.</p>
+      } @else {
+        <ul class="lista-skills">
+          @for (skill of skills(); track skill.id) {
+            <li [class.inactiva]="!skill.active">
+              <span class="skill-orden">{{ skill.orden }}</span>
+
+              <div class="skill-datos">
+                <p class="skill-nombre">
+                  {{ skill.displayName }}
+                  @if (!skill.active) {
+                    <span class="etiqueta">oculto</span>
+                  }
+                </p>
+                <p class="skill-resumen">{{ skill.summary }}</p>
+                <p class="skill-meta">
+                  <code>{{ skill.code }}</code>
+                  · {{ skill.skillMdBytes | number }} bytes · actualizado
+                  {{ skill.updatedAt | date: 'dd/MM/yyyy' }}
+                </p>
+              </div>
+
+              <div class="skill-acciones">
+                <button type="button" class="boton enlace" (click)="editarSkill(skill)">
+                  Editar
+                </button>
+                <button type="button" class="boton enlace" (click)="alternarSkill(skill)">
+                  {{ skill.active ? 'Ocultar' : 'Mostrar' }}
+                </button>
+                @if (!skill.active) {
+                  <button type="button" class="boton enlace peligro" (click)="eliminarSkill(skill)">
+                    Quitar
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!-- ══ DESCUENTOS ═══════════════════════════════════════════════════════ -->
+  @if (seccion() === 'descuentos') {
+    <section class="tarjeta">
+      <h2>Crear código promocional</h2>
+      <p class="nota">
+        Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para
+        cualquiera; si lo limitas, solo funcionará en ese.
+      </p>
+
+      <form [formGroup]="formDescuento" (ngSubmit)="crearDescuento()" novalidate>
+        <div class="fila">
+          <div class="campo estrecho">
+            <label for="soles">Descuenta (S/)</label>
+            <input id="soles" type="number" min="10" step="5" formControlName="soles" />
+          </div>
+          <div class="campo">
+            <label for="plan-promo">Válido para</label>
+            <select id="plan-promo" formControlName="planCode">
+              <option value="">Cualquier producto</option>
+              @for (plan of planes(); track plan.code) {
+                <option [value]="plan.code">{{ plan.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
+            <input id="code-promo" type="text" formControlName="code" placeholder="se inventa solo" />
+          </div>
+          <div class="campo estrecho">
+            <label for="usos">Usos máx.</label>
+            <input id="usos" type="number" min="0" formControlName="maxUses" />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="nota-promo">Nota <span class="opcional">(opcional)</span></label>
+          <input id="nota-promo" type="text" formControlName="note" placeholder="promo TikTok septiembre" />
+        </div>
+
+        <button type="submit" class="boton" [disabled]="trabajando()">
+          {{ trabajando() ? 'Creando…' : 'Crear código' }}
+        </button>
+      </form>
+
+      @if (descuentoNuevo(); as promo) {
+        <div class="codigos-nuevos">
+          <p class="codigos-titulo">
+            Listo. Este sí lo puedes volver a consultar cuando quieras.
+          </p>
+          <ul>
+            <li>{{ promo.code }}</li>
+          </ul>
+          <button type="button" class="boton" (click)="copiarDescuento(promo.code)">
+            {{ copiados() ? '¡Copiado!' : 'Copiar' }}
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="tarjeta">
+      <h2>Códigos promocionales</h2>
+      @if (descuentos().length === 0) {
+        <p class="nota">Todavía no has creado ninguno.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Descuenta</th>
+                <th>Válido para</th>
+                <th>Usos</th>
+                <th>Nota</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (promo of descuentos(); track promo.id) {
+                <tr>
+                  <td class="mono"><strong>{{ promo.code }}</strong></td>
+                  <td class="numero">{{ importe(promo.amountCents) }}</td>
+                  <td>{{ promo.planCode ?? 'Cualquiera' }}</td>
+                  <td class="numero">
+                    {{ promo.usedCount }}{{ promo.maxUses > 0 ? ' / ' + promo.maxUses : '' }}
+                  </td>
+                  <td class="tenue">{{ promo.note ?? '—' }}</td>
+                  <td>
+                    <span class="pastilla" [class.buena]="promo.active" [class.mala]="!promo.active">
+                      {{ promo.active ? 'Activo' : 'Apagado' }}
+                    </span>
+                  </td>
+                  <td class="derecha">
+                    <button
+                      type="button"
+                      [class.enlace]="!promo.active"
+                      [class.enlace-peligro]="promo.active"
+                      (click)="alternarDescuento(promo)"
+                    >
+                      {{ promo.active ? 'Apagar' : 'Encender' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ══ LICENCIAS ════════════════════════════════════════════════════════ -->
+  @if (seccion() === 'licencias') {
+    <section class="tarjeta">
+      <h2>Licencias del conector</h2>
+      @if (licencias().length === 0) {
+        <p class="nota">Aún no hay ninguna licencia emitida.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Comprador</th>
+                <th>Producto</th>
+                <th>Consultas</th>
+                <th>Último uso</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (licencia of licencias(); track licencia.id) {
+                <tr [class.revocada]="licencia.status === 'REVOKED'">
+                  <td>
+                    <strong>{{ licencia.user.firstName }} {{ licencia.user.lastName }}</strong>
+                    <span class="tenue bloque">{{ licencia.user.email }}</span>
+                  </td>
+                  <td>
+                    {{ licencia.productCode }}
+                    <span class="tenue bloque mono">…{{ licencia.tokenHint }}</span>
+                  </td>
+                  <td class="numero">{{ licencia.callsTotal | number }}</td>
+                  <td class="tenue">
+                    {{ licencia.lastUsedAt ? (licencia.lastUsedAt | date: 'd MMM HH:mm') : 'nunca' }}
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="licencia.status === 'ACTIVE'"
+                      [class.mala]="licencia.status !== 'ACTIVE'"
+                    >
+                      {{ licencia.status }}
+                    </span>
+                    @if (licencia.revokedReason) {
+                      <span class="tenue bloque">{{ licencia.revokedReason }}</span>
+                    }
+                  </td>
+                  <td class="derecha">
+                    @if (licencia.status === 'ACTIVE') {
+                      <button type="button" class="enlace-peligro" (click)="revocar(licencia)">
+                        Revocar
+                      </button>
+                    } @else {
+                      <button type="button" class="enlace" (click)="reactivar(licencia)">
+                        Reactivar
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ══ ALERTAS ══════════════════════════════════════════════════════════ -->
+  @if (seccion() === 'alertas') {
+    <section class="tarjeta">
+      <h2>Alertas de uso compartido</h2>
+      <p class="nota">
+        A la primera sospecha alta se avisa al comprador por correo; solo si vuelve a saltar
+        pasadas 12 horas se revoca sola. Aquí puedes adelantarte o descartarla.
+      </p>
+
+      @if (alertas().length === 0) {
+        <p class="vacio-ok">Ninguna alerta abierta. Todo en orden.</p>
+      } @else {
+        <ul class="alertas">
+          @for (alerta of alertas(); track alerta.id) {
+            <li [class.grave]="alerta.level === 'SOSPECHA_ALTA'">
+              <div class="alerta-cabecera">
+                <strong>{{ nombreCorto(alerta) }}</strong>
+                <span
+                  class="pastilla"
+                  [class.mala]="alerta.level === 'SOSPECHA_ALTA'"
+                  [class.espera]="alerta.level === 'ALERTA'"
+                >
+                  {{ alerta.level === 'SOSPECHA_ALTA' ? 'Sospecha alta' : 'Aviso' }}
+                </span>
+                <span class="tenue">{{ alerta.createdAt | date: 'd MMM HH:mm' }}</span>
+              </div>
+
+              <p class="alerta-detalle">{{ alerta.detalle }}</p>
+
+              <div class="alerta-pie">
+                <span>
+                  {{ alerta.license.user.firstName }} {{ alerta.license.user.lastName }}
+                  <span class="tenue">· {{ alerta.license.user.email }}</span>
+                </span>
+                <span class="tenue">Ya notificado: {{ alerta.action }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!-- ══ MOVIMIENTOS ══════════════════════════════════════════════════════ -->
+  @if (seccion() === 'movimientos') {
+    <section class="tarjeta">
+      <h2>Pagos por pasarela</h2>
+      @if (pagos().length === 0) {
+        <p class="nota">Todavía no hay pagos.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Comprador</th>
+                <th>Producto</th>
+                <th>Importe</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pago of pagos(); track pago.id) {
+                <tr>
+                  <td class="tenue">{{ pago.createdAt | date: 'd MMM HH:mm' }}</td>
+                  <td>{{ pago.user.email }}</td>
+                  <td>{{ pago.plan.name }}</td>
+                  <td class="numero">{{ importe(pago.amountCents, pago.currency) }}</td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="pago.status === 'PAID'"
+                      [class.espera]="pago.status === 'PENDING'"
+                      [class.mala]="pago.status === 'FAILED'"
+                    >
+                      {{ pago.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="tarjeta">
+      <h2>Bolsas de palabras activadas</h2>
+      @if (bolsas().length === 0) {
+        <p class="nota">Todavía no hay bolsas.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Comprador</th>
+                <th>Plan</th>
+                <th>Consumo</th>
+                <th>Pagó por</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (bolsa of bolsas(); track bolsa.id) {
+                <tr>
+                  <td class="tenue">{{ bolsa.activatedAt | date: 'd MMM' }}</td>
+                  <td>{{ bolsa.user.email }}</td>
+                  <td>{{ bolsa.plan.name }}</td>
+                  <td class="numero">
+                    {{ bolsa.wordsUsed | number }} / {{ bolsa.wordsTotal | number }}
+                  </td>
+                  <td class="tenue">
+                    {{ bolsa.paymentMethod ?? '—' }}
+                    @if (bolsa.paymentRef) {
+                      <span class="mono">· {{ bolsa.paymentRef }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</main>
+
+<app-site-footer />

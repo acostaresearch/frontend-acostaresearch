@@ -18,6 +18,6 @@ export function roleGuard(...roles: Role[]): CanActivateFn {
       return router.createUrlTree(['/auth/login']);
     }
 
-    return auth.hasRole(...roles) ? true : router.createUrlTree(['/panel']);
+    return auth.hasRole(...roles) ? true : router.createUrlTree(['/']);
   };
 }

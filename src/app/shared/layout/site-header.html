@@ -9,13 +9,20 @@
       <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">
         Inicio
       </a>
-      <a routerLink="/planes" routerLinkActive="activo">Precios</a>
-      <a routerLink="/humanizador" routerLinkActive="activo">Humanizador</a>
+      <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
+      <a routerLink="/metodo" routerLinkActive="activo">Las 9 Skills</a>
+      <a routerLink="/como-funciona" routerLinkActive="activo">Cómo funciona</a>
+      <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
+      <a routerLink="/planes" routerLinkActive="activo">Comprar</a>
+      <!-- <a routerLink="/humanizador" routerLinkActive="activo">Humanizador</a> -->
     </nav>
 
     <div class="acciones">
       @if (auth.isAuthenticated()) {
-        <a class="boton secundario" routerLink="/panel">Mi panel</a>
+        @if (auth.hasRole('ADMIN')) {
+          <a class="enlace-entrar" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+        }
+        <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
         <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
       } @else {
         <a class="enlace-entrar" routerLink="/auth/login">Iniciar sesión</a>

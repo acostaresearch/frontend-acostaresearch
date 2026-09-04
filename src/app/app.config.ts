@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
 
 import { routes } from './app.routes';
@@ -40,7 +40,13 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    provideRouter(routes, withComponentInputBinding()),
+    // El panel es una sección de la portada: sin `anchorScrolling` los enlaces
+    // «Mi panel» llegarían al inicio de la página en vez de a la sección.
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
+    ),
     provideAppInitializer(restaurarSesion),
   ],
 };

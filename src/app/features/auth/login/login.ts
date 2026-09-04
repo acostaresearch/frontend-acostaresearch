@@ -93,7 +93,7 @@ export class Login {
   }
 
   private irADestino(): void {
-    const destino = this.ruta.snapshot.queryParamMap.get('returnUrl') ?? '/panel';
+    const destino = this.ruta.snapshot.queryParamMap.get('returnUrl') ?? '/';
     void this.router.navigateByUrl(destino);
   }
 }

@@ -1,0 +1,83 @@
+.autor {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.autor-texto p {
+  max-width: 58ch;
+  margin: 0 0 14px;
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: var(--color-texto-suave);
+}
+
+.autor-remate {
+  font-weight: 650;
+  color: var(--color-texto) !important;
+}
+
+.autor-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.autor-enlaces a {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  border: 1px solid var(--color-borde);
+  border-radius: 100px;
+  transition:
+    color var(--transicion),
+    border-color var(--transicion);
+}
+
+.autor-enlaces a:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+/* ── El retrato ─────────────────────────────────────────────────────────── */
+.autor-retrato {
+  margin: 0;
+}
+
+.autor-retrato img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* El original es 2400×3600, un vertical muy alargado: recortarlo a 4:5 lo
+     deja del alto de una tarjeta y evita que empuje el texto de al lado. */
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: center 22%;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  margin-bottom: 100px;
+}
+
+.autor-retrato figcaption {
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+@media (max-width: 900px) {
+  .autor {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  /* En una sola columna la foto a ancho completo es demasiada foto. */
+  .autor-retrato {
+    max-width: 320px;
+  }
+}

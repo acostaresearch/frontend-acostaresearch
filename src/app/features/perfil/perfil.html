@@ -1,0 +1,319 @@
+<app-site-header />
+
+<main class="perfil">
+  @if (usuario(); as user) {
+    <!-- ── Cabecera de la cuenta ────────────────────────────────────────────── -->
+    <section class="identidad">
+      <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
+
+      <div class="identidad-texto">
+        <p class="marca">Mi cuenta</p>
+        <h1>{{ nombre() }}</h1>
+        <p class="correo">{{ user.email }}</p>
+
+        <div class="insignias">
+          <span class="etiqueta">{{ rol() }}</span>
+          <span
+            class="etiqueta"
+            [class.buena]="user.status === 'ACTIVE'"
+            [class.mala]="user.status === 'SUSPENDED'"
+          >
+            {{ estado() }}
+          </span>
+          @if (user.emailVerifiedAt) {
+            <span class="etiqueta buena">Correo verificado</span>
+          } @else {
+            <span class="etiqueta mala">Correo sin verificar</span>
+          }
+        </div>
+      </div>
+
+      <div class="identidad-acciones">
+        <a class="boton" routerLink="/humanizador">Ir al humanizador</a>
+        <a class="boton secundario" routerLink="/planes">Comprar palabras</a>
+      </div>
+    </section>
+
+    <!-- ── Datos de la cuenta ───────────────────────────────────────────────── -->
+    <section class="tarjeta">
+      <h2>Datos de la cuenta</h2>
+      <p class="nota">
+        Estos datos vienen de tu registro. Para cambiar tu nombre o tu correo, escríbenos y lo
+        actualizamos.
+      </p>
+
+      <dl class="datos">
+        <div>
+          <dt>Nombre</dt>
+          <dd>{{ user.firstName }}</dd>
+        </div>
+        <div>
+          <dt>Apellidos</dt>
+          <dd>{{ user.lastName }}</dd>
+        </div>
+        <div>
+          <dt>Correo</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+        <div>
+          <dt>Rol</dt>
+          <dd>{{ rol() }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{ estado() }}</dd>
+        </div>
+        <div>
+          <dt>Verificación</dt>
+          <dd>
+            @if (user.emailVerifiedAt) {
+              {{ user.emailVerifiedAt | date: 'd MMM y' }}
+            } @else {
+              Pendiente
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Miembro desde</dt>
+          <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
+        </div>
+        <div>
+          <dt>Último acceso</dt>
+          <dd>
+            @if (user.lastLoginAt) {
+              {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
+            } @else {
+              Este es tu primer acceso
+            }
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ── Saldo del humanizador ────────────────────────────────────────────── -->
+    <!-- <section class="tarjeta">
+      <h2>Saldo del humanizador</h2>
+
+      @if (saldo(); as s) {
+        <div class="saldo">
+          <div class="saldo-cifra" [class.agotado]="s.wordsAvailable === 0">
+            <strong>{{ s.wordsAvailable | number }}</strong>
+            <span>palabras disponibles</span>
+          </div>
+          <div class="saldo-detalle">
+            <p>
+              <span class="tenue">Máximo por reescritura:</span>
+              {{ s.maxWordsPerRequest | number }} palabras
+            </p>
+            @if (s.expiresAt) {
+              <p>
+                <span class="tenue">Tu saldo vence el:</span> {{ s.expiresAt | date: 'd MMM y' }}
+              </p>
+            }
+          </div>
+        </div>
+
+        @if (bolsasActivas().length > 0) {
+          <ul class="bolsas">
+            @for (bolsa of bolsasActivas(); track bolsa.id) {
+              <li>
+                <div class="bolsa-cabecera">
+                  <strong>{{ bolsa.plan.name }}</strong>
+                  <span class="tenue">
+                    {{ bolsa.wordsUsed | number }} de {{ bolsa.wordsTotal | number }} usadas · vence
+                    el {{ bolsa.expiresAt | date: 'd MMM y' }}
+                  </span>
+                </div>
+                <div
+                  class="barra"
+                  role="progressbar"
+                  [attr.aria-valuenow]="consumido(bolsa.wordsUsed, bolsa.wordsTotal)"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <span [style.width.%]="consumido(bolsa.wordsUsed, bolsa.wordsTotal)"></span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (s.wordsAvailable === 0) {
+          <p class="nota-pie">
+            Te quedaste sin palabras. <a routerLink="/planes">Recarga tu bolsa</a> — 30 días, sin
+            suscripción.
+          </p>
+        }
+      } @else {
+        <p class="nota">
+          Todavía no tienes saldo activo. <a routerLink="/planes">Elige una bolsa de palabras</a>
+          y empieza a pulir tu texto.
+        </p>
+      }
+    </section> -->
+
+    <!-- ── Método de tesis ──────────────────────────────────────────────────── -->
+    <section class="tarjeta">
+      <h2>Método de tesis · conector de Claude</h2>
+
+      @if (errorLicencia(); as mensaje) {
+        <p class="aviso error">{{ mensaje }}</p>
+      }
+
+      @if (urlNueva(); as url) {
+        <div class="url-nueva">
+          <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
+          <div class="url-fila">
+            <input type="text" [value]="url" readonly />
+            <button type="button" class="boton" (click)="copiarUrlNueva()">
+              {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+            </button>
+          </div>
+          <p class="url-pie">
+            Pégala en Claude: Configuración → Conectores → Añadir personalizado.
+          </p>
+        </div>
+      }
+
+      @if (misLicencias().length > 0) {
+        <ul class="licencias">
+          @for (licencia of misLicencias(); track licencia.id) {
+            <li>
+              <div>
+                <strong>{{ licencia.productCode }}</strong>
+                <span class="tenue">
+                  @if (licencia.callsPerDay && licencia.usage) {
+                    hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
+                  } @else {
+                    {{ licencia.callsTotal }} consultas ·
+                  }
+                  @if (licencia.expiresAt) {
+                    vence el {{ licencia.expiresAt | date: 'd MMM y' }}
+                  } @else {
+                    sin caducidad
+                  }
+                </span>
+              </div>
+              <div class="licencia-acciones">
+                <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
+                  {{ licencia.status }}
+                </span>
+                @if (licencia.status === 'ACTIVE') {
+                  <button
+                    type="button"
+                    class="boton secundario"
+                    [disabled]="rotando() === licencia.id"
+                    (click)="regenerarUrl(licencia)"
+                  >
+                    {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="nota">
+          Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
+          funciona también en el plan gratuito.
+        </p>
+        <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+          Ver el método
+        </a>
+      }
+
+      <!-- Códigos comprados por Yape o transferencia: se canjean aquí. -->
+      <!-- <div class="canje">
+        <h3>¿Compraste por Yape o transferencia?</h3>
+        <p class="nota">Canjea aquí el código de activación que te enviamos.</p>
+        <div class="canje-fila">
+          <input
+            type="text"
+            [formControl]="codigo"
+            placeholder="Tu código de activación"
+            autocomplete="off"
+          />
+          <button type="button" class="boton" [disabled]="canjeando()" (click)="canjearCodigo()">
+            {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
+          </button>
+        </div>
+      </div> -->
+    </section>
+
+    <!-- ── Compras ──────────────────────────────────────────────────────────── -->
+    <section class="tarjeta">
+      <h2>Mis compras</h2>
+
+      @if (cargandoCompras()) {
+        <p class="nota">Cargando tus compras…</p>
+      } @else if (compras().length > 0) {
+        <div class="tabla-envoltura">
+          <table class="compras">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Plan</th>
+                <th>Importe</th>
+                <th>Medio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pago of compras(); track pago.id) {
+                <tr>
+                  <td>{{ pago.paidAt ?? pago.createdAt | date: 'd MMM y' }}</td>
+                  <td>
+                    {{ pago.plan.name }}
+                    @if (pago.plan.words > 0) {
+                      <span class="tenue">{{ pago.plan.words | number }} palabras</span>
+                    }
+                  </td>
+                  <td>{{ precio(pago) }}</td>
+                  <td class="tenue">{{ pago.provider }}</td>
+                  <td>
+                    <span
+                      class="etiqueta"
+                      [class.buena]="pago.status === 'PAID'"
+                      [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
+                    >
+                      {{ estadoPago(pago) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="nota">
+          Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando quieras
+          empezar.
+        </p>
+      }
+    </section>
+
+    <!-- ── Sesión y seguridad ───────────────────────────────────────────────── -->
+    <section class="tarjeta">
+      <h2>Sesión y seguridad</h2>
+      <p class="nota">
+        Si usaste la web en un ordenador que no es tuyo, cierra la sesión en todos los dispositivos.
+      </p>
+
+      <div class="acciones-sesion">
+        <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
+          Cerrar sesión
+        </button>
+        <button
+          type="button"
+          class="boton peligro"
+          [disabled]="cerrando()"
+          (click)="salirDeTodos()"
+        >
+          Cerrar sesión en todos los dispositivos
+        </button>
+      </div>
+    </section>
+  }
+</main>
+
+<app-site-footer />

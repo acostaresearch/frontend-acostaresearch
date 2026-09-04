@@ -1,0 +1,55 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">El método completo</p>
+    <h1 class="titulo-seccion ancho">Las 9 Skills, en el orden en que se hace una tesis</h1>
+    <p class="seccion-entrada">
+      Se instalan en tu cuenta de Claude.ai y se activan escribiendo lo que necesitas. No tienes
+      que empezar por la primera: entra por donde estés hoy.
+    </p>
+  </header>
+
+  <section class="seccion">
+    @if (cargando()) {
+      <p class="cargando">Cargando el método…</p>
+    } @else if (capitulos().length === 0) {
+      <p class="cargando">
+        No pudimos cargar el listado. Escríbenos por WhatsApp y te lo contamos capítulo por
+        capítulo.
+      </p>
+    } @else {
+      <ol class="capitulos">
+        @for (c of capitulos(); track c.nombre) {
+          <li>
+            <span class="capitulo-numero" aria-hidden="true">{{ c.numero }}</span>
+            <div class="capitulo-cuerpo">
+              <h2>{{ c.nombre }}</h2>
+              <p>{{ c.descripcion }}</p>
+              @if (c.entregable) {
+                <p class="entregable">
+                  <span class="entregable-rotulo">Entregable</span>
+                  {{ c.entregable }}
+                </p>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    }
+
+    <div class="cierre-metodo">
+      <a class="boton grande" routerLink="/planes">Quiero el paquete completo</a>
+      <span>Un solo pago, acceso de por vida y 30 minutos de asesoría conmigo.</span>
+    </div>
+  </section>
+
+  <app-paso-siguiente
+    titulo="Cómo funciona"
+    texto="De la instalación al primer capítulo en menos de diez minutos, y las dos dudas que siempre aparecen."
+    enlace="/como-funciona"
+    etiqueta="Ver cómo empieza"
+  />
+</main>
+
+<app-site-footer />
