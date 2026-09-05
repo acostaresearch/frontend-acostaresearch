@@ -86,7 +86,7 @@ export class Register {
       { texto: 'Al menos 10 caracteres', cumple: v.length >= 10 },
       { texto: 'Una letra mayúscula', cumple: /[A-Z]/.test(v) },
       { texto: 'Una letra minúscula', cumple: /[a-z]/.test(v) },
-      { texto: 'Un número', cumple: /d/.test(v) },
+      { texto: 'Un número', cumple: /\d/.test(v) },
     ];
   });
 
