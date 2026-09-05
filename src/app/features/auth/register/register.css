@@ -10,9 +10,202 @@
   color: var(--color-texto-suave);
 }
 
+/* ── Campos con adorno dentro ────────────────────────────────────────────── */
+.entrada {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.entrada input {
+  width: 100%;
+  padding-right: 72px;
+}
+
+.ojo {
+  position: absolute;
+  right: 8px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--transicion),
+    border-color var(--transicion),
+    background-color var(--transicion);
+}
+
+.ojo:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.ojo:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 1px;
+}
+
+.marca-ok {
+  position: absolute;
+  right: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-exito);
+  pointer-events: none;
+}
+
+.campo.correcto input {
+  border-color: rgba(18, 115, 75, 0.45);
+}
+
+/* ── Requisitos de la contraseña, en vivo ─────────────────────────────────
+   Cada línea se marca sola al cumplirse. El color no lleva el mensaje solo:
+   el símbolo cambia de ○ a ✓, para quien no distinga los tonos. */
+.requisitos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  list-style: none;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+  transition: color var(--transicion);
+}
+
+.requisitos li.cumple {
+  color: var(--color-exito);
+}
+
+.requisitos .marca {
+  width: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.aviso-mayusculas {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-aviso);
+}
+
+.ayuda.coincide {
+  color: var(--color-exito);
+}
+
+/* ── Columna de apoyo ─────────────────────────────────────────────────────── */
+.apoyo {
+  padding: 4px 0 0 8px;
+}
+
+.apoyo h2 {
+  margin: 0 0 18px;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.pasos {
+  display: grid;
+  gap: 18px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.pasos li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.pasos strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.pasos p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.apoyo-nota {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.apoyo-nota strong {
+  color: var(--color-texto);
+}
+
+.apoyo-contacto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.apoyo-contacto a,
+.apoyo-nota a {
+  color: var(--color-primario);
+}
+
+@media (max-width: 860px) {
+  .apoyo {
+    padding: 0;
+  }
+}
+
 @media (max-width: 420px) {
   .fila {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+
+  .requisitos {
+    grid-template-columns: 1fr;
   }
 }
