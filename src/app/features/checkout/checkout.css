@@ -921,3 +921,29 @@ h1 {
   font-size: 12.5px;
   color: var(--color-texto-suave);
 }
+
+/* ── Varias tarjetas ──────────────────────────────────────────────────────
+ *
+ * Con un solo grupo la tarjeta manda sola y ocupa el ancho de la columna. Con
+ * varios se ponen en rejilla para poder compararlos de un vistazo, que es lo
+ * que hace alguien que ve dos precios: mirarlos a la vez, no uno debajo del
+ * otro.
+ */
+.rejilla-planes.varios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* Solo la tarjeta elegida lleva el borde fuerte: si todas gritan, ninguna
+   destaca y no se ve cuál está seleccionada. */
+.rejilla-planes.varios .tarjeta-plan {
+  border-color: var(--color-borde);
+  box-shadow: none;
+}
+
+.rejilla-planes.varios .tarjeta-plan.elegido {
+  border-color: var(--color-primario);
+  box-shadow: var(--sombra);
+}

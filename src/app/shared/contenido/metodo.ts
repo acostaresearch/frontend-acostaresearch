@@ -192,7 +192,7 @@ export const INCLUYE = [
   'Plantillas .docx en formato APA 7 y matriz Excel de datos',
   'Compatible con el plan gratuito de Claude',
   '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
-  'Acceso de por vida, sin suscripción mensual',
+  'Tres meses de acceso, renovables cuando los necesites',
 ];
 
 export const FAQ: Pregunta[] = [

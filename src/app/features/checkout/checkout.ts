@@ -335,8 +335,45 @@ export class Checkout implements OnInit {
   }
 
   /** «30 días» o «permanente», según el plan. */
+  /**
+   * Qué se lleva quien compra este paquete.
+   *
+   * El método de tesis tiene su lista escrita —las nueve Skills, las plantillas,
+   * los treinta minutos de asesoría—, y es la misma que aparece en la portada.
+   * Un grupo creado desde el panel no puede tenerla: nadie la ha escrito. Para
+   * esos se arma con lo que el servidor sí sabe con certeza, que es poco pero
+   * cierto. Inventarles viñetas sería prometer en su nombre.
+   */
+  loQueIncluye(plan: Plan): string[] {
+    if (plan.code === 'METODO_9_SKILLS') return this.incluye;
+
+    const lista = [
+      'Se instala en tu cuenta de Claude.ai',
+      'Funciona también con el plan gratuito de Claude',
+    ];
+
+    lista.push(
+      plan.durationDays > 0
+        ? `${this.vigencia(plan)} de acceso, renovables`
+        : 'Acceso permanente, sin suscripción',
+    );
+
+    return lista;
+  }
+
+  /**
+   * Cuánto dura lo que se compra.
+   *
+   * En meses cuando cuadran justos: «3 meses» se entiende de un vistazo y
+   * «90 días» hay que traducirlo mentalmente. Los que no cuadran se quedan en
+   * días, que es como los piensa quien los configuró.
+   */
   vigencia(plan: Plan): string {
-    return plan.durationDays > 0 ? `${plan.durationDays} días` : 'Acceso permanente';
+    if (plan.durationDays <= 0) return 'Acceso permanente';
+    if (plan.durationDays % 30 !== 0) return `${plan.durationDays} días`;
+
+    const meses = plan.durationDays / 30;
+    return meses === 1 ? '1 mes' : `${meses} meses`;
   }
 
   precio(plan: Plan): string {

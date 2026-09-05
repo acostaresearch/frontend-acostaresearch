@@ -15,7 +15,7 @@ import {
 import { PagoPorRevisar } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
-import { BillingService } from '../../core/services/billing.service';
+import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
@@ -25,6 +25,7 @@ type Seccion =
   | 'ventas'
   | 'yape'
   | 'skills'
+  | 'grupos'
   | 'descuentos'
   | 'licencias'
   | 'alertas'
@@ -154,6 +155,30 @@ export class Admin implements OnInit {
   readonly skills = signal<Skill[]>([]);
   readonly editando = signal<Skill | null>(null);
 
+  // ── Grupos ───────────────────────────────────────────────────────────────
+  //
+  // Un grupo es un producto: sus capítulos, su precio y su duración. Se crean
+  // aquí y luego cada .skill se cuelga de uno al subirlo.
+  readonly grupos = signal<Grupo[]>([]);
+  readonly editandoGrupo = signal<Grupo | null>(null);
+  /** A qué grupo van los archivos que hay ahora mismo en la cola. */
+  readonly grupoDestino = signal<string>('');
+
+  readonly gruposActivos = computed(() => this.grupos().filter((g) => g.active));
+
+  readonly formGrupo = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(40)]],
+    name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(80)]],
+    description: ['', [Validators.maxLength(255)]],
+    // En soles, que es como se piensa un precio; se pasa a céntimos al enviar.
+    soles: [199, [Validators.required, Validators.min(0)]],
+    dolares: [57.9, [Validators.min(0)]],
+    // 0 = no caduca. 90 días es el trimestre por defecto.
+    durationDays: [90, [Validators.required, Validators.min(0)]],
+    mcpCallsPerDay: [200, [Validators.required, Validators.min(0)]],
+    active: [true],
+  });
+
   /** Archivos soltados, en el orden en que se publicarán. */
   readonly cola = signal<EnCola[]>([]);
   /** El puntero está encima de la zona de soltar: solo pinta el resaltado. */
@@ -182,12 +207,147 @@ export class Admin implements OnInit {
   readonly formSkill = this.fb.nonNullable.group({
     displayName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     summary: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
+    productCode: [''],
     active: [true],
   });
 
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
+  }
+
+  // ── Grupos ───────────────────────────────────────────────────────────────
+
+  private cargarGrupos(): void {
+    this.billing.grupos().subscribe({
+      next: (grupos) => {
+        this.grupos.set(grupos);
+        // Con un solo grupo no tiene sentido preguntar a cuál va cada archivo.
+        const activos = grupos.filter((g) => g.active);
+        if (!this.grupoDestino() && activos.length > 0) {
+          this.grupoDestino.set(activos[0].code);
+        }
+      },
+      error: (e: unknown) => this.error.set(toApiError(e).message),
+    });
+  }
+
+  elegirGrupoDestino(evento: Event): void {
+    this.grupoDestino.set((evento.target as HTMLSelectElement).value);
+  }
+
+  nuevoGrupo(): void {
+    this.editandoGrupo.set(null);
+    this.error.set(null);
+    this.aviso.set(null);
+    this.formGrupo.reset({
+      code: '',
+      name: '',
+      description: '',
+      soles: 199,
+      dolares: 57.9,
+      durationDays: 90,
+      mcpCallsPerDay: 200,
+      active: true,
+    });
+    this.formGrupo.controls.code.enable();
+  }
+
+  editarGrupo(grupo: Grupo): void {
+    this.editandoGrupo.set(grupo);
+    this.error.set(null);
+    this.aviso.set(null);
+    this.formGrupo.patchValue({
+      code: grupo.code,
+      name: grupo.name,
+      description: grupo.description ?? '',
+      soles: grupo.priceCents / 100,
+      dolares: grupo.priceUsdCents ? grupo.priceUsdCents / 100 : 0,
+      durationDays: grupo.durationDays,
+      mcpCallsPerDay: grupo.mcpCallsPerDay,
+      active: grupo.active,
+    });
+    // El código no se toca nunca: lo llevan las licencias ya emitidas y los
+    // capítulos que cuelgan de él. Cambiarlo dejaría a esos compradores
+    // apuntando a un producto que ya no existe.
+    this.formGrupo.controls.code.disable();
+  }
+
+  guardarGrupo(): void {
+    if (this.formGrupo.invalid || this.trabajando()) {
+      this.formGrupo.markAllAsTouched();
+      return;
+    }
+
+    this.trabajando.set(true);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    const v = this.formGrupo.getRawValue();
+    const datos = {
+      name: v.name,
+      description: v.description || undefined,
+      priceCents: Math.round(v.soles * 100),
+      priceUsdCents: v.dolares > 0 ? Math.round(v.dolares * 100) : undefined,
+      durationDays: v.durationDays,
+      mcpCallsPerDay: v.mcpCallsPerDay,
+      active: v.active,
+    };
+
+    const enEdicion = this.editandoGrupo();
+    const peticion = enEdicion
+      ? this.billing.actualizarGrupo(enEdicion.code, datos)
+      : this.billing.crearGrupo({ ...datos, code: v.code });
+
+    peticion.subscribe({
+      next: (grupo) => {
+        this.aviso.set(
+          enEdicion ? `Grupo «${grupo.name}» actualizado.` : `Grupo «${grupo.name}» creado.`,
+        );
+        this.editandoGrupo.set(null);
+        this.trabajando.set(false);
+        this.cargarGrupos();
+        // El precio y la duración salen en la web de venta.
+        this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.trabajando.set(false);
+      },
+    });
+  }
+
+  alternarGrupo(grupo: Grupo): void {
+    if (this.trabajando()) return;
+
+    if (grupo.active && !confirm(`«${grupo.name}» dejará de venderse. Lo ya vendido sigue igual. ¿Continuar?`)) {
+      return;
+    }
+
+    this.trabajando.set(true);
+    this.billing.actualizarGrupo(grupo.code, { active: !grupo.active }).subscribe({
+      next: () => {
+        this.trabajando.set(false);
+        this.cargarGrupos();
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.trabajando.set(false);
+      },
+    });
+  }
+
+  /** Cuánto dura, dicho como lo diría una persona. */
+  duracion(dias: number): string {
+    if (dias <= 0) return 'Sin caducidad';
+    if (dias % 30 !== 0) return `${dias} días`;
+    const meses = dias / 30;
+    return meses === 1 ? '1 mes' : `${meses} meses`;
+  }
+
+  nombreGrupo(code: string | null): string {
+    if (!code) return 'Sin grupo';
+    return this.grupos().find((g) => g.productCode === code || g.code === code)?.name ?? code;
   }
 
   // ── Publicar capítulos ───────────────────────────────────────────────────
@@ -317,6 +477,10 @@ export class Admin implements OnInit {
         summary: a.reemplaza?.summary ?? a.summarySugerido,
         orden: a.reemplaza?.orden ?? proximoOrden,
         active: a.reemplaza?.active ?? true,
+        // Un reemplazo se queda en el grupo que ya tenía; uno nuevo va al que
+        // esté elegido arriba. Mover un capítulo de grupo se hace a propósito,
+        // desde Editar, no de rebote al actualizar su archivo.
+        productCode: a.reemplaza?.productCode ?? this.grupoDestino() ?? undefined,
       })
       .subscribe({
         next: () => {
@@ -343,6 +507,7 @@ export class Admin implements OnInit {
     this.formSkill.patchValue({
       displayName: skill.displayName,
       summary: skill.summary,
+      productCode: skill.productCode ?? '',
       active: skill.active,
     });
   }
@@ -467,6 +632,7 @@ export class Admin implements OnInit {
 
   recargar(): void {
     this.cargarSkills();
+    this.cargarGrupos();
     this.admin.licenciasTodas().subscribe({
       next: (l) => this.licencias.set(l),
       error: (e: unknown) => this.error.set(toApiError(e).message),

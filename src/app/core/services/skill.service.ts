@@ -8,6 +8,8 @@ import { ApiResponse } from '../models/api.model';
 /** Un capítulo tal como lo ve el visitante. */
 export interface SkillPublica {
   code: string;
+  /** Grupo al que pertenece. Nulo = visible para cualquier licencia. */
+  productCode: string | null;
   orden: number;
   displayName: string;
   summary: string;
@@ -37,6 +39,7 @@ export interface AnalisisBundle {
 
 export interface DatosFicha {
   displayName?: string;
+  productCode?: string | null;
   summary?: string;
   orden?: number;
   active?: boolean;
@@ -81,6 +84,7 @@ export class SkillService {
     if (datos.summary) params = params.set('summary', datos.summary);
     if (datos.orden !== undefined) params = params.set('orden', String(datos.orden));
     if (datos.active !== undefined) params = params.set('active', String(datos.active));
+    if (datos.productCode) params = params.set('productCode', datos.productCode);
 
     return this.http
       .post<ApiResponse<{ skill: Skill; tramos: number }>>(this.base, archivo, {

@@ -54,9 +54,9 @@
         Se han añadido <strong>{{ pack.wordsTotal | number }} palabras</strong> a tu cuenta con el
         plan {{ pack.plan.name }}. Caducan el {{ pack.expiresAt | date: 'd MMM y' }}.
       </p>
-      <div class="botones">
+      <!-- <div class="botones">
         <a class="boton" routerLink="/humanizador">Ir al humanizador</a>
-      </div>
+      </div> -->
     </section>
   } @else {
     <header class="cabecera">
@@ -86,7 +86,8 @@
         }
 
         @if (metodo().length > 0) {
-          <h2 class="grupo">Método de tesis</h2>
+          <h2 class="grupo">{{ metodo().length === 1 ? 'Método de tesis' : 'Elige tu paquete' }}</h2>
+          <div class="rejilla-planes" [class.varios]="metodo().length > 1">
           @for (plan of metodo(); track plan.code) {
             <!-- Tarjeta de venta, no factura.
                  Antes esto era una lista «Producto / Incluye / Vigencia / Total»
@@ -94,7 +95,9 @@
                  que decide una compra es qué te llevas, así que manda la lista
                  de lo incluido. -->
             <article class="tarjeta-plan" [class.elegido]="seleccionado()?.code === plan.code">
-              <p class="cinta">Pago único · sin suscripción</p>
+              <p class="cinta">
+                {{ plan.durationDays > 0 ? vigencia(plan) + ' de acceso' : 'Pago único · sin suscripción' }}
+              </p>
 
               <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
               @if (plan.description) {
@@ -121,12 +124,13 @@
 
               <p class="tarjeta-rotulo">Qué incluye</p>
               <ul class="tarjeta-lista">
-                @for (item of incluye; track item) {
+                @for (item of loQueIncluye(plan); track item) {
                   <li>{{ item }}</li>
                 }
               </ul>
             </article>
           }
+          </div>
         }
 
         <!-- @if (bolsas().length > 0) {

@@ -43,6 +43,9 @@
         <span class="contador-pestana">{{ porRevisar().length }}</span>
       }
     </button>
+    <button type="button" [class.activa]="seccion() === 'grupos'" (click)="ir('grupos')">
+      Grupos
+    </button>
     <button type="button" [class.activa]="seccion() === 'skills'" (click)="ir('skills')">
       Capítulos
     </button>
@@ -320,6 +323,162 @@
     </section>
   }
 
+  <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
+  @if (seccion() === 'grupos') {
+    <section class="tarjeta">
+      <h2>{{ editandoGrupo() ? 'Editar «' + editandoGrupo()!.name + '»' : 'Crear un grupo' }}</h2>
+      <p class="nota">
+        Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es uno;
+        «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia solo ve
+        los capítulos de <b>su</b> grupo.
+      </p>
+
+      <form [formGroup]="formGrupo" class="formulario">
+        <div class="fila">
+          <div class="campo">
+            <label for="g-code">Código</label>
+            <input
+              id="g-code"
+              type="text"
+              formControlName="code"
+              maxlength="40"
+              placeholder="HUMANIZAR_TEXTO"
+            />
+            <span class="ayuda">
+              @if (editandoGrupo()) {
+                No se puede cambiar: lo llevan las licencias ya vendidas.
+              } @else {
+                Mayúsculas y guion bajo. No se podrá cambiar después.
+              }
+            </span>
+          </div>
+
+          <div class="campo">
+            <label for="g-name">Nombre visible</label>
+            <input id="g-name" type="text" formControlName="name" maxlength="80" />
+            <span class="ayuda">Es el título de la tarjeta en la página de precios.</span>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="g-desc">Descripción <span class="opcional">· opcional</span></label>
+          <input id="g-desc" type="text" formControlName="description" maxlength="255" />
+          <span class="ayuda">Una frase bajo el nombre, en la tarjeta de venta.</span>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="g-soles">Precio en soles</label>
+            <input id="g-soles" type="number" formControlName="soles" min="0" step="1" />
+            <span class="ayuda">Lo que paga por Yape o Plin.</span>
+          </div>
+
+          <div class="campo">
+            <label for="g-dolares">Precio en dólares</label>
+            <input id="g-dolares" type="number" formControlName="dolares" min="0" step="0.01" />
+            <span class="ayuda">
+              Para PayPal, que no cobra en soles. Algo por encima del cambio: se queda con un 5,4 %
+              más una comisión fija. En 0 se vende solo por Yape.
+            </span>
+          </div>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="g-dias">Duración en días</label>
+            <input id="g-dias" type="number" formControlName="durationDays" min="0" step="30" />
+            <span class="ayuda">
+              90 = tres meses. Con 0 no caduca nunca. Al renovar se alarga la misma licencia, así
+              que el comprador no reinstala el conector.
+            </span>
+          </div>
+
+          <div class="campo">
+            <label for="g-tope">Consultas por día</label>
+            <input id="g-tope" type="number" formControlName="mcpCallsPerDay" min="0" />
+            <span class="ayuda">
+              No es un límite de uso: trabajar de verdad son diez o quince al día. Es el freno
+              contra vaciar el método de una sentada. 0 = sin freno.
+            </span>
+          </div>
+        </div>
+
+        <label class="casilla">
+          <input type="checkbox" formControlName="active" />
+          <span>A la venta en la web</span>
+        </label>
+
+        <div class="acciones-formulario">
+          <button type="button" class="boton" (click)="guardarGrupo()" [disabled]="trabajando()">
+            {{ editandoGrupo() ? 'Guardar cambios' : 'Crear grupo' }}
+          </button>
+          @if (editandoGrupo()) {
+            <button type="button" class="boton secundario" (click)="nuevoGrupo()">Cancelar</button>
+          }
+        </div>
+      </form>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Grupos</h2>
+
+      @if (grupos().length === 0) {
+        <p class="tenue">Todavía no hay ninguno.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Capítulos</th>
+                <th class="derecha">Precio</th>
+                <th>Duración</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (grupo of grupos(); track grupo.id) {
+                <tr>
+                  <td>
+                    <b>{{ grupo.name }}</b>
+                    <span class="bloque mono tenue">{{ grupo.code }}</span>
+                  </td>
+                  <td class="numero">{{ grupo.skills }}</td>
+                  <td class="derecha numero">
+                    S/ {{ (grupo.priceCents / 100).toFixed(2) }}
+                    @if (grupo.priceUsdCents) {
+                      <span class="bloque tenue">$ {{ (grupo.priceUsdCents / 100).toFixed(2) }}</span>
+                    }
+                  </td>
+                  <td>{{ duracion(grupo.durationDays) }}</td>
+                  <td>
+                    @if (grupo.active) {
+                      <span class="pastilla buena">A la venta</span>
+                    } @else {
+                      <span class="pastilla">Retirado</span>
+                    }
+                  </td>
+                  <td class="derecha">
+                    <button type="button" class="enlace" (click)="editarGrupo(grupo)">Editar</button>
+                    <button
+                      type="button"
+                      class="enlace"
+                      (click)="alternarGrupo(grupo)"
+                      [disabled]="trabajando()"
+                    >
+                      {{ grupo.active ? 'Retirar' : 'Poner a la venta' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
   <!-- ══ CAPÍTULOS ════════════════════════════════════════════════════════ -->
   @if (seccion() === 'skills') {
     <section class="tarjeta">
@@ -329,6 +488,29 @@
         <code>SKILL.md</code> dentro. No hay que convertirlos a nada — el conector lee ese mismo
         archivo. Puedes soltar varios de una vez; se comprueban todos antes de guardar ninguno.
       </p>
+
+      @if (gruposActivos().length === 0) {
+        <p class="nota atencion">
+          No hay ningún grupo a la venta. Crea uno en <b>Grupos</b> antes de subir capítulos: un
+          capítulo sin grupo se sirve a todas las licencias, que casi nunca es lo que se quiere.
+        </p>
+      } @else {
+        <div class="campo">
+          <label for="grupo-destino">¿A qué grupo van?</label>
+          <select id="grupo-destino" (change)="elegirGrupoDestino($event)" [disabled]="publicando()">
+            @for (grupo of gruposActivos(); track grupo.code) {
+              <option [value]="grupo.code" [selected]="grupo.code === grupoDestino()">
+                {{ grupo.name }} · S/ {{ (grupo.priceCents / 100).toFixed(2) }} ·
+                {{ duracion(grupo.durationDays) }}
+              </option>
+            }
+          </select>
+          <span class="ayuda">
+            Solo se aplica a los capítulos nuevos. Los que reemplacen a uno existente se quedan en
+            el grupo que ya tenían.
+          </span>
+        </div>
+      }
 
       <label
         class="soltar"
@@ -461,6 +643,25 @@
             </span>
           </div>
 
+          <div class="campo">
+            <label for="s-grupo">Grupo</label>
+            <select id="s-grupo" formControlName="productCode">
+              <option value="">Sin grupo · lo ven todas las licencias</option>
+              @for (grupo of grupos(); track grupo.code) {
+                <option [value]="grupo.code">
+                  {{ grupo.name }}
+                  @if (!grupo.active) {
+                    (retirado)
+                  }
+                </option>
+              }
+            </select>
+            <span class="ayuda">
+              Moverlo de grupo lo saca del conector de quien compró el anterior y lo mete en el del
+              otro. Se aplica al instante.
+            </span>
+          </div>
+
           <label class="casilla">
             <input type="checkbox" formControlName="active" />
             <span>Visible en el conector</span>
@@ -527,6 +728,7 @@
                 <p class="skill-resumen">{{ skill.summary }}</p>
                 <p class="skill-meta">
                   <code>{{ skill.code }}</code>
+                  · {{ nombreGrupo(skill.productCode) }}
                   · {{ skill.skillMdBytes | number }} bytes · actualizado
                   {{ skill.updatedAt | date: 'dd/MM/yyyy' }}
                 </p>

@@ -7,6 +7,42 @@ import { ApiResponse } from '../models/api.model';
 import { Descuento } from '../models/payment.model';
 import { Balance, Plan } from '../models/rewrite.model';
 
+/**
+ * Un grupo de skills, tal como lo administra el panel.
+ *
+ * Es un producto vendible: sus capítulos, su precio y su duración. En la base
+ * de datos es un plan de tipo LICENSE; aquí se le llama grupo porque es como lo
+ * piensa quien lo crea.
+ */
+export interface Grupo {
+  id: string;
+  code: string;
+  productCode: string | null;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  priceUsdCents: number | null;
+  currency: string;
+  durationDays: number;
+  active: boolean;
+  sortOrder: number;
+  mcpCallsPerDay: number;
+  mcpDelivery: string;
+  /** Cuántos capítulos cuelgan de él. Lo calcula el servidor. */
+  skills: number;
+}
+
+export interface DatosGrupo {
+  code?: string;
+  name?: string;
+  description?: string;
+  priceCents?: number;
+  priceUsdCents?: number;
+  durationDays?: number;
+  mcpCallsPerDay?: number;
+  active?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly http = inject(HttpClient);
@@ -17,6 +53,29 @@ export class BillingService {
     return this.http
       .get<ApiResponse<{ plans: Plan[] }>>(`${this.base}/plans`)
       .pipe(map((res) => res.data.plans));
+  }
+
+  // ── Grupos de skills (administración) ────────────────────────────────────
+  //
+  // `plans()` devuelve solo los activos porque es lo que ve un comprador. El
+  // panel necesita también los retirados, así que van por su propia ruta.
+
+  grupos(): Observable<Grupo[]> {
+    return this.http
+      .get<ApiResponse<{ products: Grupo[] }>>(`${this.base}/products`)
+      .pipe(map((res) => res.data.products));
+  }
+
+  crearGrupo(datos: DatosGrupo): Observable<Grupo> {
+    return this.http
+      .post<ApiResponse<{ product: Grupo }>>(`${this.base}/products`, datos)
+      .pipe(map((res) => res.data.product));
+  }
+
+  actualizarGrupo(code: string, cambios: DatosGrupo): Observable<Grupo> {
+    return this.http
+      .patch<ApiResponse<{ product: Grupo }>>(`${this.base}/products/${code}`, cambios)
+      .pipe(map((res) => res.data.product));
   }
 
   /**
