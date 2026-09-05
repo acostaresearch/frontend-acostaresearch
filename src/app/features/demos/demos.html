@@ -37,7 +37,9 @@
     </div>
 
     <p class="pie-demos">
-      <a class="boton" routerLink="/planes">Quiero avanzar así</a>
+      <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+        Quiero avanzar así
+      </a>
       <span>
         Y si algo se te atora, tienes 30 minutos conmigo para resolverlo. Hay más videos en
         <a [href]="redes.youtube" target="_blank" rel="noopener">mi canal de YouTube</a>.

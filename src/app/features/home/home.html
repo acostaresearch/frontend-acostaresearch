@@ -12,7 +12,13 @@
 
     <div class="hero-acciones">
       @if (metodo(); as plan) {
-        <a class="boton grande" routerLink="/planes">Acceder por {{ precio(plan) }}</a>
+        <a
+            class="boton grande"
+            routerLink="/planes"
+            [queryParams]="{ plan: plan.code }"
+          >
+            Acceder por {{ precio(plan) }}
+          </a>
       } @else {
         <a class="boton grande" routerLink="/planes">Quiero el paquete</a>
       }

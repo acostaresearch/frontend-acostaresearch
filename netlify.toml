@@ -16,6 +16,27 @@
   # viejo y el build falla con un error que no dice que la causa sea la versión.
   NODE_VERSION = "22"
 
+  # ── Escáner de secretos ───────────────────────────────────────────────────
+  #
+  # Netlify aborta el despliegue si encuentra el valor de una variable del panel
+  # dentro del paquete compilado. La intención es buena, pero aquí se dispara
+  # con diez variables que NO son secretas y que tienen que estar en el paquete
+  # para que la web funcione:
+  #
+  #   · Las siete URLs de redes son enlaces públicos del pie de página. Su razón
+  #     de existir es que la gente los vea.
+  #   · Los client ID de Google y PayPal son públicos POR DISEÑO: viajan en el
+  #     HTML de cualquier visitante y en la URL del SDK de PayPal. Lo que
+  #     protege a esas cuentas es el origen autorizado en cada consola, no que
+  #     el identificador esté escondido; ocultarlo no aportaría nada y ni
+  #     siquiera es posible.
+  #
+  # Se listan una a una en vez de apagar el escáner entero (SECRETS_SCAN_ENABLED
+  # = false), para que siga vigilando: el día que alguien meta por descuido una
+  # clave de verdad —un secreto de PayPal, la contraseña de la base de datos— el
+  # despliegue tiene que seguir parándose.
+  SECRETS_SCAN_OMIT_KEYS = "WHATSAPP_URL,TIKTOK_URL,YOUTUBE_URL,INSTAGRAM_URL,FACEBOOK_URL,SCHOLAR_URL,CTIVITAE_URL,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_ID_DEV,PAYPAL_CLIENT_ID"
+
 # ── La API ──────────────────────────────────────────────────────────────────
 #
 # El frontend llama a `/api/v1/...` en su propio dominio y Netlify lo reenvía al

@@ -27,6 +27,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
+import { INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -44,6 +45,17 @@ export class Checkout implements OnInit {
   protected readonly auth = inject(AuthService);
 
   readonly whatsappUrl = environment.whatsappUrl;
+  /** Lo que entra en el paquete. Es el mismo texto que la portada. */
+  readonly incluye = INCLUYE;
+
+  /**
+   * Medio de pago elegido.
+   *
+   * Antes se enseñaban los dos a la vez —PayPal y el QR de Yape con su
+   * formulario de captura— y la página se convertía en una lista interminable.
+   * Ahora se elige uno y solo se despliega ese.
+   */
+  readonly metodoPago = signal<'yape' | 'paypal' | null>(null);
 
   readonly planes = signal<Plan[]>([]);
   readonly pasarelas = signal<PaymentProvider[]>([]);
@@ -84,6 +96,8 @@ export class Checkout implements OnInit {
   readonly copiada = signal(false);
 
   private readonly hostBoton = viewChild<ElementRef<HTMLDivElement>>('paypalHost');
+  /** El panel de pago. Existe siempre; lo que cambia es lo que hay dentro. */
+  private readonly panelPago = viewChild<ElementRef<HTMLElement>>('panelPago');
   private botonMontado = false;
 
   readonly metodo = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
@@ -158,11 +172,34 @@ export class Checkout implements OnInit {
     });
   }
 
+  /**
+   * Lleva la vista a los medios de pago tras elegir.
+   *
+   * Solo cuando la maqueta está apilada. Por encima de 860 px el panel vive en
+   * la columna de al lado y ya se ve entero: desplazar ahí sería mover la
+   * página por nada, y eso desconcierta más que ayudar.
+   *
+   * Se espera un cuadro de animación porque el panel acaba de cambiar de
+   * contenido y su altura todavía no es la definitiva. Y si el sistema pide
+   * menos movimiento, el salto es seco.
+   */
+  private llevarAlPago(): void {
+    const panel = this.panelPago()?.nativeElement;
+    if (!panel || window.matchMedia('(min-width: 861px)').matches) return;
+
+    const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    requestAnimationFrame(() => {
+      panel.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
+    });
+  }
+
   /** Deshace la elección y vuelve a esconder los medios de pago. */
   cambiarPlan(): void {
     if (this.procesando() || this.enviandoComprobante()) return;
 
     this.seleccionado.set(null);
+    this.metodoPago.set(null);
     this.quitarDescuento();
     this.quitarCaptura();
     this.comprobanteEnviado.set(null);
@@ -174,16 +211,9 @@ export class Checkout implements OnInit {
     if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
     this.seleccionado.set(plan);
+    this.metodoPago.set(null);
 
-    // En móvil los medios de pago quedan bajo la tarjeta, fuera de pantalla:
-    // sin esto, pulsar «Comprar» no parece hacer nada. Se espera un cuadro
-    // para que el panel ya exista en el DOM cuando se busque.
-    requestAnimationFrame(() => {
-      document.getElementById('medios-de-pago')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
+    this.llevarAlPago();
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();
     // Y la captura también: es el comprobante de OTRO importe.

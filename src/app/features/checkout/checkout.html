@@ -88,34 +88,44 @@
         @if (metodo().length > 0) {
           <h2 class="grupo">Método de tesis</h2>
           @for (plan of metodo(); track plan.code) {
-            <button
-              type="button"
-              class="plan destacado"
-              [class.activo]="seleccionado()?.code === plan.code"
-              [attr.aria-pressed]="seleccionado()?.code === plan.code"
-              (click)="elegir(plan)"
-            >
-              <span class="plan-cabecera">
-                <strong>{{ plan.name }}</strong>
-                <span class="plan-precio">{{ precio(plan) }}</span>
-              </span>
-              <span class="plan-palabras">Los 9 capítulos · {{ vigencia(plan) }}</span>
-              @if (plan.description) {
-                <span class="plan-detalle">{{ plan.description }}</span>
-              }
-              <span class="plan-unitario">Se conecta a tu propio Claude con una URL</span>
+            <!-- Tarjeta de venta, no factura.
+                 Antes esto era una lista «Producto / Incluye / Vigencia / Total»
+                 que describía la operación en lugar de vender el producto. Lo
+                 que decide una compra es qué te llevas, así que manda la lista
+                 de lo incluido. -->
+            <article class="tarjeta-plan" [class.elegido]="seleccionado()?.code === plan.code">
+              <p class="cinta">Pago único · sin suscripción</p>
 
-              <!-- La tarjeta entera ya es pulsable; esto es para que se vea que
-                   lo es. Sin una llamada explícita, un recuadro con el precio
-                   se lee como información, no como el paso siguiente. -->
-              <span class="plan-accion">
+              <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
+              @if (plan.description) {
+                <p class="tarjeta-lema">{{ plan.description }}</p>
+              }
+
+              <p class="tarjeta-precio">
+                <span class="importe">{{ precio(plan) }}</span>
+                <span class="periodo">{{ vigencia(plan) }}</span>
+              </p>
+
+              <button
+                type="button"
+                class="boton grande bloque"
+                (click)="elegir(plan)"
+                [attr.aria-pressed]="seleccionado()?.code === plan.code"
+              >
                 @if (seleccionado()?.code === plan.code) {
-                  Elegido · elige abajo cómo pagar
+                  Elige abajo cómo pagar ↓
                 } @else {
                   Comprar por {{ precio(plan) }}
                 }
-              </span>
-            </button>
+              </button>
+
+              <p class="tarjeta-rotulo">Qué incluye</p>
+              <ul class="tarjeta-lista">
+                @for (item of incluye; track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </article>
           }
         }
 
@@ -145,42 +155,23 @@
         } -->
       </section>
 
-      <section class="panel pago" id="medios-de-pago">
+      <section class="panel pago" #panelPago>
         @if (seleccionado(); as plan) {
+          <!-- El resumen en una línea. Ya eligió: no hace falta repetirle la
+               ficha del producto, solo qué va a pagar y por cuánto. -->
           <div class="pago-cabecera">
-            <h2>Resumen</h2>
+            <div>
+              <p class="pago-producto">{{ plan.name }}</p>
+              <p class="pago-total">
+                @if (descuento(); as promo) {
+                  <span class="tachado">{{ precio(plan) }}</span>
+                }
+                <strong>{{ precioFinal(plan) }}</strong>
+                <span class="tenue">· {{ vigencia(plan) }}</span>
+              </p>
+            </div>
             <button type="button" class="enlace-quitar" (click)="cambiarPlan()">Cambiar</button>
           </div>
-          <dl class="resumen">
-            <div>
-              <dt>Producto</dt>
-              <dd>{{ plan.name }}</dd>
-            </div>
-            <div>
-              <dt>{{ esLicencia() ? 'Incluye' : 'Palabras' }}</dt>
-              <dd>{{ esLicencia() ? '9 capítulos' : (plan.words | number) }}</dd>
-            </div>
-            <div>
-              <dt>Vigencia</dt>
-              <dd>{{ vigencia(plan) }}</dd>
-            </div>
-
-            @if (descuento(); as promo) {
-              <div>
-                <dt>Precio</dt>
-                <dd class="tachado">{{ precio(plan) }}</dd>
-              </div>
-              <div class="rebaja">
-                <dt>Descuento {{ promo.code }}</dt>
-                <dd>− S/ {{ (promo.amountCents / 100).toFixed(2) }}</dd>
-              </div>
-            }
-
-            <div class="total">
-              <dt>Total</dt>
-              <dd>{{ precioFinal(plan) }}</dd>
-            </div>
-          </dl>
           
 
           <!-- ── Código promocional ─────────────────────────────────────── -->
@@ -228,7 +219,41 @@
             </p>
             <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
             <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
-          } @else if (pagoEnLinea()) {
+          } @else {
+            <!-- ── Elegir cómo pagar ──────────────────────────────────────
+                 Un medio por vez. Enseñar PayPal y el QR de Yape a la vez
+                 convertía la página en una lista sin fin, y encima obligaba a
+                 decidir leyendo dos formularios abiertos. -->
+            <p class="pago-rotulo">¿Cómo prefieres pagar?</p>
+
+            <div class="medios">
+              <button
+                type="button"
+                class="medio"
+                [class.activo]="metodoPago() === 'yape'"
+                [attr.aria-pressed]="metodoPago() === 'yape'"
+                (click)="metodoPago.set('yape')"
+              >
+                <span class="medio-nombre">Yape o Plin</span>
+                <span class="medio-detalle">Desde Perú, en soles</span>
+              </button>
+
+              @if (pagoEnLinea()) {
+                <button
+                  type="button"
+                  class="medio"
+                  [class.activo]="metodoPago() === 'paypal'"
+                  [attr.aria-pressed]="metodoPago() === 'paypal'"
+                  (click)="metodoPago.set('paypal')"
+                >
+                  <span class="medio-nombre">PayPal</span>
+                  <span class="medio-detalle">Desde el extranjero, en dólares</span>
+                </button>
+              }
+            </div>
+          }
+
+          @if (auth.isAuthenticated() && metodoPago() === 'paypal') {
             @if (precioFinalDolares(plan); as dolares) {
               <p class="nota">
                 PayPal no admite soles, así que el cobro sale en dólares:
@@ -246,16 +271,15 @@
                 mano.
               </p>
             }
-          } @else {
-            <p class="nota">
-              El pago en línea aún no está activo. Escríbenos, confirmamos el Yape o la
-              transferencia y te activamos el acceso el mismo día.
-            </p>
           }
 
-          <!-- ── Pago por Yape ──────────────────────────────────────────── -->
-          <section class="yape">
-            <h3 class="yape-titulo">Pagar con Yape</h3>
+          <!-- ── Pago por Yape ──────────────────────────────────────────────
+               Solo si es el medio elegido. La opción de PayPal ni siquiera
+               aparece en el selector cuando la pasarela no está activa, así que
+               aquí ya no hace falta explicarlo. -->
+          @if (auth.isAuthenticated() && metodoPago() === 'yape') {
+            <section class="yape">
+              <h3 class="yape-titulo">Pagar con Yape</h3>
 
             @if (comprobanteEnviado(); as enviado) {
               <!-- Ya envió la captura: aquí solo se le dice qué pasa ahora. -->
@@ -359,8 +383,9 @@
                   </p>
                 </div>
               }
-            }
-          </section>
+              }
+            </section>
+          }
 
           <div class="alternativa">
             <span class="tenue">¿Prefieres transferencia o tienes alguna duda?</span>

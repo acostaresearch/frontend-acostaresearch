@@ -39,7 +39,13 @@
     }
 
     <div class="cierre-metodo">
-      <a class="boton grande" routerLink="/planes">Quiero el paquete completo</a>
+      <a
+        class="boton grande"
+        routerLink="/planes"
+        [queryParams]="{ plan: 'METODO_9_SKILLS' }"
+      >
+        Quiero el paquete completo
+      </a>
       <span>Un solo pago, acceso de por vida y 30 minutos de asesoría conmigo.</span>
     </div>
   </section>
