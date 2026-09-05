@@ -84,3 +84,124 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Asesoría personalizada ───────────────────────────────────────────────
+ *
+ * Texto a la izquierda y las tres fotos a la derecha en una tira: la primera
+ * ocupa toda la altura y las otras dos se apilan a su lado. Así una foto manda
+ * y las otras dos la acompañan, en vez de tres recortes del mismo tamaño que
+ * no dicen cuál mirar.
+ */
+.asesoria {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.asesoria-texto .seccion-entrada {
+  max-width: 40ch;
+}
+
+.asesoria-fotos {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asesoria-fotos li:first-child {
+  grid-row: span 2;
+}
+
+.asesoria-fotos img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Las fotos llegarán con proporciones distintas; el recorte las iguala para
+     que la tira no quede escalonada. */
+  object-fit: cover;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.asesoria-fotos li:first-child img {
+  aspect-ratio: 3 / 4;
+}
+
+.asesoria-fotos li:not(:first-child) img {
+  aspect-ratio: 4 / 3;
+}
+
+/* ── Los libros ───────────────────────────────────────────────────────────── */
+.libros-lista {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.libros-lista img {
+  display: block;
+  width: 100%;
+  max-width: 190px;
+  height: auto;
+  /* Proporción de portada de libro. Contain y no cover: recortar una portada
+     le corta el título, que es justo lo que se quiere que se lea. */
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  margin-bottom: 16px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.libros-lista h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-texto);
+}
+
+.libros-lista p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+@media (max-width: 900px) {
+  .asesoria {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .asesoria-texto .seccion-entrada {
+    max-width: none;
+  }
+
+  .libros-lista {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  /* En una columna, la portada al lado del texto en vez de encima: apiladas
+     ocuparían tres pantallas para tres libros. */
+  .libros-lista li {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .libros-lista img {
+    margin-bottom: 0;
+  }
+}

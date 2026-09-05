@@ -38,6 +38,56 @@
       </ol>
     }
 
+  </section>
+
+  <!-- Lo que las Skills no resuelven. Va justo después del listado porque es
+       la objeción que aparece al terminar de leerlo: «¿y si me trabo?». -->
+  <section class="seccion asesoria">
+    <div class="asesoria-texto">
+      <p class="seccion-marca">Cuando lo necesites</p>
+      <h2 class="titulo-seccion">Asesoría personalizada conmigo</h2>
+      <p class="seccion-entrada">
+        El método resuelve casi todo. Para lo que no, tienes 30 minutos conmigo, uno a uno, para
+        destrabar tu caso puntual.
+      </p>
+    </div>
+
+    <ul class="asesoria-fotos">
+      @for (foto of asesoria; track foto.src) {
+        <li>
+          <img [src]="foto.src" [alt]="foto.alt" loading="lazy" decoding="async" />
+        </li>
+      }
+    </ul>
+  </section>
+
+  <!-- El respaldo bibliográfico. Después de la asesoría y antes del precio:
+       es el último argumento antes de pedir la decisión. -->
+  <section class="seccion libros">
+    <p class="seccion-marca">Respaldo académico</p>
+    <h2 class="titulo-seccion">No es un método improvisado</h2>
+    <p class="seccion-entrada ancho">
+      Cada Skill sigue la estructura de los libros de metodología que tu asesor ya conoce y exige.
+      Es un plus, no una sorpresa en tu sustentación.
+    </p>
+
+    <ul class="libros-lista">
+      @for (libro of libros; track libro.titulo) {
+        <li>
+          <img
+            [src]="libro.portada"
+            [alt]="'Portada de ' + libro.titulo"
+            loading="lazy"
+            decoding="async"
+          />
+          <h3>{{ libro.titulo }}</h3>
+          <p>{{ libro.autores }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="seccion">
     <div class="cierre-metodo">
       <a
         class="boton grande"

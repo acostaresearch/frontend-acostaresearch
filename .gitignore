@@ -45,3 +45,10 @@ Thumbs.db
 
 # Variables del frontend. El .example queda como plantilla.
 .env
+
+# Los environments los GENERA scripts/generar-environment.js en cada build,
+# a partir de .env o del panel de Netlify. Versionarlos solo servía para que
+# el repositorio arrastrara una copia de la configuración que además se
+# quedaba vieja en cuanto alguien cambiaba una variable.
+src/environments/environment.ts
+src/environments/environment.development.ts

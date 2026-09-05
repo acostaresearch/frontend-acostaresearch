@@ -235,3 +235,47 @@ export const FAQ: Pregunta[] = [
       'tomaste tú.',
   },
 ];
+
+/* ── Las dos secciones con imagen de «El método» ───────────────────────────
+ *
+ * Los archivos viven en `public/`, que Angular sirve desde la raíz: una ruta
+ * `asesoria/01.jpg` aquí es `https://…/asesoria/01.jpg` en el navegador. No
+ * llevan `/` delante a propósito, igual que el retrato de «Quién te acompaña».
+ */
+
+/** Foto de una sesión de asesoría. */
+export interface Foto {
+  src: string;
+  alt: string;
+}
+
+export const ASESORIA: Foto[] = [
+  { src: 'asesoria/01.jpg', alt: 'Benicio Acosta en una sesión de asesoría de tesis' },
+  { src: 'asesoria/02.jpg', alt: 'Revisión del capítulo de metodología con una tesista' },
+  { src: 'asesoria/03.jpg', alt: 'Sesión de asesoría por videollamada' },
+];
+
+/** Libro de metodología en el que se apoya la estructura de las Skills. */
+export interface Libro {
+  portada: string;
+  titulo: string;
+  autores: string;
+}
+
+export const LIBROS: Libro[] = [
+  {
+    portada: 'libros/sampieri.jpg',
+    titulo: 'Metodología de la Investigación',
+    autores: 'Hernández-Sampieri y Mendoza Torres (2018)',
+  },
+  {
+    portada: 'libros/carrasco.jpg',
+    titulo: 'Metodología de la Investigación Científica',
+    autores: 'Carrasco Díaz (2019)',
+  },
+  {
+    portada: 'libros/sanchez-reyes.jpg',
+    titulo: 'Metodología y Diseños de la Investigación Científica',
+    autores: 'Sánchez y Reyes (2021)',
+  },
+];
