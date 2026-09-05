@@ -49,7 +49,7 @@ export const DEMOS: Demo[] = [
       'Si la estadística es lo que más te asusta, este es tu video. Sin programar: subes tu ' +
       'base en Excel y salen los descriptivos, la confiabilidad, la normalidad y tus tablas ' +
       'en APA 7.',
-    video: '',
+    video: 'https://youtu.be/ACkSfVbB4Rk?si=ExzzhlKRvl0iTS7H',
   },
 ];
 

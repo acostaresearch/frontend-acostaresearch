@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 
 import { SkillPublica, SkillService } from '../../core/services/skill.service';
 import { DESCRIPCIONES } from '../../shared/contenido/metodo';
-import { PasoSiguiente } from '../../shared/layout/paso-siguiente';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -16,7 +15,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-metodo',
-  imports: [RouterLink, SiteHeader, SiteFooter, PasoSiguiente],
+  imports: [RouterLink, SiteHeader, SiteFooter],
   templateUrl: './metodo.html',
   styleUrl: './metodo.css',
 })

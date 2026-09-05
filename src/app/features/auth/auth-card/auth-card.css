@@ -1,15 +1,40 @@
-.envoltorio {
+/* Cabecera arriba, pie abajo y el acceso ocupando lo que sobre: así una
+   pantalla corta —el código de verificación— no deja el pie flotando a media
+   altura ni un palmo de fondo vacío debajo de la tarjeta. */
+:host {
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
+}
+
+.envoltorio {
+  display: flex;
+  flex: 1 0 auto;
   align-items: center;
   justify-content: center;
-  min-height: 100dvh;
-  padding: 32px 20px;
+  padding: 48px 20px;
+  background:
+    radial-gradient(900px 380px at 12% -10%, rgba(26, 86, 219, 0.07), transparent 65%),
+    var(--color-fondo);
+}
+
+.contenido {
+  display: grid;
+  gap: 40px;
+  width: 100%;
+  max-width: 400px;
+  align-items: center;
+}
+
+/* Con columna de apoyo el bloque se ensancha y el formulario deja de estar
+   centrado: pasa a leerse de izquierda a derecha, como el resto del sitio. */
+.contenido:has(.lateral > *) {
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  max-width: 900px;
+  align-items: start;
 }
 
 .tarjeta {
-  width: 100%;
-  max-width: 400px;
   padding: 32px;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
@@ -21,18 +46,8 @@ header {
   margin-bottom: 24px;
 }
 
-.marca {
-  display: inline-block;
-  text-decoration: none;
-  margin: 0 0 14px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--color-primario);
-}
-
 h1 {
+  margin: 0;
   font-size: 22px;
   font-weight: 650;
 }
@@ -40,12 +55,30 @@ h1 {
 .subtitulo {
   margin: 6px 0 0;
   font-size: 14px;
+  line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
 .pie {
-  margin-top: 18px;
+  margin: 18px 0 0;
   font-size: 13.5px;
   color: var(--color-texto-suave);
   text-align: center;
+}
+
+/* Sin contenido proyectado quedaría un hueco muerto bajo la tarjeta. */
+.pie:not(:has(*)) {
+  display: none;
+}
+
+.lateral:not(:has(*)) {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .contenido:has(.lateral > *) {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    gap: 28px;
+  }
 }

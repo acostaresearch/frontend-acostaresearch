@@ -16,6 +16,10 @@ export const environment = {
     ctivitae:
       'https://ctivitae.concytec.gob.pe/appDirectorioCTI/VerDatosInvestigador.do?id_investigador=0316353',
   },
+  // Client ID de la app OAuth de Google (console.cloud.google.com → Credenciales).
+  // Es público por diseño: Google valida el origen desde el que se pide.
+  // Vacío = no se muestra el botón y solo queda el acceso con contraseña.
+  googleClientId: '608487070231-s1jres413fgs0i016vfm63c0vvfja580.apps.googleusercontent.com',
   // Client ID de la app de PayPal (developer.paypal.com → Apps & Credentials).
   // Es público por diseño: el secreto vive solo en el backend.
   // Vacío = no se muestra el botón y la recarga sigue siendo manual.

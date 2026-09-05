@@ -1,16 +1,19 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { environment } from '../../../../environments/environment';
 import { fieldErrors, toApiError } from '../../../core/http/api-error';
 import { ERROR_CODE } from '../../../core/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthCard } from '../auth-card/auth-card';
+import { BotonGoogle } from '../boton-google/boton-google';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, AuthCard],
+  imports: [ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -26,14 +29,45 @@ export class Login {
     password: ['', [Validators.required]],
   });
 
+  /**
+   * Espejo del correo escrito.
+   *
+   * Los formularios reactivos no son señales: sin esto, `emailListo` no se
+   * recalcularía al teclear y el check verde no aparecería nunca.
+   */
+  private readonly valorEmail = toSignal(this.formulario.controls.email.valueChanges, {
+    initialValue: '',
+  });
+
+  readonly whatsappUrl = environment.whatsappUrl;
+
   readonly enviando = signal(false);
+  /** El ojo del campo de contraseña. Ver lo que se teclea evita medio soporte. */
+  readonly verContrasena = signal(false);
+  /**
+   * Bloq Mayús pulsado.
+   *
+   * Es la causa más común de «mi contraseña no funciona» y la única que el
+   * navegador nos deja detectar: el evento de teclado lo dice, pero solo
+   * mientras se teclea, así que se consulta en cada pulsación.
+   */
+  readonly mayusculasActivas = signal(false);
   readonly errorGeneral = signal<string | null>(null);
   readonly erroresServidor = signal<Record<string, string>>({});
   /** Se activa cuando el backend responde EMAIL_NOT_VERIFIED. */
   readonly correoSinVerificar = signal(false);
 
+  /** Marca de correo válido. Se enseña solo cuando ya hay algo escrito. */
+  readonly emailListo = computed(() => {
+    const control = this.formulario.controls.email;
+    return this.valorEmail().length > 0 && control.valid;
+  });
+
   /** El interceptor redirige aquí con `expirada=1` cuando muere el refresh. */
   readonly sesionExpirada = this.ruta.snapshot.queryParamMap.get('expirada') === '1';
+
+  /** Adónde vuelve quien entró por Google. El mismo destino que el formulario. */
+  readonly destinoTrasEntrar = this.ruta.snapshot.queryParamMap.get('returnUrl') ?? '/';
 
   errorDe(campo: 'email' | 'password'): string | null {
     const control = this.formulario.controls[campo];
@@ -83,6 +117,17 @@ export class Login {
         this.errorGeneral.set(apiError.message);
       },
     });
+  }
+
+  alternarContrasena(): void {
+    this.verContrasena.update((visible) => !visible);
+  }
+
+  /** Mira si Bloq Mayús está puesto. Solo el teclado lo sabe. */
+  vigilarMayusculas(evento: Event): void {
+    const teclado = evento as KeyboardEvent;
+    if (typeof teclado.getModifierState !== 'function') return;
+    this.mayusculasActivas.set(teclado.getModifierState('CapsLock'));
   }
 
   /** Lleva a la pantalla del código con el correo ya escrito. */

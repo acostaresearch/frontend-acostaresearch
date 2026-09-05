@@ -11,14 +11,23 @@ import {
   PackAdmin,
   PagoAdmin,
 } from '../../core/models/admin.model';
+import { PagoPorRevisar } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
 import { BillingService } from '../../core/services/billing.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
-type Seccion = 'ventas' | 'skills' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
+type Seccion =
+  | 'ventas'
+  | 'yape'
+  | 'skills'
+  | 'descuentos'
+  | 'licencias'
+  | 'alertas'
+  | 'movimientos';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -42,6 +51,7 @@ export class Admin implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly admin = inject(AdminService);
   private readonly billing = inject(BillingService);
+  private readonly payments = inject(PaymentService);
 
   readonly metodos = METODOS;
   readonly seccion = signal<Seccion>('ventas');
@@ -58,6 +68,21 @@ export class Admin implements OnInit {
   readonly pagos = signal<PagoAdmin[]>([]);
   readonly descuentos = signal<CodigoDescuento[]>([]);
   readonly descuentoNuevo = signal<CodigoDescuento | null>(null);
+
+  // ── Comprobantes de Yape ─────────────────────────────────────────────────
+  readonly porRevisar = signal<PagoPorRevisar[]>([]);
+  /**
+   * Imágenes ya descargadas, por pago.
+   *
+   * El <img> no puede mandar la cabecera de autorización, así que la imagen se
+   * baja con el token y se enseña como object URL. Se guardan aquí para no
+   * volver a pedir la misma captura cada vez que se repinta la lista.
+   */
+  readonly capturas = signal<Record<string, string>>({});
+  /** Qué pago se está aprobando o rechazando, para bloquear solo esa fila. */
+  readonly revisando = signal<string | null>(null);
+  /** Motivo del rechazo, por pago: cada fila escribe el suyo. */
+  readonly motivos = signal<Record<string, string>>({});
 
   /** Códigos recién generados. Se muestran una vez y no vuelven. */
   readonly codigosNuevos = signal<string[]>([]);
@@ -277,6 +302,114 @@ export class Admin implements OnInit {
     this.admin.bolsasRecientes().subscribe({ next: (b) => this.bolsas.set(b) });
     this.admin.pagosRecientes().subscribe({ next: (p) => this.pagos.set(p) });
     this.admin.descuentos().subscribe({ next: (d) => this.descuentos.set(d) });
+    this.cargarPorRevisar();
+  }
+
+  // ── Comprobantes de Yape ─────────────────────────────────────────────────
+
+  private cargarPorRevisar(): void {
+    this.payments.porRevisar().subscribe({
+      next: (pagos) => {
+        this.porRevisar.set(pagos);
+        for (const pago of pagos) this.cargarCaptura(pago.id);
+      },
+      error: (e: unknown) => this.error.set(toApiError(e).message),
+    });
+  }
+
+  /** Baja la captura con el token y la deja lista para el <img>. */
+  private cargarCaptura(paymentId: string): void {
+    if (this.capturas()[paymentId]) return;
+
+    this.payments.comprobante(paymentId).subscribe({
+      next: (blob) => {
+        this.capturas.update((actual) => ({ ...actual, [paymentId]: URL.createObjectURL(blob) }));
+      },
+      // Que falte la miniatura no bloquea la revisión: el número de operación
+      // sigue estando, que es lo que de verdad se coteja con el extracto.
+      error: () => undefined,
+    });
+  }
+
+  captura(paymentId: string): string | null {
+    return this.capturas()[paymentId] ?? null;
+  }
+
+  motivo(paymentId: string): string {
+    return this.motivos()[paymentId] ?? '';
+  }
+
+  escribirMotivo(paymentId: string, evento: Event): void {
+    const valor = (evento.target as HTMLInputElement).value;
+    this.motivos.update((actual) => ({ ...actual, [paymentId]: valor }));
+  }
+
+  /**
+   * Da el pago por bueno y entrega lo comprado.
+   *
+   * Lo que llega de vuelta NO trae la URL del conector, y es deliberado: esa
+   * URL es la credencial del comprador y la genera él desde su panel.
+   */
+  aprobarComprobante(pago: PagoPorRevisar): void {
+    if (this.revisando()) return;
+
+    this.revisando.set(pago.id);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    this.payments.aprobarComprobante(pago.id).subscribe({
+      next: (resultado) => {
+        this.aviso.set(
+          resultado.alreadyProcessed
+            ? 'Ese pago ya estaba aprobado.'
+            : `Aprobado. ${pago.user.firstName} ya tiene su acceso y le hemos avisado por correo.`,
+        );
+        this.olvidarPago(pago.id);
+        this.revisando.set(null);
+        // Las licencias y los movimientos cambian al entregar.
+        this.recargar();
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.revisando.set(null);
+      },
+    });
+  }
+
+  rechazarComprobante(pago: PagoPorRevisar): void {
+    const motivo = this.motivo(pago.id).trim();
+    if (this.revisando()) return;
+
+    if (motivo.length < 10) {
+      this.error.set('Escribe por qué lo rechazas: el comprador solo va a leer eso.');
+      return;
+    }
+
+    this.revisando.set(pago.id);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    this.payments.rechazarComprobante(pago.id, motivo).subscribe({
+      next: () => {
+        this.aviso.set(`Rechazado. Se lo hemos comunicado a ${pago.user.email}.`);
+        this.olvidarPago(pago.id);
+        this.revisando.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.revisando.set(null);
+      },
+    });
+  }
+
+  /** Saca el pago de la bandeja y libera su miniatura. */
+  private olvidarPago(paymentId: string): void {
+    const url = this.capturas()[paymentId];
+    if (url) URL.revokeObjectURL(url);
+
+    this.porRevisar.update((pagos) => pagos.filter((p) => p.id !== paymentId));
+    this.capturas.update(({ [paymentId]: _fuera, ...resto }) => resto);
+    this.motivos.update(({ [paymentId]: _tambien, ...resto }) => resto);
   }
 
   // ── Descuentos ───────────────────────────────────────────────────────────

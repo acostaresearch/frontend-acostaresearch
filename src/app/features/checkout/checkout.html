@@ -167,6 +167,7 @@
               <dd>{{ precioFinal(plan) }}</dd>
             </div>
           </dl>
+          
 
           <!-- ── Código promocional ─────────────────────────────────────── -->
           @if (auth.isAuthenticated()) {
@@ -205,6 +206,7 @@
             }
           }
 
+
           @if (!auth.isAuthenticated()) {
             <p class="nota">
               Para comprar necesitas una cuenta: es donde queda registrado tu acceso y desde
@@ -237,8 +239,117 @@
             </p>
           }
 
+          <!-- ── Pago por Yape ──────────────────────────────────────────── -->
+          <section class="yape">
+            <h3 class="yape-titulo">Pagar con Yape</h3>
+
+            @if (comprobanteEnviado(); as enviado) {
+              <!-- Ya envió la captura: aquí solo se le dice qué pasa ahora. -->
+              <div class="yape-enviado">
+                <p class="yape-enviado-titulo">Comprobante recibido</p>
+                <p>
+                  Estamos comprobando tu pago de
+                  <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong>. En cuanto
+                  quede confirmado te llega un correo y tu acceso aparece en tu panel.
+                </p>
+                <p class="tenue">
+                  Referencia <strong>{{ enviado.reference }}</strong> · guárdala por si tienes
+                  que escribirnos.
+                </p>
+                @if (whatsappUrl) {
+                  <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+                    Avisar por WhatsApp
+                  </a>
+                }
+              </div>
+            } @else {
+              <p class="yape-instruccion">
+                Escanea el código con tu app y paga
+                <strong>{{ precioFinal(plan) }}</strong>. Luego súbenos la captura.
+              </p>
+
+              <div class="qr-pago">
+                <img src="/qr-pago/qr-code.jpeg" alt="Código QR para pagar con Yape" />
+              </div>
+
+              @if (datosYape(); as yape) {
+                @if (yape.titular || yape.numero) {
+                  <p class="yape-titular">
+                    @if (yape.titular) {
+                      <span>{{ yape.titular }}</span>
+                    }
+                    @if (yape.numero) {
+                      <span class="yape-numero">{{ yape.numero }}</span>
+                    }
+                  </p>
+                }
+              }
+
+              @if (!auth.isAuthenticated()) {
+                <p class="nota">
+                  Puedes pagar ahora, pero para enviarnos la captura necesitas una cuenta: es
+                  donde queda registrado tu acceso.
+                </p>
+              } @else {
+                <div class="yape-formulario">
+                  <label for="operacion">Número de operación</label>
+                  <input
+                    id="operacion"
+                    type="text"
+                    inputmode="numeric"
+                    [formControl]="numeroOperacion"
+                    placeholder="Aparece en tu constancia de Yape"
+                    autocomplete="off"
+                  />
+                  <p class="tenue campo-ayuda">
+                    No es obligatorio, pero con él confirmamos tu pago mucho antes.
+                  </p>
+
+                  @if (capturaPrevia(); as previa) {
+                    <div class="captura">
+                      <img [src]="previa" alt="Captura del pago que vas a enviar" />
+                      <div class="captura-datos">
+                        <span>{{ capturaElegida()?.name }}</span>
+                        <button type="button" class="enlace-quitar" (click)="quitarCaptura()">
+                          Elegir otra
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <label class="captura-elegir">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        (change)="elegirCaptura($event)"
+                      />
+                      <span>Elegir la captura del pago</span>
+                    </label>
+                  }
+
+                  @if (errorComprobante(); as mensaje) {
+                    <p class="promo-error">{{ mensaje }}</p>
+                  }
+
+                  <button
+                    type="button"
+                    class="boton bloque"
+                    [disabled]="!capturaElegida() || enviandoComprobante()"
+                    (click)="enviarComprobante()"
+                  >
+                    {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
+                  </button>
+
+                  <p class="tenue campo-ayuda">
+                    Lo revisa una persona, no un robot. Suele estar listo el mismo día; si
+                    corre prisa, avísanos por WhatsApp después de enviarlo.
+                  </p>
+                </div>
+              }
+            }
+          </section>
+
           <div class="alternativa">
-            <span class="tenue">¿Prefieres pagar por Yape o transferencia?</span>
+            <span class="tenue">¿Prefieres transferencia o tienes alguna duda?</span>
             @if (whatsappUrl) {
               <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
                 Escribir por WhatsApp

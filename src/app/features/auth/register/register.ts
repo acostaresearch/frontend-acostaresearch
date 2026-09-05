@@ -7,12 +7,13 @@ import { ERROR_CODE } from '../../../core/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { matchFields } from '../../../shared/validators/match.validator';
 import { AuthCard } from '../auth-card/auth-card';
+import { BotonGoogle } from '../boton-google/boton-google';
 
 type CampoRegistro = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, AuthCard],
+  imports: [ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })

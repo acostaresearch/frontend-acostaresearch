@@ -1,0 +1,87 @@
+/* Documento legal: una sola columna estrecha y mucho aire. Se lee entero de
+   arriba abajo, no se escanea, así que manda la longitud de línea. */
+
+.legal {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 56px 0 72px;
+}
+
+.legal h1 {
+  margin: 0 0 8px;
+  font-size: clamp(30px, 4vw, 40px);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-texto);
+}
+
+.actualizacion {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--color-texto-tenue);
+}
+
+.entradilla {
+  margin: 0 0 8px;
+  padding-bottom: 28px;
+  font-size: 16.5px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.legal section {
+  padding-top: 30px;
+}
+
+.legal h2 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-texto);
+}
+
+.legal p {
+  margin: 0 0 14px;
+  font-size: 15.5px;
+  line-height: 1.72;
+  color: var(--color-texto-suave);
+}
+
+.legal p:last-child {
+  margin-bottom: 0;
+}
+
+.legal ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.legal li {
+  margin-bottom: 9px;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+/* La frase que más importa de toda la política. */
+.remate {
+  font-weight: 600;
+  color: var(--color-texto) !important;
+}
+
+.legal a {
+  color: var(--color-primario);
+}
+
+.pie-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 44px;
+  padding-top: 28px;
+  border-top: 1px solid var(--color-borde);
+}

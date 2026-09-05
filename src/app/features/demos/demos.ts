@@ -3,7 +3,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 import { DEMOS } from '../../shared/contenido/metodo';
-import { PasoSiguiente } from '../../shared/layout/paso-siguiente';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { environment } from '../../../environments/environment';
@@ -11,7 +10,7 @@ import { environment } from '../../../environments/environment';
 /** Las demostraciones grabadas. Es la página que más convence, así que va sola. */
 @Component({
   selector: 'app-demos',
-  imports: [RouterLink, SiteHeader, SiteFooter, PasoSiguiente],
+  imports: [RouterLink, SiteHeader, SiteFooter],
   templateUrl: './demos.html',
   styleUrl: './demos.css',
 })

@@ -1,17 +1,28 @@
-<div class="envoltorio">
-  <main class="tarjeta">
-    <header>
-      <a class="marca" routerLink="/">← Acosta Research</a>
-      <h1>{{ titulo() }}</h1>
-      @if (subtitulo()) {
-        <p class="subtitulo">{{ subtitulo() }}</p>
-      }
-    </header>
+<app-site-header />
 
-    <ng-content />
+<div class="envoltorio" [class.con-lateral]="conLateral()">
+  <main class="contenido">
+    <section class="tarjeta">
+      <header>
+        <h1>{{ titulo() }}</h1>
+        @if (subtitulo()) {
+          <p class="subtitulo">{{ subtitulo() }}</p>
+        }
+      </header>
+
+      <ng-content />
+
+      <div class="pie">
+        <ng-content select="[pie]" />
+      </div>
+    </section>
+
+    <!-- Columna de apoyo. Solo aparece si la pantalla proyecta algo en ella:
+         en «verificar correo» estorbaría, porque ahí solo hay que teclear. -->
+    <aside class="lateral">
+      <ng-content select="[lateral]" />
+    </aside>
   </main>
-
-  <footer class="pie">
-    <ng-content select="[pie]" />
-  </footer>
 </div>
+
+<app-site-footer />

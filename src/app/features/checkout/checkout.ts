@@ -15,7 +15,13 @@ import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
-import { Descuento, License, PaymentProvider } from '../../core/models/payment.model';
+import {
+  ComprobanteEnviado,
+  DatosYape,
+  Descuento,
+  License,
+  PaymentProvider,
+} from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
@@ -53,6 +59,23 @@ export class Checkout implements OnInit {
   readonly cargando = signal(true);
   readonly procesando = signal(false);
   readonly error = signal<string | null>(null);
+
+  // ── Pago por Yape ──────────────────────────────────────────────────────
+  // Aquí no hay pasarela: el comprador paga con el QR, sube la captura y espera
+  // a que un administrador la mire. Hasta que la apruebe no existe licencia.
+  readonly datosYape = signal<DatosYape | null>(null);
+  readonly numeroOperacion = new FormControl('', { nonNullable: true });
+  readonly capturaElegida = signal<File | null>(null);
+  /** Miniatura local del archivo. Es un object URL: hay que revocarlo. */
+  readonly capturaPrevia = signal<string | null>(null);
+  readonly enviandoComprobante = signal(false);
+  readonly comprobanteEnviado = signal<ComprobanteEnviado | null>(null);
+  readonly errorComprobante = signal<string | null>(null);
+
+  /** Lo que el navegador acepta subir; el servidor lo vuelve a comprobar. */
+  private readonly FORMATOS = ['image/png', 'image/jpeg', 'image/webp'];
+  /** Mismo techo que el servidor, para avisar antes de subir 6 MB en balde. */
+  private readonly MAX_BYTES = 6 * 1024 * 1024;
 
   /** Resultado de una compra recién confirmada. */
   readonly bolsaComprada = signal<WordPack | null>(null);
@@ -99,6 +122,13 @@ export class Checkout implements OnInit {
       error: () => this.pasarelas.set([]),
     });
 
+    // El titular y el número son opcionales: si no están configurados, el QR
+    // se enseña solo y la página sigue funcionando igual.
+    this.payments.datosYape().subscribe({
+      next: (datos) => this.datosYape.set(datos),
+      error: () => this.datosYape.set(null),
+    });
+
     this.billing.plans().subscribe({
       next: (planes) => {
         const vendibles = planes.filter((plan) => plan.priceCents > 0);
@@ -122,11 +152,85 @@ export class Checkout implements OnInit {
   }
 
   elegir(plan: Plan): void {
-    if (this.procesando()) return;
+    if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
     this.seleccionado.set(plan);
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();
+    // Y la captura también: es el comprobante de OTRO importe.
+    this.quitarCaptura();
+    this.comprobanteEnviado.set(null);
+    this.errorComprobante.set(null);
+  }
+
+  // ── Pago por Yape ────────────────────────────────────────────────────────
+
+  /**
+   * Guarda el archivo elegido y prepara la miniatura.
+   *
+   * Se comprueba tipo y tamaño aquí para no hacerle subir seis megabytes a
+   * alguien que va a recibir un error de vuelta. La comprobación que cuenta
+   * sigue siendo la del servidor, que además mira los bytes de la imagen.
+   */
+  elegirCaptura(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+
+    this.errorComprobante.set(null);
+    this.quitarCaptura();
+    // El input se vacía para que elegir dos veces el mismo archivo dispare el
+    // evento otra vez.
+    input.value = '';
+
+    if (!archivo) return;
+
+    if (!this.FORMATOS.includes(archivo.type)) {
+      this.errorComprobante.set('Sube una captura en PNG, JPG o WebP.');
+      return;
+    }
+
+    if (archivo.size > this.MAX_BYTES) {
+      this.errorComprobante.set('La imagen pesa más de 6 MB. Hazle una captura en vez de una foto.');
+      return;
+    }
+
+    this.capturaElegida.set(archivo);
+    this.capturaPrevia.set(URL.createObjectURL(archivo));
+  }
+
+  /** Suelta el archivo y libera la miniatura. */
+  quitarCaptura(): void {
+    const previa = this.capturaPrevia();
+    if (previa) URL.revokeObjectURL(previa);
+    this.capturaPrevia.set(null);
+    this.capturaElegida.set(null);
+  }
+
+  enviarComprobante(): void {
+    const plan = this.seleccionado();
+    const archivo = this.capturaElegida();
+    if (!plan || !archivo || this.enviandoComprobante()) return;
+
+    this.enviandoComprobante.set(true);
+    this.errorComprobante.set(null);
+
+    this.payments
+      .enviarComprobante(plan.code, archivo, {
+        operationCode: this.numeroOperacion.value.trim() || undefined,
+        discountCode: this.descuento()?.code,
+      })
+      .subscribe({
+        next: (enviado) => {
+          this.comprobanteEnviado.set(enviado);
+          this.quitarCaptura();
+          this.numeroOperacion.reset();
+          this.enviandoComprobante.set(false);
+        },
+        error: (error: unknown) => {
+          this.errorComprobante.set(toApiError(error).message);
+          this.enviandoComprobante.set(false);
+        },
+      });
   }
 
   aplicarDescuento(): void {

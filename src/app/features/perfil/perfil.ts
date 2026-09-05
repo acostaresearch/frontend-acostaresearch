@@ -30,8 +30,12 @@ const ESTADOS: Record<UserStatus, string> = {
 
 const ESTADOS_PAGO: Record<Payment['status'], string> = {
   PENDING: 'Pendiente',
+  // El comprobante llegó y está esperando a que un administrador lo mire. Al
+  // comprador hay que decírselo así: no ha fallado nada, solo hay que esperar.
+  IN_REVIEW: 'En revisión',
   PAID: 'Pagado',
   FAILED: 'Fallido',
+  REJECTED: 'Rechazado',
   CANCELLED: 'Cancelado',
 };
 

@@ -61,6 +61,21 @@ export class AuthService {
     );
   }
 
+  /**
+   * Entrar o darse de alta con Google. Es la misma llamada para ambas cosas:
+   * el servidor decide si crea la cuenta o abre la que ya existía.
+   */
+  loginWithGoogle(credential: string): Observable<User> {
+    return this.http.post<ApiResponse<LoginResponse>>(`${this.base}/google`, { credential }).pipe(
+      map((res) => res.data),
+      tap(({ user, accessToken }) => {
+        this.accessTokenSignal.set(accessToken);
+        this.userSignal.set(user);
+      }),
+      map(({ user }) => user),
+    );
+  }
+
   logout(): Observable<void> {
     // La sesión local se limpia pase lo que pase: si el backend no responde,
     // dejar al usuario "dentro" sería peor que cerrarle igualmente.

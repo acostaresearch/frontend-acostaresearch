@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 
 import { OBJECIONES, PASOS } from '../../shared/contenido/metodo';
-import { PasoSiguiente } from '../../shared/layout/paso-siguiente';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -14,7 +13,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-como-funciona',
-  imports: [SiteHeader, SiteFooter, PasoSiguiente],
+  imports: [SiteHeader, SiteFooter],
   templateUrl: './como-funciona.html',
   styleUrl: './como-funciona.css',
 })

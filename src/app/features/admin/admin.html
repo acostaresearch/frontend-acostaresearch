@@ -23,6 +23,10 @@
       <span class="cifra">{{ licenciasRevocadas() }}</span>
       <span class="etiqueta-dato">revocadas</span>
     </div>
+    <div class="dato" [class.alarma]="porRevisar().length > 0">
+      <span class="cifra">{{ porRevisar().length }}</span>
+      <span class="etiqueta-dato">yapes por revisar</span>
+    </div>
     <div class="dato">
       <span class="cifra">{{ codigosSinUsar() }}</span>
       <span class="etiqueta-dato">códigos sin canjear</span>
@@ -32,6 +36,12 @@
   <nav class="pestanas">
     <button type="button" [class.activa]="seccion() === 'ventas'" (click)="ir('ventas')">
       Vender
+    </button>
+    <button type="button" [class.activa]="seccion() === 'yape'" (click)="ir('yape')">
+      Yapes
+      @if (porRevisar().length > 0) {
+        <span class="contador-pestana">{{ porRevisar().length }}</span>
+      }
     </button>
     <button type="button" [class.activa]="seccion() === 'skills'" (click)="ir('skills')">
       Capítulos
@@ -212,6 +222,100 @@
             </tbody>
           </table>
         </div>
+      }
+    </section>
+  }
+
+  <!-- ══ YAPES POR REVISAR ════════════════════════════════════════════════ -->
+  @if (seccion() === 'yape') {
+    <section class="bloque">
+      <h2>Comprobantes por revisar</h2>
+      <p class="comprobantes-ayuda">
+        Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla,
+        no que el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
+      </p>
+
+      @if (porRevisar().length === 0) {
+        <p class="vacio-ok">No hay ningún comprobante esperando.</p>
+      } @else {
+        <ul class="comprobantes">
+          @for (pago of porRevisar(); track pago.id) {
+            <li class="comprobante" [class.ocupado]="revisando() === pago.id">
+              <div class="comprobante-imagen">
+                @if (captura(pago.id); as imagen) {
+                  <a [href]="imagen" target="_blank" rel="noopener">
+                    <img [src]="imagen" alt="Comprobante enviado por {{ pago.user.email }}" />
+                  </a>
+                } @else {
+                  <span class="sin-imagen">sin vista previa</span>
+                }
+              </div>
+
+              <div class="comprobante-datos">
+                <p class="comprobante-quien">
+                  <strong>{{ pago.user.firstName }} {{ pago.user.lastName }}</strong>
+                  <span class="tenue">{{ pago.user.email }}</span>
+                </p>
+
+                <dl class="comprobante-detalle">
+                  <div>
+                    <dt>Plan</dt>
+                    <dd>{{ pago.plan.name }}</dd>
+                  </div>
+                  <div>
+                    <dt>Importe</dt>
+                    <dd>S/ {{ pago.amountCents / 100 | number: '1.2-2' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Nº de operación</dt>
+                    <dd [class.falta]="!pago.operationCode">
+                      {{ pago.operationCode ?? 'no lo indicó' }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Enviado</dt>
+                    <dd>{{ pago.createdAt | date: 'd MMM, HH:mm' }}</dd>
+                  </div>
+                  @if (pago.discountCents > 0) {
+                    <div>
+                      <dt>Descuento</dt>
+                      <dd>− S/ {{ pago.discountCents / 100 | number: '1.2-2' }}</dd>
+                    </div>
+                  }
+                </dl>
+
+                <div class="comprobante-acciones">
+                  <button
+                    type="button"
+                    class="boton"
+                    [disabled]="revisando() !== null"
+                    (click)="aprobarComprobante(pago)"
+                  >
+                    {{ revisando() === pago.id ? 'Aprobando…' : 'Aprobar y entregar' }}
+                  </button>
+
+                  <div class="rechazo">
+                    <input
+                      type="text"
+                      [value]="motivo(pago.id)"
+                      (input)="escribirMotivo(pago.id, $event)"
+                      placeholder="Motivo del rechazo (lo lee el comprador)"
+                      maxlength="255"
+                    />
+                    <button
+                      type="button"
+                      class="boton peligro"
+                      [disabled]="revisando() !== null"
+                      (click)="rechazarComprobante(pago)"
+                    >
+                      Rechazar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
       }
     </section>
   }

@@ -485,3 +485,197 @@ h1 {
 .resumen .rebaja dd {
   color: var(--color-exito);
 }
+
+/* ── Pago por Yape ─────────────────────────────────────────────────────────
+   El QR y el envío del comprobante van en un mismo bloque enmarcado: es un
+   camino de pago completo, no un adorno al lado del botón de PayPal. */
+.yape {
+  margin-top: 22px;
+  padding: 20px;
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.yape-titulo {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.yape-instruccion {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.qr-pago {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.qr-pago img {
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+  display: block;
+}
+
+.yape-titular {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+}
+
+.yape-numero {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-texto);
+}
+
+.yape-formulario {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.yape-formulario label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.yape-formulario input[type='text'] {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  box-sizing: border-box;
+}
+
+.yape-formulario input[type='text']:focus {
+  outline: 2px solid var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.campo-ayuda {
+  margin: 6px 0 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* El input de archivo real se oculta: su aspecto no se puede diseñar y cambia
+   en cada navegador. La etiqueta hace de botón y mantiene el foco accesible. */
+.captura-elegir {
+  display: block;
+  margin-bottom: 14px;
+  padding: 18px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background-color: var(--color-superficie);
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: border-color var(--transicion), background-color var(--transicion);
+}
+
+.captura-elegir:hover {
+  border-color: var(--color-primario);
+  background-color: var(--color-primario-suave);
+}
+
+.captura-elegir input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.captura-elegir:focus-within {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.captura {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 10px;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.captura img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-borde);
+}
+
+.captura-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.captura-datos span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.captura-datos .enlace-quitar {
+  margin-left: 0;
+  align-self: flex-start;
+}
+
+/* Estado de espera: el comprobante ya está enviado y ahora depende de nosotros. */
+.yape-enviado {
+  padding: 16px;
+  background-color: var(--color-exito-suave);
+  border: 1px solid rgba(18, 115, 75, 0.22);
+  border-radius: var(--radio-sm);
+}
+
+.yape-enviado p {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto);
+}
+
+.yape-enviado-titulo {
+  font-weight: 700;
+  color: var(--color-exito);
+}
+
+.yape-enviado .boton.secundario {
+  margin-top: 8px;
+}

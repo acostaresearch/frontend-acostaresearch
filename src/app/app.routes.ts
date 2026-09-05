@@ -42,6 +42,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/preguntas/preguntas').then((m) => m.Preguntas),
   },
   {
+    path: 'privacidad',
+    title: 'Política de Privacidad · Acosta Research',
+    loadComponent: () => import('./features/privacidad/privacidad').then((m) => m.Privacidad),
+  },
+  {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
   },

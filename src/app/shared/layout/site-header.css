@@ -61,6 +61,10 @@
   color: var(--color-primario);
 }
 
+.secundario{
+  background: var(--color-primario);
+}
+
 /* ── Acciones ───────────────────────────────────────────────────────────── */
 .acciones {
   display: flex;
@@ -70,6 +74,7 @@
 }
 
 .enlace-entrar {
+  white-space: nowrap;
   font-size: 14px;
   color: var(--color-texto-suave);
   text-decoration: none;
@@ -96,6 +101,14 @@
 .acciones .boton {
   padding: 8px 16px;
   font-size: 14px;
+  background-color: var(--color-primario);
+  color: #ffffff; /* Mantiene la legibilidad del texto */
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 720px) {

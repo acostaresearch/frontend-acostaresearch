@@ -62,14 +62,58 @@ export interface PaymentResult {
   balance: Balance;
 }
 
+/** Datos del Yape que la web enseña junto al QR. Vacíos = solo el QR. */
+export interface DatosYape {
+  titular: string | null;
+  numero: string | null;
+  currency: string;
+}
+
+/** Comprobante recién enviado, a la espera de que un administrador lo mire. */
+export interface ComprobanteEnviado {
+  paymentId: string;
+  reference: string;
+  amountCents: number;
+  currency: string;
+  status: 'IN_REVIEW';
+  plan: { code: string; name: string };
+}
+
+/** Una fila de la bandeja de comprobantes del panel de administración. */
+export interface PagoPorRevisar {
+  id: string;
+  provider: string;
+  providerOrderId: string;
+  status: string;
+  amountCents: number;
+  discountCents: number;
+  currency: string;
+  createdAt: string;
+  operationCode: string | null;
+  proofMime: string | null;
+  plan: { code: string; name: string; words: number; durationDays: number };
+  user: { id: string; email: string; firstName: string; lastName: string };
+}
+
+/** Resultado de aprobar un comprobante. Sin la URL del conector: es del comprador. */
+export interface AprobacionManual {
+  alreadyProcessed: boolean;
+  payment: { id: string; status: string };
+  entregado?:
+    | { tipo: 'LICENSE'; licenseId: string; productCode: string }
+    | { tipo: 'WORDS'; packId: string; words: number };
+}
+
 export interface Payment {
   id: string;
   provider: string;
   providerOrderId: string;
-  status: 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED';
+  status: 'PENDING' | 'IN_REVIEW' | 'PAID' | 'FAILED' | 'REJECTED' | 'CANCELLED';
   amountCents: number;
   currency: string;
   createdAt: string;
   paidAt: string | null;
+  /** Por qué se rechazó un pago manual. Se le enseña al comprador tal cual. */
+  reviewNote?: string | null;
   plan: { code: string; name: string; words: number; durationDays: number };
 }
