@@ -189,7 +189,7 @@ export const OBJECIONES = [
 export const INCLUYE = [
   'Las 9 Skills instalables en tu cuenta de Claude.ai',
   'Guía de instalación paso a paso',
-  'Plantillas .docx en formato APA 7 y matriz Excel de datos',
+  // 'Plantillas .docx en formato APA 7 y matriz Excel de datos',
   'Compatible con el plan gratuito de Claude',
   '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
   'Tres meses de acceso, renovables cuando los necesites',
