@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable, switchMap } from 'rxjs';
 
 import { toApiError } from '../../core/http/api-error';
 import {
@@ -31,6 +32,20 @@ type Seccion =
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
+
+/**
+ * Un `.skill` esperando turno para publicarse.
+ *
+ * Se inspecciona en cuanto entra en la cola —antes de que nadie pulse nada—,
+ * así que para cuando el administrador mira ya sabe cuáles son nuevos y
+ * cuáles pisan un capítulo existente.
+ */
+interface EnCola {
+  archivo: File;
+  analisis: AnalisisBundle | null;
+  estado: 'analizando' | 'lista' | 'subiendo' | 'publicada' | 'error';
+  error: string | null;
+}
 
 /** Métodos de pago que acepta el backend para una activación manual. */
 const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CORTESIA'] as const;
@@ -137,14 +152,36 @@ export class Admin implements OnInit {
   private readonly skillsApi = inject(SkillService);
 
   readonly skills = signal<Skill[]>([]);
-  readonly archivo = signal<File | null>(null);
-  readonly analisis = signal<AnalisisBundle | null>(null);
   readonly editando = signal<Skill | null>(null);
 
+  /** Archivos soltados, en el orden en que se publicarán. */
+  readonly cola = signal<EnCola[]>([]);
+  /** El puntero está encima de la zona de soltar: solo pinta el resaltado. */
+  readonly arrastrando = signal(false);
+  readonly publicando = signal(false);
+
+  readonly colaListas = computed(() => this.cola().filter((c) => c.estado === 'lista'));
+  readonly colaAnalizando = computed(() => this.cola().some((c) => c.estado === 'analizando'));
+  readonly colaReemplazos = computed(
+    () => this.colaListas().filter((c) => c.analisis?.reemplaza).length,
+  );
+
+  readonly skillsVisibles = computed(() => this.skills().filter((s) => s.active).length);
+  /** Ordenados como se van a mostrar, que es lo que ven las flechas. */
+  readonly skillsOrdenadas = computed(() =>
+    [...this.skills()].sort((a, b) => a.orden - b.orden),
+  );
+
+  /**
+   * Ficha editable de un capítulo ya publicado.
+   *
+   * No lleva `orden`: la posición se cambia con las flechas de la lista, que
+   * es donde se ve el resultado. Escribir un número a ciegas y descubrir luego
+   * que había un empate era la forma lenta de hacer lo mismo.
+   */
   readonly formSkill = this.fb.nonNullable.group({
     displayName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     summary: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
-    orden: [0, [Validators.required, Validators.min(0)]],
     active: [true],
   });
 
@@ -153,85 +190,159 @@ export class Admin implements OnInit {
     this.recargar();
   }
 
-  /**
-   * Al elegir un .skill se inspecciona antes de guardar nada.
-   *
-   * Así el formulario llega relleno con lo que trae el archivo y, sobre todo,
-   * se avisa si va a reemplazar un capítulo existente. Subir por error encima
-   * de uno bueno es el fallo que hay que hacer difícil.
-   */
-  elegirArchivo(evento: Event): void {
+  // ── Publicar capítulos ───────────────────────────────────────────────────
+
+  /** Los archivos llegan del diálogo del sistema o arrastrados a la zona. */
+  elegirArchivos(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0] ?? null;
-
-    this.archivo.set(archivo);
-    this.analisis.set(null);
-    this.error.set(null);
-    this.aviso.set(null);
-    if (!archivo) return;
-
-    this.trabajando.set(true);
-    this.skillsApi.inspeccionar(archivo).subscribe({
-      next: (analisis) => {
-        this.analisis.set(analisis);
-        this.formSkill.patchValue({
-          displayName: analisis.reemplaza?.displayName ?? analisis.displayNameSugerido,
-          summary: analisis.reemplaza?.summary ?? analisis.summarySugerido,
-          orden: analisis.reemplaza?.orden ?? this.skills().length + 1,
-          active: analisis.reemplaza?.active ?? true,
-        });
-        this.trabajando.set(false);
-      },
-      error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
-        this.archivo.set(null);
-        entrada.value = '';
-        this.trabajando.set(false);
-      },
-    });
+    this.encolar(Array.from(entrada.files ?? []));
+    // Se vacía para que volver a elegir el MISMO archivo dispare el evento.
+    entrada.value = '';
   }
 
-  subirSkill(): void {
-    const archivo = this.archivo();
-    if (!archivo || this.formSkill.invalid || this.trabajando()) {
-      this.formSkill.markAllAsTouched();
+  soltar(evento: DragEvent): void {
+    evento.preventDefault();
+    this.arrastrando.set(false);
+    this.encolar(Array.from(evento.dataTransfer?.files ?? []));
+  }
+
+  arrastrar(evento: DragEvent, dentro: boolean): void {
+    evento.preventDefault();
+    this.arrastrando.set(dentro);
+  }
+
+  /**
+   * Mete los archivos en la cola y los inspecciona a la vez.
+   *
+   * Se comprueban todos antes de escribir nada: así el administrador ve de un
+   * vistazo cuáles son nuevos y cuáles pisan un capítulo que ya está en el
+   * conector, y decide con esa lista delante en vez de archivo por archivo.
+   */
+  private encolar(archivos: File[]): void {
+    if (archivos.length === 0) return;
+
+    this.error.set(null);
+    this.aviso.set(null);
+    this.editando.set(null);
+
+    const nuevos: EnCola[] = archivos.map((archivo) => ({
+      archivo,
+      analisis: null,
+      estado: 'analizando' as const,
+      error: null,
+    }));
+    this.cola.update((cola) => [...cola, ...nuevos]);
+
+    for (const item of nuevos) {
+      this.skillsApi.inspeccionar(item.archivo).subscribe({
+        next: (analisis) => this.marcar(item, { analisis, estado: 'lista' }),
+        error: (e: unknown) =>
+          this.marcar(item, { estado: 'error', error: toApiError(e).message }),
+      });
+    }
+  }
+
+  /** La entrada se localiza por su File, que no cambia aunque la fila sí. */
+  private marcar(item: EnCola, cambios: Partial<EnCola>): void {
+    this.cola.update((cola) =>
+      cola.map((x) => (x.archivo === item.archivo ? { ...x, ...cambios } : x)),
+    );
+  }
+
+  quitarDeCola(item: EnCola): void {
+    if (this.publicando()) return;
+    this.cola.update((cola) => cola.filter((x) => x.archivo !== item.archivo));
+  }
+
+  vaciarCola(): void {
+    if (this.publicando()) return;
+    this.cola.set([]);
+  }
+
+  /**
+   * Publica toda la cola de una vez.
+   *
+   * Uno detrás de otro y no en paralelo: cada subida reescribe el índice que
+   * sirve el conector, y lanzarlas juntas sería pelearse por el mismo archivo.
+   */
+  publicarCola(): void {
+    const pendientes = this.colaListas();
+    if (pendientes.length === 0 || this.publicando()) return;
+
+    this.publicando.set(true);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    const ultimo = this.skills().reduce((max, s) => Math.max(max, s.orden), 0);
+    this.publicarSiguiente(pendientes, 0, 0, ultimo + 1);
+  }
+
+  private publicarSiguiente(
+    pendientes: EnCola[],
+    i: number,
+    hechas: number,
+    proximoOrden: number,
+  ): void {
+    if (i >= pendientes.length) {
+      this.publicando.set(false);
+      // Las publicadas desaparecen; las que fallaron se quedan con su motivo.
+      this.cola.update((cola) => cola.filter((x) => x.estado !== 'publicada'));
+      this.aviso.set(
+        hechas === 0
+          ? null
+          : hechas === 1
+            ? 'Capítulo publicado. Ya está en el conector, sin reinstalar nada.'
+            : `${hechas} capítulos publicados. Ya están en el conector, sin reinstalar nada.`,
+      );
+      this.cargarSkills();
       return;
     }
 
-    this.trabajando.set(true);
-    this.error.set(null);
+    const item = pendientes[i];
+    const a = item.analisis;
+    if (!a) {
+      this.publicarSiguiente(pendientes, i + 1, hechas, proximoOrden);
+      return;
+    }
 
-    this.skillsApi.subir(archivo, this.formSkill.getRawValue()).subscribe({
-      next: ({ skill, tramos }) => {
-        this.aviso.set(
-          `«${skill.displayName}» está disponible en el conector: ${tramos} tramos. ` +
-            'Los tesistas lo ven al instante, sin reinstalar nada.',
-        );
-        this.cancelarSubida();
-        this.cargarSkills();
-        this.trabajando.set(false);
-      },
-      error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
-        this.trabajando.set(false);
-      },
-    });
+    // Un reemplazo conserva la ficha que ya tenía —nombre, resumen, posición y
+    // visibilidad—: el archivo cambia, la ficha no. Uno nuevo entra al final,
+    // con lo que declara su propio SKILL.md.
+    const esNuevo = !a.reemplaza;
+    this.marcar(item, { estado: 'subiendo' });
+
+    this.skillsApi
+      .subir(item.archivo, {
+        displayName: a.reemplaza?.displayName ?? a.displayNameSugerido,
+        summary: a.reemplaza?.summary ?? a.summarySugerido,
+        orden: a.reemplaza?.orden ?? proximoOrden,
+        active: a.reemplaza?.active ?? true,
+      })
+      .subscribe({
+        next: () => {
+          this.marcar(item, { estado: 'publicada' });
+          this.publicarSiguiente(
+            pendientes,
+            i + 1,
+            hechas + 1,
+            esNuevo ? proximoOrden + 1 : proximoOrden,
+          );
+        },
+        // Que uno falle no detiene a los demás: se marca y se sigue.
+        error: (e: unknown) => {
+          this.marcar(item, { estado: 'error', error: toApiError(e).message });
+          this.publicarSiguiente(pendientes, i + 1, hechas, proximoOrden);
+        },
+      });
   }
 
-  cancelarSubida(): void {
-    this.archivo.set(null);
-    this.analisis.set(null);
-    this.formSkill.reset({ displayName: '', summary: '', orden: 0, active: true });
-  }
+  // ── La lista ─────────────────────────────────────────────────────────────
 
   editarSkill(skill: Skill): void {
     this.editando.set(skill);
-    this.analisis.set(null);
-    this.archivo.set(null);
     this.formSkill.patchValue({
       displayName: skill.displayName,
       summary: skill.summary,
-      orden: skill.orden,
       active: skill.active,
     });
   }
@@ -251,7 +362,6 @@ export class Admin implements OnInit {
         this.skills.update((lista) => lista.map((s) => (s.id === actualizada.id ? actualizada : s)));
         this.aviso.set(`Ficha de «${actualizada.displayName}» actualizada.`);
         this.editando.set(null);
-        this.cancelarSubida();
         this.trabajando.set(false);
       },
       error: (e: unknown) => {
@@ -270,17 +380,81 @@ export class Admin implements OnInit {
     });
   }
 
-  eliminarSkill(skill: Skill): void {
-    if (!confirm(`¿Quitar «${skill.displayName}» del catálogo? El archivo .skill se conserva.`)) {
-      return;
-    }
+  /**
+   * Sube o baja un capítulo en el método.
+   *
+   * Intercambiar la posición con el vecino son dos escrituras. Si la segunda
+   * falla, los dos quedarían con el mismo número, así que se recarga en ambos
+   * casos: más vale volver a preguntar que enseñar un orden que no es el real.
+   */
+  mover(skill: Skill, direccion: -1 | 1): void {
+    if (this.trabajando()) return;
 
-    this.skillsApi.eliminar(skill.id).subscribe({
+    const lista = this.skillsOrdenadas();
+    const i = lista.findIndex((s) => s.id === skill.id);
+    const vecina = lista[i + direccion];
+    if (i < 0 || !vecina) return;
+
+    this.trabajando.set(true);
+    this.error.set(null);
+
+    this.skillsApi
+      .actualizar(skill.id, { orden: vecina.orden })
+      .pipe(switchMap(() => this.skillsApi.actualizar(vecina.id, { orden: skill.orden })))
+      .subscribe({
+        next: () => {
+          this.trabajando.set(false);
+          this.cargarSkills();
+        },
+        error: (e: unknown) => {
+          this.error.set(toApiError(e).message);
+          this.trabajando.set(false);
+          this.cargarSkills();
+        },
+      });
+  }
+
+  /**
+   * Quita el capítulo del catálogo.
+   *
+   * El servidor exige que esté oculto antes de borrarlo, para no dejar a medias
+   * a quien esté trabajando con él. Ese paso lo damos aquí en lugar de obligar
+   * al administrador a ocultar primero y volver después: la advertencia ya le
+   * dijo que está visible, y confirmarlo dos veces no protege de nada.
+   */
+  eliminarSkill(skill: Skill): void {
+    if (this.trabajando()) return;
+
+    const aviso = skill.active
+      ? `«${skill.displayName}» está visible en el conector ahora mismo.\n\n` +
+        'Se ocultará y se quitará del catálogo. El archivo .skill se conserva en el ' +
+        'servidor, así que puedes volver a subirlo.\n\n¿Continuar?'
+      : `¿Quitar «${skill.displayName}» del catálogo? El archivo .skill se conserva.`;
+    if (!confirm(aviso)) return;
+
+    this.trabajando.set(true);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    const borrar: Observable<void> = skill.active
+      ? this.skillsApi
+          .actualizar(skill.id, { active: false })
+          .pipe(switchMap(() => this.skillsApi.eliminar(skill.id)))
+      : this.skillsApi.eliminar(skill.id);
+
+    borrar.subscribe({
       next: () => {
         this.skills.update((lista) => lista.filter((s) => s.id !== skill.id));
+        if (this.editando()?.id === skill.id) this.editando.set(null);
         this.aviso.set(`«${skill.displayName}» ya no aparece en el conector.`);
+        this.trabajando.set(false);
       },
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.trabajando.set(false);
+        // Pudo quedarse oculta pero sin borrar: que la lista lo refleje.
+        this.cargarSkills();
+      },
     });
   }
 

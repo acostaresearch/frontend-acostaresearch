@@ -452,50 +452,168 @@ tbody tr.revocada {
   margin-top: 14px;
 }
 
-/* Resumen de lo que trae el archivo, antes de guardarlo. */
-.analisis {
-  margin-top: 16px;
-  padding: 16px 18px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-left: 3px solid var(--color-exito);
-  border-radius: var(--radio-sm);
-}
-
-/* Reemplazar un capítulo que ya existe no es lo mismo que añadir uno. */
-.analisis.reemplazo {
-  border-left-color: var(--color-aviso);
-  background: var(--color-aviso-suave);
-}
-
-.analisis-titulo {
+/* ── Zona de arrastre ─────────────────────────────────────────────────────
+   Es un <label> envolviendo el <input type=file>, así que pulsarla abre el
+   diálogo sin una línea de JavaScript. El input no se oculta con `hidden`
+   —eso lo saca del tabulador— sino recortándolo a un píxel: sigue siendo
+   enfocable y se abre con Enter. */
+.soltar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   align-items: center;
-  margin: 0 0 10px;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 34px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-fondo);
+  border: 2px dashed var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
 }
 
-.analisis-titulo code {
-  font-size: 13.5px;
-  font-weight: 600;
+.soltar:hover,
+.soltar:focus-within {
+  border-color: var(--color-primario);
+}
+
+/* Mientras el archivo va en el aire, que se note dónde soltarlo. */
+.soltar.encima {
+  border-color: var(--color-primario);
+  background: var(--color-exito-suave);
+}
+
+.entrada-archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.soltar > * {
+  /* Sin esto, mover el puntero sobre el texto dispara `dragleave` en la
+     etiqueta y el resaltado parpadea mientras se arrastra. */
+  pointer-events: none;
+}
+
+.soltar-titulo {
+  font-size: 15px;
+  font-weight: 650;
   color: var(--color-texto);
 }
 
-.analisis-datos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin: 0;
+.soltar-ayuda {
+  max-width: 52ch;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+/* ── La cola ──────────────────────────────────────────────────────────────
+   Una fila por archivo, con su estado a la izquierda: se lee de un vistazo
+   cuántos van y cuál se atascó. */
+.cola {
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
-  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
 }
 
-.analisis-datos b {
+.cola-fila {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 14px;
+  align-items: start;
+  padding: 13px 16px;
+  background: var(--color-superficie);
+}
+
+.cola-fila + .cola-fila {
+  border-top: 1px solid var(--color-borde);
+}
+
+.cola-fila.fallida {
+  background: var(--color-error-suave);
+}
+
+.cola-punto {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--color-borde-fuerte);
+}
+
+.cola-punto.lista {
+  background: var(--color-exito);
+}
+
+.cola-punto.publicada {
+  background: var(--color-exito);
+}
+
+.cola-punto.error {
+  background: var(--color-error);
+}
+
+/* Comprobando y subiendo laten para distinguirse de lo que ya terminó. */
+.cola-punto.analizando,
+.cola-punto.subiendo {
+  background: var(--color-primario);
+  animation: latido 1.1s ease-in-out infinite;
+}
+
+@keyframes latido {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cola-punto.analizando,
+  .cola-punto.subiendo {
+    animation: none;
+  }
+}
+
+.cola-nombre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 650;
   color: var(--color-texto);
-  font-variant-numeric: tabular-nums;
+}
+
+.cola-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.cola-error {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-error);
+}
+
+/* Aviso de que algo de la cola pisa un capítulo vivo. */
+.nota.atencion {
+  padding: 10px 14px;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
 }
 
 .etiqueta {
@@ -525,7 +643,7 @@ tbody tr.revocada {
 
 .lista-skills li {
   display: grid;
-  grid-template-columns: 32px 1fr auto;
+  grid-template-columns: 30px 1fr auto;
   gap: 14px;
   align-items: start;
   padding: 14px 0;
@@ -536,12 +654,45 @@ tbody tr.revocada {
   opacity: 0.55;
 }
 
+/* Flecha, número, flecha: el orden se cambia donde se ve, y el número queda
+   como referencia en lugar de como campo que haya que rellenar. */
+.skill-posicion {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+
+.flecha {
+  width: 26px;
+  height: 20px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+  transition:
+    color var(--transicion),
+    border-color var(--transicion);
+}
+
+.flecha:hover:not(:disabled) {
+  color: var(--color-primario);
+  border-color: var(--color-borde-fuerte);
+}
+
+.flecha:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .skill-orden {
   font-size: 13px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--color-texto-tenue);
-  padding-top: 2px;
 }
 
 .skill-nombre {

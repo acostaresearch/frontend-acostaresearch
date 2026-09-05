@@ -323,50 +323,129 @@
   <!-- ══ CAPÍTULOS ════════════════════════════════════════════════════════ -->
   @if (seccion() === 'skills') {
     <section class="tarjeta">
-      <h2>{{ editando() ? 'Editar ficha' : 'Añadir o actualizar un capítulo' }}</h2>
+      <h2>Publicar capítulos</h2>
       <p class="nota">
-        Sube el <code>.skill</code> tal cual: es la carpeta de la skill comprimida, con su
-        <code>SKILL.md</code> dentro. No hay que convertirlo a nada — el conector lee ese mismo
-        archivo. Si el código ya existe, se reemplaza y los tesistas ven la versión nueva en su
-        siguiente consulta.
+        Suelta los <code>.skill</code> tal cual: son las carpetas de las skills comprimidas, con su
+        <code>SKILL.md</code> dentro. No hay que convertirlos a nada — el conector lee ese mismo
+        archivo. Puedes soltar varios de una vez; se comprueban todos antes de guardar ninguno.
       </p>
 
-      @if (!editando()) {
-        <div class="campo">
-          <label for="bundle">Archivo .skill</label>
-          <input
-            id="bundle"
-            type="file"
-            accept=".skill,.zip,application/zip"
-            (change)="elegirArchivo($event)"
-            [disabled]="trabajando()"
-          />
-          <span class="ayuda">Máximo 15 MB. Se comprueba antes de guardarse.</span>
-        </div>
-      }
+      <label
+        class="soltar"
+        for="bundle"
+        [class.encima]="arrastrando()"
+        (dragover)="arrastrar($event, true)"
+        (dragleave)="arrastrar($event, false)"
+        (drop)="soltar($event)"
+      >
+        <input
+          id="bundle"
+          class="entrada-archivo"
+          type="file"
+          multiple
+          accept=".skill,.zip,application/zip"
+          (change)="elegirArchivos($event)"
+          [disabled]="publicando()"
+        />
+        <span class="soltar-titulo">Arrastra aquí tus archivos .skill</span>
+        <span class="soltar-ayuda">
+          o pulsa para elegirlos · puedes soltar los nueve de golpe · máximo 15 MB cada uno
+        </span>
+      </label>
 
-      @if (analisis(); as a) {
-        <div class="analisis" [class.reemplazo]="a.reemplaza">
-          <p class="analisis-titulo">
-            <code>{{ a.code }}</code>
-            @if (a.reemplaza) {
-              <span class="etiqueta aviso">Reemplaza a «{{ a.reemplaza.displayName }}»</span>
-            } @else {
-              <span class="etiqueta">Capítulo nuevo</span>
-            }
-          </p>
-          <ul class="analisis-datos">
-            <li><b>{{ a.pasos }}</b> pasos declarados</li>
-            <li><b>{{ a.archivos }}</b> archivos en el bundle</li>
-            <li><b>{{ a.skillMdBytes | number }}</b> bytes de método</li>
-          </ul>
-          @if (a.materiales.length > 0) {
-            <p class="nota">Materiales de apoyo: {{ a.materiales.join(', ') }}</p>
+      @if (cola().length > 0) {
+        <ul class="cola">
+          @for (item of cola(); track item.archivo) {
+            <li class="cola-fila" [class.fallida]="item.estado === 'error'">
+              <span class="cola-punto {{ item.estado }}" aria-hidden="true"></span>
+
+              <div class="cola-datos">
+                <p class="cola-nombre">
+                  @if (item.analisis; as a) {
+                    {{ a.reemplaza?.displayName ?? a.displayNameSugerido }}
+                    @if (a.reemplaza) {
+                      <span class="etiqueta aviso">reemplaza</span>
+                    } @else {
+                      <span class="etiqueta">nuevo</span>
+                    }
+                  } @else {
+                    {{ item.archivo.name }}
+                  }
+                </p>
+
+                @if (item.analisis; as a) {
+                  <p class="cola-meta">
+                    <code>{{ a.code }}</code>
+                    · {{ a.pasos }} pasos · {{ a.archivos }} archivos ·
+                    {{ a.skillMdBytes | number }} bytes
+                  </p>
+                } @else if (item.estado === 'analizando') {
+                  <p class="cola-meta">Comprobando {{ item.archivo.name }}…</p>
+                }
+
+                @if (item.error) {
+                  <p class="cola-error">{{ item.error }}</p>
+                }
+              </div>
+
+              <button
+                type="button"
+                class="boton enlace"
+                (click)="quitarDeCola(item)"
+                [disabled]="publicando()"
+              >
+                Quitar
+              </button>
+            </li>
           }
+        </ul>
+
+        @if (colaReemplazos() > 0) {
+          <p class="nota atencion">
+            {{ colaReemplazos() === 1 ? 'Uno de ellos pisa' : colaReemplazos() + ' de ellos pisan' }}
+            un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y
+            posición— y solo cambia el archivo.
+          </p>
+        }
+
+        <div class="acciones-formulario">
+          <button
+            type="button"
+            class="boton"
+            (click)="publicarCola()"
+            [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
+          >
+            @if (publicando()) {
+              Publicando…
+            } @else if (colaAnalizando()) {
+              Comprobando…
+            } @else {
+              Publicar {{ colaListas().length }}
+              {{ colaListas().length === 1 ? 'capítulo' : 'capítulos' }}
+            }
+          </button>
+          <button
+            type="button"
+            class="boton secundario"
+            (click)="vaciarCola()"
+            [disabled]="publicando()"
+          >
+            Vaciar
+          </button>
         </div>
       }
+    </section>
 
-      @if (analisis() || editando()) {
+    <!-- La ficha se edita en su propia tarjeta y solo cuando toca: el resto
+         del tiempo estorbaba entre la zona de subida y la lista. -->
+    @if (editando(); as enEdicion) {
+      <section class="tarjeta">
+        <h2>Editar «{{ enEdicion.displayName }}»</h2>
+        <p class="nota">
+          Cambia lo que lee el comprador. El archivo no se toca: para cambiarlo, vuelve a subir el
+          <code>.skill</code> arriba.
+        </p>
+
         <form [formGroup]="formSkill" class="formulario">
           <div class="campo">
             <label for="s-nombre">Nombre visible</label>
@@ -382,54 +461,61 @@
             </span>
           </div>
 
-          <div class="fila-doble">
-            <div class="campo">
-              <label for="s-orden">Orden</label>
-              <input id="s-orden" type="number" formControlName="orden" min="0" />
-              <span class="ayuda">Posición en el método.</span>
-            </div>
-
-            <label class="casilla">
-              <input type="checkbox" formControlName="active" />
-              <span>Visible en el conector</span>
-            </label>
-          </div>
+          <label class="casilla">
+            <input type="checkbox" formControlName="active" />
+            <span>Visible en el conector</span>
+          </label>
 
           <div class="acciones-formulario">
-            @if (editando()) {
-              <button type="button" class="boton" (click)="guardarFicha()" [disabled]="trabajando()">
-                Guardar ficha
-              </button>
-              <button type="button" class="boton secundario" (click)="editando.set(null)">
-                Cancelar
-              </button>
-            } @else {
-              <button type="button" class="boton" (click)="subirSkill()" [disabled]="trabajando()">
-                {{ analisis()?.reemplaza ? 'Reemplazar capítulo' : 'Publicar capítulo' }}
-              </button>
-              <button type="button" class="boton secundario" (click)="cancelarSubida()">
-                Descartar
-              </button>
-            }
+            <button type="button" class="boton" (click)="guardarFicha()" [disabled]="trabajando()">
+              Guardar
+            </button>
+            <button type="button" class="boton secundario" (click)="editando.set(null)">
+              Cancelar
+            </button>
           </div>
         </form>
-      }
-    </section>
+      </section>
+    }
 
     <section class="tarjeta">
       <h2>Capítulos publicados</h2>
       <p class="nota">
-        Los activos aparecen en <code>listar_capitulos</code> para todas las licencias, y en la
-        portada de la web.
+        @if (skills().length === 0) {
+          Los activos aparecen en <code>listar_capitulos</code> y en la web.
+        } @else {
+          {{ skills().length }} en total, {{ skillsVisibles() }} visibles en
+          <code>listar_capitulos</code> y en la web. Las flechas cambian el orden del método.
+        }
       </p>
 
       @if (skills().length === 0) {
         <p class="tenue">Todavía no hay ninguno.</p>
       } @else {
         <ul class="lista-skills">
-          @for (skill of skills(); track skill.id) {
+          @for (skill of skillsOrdenadas(); track skill.id; let primero = $first, ultimo = $last) {
             <li [class.inactiva]="!skill.active">
-              <span class="skill-orden">{{ skill.orden }}</span>
+              <div class="skill-posicion">
+                <button
+                  type="button"
+                  class="flecha"
+                  (click)="mover(skill, -1)"
+                  [disabled]="primero || trabajando()"
+                  [attr.aria-label]="'Subir ' + skill.displayName"
+                >
+                  ↑
+                </button>
+                <span class="skill-orden">{{ skill.orden }}</span>
+                <button
+                  type="button"
+                  class="flecha"
+                  (click)="mover(skill, 1)"
+                  [disabled]="ultimo || trabajando()"
+                  [attr.aria-label]="'Bajar ' + skill.displayName"
+                >
+                  ↓
+                </button>
+              </div>
 
               <div class="skill-datos">
                 <p class="skill-nombre">
@@ -450,14 +536,22 @@
                 <button type="button" class="boton enlace" (click)="editarSkill(skill)">
                   Editar
                 </button>
-                <button type="button" class="boton enlace" (click)="alternarSkill(skill)">
+                <button
+                  type="button"
+                  class="boton enlace"
+                  (click)="alternarSkill(skill)"
+                  [disabled]="trabajando()"
+                >
                   {{ skill.active ? 'Ocultar' : 'Mostrar' }}
                 </button>
-                @if (!skill.active) {
-                  <button type="button" class="boton enlace peligro" (click)="eliminarSkill(skill)">
-                    Quitar
-                  </button>
-                }
+                <button
+                  type="button"
+                  class="boton enlace peligro"
+                  (click)="eliminarSkill(skill)"
+                  [disabled]="trabajando()"
+                >
+                  Eliminar
+                </button>
               </div>
             </li>
           }
