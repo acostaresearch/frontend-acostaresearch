@@ -104,6 +104,17 @@
                 <span class="plan-detalle">{{ plan.description }}</span>
               }
               <span class="plan-unitario">Se conecta a tu propio Claude con una URL</span>
+
+              <!-- La tarjeta entera ya es pulsable; esto es para que se vea que
+                   lo es. Sin una llamada explícita, un recuadro con el precio
+                   se lee como información, no como el paso siguiente. -->
+              <span class="plan-accion">
+                @if (seleccionado()?.code === plan.code) {
+                  Elegido · elige abajo cómo pagar
+                } @else {
+                  Comprar por {{ precio(plan) }}
+                }
+              </span>
             </button>
           }
         }
@@ -134,9 +145,12 @@
         } -->
       </section>
 
-      <section class="panel pago">
+      <section class="panel pago" id="medios-de-pago">
         @if (seleccionado(); as plan) {
-          <h2>Resumen</h2>
+          <div class="pago-cabecera">
+            <h2>Resumen</h2>
+            <button type="button" class="enlace-quitar" (click)="cambiarPlan()">Cambiar</button>
+          </div>
           <dl class="resumen">
             <div>
               <dt>Producto</dt>
@@ -353,6 +367,22 @@
             @if (whatsappUrl) {
               <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
                 Escribir por WhatsApp
+              </a>
+            }
+          </div>
+        } @else {
+          <!-- Sin plan elegido no se enseña ni un medio de pago. La columna no
+               se queda vacía, pero tampoco finge ser un formulario. -->
+          <div class="pago-en-espera">
+            <p class="espera-titulo">Elige el método para ver cómo pagar</p>
+            <p class="tenue">
+              Aceptamos Yape, Plin y transferencia desde Perú, y PayPal desde el extranjero. Los
+              medios aparecen aquí en cuanto elijas.
+            </p>
+
+            @if (whatsappUrl) {
+              <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+                Tengo una duda antes de comprar
               </a>
             }
           </div>

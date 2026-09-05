@@ -1,0 +1,44 @@
+# Despliegue del frontend en Netlify.
+#
+# Lo que ponga aquí gana sobre lo que se escriba en el panel, así que la
+# configuración vive en el repositorio y no en una pantalla que nadie recuerda
+# haber tocado.
+
+[build]
+  command = "npm run build"
+  # Angular 17+ parte la salida en dos: `browser` (lo que va al navegador) y
+  # `prerendered-routes.json`. Publicar `dist/` a secas sirve una carpeta sin
+  # index.html y el sitio entero responde 404.
+  publish = "dist/acostaresearch-frontend/browser"
+
+[build.environment]
+  # Angular 22 exige Node 20 o más. Sin fijarlo, Netlify puede elegir uno más
+  # viejo y el build falla con un error que no dice que la causa sea la versión.
+  NODE_VERSION = "22"
+
+# ── La API ──────────────────────────────────────────────────────────────────
+#
+# El frontend llama a `/api/v1/...` en su propio dominio y Netlify lo reenvía al
+# backend. Se hace así, y no apuntando el frontend directamente al backend, por
+# la cookie de sesión: el refresh token viaja en una cookie httpOnly, y entre
+# dominios distintos haría falta SameSite=None + CORS con credenciales, que es
+# justo donde se rompen estas cosas. Con el proxy todo es del mismo origen.
+#
+# ⚠️ CAMBIA ESTA URL por la del backend ya desplegado. Mientras apunte a un
+# sitio que no existe, la web carga pero no habrá planes, ni login, ni capítulos.
+[[redirects]]
+  from = "/api/*"
+  to = "https://TU-BACKEND.example.com/api/:splat"
+  status = 200
+  force = true
+
+# ── Rutas de Angular ────────────────────────────────────────────────────────
+#
+# Va la última a propósito: cualquier petición que no sea un archivo real ni la
+# API devuelve el index.html para que el router de Angular resuelva. Sin esto,
+# entrar directo a /metodo o /privacidad —o recargar con F5— da 404, porque en
+# el servidor esas carpetas no existen.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

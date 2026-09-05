@@ -134,14 +134,21 @@ export class Checkout implements OnInit {
         const vendibles = planes.filter((plan) => plan.priceCents > 0);
         this.planes.set(vendibles);
 
-        // ?plan=CODIGO permite enlazar directo a un producto desde la portada.
+        // Nada queda seleccionado por defecto.
+        //
+        // Antes se elegía el método automáticamente y la página abría con todo
+        // desplegado: resumen, descuento, PayPal, el QR de Yape y el formulario
+        // del comprobante. Quien solo venía a mirar el precio se encontraba un
+        // formulario de pago encima, y el precio —que es lo que buscaba— quedaba
+        // sepultado. Ahora se elige primero y los medios de pago aparecen
+        // después.
+        //
+        // La excepción es ?plan=CODIGO: quien llega por ese enlace ya decidió,
+        // y hacerle pulsar otra vez sería un paso de más.
         const pedido = this.ruta.snapshot.queryParamMap.get('plan');
-        this.seleccionado.set(
-          vendibles.find((p) => p.code === pedido) ??
-            vendibles.find((p) => p.kind === 'LICENSE') ??
-            vendibles[0] ??
-            null,
-        );
+        const directo = pedido ? (vendibles.find((p) => p.code === pedido) ?? null) : null;
+        if (directo) this.seleccionado.set(directo);
+
         this.cargando.set(false);
       },
       error: (error: unknown) => {
@@ -151,10 +158,32 @@ export class Checkout implements OnInit {
     });
   }
 
+  /** Deshace la elección y vuelve a esconder los medios de pago. */
+  cambiarPlan(): void {
+    if (this.procesando() || this.enviandoComprobante()) return;
+
+    this.seleccionado.set(null);
+    this.quitarDescuento();
+    this.quitarCaptura();
+    this.comprobanteEnviado.set(null);
+    this.errorComprobante.set(null);
+    this.error.set(null);
+  }
+
   elegir(plan: Plan): void {
     if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
     this.seleccionado.set(plan);
+
+    // En móvil los medios de pago quedan bajo la tarjeta, fuera de pantalla:
+    // sin esto, pulsar «Comprar» no parece hacer nada. Se espera un cuadro
+    // para que el panel ya exista en el DOM cuando se busque.
+    requestAnimationFrame(() => {
+      document.getElementById('medios-de-pago')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();
     // Y la captura también: es el comprobante de OTRO importe.

@@ -1,52 +1,104 @@
-/* Documento legal: una sola columna estrecha y mucho aire. Se lee entero de
-   arriba abajo, no se escanea, así que manda la longitud de línea. */
+/* =========================================================
+   POLÍTICA DE PRIVACIDAD
+   Diseño limpio, profesional y cómodo para lectura larga
+   ========================================================= */
 
 .legal {
-  max-width: 68ch;
+  width: min(100% - 32px, 820px);
   margin: 0 auto;
-  padding: 56px 0 72px;
+  padding: 64px 0 80px;
+}
+
+/* ---------- Encabezado ---------- */
+
+.legal > header {
+  text-align: center;
+  margin-bottom: 38px;
 }
 
 .legal h1 {
-  margin: 0 0 8px;
-  font-size: clamp(30px, 4vw, 40px);
+  margin: 0 0 10px;
+  font-size: clamp(32px, 5vw, 46px);
   font-weight: 750;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
   color: var(--color-texto);
 }
 
 .actualizacion {
-  margin: 0 0 24px;
-  font-size: 13px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-texto-tenue);
 }
 
+/* ---------- Contenido introductorio ---------- */
+
 .entradilla {
-  margin: 0 0 8px;
-  padding-bottom: 28px;
-  font-size: 16.5px;
-  line-height: 1.7;
+  margin: 30px 0 0;
+  padding: 24px 28px;
+  font-size: 16px;
+  line-height: 1.75;
+  text-align: left;
   color: var(--color-texto-suave);
+  background: color-mix(
+    in srgb,
+    var(--color-primario) 5%,
+    transparent
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--color-primario) 14%,
+    var(--color-borde)
+  );
+  border-radius: 14px;
+}
+
+/* ---------- Secciones ---------- */
+
+.legal section {
+  padding: 30px 0;
   border-bottom: 1px solid var(--color-borde);
 }
 
-.legal section {
-  padding-top: 30px;
+.legal section:first-of-type {
+  padding-top: 8px;
+}
+
+.legal section:last-of-type {
+  border-bottom: none;
 }
 
 .legal h2 {
-  margin: 0 0 12px;
-  font-size: 19px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0 0 14px;
+
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
   color: var(--color-texto);
 }
 
+.legal h2::before {
+  content: "";
+  width: 4px;
+  height: 22px;
+  flex: 0 0 4px;
+
+  border-radius: 999px;
+  background: var(--color-primario);
+}
+
+/* ---------- Párrafos ---------- */
+
 .legal p {
-  margin: 0 0 14px;
+  margin: 0 0 15px;
   font-size: 15.5px;
-  line-height: 1.72;
+  line-height: 1.78;
   color: var(--color-texto-suave);
 }
 
@@ -54,34 +106,223 @@
   margin-bottom: 0;
 }
 
+/* ---------- Listas ---------- */
+
 .legal ul {
-  margin: 0 0 14px;
-  padding-left: 20px;
+  margin: 0 0 16px;
+  padding-left: 24px;
 }
 
 .legal li {
-  margin-bottom: 9px;
+  margin-bottom: 10px;
+  padding-left: 4px;
+
   font-size: 15.5px;
   line-height: 1.7;
   color: var(--color-texto-suave);
 }
 
-/* La frase que más importa de toda la política. */
-.remate {
-  font-weight: 600;
-  color: var(--color-texto) !important;
+.legal li:last-child {
+  margin-bottom: 0;
 }
+
+.legal li::marker {
+  color: var(--color-primario);
+  font-size: 0.9em;
+}
+
+/* ---------- Enlaces ---------- */
 
 .legal a {
   color: var(--color-primario);
+  font-weight: 600;
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
+
+.legal a:hover {
+  opacity: 0.78;
+  text-decoration: underline;
+}
+
+/* ---------- Frase destacada ---------- */
+
+.remate {
+  margin-top: 20px !important;
+  padding: 16px 18px;
+
+  font-weight: 650;
+  line-height: 1.6 !important;
+
+  color: var(--color-texto) !important;
+
+  background: color-mix(
+    in srgb,
+    var(--color-primario) 6%,
+    transparent
+  );
+
+  border-left: 3px solid var(--color-primario);
+  border-radius: 0 10px 10px 0;
+}
+
+/* ---------- Footer de la política ---------- */
 
 .pie-legal {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
   align-items: center;
-  margin-top: 44px;
-  padding-top: 28px;
+
+  gap: 12px;
+
+  margin-top: 30px;
+  padding-top: 30px;
+
   border-top: 1px solid var(--color-borde);
+}
+
+/* ---------- Botones ---------- */
+
+.pie-legal .boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 44px;
+  padding: 10px 18px;
+
+  border-radius: 9px;
+
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.pie-legal .boton:hover {
+  opacity: 1;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.pie-legal .boton:active {
+  transform: translateY(0);
+}
+
+/* Botón principal */
+
+.pie-legal .secundario {
+  color: #fff;
+  background: var(--color-primario);
+
+  box-shadow:
+    0 4px 12px color-mix(
+      in srgb,
+      var(--color-primario) 20%,
+      transparent
+    );
+}
+
+.pie-legal .secundario:hover {
+  box-shadow:
+    0 6px 16px color-mix(
+      in srgb,
+      var(--color-primario) 28%,
+      transparent
+    );
+}
+
+/* Botón secundario */
+
+.pie-legal .enlace {
+  color: var(--color-texto);
+  background: transparent;
+  border: 1px solid var(--color-borde);
+}
+
+.pie-legal .enlace:hover {
+  background: color-mix(
+    in srgb,
+    var(--color-texto) 4%,
+    transparent
+  );
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .legal {
+    width: min(100% - 24px, 820px);
+    padding: 42px 0 56px;
+  }
+
+  .legal > header {
+    margin-bottom: 28px;
+  }
+
+  .legal h1 {
+    font-size: clamp(30px, 9vw, 38px);
+  }
+
+  .entradilla {
+    margin-top: 24px;
+    padding: 20px;
+    font-size: 15.5px;
+    line-height: 1.7;
+  }
+
+  .legal section {
+    padding: 25px 0;
+  }
+
+  .legal h2 {
+    font-size: 18px;
+  }
+
+  .legal p,
+  .legal li {
+    font-size: 15px;
+    line-height: 1.72;
+  }
+
+  .legal ul {
+    padding-left: 21px;
+  }
+
+  .pie-legal {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pie-legal .boton {
+    width: 100%;
+  }
+}
+
+/* ---------- Pantallas muy pequeñas ---------- */
+
+@media (max-width: 400px) {
+  .legal {
+    width: min(100% - 20px, 820px);
+    padding-top: 34px;
+  }
+
+  .entradilla {
+    padding: 17px;
+  }
+
+  .legal h2 {
+    font-size: 17px;
+  }
 }
