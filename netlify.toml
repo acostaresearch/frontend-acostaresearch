@@ -45,11 +45,15 @@
 # dominios distintos haría falta SameSite=None + CORS con credenciales, que es
 # justo donde se rompen estas cosas. Con el proxy todo es del mismo origen.
 #
-# ⚠️ CAMBIA ESTA URL por la del backend ya desplegado. Mientras apunte a un
-# sitio que no existe, la web carga pero no habrá planes, ni login, ni capítulos.
+# El backend vive en un servidor propio (Hetzner, Núremberg), junto a la base de
+# datos de Clever Cloud (París): así una petición no cruza el Atlántico una vez
+# por cada consulta a la base, que es lo que pasaba con el backend en local.
+#
+# PROVISIONAL: sslip.io resuelve el nombre a partir de la IP del servidor.
+# Cuando haya dominio propio, se cambia aquí y en MCP_PUBLIC_URL del backend.
 [[redirects]]
   from = "/api/*"
-  to = "https://TU-BACKEND.example.com/api/:splat"
+  to = "https://2-28-64-216.sslip.io/api/:splat"
   status = 200
   force = true
 
