@@ -86,6 +86,33 @@ const REDES = {
   ),
 };
 
+/**
+ * La guía de instalación en PDF.
+ *
+ * Se detecta sola: si el archivo está en `public/guias/`, el enlace aparece en
+ * la web; si no está, no aparece. No hay nada que configurar — se suelta el PDF
+ * en su carpeta y en el siguiente build ya se ofrece.
+ *
+ * Es así y no un enlace fijo por una razón concreta: Netlify devuelve el
+ * index.html para cualquier ruta que no exista, así que un enlace a un PDF que
+ * todavía no está no da un 404 honesto, sino que le descarga al comprador la
+ * portada de la web con extensión .pdf. Mejor que no haya botón a que haya uno
+ * que entrega basura, y menos en la pantalla en la que acaba de pagar.
+ *
+ * GUIA_URL en el entorno gana: sirve para apuntar a un Drive o a un CDN sin
+ * meter el archivo en el repositorio.
+ */
+const GUIA_LOCAL = 'guias/guia-instalacion.pdf';
+
+function rutaGuia() {
+  const configurada = v('GUIA_URL');
+  if (configurada) return configurada;
+
+  return fs.existsSync(path.join(RAIZ, 'public', GUIA_LOCAL)) ? `/${GUIA_LOCAL}` : '';
+}
+
+const GUIA = rutaGuia();
+
 /** `JSON.stringify` escapa comillas y acentos sin que haya que pensarlo. */
 const s = (valor) => JSON.stringify(valor);
 
@@ -119,6 +146,8 @@ export const environment = {
   googleClientId: ${s(googleClientId)},
   /** Client ID de PayPal. Vacío = no se muestra el botón y la venta sigue siendo manual. */
   paypalClientId: ${s(v('PAYPAL_CLIENT_ID'))},
+  /** Guía de instalación en PDF. Vacío = no se ofrece la descarga. */
+  guiaUrl: ${s(GUIA)},
 };
 `;
 }
@@ -151,3 +180,4 @@ console.log(`environments generados desde ${origen}`);
 console.log(`  api           ${v('API_URL', '/api/v1')}`);
 console.log(`  google        ${v('GOOGLE_CLIENT_ID') || '(sin configurar)'}`);
 console.log(`  paypal        ${v('PAYPAL_CLIENT_ID') ? 'configurado' : '(sin configurar)'}`);
+console.log(`  guía PDF      ${GUIA || '(no encontrada en public/' + GUIA_LOCAL + ')'}`);

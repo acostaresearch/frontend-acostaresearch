@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
 import { License, Payment } from '../../core/models/payment.model';
 import { Balance } from '../../core/models/rewrite.model';
@@ -88,6 +89,28 @@ export class Perfil implements OnInit {
 
   // ── Licencias del conector ───────────────────────────────────────────────
   readonly misLicencias = signal<License[]>([]);
+
+  /**
+   * Guía de instalación en PDF. Cadena vacía = el archivo no está y no se
+   * ofrece la descarga; lo resuelve el generador de environments al compilar.
+   */
+  readonly guiaUrl = environment.guiaUrl;
+
+  /**
+   * ¿Tiene acceso pagado y vigente?
+   *
+   * No basta con que exista una fila de licencia: una revocada o una caducada
+   * también aparecen ahí, y a quien está en cualquiera de esos dos casos no se
+   * le ofrece la guía de instalación. Lo que necesita es renovar o escribirnos,
+   * no un manual para conectar algo que ya no le va a responder.
+   */
+  readonly tieneAccesoVigente = computed(() =>
+    this.misLicencias().some(
+      (licencia) =>
+        licencia.status === 'ACTIVE' &&
+        (licencia.expiresAt === null || new Date(licencia.expiresAt) > new Date()),
+    ),
+  );
   /** URL recién generada. Solo se puede mostrar en el momento de crearla. */
   readonly urlNueva = signal<string | null>(null);
   readonly rotando = signal<string | null>(null);

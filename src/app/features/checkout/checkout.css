@@ -947,3 +947,74 @@ h1 {
   border-color: var(--color-primario);
   box-shadow: var(--sombra);
 }
+
+/* ── Guía de instalación en PDF ────────────────────────────────────────────
+ *
+ * Va después de los tres pasos, no antes: quien puede seguirlos en pantalla
+ * ya ha terminado, y el PDF es para quien se atasca o lo quiere a mano. Se
+ * pinta como una fila y no como un botón grande para no competir con la URL
+ * del conector, que es lo que de verdad hay que copiar ahora.
+ */
+.guia {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.guia:hover {
+  border-color: var(--color-primario);
+  background: var(--color-superficie);
+}
+
+.guia-icono {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.guia-texto {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.guia-texto strong {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.guia-texto span {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.guia-accion {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+@media (max-width: 520px) {
+  /* En pantalla estrecha, «Descargar» debajo del texto en vez de comprimirlo. */
+  .guia {
+    flex-wrap: wrap;
+  }
+
+  .guia-accion {
+    width: 100%;
+    padding-left: 36px;
+  }
+}

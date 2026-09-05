@@ -212,6 +212,25 @@
             </li>
           }
         </ul>
+
+        <!-- La guía, debajo de la licencia y solo para quien tiene acceso
+             vigente: es material del producto, no un folleto.
+             Una licencia revocada o caducada no la ve — a quien está en ese
+             caso lo que le hace falta es renovar, no un manual para conectar
+             algo que ya no le va a responder.
+             Y solo aparece si el PDF existe de verdad: lo comprueba el build,
+             porque un enlace a un PDF ausente descargaría la portada de la web
+             con extensión .pdf en vez de dar un error honesto. -->
+        @if (guiaUrl && tieneAccesoVigente()) {
+          <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
+            <span class="guia-icono" aria-hidden="true">📄</span>
+            <span class="guia-texto">
+              <strong>Guía de instalación en PDF</strong>
+              <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
+            </span>
+            <span class="guia-accion">Descargar</span>
+          </a>
+        }
       } @else {
         <p class="nota">
           Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y

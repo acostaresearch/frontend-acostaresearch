@@ -49,11 +49,9 @@
 # datos de Clever Cloud (París): así una petición no cruza el Atlántico una vez
 # por cada consulta a la base, que es lo que pasaba con el backend en local.
 #
-# PROVISIONAL: sslip.io resuelve el nombre a partir de la IP del servidor.
-# Cuando haya dominio propio, se cambia aquí y en MCP_PUBLIC_URL del backend.
 [[redirects]]
   from = "/api/*"
-  to = "https://2-28-64-216.sslip.io/api/:splat"
+  to = "https://api.acostaresearch.com/api/:splat"
   status = 200
   force = true
 
