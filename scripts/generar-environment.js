@@ -116,7 +116,7 @@ const GUIA = rutaGuia();
 /** `JSON.stringify` escapa comillas y acentos sin que haya que pensarlo. */
 const s = (valor) => JSON.stringify(valor);
 
-function contenido({ produccion, apiUrl, googleClientId }) {
+function contenido({ produccion, apiUrl, googleClientId, paypalClientId }) {
   const cabecera = produccion
     ? '/** Configuración de producción. La reemplaza `environment.development.ts` al servir en local. */'
     : '/** Configuración de desarrollo. */';
@@ -145,7 +145,7 @@ export const environment = {
   /** Client ID de Google. Vacío = no se muestra el botón de «Continuar con Google». */
   googleClientId: ${s(googleClientId)},
   /** Client ID de PayPal. Vacío = no se muestra el botón y la venta sigue siendo manual. */
-  paypalClientId: ${s(v('PAYPAL_CLIENT_ID'))},
+  paypalClientId: ${s(paypalClientId)},
   /** Guía de instalación en PDF. Vacío = no se ofrece la descarga. */
   guiaUrl: ${s(GUIA)},
 };
@@ -163,6 +163,7 @@ fs.writeFileSync(
     // sin necesitar SameSite=None ni CORS con credenciales.
     apiUrl: v('API_URL', '/api/v1'),
     googleClientId: v('GOOGLE_CLIENT_ID'),
+    paypalClientId: v('PAYPAL_CLIENT_ID'),
   }),
 );
 
@@ -172,6 +173,10 @@ fs.writeFileSync(
     produccion: false,
     apiUrl: vDev('API_URL', 'http://localhost:3000/api/v1'),
     googleClientId: vDev('GOOGLE_CLIENT_ID'),
+    // Con PAYPAL_CLIENT_ID en producción apuntando a la cuenta real, trabajar
+    // en local con ese mismo identificador significaría enseñar botones que
+    // cobran de verdad. La variante _DEV mantiene el sandbox separado.
+    paypalClientId: vDev('PAYPAL_CLIENT_ID'),
   }),
 );
 
