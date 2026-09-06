@@ -822,7 +822,7 @@ h1 {
 }
 
 .tarjeta-rotulo {
-  /*  arriba: empuja el bloque de ventajas al fondo de la tarjeta, que es
+  /* Margen superior automático: empuja el bloque de ventajas al fondo, que es
      lo que alinea el pie de todas las de una fila. */
   margin: auto 0 10px;
   padding-top: 22px;
