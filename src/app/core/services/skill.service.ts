@@ -68,10 +68,18 @@ export class SkillService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/skills`;
 
-  /** Público: no hace falta sesión para ver qué capítulos hay. */
-  catalogo(): Observable<SkillPublica[]> {
+  /**
+   * Público: no hace falta sesión para ver qué capítulos hay.
+   *
+   * Con `grupo`, solo los de ese producto. Sin él vienen todos, y eso en una
+   * página de venta es un revoltijo: quien mira el método de tesis no tiene por
+   * qué leer las fases del artículo científico.
+   */
+  catalogo(grupo?: string): Observable<SkillPublica[]> {
+    const params = grupo ? new HttpParams().set('grupo', grupo) : undefined;
+
     return this.http
-      .get<ApiResponse<{ skills: SkillPublica[] }>>(`${this.base}/catalogo`)
+      .get<ApiResponse<{ skills: SkillPublica[] }>>(`${this.base}/catalogo`, { params })
       .pipe(map((res) => res.data.skills));
   }
 

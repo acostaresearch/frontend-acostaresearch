@@ -7,6 +7,19 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 /**
+ * El producto que vende esta página.
+ *
+ * Sin filtro, el catálogo devuelve TODOS los capítulos de la casa, y esta
+ * página acababa listando el humanizador y las diez fases del artículo
+ * científico debajo de las nueve del método: la página se llama «Las 9 Skills»
+ * y enseñaba veinte.
+ *
+ * Va aquí y no en el servidor porque es una decisión de esta página, no del
+ * catálogo. El día que el artículo científico tenga la suya, pedirá su grupo.
+ */
+const GRUPO_DEL_METODO = 'METODO_9_SKILLS';
+
+/**
  * El método: los capítulos publicados, uno por uno.
  *
  * La lista sale del catálogo de la API y no de un array escrito aquí: cuando
@@ -44,7 +57,7 @@ export class Metodo implements OnInit {
   );
 
   ngOnInit(): void {
-    this.skillsApi.catalogo().subscribe({
+    this.skillsApi.catalogo(GRUPO_DEL_METODO).subscribe({
       next: (skills) => {
         this.publicadas.set(skills);
         this.cargando.set(false);
