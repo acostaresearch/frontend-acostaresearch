@@ -1906,6 +1906,49 @@ export class Admin implements OnInit {
     });
   }
 
+  /** Qué código se está borrando, para bloquear solo esa fila. */
+  readonly borrandoDescuento = signal<string | null>(null);
+
+  /**
+   * Borra un código promocional de la lista.
+   *
+   * Convive con «Apagar» porque no son lo mismo: una promoción que puede volver
+   * se apaga, y una que se escribió mal o que ya no se repetirá estorba en la
+   * lista para siempre.
+   *
+   * Uno ya canjeado se puede borrar igual, pero se avisa: la rebaja sigue
+   * guardada dentro del pago —las cuentas no se mueven— y lo que se pierde es
+   * saber con qué código se consiguió.
+   */
+  async eliminarDescuento(descuento: CodigoDescuento): Promise<void> {
+    const usado = descuento.usedCount > 0;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Borrar «${descuento.code}»`,
+      mensaje: usado
+        ? `Se canjeó ${descuento.usedCount} ${descuento.usedCount === 1 ? 'vez' : 'veces'}. ` +
+          'Esas ventas conservan su rebaja y su importe; lo que se pierde es saber ' +
+          'que vinieron de este código.'
+        : 'Nunca se ha canjeado, así que no arrastra nada.',
+      nota: 'Si es una promoción que puede volver, «Apagar» la deja lista sin borrarla.',
+      confirmar: 'Borrar el código',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoDescuento.set(descuento.id);
+    this.admin.eliminarDescuento(descuento.id).subscribe({
+      next: () => {
+        this.descuentos.update((lista) => lista.filter((d) => d.id !== descuento.id));
+        this.borrandoDescuento.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoDescuento.set(null);
+      },
+    });
+  }
+
   async copiarDescuento(code: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(code);

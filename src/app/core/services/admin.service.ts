@@ -151,6 +151,18 @@ export class AdminService {
       .pipe(map((res) => res.data.discount));
   }
 
+  /**
+   * Lo borra de verdad. Para una promoción que puede volver está «Apagar».
+   *
+   * La rebaja que ya concedió vive dentro del pago, así que las cuentas no se
+   * mueven: lo que se pierde es con qué código se consiguió.
+   */
+  eliminarDescuento(id: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(`${this.facturacion}/discounts/${id}`)
+      .pipe(map(() => undefined));
+  }
+
   // ── Pagos ──────────────────────────────────────────────────────────────
 
   pagosRecientes(): Observable<PagoAdmin[]> {

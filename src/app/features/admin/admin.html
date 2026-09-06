@@ -1570,6 +1570,14 @@
                     >
                       {{ promo.active ? 'Apagar' : 'Encender' }}
                     </button>
+                    <button
+                      type="button"
+                      class="enlace-peligro"
+                      [disabled]="borrandoDescuento() === promo.id"
+                      (click)="eliminarDescuento(promo)"
+                    >
+                      {{ borrandoDescuento() === promo.id ? 'Borrando…' : 'Eliminar' }}
+                    </button>
                   </td>
                 </tr>
               }
