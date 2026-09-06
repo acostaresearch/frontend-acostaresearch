@@ -331,15 +331,46 @@ tbody tr.revocada {
   background: var(--color-aviso-suave);
 }
 
-/* ── Acciones en línea ──────────────────────────────────────────────────── */
-.enlace,
-.enlace-peligro {
-  padding: 0;
+/* ── Acciones de una fila ──────────────────────────────────────────────────
+ *
+ * Eran texto plano sin separación, así que en una tabla se leían pegadas:
+ * «EditarRetirarEliminar». Ahora cada una es una pastilla con su propio hueco
+ * y su zona de pulsación, que además importa en el móvil: 13 px de texto sin
+ * relleno son un objetivo diminuto para un dedo.
+ *
+ * Se quedan discretas —sin fondo hasta que el puntero encima— porque son
+ * acciones secundarias dentro de una tabla; el botón principal de cada sección
+ * sigue siendo el sólido de arriba.
+ */
+/* Se excluye lo que ya es un botón sólido: en «Capítulos» hay uno que combina
+   ambas clases y no debe convertirse en pastilla. */
+.enlace:not(.boton),
+.enlace-peligro:not(.boton) {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
   font: inherit;
   font-size: 13px;
+  line-height: 1.2;
   background: none;
-  border: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--transicion),
+    border-color var(--transicion),
+    color var(--transicion);
+}
+
+/* El hueco entre acciones consecutivas. Va con el selector de hermanos y no
+   con `gap` para no tener que envolver cada grupo en un contenedor: las
+   acciones cuelgan sueltas de la celda en todas las tablas del panel. */
+.enlace + .enlace,
+.enlace + .enlace-peligro,
+.enlace-peligro + .enlace,
+.enlace-peligro + .enlace-peligro {
+  margin-left: 4px;
 }
 
 .enlace {
@@ -350,9 +381,25 @@ tbody tr.revocada {
   color: var(--color-error);
 }
 
-.enlace:hover,
-.enlace-peligro:hover {
-  text-decoration: underline;
+.enlace:hover:not(:disabled) {
+  background: var(--color-primario-suave);
+  border-color: #cfdcf9;
+}
+
+.enlace-peligro:hover:not(:disabled) {
+  background: var(--color-error-suave);
+  border-color: #f5cccc;
+}
+
+.enlace:disabled,
+.enlace-peligro:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* La celda de acciones no parte los botones en dos líneas por una palabra. */
+td.acciones {
+  white-space: nowrap;
 }
 
 /* ── Alertas ────────────────────────────────────────────────────────────── */
@@ -1006,12 +1053,6 @@ tbody tr.revocada {
   max-width: 62ch;
 }
 
-/* Borrar es el único de los tres botones de fila que no tiene vuelta atrás,
-   así que se distingue del resto. */
-.enlace.peligro {
-  color: var(--color-error);
-}
-
 .boton.destructivo {
   background: var(--color-error);
   border-color: var(--color-error);
@@ -1037,11 +1078,14 @@ tbody tr.revocada {
   list-style: none;
   margin: 4px 0 6px;
   padding: 0;
+  /* Sin esto la lista no puede encogerse dentro del campo —que es una rejilla—
+     y su contenido desborda a lo ancho en vez de partirse. */
+  min-width: 0;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
-  /* Con nueve capítulos cabe entero; con treinta, esto evita que el formulario
+  /* Con nueve capítulos cabe entera; con treinta, esto evita que el formulario
      se estire hasta dejar el botón de guardar fuera de la pantalla. */
-  max-height: 280px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
@@ -1051,9 +1095,9 @@ tbody tr.revocada {
 
 .capitulo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 10px 12px;
   cursor: pointer;
   font-weight: 400;
   transition: background var(--transicion);
@@ -1065,22 +1109,58 @@ tbody tr.revocada {
 
 .capitulo input[type='checkbox'] {
   flex: none;
-  margin: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  cursor: pointer;
 }
 
+/* El texto ocupa lo que queda y puede encogerse. Sin `min-width: 0`, un
+   elemento flexible se niega a bajar del ancho de su contenido, y el nombre del
+   capítulo acababa partido letra a letra en una columna. */
 .capitulo-texto {
   flex: 1;
   min-width: 0;
-  font-size: 0.92rem;
-  line-height: 1.4;
+  display: grid;
+  gap: 3px;
 }
 
-/* Que un capítulo pertenezca a otro grupo se avisa en ámbar: marcarlo no lo
-   copia, lo mueve. */
+.capitulo-nombre {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-texto);
+}
+
+/* El código y las etiquetas van debajo del nombre y se reparten en varias
+   líneas si hace falta. Antes competían con el nombre por el mismo ancho, y
+   como una pastilla no se parte, ganaba siempre la pastilla. */
+.capitulo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Marcado = va dentro del grupo. Se resalta la fila entera para poder ver de un
+   vistazo qué lleva el producto, sin repasar casilla por casilla. */
+.capitulo:has(input:checked) {
+  background: var(--color-primario-suave);
+}
+
+.capitulo:has(input:checked) .capitulo-nombre {
+  color: var(--color-primario-oscuro);
+}
+
+/* Que un capítulo pertenezca ya a otro grupo se avisa en ámbar: marcarlo aquí
+   no lo copia, lo mueve. */
 .pastilla.aviso-mover {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: var(--color-aviso-suave);
   color: var(--color-aviso);
-  flex: none;
 }
 
 .capitulos-grupo {

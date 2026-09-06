@@ -487,19 +487,10 @@
 
   <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
   @if (seccion() === 'grupos') {
+    <!-- La tabla va primero y la explicación debajo, con el botón de crear.
+         Quien entra aquí viene a mirar qué hay vendiéndose; el texto explica
+         qué es un grupo y eso solo hace falta leerlo una vez. -->
     <section class="tarjeta">
-      <div class="cabecera-seccion">
-        <div>
-          <h2>Grupos</h2>
-          <p class="nota">
-            Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es
-            uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia
-            solo ve los capítulos de <b>su</b> grupo.
-          </p>
-        </div>
-        <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
-      </div>
-
       @if (grupos().length === 0) {
         <p class="tenue">Todavía no hay ninguno.</p>
       } @else {
@@ -558,7 +549,7 @@
                          que no tiene vuelta atrás. -->
                     <button
                       type="button"
-                      class="enlace peligro"
+                      class="enlace-peligro"
                       (click)="pedirBorrarGrupo(grupo)"
                       [disabled]="trabajando()"
                     >
@@ -571,6 +562,20 @@
           </table>
         </div>
       }
+    </section>
+
+    <section class="tarjeta">
+      <div class="cabecera-seccion">
+        <div>
+          <h2>Grupos</h2>
+          <p class="nota">
+            Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es
+            uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia
+            solo ve los capítulos de <b>su</b> grupo.
+          </p>
+        </div>
+        <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
+      </div>
     </section>
 
     <!-- ── Ventana de crear/editar ─────────────────────────────────────────
@@ -698,18 +703,23 @@
                             (change)="alternarCapitulo(skill.id)"
                           />
                           <span class="capitulo-texto">
-                            <b>{{ skill.displayName }}</b>
-                            <span class="bloque mono tenue">{{ skill.code }}</span>
+                            <span class="capitulo-nombre">{{ skill.displayName }}</span>
+                            <span class="capitulo-meta">
+                              <span class="mono tenue">{{ skill.code }}</span>
+                              <!-- Marcarlo aquí lo MUEVE: un capítulo pertenece a
+                                   un grupo y solo a uno. Sin este aviso, añadirlo
+                                   a un producto se lo quitaría a otro sin que se
+                                   viera. Va en su propia línea porque el nombre
+                                   de un grupo es largo y, en la misma fila,
+                                   aplastaba el del capítulo. -->
+                              @if (grupoDe(skill.productCode); as otro) {
+                                <span class="pastilla aviso-mover">ahora en {{ otro }}</span>
+                              }
+                              @if (!skill.active) {
+                                <span class="pastilla">oculto</span>
+                              }
+                            </span>
                           </span>
-                          <!-- Marcarlo aquí lo MUEVE: un capítulo pertenece a un
-                               grupo y solo a uno. Sin este aviso, añadirlo a un
-                               producto se lo quitaría a otro sin que se viera. -->
-                          @if (grupoDe(skill.productCode); as otro) {
-                            <span class="pastilla aviso-mover">ahora en «{{ otro }}»</span>
-                          }
-                          @if (!skill.active) {
-                            <span class="pastilla">oculto</span>
-                          }
                         </label>
                       </li>
                     }
