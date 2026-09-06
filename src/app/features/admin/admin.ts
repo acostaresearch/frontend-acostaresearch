@@ -21,6 +21,7 @@ import {
 } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
@@ -189,6 +190,10 @@ export class Admin implements OnInit {
   private readonly fondo = inject(FondoService);
   private readonly payments = inject(PaymentService);
   private readonly usuariosApi = inject(UserService);
+  private readonly auth = inject(AuthService);
+
+  /** La cuenta con la que se está administrando ahora mismo. */
+  readonly yo = this.auth.user;
 
   readonly metodos = METODOS;
   readonly seccion = signal<Seccion>('accesos');
@@ -766,6 +771,12 @@ export class Admin implements OnInit {
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
+
+    // La ficha de «Datos de la cuenta» sale de la sesión, y la sesión se llenó al
+    // entrar: el último acceso o la verificación pueden haber cambiado desde
+    // otro dispositivo. Se vuelve a pedir para no enseñar algo viejo como si
+    // fuera de ahora. Si falla, se queda lo que ya había.
+    this.usuariosApi.me().subscribe({ next: (usuario) => this.auth.setUser(usuario) });
 
     // El precio de PayPal se enseña mientras se teclea el de soles. El
     // componente vive lo que la página, así que no hace falta soltar esto.

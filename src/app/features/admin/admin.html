@@ -1547,6 +1547,65 @@
        Tres cosas que van juntas porque se hacen desde el mismo sitio: tus
        propios datos, quién más entra al panel, y quién está registrado. -->
   @if (seccion() === 'cuentas') {
+    <!-- Lo que hay registrado de ti, siempre a la vista y fuera de las pestañas.
+         Es de consulta, no de edición: mirarlo no debería costar un clic, y
+         además da contexto a lo que hay debajo —quién eres y con qué rol estás
+         mirando esta pantalla—. Al administrador le importa porque su barra ya
+         no le lleva a su perfil: entra a «Administrar». -->
+    @if (yo(); as user) {
+      <section class="tarjeta">
+        <h2>Datos de la cuenta</h2>
+        <p class="nota">Lo que hay registrado de ti, para consultarlo de un vistazo.</p>
+
+        <dl class="datos">
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ user.firstName }}</dd>
+          </div>
+          <div>
+            <dt>Apellidos</dt>
+            <dd>{{ user.lastName }}</dd>
+          </div>
+          <div>
+            <dt>Correo</dt>
+            <dd>{{ user.email }}</dd>
+          </div>
+          <div>
+            <dt>Rol</dt>
+            <dd>{{ rolUsuario(user.role) }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ estadoUsuario(user.status) }}</dd>
+          </div>
+          <div>
+            <dt>Verificación</dt>
+            <dd>
+              @if (user.emailVerifiedAt) {
+                {{ user.emailVerifiedAt | date: 'd MMM y' }}
+              } @else {
+                Pendiente
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Miembro desde</dt>
+            <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
+          </div>
+          <div>
+            <dt>Último acceso</dt>
+            <dd>
+              @if (user.lastLoginAt) {
+                {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
+              } @else {
+                Este es tu primer acceso
+              }
+            </dd>
+          </div>
+        </dl>
+      </section>
+    }
+
     <!-- Sub-pestañas, no cuatro tarjetas apiladas: cambiar tu contraseña y
          revisar quién está registrado no se hacen en el mismo rato, y juntas
          obligaban a bajar por las tres que no interesan. -->
