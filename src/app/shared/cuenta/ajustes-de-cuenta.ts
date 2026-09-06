@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { mensajeDeError } from '../../core/http/api-error';
@@ -33,6 +33,16 @@ export class AjustesDeCuenta {
   private readonly fb = inject(FormBuilder);
   private readonly usuarios = inject(UserService);
   private readonly auth = inject(AuthService);
+
+  /**
+   * Qué mitad se pinta: los datos o la contraseña.
+   *
+   * Las pestañas las pone quien usa el componente, no él. Si las llevara dentro,
+   * el perfil acabaría con pestañas dentro de pestañas —y una de fuera y otra de
+   * dentro llamadas igual—, y el panel tendría que fingir que «Administradores»
+   * es un ajuste de cuenta para que cupiera en la misma fila.
+   */
+  readonly panel = input<'datos' | 'clave'>('datos');
 
   readonly usuario = this.auth.user;
 
@@ -76,6 +86,15 @@ export class AjustesDeCuenta {
   /** Los valores del formulario como señal, para poder derivar de ellos. */
   private readonly valoresDeClave = signal({ newPassword: '', repetida: '' });
 
+  /**
+   * Lo escrito en el formulario de datos, como señal.
+   *
+   * Existe porque `formDatos.dirty` NO es una señal: un `computed` que lo leyera
+   * se calcularía una vez, daría false y no se volvería a enterar de nada. Ese
+   * fue exactamente el fallo que dejaba «Guardar cambios» apagado para siempre.
+   */
+  private readonly valoresDatos = signal({ firstName: '', lastName: '' });
+
   constructor() {
     // Los datos del formulario salen del usuario en sesión, y se vuelven a poner
     // cada vez que cambia: si otra pantalla lo actualiza, esto no se queda atrás.
@@ -86,15 +105,34 @@ export class AjustesDeCuenta {
         { firstName: user.firstName, lastName: user.lastName },
         { emitEvent: false },
       );
+      // `emitEvent: false` no dispara `valueChanges`, así que la señal se pone a
+      // mano: sin esto arrancaría vacía y el botón se encendería sin motivo.
+      this.valoresDatos.set({ firstName: user.firstName, lastName: user.lastName });
     });
+
+    this.formDatos.valueChanges.subscribe((v) =>
+      this.valoresDatos.set({ firstName: v.firstName ?? '', lastName: v.lastName ?? '' }),
+    );
 
     this.formClave.valueChanges.subscribe((v) =>
       this.valoresDeClave.set({ newPassword: v.newPassword ?? '', repetida: v.repetida ?? '' }),
     );
   }
 
-  /** Si no ha tocado nada, no hay nada que guardar. */
-  readonly datosCambiados = computed(() => this.formDatos.dirty);
+  /**
+   * ¿Hay algo distinto que guardar?
+   *
+   * Se compara con lo que hay guardado, no con si se ha tocado el formulario.
+   * Así, escribir una letra y borrarla vuelve a apagar el botón: no se manda al
+   * servidor un cambio que no cambia nada.
+   */
+  readonly datosCambiados = computed(() => {
+    const user = this.usuario();
+    if (!user) return false;
+
+    const v = this.valoresDatos();
+    return v.firstName.trim() !== user.firstName || v.lastName.trim() !== user.lastName;
+  });
 
   guardarDatos(): void {
     this.errorDatos.set(null);

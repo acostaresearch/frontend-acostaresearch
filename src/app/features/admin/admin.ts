@@ -1933,6 +1933,25 @@ export class Admin implements OnInit {
 
   // ── Cuentas ──────────────────────────────────────────────────────────────
 
+  /**
+   * Qué sub-pestaña de «Cuentas» se está viendo.
+   *
+   * Las dos primeras son las de cualquier usuario —el mismo componente que se ve
+   * en el perfil— y las dos últimas solo existen aquí. Van en la misma fila
+   * porque todas responden a «quién entra y con qué», que es lo que se viene a
+   * hacer a esta pestaña.
+   */
+  readonly cuenta = signal<'datos' | 'clave' | 'admins' | 'usuarios'>('datos');
+
+  verCuenta(cuenta: 'datos' | 'clave' | 'admins' | 'usuarios'): void {
+    this.cuenta.set(cuenta);
+    // Las dos listas salen de la misma petición, así que basta con pedirla al
+    // abrir cualquiera de las dos.
+    if ((cuenta === 'admins' || cuenta === 'usuarios') && this.usuarios().length === 0) {
+      this.cargarUsuarios();
+    }
+  }
+
   readonly usuarios = signal<User[]>([]);
   readonly cargandoUsuarios = signal(false);
   readonly busquedaUsuarios = signal('');

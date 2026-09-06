@@ -1547,16 +1547,45 @@
        Tres cosas que van juntas porque se hacen desde el mismo sitio: tus
        propios datos, quién más entra al panel, y quién está registrado. -->
   @if (seccion() === 'cuentas') {
-    <section class="tarjeta">
-      <h2>Mi cuenta</h2>
-      <p class="nota">
-        Tus datos y tu contraseña. Es el mismo formulario que ve cualquier usuario en su perfil: un
-        administrador también es una persona con nombre y contraseña.
-      </p>
+    <!-- Sub-pestañas, no cuatro tarjetas apiladas: cambiar tu contraseña y
+         revisar quién está registrado no se hacen en el mismo rato, y juntas
+         obligaban a bajar por las tres que no interesan. -->
+    <nav class="pestanas">
+      <button type="button" [class.activa]="cuenta() === 'datos'" (click)="verCuenta('datos')">
+        Tus datos
+      </button>
+      <button type="button" [class.activa]="cuenta() === 'clave'" (click)="verCuenta('clave')">
+        Contraseña
+      </button>
+      <button type="button" [class.activa]="cuenta() === 'admins'" (click)="verCuenta('admins')">
+        Administradores
+      </button>
+      <button
+        type="button"
+        [class.activa]="cuenta() === 'usuarios'"
+        (click)="verCuenta('usuarios')"
+      >
+        Usuarios
+      </button>
+    </nav>
 
-      <app-ajustes-de-cuenta />
-    </section>
+    <!-- El mismo componente que ve cualquier usuario en su perfil: un
+         administrador también es una persona con nombre y contraseña. -->
+    @if (cuenta() === 'datos') {
+      <section class="tarjeta">
+        <h2>Tus datos</h2>
+        <app-ajustes-de-cuenta panel="datos" />
+      </section>
+    }
 
+    @if (cuenta() === 'clave') {
+      <section class="tarjeta">
+        <h2>Contraseña</h2>
+        <app-ajustes-de-cuenta panel="clave" />
+      </section>
+    }
+
+    @if (cuenta() === 'admins') {
     <section class="tarjeta">
       <div class="tarjeta-cabecera">
         <div>
@@ -1614,7 +1643,9 @@
         </div>
       }
     </section>
+    }
 
+    @if (cuenta() === 'usuarios') {
     <section class="tarjeta">
       <h2>Usuarios registrados</h2>
       <p class="nota">Todo el que tiene cuenta. Esta lista solo la ve un administrador.</p>
@@ -1710,6 +1741,7 @@
         }
       }
     </section>
+    }
   }
 
   <!-- ── Ventana de crear administrador ──────────────────────────────────── -->

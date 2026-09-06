@@ -27,7 +27,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  * cuadra. Apiladas en una columna obligaban a recorrer las tres que no
  * interesan para llegar a la que sí.
  */
-type PestanaDePerfil = 'datos' | 'metodo' | 'cuenta' | 'compras';
+type PestanaDePerfil = 'datos' | 'clave' | 'metodo' | 'cuenta' | 'compras';
 
 /** Etiquetas en castellano: el backend solo maneja los códigos. */
 const ROLES: Record<Role, string> = {

@@ -105,6 +105,9 @@
       <button type="button" [class.activa]="pestana() === 'datos'" (click)="verPestana('datos')">
         Tus datos
       </button>
+      <button type="button" [class.activa]="pestana() === 'clave'" (click)="verPestana('clave')">
+        Contraseña
+      </button>
       <button type="button" [class.activa]="pestana() === 'metodo'" (click)="verPestana('metodo')">
         Método de tesis
       </button>
@@ -120,13 +123,20 @@
       </button>
     </nav>
 
+    <!-- El mismo componente que usa el panel del administrador: un administrador
+         también es una persona con nombre y contraseña. Las pestañas las pone
+         cada pantalla; él solo pinta la mitad que se le pide. -->
     @if (pestana() === 'datos') {
-      <!-- ── Ajustes de la cuenta ─────────────────────────────────────────────── -->
-      <!-- El mismo componente que usa el panel del administrador: un administrador
-           también es una persona con nombre y contraseña. -->
       <section class="tarjeta">
-        <h2>Ajustes de la cuenta</h2>
-        <app-ajustes-de-cuenta />
+        <h2>Tus datos</h2>
+        <app-ajustes-de-cuenta panel="datos" />
+      </section>
+    }
+
+    @if (pestana() === 'clave') {
+      <section class="tarjeta">
+        <h2>Contraseña</h2>
+        <app-ajustes-de-cuenta panel="clave" />
       </section>
     }
 
