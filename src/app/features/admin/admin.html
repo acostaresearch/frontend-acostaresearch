@@ -206,6 +206,9 @@
   </section>
 
   <nav class="pestanas">
+    <button type="button" [class.activa]="seccion() === 'accesos'" (click)="ir('accesos')">
+      Accesos
+    </button>
     <button type="button" [class.activa]="seccion() === 'ventas'" (click)="ir('ventas')">
       Vender
     </button>
@@ -240,6 +243,151 @@
   }
   @if (aviso(); as mensaje) {
     <div class="aviso exito" role="status">{{ mensaje }}</div>
+  }
+
+  <!-- ══ ACCESOS ══════════════════════════════════════════════════════════
+       Las tres pantallas de venta contadas como una. Arriba, lo que hay que
+       hacer hoy: revisar comprobantes y emitir códigos. Abajo, todo lo que ya
+       pasó, sin importar por dónde entró. -->
+  @if (seccion() === 'accesos') {
+    <div class="columnas accesos-cabecera">
+      <section class="tarjeta">
+        <h2>Comprobantes por revisar</h2>
+        <p class="nota">
+          Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla, no
+          que el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
+        </p>
+
+        @if (porRevisar().length === 0) {
+          <p class="vacio-ok">No hay ningún comprobante esperando.</p>
+        } @else {
+          <!-- Aquí solo se enseña QUÉ espera y desde cuándo. Aprobar o rechazar
+               exige mirar la captura, y eso vive en su pestaña con la imagen
+               delante: decidir sin verla es justo lo que no debe facilitarse. -->
+          <ul class="esperando">
+            @for (pago of porRevisar(); track pago.id) {
+              <li>
+                <div>
+                  <strong>{{ pago.user.email }}</strong>
+                  <span class="tenue">
+                    {{ pago.plan.name }} · {{ importe(pago.amountCents, pago.currency) }}
+                  </span>
+                </div>
+                <span class="tenue">{{ pago.createdAt | date: 'd MMM, HH:mm' }}</span>
+              </li>
+            }
+          </ul>
+          <button type="button" class="boton" (click)="ir('yape')">
+            Revisar {{ porRevisar().length === 1 ? 'el comprobante' : 'los comprobantes' }}
+          </button>
+        }
+      </section>
+
+      <section class="tarjeta">
+        <h2>Códigos generados</h2>
+        <button type="button" class="boton" (click)="abrirFormularioCodigos()">
+          Generar código
+        </button>
+        <p class="nota nota-suelta">
+          Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
+          Pones el correo del comprador y le llega el código con las instrucciones; después él crea
+          su cuenta y lo canjea desde su perfil.
+        </p>
+
+        @if (codigosNuevos().length > 0) {
+          <div class="codigos-nuevos">
+            <p class="codigos-titulo">
+              Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+            </p>
+            @if (codigoEnviadoA(); as correo) {
+              <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+            }
+            @if (cobroApuntado(); as cobro) {
+              <p class="codigos-enviado">
+                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
+                {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
+              </p>
+            } @else {
+              <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
+            }
+            <ul>
+              @for (codigo of codigosNuevos(); track codigo) {
+                <li>{{ codigo }}</li>
+              }
+            </ul>
+            <button type="button" class="boton" (click)="copiarCodigos()">
+              {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
+            </button>
+          </div>
+        }
+      </section>
+    </div>
+
+    <section class="tarjeta">
+      <h2>Historial de accesos</h2>
+      <p class="nota">
+        Todo lo que se ha emitido o cobrado, sin importar la vía. Los Yape salen por su comprobante
+        y no se repiten como pasarela.
+      </p>
+
+      @if (accesos().length === 0) {
+        <p class="nota">Todavía no hay nada que enseñar aquí.</p>
+      } @else {
+        <app-filtros-lista [lista]="listaAccesos" placeholder="Correo, código o nº de operación" />
+
+        @if (listaAccesos.filtrado().length === 0) {
+          <p class="tenue">Nada coincide con lo que buscas.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Comprador</th>
+                  <th>Canal</th>
+                  <th>Producto</th>
+                  <th>Importe</th>
+                  <th>Referencia</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (acceso of listaAccesos.visible(); track acceso.canal + acceso.id) {
+                  <tr>
+                    <td class="tenue">{{ acceso.fecha | date: 'd MMM, HH:mm' }}</td>
+                    <td>{{ acceso.comprador }}</td>
+                    <td>
+                      <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
+                    </td>
+                    <td class="tenue">{{ acceso.producto }}</td>
+                    <td>
+                      @if (acceso.amountCents) {
+                        {{ importe(acceso.amountCents, acceso.moneda) }}
+                      } @else {
+                        <span class="tenue">cortesía</span>
+                      }
+                    </td>
+                    <td class="mono tenue">{{ acceso.referencia ?? '—' }}</td>
+                    <td>
+                      <span
+                        class="pastilla"
+                        [class.buena]="acceso.tono === 'buena'"
+                        [class.espera]="acceso.tono === 'espera'"
+                        [class.mala]="acceso.tono === 'mala'"
+                      >
+                        {{ acceso.estado }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <app-pie-lista [lista]="listaAccesos" nombre="accesos" />
+        }
+      }
+    </section>
   }
 
   <!-- ══ VENDER ═══════════════════════════════════════════════════════════ -->
@@ -460,211 +608,6 @@
           </button>
         </form>
       </section> -->
-
-    <!-- ── Ventana de generar ──────────────────────────────────────────────
-         Fuera de la tarjeta para que se superponga a toda la página. El fondo
-         cierra al pulsarlo; el contenido no, o un clic dentro del formulario lo
-         cerraría con todo escrito. -->
-    @if (formularioCodigosAbierto()) {
-      <div class="ventana-fondo" (click)="cerrarFormularioCodigos()">
-        <div
-          class="ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-codigos"
-          (click)="$event.stopPropagation()"
-        >
-          <div class="ventana-cabecera">
-            <h3 id="titulo-codigos">Vender el método (código de activación)</h3>
-            <button
-              type="button"
-              class="cerrar"
-              aria-label="Cerrar"
-              (click)="cerrarFormularioCodigos()"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div class="ventana-cuerpo">
-            <form [formGroup]="formCodigos" class="formulario" (ngSubmit)="generarCodigos()">
-              <div class="fila">
-                <div class="campo estrecho">
-                  <label for="cantidad">Cantidad</label>
-                  <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
-                </div>
-                <div class="campo">
-                  <label for="producto">Producto</label>
-                  <select id="producto" formControlName="productCode">
-                    @for (plan of planesLicencia(); track plan.code) {
-                      <option [value]="plan.productCode ?? plan.code">{{ plan.name }}</option>
-                    }
-                  </select>
-                </div>
-              </div>
-
-              <div class="campo">
-                <label for="comprador">
-                  Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
-                </label>
-                <input
-                  id="comprador"
-                  type="email"
-                  formControlName="buyerEmail"
-                  placeholder="Déjalo vacío y solo lo verás aquí"
-                />
-              </div>
-
-              <!-- El cobro. Se apunta aquí, al vender, porque es el único momento
-                   en que alguien sabe cuánto entró y por dónde; el pago se crea
-                   solo cuando el comprador canjea, que es cuando ya hay cuenta. -->
-              <div class="fila">
-                <div class="campo">
-                  <label for="metodo-codigo">Cómo te pagó</label>
-                  <select id="metodo-codigo" formControlName="paymentMethod">
-                    @for (metodo of metodos; track metodo) {
-                      <option [value]="metodo">{{ metodo }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="campo estrecho">
-                  <label for="importe-codigo">
-                    Importe S/ <span class="opcional">(vacío = precio del plan)</span>
-                  </label>
-                  <input
-                    id="importe-codigo"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    formControlName="importe"
-                  />
-                </div>
-              </div>
-
-              <!-- ── Código de descuento ─────────────────────────────────────
-                   No se guarda en el código de activación: lo que queda apuntado
-                   es el importe final, que es el dinero que entró. Esto solo
-                   evita restar el descuento a mano, y restar mal un descuento es
-                   cuadrar mal el mes. -->
-              <div class="campo">
-                <label for="descuento-codigo">
-                  Código de descuento <span class="opcional">(opcional)</span>
-                </label>
-                <div class="fila-descuento">
-                  <input
-                    id="descuento-codigo"
-                    type="text"
-                    formControlName="descuento"
-                    placeholder="TESIS20"
-                    autocomplete="off"
-                    [disabled]="descuentoAplicado() !== null"
-                  />
-                  @if (descuentoAplicado()) {
-                    <button type="button" class="boton secundario" (click)="quitarDescuento()">
-                      Quitar
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="boton secundario"
-                      (click)="aplicarDescuento()"
-                      [disabled]="comprobandoDescuento() || !formCodigos.controls.descuento.value"
-                    >
-                      {{ comprobandoDescuento() ? 'Comprobando…' : 'Aplicar' }}
-                    </button>
-                  }
-                </div>
-
-                @if (descuentoAplicado(); as d) {
-                  <span class="ayuda descuento-ok">
-                    <b>{{ d.code }}</b> aplicado: −S/ {{ d.amountCents / 100 | number: '1.2-2' }}.
-                    El importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b
-                    >.
-                  </span>
-                } @else if (errorDescuento(); as mensaje) {
-                  <span class="ayuda descuento-mal">{{ mensaje }}</span>
-                } @else {
-                  <span class="ayuda">
-                    Lo calcula el servidor, igual que en una compra por la web, y el cupón queda
-                    anotado en la nota para saber después por qué se cobró esa cifra.
-                  </span>
-                }
-              </div>
-
-              <!-- ── Comprobante ─────────────────────────────────────────────
-                   Opcional de verdad: una cortesía no tiene captura y una
-                   transferencia que ya se vio en el extracto tampoco la
-                   necesita. Cuando la hay, es lo que permite reconstruir meses
-                   después de dónde salió ese dinero. -->
-              <div class="campo">
-                <label>Comprobante <span class="opcional">(opcional)</span></label>
-
-                @if (capturaCodigoPrevia(); as previa) {
-                  <div class="captura-codigo">
-                    <img [src]="previa" alt="Comprobante de esta venta" />
-                    <div class="captura-codigo-datos">
-                      <span class="tenue">{{ capturaCodigo()?.name }}</span>
-                      <button type="button" class="enlace-peligro" (click)="quitarCapturaCodigo()">
-                        Quitar
-                      </button>
-                    </div>
-                  </div>
-                } @else {
-                  <label class="captura-elegir">
-                    <input
-                      type="file"
-                      class="entrada-archivo"
-                      accept="image/png,image/jpeg,image/webp"
-                      (change)="elegirCapturaCodigo($event)"
-                    />
-                    <span>Adjuntar una captura del pago</span>
-                  </label>
-                  <span class="ayuda">
-                    Si no la tienes o no hace falta, déjalo así: el código se genera igual.
-                  </span>
-                }
-              </div>
-
-              <div class="campo">
-                <label for="operacion-codigo">
-                  Nº de operación <span class="opcional">(MTCN, opcional)</span>
-                </label>
-                <input
-                  id="operacion-codigo"
-                  type="text"
-                  formControlName="paymentRef"
-                  placeholder="para cuadrarlo con tu extracto"
-                />
-              </div>
-
-              <div class="campo">
-                <label for="nota">Nota <span class="opcional">(opcional)</span></label>
-                <input
-                  id="nota"
-                  type="text"
-                  formControlName="note"
-                  placeholder="Yape 3 sep · Ana G."
-                />
-              </div>
-            </form>
-          </div>
-
-          <div class="ventana-pie">
-            <button type="button" class="boton secundario" (click)="cerrarFormularioCodigos()">
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="boton"
-              [disabled]="trabajando()"
-              (click)="generarCodigos()"
-            >
-              {{ trabajando() ? 'Generando…' : 'Generar código' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
   }
 
   <!-- ══ YAPES POR REVISAR ════════════════════════════════════════════════ -->
@@ -1947,6 +1890,209 @@
         <app-pie-lista [lista]="listaBolsas" nombre="bolsas" />
       }
     </section> -->
+  }
+
+  <!-- ── Ventana de generar un código ────────────────────────────────────
+       Vive FUERA de las secciones a propósito: se abre desde «Vender» y desde
+       «Accesos», y dentro del @if de una sección el botón de la otra pestaña
+       no abriría nada.
+
+       El fondo cierra al pulsarlo; el contenido no, o un clic dentro del
+       formulario lo cerraría con todo escrito. -->
+  @if (formularioCodigosAbierto()) {
+    <div class="ventana-fondo" (click)="cerrarFormularioCodigos()">
+      <div
+        class="ventana"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-codigos"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="ventana-cabecera">
+          <h3 id="titulo-codigos">Vender el método (código de activación)</h3>
+          <button
+            type="button"
+            class="cerrar"
+            aria-label="Cerrar"
+            (click)="cerrarFormularioCodigos()"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="ventana-cuerpo">
+          <form [formGroup]="formCodigos" class="formulario" (ngSubmit)="generarCodigos()">
+            <div class="fila">
+              <div class="campo estrecho">
+                <label for="cantidad">Cantidad</label>
+                <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
+              </div>
+              <div class="campo">
+                <label for="producto">Producto</label>
+                <select id="producto" formControlName="productCode">
+                  @for (plan of planesLicencia(); track plan.code) {
+                    <option [value]="plan.productCode ?? plan.code">{{ plan.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="campo">
+              <label for="comprador">
+                Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
+              </label>
+              <input
+                id="comprador"
+                type="email"
+                formControlName="buyerEmail"
+                placeholder="Déjalo vacío y solo lo verás aquí"
+              />
+            </div>
+
+            <!-- El cobro. Se apunta aquí, al vender, porque es el único momento
+                 en que alguien sabe cuánto entró y por dónde; el pago se crea
+                 solo cuando el comprador canjea, que es cuando ya hay cuenta. -->
+            <div class="fila">
+              <div class="campo">
+                <label for="metodo-codigo">Cómo te pagó</label>
+                <select id="metodo-codigo" formControlName="paymentMethod">
+                  @for (metodo of metodos; track metodo) {
+                    <option [value]="metodo">{{ metodo }}</option>
+                  }
+                </select>
+              </div>
+              <div class="campo estrecho">
+                <label for="importe-codigo">
+                  Importe S/ <span class="opcional">(vacío = precio del plan)</span>
+                </label>
+                <input
+                  id="importe-codigo"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="importe"
+                />
+              </div>
+            </div>
+
+            <!-- ── Código de descuento ─────────────────────────────────────
+                 No se guarda en el código de activación: lo que queda apuntado
+                 es el importe final, que es el dinero que entró. Esto solo
+                 evita restar el descuento a mano, y restar mal un descuento es
+                 cuadrar mal el mes. -->
+            <div class="campo">
+              <label for="descuento-codigo">
+                Código de descuento <span class="opcional">(opcional)</span>
+              </label>
+              <div class="fila-descuento">
+                <input
+                  id="descuento-codigo"
+                  type="text"
+                  formControlName="descuento"
+                  placeholder="TESIS20"
+                  autocomplete="off"
+                  [disabled]="descuentoAplicado() !== null"
+                />
+                @if (descuentoAplicado()) {
+                  <button type="button" class="boton secundario" (click)="quitarDescuento()">
+                    Quitar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="boton secundario"
+                    (click)="aplicarDescuento()"
+                    [disabled]="comprobandoDescuento() || !formCodigos.controls.descuento.value"
+                  >
+                    {{ comprobandoDescuento() ? 'Comprobando…' : 'Aplicar' }}
+                  </button>
+                }
+              </div>
+
+              @if (descuentoAplicado(); as d) {
+                <span class="ayuda descuento-ok">
+                  <b>{{ d.code }}</b> aplicado: −S/ {{ d.amountCents / 100 | number: '1.2-2' }}. El
+                  importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b
+                  >.
+                </span>
+              } @else if (errorDescuento(); as mensaje) {
+                <span class="ayuda descuento-mal">{{ mensaje }}</span>
+              } @else {
+                <span class="ayuda">
+                  Lo calcula el servidor, igual que en una compra por la web, y el cupón queda
+                  anotado en la nota para saber después por qué se cobró esa cifra.
+                </span>
+              }
+            </div>
+
+            <!-- ── Comprobante ─────────────────────────────────────────────
+                 Opcional de verdad: una cortesía no tiene captura y una
+                 transferencia que ya se vio en el extracto tampoco la
+                 necesita. Cuando la hay, es lo que permite reconstruir meses
+                 después de dónde salió ese dinero. -->
+            <div class="campo">
+              <label>Comprobante <span class="opcional">(opcional)</span></label>
+
+              @if (capturaCodigoPrevia(); as previa) {
+                <div class="captura-codigo">
+                  <img [src]="previa" alt="Comprobante de esta venta" />
+                  <div class="captura-codigo-datos">
+                    <span class="tenue">{{ capturaCodigo()?.name }}</span>
+                    <button type="button" class="enlace-peligro" (click)="quitarCapturaCodigo()">
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <label class="captura-elegir">
+                  <input
+                    type="file"
+                    class="entrada-archivo"
+                    accept="image/png,image/jpeg,image/webp"
+                    (change)="elegirCapturaCodigo($event)"
+                  />
+                  <span>Adjuntar una captura del pago</span>
+                </label>
+                <span class="ayuda">
+                  Si no la tienes o no hace falta, déjalo así: el código se genera igual.
+                </span>
+              }
+            </div>
+
+            <div class="campo">
+              <label for="operacion-codigo">
+                Nº de operación <span class="opcional">(MTCN, opcional)</span>
+              </label>
+              <input
+                id="operacion-codigo"
+                type="text"
+                formControlName="paymentRef"
+                placeholder="para cuadrarlo con tu extracto"
+              />
+            </div>
+
+            <div class="campo">
+              <label for="nota">Nota <span class="opcional">(opcional)</span></label>
+              <input
+                id="nota"
+                type="text"
+                formControlName="note"
+                placeholder="Yape 3 sep · Ana G."
+              />
+            </div>
+          </form>
+        </div>
+
+        <div class="ventana-pie">
+          <button type="button" class="boton secundario" (click)="cerrarFormularioCodigos()">
+            Cancelar
+          </button>
+          <button type="button" class="boton" [disabled]="trabajando()" (click)="generarCodigos()">
+            {{ trabajando() ? 'Generando…' : 'Generar código' }}
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </main>
 

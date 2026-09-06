@@ -27,13 +27,14 @@ import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { Acceso, unirAccesos } from './accesos';
 import { columnas, lunes, porCategoria, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
 
 type Seccion =
-  'ventas' | 'yape' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
+  'accesos' | 'ventas' | 'yape' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -314,6 +315,25 @@ export class Admin implements OnInit {
     pasa: (d, filtro) => filtro === `${this.estadoDescuento(d)}s`,
   });
 
+  // ── Historial de accesos ─────────────────────────────────────────────────
+  //
+  // Las tres listas de arriba contadas como una sola. No sustituye a ninguna:
+  // vive en su propia pestaña para poder compararlas antes de decidir si las
+  // otras sobran.
+  readonly accesos = computed(() => unirAccesos(this.codigos(), this.historial(), this.pagos()));
+
+  readonly listaAccesos = new Listado(this.accesos, {
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'codigo', etiqueta: 'Código' },
+      { valor: 'comprobante', etiqueta: 'Comprobante' },
+      { valor: 'pasarela', etiqueta: 'Pasarela' },
+    ],
+    // Se busca por lo que uno tiene a mano al abrir esto: un correo de una
+    // conversación, el final de un código, un número de operación.
+    texto: (a: Acceso) => [a.comprador, a.referencia, a.producto, a.estado, a.canalNombre],
+    pasa: (a: Acceso, filtro: string) => a.canal === filtro,
+  });
   readonly listaHistorial = new Listado(this.historial, {
     filtros: [
       { valor: 'todos', etiqueta: 'Todos' },
