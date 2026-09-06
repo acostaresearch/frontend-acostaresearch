@@ -34,67 +34,6 @@
       </div>
     </section>
 
-    <!-- ── Ajustes de la cuenta ─────────────────────────────────────────────── -->
-    <!-- El mismo componente que usa el panel del administrador: un administrador
-         también es una persona con nombre y contraseña. -->
-    <section class="tarjeta">
-      <h2>Ajustes de la cuenta</h2>
-      <app-ajustes-de-cuenta />
-    </section>
-
-    <!-- ── Datos de la cuenta ───────────────────────────────────────────────── -->
-    <section class="tarjeta">
-      <h2>Datos de la cuenta</h2>
-      <p class="nota">Lo que hay registrado de ti, para consultarlo de un vistazo.</p>
-
-      <dl class="datos">
-        <div>
-          <dt>Nombre</dt>
-          <dd>{{ user.firstName }}</dd>
-        </div>
-        <div>
-          <dt>Apellidos</dt>
-          <dd>{{ user.lastName }}</dd>
-        </div>
-        <div>
-          <dt>Correo</dt>
-          <dd>{{ user.email }}</dd>
-        </div>
-        <div>
-          <dt>Rol</dt>
-          <dd>{{ rol() }}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>{{ estado() }}</dd>
-        </div>
-        <div>
-          <dt>Verificación</dt>
-          <dd>
-            @if (user.emailVerifiedAt) {
-              {{ user.emailVerifiedAt | date: 'd MMM y' }}
-            } @else {
-              Pendiente
-            }
-          </dd>
-        </div>
-        <div>
-          <dt>Miembro desde</dt>
-          <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
-        </div>
-        <div>
-          <dt>Último acceso</dt>
-          <dd>
-            @if (user.lastLoginAt) {
-              {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
-            } @else {
-              Este es tu primer acceso
-            }
-          </dd>
-        </div>
-      </dl>
-    </section>
-
     <!-- ── Saldo del humanizador ────────────────────────────────────────────── -->
     <!-- <section class="tarjeta">
       <h2>Saldo del humanizador</h2>
@@ -157,168 +96,272 @@
       }
     </section> -->
 
-    <!-- ── Método de tesis ──────────────────────────────────────────────────── -->
-    <section class="tarjeta">
-      <h2>Método de tesis · conector de Claude</h2>
+    <!-- ── Pestañas ─────────────────────────────────────────────────────────
+         Cuatro secciones que se miran en momentos distintos: los datos se
+         cambian una vez al año, el conector se consulta al instalarlo y las
+         compras se buscan cuando algo no cuadra. Apiladas obligaban a
+         desplazarse por las tres que no interesan. -->
+    <nav class="pestanas">
+      <button type="button" [class.activa]="pestana() === 'datos'" (click)="verPestana('datos')">
+        Tus datos
+      </button>
+      <button
+        type="button"
+        [class.activa]="pestana() === 'metodo'"
+        (click)="verPestana('metodo')"
+      >
+        Método de tesis
+      </button>
+      <button
+        type="button"
+        [class.activa]="pestana() === 'cuenta'"
+        (click)="verPestana('cuenta')"
+      >
+        Datos de la cuenta
+      </button>
+      <button
+        type="button"
+        [class.activa]="pestana() === 'compras'"
+        (click)="verPestana('compras')"
+      >
+        Mis compras
+      </button>
+    </nav>
 
-      @if (errorLicencia(); as mensaje) {
-        <p class="aviso error">{{ mensaje }}</p>
-      }
+    @if (pestana() === 'datos') {
+      <!-- ── Ajustes de la cuenta ─────────────────────────────────────────────── -->
+      <!-- El mismo componente que usa el panel del administrador: un administrador
+           también es una persona con nombre y contraseña. -->
+      <section class="tarjeta">
+        <h2>Ajustes de la cuenta</h2>
+        <app-ajustes-de-cuenta />
+      </section>
+    }
 
-      @if (urlNueva(); as url) {
-        <div class="url-nueva">
-          <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
-          <div class="url-fila">
-            <input type="text" [value]="url" readonly />
-            <button type="button" class="boton" (click)="copiarUrlNueva()">
-              {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
-            </button>
+    @if (pestana() === 'metodo') {
+      <!-- ── Método de tesis ──────────────────────────────────────────────────── -->
+      <section class="tarjeta">
+        <h2>Método de tesis · conector de Claude</h2>
+
+        @if (errorLicencia(); as mensaje) {
+          <p class="aviso error">{{ mensaje }}</p>
+        }
+
+        @if (urlNueva(); as url) {
+          <div class="url-nueva">
+            <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
+            <div class="url-fila">
+              <input type="text" [value]="url" readonly />
+              <button type="button" class="boton" (click)="copiarUrlNueva()">
+                {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+              </button>
+            </div>
+            <p class="url-pie">
+              Pégala en Claude: Configuración → Conectores → Añadir personalizado.
+            </p>
           </div>
-          <p class="url-pie">
-            Pégala en Claude: Configuración → Conectores → Añadir personalizado.
-          </p>
-        </div>
-      }
+        }
 
-      @if (misLicencias().length > 0) {
-        <ul class="licencias">
-          @for (licencia of misLicencias(); track licencia.id) {
-            <li>
-              <div>
-                <strong>{{ licencia.productCode }}</strong>
-                <span class="tenue">
-                  @if (licencia.callsPerDay && licencia.usage) {
-                    hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
-                  } @else {
-                    {{ licencia.callsTotal }} consultas ·
+        @if (misLicencias().length > 0) {
+          <ul class="licencias">
+            @for (licencia of misLicencias(); track licencia.id) {
+              <li>
+                <div>
+                  <strong>{{ licencia.productCode }}</strong>
+                  <span class="tenue">
+                    @if (licencia.callsPerDay && licencia.usage) {
+                      hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
+                    } @else {
+                      {{ licencia.callsTotal }} consultas ·
+                    }
+                    @if (licencia.expiresAt) {
+                      vence el {{ licencia.expiresAt | date: 'd MMM y' }}
+                    } @else {
+                      sin caducidad
+                    }
+                  </span>
+                </div>
+                <div class="licencia-acciones">
+                  <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
+                    {{ licencia.status }}
+                  </span>
+                  @if (licencia.status === 'ACTIVE') {
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      [disabled]="rotando() === licencia.id"
+                      (click)="regenerarUrl(licencia)"
+                    >
+                      {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
+                    </button>
                   }
-                  @if (licencia.expiresAt) {
-                    vence el {{ licencia.expiresAt | date: 'd MMM y' }}
-                  } @else {
-                    sin caducidad
-                  }
-                </span>
-              </div>
-              <div class="licencia-acciones">
-                <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
-                  {{ licencia.status }}
-                </span>
-                @if (licencia.status === 'ACTIVE') {
-                  <button
-                    type="button"
-                    class="boton secundario"
-                    [disabled]="rotando() === licencia.id"
-                    (click)="regenerarUrl(licencia)"
-                  >
-                    {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
-                  </button>
-                }
-              </div>
-            </li>
+                </div>
+              </li>
+            }
+          </ul>
+
+          <!-- La guía, debajo de la licencia y solo para quien tiene acceso
+               vigente: es material del producto, no un folleto.
+               Una licencia revocada o caducada no la ve — a quien está en ese
+               caso lo que le hace falta es renovar, no un manual para conectar
+               algo que ya no le va a responder.
+               Y solo aparece si el PDF existe de verdad: lo comprueba el build,
+               porque un enlace a un PDF ausente descargaría la portada de la web
+               con extensión .pdf en vez de dar un error honesto. -->
+          @if (guiaUrl && tieneAccesoVigente()) {
+            <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
+              <span class="guia-icono" aria-hidden="true">📄</span>
+              <span class="guia-texto">
+                <strong>Guía de instalación en PDF</strong>
+                <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
+              </span>
+              <span class="guia-accion">Descargar</span>
+            </a>
           }
-        </ul>
-
-        <!-- La guía, debajo de la licencia y solo para quien tiene acceso
-             vigente: es material del producto, no un folleto.
-             Una licencia revocada o caducada no la ve — a quien está en ese
-             caso lo que le hace falta es renovar, no un manual para conectar
-             algo que ya no le va a responder.
-             Y solo aparece si el PDF existe de verdad: lo comprueba el build,
-             porque un enlace a un PDF ausente descargaría la portada de la web
-             con extensión .pdf en vez de dar un error honesto. -->
-        @if (guiaUrl && tieneAccesoVigente()) {
-          <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
-            <span class="guia-icono" aria-hidden="true">📄</span>
-            <span class="guia-texto">
-              <strong>Guía de instalación en PDF</strong>
-              <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
-            </span>
-            <span class="guia-accion">Descargar</span>
+        } @else {
+          <p class="nota">
+            Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
+            funciona también en el plan gratuito.
+          </p>
+          <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+            Ver el método
           </a>
         }
-      } @else {
-        <p class="nota">
-          Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
-          funciona también en el plan gratuito.
-        </p>
-        <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
-          Ver el método
-        </a>
-      }
 
-      <!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
-           Western Union— y recibió el código por correo. Es el único sitio donde
-           se canjea, así que se enseña siempre, tenga o no licencia ya: quien
-           renueva también llega aquí con un código nuevo. -->
-      <div class="canje">
-        <h3>¿Compraste por Yape o transferencia?</h3>
-        <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
-        <div class="canje-fila">
-          <input
-            type="text"
-            [formControl]="codigo"
-            placeholder="Tu código de activación"
-            autocomplete="off"
-          />
-          <button type="button" class="boton" [disabled]="canjeando()" (click)="canjearCodigo()">
-            {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
-          </button>
+        <!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
+             Western Union— y recibió el código por correo. Es el único sitio donde
+             se canjea, así que se enseña siempre, tenga o no licencia ya: quien
+             renueva también llega aquí con un código nuevo. -->
+        <div class="canje">
+          <h3>¿Compraste por Yape o transferencia?</h3>
+          <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
+          <div class="canje-fila">
+            <input
+              type="text"
+              [formControl]="codigo"
+              placeholder="Tu código de activación"
+              autocomplete="off"
+            />
+            <button type="button" class="boton" [disabled]="canjeando()" (click)="canjearCodigo()">
+              {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
+            </button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    }
 
-    <!-- ── Compras ──────────────────────────────────────────────────────────── -->
-    <section class="tarjeta">
-      <h2>Mis compras</h2>
+    @if (pestana() === 'cuenta') {
+      <!-- ── Datos de la cuenta ───────────────────────────────────────────────── -->
+      <section class="tarjeta">
+        <h2>Datos de la cuenta</h2>
+        <p class="nota">Lo que hay registrado de ti, para consultarlo de un vistazo.</p>
 
-      @if (cargandoCompras()) {
-        <p class="nota">Cargando tus compras…</p>
-      } @else if (compras().length > 0) {
-        <div class="tabla-envoltura">
-          <table class="compras">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Plan</th>
-                <th>Importe</th>
-                <th>Medio</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (pago of compras(); track pago.id) {
-                <tr>
-                  <td>{{ pago.paidAt ?? pago.createdAt | date: 'd MMM y' }}</td>
-                  <td>
-                    {{ pago.plan.name }}
-                    @if (pago.plan.words > 0) {
-                      <span class="tenue">{{ pago.plan.words | number }} palabras</span>
-                    }
-                  </td>
-                  <td>{{ precio(pago) }}</td>
-                  <td class="tenue">{{ medioPago(pago) }}</td>
-                  <td>
-                    <span
-                      class="etiqueta"
-                      [class.buena]="pago.status === 'PAID'"
-                      [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
-                    >
-                      {{ estadoPago(pago) }}
-                    </span>
-                  </td>
-                </tr>
+        <dl class="datos">
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ user.firstName }}</dd>
+          </div>
+          <div>
+            <dt>Apellidos</dt>
+            <dd>{{ user.lastName }}</dd>
+          </div>
+          <div>
+            <dt>Correo</dt>
+            <dd>{{ user.email }}</dd>
+          </div>
+          <div>
+            <dt>Rol</dt>
+            <dd>{{ rol() }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ estado() }}</dd>
+          </div>
+          <div>
+            <dt>Verificación</dt>
+            <dd>
+              @if (user.emailVerifiedAt) {
+                {{ user.emailVerifiedAt | date: 'd MMM y' }}
+              } @else {
+                Pendiente
               }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="nota">
-          Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando quieras
-          empezar.
-        </p>
-      }
-    </section>
+            </dd>
+          </div>
+          <div>
+            <dt>Miembro desde</dt>
+            <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
+          </div>
+          <div>
+            <dt>Último acceso</dt>
+            <dd>
+              @if (user.lastLoginAt) {
+                {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
+              } @else {
+                Este es tu primer acceso
+              }
+            </dd>
+          </div>
+        </dl>
+      </section>
+    }
 
+    @if (pestana() === 'compras') {
+      <!-- ── Compras ──────────────────────────────────────────────────────────── -->
+      <section class="tarjeta">
+        <h2>Mis compras</h2>
+
+        @if (cargandoCompras()) {
+          <p class="nota">Cargando tus compras…</p>
+        } @else if (compras().length > 0) {
+          <div class="tabla-envoltura">
+            <table class="compras">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Plan</th>
+                  <th>Importe</th>
+                  <th>Medio</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pago of compras(); track pago.id) {
+                  <tr>
+                    <td>{{ pago.paidAt ?? pago.createdAt | date: 'd MMM y' }}</td>
+                    <td>
+                      {{ pago.plan.name }}
+                      @if (pago.plan.words > 0) {
+                        <span class="tenue">{{ pago.plan.words | number }} palabras</span>
+                      }
+                    </td>
+                    <td>{{ precio(pago) }}</td>
+                    <td class="tenue">{{ medioPago(pago) }}</td>
+                    <td>
+                      <span
+                        class="etiqueta"
+                        [class.buena]="pago.status === 'PAID'"
+                        [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
+                      >
+                        {{ estadoPago(pago) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="nota">
+            Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando quieras
+            empezar.
+          </p>
+        }
+      </section>
+    }
+
+    <!-- Sesión y seguridad va SIEMPRE abajo y fuera de las pestañas: cerrar la
+         sesión en un ordenador ajeno es lo que se busca con prisa, y esconderlo
+         detrás de una pestaña sería ponérselo difícil justo cuando corre. -->
     <!-- ── Sesión y seguridad ───────────────────────────────────────────────── -->
     <section class="tarjeta">
       <h2>Sesión y seguridad</h2>
@@ -338,8 +381,78 @@
         >
           Cerrar sesión en todos los dispositivos
         </button>
+        <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
+          Eliminar cuenta
+        </button>
       </div>
     </section>
+
+    <!-- ── Ventana de borrar la cuenta ──────────────────────────────────────
+         Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide
+         el clic sin querer, y el correo impide equivocarse de cuenta cuando
+         alguien tiene abiertas la suya y la de otro. -->
+    @if (borrandoCuenta()) {
+      <div class="ventana-fondo">
+        <div
+          class="ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-borrar-cuenta"
+        >
+          <h3 id="titulo-borrar-cuenta">Eliminar tu cuenta</h3>
+
+          <p class="nota">
+            No podrás volver a entrar y <b>tu conector de Claude dejará de responder</b>. Si
+            tienes acceso al método, lo pierdes.
+          </p>
+          <p class="nota">
+            Guardamos el registro de tus compras, sin tu nombre ni tu correo, porque una
+            factura tiene que poder cuadrarse años después. Todo lo demás se borra.
+          </p>
+
+          <label class="campo-borrado">
+            <span>Escribe <b>eliminar</b></span>
+            <input
+              type="text"
+              [value]="palabraBorrado()"
+              (input)="palabraBorrado.set($any($event.target).value)"
+              placeholder="eliminar"
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="campo-borrado">
+            <span>Y tu correo, <b>{{ user.email }}</b></span>
+            <input
+              type="email"
+              [value]="correoBorrado()"
+              (input)="correoBorrado.set($any($event.target).value)"
+              [placeholder]="user.email"
+              autocomplete="off"
+            />
+          </label>
+
+          @if (errorBorrado(); as mensaje) {
+            <p class="aviso error">{{ mensaje }}</p>
+          }
+
+          <div class="acciones-sesion">
+            <button type="button" class="boton secundario" (click)="cerrarBorradoDeCuenta()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton peligro"
+              [disabled]="!puedeBorrarCuenta() || borrando()"
+              (click)="eliminarCuenta()"
+            >
+              {{ borrando() ? 'Eliminando…' : 'Eliminar mi cuenta' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
   }
 </main>
 

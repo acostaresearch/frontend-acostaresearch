@@ -186,13 +186,12 @@
          El fondo cierra al pulsarlo, y cerrar es lo mismo que «Cambiar»: se
          suelta el plan, el descuento y la captura, porque son de OTRO importe. -->
     @if (seleccionado(); as plan) {
-      <div class="pago-fondo" (click)="cambiarPlan()">
+      <div class="pago-fondo">
         <div
           class="pago-ventana"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-pago"
-          (click)="$event.stopPropagation()"
         >
           <div class="pago-barra">
             <h2 id="titulo-pago">Cómo quieres pagar</h2>

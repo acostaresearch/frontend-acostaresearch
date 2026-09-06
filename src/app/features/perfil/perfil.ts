@@ -18,6 +18,16 @@ import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
+/**
+ * Las cuatro pestañas del perfil.
+ *
+ * Se miran en momentos distintos: los datos se cambian una vez al año, el
+ * conector se consulta al instalarlo y las compras se buscan cuando algo no
+ * cuadra. Apiladas en una columna obligaban a recorrer las tres que no
+ * interesan para llegar a la que sí.
+ */
+type PestanaDePerfil = 'datos' | 'metodo' | 'cuenta' | 'compras';
+
 /** Etiquetas en castellano: el backend solo maneja los códigos. */
 const ROLES: Record<Role, string> = {
   USER: 'Usuario',
@@ -140,6 +150,19 @@ export class Perfil implements OnInit {
 
   // ── Sesión ───────────────────────────────────────────────────────────────
   readonly cerrando = signal(false);
+
+  /**
+   * Qué pestaña se está viendo.
+   *
+   * Arranca en «Tus datos» y no en el conector porque quien entra a su perfil
+   * suele venir a cambiar algo suyo; quien busca la URL del conector ya sabe
+   * dónde está y viene a por ella.
+   */
+  readonly pestana = signal<PestanaDePerfil>('datos');
+
+  verPestana(pestana: PestanaDePerfil): void {
+    this.pestana.set(pestana);
+  }
 
   ngOnInit(): void {
     // El perfil se vuelve a pedir al servidor: si cambió el rol o se verificó
@@ -294,5 +317,70 @@ export class Perfil implements OnInit {
       next: () => this.router.navigate(['/']),
       error: () => this.router.navigate(['/']),
     });
+  }
+
+  // ── Borrar la cuenta ─────────────────────────────────────────────────────
+
+  readonly borrandoCuenta = signal(false);
+  readonly borrando = signal(false);
+  readonly errorBorrado = signal<string | null>(null);
+  readonly palabraBorrado = signal('');
+  readonly correoBorrado = signal('');
+
+  /**
+   * El botón no se enciende hasta que las dos cosas están escritas.
+   *
+   * Se piden dos y ninguna sobra: la palabra impide el clic sin querer, y el
+   * correo impide equivocarse de cuenta, que es el error de verdad cuando
+   * alguien tiene abiertas la suya y la de otro. «Eliminar» a secas se escribe
+   * en piloto automático; tu propio correo obliga a mirar cuál es.
+   *
+   * Se comparan sin mayúsculas ni espacios de sobra: lo que se comprueba es la
+   * intención, no la mecanografía.
+   */
+  readonly puedeBorrarCuenta = computed(() => {
+    const user = this.usuario();
+    if (!user) return false;
+
+    return (
+      this.palabraBorrado().trim().toLowerCase() === 'eliminar' &&
+      this.correoBorrado().trim().toLowerCase() === user.email.toLowerCase()
+    );
+  });
+
+  abrirBorradoDeCuenta(): void {
+    this.palabraBorrado.set('');
+    this.correoBorrado.set('');
+    this.errorBorrado.set(null);
+    this.borrandoCuenta.set(true);
+  }
+
+  cerrarBorradoDeCuenta(): void {
+    this.borrandoCuenta.set(false);
+  }
+
+  eliminarCuenta(): void {
+    if (!this.puedeBorrarCuenta() || this.borrando()) return;
+    this.errorBorrado.set(null);
+    this.borrando.set(true);
+
+    this.usuarios
+      .eliminarCuenta({
+        confirmacion: this.palabraBorrado().trim().toLowerCase(),
+        email: this.correoBorrado().trim().toLowerCase(),
+      })
+      .subscribe({
+        next: () => {
+          // La sesión del navegador se limpia a mano: el servidor ya revocó los
+          // tokens, pero el estado del cliente sigue creyendo que hay alguien
+          // dentro hasta que se le dice que no.
+          this.auth.clearSession();
+          this.router.navigate(['/']);
+        },
+        error: (e: unknown) => {
+          this.errorBorrado.set(toApiError(e).message);
+          this.borrando.set(false);
+        },
+      });
   }
 }

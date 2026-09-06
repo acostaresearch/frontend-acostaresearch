@@ -372,3 +372,9 @@ a:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* La página no se mueve mientras hay una ventana modal abierta. Lo pone y lo
+   quita `FondoService`, que lleva la cuenta de las que hay abiertas. */
+body.sin-scroll {
+  overflow: hidden;
+}

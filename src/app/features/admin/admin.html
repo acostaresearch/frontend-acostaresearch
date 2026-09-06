@@ -480,13 +480,12 @@
          mirar de uno concreto, la captura incluida. Estrecha a propósito: es
          una consulta, no un formulario. -->
     @if (accesoAbierto(); as acceso) {
-      <div class="ventana-fondo" (click)="cerrarAcceso()">
+      <div class="ventana-fondo">
         <div
           class="ventana estrecha"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-acceso"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-acceso">{{ acceso.comprador }}</h3>
@@ -678,17 +677,14 @@
     </section>
 
     <!-- ── Ventana de crear/editar ─────────────────────────────────────────
-         Va fuera de la tarjeta para que se superponga a toda la página. El
-         fondo cierra al pulsarlo, pero el contenido no: sin `stopPropagation`,
-         un clic dentro del formulario lo cerraría con todo escrito. -->
+         Va fuera de la tarjeta para que se superponga a toda la página. El -->
     @if (formularioAbierto()) {
-      <div class="ventana-fondo" (click)="cerrarFormularioGrupo()">
+      <div class="ventana-fondo">
         <div
           class="ventana"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-grupo"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-grupo">
@@ -1059,13 +1055,12 @@
          Solo mira: para cambiar cuáles lleva se usa «Editar», que es donde se
          marcan. Tener dos sitios para lo mismo acaba con los dos a medias. -->
     @if (viendoCapitulos(); as grupoVisto) {
-      <div class="ventana-fondo" (click)="cerrarCapitulos()">
+      <div class="ventana-fondo">
         <div
           class="ventana"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-capitulos"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-capitulos">Capítulos de «{{ grupoVisto.name }}»</h3>
@@ -1123,13 +1118,12 @@
          encima porque la de grupo sigue detrás con lo que se estaba editando, y
          cerrar esta devuelve exactamente a donde uno estaba. -->
     @if (editando(); as capitulo) {
-      <div class="ventana-fondo encima" (click)="cancelarFicha()">
+      <div class="ventana-fondo encima">
         <div
           class="ventana estrecha"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-ficha"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-ficha">Editar «{{ capitulo.displayName }}»</h3>
@@ -1188,13 +1182,12 @@
          Se pide escribir la palabra en vez de un «¿seguro?»: a un «¿seguro?» se
          le da que sí sin leerlo. Escribir obliga a mirar qué se está borrando. -->
     @if (borrandoGrupo(); as aBorrar) {
-      <div class="ventana-fondo" (click)="cancelarBorrado()">
+      <div class="ventana-fondo">
         <div
           class="ventana estrecha"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-borrado"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-borrado">Eliminar «{{ aBorrar.name }}»</h3>
@@ -1341,13 +1334,12 @@
          Igual que la de los códigos de activación y la de los grupos: crear es
          algo puntual, y la pantalla es el listado de lo que ya existe. -->
     @if (formularioDescuentoAbierto()) {
-      <div class="ventana-fondo" (click)="cerrarFormularioDescuento()">
+      <div class="ventana-fondo">
         <div
           class="ventana"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-descuento"
-          (click)="$event.stopPropagation()"
         >
           <div class="ventana-cabecera">
             <h3 id="titulo-descuento">Crear código promocional</h3>
@@ -1744,13 +1736,12 @@
 
   <!-- ── Ventana de crear administrador ──────────────────────────────────── -->
   @if (formularioAdminAbierto()) {
-    <div class="ventana-fondo" (click)="cerrarFormularioAdmin()">
+    <div class="ventana-fondo">
       <div
         class="ventana"
         role="dialog"
         aria-modal="true"
         aria-labelledby="titulo-admin"
-        (click)="$event.stopPropagation()"
       >
         <div class="ventana-cabecera">
           <h3 id="titulo-admin">Crear una cuenta de administrador</h3>
@@ -1842,13 +1833,12 @@
        El fondo cierra al pulsarlo; el contenido no, o un clic dentro del
        formulario lo cerraría con todo escrito. -->
   @if (formularioCodigosAbierto()) {
-    <div class="ventana-fondo" (click)="cerrarFormularioCodigos()">
+    <div class="ventana-fondo">
       <div
         class="ventana"
         role="dialog"
         aria-modal="true"
         aria-labelledby="titulo-codigos"
-        (click)="$event.stopPropagation()"
       >
         <div class="ventana-cabecera">
           <h3 id="titulo-codigos">Vender el método (código de activación)</h3>

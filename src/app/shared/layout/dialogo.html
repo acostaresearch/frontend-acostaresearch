@@ -1,13 +1,12 @@
 <!-- El fondo cierra al pulsarlo; la ventana no, o un clic dentro la cerraría
      con lo escrito a medias. -->
 @if (abierto(); as ventana) {
-  <div class="fondo" (click)="cancelar()">
+  <div class="fondo">
     <div
       class="ventana"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialogo-titulo"
-      (click)="$event.stopPropagation()"
     >
       <div class="cuerpo">
         <span class="icono" [class]="ventana.tono" aria-hidden="true">

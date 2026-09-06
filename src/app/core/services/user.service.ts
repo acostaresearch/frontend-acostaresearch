@@ -70,6 +70,20 @@ export class UserService {
       .pipe(map((res) => res.data.sesionesCerradas));
   }
 
+  /**
+   * Borra la propia cuenta. Irreversible.
+   *
+   * Las dos confirmaciones viajan al servidor y allí se vuelven a comprobar: lo
+   * que valida el navegador es comodidad, no seguridad, y una petición no tiene
+   * por qué haber pasado por esta pantalla.
+   *
+   * El cuerpo va dentro de `body` porque un DELETE en Angular no lo acepta como
+   * segundo argumento, al contrario que POST o PATCH.
+   */
+  eliminarCuenta(datos: { confirmacion: string; email: string }): Observable<void> {
+    return this.http.delete<void>(`${this.base}/me`, { body: datos });
+  }
+
   /** Crea una cuenta de administrador. Solo ADMIN. */
   crearAdministrador(datos: {
     firstName: string;
