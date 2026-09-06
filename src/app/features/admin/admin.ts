@@ -13,7 +13,7 @@ import {
   PackAdmin,
   PagoAdmin,
 } from '../../core/models/admin.model';
-import { PagoPorRevisar } from '../../core/models/payment.model';
+import { PagoPorRevisar, PagoRevisado } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
 import { DialogoService } from '../../core/services/dialogo.service';
@@ -24,7 +24,13 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 type Seccion =
-  'ventas' | 'yape' | 'skills' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
+  'ventas' | 'yape' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
+
+/** Los estados por los que se puede filtrar el historial de Yape. */
+type FiltroHistorial = 'todos' | 'aprobados' | 'rechazados' | 'sin-resolver';
+
+/** Filas del historial que se enseñan de golpe, y que añade cada despliegue. */
+const POR_TANDA = 10;
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -129,6 +135,31 @@ export class Admin implements OnInit {
   readonly revisando = signal<string | null>(null);
   /** Motivo del rechazo, por pago: cada fila escribe el suyo. */
   readonly motivos = signal<Record<string, string>>({});
+
+  // ── Historial de Yape ────────────────────────────────────────────────────
+  /** Comprobantes ya resueltos. Llega la tanda entera y se filtra aquí. */
+  readonly historial = signal<PagoRevisado[]>([]);
+  /** Texto del buscador: correo, nombre, nº de operación o referencia. */
+  readonly buscaHistorial = signal('');
+  readonly filtroHistorial = signal<FiltroHistorial>('todos');
+  /**
+   * Cuántas filas se enseñan.
+   *
+   * Se muestran diez y el resto se despliega a tandas. El historial crece sin
+   * parar y nadie lo lee entero: lo que se busca casi siempre está en las
+   * últimas, y lo que no, se encuentra con el buscador antes que bajando.
+   */
+  readonly visiblesHistorial = signal(POR_TANDA);
+  /** Qué captura se está bajando, para no dejar el botón mudo mientras tanto. */
+  readonly abriendo = signal<string | null>(null);
+  /** Las pestañas del filtro, en el orden en que se leen. */
+  readonly filtrosHistorial: { valor: FiltroHistorial; etiqueta: string }[] = [
+    { valor: 'todos', etiqueta: 'Todos' },
+    { valor: 'aprobados', etiqueta: 'Aprobados' },
+    { valor: 'rechazados', etiqueta: 'Rechazados' },
+    { valor: 'sin-resolver', etiqueta: 'Sin resolver' },
+  ];
+  readonly porTanda = POR_TANDA;
 
   /** Códigos recién generados. Se muestran una vez y no vuelven. */
   readonly codigosNuevos = signal<string[]>([]);
@@ -300,26 +331,16 @@ export class Admin implements OnInit {
   );
 
   /**
-   * Los que se pueden marcar: los de este grupo y los que no son de nadie.
+   * Todos los capítulos, incluidos los que ya son de otro grupo.
    *
-   * Los que ya pertenecen a otro producto no se listan. Marcarlos aquí los
-   * MOVERÍA —un capítulo está en un grupo y solo en uno—, así que enseñarlos
-   * era ofrecer quitárselos a otro producto con una casilla, demasiado fácil de
-   * pulsar sin querer.
-   *
-   * Para mover uno a propósito se le desmarca en su grupo de origen; entonces
-   * queda libre y aparece aquí.
+   * Se listan todos a propósito. Un capítulo pertenece a un grupo y solo a uno,
+   * así que marcar aquí uno ajeno lo MUEVE: eso se avisa con una etiqueta en su
+   * fila, pero no se impide. Montar un producto nuevo con capítulos que ya
+   * existen es un caso real —un paquete reducido, una edición distinta— y
+   * obligar a desmarcarlos antes en el grupo de origen era dar un rodeo para
+   * llegar al mismo sitio.
    */
-  readonly capitulosDisponibles = computed(() => {
-    const actual = this.editandoGrupo();
-    const mio = actual ? (actual.productCode ?? actual.code) : null;
-    return this.capitulosOrdenados().filter((s) => !s.productCode || s.productCode === mio);
-  });
-
-  /** Cuántos hay en otros grupos, para explicar por qué no salen en la lista. */
-  readonly capitulosEnOtrosGrupos = computed(
-    () => this.capitulosOrdenados().length - this.capitulosDisponibles().length,
-  );
+  readonly capitulosDisponibles = this.capitulosOrdenados;
 
   /** Grupo cuyos capítulos se están mirando desde la tabla. */
   readonly viendoCapitulos = signal<Grupo | null>(null);
@@ -745,10 +766,48 @@ export class Admin implements OnInit {
 
     for (const item of nuevos) {
       this.skillsApi.inspeccionar(item.archivo).subscribe({
-        next: (analisis) => this.marcar(item, { analisis, estado: 'lista' }),
+        next: (analisis) => {
+          this.marcar(item, { analisis, estado: 'lista' });
+          // Se reordena con cada análisis que llega: la posición final sale del
+          // orden de esta lista, así que lo que se ve es lo que se aplicará.
+          this.ordenarCola();
+        },
         error: (e: unknown) => this.marcar(item, { estado: 'error', error: toApiError(e).message }),
       });
     }
+  }
+
+  /**
+   * Por dónde se ordena un archivo de la cola.
+   *
+   * Por el nombre que declara el propio bundle, no por el del archivo. Los
+   * `.skill` del método se llaman `analisis-datos-rstudio-v3-…`, y alfabéticamente
+   * eso pone el Capítulo IV el primero. Dentro, en cambio, cada uno se presenta
+   * como «1 · Tema y delimitación», «2 · Capítulo I · …»: ese es el orden real.
+   *
+   * Si el análisis aún no ha llegado se usa el nombre del archivo, que al menos
+   * mantiene la lista estable mientras se comprueban.
+   */
+  private etiquetaDeOrden(item: EnCola): string {
+    const a = item.analisis;
+    if (!a) return item.archivo.name;
+    return a.reemplaza?.displayName ?? a.displayNameSugerido;
+  }
+
+  /**
+   * Ordena la cola sola, para no tener que soltar los archivos de uno en uno.
+   *
+   * El comparador entiende los números dentro del texto: sin él, «10 · …» iría
+   * antes que «2 · …», que es lo que hace una ordenación de cadenas normal y
+   * corriente.
+   */
+  private ordenarCola(): void {
+    const comparador = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
+    this.cola.update((cola) =>
+      [...cola].sort((x, y) =>
+        comparador.compare(this.etiquetaDeOrden(x), this.etiquetaDeOrden(y)),
+      ),
+    );
   }
 
   /** La entrada se localiza por su File, que no cambia aunque la fila sí. */
@@ -782,8 +841,13 @@ export class Admin implements OnInit {
     this.error.set(null);
     this.aviso.set(null);
 
+    // Se publican en el orden de la lista, y la lista viene ya ordenada por el
+    // nombre que declara cada bundle. Soltar los nueve de golpe los deja en su
+    // orden del método sin tocar una flecha.
+    this.ordenarCola();
+
     const ultimo = this.skills().reduce((max, s) => Math.max(max, s.orden), 0);
-    this.publicarSiguiente(pendientes, 0, 0, ultimo + 1);
+    this.publicarSiguiente(this.colaListas(), 0, 0, ultimo + 1);
   }
 
   private publicarSiguiente(
@@ -851,7 +915,14 @@ export class Admin implements OnInit {
 
   // ── La lista ─────────────────────────────────────────────────────────────
 
+  /** Cierra la ficha sin guardar. La ventana del grupo sigue detrás, intacta. */
+  cancelarFicha(): void {
+    if (this.trabajando()) return;
+    this.editando.set(null);
+  }
+
   editarSkill(skill: Skill): void {
+    this.error.set(null);
     this.editando.set(skill);
     this.formSkill.patchValue({
       displayName: skill.displayName,
@@ -888,6 +959,69 @@ export class Admin implements OnInit {
   }
 
   /** Activa o desactiva sin abrir el formulario: es el gesto más frecuente. */
+  /** Qué capítulo se está reemplazando ahora mismo, para bloquear solo esa fila. */
+  readonly reemplazando = signal<string | null>(null);
+
+  /**
+   * Cambia el archivo de un capítulo por otro del equipo, conservando su ficha.
+   *
+   * Se comprueba ANTES de subir que el bundle sea el de ese capítulo. El
+   * servidor identifica una skill por el `name` de su SKILL.md, así que soltar
+   * aquí el archivo equivocado no daría error: crearía un capítulo nuevo y
+   * dejaría el viejo intacto, y el administrador se iría convencido de haberlo
+   * actualizado. Comparar el código y negarse es lo único que evita eso.
+   *
+   * Lo que cambia es el archivo. El nombre, el resumen, la posición, la
+   * visibilidad y el grupo se conservan: actualizar el contenido de un capítulo
+   * no es motivo para reescribir su ficha.
+   */
+  cambiarArchivoDeCapitulo(skill: Skill, evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara el evento y parece que la segunda no hizo nada.
+    entrada.value = '';
+    if (!archivo || this.reemplazando()) return;
+
+    this.reemplazando.set(skill.id);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    this.skillsApi
+      .inspeccionar(archivo)
+      .pipe(
+        switchMap((analisis) => {
+          if (analisis.code !== skill.code) {
+            throw new Error(
+              `Ese archivo es «${analisis.code}», no «${skill.code}». ` +
+                'Subirlo aquí habría creado un capítulo nuevo en vez de actualizar este.',
+            );
+          }
+
+          return this.skillsApi.subir(archivo, {
+            displayName: skill.displayName,
+            summary: skill.summary,
+            orden: skill.orden,
+            active: skill.active,
+            productCode: skill.productCode ?? undefined,
+          });
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.aviso.set(
+            `«${skill.displayName}» actualizado. Ya está en el conector, sin reinstalar nada.`,
+          );
+          this.reemplazando.set(null);
+          this.cargarSkills();
+        },
+        error: (e: unknown) => {
+          this.error.set(e instanceof Error ? e.message : toApiError(e).message);
+          this.reemplazando.set(null);
+        },
+      });
+  }
+
   alternarSkill(skill: Skill): void {
     this.skillsApi.actualizar(skill.id, { active: !skill.active }).subscribe({
       next: (actualizada) =>
@@ -908,7 +1042,11 @@ export class Admin implements OnInit {
   mover(skill: Skill, direccion: -1 | 1): void {
     if (this.trabajando()) return;
 
-    const lista = this.skillsOrdenadas();
+    // Se intercambia con el vecino DE LA LISTA QUE SE ESTÁ VIENDO, no con el de
+    // la lista global. Si no, pulsar «bajar» en el último capítulo de un grupo
+    // lo cambiaría por uno de otro producto —invisible en esta pantalla— y el
+    // administrador vería que no pasa nada.
+    const lista = this.capitulosDisponibles();
     const i = lista.findIndex((s) => s.id === skill.id);
     const vecina = lista[i + direccion];
     if (i < 0 || !vecina) return;
@@ -1056,6 +1194,7 @@ export class Admin implements OnInit {
       pagos: tolerante('ventas', this.admin.pagosRecientes()),
       descuentos: tolerante('descuentos', this.admin.descuentos()),
       porRevisar: tolerante('yapes por revisar', this.payments.porRevisar()),
+      historial: tolerante('historial de yapes', this.payments.historialManual()),
     }).subscribe((datos) => {
       if (datos.skills) this.skills.set(datos.skills);
       if (datos.grupos) this.aplicarGrupos(datos.grupos);
@@ -1067,6 +1206,7 @@ export class Admin implements OnInit {
       if (datos.pagos) this.pagos.set(datos.pagos);
       if (datos.descuentos) this.descuentos.set(datos.descuentos);
       if (datos.porRevisar) this.aplicarPorRevisar(datos.porRevisar);
+      if (datos.historial) this.historial.set(datos.historial);
 
       this.recargando.set(false);
 
@@ -1176,6 +1316,8 @@ export class Admin implements OnInit {
         this.aviso.set(`Rechazado. Se lo hemos comunicado a ${pago.user.email}.`);
         this.olvidarPago(pago.id);
         this.revisando.set(null);
+        // El pago no desaparece: se muda al historial, y allí tiene que verse.
+        this.cargarHistorial();
       },
       error: (e: unknown) => {
         this.error.set(toApiError(e).message);
@@ -1192,6 +1334,141 @@ export class Admin implements OnInit {
     this.porRevisar.update((pagos) => pagos.filter((p) => p.id !== paymentId));
     this.capturas.update(({ [paymentId]: _fuera, ...resto }) => resto);
     this.motivos.update(({ [paymentId]: _tambien, ...resto }) => resto);
+  }
+
+  // ── Historial de Yape ────────────────────────────────────────────────────
+
+  private cargarHistorial(): void {
+    this.payments.historialManual().subscribe({
+      next: (pagos) => this.historial.set(pagos),
+      error: () => undefined,
+    });
+  }
+
+  /** Cuántos hay en cada estado. Va en las pestañas del filtro. */
+  readonly conteoHistorial = computed(() => {
+    const pagos = this.historial();
+    return {
+      todos: pagos.length,
+      aprobados: pagos.filter((p) => p.status === 'PAID').length,
+      rechazados: pagos.filter((p) => p.status === 'REJECTED').length,
+      'sin-resolver': pagos.filter((p) => p.status !== 'PAID' && p.status !== 'REJECTED').length,
+    } satisfies Record<FiltroHistorial, number>;
+  });
+
+  /**
+   * El historial ya cribado por el filtro y el buscador.
+   *
+   * Se busca por correo, nombre, nº de operación y referencia porque son las
+   * cuatro cosas con las que llega una reclamación: «soy fulano», «pagué con
+   * este correo» o «mi operación es la 01234567».
+   */
+  readonly historialFiltrado = computed(() => {
+    const filtro = this.filtroHistorial();
+    const busca = this.buscaHistorial().trim().toLowerCase();
+
+    return this.historial().filter((pago) => {
+      if (filtro === 'aprobados' && pago.status !== 'PAID') return false;
+      if (filtro === 'rechazados' && pago.status !== 'REJECTED') return false;
+      if (filtro === 'sin-resolver' && (pago.status === 'PAID' || pago.status === 'REJECTED')) {
+        return false;
+      }
+      if (!busca) return true;
+
+      return [
+        pago.user.email,
+        `${pago.user.firstName} ${pago.user.lastName}`,
+        pago.operationCode ?? '',
+        pago.providerOrderId,
+        pago.plan.name,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(busca);
+    });
+  });
+
+  /** La tanda que se está enseñando ahora mismo. */
+  readonly historialVisible = computed(() =>
+    this.historialFiltrado().slice(0, this.visiblesHistorial()),
+  );
+
+  /** Cuántos quedan escondidos, para decirlo en el botón. */
+  readonly restanHistorial = computed(() =>
+    Math.max(0, this.historialFiltrado().length - this.visiblesHistorial()),
+  );
+
+  buscarHistorial(evento: Event): void {
+    this.buscaHistorial.set((evento.target as HTMLInputElement).value);
+    // Cambiar la búsqueda con veinte filas abiertas dejaba el resultado nuevo
+    // ya desplegado, sin que nadie lo pidiera.
+    this.visiblesHistorial.set(POR_TANDA);
+  }
+
+  filtrarHistorial(filtro: FiltroHistorial): void {
+    this.filtroHistorial.set(filtro);
+    this.visiblesHistorial.set(POR_TANDA);
+  }
+
+  limpiarBusquedaHistorial(): void {
+    this.buscaHistorial.set('');
+    this.visiblesHistorial.set(POR_TANDA);
+  }
+
+  verMasHistorial(): void {
+    this.visiblesHistorial.update((n) => n + POR_TANDA);
+  }
+
+  plegarHistorial(): void {
+    this.visiblesHistorial.set(POR_TANDA);
+  }
+
+  /**
+   * Abre la captura de un pago del historial en otra pestaña.
+   *
+   * Las de la bandeja se bajan solas al entrar porque hay que mirarlas para
+   * decidir; las del historial no, que serían doscientas descargas para una
+   * pantalla que casi siempre se consulta de pasada. Esta se pide cuando se
+   * pide, y se queda cacheada por si se vuelve a ella.
+   */
+  abrirComprobante(paymentId: string): void {
+    const guardada = this.capturas()[paymentId];
+    if (guardada) {
+      window.open(guardada, '_blank', 'noopener');
+      return;
+    }
+
+    if (this.abriendo()) return;
+    this.abriendo.set(paymentId);
+
+    this.payments.comprobante(paymentId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.capturas.update((actual) => ({ ...actual, [paymentId]: url }));
+        this.abriendo.set(null);
+        window.open(url, '_blank', 'noopener');
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.abriendo.set(null);
+      },
+    });
+  }
+
+  /** Cómo acabó el pago, en castellano y en una palabra. */
+  estadoHistorial(pago: PagoRevisado): string {
+    switch (pago.status) {
+      case 'PAID':
+        return 'Aprobado';
+      case 'REJECTED':
+        return 'Rechazado';
+      case 'CANCELLED':
+        return 'Cancelado';
+      case 'FAILED':
+        return 'Fallido';
+      default:
+        return 'Sin comprobante';
+    }
   }
 
   // ── Descuentos ───────────────────────────────────────────────────────────

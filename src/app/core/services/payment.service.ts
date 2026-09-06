@@ -9,6 +9,7 @@ import {
   ComprobanteEnviado,
   DatosYape,
   PagoPorRevisar,
+  PagoRevisado,
   Payment,
   PaymentOrder,
   PaymentProvider,
@@ -102,6 +103,13 @@ export class PaymentService {
   porRevisar(): Observable<PagoPorRevisar[]> {
     return this.http
       .get<ApiResponse<{ payments: PagoPorRevisar[] }>>(`${this.base}/manual/pending`)
+      .pipe(map((res) => res.data.payments));
+  }
+
+  /** Historial del administrador: comprobantes ya resueltos, del último al primero. */
+  historialManual(): Observable<PagoRevisado[]> {
+    return this.http
+      .get<ApiResponse<{ payments: PagoRevisado[] }>>(`${this.base}/manual/history`)
       .pipe(map((res) => res.data.payments));
   }
 

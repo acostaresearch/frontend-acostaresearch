@@ -48,9 +48,6 @@
     <button type="button" [class.activa]="seccion() === 'grupos'" (click)="ir('grupos')">
       Grupos
     </button>
-    <button type="button" [class.activa]="seccion() === 'skills'" (click)="ir('skills')">
-      Capítulos
-    </button>
     <button type="button" [class.activa]="seccion() === 'descuentos'" (click)="ir('descuentos')">
       Descuentos
     </button>
@@ -483,6 +480,136 @@
         </ul>
       }
     </section>
+
+    <!-- ── Historial ───────────────────────────────────────────────────────
+         Lo que ya se resolvió. Se enseñan diez y el resto se despliega: el
+         historial solo crece, y quien entra aquí viene con un nombre o un
+         número de operación concreto, no a leerlo entero. -->
+    <section class="tarjeta historial">
+      <div class="cabecera-seccion">
+        <div>
+          <h2>Historial</h2>
+          <p class="nota">
+            Comprobantes ya resueltos, del último al primero. Se guardan los doscientos más
+            recientes.
+          </p>
+        </div>
+      </div>
+
+      <div class="filtros-historial">
+        <div class="buscador">
+          <input
+            type="search"
+            [value]="buscaHistorial()"
+            (input)="buscarHistorial($event)"
+            placeholder="Correo, nombre, nº de operación o referencia"
+            aria-label="Buscar en el historial"
+          />
+          @if (buscaHistorial()) {
+            <button
+              type="button"
+              class="limpiar"
+              aria-label="Limpiar la búsqueda"
+              (click)="limpiarBusquedaHistorial()"
+            >
+              ✕
+            </button>
+          }
+        </div>
+
+        <div class="pestanas" role="group" aria-label="Filtrar por estado">
+          @for (opcion of filtrosHistorial; track opcion.valor) {
+            <button
+              type="button"
+              [class.activa]="filtroHistorial() === opcion.valor"
+              (click)="filtrarHistorial(opcion.valor)"
+            >
+              {{ opcion.etiqueta }}
+              <span class="cuenta">{{ conteoHistorial()[opcion.valor] }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (historial().length === 0) {
+        <p class="tenue">Todavía no se ha revisado ningún comprobante.</p>
+      } @else if (historialFiltrado().length === 0) {
+        <p class="tenue">Nada coincide con lo que buscas.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table class="tabla-historial">
+            <thead>
+              <tr>
+                <th>Enviado</th>
+                <th>Comprador</th>
+                <th>Producto</th>
+                <th class="derecha">Importe</th>
+                <th>Nº de operación</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (pago of historialVisible(); track pago.id) {
+                <tr>
+                  <td class="tenue">{{ pago.createdAt | date: 'd MMM yy, HH:mm' }}</td>
+                  <td>
+                    <span class="quien">{{ pago.user.firstName }} {{ pago.user.lastName }}</span>
+                    <span class="tenue">{{ pago.user.email }}</span>
+                  </td>
+                  <td>{{ pago.plan.name }}</td>
+                  <td class="numero">S/ {{ pago.amountCents / 100 | number: '1.2-2' }}</td>
+                  <td class="mono" [class.falta]="!pago.operationCode">
+                    {{ pago.operationCode ?? '—' }}
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="pago.status === 'PAID'"
+                      [class.mala]="pago.status === 'REJECTED'"
+                      [class.espera]="pago.status !== 'PAID' && pago.status !== 'REJECTED'"
+                    >
+                      {{ estadoHistorial(pago) }}
+                    </span>
+                    @if (pago.reviewNote) {
+                      <span class="motivo-rechazo">{{ pago.reviewNote }}</span>
+                    }
+                  </td>
+                  <td class="derecha">
+                    @if (pago.tieneComprobante) {
+                      <button
+                        type="button"
+                        class="boton enlace"
+                        [disabled]="abriendo() === pago.id"
+                        (click)="abrirComprobante(pago.id)"
+                      >
+                        {{ abriendo() === pago.id ? 'Abriendo…' : 'Ver captura' }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pie-historial">
+          <span class="tenue">
+            {{ historialVisible().length }} de {{ historialFiltrado().length }}
+          </span>
+
+          @if (restanHistorial() > 0) {
+            <button type="button" class="boton secundario" (click)="verMasHistorial()">
+              Ver {{ restanHistorial() < porTanda ? restanHistorial() : porTanda }} más
+            </button>
+          } @else if (historialVisible().length > porTanda) {
+            <button type="button" class="boton secundario" (click)="plegarHistorial()">
+              Plegar
+            </button>
+          }
+        </div>
+      }
+    </section>
   }
 
   <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
@@ -689,36 +816,115 @@
 
                 @if (capitulosDisponibles().length === 0) {
                   <span class="ayuda">
-                    @if (capitulosEnOtrosGrupos() > 0) {
-                      Todos los capítulos subidos pertenecen ya a otro grupo. Súbele los suyos a
-                      este arrastrándolos aquí abajo.
-                    } @else {
-                      Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
-                    }
+                    Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
                   </span>
                 } @else {
                   <ul class="lista-capitulos">
                     @for (skill of capitulosDisponibles(); track skill.id) {
                       <li>
-                        <label class="capitulo">
-                          <input
-                            type="checkbox"
-                            [checked]="capitulosElegidos().has(skill.id)"
-                            (change)="alternarCapitulo(skill.id)"
-                          />
-                          <span class="capitulo-texto">
-                            <span class="capitulo-nombre">{{ skill.displayName }}</span>
-                            <span class="capitulo-meta">
-                              <span class="mono tenue">{{ skill.code }}</span>
-                              @if (!skill.productCode) {
-                                <span class="pastilla">sin grupo</span>
-                              }
-                              @if (!skill.active) {
-                                <span class="pastilla">oculto</span>
-                              }
+                        <div class="capitulo-fila">
+                          <label class="capitulo">
+                            <input
+                              type="checkbox"
+                              [checked]="capitulosElegidos().has(skill.id)"
+                              (change)="alternarCapitulo(skill.id)"
+                            />
+                            <span class="capitulo-texto">
+                              <span class="capitulo-nombre">{{ skill.displayName }}</span>
+                              <span class="capitulo-meta">
+                                <span class="mono tenue">{{ skill.code }}</span>
+                                <!-- Marcarlo lo MUEVE: un capítulo está en un
+                                     grupo y solo en uno. No se impide —montar un
+                                     producto con capítulos que ya existen es un
+                                     caso real— pero se dice de dónde sale. -->
+                                @if (grupoDe(skill.productCode); as otro) {
+                                  <span class="pastilla aviso-mover">ahora en {{ otro }}</span>
+                                }
+                                @if (!skill.productCode) {
+                                  <span class="pastilla">sin grupo</span>
+                                }
+                                @if (!skill.active) {
+                                  <span class="pastilla">oculto</span>
+                                }
+                              </span>
                             </span>
-                          </span>
-                        </label>
+                          </label>
+
+                          <!-- Las tres acciones del capítulo. Van fuera del
+                               <label> a propósito: dentro, pulsar cualquiera de
+                               ellas marcaría además la casilla. -->
+                          <div class="capitulo-acciones">
+                            <!-- El orden es el que ve el comprador en el
+                                 conector. Se mueve intercambiando con el vecino,
+                                 que es como ya funcionaba. -->
+                            <button
+                              type="button"
+                              class="enlace flecha"
+                              title="Subir"
+                              aria-label="Subir «{{ skill.displayName }}»"
+                              (click)="mover(skill, -1)"
+                              [disabled]="trabajando() || $first"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              class="enlace flecha"
+                              title="Bajar"
+                              aria-label="Bajar «{{ skill.displayName }}»"
+                              (click)="mover(skill, 1)"
+                              [disabled]="trabajando() || $last"
+                            >
+                              ↓
+                            </button>
+
+                            <button
+                              type="button"
+                              class="enlace"
+                              (click)="editarSkill(skill)"
+                              [disabled]="trabajando()"
+                            >
+                              Editar
+                            </button>
+
+                            <!-- Cambiar el archivo por otro del equipo. El
+                                 <input> va oculto dentro del propio botón: es la
+                                 única forma de abrir el diálogo del sistema sin
+                                 enseñar el control feo del navegador. -->
+                            <label
+                              class="enlace"
+                              [class.ocupado]="reemplazando() === skill.id"
+                              [attr.aria-busy]="reemplazando() === skill.id"
+                            >
+                              {{ reemplazando() === skill.id ? 'Subiendo…' : 'Cambiar' }}
+                              <input
+                                class="entrada-archivo"
+                                type="file"
+                                accept=".skill,.zip,application/zip"
+                                [disabled]="reemplazando() !== null"
+                                (change)="cambiarArchivoDeCapitulo(skill, $event)"
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              class="enlace"
+                              (click)="alternarSkill(skill)"
+                              [disabled]="trabajando()"
+                            >
+                              {{ skill.active ? 'Ocultar' : 'Mostrar' }}
+                            </button>
+
+                            <button
+                              type="button"
+                              class="enlace-peligro"
+                              (click)="eliminarSkill(skill)"
+                              [disabled]="trabajando()"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
                       </li>
                     }
                   </ul>
@@ -728,18 +934,6 @@
                   </span>
                 }
 
-                <!-- Los que ya son de otro producto no se listan: marcarlos aquí
-                     los movería, y eso no debe pasar por pulsar una casilla sin
-                     querer. Se dice cuántos hay para que su ausencia no parezca
-                     un fallo. -->
-                @if (capitulosEnOtrosGrupos() > 0) {
-                  <span class="ayuda">
-                    Hay {{ capitulosEnOtrosGrupos() }}
-                    {{ capitulosEnOtrosGrupos() === 1 ? 'capítulo' : 'capítulos' }} en otros grupos.
-                    No salen aquí porque marcarlos se los quitaría a su producto; para mover uno,
-                    desmárcalo primero en el grupo donde está.
-                  </span>
-                }
               </div>
 
               <!-- ── Subir capítulos nuevos a este grupo ────────────────────
@@ -751,121 +945,121 @@
                    cuanto se pulsa «Crear grupo». Antes de eso no hay código al
                    que colgarlos, y por eso el botón de publicar no aparece. -->
               <div class="campo">
-                  <label>Subir capítulos nuevos</label>
+                <label>Subir capítulos nuevos</label>
 
-                  <label
-                    class="soltar compacta"
-                    for="bundle-grupo"
-                    [class.encima]="arrastrando()"
-                    (dragover)="arrastrar($event, true)"
-                    (dragleave)="arrastrar($event, false)"
-                    (drop)="soltar($event)"
-                  >
-                    <input
-                      id="bundle-grupo"
-                      class="entrada-archivo"
-                      type="file"
-                      multiple
-                      accept=".skill,.zip,application/zip"
-                      (change)="elegirArchivos($event)"
-                      [disabled]="publicando()"
-                    />
-                    <span class="soltar-titulo">Arrastra aquí tus archivos .skill</span>
-                    <span class="soltar-ayuda">
-                      o pulsa para elegirlos · entran directos en este grupo · máximo 15 MB cada uno
-                    </span>
-                  </label>
+                <label
+                  class="soltar compacta"
+                  for="bundle-grupo"
+                  [class.encima]="arrastrando()"
+                  (dragover)="arrastrar($event, true)"
+                  (dragleave)="arrastrar($event, false)"
+                  (drop)="soltar($event)"
+                >
+                  <input
+                    id="bundle-grupo"
+                    class="entrada-archivo"
+                    type="file"
+                    multiple
+                    accept=".skill,.zip,application/zip"
+                    (change)="elegirArchivos($event)"
+                    [disabled]="publicando()"
+                  />
+                  <span class="soltar-titulo">Arrastra aquí tus archivos .skill</span>
+                  <span class="soltar-ayuda">
+                    o pulsa para elegirlos · entran directos en este grupo · máximo 15 MB cada uno
+                  </span>
+                </label>
 
-                  @if (cola().length > 0) {
-                    <ul class="cola">
-                      @for (item of cola(); track item.archivo) {
-                        <li class="cola-fila" [class.fallida]="item.estado === 'error'">
-                          <span class="cola-punto {{ item.estado }}" aria-hidden="true"></span>
+                @if (cola().length > 0) {
+                  <ul class="cola">
+                    @for (item of cola(); track item.archivo) {
+                      <li class="cola-fila" [class.fallida]="item.estado === 'error'">
+                        <span class="cola-punto {{ item.estado }}" aria-hidden="true"></span>
 
-                          <div class="cola-datos">
-                            <p class="cola-nombre">
-                              @if (item.analisis; as a) {
-                                {{ a.reemplaza?.displayName ?? a.displayNameSugerido }}
-                                @if (a.reemplaza) {
-                                  <span class="etiqueta aviso">reemplaza</span>
-                                } @else {
-                                  <span class="etiqueta">nuevo</span>
-                                }
-                              } @else {
-                                {{ item.archivo.name }}
-                              }
-                            </p>
-
+                        <div class="cola-datos">
+                          <p class="cola-nombre">
                             @if (item.analisis; as a) {
-                              <p class="cola-meta">
-                                <code>{{ a.code }}</code>
-                                · {{ a.pasos }} pasos · {{ a.archivos }} archivos
-                              </p>
-                            } @else if (item.estado === 'analizando') {
-                              <p class="cola-meta">Comprobando {{ item.archivo.name }}…</p>
+                              {{ a.reemplaza?.displayName ?? a.displayNameSugerido }}
+                              @if (a.reemplaza) {
+                                <span class="etiqueta aviso">reemplaza</span>
+                              } @else {
+                                <span class="etiqueta">nuevo</span>
+                              }
+                            } @else {
+                              {{ item.archivo.name }}
                             }
+                          </p>
 
-                            @if (item.error) {
-                              <p class="cola-error">{{ item.error }}</p>
-                            }
-                          </div>
+                          @if (item.analisis; as a) {
+                            <p class="cola-meta">
+                              <code>{{ a.code }}</code>
+                              · {{ a.pasos }} pasos · {{ a.archivos }} archivos
+                            </p>
+                          } @else if (item.estado === 'analizando') {
+                            <p class="cola-meta">Comprobando {{ item.archivo.name }}…</p>
+                          }
 
-                          <button
-                            type="button"
-                            class="enlace"
-                            (click)="quitarDeCola(item)"
-                            [disabled]="publicando()"
-                          >
-                            Quitar
-                          </button>
-                        </li>
-                      }
-                    </ul>
+                          @if (item.error) {
+                            <p class="cola-error">{{ item.error }}</p>
+                          }
+                        </div>
 
-                    @if (colaReemplazos() > 0) {
-                      <p class="nota atencion">
-                        {{
-                          colaReemplazos() === 1
-                            ? 'Uno de ellos pisa'
-                            : colaReemplazos() + ' de ellos pisan'
-                        }}
-                        un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y
-                        posición— y solo cambia el archivo.
-                      </p>
+                        <button
+                          type="button"
+                          class="enlace"
+                          (click)="quitarDeCola(item)"
+                          [disabled]="publicando()"
+                        >
+                          Quitar
+                        </button>
+                      </li>
                     }
+                  </ul>
 
-                    <!-- Publicar va aparte de «Guardar cambios»: sube los
+                  @if (colaReemplazos() > 0) {
+                    <p class="nota atencion">
+                      {{
+                        colaReemplazos() === 1
+                          ? 'Uno de ellos pisa'
+                          : colaReemplazos() + ' de ellos pisan'
+                      }}
+                      un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y
+                      posición— y solo cambia el archivo.
+                    </p>
+                  }
+
+                  <!-- Publicar va aparte de «Guardar cambios»: sube los
                          archivos ahora, sin cerrar la ventana, para poder
                          marcarlos acto seguido en la lista de arriba.
 
                          Al crear no se ofrece: no hay grupo al que subirlos
                          todavía. Se publican solos al pulsar «Crear grupo». -->
-                    @if (editandoGrupo()) {
-                      <button
-                        type="button"
-                        class="boton secundario"
-                        (click)="publicarCola()"
-                        [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
-                      >
-                        @if (publicando()) {
-                          Publicando…
-                        } @else if (colaAnalizando()) {
-                          Comprobando…
-                        } @else {
-                          Publicar {{ colaListas().length }} en este grupo
-                        }
-                      </button>
-                    } @else {
-                      <p class="nota">
-                        @if (colaAnalizando()) {
-                          Comprobando los archivos…
-                        } @else {
-                          Se publicarán dentro del grupo en cuanto pulses «Crear grupo».
-                        }
-                      </p>
-                    }
+                  @if (editandoGrupo()) {
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      (click)="publicarCola()"
+                      [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
+                    >
+                      @if (publicando()) {
+                        Publicando…
+                      } @else if (colaAnalizando()) {
+                        Comprobando…
+                      } @else {
+                        Publicar {{ colaListas().length }} en este grupo
+                      }
+                    </button>
+                  } @else {
+                    <p class="nota">
+                      @if (colaAnalizando()) {
+                        Comprobando los archivos…
+                      } @else {
+                        Se publicarán dentro del grupo en cuanto pulses «Crear grupo».
+                      }
+                    </p>
                   }
-                </div>
+                }
+              </div>
             </form>
           </div>
 
@@ -943,6 +1137,73 @@
       </div>
     }
 
+    <!-- ── Ficha de un capítulo ────────────────────────────────────────────
+         Ventana dentro de la ventana. Es lo que antes vivía en la pestaña de
+         capítulos: cambiar el nombre y el resumen que ve el comprador. Se abre
+         encima porque la de grupo sigue detrás con lo que se estaba editando, y
+         cerrar esta devuelve exactamente a donde uno estaba. -->
+    @if (editando(); as capitulo) {
+      <div class="ventana-fondo encima" (click)="cancelarFicha()">
+        <div
+          class="ventana estrecha"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-ficha"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-ficha">Editar «{{ capitulo.displayName }}»</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cancelarFicha()">
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <form [formGroup]="formSkill" class="formulario">
+              <div class="campo">
+                <label for="f-nombre">Nombre visible</label>
+                <input id="f-nombre" type="text" formControlName="displayName" maxlength="120" />
+                <span class="ayuda">
+                  Es como lo nombra el conector al listar los capítulos.
+                </span>
+              </div>
+
+              <div class="campo">
+                <label for="f-resumen">Resumen</label>
+                <input id="f-resumen" type="text" formControlName="summary" maxlength="500" />
+                <span class="ayuda">
+                  Una línea que explique qué hace. La lee el Claude del comprador para decidir
+                  cuál le toca, así que dice el qué, no el cómo.
+                </span>
+              </div>
+
+              <label class="casilla">
+                <input type="checkbox" formControlName="active" />
+                <span>Visible en el conector</span>
+              </label>
+
+              <p class="nota">
+                El archivo no se toca aquí. Para cambiarlo, «Cambiar» en la lista.
+                <span class="bloque mono tenue">{{ capitulo.code }}</span>
+              </p>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cancelarFicha()">Cancelar</button>
+            <button
+              type="button"
+              class="boton"
+              (click)="guardarFicha()"
+              [disabled]="trabajando() || formSkill.invalid"
+            >
+              {{ trabajando() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- ── Confirmación de borrado ─────────────────────────────────────────
          Se pide escribir la palabra en vez de un «¿seguro?»: a un «¿seguro?» se
          le da que sí sin leerlo. Escribir obliga a mirar qué se está borrando. -->
@@ -1004,294 +1265,6 @@
     }
   }
 
-  <!-- ══ CAPÍTULOS ════════════════════════════════════════════════════════ -->
-  @if (seccion() === 'skills') {
-    <section class="tarjeta">
-      <h2>Publicar capítulos</h2>
-      <p class="nota">
-        Suelta los <code>.skill</code> tal cual: son las carpetas de las skills comprimidas, con su
-        <code>SKILL.md</code> dentro. No hay que convertirlos a nada — el conector lee ese mismo
-        archivo. Puedes soltar varios de una vez; se comprueban todos antes de guardar ninguno.
-      </p>
-
-      @if (gruposActivos().length === 0) {
-        <p class="nota atencion">
-          No hay ningún grupo a la venta. Crea uno en <b>Grupos</b> antes de subir capítulos: un
-          capítulo sin grupo se sirve a todas las licencias, que casi nunca es lo que se quiere.
-        </p>
-      } @else {
-        <div class="campo">
-          <label for="grupo-destino">¿A qué grupo van?</label>
-          <select
-            id="grupo-destino"
-            (change)="elegirGrupoDestino($event)"
-            [disabled]="publicando()"
-          >
-            @for (grupo of gruposActivos(); track grupo.code) {
-              <option [value]="grupo.code" [selected]="grupo.code === grupoDestino()">
-                {{ grupo.name }} · S/ {{ (grupo.priceCents / 100).toFixed(2) }} ·
-                {{ duracion(grupo.durationDays) }}
-              </option>
-            }
-          </select>
-          <span class="ayuda">
-            Solo se aplica a los capítulos nuevos. Los que reemplacen a uno existente se quedan en
-            el grupo que ya tenían.
-          </span>
-        </div>
-      }
-
-      <label
-        class="soltar"
-        for="bundle"
-        [class.encima]="arrastrando()"
-        (dragover)="arrastrar($event, true)"
-        (dragleave)="arrastrar($event, false)"
-        (drop)="soltar($event)"
-      >
-        <input
-          id="bundle"
-          class="entrada-archivo"
-          type="file"
-          multiple
-          accept=".skill,.zip,application/zip"
-          (change)="elegirArchivos($event)"
-          [disabled]="publicando()"
-        />
-        <span class="soltar-titulo">Arrastra aquí tus archivos .skill</span>
-        <span class="soltar-ayuda">
-          o pulsa para elegirlos · puedes soltar los nueve de golpe · máximo 15 MB cada uno
-        </span>
-      </label>
-
-      @if (cola().length > 0) {
-        <ul class="cola">
-          @for (item of cola(); track item.archivo) {
-            <li class="cola-fila" [class.fallida]="item.estado === 'error'">
-              <span class="cola-punto {{ item.estado }}" aria-hidden="true"></span>
-
-              <div class="cola-datos">
-                <p class="cola-nombre">
-                  @if (item.analisis; as a) {
-                    {{ a.reemplaza?.displayName ?? a.displayNameSugerido }}
-                    @if (a.reemplaza) {
-                      <span class="etiqueta aviso">reemplaza</span>
-                    } @else {
-                      <span class="etiqueta">nuevo</span>
-                    }
-                  } @else {
-                    {{ item.archivo.name }}
-                  }
-                </p>
-
-                @if (item.analisis; as a) {
-                  <p class="cola-meta">
-                    <code>{{ a.code }}</code>
-                    · {{ a.pasos }} pasos · {{ a.archivos }} archivos ·
-                    {{ a.skillMdBytes | number }} bytes
-                  </p>
-                } @else if (item.estado === 'analizando') {
-                  <p class="cola-meta">Comprobando {{ item.archivo.name }}…</p>
-                }
-
-                @if (item.error) {
-                  <p class="cola-error">{{ item.error }}</p>
-                }
-              </div>
-
-              <button
-                type="button"
-                class="boton enlace"
-                (click)="quitarDeCola(item)"
-                [disabled]="publicando()"
-              >
-                Quitar
-              </button>
-            </li>
-          }
-        </ul>
-
-        @if (colaReemplazos() > 0) {
-          <p class="nota atencion">
-            {{
-              colaReemplazos() === 1 ? 'Uno de ellos pisa' : colaReemplazos() + ' de ellos pisan'
-            }}
-            un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y posición— y
-            solo cambia el archivo.
-          </p>
-        }
-
-        <div class="acciones-formulario">
-          <button
-            type="button"
-            class="boton"
-            (click)="publicarCola()"
-            [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
-          >
-            @if (publicando()) {
-              Publicando…
-            } @else if (colaAnalizando()) {
-              Comprobando…
-            } @else {
-              Publicar {{ colaListas().length }}
-              {{ colaListas().length === 1 ? 'capítulo' : 'capítulos' }}
-            }
-          </button>
-          <button
-            type="button"
-            class="boton secundario"
-            (click)="vaciarCola()"
-            [disabled]="publicando()"
-          >
-            Vaciar
-          </button>
-        </div>
-      }
-    </section>
-
-    <!-- La ficha se edita en su propia tarjeta y solo cuando toca: el resto
-         del tiempo estorbaba entre la zona de subida y la lista. -->
-    @if (editando(); as enEdicion) {
-      <section class="tarjeta">
-        <h2>Editar «{{ enEdicion.displayName }}»</h2>
-        <p class="nota">
-          Cambia lo que lee el comprador. El archivo no se toca: para cambiarlo, vuelve a subir el
-          <code>.skill</code> arriba.
-        </p>
-
-        <form [formGroup]="formSkill" class="formulario">
-          <div class="campo">
-            <label for="s-nombre">Nombre visible</label>
-            <input id="s-nombre" type="text" formControlName="displayName" maxlength="120" />
-            <span class="ayuda">Es lo que lee el tesista en el listado de capítulos.</span>
-          </div>
-
-          <div class="campo">
-            <label for="s-resumen">Descripción</label>
-            <input id="s-resumen" type="text" formControlName="summary" maxlength="500" />
-            <span class="ayuda">
-              Una frase: qué hace y con qué sale. Es lo ÚNICO del contenido que ve el comprador.
-            </span>
-          </div>
-
-          <div class="campo">
-            <label for="s-grupo">Grupo</label>
-            <select id="s-grupo" formControlName="productCode">
-              <option value="">Sin grupo · lo ven todas las licencias</option>
-              @for (grupo of grupos(); track grupo.code) {
-                <option [value]="grupo.code">
-                  {{ grupo.name }}
-                  @if (!grupo.active) {
-                    (retirado)
-                  }
-                </option>
-              }
-            </select>
-            <span class="ayuda">
-              Moverlo de grupo lo saca del conector de quien compró el anterior y lo mete en el del
-              otro. Se aplica al instante.
-            </span>
-          </div>
-
-          <label class="casilla">
-            <input type="checkbox" formControlName="active" />
-            <span>Visible en el conector</span>
-          </label>
-
-          <div class="acciones-formulario">
-            <button type="button" class="boton" (click)="guardarFicha()" [disabled]="trabajando()">
-              Guardar
-            </button>
-            <button type="button" class="boton secundario" (click)="editando.set(null)">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </section>
-    }
-
-    <section class="tarjeta">
-      <h2>Capítulos publicados</h2>
-      <p class="nota">
-        @if (skills().length === 0) {
-          Los activos aparecen en <code>listar_capitulos</code> y en la web.
-        } @else {
-          {{ skills().length }} en total, {{ skillsVisibles() }} visibles en
-          <code>listar_capitulos</code> y en la web. Las flechas cambian el orden del método.
-        }
-      </p>
-
-      @if (skills().length === 0) {
-        <p class="tenue">Todavía no hay ninguno.</p>
-      } @else {
-        <ul class="lista-skills">
-          @for (skill of skillsOrdenadas(); track skill.id; let primero = $first, ultimo = $last) {
-            <li [class.inactiva]="!skill.active">
-              <div class="skill-posicion">
-                <button
-                  type="button"
-                  class="flecha"
-                  (click)="mover(skill, -1)"
-                  [disabled]="primero || trabajando()"
-                  [attr.aria-label]="'Subir ' + skill.displayName"
-                >
-                  ↑
-                </button>
-                <span class="skill-orden">{{ skill.orden }}</span>
-                <button
-                  type="button"
-                  class="flecha"
-                  (click)="mover(skill, 1)"
-                  [disabled]="ultimo || trabajando()"
-                  [attr.aria-label]="'Bajar ' + skill.displayName"
-                >
-                  ↓
-                </button>
-              </div>
-
-              <div class="skill-datos">
-                <p class="skill-nombre">
-                  {{ skill.displayName }}
-                  @if (!skill.active) {
-                    <span class="etiqueta">oculto</span>
-                  }
-                </p>
-                <p class="skill-resumen">{{ skill.summary }}</p>
-                <p class="skill-meta">
-                  <code>{{ skill.code }}</code>
-                  · {{ nombreGrupo(skill.productCode) }} · {{ skill.skillMdBytes | number }} bytes ·
-                  actualizado
-                  {{ skill.updatedAt | date: 'dd/MM/yyyy' }}
-                </p>
-              </div>
-
-              <div class="skill-acciones">
-                <button type="button" class="boton enlace" (click)="editarSkill(skill)">
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  class="boton enlace"
-                  (click)="alternarSkill(skill)"
-                  [disabled]="trabajando()"
-                >
-                  {{ skill.active ? 'Ocultar' : 'Mostrar' }}
-                </button>
-                <button
-                  type="button"
-                  class="boton enlace peligro"
-                  (click)="eliminarSkill(skill)"
-                  [disabled]="trabajando()"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
-      }
-    </section>
-  }
 
   <!-- ══ DESCUENTOS ═══════════════════════════════════════════════════════ -->
   @if (seccion() === 'descuentos') {

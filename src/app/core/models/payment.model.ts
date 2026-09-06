@@ -95,6 +95,35 @@ export interface PagoPorRevisar {
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
+/**
+ * Una fila del historial de Yape: un comprobante que ya salió de la bandeja.
+ *
+ * Es casi lo mismo que `PagoPorRevisar` pero no lo extiende: aquí lo que
+ * importa es cómo acabó —`status`, `reviewedAt`, `reviewNote`— y allí lo que
+ * hace falta para decidir. Juntarlos obligaría a marcar como opcional media
+ * interfaz en los dos sitios.
+ */
+export interface PagoRevisado {
+  id: string;
+  provider: string;
+  providerOrderId: string;
+  status: 'PENDING' | 'IN_REVIEW' | 'PAID' | 'FAILED' | 'REJECTED' | 'CANCELLED';
+  amountCents: number;
+  discountCents: number;
+  currency: string;
+  createdAt: string;
+  paidAt: string | null;
+  operationCode: string | null;
+  /** Cuándo se resolvió. Null en los que caducaron sin que nadie los mirara. */
+  reviewedAt: string | null;
+  /** Motivo del rechazo, tal como lo leyó el comprador. */
+  reviewNote: string | null;
+  /** Si queda imagen que abrir. Los que nunca subieron captura no la tienen. */
+  tieneComprobante: boolean;
+  plan: { code: string; name: string; words: number; durationDays: number };
+  user: { id: string; email: string; firstName: string; lastName: string };
+}
+
 /** Resultado de aprobar un comprobante. Sin la URL del conector: es del comprador. */
 export interface AprobacionManual {
   alreadyProcessed: boolean;

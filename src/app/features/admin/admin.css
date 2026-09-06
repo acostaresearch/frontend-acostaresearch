@@ -1277,3 +1277,245 @@ td.acciones {
 .soltar.compacta .soltar-titulo {
   font-size: 14px;
 }
+
+/* ── Capítulo con sus acciones ─────────────────────────────────────────────
+ *
+ * La casilla y el texto van en un <label> —pulsar el nombre marca— y las
+ * acciones fuera de él: dentro, pulsar «Eliminar» marcaría además la casilla.
+ */
+.capitulo-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.capitulo-fila .capitulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.capitulo-acciones {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding-right: 8px;
+}
+
+/* «Cambiar» es un <label> con un input de archivo escondido dentro, así que
+   hay que devolverle el aspecto y el cursor de un botón a mano. */
+.capitulo-acciones label.enlace {
+  position: relative;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.capitulo-acciones label.enlace.ocupado {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.capitulo-acciones label.enlace + .enlace,
+.capitulo-acciones label.enlace + .enlace-peligro {
+  margin-left: 4px;
+}
+
+/* Las acciones aparecen al pasar por la fila. Estando siempre visibles, nueve
+   capítulos son veintisiete botones compitiendo con lo que se viene a hacer
+   aquí, que es marcar casillas. */
+@media (hover: hover) {
+  .capitulo-acciones {
+    opacity: 0;
+    transition: opacity var(--transicion);
+  }
+
+  .capitulo-fila:hover .capitulo-acciones,
+  .capitulo-acciones:focus-within {
+    opacity: 1;
+  }
+}
+
+/* ── Historial de Yape ─────────────────────────────────────────────────────
+ *
+ * La bandeja de arriba se vacía; esto no. Por eso se enseña de diez en diez y
+ * con buscador: lo que se viene a hacer aquí es comprobar un pago concreto
+ * —«pagué el martes y no me llegó»—, no repasar la lista.
+ */
+/* La bandeja de arriba no va en tarjeta, así que sin esto se tocarían. */
+.tarjeta.historial {
+  margin-top: 28px;
+}
+
+.filtros-historial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.buscador {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.buscador input {
+  width: 100%;
+  padding: 9px 34px 9px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
+}
+
+.buscador input::placeholder {
+  color: var(--color-texto-tenue);
+}
+
+.buscador input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+/* La cruz nativa del type="search" no se puede maquetar y no aparece en todos
+   los navegadores; esta sí, y solo cuando hay algo escrito. */
+.buscador input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.buscador .limpiar {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 4px 6px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  background: none;
+  border: none;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.buscador .limpiar:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+/* Pestañas del filtro: una barra de segmentos, no cuatro botones sueltos. */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.pestanas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background var(--transicion),
+    color var(--transicion);
+}
+
+.pestanas button:hover {
+  color: var(--color-texto);
+}
+
+.pestanas button.activa {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+}
+
+.pestanas .cuenta {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto-tenue);
+}
+
+.pestanas button.activa .cuenta {
+  color: var(--color-primario);
+}
+
+.tabla-historial .quien {
+  display: block;
+  font-weight: 600;
+}
+
+.tabla-historial td.falta {
+  color: var(--color-texto-tenue);
+}
+
+/* El motivo del rechazo va bajo su pastilla: es la respuesta a «¿por qué?»,
+   que es lo siguiente que se pregunta al ver un rechazado. */
+.motivo-rechazo {
+  display: block;
+  max-width: 32ch;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-texto-tenue);
+}
+
+.pie-historial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  margin-top: 4px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.pie-historial .boton {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .filtros-historial {
+    align-items: stretch;
+  }
+
+  .pestanas {
+    justify-content: space-between;
+  }
+}
+
+/* La ficha de un capítulo se abre encima de la ventana del grupo, que sigue
+   detrás con lo que se estaba editando. */
+.ventana-fondo.encima {
+  z-index: 70;
+}
+
+/* Las flechas de orden: cuadradas y sin texto, para que cinco acciones en una
+   fila no se coman el nombre del capítulo. */
+.enlace.flecha {
+  padding: 4px 7px;
+  font-size: 14px;
+  line-height: 1;
+}
