@@ -140,6 +140,88 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'seleccionan del Tesauro de la Unesco.',
     entregable: 'Cierre de tesis, resumen y abstract con palabras clave del Tesauro Unesco',
   },
+
+  // ── Ruta del Artículo Científico ────────────────────────────────────────
+  //
+  // Otro producto, el mismo mapa: la clave es el código del capítulo, así que
+  // conviven sin estorbarse y cada página pide su grupo al catálogo.
+  'articulo-fase0-tema-y-orientacion': {
+    descripcion:
+      'De una inquietud a un tema con destino. Defines área, enfoque y tipo de estudio, y ' +
+      'eliges la revista real donde puede salir publicado: se comprueban en la fuente su ' +
+      'cuartil, su vigencia y cuánto cobra por publicar, y si es legítima o depredadora.',
+    entregable: 'Ficha de Orientación y revista destino verificada',
+  },
+  'articulo-fase1-matriz-de-estrategia': {
+    descripcion:
+      'El esqueleto del estudio, antes de escribir una línea: diseño, objetivos, preguntas, ' +
+      'hipótesis, cada variable hasta su instrumento y la muestra. El error más caro no es ' +
+      'escribir mal, es escribir bien un estudio que no cuadra.',
+    entregable: 'Matriz de Estrategia en Excel',
+  },
+  'articulo-fase2-introduccion': {
+    descripcion:
+      'La primera fase que escribe artículo, y la que crea el Word que crecerá hasta el envío. ' +
+      'Te arma la ecuación de búsqueda lista para pegar en Scopus, Web of Science y Google ' +
+      'Académico, y redacta los cinco bloques en el orden que espera un revisor.',
+    entregable: 'Introducción, en el documento del artículo',
+  },
+  'articulo-fase3-revision-literatura': {
+    descripcion:
+      'Responde las tres preguntas que hará el revisor: qué teorías dan base a tus constructos, ' +
+      'qué se sabe de cada uno y por qué es razonable esperar lo que planteas. Comprueba que la ' +
+      'dirección de cada estudio citado coincida con la de tu hipótesis.',
+    entregable: 'Revisión de la literatura y sustento de hipótesis',
+  },
+  'articulo-fase4-metodos': {
+    descripcion:
+      'La sección que permite que otro repita tu estudio: la más leída en revisión y la que más ' +
+      'rechazos provoca, no por mal escrita sino por incompleta. La Tabla 1 sociodemográfica se ' +
+      'calcula desde tu base de datos, no de memoria.',
+    entregable: 'Métodos y Tabla 1 sociodemográfica',
+  },
+  'articulo-fase5-resultados': {
+    descripcion:
+      'Convierte las salidas de tu análisis en la sección que las reporta. Reporta, no ' +
+      'interpreta: un resultado que ya viene explicado deja a la Discusión sin nada que decir. ' +
+      'Cada cifra se traslada desde tu documento de análisis.',
+    entregable: 'Resultados con sus tablas y figuras',
+  },
+  'articulo-fase6-discusion': {
+    descripcion:
+      'Donde el artículo dice qué significan tus hallazgos. Por cada uno se recuerda el ' +
+      'resultado, se contrasta con cuatro o cinco citas y se explica qué implica. Una discusión ' +
+      'que repite los resultados con otras palabras es la observación más frecuente del revisor.',
+    entregable: 'Discusión en prosa continua',
+  },
+  'articulo-fase7-conclusiones-abstract': {
+    descripcion:
+      'Cierra el manuscrito y escribe las dos partes que más gente lee y casi nadie cuida: el ' +
+      'título definitivo y el resumen. Un editor decide en esos dos si sigue leyendo. ' +
+      'Conclusiones como síntesis integradora, no como una lista por hipótesis.',
+    entregable: 'Conclusiones, título, resumen y abstract',
+  },
+  'articulo-fase8-adaptacion-y-envio': {
+    descripcion:
+      'El manuscrito está escrito; ahora hay que dejarlo como esa revista exige. De su guía de ' +
+      'autores salen estructura, límite de palabras, estilo de cita y anonimización. Es la fase ' +
+      'que más rechazos de escritorio evita.',
+    entregable: 'Manuscrito adaptado y carta de presentación',
+  },
+  'articulo-fase9-respuesta-revisores': {
+    descripcion:
+      'Llega el correo con observaciones y no sabes si tienes que aceptarlas todas. No tienes. ' +
+      'Se inventaría cada una con su decisión, se aplican los cambios con control de cambios ' +
+      'real y se responde punto por punto, incluidas las que no atendiste y por qué.',
+    entregable: 'Manuscrito revisado y carta de respuesta',
+  },
+  'humanizador-academico': {
+    descripcion:
+      'Para cuando te dicen que tu texto suena a IA. Primero un informe de diagnóstico con los ' +
+      'patrones detectados y la medición estilométrica; después la reescritura. No te pide ' +
+      'fuentes ni te llena el texto de citas pendientes: humanizar es restar.',
+    entregable: 'Informe de diagnóstico y texto reescrito',
+  },
 };
 
 export const PASOS = [
