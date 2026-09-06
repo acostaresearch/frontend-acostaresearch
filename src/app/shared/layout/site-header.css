@@ -111,13 +111,118 @@
   justify-content: center;
 }
 
-@media (max-width: 720px) {
-  .navegacion {
-    display: none;
-  }
+/* ── Menú de móvil ──────────────────────────────────────────────────────────
+ *
+ * En escritorio este envoltorio NO existe: display:contents hace que la
+ * navegación y las acciones sigan siendo hijas directas de la fila, con su
+ * margin-right:auto y todo, exactamente como antes de que hubiera menú.
+ * Así no hay dos maquetaciones que mantener ni los enlaces escritos dos veces.
+ */
+.menu {
+  display: contents;
+}
 
+.hamburguesa {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.barra {
+  width: 18px;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--color-texto);
+  border-radius: 2px;
+  transition:
+    transform var(--transicion),
+    opacity var(--transicion);
+}
+
+/* Abierto, las tres barras se convierten en una equis: la de en medio se
+   desvanece y las otras dos se cruzan sobre ella. */
+.hamburguesa.abierta .barra:first-child {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburguesa.abierta .barra:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburguesa.abierta .barra:last-child {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (max-width: 720px) {
   .contenido {
     gap: 14px;
     justify-content: space-between;
+  }
+
+  .hamburguesa {
+    display: flex;
+  }
+
+  /* Cuelga de la cabecera, que ya está posicionada por ser sticky. Va por
+     encima de la página y no la empuja: abrir un menú no debería mover el
+     contenido que estabas mirando. */
+  .menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    padding: 6px 20px 18px;
+    background: var(--color-superficie);
+    border-bottom: 1px solid var(--color-borde);
+    box-shadow: var(--sombra);
+  }
+
+  .menu.abierto {
+    display: flex;
+  }
+
+  .navegacion {
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+  }
+
+  /* Cada enlace ocupa toda la fila: el objetivo del dedo es la línea entera,
+     no las once letras de «Las 9 Skills». */
+  .navegacion a {
+    padding: 13px 0;
+    font-size: 15px;
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .acciones {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 16px;
+  }
+
+  .acciones .boton,
+  .enlace-entrar,
+  .enlace-salir {
+    width: 100%;
+    padding: 11px 16px;
+    text-align: center;
+  }
+
+  .enlace-entrar,
+  .enlace-salir {
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-sm);
   }
 }

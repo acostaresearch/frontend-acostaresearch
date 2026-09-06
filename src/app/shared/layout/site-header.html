@@ -5,35 +5,54 @@
       <span class="marca-cola">IA &amp; Research</span>
     </a>
 
-    <nav class="navegacion">
-      <!-- <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">
-        Inicio
-      </a> -->
-      <a routerLink="/metodo" routerLinkActive="activo">Las 9 Skills</a>
-      <a routerLink="/articulo" routerLinkActive="activo">Artículos</a>
-      <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
-      <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
-      <a routerLink="/planes" routerLinkActive="activo">Comprar</a>
-      <!-- <a routerLink="/humanizador" routerLinkActive="activo">Humanizador</a> -->
-    </nav>
+    <!-- Solo se ve en móvil. `aria-expanded` es lo que le dice a un lector de
+         pantalla si el menú está abierto; sin eso el botón se anuncia como un
+         botón cualquiera que no se sabe qué hace. -->
+    <button
+      type="button"
+      class="hamburguesa"
+      [class.abierta]="menuAbierto()"
+      [attr.aria-expanded]="menuAbierto()"
+      [attr.aria-label]="menuAbierto() ? 'Cerrar el menú' : 'Abrir el menú'"
+      aria-controls="menu-principal"
+      (click)="alternarMenu()"
+    >
+      <span class="barra" aria-hidden="true"></span>
+      <span class="barra" aria-hidden="true"></span>
+      <span class="barra" aria-hidden="true"></span>
+    </button>
 
-    <div class="acciones">
-      @if (auth.isAuthenticated()) {
-        <!-- Un solo destino por persona, no dos. Al administrador le llevaba a
-             «Administrar» y a «Mi perfil» a la vez, y entre las dos gana siempre
-             la primera: al panel se entra a diario y al perfil casi nunca. Sus
-             datos y su contraseña están en la pestaña «Cuentas» del panel, que
-             es el mismo formulario que ve cualquiera en su perfil. -->
-        @if (auth.hasRole('ADMIN')) {
-          <a class="boton secundario" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+    <!-- Enlaces y acciones viven dentro del mismo envoltorio para no escribirlos
+         dos veces, una para cada tamaño de pantalla. En escritorio el
+         envoltorio no existe (`display: contents`) y los dos bloques quedan
+         como estaban; en móvil se convierte en el desplegable. -->
+    <div id="menu-principal" class="menu" [class.abierto]="menuAbierto()">
+      <nav class="navegacion">
+        <a routerLink="/metodo" routerLinkActive="activo">Las 9 Skills</a>
+        <a routerLink="/articulo" routerLinkActive="activo">Artículos</a>
+        <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
+        <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
+        <a routerLink="/planes" routerLinkActive="activo">Comprar</a>
+      </nav>
+
+      <div class="acciones">
+        @if (auth.isAuthenticated()) {
+          <!-- Un solo destino por persona, no dos. Al administrador le llevaba a
+               «Administrar» y a «Mi perfil» a la vez, y entre las dos gana siempre
+               la primera: al panel se entra a diario y al perfil casi nunca. Sus
+               datos y su contraseña están en la pestaña «Cuentas» del panel, que
+               es el mismo formulario que ve cualquiera en su perfil. -->
+          @if (auth.hasRole('ADMIN')) {
+            <a class="boton secundario" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+          } @else {
+            <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
+          }
+          <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
         } @else {
-          <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
+          <a class="enlace-entrar" routerLink="/auth/login">Iniciar sesión</a>
+          <a class="boton" routerLink="/auth/registro">Crear cuenta</a>
         }
-        <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
-      } @else {
-        <a class="enlace-entrar" routerLink="/auth/login">Iniciar sesión</a>
-        <a class="boton" routerLink="/auth/registro">Crear cuenta</a>
-      }
+      </div>
     </div>
   </div>
 </header>
