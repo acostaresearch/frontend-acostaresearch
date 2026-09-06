@@ -100,8 +100,15 @@ async function servirLaWeb(request, env) {
   const quierePagina = (request.headers.get('Accept') || '').includes('text/html');
   if (!quierePagina) return respuesta;
 
-  const indice = new URL('/index.html', request.url);
-  const pagina = await env.ASSETS.fetch(new Request(indice, request));
+  // Se pide la RAÍZ, no `/index.html`.
+  //
+  // Cloudflare redirige `/index.html` a `/` para tener una sola URL canónica de
+  // cada página. Pedirlo por su nombre devuelve una redirección —un 301 con
+  // `Location: /`— y no el contenido. Si a esa respuesta se le fuerza el estado
+  // 200, como se hace abajo, sale un 200 con cabecera `Location` y sin cuerpo:
+  // un híbrido que ningún navegador sabe interpretar, y la página queda en
+  // blanco sin un solo error en la consola.
+  const pagina = await env.ASSETS.fetch(new Request(new URL('/', request.url), request));
 
   // El 200 es a propósito: para el navegador y para Google, /metodo es una
   // página que existe, no un error al que le hemos puesto contenido.
