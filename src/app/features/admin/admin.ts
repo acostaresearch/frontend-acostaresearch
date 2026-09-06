@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
 import { mensajeDeError } from '../../core/http/api-error';
@@ -26,6 +26,11 @@ import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
+import {
+  EstadoCorpus,
+  Referencia,
+  ReferenceService,
+} from '../../core/services/reference.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
@@ -38,7 +43,14 @@ import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
 
-type Seccion = 'accesos' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'cuentas';
+type Seccion =
+  | 'accesos'
+  | 'grupos'
+  | 'descuentos'
+  | 'licencias'
+  | 'alertas'
+  | 'corpus'
+  | 'cuentas';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -1940,6 +1952,141 @@ export class Admin implements OnInit {
     // pagina en el servidor y la única que no hace falta para nada de lo que se
     // ve al entrar. Se pide la primera vez que se abre su pestaña.
     if (seccion === 'cuentas' && this.usuarios().length === 0) this.cargarUsuarios();
+
+    // El corpus tampoco: es una llamada a la base por una lista que solo
+    // mira quien viene a curar bibliografía, no quien entra a revisar cobros.
+    if (seccion === 'corpus' && this.corpus() === null) this.cargarCorpus();
+  }
+
+  // ── Corpus bibliográfico ─────────────────────────────────────────────────
+
+  private readonly referenciasApi = inject(ReferenceService);
+
+  /** `null` mientras no se ha abierto la pestaña ni una vez. */
+  readonly corpus = signal<EstadoCorpus | null>(null);
+  readonly referencias = signal<Referencia[]>([]);
+  readonly totalReferencias = signal(0);
+  readonly paginaReferencias = signal(1);
+  readonly buscadorCorpus = new FormControl<string>({ value: '', disabled: false });
+
+  /** El temporizador que va preguntando cómo va la pasada. */
+  private vigilanteDelCorpus: ReturnType<typeof setInterval> | null = null;
+
+  // Al salir del panel el temporizador tiene que morir con él: si no, sigue
+  // pidiendo el estado desde una pantalla que ya no existe.
+  private readonly alDestruir = inject(DestroyRef).onDestroy(() =>
+    this.pararVigilanteDelCorpus(),
+  );
+
+  readonly sincronizando = computed(() => this.corpus()?.trabajo?.activo === true);
+
+  /** «1.200 de 24.006» mientras trabaja, para que no parezca colgado. */
+  readonly avanceDelCorpus = computed(() => {
+    const trabajo = this.corpus()?.trabajo;
+    if (!trabajo?.activo) return '';
+
+    const fase =
+      trabajo.fase === 'notas'
+        ? 'Leyendo las notas'
+        : trabajo.fase === 'retiradas'
+          ? 'Retirando lo borrado en Zotero'
+          : 'Leyendo las fuentes';
+
+    if (trabajo.total === 0) return `${fase}…`;
+    return `${fase}: ${trabajo.hechas.toLocaleString('es-PE')} de ${trabajo.total.toLocaleString('es-PE')}`;
+  });
+
+  cargarCorpus(pagina = 1): void {
+    this.paginaReferencias.set(pagina);
+
+    this.referenciasApi.estado().subscribe({
+      next: (estado) => {
+        this.corpus.set(estado);
+        // Una pasada completa son unas 450 peticiones a Zotero y varios
+        // minutos. Si al abrir el panel ya hay uno en marcha —lo arrancó otra
+        // pestaña, o se recargó esta—, se sigue mirando sin volver a lanzarlo.
+        if (estado.trabajo?.activo) this.vigilarCorpus();
+      },
+      error: () => this.error.set('No pudimos leer el estado del corpus.'),
+    });
+
+    this.referenciasApi.listar({ pagina, texto: this.buscadorCorpus.value ?? '' }).subscribe({
+      next: (datos) => {
+        this.referencias.set(datos.filas);
+        this.totalReferencias.set(datos.total);
+      },
+      error: () => this.error.set('No pudimos leer la bibliografía.'),
+    });
+  }
+
+  /**
+   * Pregunta cada tres segundos hasta que la pasada termina.
+   *
+   * Se para sola y también al salir del panel: un temporizador que sobrevive al
+   * componente sigue pegándole a la API desde una pantalla que ya no existe.
+   */
+  private vigilarCorpus(): void {
+    if (this.vigilanteDelCorpus) return;
+
+    this.vigilanteDelCorpus = setInterval(() => {
+      this.referenciasApi.estado().subscribe({
+        next: (estado) => {
+          this.corpus.set(estado);
+          if (estado.trabajo?.activo) return;
+
+          this.pararVigilanteDelCorpus();
+          if (estado.trabajo?.error) this.error.set(`Zotero: ${estado.trabajo.error}`);
+          else {
+            this.aviso.set(
+              `Corpus al día: ${estado.total.toLocaleString('es-PE')} fuentes` +
+                (estado.trabajo?.retiradas ? `, ${estado.trabajo.retiradas} retiradas` : '') +
+                '.',
+            );
+          }
+          this.cargarCorpus(1);
+        },
+        error: () => this.pararVigilanteDelCorpus(),
+      });
+    }, 3000);
+  }
+
+  private pararVigilanteDelCorpus(): void {
+    if (!this.vigilanteDelCorpus) return;
+    clearInterval(this.vigilanteDelCorpus);
+    this.vigilanteDelCorpus = null;
+  }
+
+  /**
+   * Arranca una pasada. Vuelve enseguida: el trabajo sigue en el servidor.
+   *
+   * La pasada completa está a un clic aparte y no como comportamiento normal:
+   * son unas 450 peticiones a Zotero, y Zotero las cuenta POR CUENTA. La cuenta
+   * es una sola y sirve a todos los clientes a la vez, así que gastarlas por
+   * costumbre acabaría bloqueando el corpus para todo el mundo.
+   */
+  sincronizarCorpus(completa = false): void {
+    if (this.sincronizando()) return;
+
+    this.error.set(null);
+    this.aviso.set(null);
+
+    this.referenciasApi.sincronizar(completa).subscribe({
+      next: ({ arranque, mensaje }) => {
+        this.corpus.update((estado) => (estado ? { ...estado, trabajo: arranque } : estado));
+        this.aviso.set(mensaje);
+        this.vigilarCorpus();
+      },
+      error: (fallo) =>
+        this.error.set(
+          fallo?.error?.message ?? 'No pudimos sincronizar con Zotero. Mira el log del servidor.',
+        ),
+    });
+  }
+
+  /** Cómo se lee una fuente sin producto: la ven todas las licencias. */
+  productosDe(referencia: Referencia): string {
+    if (referencia.groups.length === 0) return 'Todas';
+    return referencia.groups.map((g) => g.productCode).join(', ');
   }
 
   // ── Cuentas ──────────────────────────────────────────────────────────────

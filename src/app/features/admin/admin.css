@@ -1847,3 +1847,66 @@ td.acciones {
   font-size: 14px;
   overflow-wrap: anywhere;
 }
+
+/* ── Bibliografía ────────────────────────────────────────────────────────
+   La lista del corpus. No es una tabla porque una cita no son campos que se
+   comparan en columna: se lee de corrido, como se va a leer en la tesis. */
+.referencias {
+  margin: 16px 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.referencias li {
+  padding: 12px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.referencia-cita {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.referencia-meta {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+/* A qué licencias llega esta fuente. «Todas» es el caso normal, no un fallo:
+   la metodología sirve a las dos rutas. */
+.etiqueta-producto {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+/* Se marca en rojo porque hay que arreglarlo en Zotero: una cita que el jurado
+   no puede seguir es media cita. */
+.sin-doi {
+  color: var(--color-error);
+}
+
+.referencia-nota {
+  margin: 8px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--color-borde);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  white-space: pre-line;
+}

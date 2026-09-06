@@ -229,6 +229,9 @@
         <span class="contador-pestana">{{ alertas().length }}</span>
       }
     </button>
+    <button type="button" [class.activa]="seccion() === 'corpus'" (click)="ir('corpus')">
+      Bibliografía
+    </button>
     <button type="button" [class.activa]="seccion() === 'cuentas'" (click)="ir('cuentas')">
       Cuentas
     </button>
@@ -1546,6 +1549,149 @@
   <!-- ══ CUENTAS ══════════════════════════════════════════════════════════
        Tres cosas que van juntas porque se hacen desde el mismo sitio: tus
        propios datos, quién más entra al panel, y quién está registrado. -->
+  <!-- ══ BIBLIOGRAFÍA ═══════════════════════════════════════════════════════
+       El corpus que citan las Skills. Se cura en Zotero —ahí está el conector
+       del navegador que captura una ficha de Scopus o Scielo en un clic— y aquí
+       solo se trae y se comprueba. Por eso NO hay formulario para añadir
+       fuentes: dos sitios donde editar lo mismo acaban discrepando, y el que
+       manda es Zotero. -->
+  @if (seccion() === 'corpus') {
+    <section class="tarjeta">
+      <div class="tarjeta-cabecera">
+        <h2>Bibliografía</h2>
+
+        @if (corpus()?.configurado) {
+          <div class="filtros">
+            <button
+              type="button"
+              class="boton"
+              [disabled]="sincronizando()"
+              (click)="sincronizarCorpus(false)"
+            >
+              {{ sincronizando() ? 'Sincronizando…' : 'Sincronizar con Zotero' }}
+            </button>
+            <!-- Aparte y en secundario a propósito: con el corpus crecido son
+                 cientos de peticiones, y Zotero las cuenta por cuenta. La
+                 cuenta es una sola para todos los clientes. -->
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="sincronizando()"
+              (click)="sincronizarCorpus(true)"
+            >
+              Volver a leerlo todo
+            </button>
+          </div>
+        }
+      </div>
+
+      <p class="nota">
+        Las fuentes que el conector puede citar. Se capturan y se corrigen en Zotero; aquí solo se
+        sincronizan y se comprueban.
+      </p>
+
+      <!-- Mientras trabaja hay que ver que avanza. Una pasada completa son unas
+           450 peticiones a Zotero y varios minutos: sin un número que se mueva,
+           un botón desactivado durante diez minutos parece un panel roto. -->
+      @if (avanceDelCorpus(); as avance) {
+        <p class="aviso-espera" role="status">
+          {{ avance }} · puedes cerrar esta página, el servidor sigue por su cuenta.
+        </p>
+      }
+
+      @if (corpus(); as estado) {
+        @if (!estado.configurado) {
+          <p class="tenue">
+            El corpus no está configurado: falta <code>ZOTERO_API_KEY</code> en el servidor.
+          </p>
+        } @else {
+          <div class="datos">
+            <div class="dato">
+              <span class="cifra">{{ estado.total }}</span>
+              <span class="etiqueta-dato">fuentes en el corpus</span>
+            </div>
+            <div class="dato">
+              <span class="cifra">{{ estado.biblioteca }}</span>
+              <span class="etiqueta-dato">biblioteca de Zotero</span>
+            </div>
+            <div class="dato" [class.apagado]="!estado.lastRunAt">
+              <span class="cifra">
+                {{ estado.lastRunAt ? (estado.lastRunAt | date: 'd MMM HH:mm') : 'nunca' }}
+              </span>
+              <span class="etiqueta-dato">última sincronización</span>
+            </div>
+          </div>
+
+          <label class="campo">
+            <span>Buscar en el corpus</span>
+            <input
+              type="search"
+              [formControl]="buscadorCorpus"
+              placeholder="Autor, título o tema"
+              (keyup.enter)="cargarCorpus(1)"
+            />
+          </label>
+
+          @if (referencias().length === 0) {
+            <p class="tenue">
+              Ninguna fuente todavía. Captúralas en Zotero y pulsa «Sincronizar». Etiqueta con
+              <strong>tesis</strong> o <strong>articulo</strong> las que sean de una ruta concreta;
+              las que dejes sin etiqueta las verán todas las licencias, que es lo que quieres para
+              la metodología.
+            </p>
+          } @else {
+            <ul class="referencias">
+              @for (fuente of referencias(); track fuente.id) {
+                <li>
+                  <p class="referencia-cita">
+                    <strong>{{ fuente.authors || '(sin autor)' }}</strong>
+                    ({{ fuente.year ?? 's. f.' }}). {{ fuente.title }}.
+                    @if (fuente.source) {
+                      <em>{{ fuente.source }}</em>
+                    }
+                  </p>
+
+                  <p class="referencia-meta">
+                    <span class="etiqueta-producto">{{ productosDe(fuente) }}</span>
+
+                    @if (fuente.doi) {
+                      <a [href]="'https://doi.org/' + fuente.doi" target="_blank" rel="noopener">
+                        {{ fuente.doi }}
+                      </a>
+                    } @else if (fuente.url) {
+                      <a [href]="fuente.url" target="_blank" rel="noopener">enlace</a>
+                    } @else {
+                      <!-- Sin DOI ni enlace la cita no se puede comprobar, y una
+                           cita que el jurado no puede seguir vale poco. Se marca
+                           para que se arregle en Zotero. -->
+                      <span class="sin-doi">sin DOI ni enlace</span>
+                    }
+
+                    @if (fuente.tags) {
+                      <span class="tenue">{{ fuente.tags }}</span>
+                    }
+                  </p>
+
+                  <!-- La nota se enseña porque es lo que de verdad prefiere el
+                       conector: lo que escribiste tú sobre la fuente vale más
+                       que el resumen que la revista puso para vender su
+                       artículo. -->
+                  @if (fuente.notes) {
+                    <p class="referencia-nota">{{ fuente.notes }}</p>
+                  }
+                </li>
+              }
+            </ul>
+
+            <p class="tenue">{{ referencias().length }} de {{ totalReferencias() }} fuentes.</p>
+          }
+        }
+      } @else {
+        <p class="tenue">Cargando el corpus…</p>
+      }
+    </section>
+  }
+
   @if (seccion() === 'cuentas') {
     <!-- Lo que hay registrado de ti, siempre a la vista y fuera de las pestañas.
          Es de consulta, no de edición: mirarlo no debería costar un clic, y
