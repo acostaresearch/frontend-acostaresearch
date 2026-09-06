@@ -160,6 +160,12 @@
   gap: 12px;
 }
 
+/* Tres campos en una fila: el primero se lleva el hueco y los dos estrechos
+   —cifras de dos dígitos— van detrás sin estirarse. */
+.fila.tres {
+  grid-template-columns: 1fr auto auto;
+}
+
 .fila .estrecho {
   max-width: 110px;
 }

@@ -871,7 +871,8 @@
                     @if (editandoGrupo()) {
                       No se puede cambiar: lo llevan las licencias ya vendidas.
                     } @else {
-                      Se pone en mayúsculas solo, sin tildes ni espacios. No se podrá cambiar después.
+                      Se pone en mayúsculas solo, sin tildes ni espacios. No se podrá cambiar
+                      después.
                     }
                   </span>
                 </div>
@@ -1413,7 +1414,7 @@
           </div>
         </div>
 
-        <div class="fila">
+        <div class="fila tres">
           <div class="campo">
             <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
             <input
@@ -1426,6 +1427,12 @@
           <div class="campo estrecho">
             <label for="usos">Usos máx.</label>
             <input id="usos" type="number" min="0" formControlName="maxUses" />
+            <span class="ayuda">0 = sin tope</span>
+          </div>
+          <div class="campo estrecho">
+            <label for="caduca">Caduca en (días)</label>
+            <input id="caduca" type="number" min="0" max="365" formControlName="expiraEnDias" />
+            <span class="ayuda">0 = no caduca</span>
           </div>
         </div>
 
@@ -1459,8 +1466,15 @@
 
     <section class="tarjeta">
       <h2>Códigos promocionales</h2>
+
+      @if (descuentos().length > 0) {
+        <app-filtros-lista [lista]="listaDescuentos" placeholder="Código, producto o nota" />
+      }
+
       @if (descuentos().length === 0) {
         <p class="nota">Todavía no has creado ninguno.</p>
+      } @else if (listaDescuentos.filtrado().length === 0) {
+        <p class="tenue">Ningún código coincide con lo que buscas.</p>
       } @else {
         <div class="tabla-scroll">
           <table>
@@ -1470,13 +1484,14 @@
                 <th>Descuenta</th>
                 <th>Válido para</th>
                 <th>Usos</th>
+                <th>Caduca</th>
                 <th>Nota</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              @for (promo of descuentos(); track promo.id) {
+              @for (promo of listaDescuentos.visible(); track promo.id) {
                 <tr>
                   <td class="mono">
                     <strong>{{ promo.code }}</strong>
@@ -1486,14 +1501,21 @@
                   <td class="numero">
                     {{ promo.usedCount }}{{ promo.maxUses > 0 ? ' / ' + promo.maxUses : '' }}
                   </td>
+                  <td class="tenue">
+                    {{ promo.expiresAt ? (promo.expiresAt | date: 'd MMM yy') : 'sin fecha' }}
+                  </td>
                   <td class="tenue">{{ promo.note ?? '—' }}</td>
                   <td>
                     <span
                       class="pastilla"
-                      [class.buena]="promo.active"
-                      [class.mala]="!promo.active"
+                      [class.buena]="estadoDescuento(promo) === 'activo'"
+                      [class.espera]="
+                        estadoDescuento(promo) === 'agotado' ||
+                        estadoDescuento(promo) === 'caducado'
+                      "
+                      [class.mala]="estadoDescuento(promo) === 'apagado'"
                     >
-                      {{ promo.active ? 'Activo' : 'Apagado' }}
+                      {{ etiquetaDescuento(promo) }}
                     </span>
                   </td>
                   <td class="derecha">
@@ -1511,6 +1533,8 @@
             </tbody>
           </table>
         </div>
+
+        <app-pie-lista [lista]="listaDescuentos" nombre="códigos" />
       }
     </section>
   }

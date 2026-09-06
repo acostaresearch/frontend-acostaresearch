@@ -276,6 +276,19 @@ export class Admin implements OnInit {
       filtro === 'con-saldo' ? b.status === 'ACTIVE' : b.status === 'EXHAUSTED',
   });
 
+  readonly listaDescuentos = new Listado(this.descuentos, {
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'activos', etiqueta: 'Activos' },
+      { valor: 'agotados', etiqueta: 'Agotados' },
+      { valor: 'caducados', etiqueta: 'Caducados' },
+      { valor: 'apagados', etiqueta: 'Apagados' },
+    ],
+    texto: (d) => [d.code, d.planCode, d.note],
+    // Cada pestaña es un estado en plural: 'activos' mira los 'activo'.
+    pasa: (d, filtro) => filtro === `${this.estadoDescuento(d)}s`,
+  });
+
   readonly listaHistorial = new Listado(this.historial, {
     filtros: [
       { valor: 'todos', etiqueta: 'Todos' },
@@ -489,6 +502,10 @@ export class Admin implements OnInit {
     planCode: [''],
     code: [''],
     maxUses: [0, [Validators.min(0)]],
+    // Días hasta que deje de valer. 0 = no caduca, que es lo que hacía siempre
+    // hasta ahora: el servidor aceptaba una fecha y el panel no la pedía, así
+    // que una promo de septiembre seguía canjeándose en enero.
+    expiraEnDias: [0, [Validators.min(0), Validators.max(365)]],
     note: [''],
   });
 
@@ -1649,6 +1666,30 @@ export class Admin implements OnInit {
     return this.estadoPago(pago.status);
   }
 
+  /**
+   * En qué está de verdad un código promocional.
+   *
+   * `active` solo dice si lo apagamos a mano. Un código que ya gastó sus usos,
+   * o al que se le pasó la fecha, sigue con `active: true` y en la tabla se
+   * leía «Activo» aunque la web lo rechace: justo lo contrario de lo que hace.
+   */
+  estadoDescuento(promo: CodigoDescuento): 'activo' | 'apagado' | 'agotado' | 'caducado' {
+    if (!promo.active) return 'apagado';
+    if (promo.expiresAt && new Date(promo.expiresAt).getTime() < Date.now()) return 'caducado';
+    if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses) return 'agotado';
+    return 'activo';
+  }
+
+  etiquetaDescuento(promo: CodigoDescuento): string {
+    const nombres: Record<string, string> = {
+      activo: 'Activo',
+      apagado: 'Apagado',
+      agotado: 'Agotado',
+      caducado: 'Caducado',
+    };
+    return nombres[this.estadoDescuento(promo)];
+  }
+
   estadoCodigo(estado: string): string {
     const nombres: Record<string, string> = {
       AVAILABLE: 'Disponible',
@@ -1698,7 +1739,7 @@ export class Admin implements OnInit {
     this.error.set(null);
     this.descuentoNuevo.set(null);
 
-    const { soles, planCode, code, maxUses, note } = this.formDescuento.getRawValue();
+    const { soles, planCode, code, maxUses, expiraEnDias, note } = this.formDescuento.getRawValue();
 
     this.admin
       .crearDescuento({
@@ -1706,6 +1747,7 @@ export class Admin implements OnInit {
         planCode: planCode || undefined,
         code: code.trim() || undefined,
         maxUses,
+        expiraEnDias: expiraEnDias > 0 ? expiraEnDias : undefined,
         note: note || undefined,
       })
       .subscribe({
