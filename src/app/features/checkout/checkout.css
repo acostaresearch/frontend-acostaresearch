@@ -69,10 +69,6 @@ h1 {
  * tarjetas —con tres planes, la tercera caía a una segunda fila— y, mientras no
  * se elegía nada, era una caja casi vacía con medio metro de blanco debajo.
  * Abajo ocupa el ancho entero solo cuando hay algo que enseñar. */
-.pago {
-  max-width: 720px;
-  margin-top: 24px;
-}
 
 .panel {
   padding: 20px;
@@ -729,26 +725,6 @@ h1 {
 }
 
 /* Estado de espera: hay algo escrito, pero nada que parezca un formulario. */
-.pago-en-espera {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 8px 0;
-}
-
-.espera-titulo {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-.pago-en-espera .tenue {
-  max-width: 42ch;
-  margin: 0;
-  line-height: 1.6;
-}
 
 /* ══ Tarjeta de venta ══════════════════════════════════════════════════════
    Sustituye a la lista «Producto / Incluye / Vigencia / Total», que describía
@@ -1030,4 +1006,135 @@ h1 {
     width: 100%;
     padding-left: 36px;
   }
+}
+
+/* ══ Un color por paquete ═══════════════════════════════════════════════════
+ *
+ * Cada tarjeta lleva su tono en la cinta, el precio, los ✓ y el botón. Los
+ * cuatro salen del verificador de contraste, no del gusto: se distinguen entre
+ * sí bajo daltonismo protán y deután, y los cuatro aguantan texto blanco encima
+ * por encima de 4,5:1, que es lo que necesita el botón de comprar.
+ *
+ * El color agrupa; quien identifica es el nombre de la tarjeta. Por eso ningún
+ * dato depende solo del tono.
+ */
+.tarjeta-plan {
+  --acento: var(--color-primario);
+  --acento-suave: var(--color-primario-suave);
+}
+
+.tarjeta-plan.acento-1 {
+  --acento: #a21caf;
+  --acento-suave: #fbeafd;
+}
+
+.tarjeta-plan.acento-2 {
+  --acento: #047857;
+  --acento-suave: #e3f5ee;
+}
+
+.tarjeta-plan.acento-3 {
+  --acento: #c2410c;
+  --acento-suave: #fdeee6;
+}
+
+.tarjeta-plan .cinta {
+  color: var(--acento);
+  background: var(--acento-suave);
+}
+
+.tarjeta-plan .tarjeta-precio .importe {
+  color: var(--acento);
+}
+
+.tarjeta-plan .tarjeta-lista li::before {
+  color: var(--acento);
+}
+
+.tarjeta-plan .boton {
+  background: var(--acento);
+  border-color: var(--acento);
+}
+
+/* Sin un tono más oscuro por acento: oscurecer el que haya es una regla que
+   vale para los cuatro y para el que se añada mañana. */
+.tarjeta-plan .boton:hover:not(:disabled) {
+  background: var(--acento);
+  filter: brightness(0.92);
+}
+
+.rejilla-planes.varios .tarjeta-plan.elegido {
+  border-color: var(--acento);
+}
+
+/* ══ La ventana del pago ════════════════════════════════════════════════════
+ *
+ * Se abre al pulsar «Comprar». El fondo cierra al pulsarlo; el contenido no, o
+ * un clic dentro del formulario lo cerraría con el comprobante a medio subir.
+ *
+ * Cerrar es lo mismo que «Cambiar»: suelta el plan, el descuento y la captura.
+ * Son de ESE importe, y dejarlos puestos al elegir otro plan es la forma segura
+ * de cobrar mal.
+ */
+.pago-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+  overflow-y: auto;
+  background: rgba(16, 24, 40, 0.55);
+}
+
+.pago-ventana {
+  width: 100%;
+  max-width: 520px;
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
+}
+
+/* La barra se queda arriba al desplazar: dentro caben el QR, la subida de la
+   captura y los botones de PayPal, y sin ella hay que subir del todo para
+   encontrar la ✕. */
+.pago-barra {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+  border-radius: var(--radio) var(--radio) 0 0;
+}
+
+.pago-barra h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.pago-cerrar {
+  padding: 6px 10px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: var(--radio-sm);
+}
+
+.pago-cerrar:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+.pago-cuerpo {
+  padding: 20px 22px 24px;
 }

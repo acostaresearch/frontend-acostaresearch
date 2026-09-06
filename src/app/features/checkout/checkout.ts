@@ -32,6 +32,30 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 /**
+ * Cuántos acentos hay para las tarjetas de plan.
+ *
+ * Cuatro tonos —azul, fucsia, verde y naranja— comprobados con el verificador
+ * de contraste: se distinguen entre sí incluso sin ver el rojo, y los cuatro
+ * aguantan texto blanco encima (más de 4,5:1), que es lo que exige el botón.
+ */
+const ACENTOS = 4;
+
+/**
+ * Qué acento le toca a la tarjeta que ocupa esta posición.
+ *
+ * Se reparte por ORDEN del catálogo, no por un cálculo sobre el código del
+ * plan. Lo probé al revés —un hash del código— y con los códigos reales dos
+ * paquetes salían del mismo color, que es justo lo que no se quería.
+ *
+ * La contrapartida, dicha claramente: si mañana se retira un producto del
+ * medio, los de detrás se corren un color. Es asumible porque el catálogo
+ * cambia una vez cada varios meses y las tarjetas llevan su nombre encima; el
+ * color agrupa, no identifica.
+ */
+function acentoDe(posicion: number): number {
+  return posicion % ACENTOS;
+}
+/**
  * Importe en soles, con los céntimos solo cuando los hay.
  *
  * Los precios del catálogo son redondos —199, 250, 399— y escribirlos como
@@ -114,7 +138,6 @@ export class Checkout implements OnInit {
 
   private readonly hostBoton = viewChild<ElementRef<HTMLDivElement>>('paypalHost');
   /** El panel de pago. Existe siempre; lo que cambia es lo que hay dentro. */
-  private readonly panelPago = viewChild<ElementRef<HTMLElement>>('panelPago');
   private botonMontado = false;
 
   readonly metodo = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
@@ -191,31 +214,6 @@ export class Checkout implements OnInit {
     });
   }
 
-  /**
-   * Lleva la vista a los medios de pago tras elegir.
-   *
-   * Solo cuando la maqueta está apilada. Por encima de 860 px el panel vive en
-   * la columna de al lado y ya se ve entero: desplazar ahí sería mover la
-   * página por nada, y eso desconcierta más que ayudar.
-   *
-   * Se espera un cuadro de animación porque el panel acaba de cambiar de
-   * contenido y su altura todavía no es la definitiva. Y si el sistema pide
-   * menos movimiento, el salto es seco.
-   */
-  private llevarAlPago(): void {
-    const panel = this.panelPago()?.nativeElement;
-    // Antes esto solo pasaba en móvil, porque en pantalla ancha el pago era una
-    // columna a la derecha y ya estaba a la vista. Ahora vive debajo de las
-    // tarjetas, así que hay que llevar allí a cualquier ancho.
-    if (!panel) return;
-
-    const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    requestAnimationFrame(() => {
-      panel.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
-    });
-  }
-
   /** Deshace la elección y vuelve a esconder los medios de pago. */
   cambiarPlan(): void {
     if (this.procesando() || this.enviandoComprobante()) return;
@@ -235,7 +233,6 @@ export class Checkout implements OnInit {
     this.seleccionado.set(plan);
     this.metodoPago.set(null);
 
-    this.llevarAlPago();
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();
     // Y la captura también: es el comprobante de OTRO importe.
@@ -407,6 +404,11 @@ export class Checkout implements OnInit {
    * página, y el «.00» solo sirve para que parezca una factura. Si algún plan
    * llega a costar S/ 199.50, los céntimos vuelven a salir.
    */
+  /** La clase del acento de la tarjeta: acento-0 … acento-3. */
+  acento(posicion: number): string {
+    return `acento-${acentoDe(posicion)}`;
+  }
+
   precio(plan: Plan): string {
     return soles(plan.priceCents);
   }
