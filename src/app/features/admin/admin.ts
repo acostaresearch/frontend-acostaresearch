@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import {
@@ -650,12 +650,11 @@ export class Admin implements OnInit {
   /**
    * Todos los capítulos, incluidos los que ya son de otro grupo.
    *
-   * Se listan todos a propósito. Un capítulo pertenece a un grupo y solo a uno,
-   * así que marcar aquí uno ajeno lo MUEVE: eso se avisa con una etiqueta en su
-   * fila, pero no se impide. Montar un producto nuevo con capítulos que ya
-   * existen es un caso real —un paquete reducido, una edición distinta— y
-   * obligar a desmarcarlos antes en el grupo de origen era dar un rodeo para
-   * llegar al mismo sitio.
+   * Se listan todos a propósito: montar un producto con capítulos que ya
+   * existen es un caso real —un paquete reducido, una edición distinta—. Y
+   * marcar aquí uno ajeno ya no se lo quita a nadie: un capítulo puede estar en
+   * varios grupos a la vez. La etiqueta de su fila dice en cuáles más está,
+   * porque editarlo cambia lo que reciben todos.
    */
   readonly capitulosDisponibles = this.capitulosOrdenados;
 
@@ -664,7 +663,8 @@ export class Admin implements OnInit {
   readonly capitulosDelGrupo = computed(() => {
     const grupo = this.viendoCapitulos();
     if (!grupo) return [];
-    return this.capitulosOrdenados().filter((s) => s.productCode === grupo.productCode);
+    const mio = grupo.productCode ?? grupo.code;
+    return this.capitulosOrdenados().filter((s) => s.productCodes.includes(mio));
   });
   /** A qué grupo van los archivos que hay ahora mismo en la cola. */
   readonly grupoDestino = signal<string>('');
@@ -709,7 +709,9 @@ export class Admin implements OnInit {
   readonly formSkill = this.fb.nonNullable.group({
     displayName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     summary: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
-    productCode: [''],
+    // Los grupos NO se editan desde aquí: se marcan en la ventana del grupo,
+    // que es donde se ve qué lleva cada producto. Tener las dos vías era tener
+    // dos verdades, y la de la ficha pisaba a la otra sin decir nada.
     active: [true],
   });
 
@@ -807,7 +809,7 @@ export class Admin implements OnInit {
     this.capitulosElegidos.set(
       new Set(
         this.skills()
-          .filter((s) => s.productCode === grupo.productCode)
+          .filter((s) => s.productCodes.includes(grupo.productCode ?? grupo.code))
           .map((s) => s.id),
       ),
     );
@@ -840,17 +842,21 @@ export class Admin implements OnInit {
   }
 
   /**
-   * De qué otro grupo viene un capítulo, si viene de alguno.
+   * En qué OTROS grupos está ya un capítulo.
    *
-   * Se enseña junto a la casilla porque marcarlo aquí lo MUEVE: un capítulo
-   * pertenece a un grupo y solo a uno. Sin este aviso, añadir un capítulo a un
-   * producto nuevo se lo quitaría a otro sin que nadie lo viera.
+   * Se enseña junto a la casilla para que se vea que el capítulo es compartido:
+   * editarlo o reemplazar su archivo cambia lo que reciben los dos productos.
+   * Marcarlo o desmarcarlo aquí ya no lo saca de esos otros grupos.
    */
-  grupoDe(productCode: string | null): string | null {
-    if (!productCode) return null;
+  otrosGrupos(skill: Skill): string {
     const actual = this.editandoGrupo();
-    if (actual && productCode === actual.productCode) return null;
-    return this.grupos().find((g) => g.productCode === productCode)?.name ?? productCode;
+    const mio = actual ? (actual.productCode ?? actual.code) : null;
+
+    const nombres = skill.productCodes
+      .filter((code) => code !== mio)
+      .map((code) => this.grupos().find((g) => g.productCode === code)?.name ?? code);
+
+    return nombres.join(' · ');
   }
 
   /** Cierra la ventana sin guardar. */
@@ -987,25 +993,26 @@ export class Admin implements OnInit {
   }
 
   /**
-   * Aplica lo marcado en la lista de capítulos: mete los nuevos y saca los que
-   * se desmarcaron.
+   * Aplica lo marcado en la lista: estos son los capítulos de este grupo.
    *
-   * Solo toca los que cambiaron. Reasignar los nueve capítulos cada vez que se
-   * corrige una errata en el nombre del grupo serían nueve escrituras inútiles
-   * y nueve líneas de log que no dicen nada.
+   * Una sola petición, y una que por construcción solo puede tocar ESTE grupo.
+   * Antes era un PATCH por capítulo cambiando su grupo, y como un capítulo solo
+   * podía estar en uno, marcar aquí uno que ya usaba otro producto se lo
+   * quitaba a ese otro sin avisar.
    */
   private moverCapitulos(productCode: string): Observable<unknown> {
-    const elegidos = this.capitulosElegidos();
+    const elegidos = [...this.capitulosElegidos()];
+    const antes = this.skills()
+      .filter((s) => s.productCodes.includes(productCode))
+      .map((s) => s.id);
 
-    const cambios = this.skills()
-      .filter((s) => (s.productCode === productCode) !== elegidos.has(s.id))
-      .map((s) =>
-        // Cadena vacía saca el capítulo de todo grupo, que es lo que el
-        // servidor entiende por «sin grupo».
-        this.skillsApi.actualizar(s.id, { productCode: elegidos.has(s.id) ? productCode : '' }),
-      );
+    // Nada que cambiar: ni se molesta al servidor.
+    const igual = antes.length === elegidos.length && antes.every((id) => elegidos.includes(id));
+    if (igual) return of(null);
 
-    return cambios.length > 0 ? forkJoin(cambios) : of(null);
+    return this.skillsApi
+      .fijarCapitulosDelGrupo(productCode, elegidos)
+      .pipe(tap((skills) => this.skills.set(skills)));
   }
 
   async alternarGrupo(grupo: Grupo): Promise<void> {
@@ -1220,7 +1227,7 @@ export class Admin implements OnInit {
         // Un reemplazo se queda en el grupo que ya tenía; uno nuevo va al que
         // esté elegido arriba. Mover un capítulo de grupo se hace a propósito,
         // desde Editar, no de rebote al actualizar su archivo.
-        productCode: a.reemplaza?.productCode ?? this.grupoDestino() ?? undefined,
+        productCode: this.grupoDestino() ?? undefined,
       })
       .subscribe({
         next: () => {
@@ -1254,7 +1261,6 @@ export class Admin implements OnInit {
     this.formSkill.patchValue({
       displayName: skill.displayName,
       summary: skill.summary,
-      productCode: skill.productCode ?? '',
       active: skill.active,
     });
   }
@@ -1330,7 +1336,6 @@ export class Admin implements OnInit {
             summary: skill.summary,
             orden: skill.orden,
             active: skill.active,
-            productCode: skill.productCode ?? undefined,
           });
         }),
       )
@@ -1471,7 +1476,7 @@ export class Admin implements OnInit {
     const mio = grupo.productCode ?? grupo.code;
     const seleccion = new Set(this.capitulosElegidos());
     for (const skill of skills) {
-      if (skill.productCode === mio) seleccion.add(skill.id);
+      if (skill.productCodes.includes(mio)) seleccion.add(skill.id);
     }
     this.capitulosElegidos.set(seleccion);
   }
@@ -1708,6 +1713,8 @@ export class Admin implements OnInit {
 
   /** Qué apunte se está borrando, para bloquear solo esa fila. */
   readonly borrandoPago = signal<string | null>(null);
+  readonly borrandoLicencia = signal<string | null>(null);
+  readonly borrandoComprobante = signal<string | null>(null);
 
   /**
    * Borra un apunte del historial de cobros.
@@ -2236,6 +2243,81 @@ export class Admin implements OnInit {
 
   // ── Licencias ────────────────────────────────────────────────────────────
 
+  /**
+   * Borra la licencia de la base de datos. No es revocar.
+   *
+   * Revocar es la herramienta para un cliente: corta el acceso, deja el motivo
+   * escrito y se puede deshacer. Esto es para las licencias de prueba que uno
+   * se emitió a sí mismo, y por eso el diálogo dice exactamente qué se lleva
+   * por delante antes de que nadie confirme.
+   */
+  /**
+   * Borra un comprobante de Yape: el apunte del pago y su captura.
+   *
+   * Sirve para los dos sitios donde aparece —los pendientes y el historial—
+   * porque los dos son el mismo pago; se quita de las dos listas sin mirar en
+   * cuál estaba.
+   *
+   * Rechazar y borrar no son lo mismo: rechazar avisa al comprador y deja el
+   * motivo escrito. Esto no le dice nada a nadie, y es lo que se quiere con un
+   * comprobante de una cuenta de prueba.
+   */
+  async eliminarComprobante(pago: PagoPorRevisar | PagoRevisado): Promise<void> {
+    if (this.borrandoComprobante()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Borrar el comprobante',
+      mensaje:
+        `Se borra el apunte de ${pago.user.email} por ` +
+        `${this.importe(pago.amountCents, pago.currency)} y la captura que subió. ` +
+        'No se puede deshacer.',
+      nota: 'Al comprador no se le avisa. Si lo que quieres es decirle que su pago no vale, usa Rechazar.',
+      confirmar: 'Borrar definitivamente',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoComprobante.set(pago.id);
+    this.admin.eliminarPago(pago.id).subscribe({
+      next: () => {
+        this.porRevisar.update((lista) => lista.filter((p) => p.id !== pago.id));
+        this.historial.update((lista) => lista.filter((p) => p.id !== pago.id));
+        this.pagos.update((lista) => lista.filter((p) => p.id !== pago.id));
+        this.borrandoComprobante.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoComprobante.set(null);
+      },
+    });
+  }
+  async eliminarLicencia(licencia: LicenciaAdmin): Promise<void> {
+    if (this.borrandoLicencia()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Borrar la licencia',
+      mensaje:
+        `Se borra la licencia de ${licencia.user.email} y su historial de ` +
+        `${licencia.callsTotal} consultas. No se puede deshacer.`,
+      nota: 'Si el comprador pagó, el cobro NO se borra: se queda en Movimientos. Para cortarle el acceso sin perder el rastro, revoca en vez de borrar.',
+      confirmar: 'Borrar definitivamente',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoLicencia.set(licencia.id);
+    this.admin.eliminarLicencia(licencia.id).subscribe({
+      next: () => {
+        this.licencias.update((lista) => lista.filter((l) => l.id !== licencia.id));
+        this.borrandoLicencia.set(null);
+        this.aviso.set(`Licencia de ${licencia.user.email} borrada.`);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoLicencia.set(null);
+      },
+    });
+  }
   async revocar(licencia: LicenciaAdmin): Promise<void> {
     const motivo = await this.dialogos.pedirTexto({
       titulo: 'Revocar la licencia',

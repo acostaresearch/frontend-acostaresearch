@@ -107,6 +107,16 @@ export class AdminService {
       .pipe(map((res) => res.data.license));
   }
 
+  /**
+   * Borra una licencia y su rastro de uso. Irreversible.
+   *
+   * No es lo mismo que revocar: revocar corta el acceso y deja la fila, con su
+   * motivo, y se puede deshacer. Esto es para limpiar lo que uno se emitió
+   * probando.
+   */
+  eliminarLicencia(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.licencias}/${id}`);
+  }
   alertas(): Observable<Alerta[]> {
     return this.http
       .get<ApiResponse<{ alerts: Alerta[] }>>(`${this.licencias}/alerts`)

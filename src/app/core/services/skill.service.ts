@@ -8,8 +8,14 @@ import { ApiResponse } from '../models/api.model';
 /** Un capítulo tal como lo ve el visitante. */
 export interface SkillPublica {
   code: string;
-  /** Grupo al que pertenece. Nulo = visible para cualquier licencia. */
-  productCode: string | null;
+  /**
+   * En qué grupos aparece.
+   *
+   * Un capítulo puede estar en varios a la vez: «Tema y delimitación» es el
+   * primero del método de tesis y también del pack con humanizador. Lista
+   * vacía = sin grupo, y entonces se ve desde cualquier licencia.
+   */
+  productCodes: string[];
   orden: number;
   displayName: string;
   summary: string;
@@ -39,10 +45,16 @@ export interface AnalisisBundle {
 
 export interface DatosFicha {
   displayName?: string;
-  productCode?: string | null;
+  /** La lista COMPLETA de grupos: lo que no venga en ella deja de serlo. */
+  productCodes?: string[];
   summary?: string;
   orden?: number;
   active?: boolean;
+}
+
+/** Al subir un archivo se indica UN grupo, y el capítulo se añade a él. */
+export interface DatosSubida extends Omit<DatosFicha, 'productCodes'> {
+  productCode?: string;
 }
 
 /**
@@ -78,7 +90,7 @@ export class SkillService {
       .pipe(map((res) => res.data));
   }
 
-  subir(archivo: File, datos: DatosFicha): Observable<{ skill: Skill; tramos: number }> {
+  subir(archivo: File, datos: DatosSubida): Observable<{ skill: Skill; tramos: number }> {
     let params = new HttpParams();
     if (datos.displayName) params = params.set('displayName', datos.displayName);
     if (datos.summary) params = params.set('summary', datos.summary);
@@ -98,6 +110,23 @@ export class SkillService {
     return this.http
       .patch<ApiResponse<{ skill: Skill }>>(`${this.base}/${id}`, cambios)
       .pipe(map((res) => res.data.skill));
+  }
+
+  /**
+   * Fija de una vez qué capítulos tiene un grupo.
+   *
+   * Una sola petición en vez de un PATCH por capítulo, y sobre todo: solo puede
+   * tocar la pertenencia a ESTE grupo. Antes se mandaba el grupo nuevo en la
+   * ficha de cada capítulo, y como un capítulo solo podía estar en uno,
+   * marcarlo aquí lo borraba del grupo de al lado.
+   *
+   * Devuelve el catálogo entero porque los capítulos compartidos cambian la
+   * ficha de más de un grupo.
+   */
+  fijarCapitulosDelGrupo(productCode: string, skillIds: string[]): Observable<Skill[]> {
+    return this.http
+      .put<ApiResponse<{ skills: Skill[] }>>(`${this.base}/grupos/${productCode}`, { skillIds })
+      .pipe(map((res) => res.data.skills));
   }
 
   eliminar(id: string): Observable<void> {

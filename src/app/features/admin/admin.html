@@ -739,6 +739,17 @@
                       Rechazar
                     </button>
                   </div>
+
+                  <!-- Borrar no es rechazar: rechazar le escribe al comprador,
+                       esto no le dice nada a nadie. Está para limpiar pruebas. -->
+                  <button
+                    type="button"
+                    class="enlace-peligro"
+                    [disabled]="borrandoComprobante() === pago.id"
+                    (click)="eliminarComprobante(pago)"
+                  >
+                    {{ borrandoComprobante() === pago.id ? 'Borrando…' : 'Eliminar' }}
+                  </button>
                 </div>
               </div>
             </li>
@@ -824,6 +835,14 @@
                         {{ abriendo() === pago.id ? 'Abriendo…' : 'Ver captura' }}
                       </button>
                     }
+                    <button
+                      type="button"
+                      class="enlace-peligro"
+                      [disabled]="borrandoComprobante() === pago.id"
+                      (click)="eliminarComprobante(pago)"
+                    >
+                      {{ borrandoComprobante() === pago.id ? 'Borrando…' : 'Eliminar' }}
+                    </button>
                   </td>
                 </tr>
               }
@@ -1035,130 +1054,138 @@
                    Se eligen aquí porque la pregunta natural es «qué lleva este
                    producto», no «a qué producto pertenece este capítulo». Lo
                    segundo obliga a recordar el grupo mientras se recorre una
-                   lista larga. -->
-              <div class="campo">
-                <label>Capítulos que incluye</label>
+                   lista larga.
 
-                @if (capitulosDisponibles().length === 0) {
-                  <span class="ayuda">
-                    Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
-                  </span>
-                } @else {
-                  <ul class="lista-capitulos">
-                    @for (skill of capitulosDisponibles(); track skill.id) {
-                      <li>
-                        <div class="capitulo-fila">
-                          <label class="capitulo">
-                            <input
-                              type="checkbox"
-                              [checked]="capitulosElegidos().has(skill.id)"
-                              (change)="alternarCapitulo(skill.id)"
-                            />
-                            <span class="capitulo-texto">
-                              <span class="capitulo-nombre">{{ skill.displayName }}</span>
-                              <span class="capitulo-meta">
-                                <span class="mono tenue">{{ skill.code }}</span>
-                                <!-- Marcarlo lo MUEVE: un capítulo está en un
-                                     grupo y solo en uno. No se impide —montar un
-                                     producto con capítulos que ya existen es un
-                                     caso real— pero se dice de dónde sale. -->
-                                @if (grupoDe(skill.productCode); as otro) {
-                                  <span class="pastilla aviso-mover">ahora en {{ otro }}</span>
-                                }
-                                @if (!skill.productCode) {
-                                  <span class="pastilla">sin grupo</span>
-                                }
-                                @if (!skill.active) {
-                                  <span class="pastilla">oculto</span>
-                                }
-                              </span>
-                            </span>
-                          </label>
+                   Solo al EDITAR. Al crear un grupo, esta lista era el catálogo
+                   entero de capítulos de todos los productos, con sus flechas de
+                   orden y sus botones de eliminar, delante de alguien que
+                   todavía está poniéndole nombre y precio a un producto que no
+                   existe. Se eligen después, con el grupo ya creado. -->
+              @if (editandoGrupo()) {
+                <div class="campo">
+                  <label>Capítulos que incluye</label>
 
-                          <!-- Las tres acciones del capítulo. Van fuera del
-                               <label> a propósito: dentro, pulsar cualquiera de
-                               ellas marcaría además la casilla. -->
-                          <div class="capitulo-acciones">
-                            <!-- El orden es el que ve el comprador en el
-                                 conector. Se mueve intercambiando con el vecino,
-                                 que es como ya funcionaba. -->
-                            <button
-                              type="button"
-                              class="enlace flecha"
-                              title="Subir"
-                              aria-label="Subir «{{ skill.displayName }}»"
-                              (click)="mover(skill, -1)"
-                              [disabled]="trabajando() || $first"
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              class="enlace flecha"
-                              title="Bajar"
-                              aria-label="Bajar «{{ skill.displayName }}»"
-                              (click)="mover(skill, 1)"
-                              [disabled]="trabajando() || $last"
-                            >
-                              ↓
-                            </button>
-
-                            <button
-                              type="button"
-                              class="enlace"
-                              (click)="editarSkill(skill)"
-                              [disabled]="trabajando()"
-                            >
-                              Editar
-                            </button>
-
-                            <!-- Cambiar el archivo por otro del equipo. El
-                                 <input> va oculto dentro del propio botón: es la
-                                 única forma de abrir el diálogo del sistema sin
-                                 enseñar el control feo del navegador. -->
-                            <label
-                              class="enlace"
-                              [class.ocupado]="reemplazando() === skill.id"
-                              [attr.aria-busy]="reemplazando() === skill.id"
-                            >
-                              {{ reemplazando() === skill.id ? 'Subiendo…' : 'Cambiar' }}
+                  @if (capitulosDisponibles().length === 0) {
+                    <span class="ayuda">
+                      Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
+                    </span>
+                  } @else {
+                    <ul class="lista-capitulos">
+                      @for (skill of capitulosDisponibles(); track skill.id) {
+                        <li>
+                          <div class="capitulo-fila">
+                            <label class="capitulo">
                               <input
-                                class="entrada-archivo"
-                                type="file"
-                                accept=".skill,.zip,application/zip"
-                                [disabled]="reemplazando() !== null"
-                                (change)="cambiarArchivoDeCapitulo(skill, $event)"
+                                type="checkbox"
+                                [checked]="capitulosElegidos().has(skill.id)"
+                                (change)="alternarCapitulo(skill.id)"
                               />
+                              <span class="capitulo-texto">
+                                <span class="capitulo-nombre">{{ skill.displayName }}</span>
+                                <span class="capitulo-meta">
+                                  <span class="mono tenue">{{ skill.code }}</span>
+                                  <!-- Un capítulo puede estar en varios grupos a
+                                       la vez, así que marcarlo aquí no se lo quita
+                                       a nadie. Se dice dónde más está porque
+                                       editarlo cambia lo que reciben todos. -->
+                                  @if (otrosGrupos(skill); as otros) {
+                                    <span class="pastilla aviso-mover">también en {{ otros }}</span>
+                                  }
+                                  @if (skill.productCodes.length === 0) {
+                                    <span class="pastilla">sin grupo</span>
+                                  }
+                                  @if (!skill.active) {
+                                    <span class="pastilla">oculto</span>
+                                  }
+                                </span>
+                              </span>
                             </label>
 
-                            <button
-                              type="button"
-                              class="enlace"
-                              (click)="alternarSkill(skill)"
-                              [disabled]="trabajando()"
-                            >
-                              {{ skill.active ? 'Ocultar' : 'Mostrar' }}
-                            </button>
+                            <!-- Las tres acciones del capítulo. Van fuera del
+                                 <label> a propósito: dentro, pulsar cualquiera de
+                                 ellas marcaría además la casilla. -->
+                            <div class="capitulo-acciones">
+                              <!-- El orden es el que ve el comprador en el
+                                   conector. Se mueve intercambiando con el vecino,
+                                   que es como ya funcionaba. -->
+                              <button
+                                type="button"
+                                class="enlace flecha"
+                                title="Subir"
+                                aria-label="Subir «{{ skill.displayName }}»"
+                                (click)="mover(skill, -1)"
+                                [disabled]="trabajando() || $first"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                class="enlace flecha"
+                                title="Bajar"
+                                aria-label="Bajar «{{ skill.displayName }}»"
+                                (click)="mover(skill, 1)"
+                                [disabled]="trabajando() || $last"
+                              >
+                                ↓
+                              </button>
 
-                            <button
-                              type="button"
-                              class="enlace-peligro"
-                              (click)="eliminarSkill(skill)"
-                              [disabled]="trabajando()"
-                            >
-                              Eliminar
-                            </button>
+                              <button
+                                type="button"
+                                class="enlace"
+                                (click)="editarSkill(skill)"
+                                [disabled]="trabajando()"
+                              >
+                                Editar
+                              </button>
+
+                              <!-- Cambiar el archivo por otro del equipo. El
+                                   <input> va oculto dentro del propio botón: es la
+                                   única forma de abrir el diálogo del sistema sin
+                                   enseñar el control feo del navegador. -->
+                              <label
+                                class="enlace"
+                                [class.ocupado]="reemplazando() === skill.id"
+                                [attr.aria-busy]="reemplazando() === skill.id"
+                              >
+                                {{ reemplazando() === skill.id ? 'Subiendo…' : 'Cambiar' }}
+                                <input
+                                  class="entrada-archivo"
+                                  type="file"
+                                  accept=".skill,.zip,application/zip"
+                                  [disabled]="reemplazando() !== null"
+                                  (change)="cambiarArchivoDeCapitulo(skill, $event)"
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                class="enlace"
+                                (click)="alternarSkill(skill)"
+                                [disabled]="trabajando()"
+                              >
+                                {{ skill.active ? 'Ocultar' : 'Mostrar' }}
+                              </button>
+
+                              <button
+                                type="button"
+                                class="enlace-peligro"
+                                (click)="eliminarSkill(skill)"
+                                [disabled]="trabajando()"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    }
-                  </ul>
-                  <span class="ayuda">
-                    {{ capitulosElegidos().size }} de {{ capitulosDisponibles().length }} marcados.
-                    Se aplican al guardar.
-                  </span>
-                }
-              </div>
+                        </li>
+                      }
+                    </ul>
+                    <span class="ayuda">
+                      {{ capitulosElegidos().size }} de {{ capitulosDisponibles().length }}
+                      marcados. Se aplican al guardar.
+                    </span>
+                  }
+                </div>
+              }
 
               <!-- ── Subir capítulos nuevos a este grupo ────────────────────
                    Lo que se suelte aquí se publica dentro de este producto, sin
@@ -1761,6 +1788,15 @@
                         Reactivar
                       </button>
                     }
+                    <!-- Borrar va el último y en rojo: revocar se deshace, esto no. -->
+                    <button
+                      type="button"
+                      class="enlace-peligro"
+                      [disabled]="borrandoLicencia() === licencia.id"
+                      (click)="eliminarLicencia(licencia)"
+                    >
+                      {{ borrandoLicencia() === licencia.id ? 'Borrando…' : 'Eliminar' }}
+                    </button>
                   </td>
                 </tr>
               }
@@ -1886,7 +1922,7 @@
         <app-pie-lista [lista]="listaPagos" nombre="pagos" />
       }
     </section>
-<!-- 
+    <!-- 
     <section class="tarjeta">
       <h2>Bolsas de palabras activadas</h2>
 
