@@ -1661,8 +1661,109 @@ td.acciones {
   border-radius: 999px;
 }
 
+/* Los tres canales llevan color además del texto. La pareja azul-morado se
+   eligió con el verificador de contraste: el morado «de libro» (#7e22ce) y
+   este azul son EL MISMO color para quien no distingue el rojo —ΔE 2,1—, así
+   que el morado tira a fucsia, que sí se separa. El texto de la pastilla es
+   lo que de verdad identifica; el color solo agrupa de un vistazo. */
 .canal.codigo {
   color: var(--color-primario);
   background: var(--color-primario-suave);
   border-color: transparent;
+}
+
+.canal.yape {
+  color: #a21caf;
+  background: #fbeafd;
+  border-color: transparent;
+}
+
+.canal.paypal {
+  color: #0d9488;
+  background: #e6f6f4;
+  border-color: transparent;
+}
+
+/* Cuántos comprobantes esperan. La revisión está debajo, así que esto es un
+   aviso, no un enlace: señalar hacia algo que ya se ve al bajar la vista. */
+.aviso-espera {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
+}
+
+/* ── Filtro por estado y ficha de un acceso ────────────────────────────────
+ *
+ * El estado va en un desplegable y el canal en pestañas, y no al revés: los
+ * canales son tres y fijos —caben y se comparan de un vistazo—; los estados
+ * salen de los datos y son ocho o nueve.
+ */
+.filtro-estado-fila {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* Una fila que se abre tiene que parecer que se abre. */
+.pulsable {
+  cursor: pointer;
+}
+
+.pulsable:hover td {
+  background: var(--color-fondo);
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.ficha dt {
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+.ficha dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-texto);
+}
+
+.ficha-captura {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.ficha-captura img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.ficha-captura p {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+}
+
+@media (max-width: 560px) {
+  .ficha {
+    grid-template-columns: 1fr;
+  }
 }

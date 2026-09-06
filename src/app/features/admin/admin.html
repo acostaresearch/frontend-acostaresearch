@@ -12,7 +12,7 @@
   </header>
 
   <!-- ── Resumen ────────────────────────────────────────────────────────── -->
-  <section class="resumen">
+  <!-- <section class="resumen">
     <div class="dato" [class.alarma]="alertasGraves() > 0">
       <span class="cifra">{{ alertasGraves() }}</span>
       <span class="etiqueta-dato">sospechas altas</span>
@@ -33,7 +33,7 @@
       <span class="cifra">{{ codigosSinUsar() }}</span>
       <span class="etiqueta-dato">códigos sin canjear</span>
     </div>
-  </section>
+  </section> -->
 
   <!-- ── Gráficos ─────────────────────────────────────────────────────────
        Debajo de las cifras y encima de las pestañas: es el vistazo, no una
@@ -208,12 +208,8 @@
   <nav class="pestanas">
     <button type="button" [class.activa]="seccion() === 'accesos'" (click)="ir('accesos')">
       Accesos
-    </button>
-    <button type="button" [class.activa]="seccion() === 'ventas'" (click)="ir('ventas')">
-      Vender
-    </button>
-    <button type="button" [class.activa]="seccion() === 'yape'" (click)="ir('yape')">
-      Yapes
+      <!-- El contador venía de la pestaña Yapes: la revisión vive aquí ahora, y
+           es lo único del panel que hay que atender el mismo día. -->
       @if (porRevisar().length > 0) {
         <span class="contador-pestana">{{ porRevisar().length }}</span>
       }
@@ -232,9 +228,6 @@
       @if (alertas().length > 0) {
         <span class="contador-pestana">{{ alertas().length }}</span>
       }
-    </button>
-    <button type="button" [class.activa]="seccion() === 'movimientos'" (click)="ir('movimientos')">
-      Movimientos
     </button>
   </nav>
 
@@ -261,28 +254,16 @@
         @if (porRevisar().length === 0) {
           <p class="vacio-ok">No hay ningún comprobante esperando.</p>
         } @else {
-          <!-- Aquí solo se enseña QUÉ espera y desde cuándo. Aprobar o rechazar
-               exige mirar la captura, y eso vive en su pestaña con la imagen
-               delante: decidir sin verla es justo lo que no debe facilitarse. -->
-          <ul class="esperando">
-            @for (pago of porRevisar(); track pago.id) {
-              <li>
-                <div>
-                  <strong>{{ pago.user.email }}</strong>
-                  <span class="tenue">
-                    {{ pago.plan.name }} · {{ importe(pago.amountCents, pago.currency) }}
-                  </span>
-                </div>
-                <span class="tenue">{{ pago.createdAt | date: 'd MMM, HH:mm' }}</span>
-              </li>
-            }
-          </ul>
-          <button type="button" class="boton" (click)="ir('yape')">
-            Revisar {{ porRevisar().length === 1 ? 'el comprobante' : 'los comprobantes' }}
-          </button>
+          <!-- Aquí solo el aviso; la revisión va debajo y a todo lo ancho,
+               porque decidir exige ver la captura a un tamaño en el que se lea
+               el número de operación. -->
+          <p class="aviso-espera">
+            {{ porRevisar().length }}
+            {{ porRevisar().length === 1 ? 'comprobante espera' : 'comprobantes esperan' }}
+            tu revisión, aquí debajo.
+          </p>
         }
       </section>
-
       <section class="tarjeta">
         <h2>Códigos generados</h2>
         <button type="button" class="boton" (click)="abrirFormularioCodigos()">
@@ -323,305 +304,11 @@
       </section>
     </div>
 
-    <section class="tarjeta">
-      <h2>Historial de accesos</h2>
-      <p class="nota">
-        Todo lo que se ha emitido o cobrado, sin importar la vía. Los Yape salen por su comprobante
-        y no se repiten como pasarela.
-      </p>
-
-      @if (accesos().length === 0) {
-        <p class="nota">Todavía no hay nada que enseñar aquí.</p>
-      } @else {
-        <app-filtros-lista [lista]="listaAccesos" placeholder="Correo, código o nº de operación" />
-
-        @if (listaAccesos.filtrado().length === 0) {
-          <p class="tenue">Nada coincide con lo que buscas.</p>
-        } @else {
-          <div class="tabla-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Comprador</th>
-                  <th>Canal</th>
-                  <th>Producto</th>
-                  <th>Importe</th>
-                  <th>Referencia</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (acceso of listaAccesos.visible(); track acceso.canal + acceso.id) {
-                  <tr>
-                    <td class="tenue">{{ acceso.fecha | date: 'd MMM, HH:mm' }}</td>
-                    <td>{{ acceso.comprador }}</td>
-                    <td>
-                      <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
-                    </td>
-                    <td class="tenue">{{ acceso.producto }}</td>
-                    <td>
-                      @if (acceso.amountCents) {
-                        {{ importe(acceso.amountCents, acceso.moneda) }}
-                      } @else {
-                        <span class="tenue">cortesía</span>
-                      }
-                    </td>
-                    <td class="mono tenue">{{ acceso.referencia ?? '—' }}</td>
-                    <td>
-                      <span
-                        class="pastilla"
-                        [class.buena]="acceso.tono === 'buena'"
-                        [class.espera]="acceso.tono === 'espera'"
-                        [class.mala]="acceso.tono === 'mala'"
-                      >
-                        {{ acceso.estado }}
-                      </span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <app-pie-lista [lista]="listaAccesos" nombre="accesos" />
-        }
-      }
-    </section>
-  }
-
-  <!-- ══ VENDER ═══════════════════════════════════════════════════════════ -->
-  @if (seccion() === 'ventas') {
-    <!-- Códigos generados. La tarjeta es la pantalla principal de vender: la
-         lista de lo emitido, y el botón que abre la ventana para emitir más. -->
-    <section class="tarjeta">
-      <div class="tarjeta-cabecera">
-        <h2>Códigos generados</h2>
-        <button type="button" class="boton" (click)="abrirFormularioCodigos()">
-          Generar código
-        </button>
-      </div>
-      <p class="nota">
-        Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
-        Pones el correo del comprador y le llega el código con las instrucciones; después él crea su
-        cuenta y lo canjea desde su perfil.
-      </p>
-
-      @if (codigosNuevos().length > 0) {
-        <div class="codigos-nuevos">
-          <p class="codigos-titulo">
-            Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
-          </p>
-          <!-- Que se hayan enviado no quita el copiar: un correo puede rebotar
-               o caer en spam, y esta pantalla es la única otra copia. -->
-          @if (codigoEnviadoA(); as correo) {
-            <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
-          }
-          <!-- El pago aún no existe: nace al canjear, porque hasta entonces no
-               hay cuenta a la que colgarlo. Decirlo evita buscarlo en las
-               ventas y no encontrarlo. -->
-          @if (cobroApuntado(); as cobro) {
-            <p class="codigos-enviado">
-              Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
-              {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
-            </p>
-          } @else {
-            <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
-          }
-          <ul>
-            @for (codigo of codigosNuevos(); track codigo) {
-              <li>{{ codigo }}</li>
-            }
-          </ul>
-          <button type="button" class="boton" (click)="copiarCodigos()">
-            {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
-          </button>
-        </div>
-      }
-
-      @if (codigos().length === 0) {
-        <p class="nota">Todavía no has generado ninguno.</p>
-      } @else {
-        <!-- Se busca por lo que uno recuerda de una venta —el final del código,
-             el correo, la nota, el nº de operación—, no por el identificador. -->
-        <div class="filtros">
-          <input
-            type="search"
-            class="buscador"
-            placeholder="Buscar por código, correo, nota u operación…"
-            aria-label="Buscar códigos"
-            [value]="busquedaCodigos()"
-            (input)="buscarCodigos($event)"
-          />
-          <select
-            class="filtro-estado"
-            aria-label="Filtrar por estado"
-            [value]="filtroEstadoCodigos()"
-            (change)="filtrarCodigos($event)"
-          >
-            <option value="">Todos los estados</option>
-            <option value="AVAILABLE">Sin canjear</option>
-            <option value="REDEEMED">Canjeados</option>
-            <option value="VOID">Anulados</option>
-          </select>
-          <span class="conteo">
-            {{ codigosEnPantalla().length }} de {{ codigosFiltrados().length }}
-          </span>
-        </div>
-
-        @if (codigosFiltrados().length === 0) {
-          <p class="nota">Ningún código coincide con lo que buscas.</p>
-        } @else {
-          <div class="tabla-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Producto</th>
-                  <th>Comprador</th>
-                  <th>Cobro</th>
-                  <th>Nota</th>
-                  <th>Estado</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (codigo of codigosEnPantalla(); track codigo.id) {
-                  <tr>
-                    <td class="mono">…{{ codigo.hint }}</td>
-                    <td>{{ codigo.productCode }}</td>
-                    <td>{{ codigo.buyerEmail ?? '—' }}</td>
-                    <!-- Mientras esté sin canjear, este importe es dinero cobrado
-                         que todavía no figura en las ventas. Es el único sitio
-                         donde se ve. -->
-                    <td [class.tenue]="codigo.status !== 'AVAILABLE'">
-                      @if (codigo.amountCents) {
-                        S/ {{ codigo.amountCents / 100 | number: '1.2-2' }}
-                        <span class="tenue">· {{ codigo.paymentMethod }}</span>
-                      } @else {
-                        <span class="tenue">cortesía</span>
-                      }
-                    </td>
-                    <td class="tenue">
-                      {{ codigo.note ?? '—' }}
-                      <!-- El comprobante se pide con el token, así que no puede
-                           ser un <img src>: se abre en una pestaña con el blob
-                           ya descargado. -->
-                      @if (codigo.proofMime) {
-                        <button
-                          type="button"
-                          class="enlace bloque"
-                          (click)="verComprobanteDeCodigo(codigo)"
-                        >
-                          Ver comprobante
-                        </button>
-                      }
-                    </td>
-                    <td>
-                      <span
-                        class="pastilla"
-                        [class.buena]="codigo.status === 'REDEEMED'"
-                        [class.espera]="codigo.status === 'AVAILABLE'"
-                        [class.mala]="codigo.status === 'VOID'"
-                      >
-                        {{ estadoCodigo(codigo.status) }}
-                      </span>
-                    </td>
-                    <td class="derecha">
-                      @if (codigo.status === 'AVAILABLE') {
-                        <button type="button" class="enlace" (click)="anularCodigo(codigo)">
-                          Anular
-                        </button>
-                      }
-                      <!-- Anular y borrar no son lo mismo: anular deja el código
-                           en la lista, con su venta apuntada; borrar lo saca de
-                           aquí y de las cifras. Está para limpiar pruebas. -->
-                      <button
-                        type="button"
-                        class="enlace-peligro"
-                        [disabled]="borrandoCodigo() === codigo.id"
-                        (click)="eliminarCodigo(codigo)"
-                      >
-                        {{ borrandoCodigo() === codigo.id ? 'Borrando…' : 'Eliminar' }}
-                      </button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          @if (codigosOcultos() > 0) {
-            <button type="button" class="mas" (click)="todosLosCodigos.set(true)">
-              Ver los {{ codigosOcultos() }} restantes
-            </button>
-          } @else if (todosLosCodigos()) {
-            <button type="button" class="mas" (click)="todosLosCodigos.set(false)">
-              Ver menos
-            </button>
-          }
-        }
-      }
-    </section>
-
-    <!-- Bolsas de palabras -->
-    <!-- <section class="tarjeta">
-        <h2>Activar palabras a mano</h2>
-        <p class="nota">
-          Para el humanizador, cuando el pago no pasó por PayPal. El usuario ya debe tener cuenta.
-        </p>
-
-        <form [formGroup]="formBolsa" (ngSubmit)="activarBolsa()" novalidate>
-          <div class="campo">
-            <label for="email">Correo de la cuenta</label>
-            <input id="email" type="email" formControlName="email" placeholder="tesista@correo.com" />
-          </div>
-
-          <div class="fila">
-            <div class="campo">
-              <label for="plan">Plan</label>
-              <select id="plan" formControlName="planCode">
-                @for (plan of planesPalabras(); track plan.code) {
-                  <option [value]="plan.code">
-                    {{ plan.name }} · {{ plan.words | number }} palabras
-                  </option>
-                }
-              </select>
-            </div>
-            <div class="campo">
-              <label for="metodo">Pagó por</label>
-              <select id="metodo" formControlName="paymentMethod">
-                @for (metodo of metodos; track metodo) {
-                  <option [value]="metodo">{{ metodo }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="campo">
-            <label for="operacion">Nº de operación <span class="opcional">(opcional)</span></label>
-            <input id="operacion" type="text" formControlName="paymentRef" placeholder="código del Yape" />
-          </div>
-
-          <button type="submit" class="boton" [disabled]="trabajando()">
-            {{ trabajando() ? 'Activando…' : 'Activar palabras' }}
-          </button>
-        </form>
-      </section> -->
-  }
-
-  <!-- ══ YAPES POR REVISAR ════════════════════════════════════════════════ -->
-  @if (seccion() === 'yape') {
-    <section class="bloque">
-      <h2>Comprobantes por revisar</h2>
-      <p class="comprobantes-ayuda">
-        Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla, no que
-        el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
-      </p>
-
-      @if (porRevisar().length === 0) {
-        <p class="vacio-ok">No hay ningún comprobante esperando.</p>
-      } @else {
+    <!-- La revisión, solo cuando hay algo que revisar. Va a todo lo ancho y
+         antes del historial: es lo único de esta pantalla que hay que hacer
+         hoy; lo de abajo es consulta. -->
+    @if (porRevisar().length > 0) {
+      <section class="bloque">
         <ul class="comprobantes">
           @for (pago of porRevisar(); track pago.id) {
             <li class="comprobante" [class.ocupado]="revisando() === pago.id">
@@ -700,96 +387,187 @@
             </li>
           }
         </ul>
+      </section>
+    }
+    <section class="tarjeta">
+      <h2>Historial de accesos</h2>
+      <p class="nota">
+        Todo lo que se ha emitido o cobrado, sin importar la vía. Los Yape salen por su comprobante
+        y no se repiten como pasarela.
+      </p>
+
+      @if (accesos().length === 0) {
+        <p class="nota">Todavía no hay nada que enseñar aquí.</p>
+      } @else {
+        <!-- Canal y estado son dos preguntas distintas: las pestañas responden
+             «por dónde entró» y este desplegable «en qué quedó». -->
+        <div class="filtro-estado-fila">
+          <label for="estado-acceso">Estado</label>
+          <select
+            id="estado-acceso"
+            class="filtro-estado"
+            [value]="estadoAcceso()"
+            (change)="estadoAcceso.set($any($event.target).value)"
+          >
+            <option value="">Todos</option>
+            @for (estado of estadosDeAcceso(); track estado) {
+              <option [value]="estado">{{ estado }}</option>
+            }
+          </select>
+        </div>
+
+        <app-filtros-lista [lista]="listaAccesos" placeholder="Correo, código o nº de operación" />
+
+        @if (listaAccesos.filtrado().length === 0) {
+          <p class="tenue">Nada coincide con lo que buscas.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Comprador</th>
+                  <th>Canal</th>
+                  <th>Producto</th>
+                  <th>Importe</th>
+                  <th>Referencia</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (acceso of listaAccesos.visible(); track acceso.canal + acceso.id) {
+                  <tr class="pulsable" (click)="abrirAcceso(acceso)">
+                    <td class="tenue">{{ acceso.fecha | date: 'd MMM, HH:mm' }}</td>
+                    <td>{{ acceso.comprador }}</td>
+                    <td>
+                      <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
+                    </td>
+                    <td class="tenue">{{ acceso.producto }}</td>
+                    <td>
+                      @if (acceso.amountCents) {
+                        {{ importe(acceso.amountCents, acceso.moneda) }}
+                      } @else {
+                        <span class="tenue">cortesía</span>
+                      }
+                    </td>
+                    <td class="mono tenue">{{ acceso.referencia ?? '—' }}</td>
+                    <td>
+                      <span
+                        class="pastilla"
+                        [class.buena]="acceso.tono === 'buena'"
+                        [class.espera]="acceso.tono === 'espera'"
+                        [class.mala]="acceso.tono === 'mala'"
+                      >
+                        {{ acceso.estado }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <app-pie-lista [lista]="listaAccesos" nombre="accesos" />
+        }
       }
     </section>
 
-    <!-- ── Historial ───────────────────────────────────────────────────────
-         Lo que ya se resolvió. Se enseñan diez y el resto se despliega: el
-         historial solo crece, y quien entra aquí viene con un nombre o un
-         número de operación concreto, no a leerlo entero. -->
-    <section class="tarjeta historial">
-      <div class="cabecera-seccion">
-        <div>
-          <h2>Historial</h2>
-          <p class="nota">
-            Comprobantes ya resueltos, del último al primero. Se guardan los doscientos más
-            recientes.
-          </p>
+    <!-- ── Ficha de un acceso ──────────────────────────────────────────────
+         La tabla enseña lo que se compara de un vistazo; aquí va lo que hay que
+         mirar de uno concreto, la captura incluida. Estrecha a propósito: es
+         una consulta, no un formulario. -->
+    @if (accesoAbierto(); as acceso) {
+      <div class="ventana-fondo" (click)="cerrarAcceso()">
+        <div
+          class="ventana estrecha"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-acceso"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-acceso">{{ acceso.comprador }}</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarAcceso()">
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <dl class="ficha">
+              <div>
+                <dt>Canal</dt>
+                <dd>
+                  <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd>
+                  <span
+                    class="pastilla"
+                    [class.buena]="acceso.tono === 'buena'"
+                    [class.espera]="acceso.tono === 'espera'"
+                    [class.mala]="acceso.tono === 'mala'"
+                  >
+                    {{ acceso.estado }}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Producto</dt>
+                <dd>{{ acceso.producto }}</dd>
+              </div>
+              <div>
+                <dt>Importe</dt>
+                <dd>
+                  @if (acceso.amountCents) {
+                    {{ importe(acceso.amountCents, acceso.moneda) }}
+                  } @else {
+                    <span class="tenue">cortesía · sin cobro</span>
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Referencia</dt>
+                <dd class="mono">{{ acceso.referencia ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Fecha</dt>
+                <dd>{{ acceso.fecha | date: 'd MMM y, HH:mm' }}</dd>
+              </div>
+            </dl>
+
+            @if (acceso.tieneComprobante) {
+              <div class="ficha-captura">
+                @if (cargandoCaptura()) {
+                  <p class="tenue">Cargando la captura…</p>
+                } @else if (capturaAbierta(); as imagen) {
+                  <!-- Se abre a tamaño real en otra pestaña: aquí entra pequeña y
+                       el número de operación de una captura de móvil no se lee. -->
+                  <a [href]="imagen" target="_blank" rel="noopener">
+                    <img [src]="imagen" alt="Comprobante de {{ acceso.comprador }}" />
+                  </a>
+                  <p class="tenue">Pulsa la imagen para verla a tamaño completo.</p>
+                } @else {
+                  <p class="tenue">No se pudo cargar la captura.</p>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarAcceso()">Cerrar</button>
+            @if (acceso.anulable) {
+              <!-- Anular deja el código en la lista, marcado, con su venta
+                   apuntada. No lo borra: el rastro de qué se emitió se queda. -->
+              <button type="button" class="boton destructivo" (click)="anularDesdeFicha(acceso)">
+                Anular acceso
+              </button>
+            }
+          </div>
         </div>
       </div>
-
-      @if (historial().length > 0) {
-        <app-filtros-lista
-          [lista]="listaHistorial"
-          placeholder="Correo, nombre, nº de operación o referencia"
-        />
-      }
-
-      @if (historial().length === 0) {
-        <p class="tenue">Todavía no se ha revisado ningún comprobante.</p>
-      } @else if (listaHistorial.filtrado().length === 0) {
-        <p class="tenue">Nada coincide con lo que buscas.</p>
-      } @else {
-        <div class="tabla-scroll">
-          <table class="tabla-historial">
-            <thead>
-              <tr>
-                <th>Enviado</th>
-                <th>Comprador</th>
-                <th>Producto</th>
-                <th class="derecha">Importe</th>
-                <th>Nº de operación</th>
-                <th>Estado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (pago of listaHistorial.visible(); track pago.id) {
-                <tr>
-                  <td class="tenue">{{ pago.createdAt | date: 'd MMM yy, HH:mm' }}</td>
-                  <td>
-                    <span class="quien">{{ pago.user.firstName }} {{ pago.user.lastName }}</span>
-                    <span class="tenue">{{ pago.user.email }}</span>
-                  </td>
-                  <td>{{ pago.plan.name }}</td>
-                  <td class="numero">S/ {{ pago.amountCents / 100 | number: '1.2-2' }}</td>
-                  <td class="mono" [class.falta]="!pago.operationCode">
-                    {{ pago.operationCode ?? '—' }}
-                  </td>
-                  <td>
-                    <span
-                      class="pastilla"
-                      [class.buena]="pago.status === 'PAID'"
-                      [class.mala]="pago.status === 'REJECTED'"
-                      [class.espera]="pago.status !== 'PAID' && pago.status !== 'REJECTED'"
-                    >
-                      {{ estadoHistorial(pago) }}
-                    </span>
-                    @if (pago.reviewNote) {
-                      <span class="motivo-rechazo">{{ pago.reviewNote }}</span>
-                    }
-                  </td>
-                  <td class="derecha">
-                    @if (pago.tieneComprobante) {
-                      <button
-                        type="button"
-                        class="boton enlace"
-                        [disabled]="abriendo() === pago.id"
-                        (click)="abrirComprobante(pago.id)"
-                      >
-                        {{ abriendo() === pago.id ? 'Abriendo…' : 'Ver captura' }}
-                      </button>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <app-pie-lista [lista]="listaHistorial" nombre="comprobantes" />
-      }
-    </section>
+    }
   }
 
   <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
@@ -1778,118 +1556,6 @@
         <app-pie-lista [lista]="listaAlertas" nombre="alertas" />
       }
     </section>
-  }
-
-  <!-- ══ MOVIMIENTOS ══════════════════════════════════════════════════════ -->
-  @if (seccion() === 'movimientos') {
-    <section class="tarjeta">
-      <h2>Pagos por pasarela</h2>
-
-      @if (pagos().length > 0) {
-        <app-filtros-lista [lista]="listaPagos" placeholder="Correo, producto o nº de orden" />
-      }
-
-      @if (pagos().length === 0) {
-        <p class="nota">Todavía no hay pagos.</p>
-      } @else if (listaPagos.filtrado().length === 0) {
-        <p class="tenue">Ningún pago coincide con lo que buscas.</p>
-      } @else {
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Comprador</th>
-                <th>Producto</th>
-                <th>Importe</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (pago of listaPagos.visible(); track pago.id) {
-                <tr>
-                  <td class="tenue">{{ pago.createdAt | date: 'd MMM HH:mm' }}</td>
-                  <td>{{ pago.user.email }}</td>
-                  <td>{{ pago.plan.name }}</td>
-                  <td class="numero">{{ importe(pago.amountCents, pago.currency) }}</td>
-                  <td>
-                    <span
-                      class="pastilla"
-                      [class.buena]="pago.status === 'PAID'"
-                      [class.espera]="pago.status === 'PENDING'"
-                      [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
-                    >
-                      {{ estadoPago(pago.status) }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <app-pie-lista [lista]="listaPagos" nombre="pagos" />
-      }
-    </section>
-    <!-- 
-    <section class="tarjeta">
-      <h2>Bolsas de palabras activadas</h2>
-
-      @if (bolsas().length > 0) {
-        <app-filtros-lista [lista]="listaBolsas" placeholder="Correo, nombre, plan o referencia" />
-      }
-
-      @if (bolsas().length === 0) {
-        <p class="nota">Todavía no hay bolsas.</p>
-      } @else if (listaBolsas.filtrado().length === 0) {
-        <p class="tenue">Ninguna bolsa coincide con lo que buscas.</p>
-      } @else {
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Comprador</th>
-                <th>Plan</th>
-                <th>Consumo</th>
-                <th>Estado</th>
-                <th>Pagó por</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (bolsa of listaBolsas.visible(); track bolsa.id) {
-                <tr>
-                  <td class="tenue">{{ bolsa.activatedAt | date: 'd MMM' }}</td>
-                  <td>{{ bolsa.user.email }}</td>
-                  <td>{{ bolsa.plan.name }}</td>
-                  <td class="numero">
-                    {{ bolsa.wordsUsed | number }} / {{ bolsa.wordsTotal | number }}
-                  </td>
-                  <td>
-                    <span
-                      class="pastilla"
-                      [class.buena]="bolsa.status === 'ACTIVE'"
-                      [class.espera]="bolsa.status === 'EXHAUSTED'"
-                      [class.mala]="bolsa.status === 'REVOKED'"
-                    >
-                      {{ estadoBolsa(bolsa.status) }}
-                    </span>
-                  </td>
-                  <td class="tenue">
-                    {{ bolsa.paymentMethod ?? '—' }}
-                    @if (bolsa.paymentRef) {
-                      <span class="mono">· {{ bolsa.paymentRef }}</span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <app-pie-lista [lista]="listaBolsas" nombre="bolsas" />
-      }
-    </section> -->
   }
 
   <!-- ── Ventana de generar un código ────────────────────────────────────

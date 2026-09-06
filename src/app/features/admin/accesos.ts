@@ -1,5 +1,5 @@
 import { ActivationCode, PagoAdmin } from '../../core/models/admin.model';
-import { PagoRevisado } from '../../core/models/payment.model';
+import { MEDIOS_PAGO, PagoRevisado } from '../../core/models/payment.model';
 
 /**
  * Una fila del historial de accesos.
@@ -14,7 +14,7 @@ import { PagoRevisado } from '../../core/models/payment.model';
  * de tres pestañas: la vía por la que entró el dinero es un dato de la venta,
  * no una sección del programa.
  */
-export type Canal = 'codigo' | 'comprobante' | 'pasarela';
+export type Canal = 'codigo' | 'yape' | 'paypal';
 
 export interface Acceso {
   /** Id de la fila de origen. Único dentro de su canal, no entre canales. */
@@ -33,6 +33,10 @@ export interface Acceso {
   tono: 'buena' | 'espera' | 'mala';
   /** Nº de operación, final del código, referencia de la pasarela. */
   referencia: string | null;
+  /** Si queda una imagen que abrir. Decide si se ofrece «Ver captura». */
+  tieneComprobante: boolean;
+  /** Solo un código sin canjear se puede anular. */
+  anulable: boolean;
 }
 
 const ESTADO_CODIGO: Record<string, { estado: string; tono: Acceso['tono'] }> = {
@@ -65,6 +69,8 @@ function deCodigo(codigo: ActivationCode): Acceso {
     amountCents: codigo.amountCents,
     moneda: 'PEN',
     referencia: `…${codigo.hint}`,
+    tieneComprobante: Boolean(codigo.proofMime),
+    anulable: codigo.status === 'AVAILABLE',
     ...estadoDe(ESTADO_CODIGO, codigo.status),
   };
 }
@@ -77,14 +83,16 @@ function deComprobante(pago: PagoRevisado): Acceso {
 
   return {
     id: pago.id,
-    canal: 'comprobante',
-    canalNombre: 'Comprobante',
+    canal: 'yape',
+    canalNombre: 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.operationCode,
+    tieneComprobante: pago.tieneComprobante,
+    anulable: false,
     estado: pago.status === 'PAID' ? 'Aprobado' : base.estado,
     tono: base.tono,
   };
@@ -93,14 +101,18 @@ function deComprobante(pago: PagoRevisado): Acceso {
 function dePasarela(pago: PagoAdmin): Acceso {
   return {
     id: pago.id,
-    canal: 'pasarela',
-    canalNombre: 'Pasarela',
+    canal: 'paypal',
+    // El nombre sale del propio cobro, no del canal: si algún día entra otra
+    // pasarela, la fila dirá «Culqi» en vez de mentir con «PayPal».
+    canalNombre: MEDIOS_PAGO[pago.provider] ?? pago.provider,
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.providerCaptureId ?? pago.providerOrderId,
+    tieneComprobante: false,
+    anulable: false,
     ...estadoDe(ESTADO_PAGO, pago.status),
   };
 }
@@ -109,7 +121,7 @@ function dePasarela(pago: PagoAdmin): Acceso {
  * Junta las tres fuentes en una sola lista, de la más reciente a la más
  * antigua.
  *
- * Los pagos por Yape se excluyen de «pasarela» a propósito: ya entran por su
+ * Los pagos por Yape se excluyen del canal de pasarela a propósito: ya entran por su
  * comprobante, y contarlos dos veces era exactamente el problema que tenía el
  * panel —la misma venta aparecía en dos pantallas y borrarla en una la dejaba
  * viva en la otra—.

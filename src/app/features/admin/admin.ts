@@ -33,8 +33,7 @@ import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
 
-type Seccion =
-  'accesos' | 'ventas' | 'yape' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
+type Seccion = 'accesos' | 'grupos' | 'descuentos' | 'licencias' | 'alertas';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -71,15 +70,6 @@ function soles(cents: number): string {
 
 /** Métodos de pago que acepta el backend para una activación manual. */
 const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CORTESIA'] as const;
-
-/**
- * Cuántos códigos se enseñan de entrada.
- *
- * La lista crece con cada venta y no para. Ocho caben sin que la tarjeta se
- * coma la pantalla, y son de sobra para el uso real: lo que se mira a diario
- * son los últimos, y para lo demás está el buscador.
- */
-const CODIGOS_VISIBLES = 8;
 
 /**
  * Soles por dólar, y cuánto se carga encima para PayPal.
@@ -180,7 +170,7 @@ export class Admin implements OnInit {
   private readonly payments = inject(PaymentService);
 
   readonly metodos = METODOS;
-  readonly seccion = signal<Seccion>('ventas');
+  readonly seccion = signal<Seccion>('accesos');
 
   readonly error = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
@@ -266,22 +256,6 @@ export class Admin implements OnInit {
           : a.action === 'NINGUNA',
   });
 
-  readonly listaPagos = new Listado(this.pagos, {
-    filtros: [
-      { valor: 'todos', etiqueta: 'Todos' },
-      { valor: 'pagados', etiqueta: 'Pagados' },
-      { valor: 'pendientes', etiqueta: 'Pendientes' },
-      { valor: 'no-cobrados', etiqueta: 'No cobrados' },
-    ],
-    texto: (p) => [p.user.email, p.plan.name, p.provider, p.providerOrderId, p.providerCaptureId],
-    pasa: (p, filtro) =>
-      filtro === 'pagados'
-        ? p.status === 'PAID'
-        : filtro === 'pendientes'
-          ? p.status === 'PENDING'
-          : p.status === 'FAILED' || p.status === 'CANCELLED',
-  });
-
   readonly listaBolsas = new Listado(this.bolsas, {
     filtros: [
       { valor: 'todas', etiqueta: 'Todas' },
@@ -322,42 +296,44 @@ export class Admin implements OnInit {
   // otras sobran.
   readonly accesos = computed(() => unirAccesos(this.codigos(), this.historial(), this.pagos()));
 
-  readonly listaAccesos = new Listado(this.accesos, {
+  /**
+   * Estado por el que se está cribando, o vacío para todos.
+   *
+   * Va aparte de las pestañas del listado y no dentro de ellas: canal y estado
+   * son dos preguntas distintas —«por dónde entró» y «en qué quedó»— y quien
+   * busca suele querer cruzarlas, no elegir una.
+   */
+  readonly estadoAcceso = signal('');
+
+  /** Los estados que existen de verdad en los datos, sin inventar ninguno. */
+  readonly estadosDeAcceso = computed(() =>
+    [...new Set(this.accesos().map((a) => a.estado))].sort((a, b) => a.localeCompare(b)),
+  );
+
+  /**
+   * Lo que ve el listado: los accesos ya cribados por estado.
+   *
+   * Se filtra ANTES de dárselo al listado para que los contadores de las
+   * pestañas cuenten sobre lo mismo que se está mirando. Al revés, «Yape 6»
+   * seguiría diciendo seis con un solo rechazado en pantalla.
+   */
+  private readonly accesosPorEstado = computed(() => {
+    const estado = this.estadoAcceso();
+    return estado ? this.accesos().filter((a) => a.estado === estado) : this.accesos();
+  });
+  readonly listaAccesos = new Listado(this.accesosPorEstado, {
     filtros: [
       { valor: 'todos', etiqueta: 'Todos' },
       { valor: 'codigo', etiqueta: 'Código' },
-      { valor: 'comprobante', etiqueta: 'Comprobante' },
-      { valor: 'pasarela', etiqueta: 'Pasarela' },
+      { valor: 'yape', etiqueta: 'Yape' },
+      // Hoy la única pasarela es PayPal; si entra otra, este filtro se parte.
+      { valor: 'paypal', etiqueta: 'PayPal' },
     ],
     // Se busca por lo que uno tiene a mano al abrir esto: un correo de una
     // conversación, el final de un código, un número de operación.
     texto: (a: Acceso) => [a.comprador, a.referencia, a.producto, a.estado, a.canalNombre],
     pasa: (a: Acceso, filtro: string) => a.canal === filtro,
   });
-  readonly listaHistorial = new Listado(this.historial, {
-    filtros: [
-      { valor: 'todos', etiqueta: 'Todos' },
-      { valor: 'aprobados', etiqueta: 'Aprobados' },
-      { valor: 'rechazados', etiqueta: 'Rechazados' },
-      { valor: 'sin-resolver', etiqueta: 'Sin resolver' },
-    ],
-    // Las cuatro cosas con las que llega una reclamación: «soy fulano», «pagué
-    // con este correo» o «mi operación es la 01234567».
-    texto: (p) => [
-      p.user.email,
-      `${p.user.firstName} ${p.user.lastName}`,
-      p.operationCode,
-      p.providerOrderId,
-      p.plan.name,
-    ],
-    pasa: (p, filtro) =>
-      filtro === 'aprobados'
-        ? p.status === 'PAID'
-        : filtro === 'rechazados'
-          ? p.status === 'REJECTED'
-          : p.status !== 'PAID' && p.status !== 'REJECTED',
-  });
-
   /** Códigos recién generados. Se muestran una vez y no vuelven. */
   readonly codigosNuevos = signal<string[]>([]);
   /** Correo al que el servidor acaba de mandarlos, si se indicó uno. */
@@ -390,53 +366,11 @@ export class Admin implements OnInit {
     () => this.codigos().filter((c) => c.status === 'AVAILABLE').length,
   );
 
-  // ── Códigos: ventana, búsqueda y filtro ──────────────────────────────────
+  // ── Ventanas de crear ────────────────────────────────────────────────────
   /** La ventana de generar. Vive fuera de la tarjeta, encima de la página. */
   readonly formularioCodigosAbierto = signal(false);
   /** La de crear un código promocional. Mismo trato: crear es algo puntual. */
   readonly formularioDescuentoAbierto = signal(false);
-  readonly busquedaCodigos = signal('');
-  readonly filtroEstadoCodigos = signal<'' | 'AVAILABLE' | 'REDEEMED' | 'VOID'>('');
-  /** Si está desplegada la lista entera o solo los primeros. */
-  readonly todosLosCodigos = signal(false);
-
-  /**
-   * Los códigos que pasan el buscador y el filtro.
-   *
-   * Se busca por todo lo que uno recuerda de una venta: los cuatro caracteres
-   * del final, el correo, la nota, el número de operación y el producto. Quien
-   * viene a esta tabla llega con un dato suelto de una conversación de
-   * WhatsApp, no con el identificador.
-   */
-  readonly codigosFiltrados = computed(() => {
-    const texto = this.busquedaCodigos().trim().toLowerCase();
-    const estado = this.filtroEstadoCodigos();
-
-    return this.codigos().filter((codigo) => {
-      if (estado && codigo.status !== estado) return false;
-      if (!texto) return true;
-
-      return [
-        codigo.hint,
-        codigo.buyerEmail,
-        codigo.note,
-        codigo.paymentRef,
-        codigo.paymentMethod,
-        codigo.productCode,
-      ].some((campo) => (campo ?? '').toLowerCase().includes(texto));
-    });
-  });
-
-  /** Los que se pintan: los primeros, salvo que se pida ver el resto. */
-  readonly codigosEnPantalla = computed(() =>
-    this.todosLosCodigos()
-      ? this.codigosFiltrados()
-      : this.codigosFiltrados().slice(0, CODIGOS_VISIBLES),
-  );
-
-  readonly codigosOcultos = computed(
-    () => this.codigosFiltrados().length - this.codigosEnPantalla().length,
-  );
 
   // ── Gráficos ─────────────────────────────────────────────────────────────
   //
@@ -2085,20 +2019,6 @@ export class Admin implements OnInit {
     this.formularioCodigosAbierto.set(false);
   }
 
-  /** El buscador y el filtro escriben aquí: en la plantilla no hay lógica. */
-  buscarCodigos(evento: Event): void {
-    this.busquedaCodigos.set((evento.target as HTMLInputElement).value);
-    // Con la lista recortada, buscar y no ver lo que se busca es lo peor que
-    // puede pasar: al filtrar se vuelve a los primeros de la nueva lista.
-    this.todosLosCodigos.set(false);
-  }
-
-  filtrarCodigos(evento: Event): void {
-    const valor = (evento.target as HTMLSelectElement).value;
-    this.filtroEstadoCodigos.set(valor as '' | 'AVAILABLE' | 'REDEEMED' | 'VOID');
-    this.todosLosCodigos.set(false);
-  }
-
   generarCodigos(): void {
     if (this.formCodigos.invalid || this.trabajando()) return;
 
@@ -2204,6 +2124,85 @@ export class Admin implements OnInit {
           this.trabajando.set(false);
         },
       });
+  }
+
+  // ── Acciones desde el historial de accesos ───────────────────────────────
+  //
+  // La tabla junta tres cosas distintas, así que cada acción tiene que volver a
+  // la fila de origen para actuar. Se busca por id dentro de su propia lista:
+  // los ids son únicos dentro de cada canal, no entre canales.
+
+  // ── Ficha de un acceso ───────────────────────────────────────────────────
+
+  /** La fila abierta en la ficha, o null. */
+  readonly accesoAbierto = signal<Acceso | null>(null);
+  /**
+   * La captura de esa fila, ya descargada.
+   *
+   * La imagen NO se puede pedir con un <img src> a secas: el endpoint exige la
+   * cabecera de autorización, así que se baja con el token y se enseña como
+   * object URL. Se suelta al cerrar para no ir dejando blobs por el camino.
+   */
+  readonly capturaAbierta = signal<string | null>(null);
+  readonly cargandoCaptura = signal(false);
+
+  abrirAcceso(acceso: Acceso): void {
+    this.accesoAbierto.set(acceso);
+    this.soltarCaptura();
+    if (acceso.tieneComprobante) this.descargarCaptura(acceso);
+  }
+
+  cerrarAcceso(): void {
+    this.accesoAbierto.set(null);
+    this.soltarCaptura();
+  }
+
+  private soltarCaptura(): void {
+    const anterior = this.capturaAbierta();
+    if (anterior) URL.revokeObjectURL(anterior);
+    this.capturaAbierta.set(null);
+  }
+
+  private descargarCaptura(acceso: Acceso): void {
+    this.cargandoCaptura.set(true);
+
+    const peticion =
+      acceso.canal === 'codigo'
+        ? this.admin.comprobanteDeCodigo(acceso.id)
+        : this.payments.comprobante(acceso.id);
+
+    peticion.subscribe({
+      next: (blob) => {
+        this.capturaAbierta.set(URL.createObjectURL(blob));
+        this.cargandoCaptura.set(false);
+      },
+      // Que falte la imagen no rompe la ficha: el resto de los datos —importe,
+      // nº de operación— es lo que de verdad se coteja con el extracto.
+      error: () => this.cargandoCaptura.set(false),
+    });
+  }
+
+  /** Anula desde la ficha y la cierra: lo que se estaba mirando ya cambió. */
+  async anularDesdeFicha(acceso: Acceso): Promise<void> {
+    const codigo = this.codigos().find((c) => c.id === acceso.id);
+    if (!codigo) return;
+
+    await this.anularCodigo(codigo);
+    this.cerrarAcceso();
+  }
+  /** Abre la captura, venga de un código o de un comprobante de Yape. */
+  verCaptura(acceso: Acceso): void {
+    if (acceso.canal === 'codigo') {
+      const codigo = this.codigos().find((c) => c.id === acceso.id);
+      if (codigo) this.verComprobanteDeCodigo(codigo);
+      return;
+    }
+    this.abrirComprobante(acceso.id);
+  }
+
+  anularAcceso(acceso: Acceso): void {
+    const codigo = this.codigos().find((c) => c.id === acceso.id);
+    if (codigo) void this.anularCodigo(codigo);
   }
 
   async anularCodigo(codigo: ActivationCode): Promise<void> {
