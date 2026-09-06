@@ -2,27 +2,21 @@
 
 <main class="pagina">
   <section class="hero">
-    <p class="eyebrow">9 Skills para Claude.ai · Método completo de tesis</p>
-    <h1>Tú haces tu tesis.<br />No la compras.</h1>
+    <p class="eyebrow">Skills para Claude.ai · Tesis y artículos científicos</p>
+    <h1>Tú haces tu investigación.<br />No la compras.</h1>
     <p class="entrada">
-      Nueve skills que te acompañan paso a paso, desde elegir el tema hasta el abstract. Cada uno te
-      devuelve un entregable real en Word, con normas APA 7 y con tus propias fuentes. Tú decides,
-      tú escribes, tú la defiendes.
+      Skills que te acompañan paso a paso: de elegir el tema hasta la sustentación, o de una idea
+      hasta el artículo enviado a una revista. Cada fase cierra con un entregable real en Word y
+      con tus propias fuentes. Tú decides, tú escribes, tú lo defiendes.
     </p>
 
     <div class="hero-acciones">
-      @if (metodo(); as plan) {
-        <a class="boton grande" routerLink="/planes" [queryParams]="{ plan: plan.code }">
-          Acceder por {{ precio(plan) }}
-        </a>
-      } @else {
-        <a class="boton grande" routerLink="/planes">Quiero el paquete</a>
-      }
-      <a class="boton secundario grande" routerLink="/metodo">Ver las 9 Skills</a>
+      <a class="boton grande" routerLink="/planes">Ver los paquetes</a>
+      <a class="boton secundario grande" routerLink="/en-accion">Míralo en acción</a>
     </div>
 
     <p class="hero-nota">
-      Incluye 30 min de asesoría personalizada · Funciona también con el plan gratuito de Claude
+      Se instalan en tu cuenta de Claude.ai · Funcionan también con el plan gratuito
     </p>
 
     <ul class="cifras">
@@ -42,6 +36,36 @@
         <h2>Hola, {{ nombre() }}</h2>
       </div>
       <a class="boton secundario" routerLink="/perfil">Ver mi conector y mis datos</a>
+    </section>
+  }
+
+  <!-- Las dos rutas, lo primero después del hero. Antes la portada hablaba solo
+       de tesis y quien venía a publicar un artículo se iba creyendo que aquí no
+       había nada para él. Cada tarjeta lleva a su página, donde está el detalle
+       fase por fase; el precio sale de la API, no escrito aquí. -->
+  @if (rutas().length > 0) {
+    <section class="seccion">
+      <p class="seccion-marca">Dos rutas</p>
+      <h2 class="titulo-seccion">Elige por dónde vas</h2>
+
+      <div class="rutas">
+        @for (ruta of rutas(); track ruta.titulo) {
+          <article class="ruta">
+            <h3>{{ ruta.titulo }}</h3>
+            <p class="ruta-detalle">{{ ruta.detalle }}</p>
+            <p class="ruta-texto">{{ ruta.texto }}</p>
+
+            <p class="ruta-precio">
+              @if (ruta.desde) {
+                <span class="ruta-desde">desde</span>
+              }
+              {{ ruta.precio }}
+            </p>
+
+            <a class="boton secundario" [routerLink]="ruta.enlace">{{ ruta.verbo }}</a>
+          </article>
+        }
+      </div>
     </section>
   }
 
@@ -75,9 +99,9 @@
         </p>
         <span class="camino-flecha" aria-hidden="true">→</span>
       </a>
-      <a class="camino" routerLink="/metodo">
-        <h3>Las 9 Skills</h3>
-        <p>Qué hace cada una y con qué documento sales.</p>
+      <a class="camino" routerLink="/preguntas">
+        <h3>Preguntas frecuentes</h3>
+        <p>Si detectan IA, si sirve para tu carrera, qué pasa cuando se acaba el acceso.</p>
         <span class="camino-flecha" aria-hidden="true">→</span>
       </a>
       <a class="camino" routerLink="/quien-soy">
