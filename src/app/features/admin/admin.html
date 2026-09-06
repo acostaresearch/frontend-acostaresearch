@@ -743,11 +743,14 @@
               </div>
 
               <!-- ── Subir capítulos nuevos a este grupo ────────────────────
-                   Solo al editar: un grupo que aún no existe no tiene código al
-                   que colgar un archivo. Lo que se suelte aquí se publica ya
-                   dentro de este producto, sin pasar por otra pestaña. -->
-              @if (editandoGrupo()) {
-                <div class="campo">
+                   Lo que se suelte aquí se publica dentro de este producto, sin
+                   pasar por otra pestaña.
+
+                   Al CREAR también se puede soltar, aunque el grupo todavía no
+                   exista: los archivos esperan en la cola y se publican solos en
+                   cuanto se pulsa «Crear grupo». Antes de eso no hay código al
+                   que colgarlos, y por eso el botón de publicar no aparece. -->
+              <div class="campo">
                   <label>Subir capítulos nuevos</label>
 
                   <label
@@ -833,24 +836,36 @@
 
                     <!-- Publicar va aparte de «Guardar cambios»: sube los
                          archivos ahora, sin cerrar la ventana, para poder
-                         marcarlos acto seguido en la lista de arriba. -->
-                    <button
-                      type="button"
-                      class="boton secundario"
-                      (click)="publicarCola()"
-                      [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
-                    >
-                      @if (publicando()) {
-                        Publicando…
-                      } @else if (colaAnalizando()) {
-                        Comprobando…
-                      } @else {
-                        Publicar {{ colaListas().length }} en este grupo
-                      }
-                    </button>
+                         marcarlos acto seguido en la lista de arriba.
+
+                         Al crear no se ofrece: no hay grupo al que subirlos
+                         todavía. Se publican solos al pulsar «Crear grupo». -->
+                    @if (editandoGrupo()) {
+                      <button
+                        type="button"
+                        class="boton secundario"
+                        (click)="publicarCola()"
+                        [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
+                      >
+                        @if (publicando()) {
+                          Publicando…
+                        } @else if (colaAnalizando()) {
+                          Comprobando…
+                        } @else {
+                          Publicar {{ colaListas().length }} en este grupo
+                        }
+                      </button>
+                    } @else {
+                      <p class="nota">
+                        @if (colaAnalizando()) {
+                          Comprobando los archivos…
+                        } @else {
+                          Se publicarán dentro del grupo en cuanto pulses «Crear grupo».
+                        }
+                      </p>
+                    }
                   }
                 </div>
-              }
             </form>
           </div>
 

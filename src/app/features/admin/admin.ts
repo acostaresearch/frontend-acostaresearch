@@ -432,6 +432,11 @@ export class Admin implements OnInit {
     this.solesEscritos.set(199);
     // Un grupo nuevo nace vacío: los capítulos se marcan a mano.
     this.capitulosElegidos.set(new Set());
+    this.cola.set([]);
+    // Sin destino: todavía no hay grupo. Se pone al crearlo, y hasta entonces
+    // el botón de publicar no aparece. Dejarlo con el valor del grupo anterior
+    // habría publicado los archivos en el producto equivocado.
+    this.grupoDestino.set('');
     this.formGrupo.controls.code.enable();
   }
 
@@ -600,15 +605,31 @@ export class Admin implements OnInit {
           this.aviso.set(
             enEdicion ? `Grupo «${grupo.name}» actualizado.` : `Grupo «${grupo.name}» creado.`,
           );
+          this.trabajando.set(false);
+          this.cargarGrupos();
+          // El precio y la duración salen en la web de venta.
+          this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+
+          // Ya hay grupo, así que los archivos que esperaban en la cola tienen
+          // dónde ir. Se apunta el destino ANTES de publicar: hasta este momento
+          // no existía y por eso el botón de publicar no se ofrecía.
+          this.grupoDestino.set(grupo.productCode ?? grupo.code);
+
+          if (this.colaListas().length > 0) {
+            // La ventana no se cierra: hay que ver cómo van las subidas. Pasa a
+            // modo edición, que es lo que de verdad es ya —el grupo existe— y
+            // deja el código bloqueado como en cualquier edición.
+            this.editandoGrupo.set(grupo);
+            this.formGrupo.controls.code.disable();
+            this.publicarCola();
+            return;
+          }
+
           this.editandoGrupo.set(null);
           // Solo se cierra al guardar bien. Si el servidor rechaza, la ventana se
           // queda abierta con lo escrito: cerrarla obligaría a teclearlo otra vez.
           this.formularioAbierto.set(false);
-          this.trabajando.set(false);
-          this.cargarGrupos();
           this.cargarSkills();
-          // El precio y la duración salen en la web de venta.
-          this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
         },
         error: (e: unknown) => {
           this.error.set(toApiError(e).message);
