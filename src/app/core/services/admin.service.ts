@@ -87,6 +87,16 @@ export class AdminService {
     return this.http.delete<void>(`${this.licencias}/codes/${id}`);
   }
 
+  /**
+   * Lo borra de la lista. Anular es lo otro: deja la fila y su venta apuntada.
+   *
+   * La licencia que entregó no se toca. Va a una ruta aparte, no a la misma con
+   * un parámetro, para que las dos decisiones no se confundan nunca.
+   */
+  eliminarCodigo(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.licencias}/codes/${id}/permanent`);
+  }
+
   // ── Licencias ──────────────────────────────────────────────────────────
 
   licenciasTodas(): Observable<LicenciaAdmin[]> {
@@ -107,16 +117,6 @@ export class AdminService {
       .pipe(map((res) => res.data.license));
   }
 
-  /**
-   * Borra una licencia y su rastro de uso. Irreversible.
-   *
-   * No es lo mismo que revocar: revocar corta el acceso y deja la fila, con su
-   * motivo, y se puede deshacer. Esto es para limpiar lo que uno se emitió
-   * probando.
-   */
-  eliminarLicencia(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.licencias}/${id}`);
-  }
   alertas(): Observable<Alerta[]> {
     return this.http
       .get<ApiResponse<{ alerts: Alerta[] }>>(`${this.licencias}/alerts`)
@@ -161,33 +161,11 @@ export class AdminService {
       .pipe(map((res) => res.data.discount));
   }
 
-  /**
-   * Lo borra de verdad. Para una promoción que puede volver está «Apagar».
-   *
-   * La rebaja que ya concedió vive dentro del pago, así que las cuentas no se
-   * mueven: lo que se pierde es con qué código se consiguió.
-   */
-  eliminarDescuento(id: string): Observable<void> {
-    return this.http
-      .delete<ApiResponse<unknown>>(`${this.facturacion}/discounts/${id}`)
-      .pipe(map(() => undefined));
-  }
-
   // ── Pagos ──────────────────────────────────────────────────────────────
 
   pagosRecientes(): Observable<PagoAdmin[]> {
     return this.http
       .get<ApiResponse<{ payments: PagoAdmin[] }>>(`${this.pagos}/recent`)
       .pipe(map((res) => res.data.payments));
-  }
-
-  /**
-   * Borra un apunte del historial de cobros.
-   *
-   * Se lleva el apunte, no la entrega: si ese pago activó una licencia, la
-   * licencia sigue viva. Lo que se pierde es el rastro de por dónde entró.
-   */
-  eliminarPago(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.pagos}/${id}`);
   }
 }

@@ -103,7 +103,9 @@
             }
           </svg>
         </div>
-        <p class="grafico-pie">Cobros confirmados de los últimos 50 movimientos.</p>
+        <p class="grafico-pie">
+          Cobros confirmados por las tres vías. Los de PayPal, pasados a soles.
+        </p>
       }
     </article>
 
@@ -379,10 +381,21 @@
                     </td>
                     <td class="derecha">
                       @if (codigo.status === 'AVAILABLE') {
-                        <button type="button" class="enlace-peligro" (click)="anularCodigo(codigo)">
+                        <button type="button" class="enlace" (click)="anularCodigo(codigo)">
                           Anular
                         </button>
                       }
+                      <!-- Anular y borrar no son lo mismo: anular deja el código
+                           en la lista, con su venta apuntada; borrar lo saca de
+                           aquí y de las cifras. Está para limpiar pruebas. -->
+                      <button
+                        type="button"
+                        class="enlace-peligro"
+                        [disabled]="borrandoCodigo() === codigo.id"
+                        (click)="eliminarCodigo(codigo)"
+                      >
+                        {{ borrandoCodigo() === codigo.id ? 'Borrando…' : 'Eliminar' }}
+                      </button>
                     </td>
                   </tr>
                 }
@@ -739,17 +752,6 @@
                       Rechazar
                     </button>
                   </div>
-
-                  <!-- Borrar no es rechazar: rechazar le escribe al comprador,
-                       esto no le dice nada a nadie. Está para limpiar pruebas. -->
-                  <button
-                    type="button"
-                    class="enlace-peligro"
-                    [disabled]="borrandoComprobante() === pago.id"
-                    (click)="eliminarComprobante(pago)"
-                  >
-                    {{ borrandoComprobante() === pago.id ? 'Borrando…' : 'Eliminar' }}
-                  </button>
                 </div>
               </div>
             </li>
@@ -835,14 +837,6 @@
                         {{ abriendo() === pago.id ? 'Abriendo…' : 'Ver captura' }}
                       </button>
                     }
-                    <button
-                      type="button"
-                      class="enlace-peligro"
-                      [disabled]="borrandoComprobante() === pago.id"
-                      (click)="eliminarComprobante(pago)"
-                    >
-                      {{ borrandoComprobante() === pago.id ? 'Borrando…' : 'Eliminar' }}
-                    </button>
                   </td>
                 </tr>
               }
@@ -1597,14 +1591,6 @@
                     >
                       {{ promo.active ? 'Apagar' : 'Encender' }}
                     </button>
-                    <button
-                      type="button"
-                      class="enlace-peligro"
-                      [disabled]="borrandoDescuento() === promo.id"
-                      (click)="eliminarDescuento(promo)"
-                    >
-                      {{ borrandoDescuento() === promo.id ? 'Borrando…' : 'Eliminar' }}
-                    </button>
                   </td>
                 </tr>
               }
@@ -1788,15 +1774,6 @@
                         Reactivar
                       </button>
                     }
-                    <!-- Borrar va el último y en rojo: revocar se deshace, esto no. -->
-                    <button
-                      type="button"
-                      class="enlace-peligro"
-                      [disabled]="borrandoLicencia() === licencia.id"
-                      (click)="eliminarLicencia(licencia)"
-                    >
-                      {{ borrandoLicencia() === licencia.id ? 'Borrando…' : 'Eliminar' }}
-                    </button>
                   </td>
                 </tr>
               }
@@ -1883,7 +1860,6 @@
                 <th>Producto</th>
                 <th>Importe</th>
                 <th>Estado</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -1902,16 +1878,6 @@
                     >
                       {{ estadoPago(pago.status) }}
                     </span>
-                  </td>
-                  <td class="derecha">
-                    <button
-                      type="button"
-                      class="enlace-peligro"
-                      [disabled]="borrandoPago() === pago.id"
-                      (click)="eliminarPago(pago)"
-                    >
-                      {{ borrandoPago() === pago.id ? 'Borrando…' : 'Eliminar' }}
-                    </button>
                   </td>
                 </tr>
               }

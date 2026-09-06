@@ -128,6 +128,30 @@ function aDolares(soles: number): number {
 }
 
 /**
+ * Un importe de la pasarela, en céntimos de sol.
+ *
+ * PayPal cobra en dólares y todo lo demás en soles. Los gráficos suman las dos
+ * cosas, y sin convertir el resultado no es dinero de ninguna moneda: un dólar
+ * contaba como un sol y PayPal salía casi cuatro veces más pequeño de lo que es.
+ *
+ * Es una conversión para MIRAR, no para cuadrar la contabilidad: usa el mismo
+ * tipo con el que se ponen los precios, no el del día del cobro.
+ */
+function aCentimosDeSol(cents: number, moneda: string): number {
+  return moneda === 'USD' ? Math.round(cents * SOLES_POR_DOLAR) : cents;
+}
+
+/**
+ * Las vías por las que puede entrar dinero. Salen todas, incluso a cero.
+ *
+ * Son tres cosas distintas y ninguna sustituye a otra: PayPal cobra solo, Yape
+ * necesita que alguien mire el comprobante, y el código de activación es lo que
+ * se vende a mano por WhatsApp. Que una esté a cero es información, no un motivo
+ * para esconderla.
+ */
+const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
+
+/**
  * Panel de administración.
  *
  * Es una herramienta de trabajo, no un escaparate: lo que se mira a diario va
@@ -412,21 +436,6 @@ export class Admin implements OnInit {
   /** Cobros efectivos: los que fallaron o se cancelaron no son ingresos. */
   private readonly cobrados = computed(() => this.pagos().filter((p) => p.status === 'PAID'));
 
-  readonly ingresosPorSemana = computed(() =>
-    columnas(
-      porSemana(
-        this.cobrados(),
-        (pago) => (pago.paidAt ? new Date(pago.paidAt) : null),
-        (pago) => pago.amountCents,
-        SEMANAS,
-      ).map((punto) => ({
-        ...punto,
-        detalle: `${punto.detalle}: ${soles(punto.valor)}`,
-      })),
-      soles,
-    ),
-  );
-
   /**
    * Ventas cobradas al generar un código de activación.
    *
@@ -452,35 +461,80 @@ export class Admin implements OnInit {
   );
 
   /**
+   * Cada entrada de dinero, ya normalizada: cuándo entró, cuánto y por dónde.
+   *
+   * Los dos gráficos de ingresos se calculan sobre esta misma lista, y eso es lo
+   * que garantiza que digan lo mismo: antes uno sumaba solo pagos y el otro
+   * sumaba pagos y códigos, así que los totales no cuadraban entre sí.
+   *
+   * Dos cosas se arreglan al normalizar aquí:
+   *
+   * 1. El canje de un código apunta su propio pago, con el medio con el que se
+   *    cobró. Sin descartarlo, esa venta saldría dos veces —una en su código y
+   *    otra en Yape—. Se reconoce porque el pago del canje lleva el
+   *    identificador del código como número de orden.
+   * 2. PayPal cobra en dólares y todo lo demás en soles. Sumar las dos cosas en
+   *    una misma barra da un número que no es dinero de ninguna moneda, así que
+   *    los dólares se pasan a soles al tipo con el que se ponen los precios.
+   */
+  private readonly entradasDeDinero = computed(() => {
+    const deCodigos = new Set(this.codigos().map((codigo) => codigo.id));
+
+    const entradas = this.cobrados()
+      .filter((pago) => !deCodigos.has(pago.providerOrderId))
+      .map((pago) => ({
+        via: MEDIOS[pago.provider] ?? pago.provider,
+        fecha: pago.paidAt ? new Date(pago.paidAt) : null,
+        cents: aCentimosDeSol(pago.amountCents, pago.currency),
+      }));
+
+    for (const codigo of this.codigosVendidos()) {
+      entradas.push({
+        via: 'Código de activación',
+        // La fecha es la de la venta, no la del canje: es cuando entró el dinero.
+        fecha: new Date(codigo.createdAt),
+        cents: codigo.amountCents ?? 0,
+      });
+    }
+
+    return entradas;
+  });
+
+  readonly ingresosPorSemana = computed(() =>
+    columnas(
+      porSemana(
+        this.entradasDeDinero(),
+        (entrada) => entrada.fecha,
+        (entrada) => entrada.cents,
+        SEMANAS,
+      ).map((punto) => ({
+        ...punto,
+        detalle: `${punto.detalle}: ${soles(punto.valor)}`,
+      })),
+      soles,
+    ),
+  );
+
+  /**
    * Por dónde entra el dinero.
    *
    * Categorías sin orden natural —PayPal, Yape, código de activación—, así que
    * todas las barras van del mismo color: la longitud ya dice cuál es mayor, y
    * teñir cada una de un tono distinto gastaría el color en repetir eso mismo.
    *
-   * El canje de un código apunta su propio pago, con el medio con el que se
-   * cobró. Si se dejara pasar, esa venta saldría dos veces: una en la barra de
-   * su código y otra en la de Yape. Se reconocen porque el pago del canje lleva
-   * el identificador del código como número de orden.
+   * Las tres vías salen SIEMPRE, aunque una esté a cero. Enseñar solo las que
+   * tienen dinero deja un gráfico que engaña por omisión: una semana sin ventas
+   * por PayPal se leía como si PayPal no existiera, cuando lo que dice de verdad
+   * es que está abierto y no entró nada por ahí. Un cero también es una cifra.
    */
   readonly ingresosPorMedio = computed(() => {
-    const deCodigos = new Set(this.codigos().map((codigo) => codigo.id));
-
-    const entradas = this.cobrados()
-      .filter((pago) => !deCodigos.has(pago.providerOrderId))
-      .map((pago) => ({
-        etiqueta: MEDIOS[pago.provider] ?? pago.provider,
-        importe: pago.amountCents,
-      }));
-
-    for (const codigo of this.codigosVendidos()) {
-      entradas.push({ etiqueta: 'Código de activación', importe: codigo.amountCents ?? 0 });
-    }
+    const vias = VIAS_DE_COBRO.map((via) => ({ via, cents: 0 }));
+    const entradas = this.entradasDeDinero().map(({ via, cents }) => ({ via, cents }));
 
     return porCategoria(
-      entradas,
-      (entrada) => entrada.etiqueta,
-      (entrada) => entrada.importe,
+      [...vias, ...entradas],
+      (entrada) => entrada.via,
+      (entrada) => entrada.cents,
     );
   });
 
@@ -1709,57 +1763,6 @@ export class Admin implements OnInit {
     });
   }
 
-  // ── Historial de pagos ───────────────────────────────────────────────────
-
-  /** Qué apunte se está borrando, para bloquear solo esa fila. */
-  readonly borrandoPago = signal<string | null>(null);
-  readonly borrandoLicencia = signal<string | null>(null);
-  readonly borrandoComprobante = signal<string | null>(null);
-
-  /**
-   * Borra un apunte del historial de cobros.
-   *
-   * El historial se llena de intentos que no llegaron a nada —órdenes de PayPal
-   * que el comprador abandonó a medias, pruebas nuestras— y un libro de cuentas
-   * que no se puede limpiar acaba sin leerse, que es peor que no tenerlo.
-   *
-   * Se avisa de lo que NO se lleva por delante porque es lo que uno teme al
-   * pulsar: la licencia que ese pago entregó sigue funcionando. Lo que se pierde
-   * es el rastro de por dónde entró ese dinero, y por eso un cobro confirmado se
-   * pregunta con más aspavientos que uno que quedó a medias.
-   */
-  async eliminarPago(pago: PagoAdmin): Promise<void> {
-    const cobrado = pago.status === 'PAID';
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Borrar este apunte',
-      mensaje: cobrado
-        ? `Es un cobro confirmado de ${this.importe(pago.amountCents, pago.currency)} ` +
-          `a nombre de ${pago.user.email}. Al borrarlo dejará de contar en los gráficos ` +
-          'y en el total del mes.'
-        : `Un intento de ${pago.user.email} que nunca llegó a cobrarse.`,
-      nota: 'Se borra el apunte, no la entrega: si activó una licencia, la licencia sigue viva.',
-      confirmar: 'Borrar el apunte',
-      tono: 'peligro',
-    });
-    if (!seguro) return;
-
-    this.borrandoPago.set(pago.id);
-    this.admin.eliminarPago(pago.id).subscribe({
-      next: () => {
-        // Se quita de la lista en el sitio en vez de recargar: la tabla enseña
-        // los últimos 50 y volver a pedirlos haría subir uno del fondo, que es
-        // justo lo que hace dudar de si se borró el que era.
-        this.pagos.update((lista) => lista.filter((p) => p.id !== pago.id));
-        this.borrandoPago.set(null);
-      },
-      error: (e: unknown) => {
-        this.error.set(mensajeDeError(e));
-        this.borrandoPago.set(null);
-      },
-    });
-  }
-
   // ── Estados en castellano ────────────────────────────────────────────────
   //
   // El servidor guarda los códigos en inglés y mayúsculas, que es lo correcto
@@ -1910,49 +1913,6 @@ export class Admin implements OnInit {
           lista.map((d) => (d.id === actualizado.id ? actualizado : d)),
         ),
       error: (e: unknown) => this.error.set(mensajeDeError(e)),
-    });
-  }
-
-  /** Qué código se está borrando, para bloquear solo esa fila. */
-  readonly borrandoDescuento = signal<string | null>(null);
-
-  /**
-   * Borra un código promocional de la lista.
-   *
-   * Convive con «Apagar» porque no son lo mismo: una promoción que puede volver
-   * se apaga, y una que se escribió mal o que ya no se repetirá estorba en la
-   * lista para siempre.
-   *
-   * Uno ya canjeado se puede borrar igual, pero se avisa: la rebaja sigue
-   * guardada dentro del pago —las cuentas no se mueven— y lo que se pierde es
-   * saber con qué código se consiguió.
-   */
-  async eliminarDescuento(descuento: CodigoDescuento): Promise<void> {
-    const usado = descuento.usedCount > 0;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: `Borrar «${descuento.code}»`,
-      mensaje: usado
-        ? `Se canjeó ${descuento.usedCount} ${descuento.usedCount === 1 ? 'vez' : 'veces'}. ` +
-          'Esas ventas conservan su rebaja y su importe; lo que se pierde es saber ' +
-          'que vinieron de este código.'
-        : 'Nunca se ha canjeado, así que no arrastra nada.',
-      nota: 'Si es una promoción que puede volver, «Apagar» la deja lista sin borrarla.',
-      confirmar: 'Borrar el código',
-      tono: 'peligro',
-    });
-    if (!seguro) return;
-
-    this.borrandoDescuento.set(descuento.id);
-    this.admin.eliminarDescuento(descuento.id).subscribe({
-      next: () => {
-        this.descuentos.update((lista) => lista.filter((d) => d.id !== descuento.id));
-        this.borrandoDescuento.set(null);
-      },
-      error: (e: unknown) => {
-        this.error.set(mensajeDeError(e));
-        this.borrandoDescuento.set(null);
-      },
     });
   }
 
@@ -2241,83 +2201,59 @@ export class Admin implements OnInit {
     });
   }
 
+  /** Qué código se está borrando, para bloquear solo esa fila. */
+  readonly borrandoCodigo = signal<string | null>(null);
+
+  /**
+   * Borra un código de la lista. Distinto de anularlo.
+   *
+   * Anular es la herramienta para una venta de verdad que se tuerce: deja la
+   * fila con su importe apuntado y solo impide el canje. Esto es para los que
+   * uno se generó probando, que si no se quedan ahí para siempre.
+   *
+   * El diálogo dice lo que cambia en las cifras, que es lo que no se ve: si el
+   * código estaba sin canjear, su venta desaparece del gráfico; si ya se canjeó,
+   * el dinero sigue contando pero pasa a contarse por su medio de cobro, porque
+   * lo que queda es el pago.
+   */
+  async eliminarCodigo(codigo: ActivationCode): Promise<void> {
+    if (this.borrandoCodigo()) return;
+
+    const venta = (codigo.amountCents ?? 0) > 0;
+    const canjeado = codigo.status === 'REDEEMED';
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Borrar el código …${codigo.hint}`,
+      mensaje: canjeado
+        ? `Lo canjeó ${codigo.buyerEmail ?? 'un comprador'} y su licencia sigue ` +
+          'funcionando: esto solo borra el código de la lista.'
+        : venta
+          ? `Se borra la venta de ${this.importe(codigo.amountCents)} que tenía apuntada, ` +
+            'y con ella su comprobante si lo hubiera.'
+          : 'Nunca se canjeó y no tenía cobro apuntado, así que no arrastra nada.',
+      nota: canjeado
+        ? 'Ese dinero deja de contar como «código de activación» y pasa a contar por su medio de cobro.'
+        : 'Si es una venta de verdad que se torció, «Anular» corta el canje sin perder el apunte.',
+      confirmar: 'Borrar el código',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoCodigo.set(codigo.id);
+    this.admin.eliminarCodigo(codigo.id).subscribe({
+      next: () => {
+        this.codigos.update((lista) => lista.filter((c) => c.id !== codigo.id));
+        this.borrandoCodigo.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoCodigo.set(null);
+      },
+    });
+  }
+
   // ── Licencias ────────────────────────────────────────────────────────────
 
-  /**
-   * Borra la licencia de la base de datos. No es revocar.
-   *
-   * Revocar es la herramienta para un cliente: corta el acceso, deja el motivo
-   * escrito y se puede deshacer. Esto es para las licencias de prueba que uno
-   * se emitió a sí mismo, y por eso el diálogo dice exactamente qué se lleva
-   * por delante antes de que nadie confirme.
-   */
-  /**
-   * Borra un comprobante de Yape: el apunte del pago y su captura.
-   *
-   * Sirve para los dos sitios donde aparece —los pendientes y el historial—
-   * porque los dos son el mismo pago; se quita de las dos listas sin mirar en
-   * cuál estaba.
-   *
-   * Rechazar y borrar no son lo mismo: rechazar avisa al comprador y deja el
-   * motivo escrito. Esto no le dice nada a nadie, y es lo que se quiere con un
-   * comprobante de una cuenta de prueba.
-   */
-  async eliminarComprobante(pago: PagoPorRevisar | PagoRevisado): Promise<void> {
-    if (this.borrandoComprobante()) return;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Borrar el comprobante',
-      mensaje:
-        `Se borra el apunte de ${pago.user.email} por ` +
-        `${this.importe(pago.amountCents, pago.currency)} y la captura que subió. ` +
-        'No se puede deshacer.',
-      nota: 'Al comprador no se le avisa. Si lo que quieres es decirle que su pago no vale, usa Rechazar.',
-      confirmar: 'Borrar definitivamente',
-      tono: 'peligro',
-    });
-    if (!seguro) return;
-
-    this.borrandoComprobante.set(pago.id);
-    this.admin.eliminarPago(pago.id).subscribe({
-      next: () => {
-        this.porRevisar.update((lista) => lista.filter((p) => p.id !== pago.id));
-        this.historial.update((lista) => lista.filter((p) => p.id !== pago.id));
-        this.pagos.update((lista) => lista.filter((p) => p.id !== pago.id));
-        this.borrandoComprobante.set(null);
-      },
-      error: (e: unknown) => {
-        this.error.set(mensajeDeError(e));
-        this.borrandoComprobante.set(null);
-      },
-    });
-  }
-  async eliminarLicencia(licencia: LicenciaAdmin): Promise<void> {
-    if (this.borrandoLicencia()) return;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Borrar la licencia',
-      mensaje:
-        `Se borra la licencia de ${licencia.user.email} y su historial de ` +
-        `${licencia.callsTotal} consultas. No se puede deshacer.`,
-      nota: 'Si el comprador pagó, el cobro NO se borra: se queda en Movimientos. Para cortarle el acceso sin perder el rastro, revoca en vez de borrar.',
-      confirmar: 'Borrar definitivamente',
-      tono: 'peligro',
-    });
-    if (!seguro) return;
-
-    this.borrandoLicencia.set(licencia.id);
-    this.admin.eliminarLicencia(licencia.id).subscribe({
-      next: () => {
-        this.licencias.update((lista) => lista.filter((l) => l.id !== licencia.id));
-        this.borrandoLicencia.set(null);
-        this.aviso.set(`Licencia de ${licencia.user.email} borrada.`);
-      },
-      error: (e: unknown) => {
-        this.error.set(mensajeDeError(e));
-        this.borrandoLicencia.set(null);
-      },
-    });
-  }
   async revocar(licencia: LicenciaAdmin): Promise<void> {
     const motivo = await this.dialogos.pedirTexto({
       titulo: 'Revocar la licencia',
