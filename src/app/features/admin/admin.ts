@@ -22,15 +22,12 @@ import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { FiltrosLista } from './filtros-lista';
+import { Listado } from './listado';
+import { PieLista } from './pie-lista';
 
 type Seccion =
   'ventas' | 'yape' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
-
-/** Los estados por los que se puede filtrar el historial de Yape. */
-type FiltroHistorial = 'todos' | 'aprobados' | 'rechazados' | 'sin-resolver';
-
-/** Filas del historial que se enseñan de golpe, y que añade cada despliegue. */
-const POR_TANDA = 10;
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -94,7 +91,15 @@ function aDolares(soles: number): number {
  */
 @Component({
   selector: 'app-admin',
-  imports: [ReactiveFormsModule, DatePipe, DecimalPipe, SiteHeader, SiteFooter],
+  imports: [
+    ReactiveFormsModule,
+    DatePipe,
+    DecimalPipe,
+    SiteHeader,
+    SiteFooter,
+    FiltrosLista,
+    PieLista,
+  ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
 })
@@ -137,29 +142,120 @@ export class Admin implements OnInit {
   readonly motivos = signal<Record<string, string>>({});
 
   // ── Historial de Yape ────────────────────────────────────────────────────
-  /** Comprobantes ya resueltos. Llega la tanda entera y se filtra aquí. */
+  /** Comprobantes ya resueltos. Llega la tanda entera y se busca aquí. */
   readonly historial = signal<PagoRevisado[]>([]);
-  /** Texto del buscador: correo, nombre, nº de operación o referencia. */
-  readonly buscaHistorial = signal('');
-  readonly filtroHistorial = signal<FiltroHistorial>('todos');
-  /**
-   * Cuántas filas se enseñan.
-   *
-   * Se muestran diez y el resto se despliega a tandas. El historial crece sin
-   * parar y nadie lo lee entero: lo que se busca casi siempre está en las
-   * últimas, y lo que no, se encuentra con el buscador antes que bajando.
-   */
-  readonly visiblesHistorial = signal(POR_TANDA);
   /** Qué captura se está bajando, para no dejar el botón mudo mientras tanto. */
   readonly abriendo = signal<string | null>(null);
-  /** Las pestañas del filtro, en el orden en que se leen. */
-  readonly filtrosHistorial: { valor: FiltroHistorial; etiqueta: string }[] = [
-    { valor: 'todos', etiqueta: 'Todos' },
-    { valor: 'aprobados', etiqueta: 'Aprobados' },
-    { valor: 'rechazados', etiqueta: 'Rechazados' },
-    { valor: 'sin-resolver', etiqueta: 'Sin resolver' },
-  ];
-  readonly porTanda = POR_TANDA;
+
+  // ── Listados ─────────────────────────────────────────────────────────────
+  //
+  // Las cinco tablas largas del panel se buscan, se filtran y se despliegan de
+  // diez en diez. El comportamiento vive en `Listado`; aquí solo se dice, por
+  // cada una, por qué texto se busca y qué significa cada pestaña.
+
+  readonly listaLicencias = new Listado(this.licencias, {
+    filtros: [
+      { valor: 'todas', etiqueta: 'Todas' },
+      { valor: 'activas', etiqueta: 'Activas' },
+      { valor: 'suspendidas', etiqueta: 'Suspendidas' },
+      { valor: 'revocadas', etiqueta: 'Revocadas' },
+    ],
+    texto: (l) => [
+      l.user.email,
+      `${l.user.firstName} ${l.user.lastName}`,
+      l.productCode,
+      l.tokenHint,
+      l.revokedReason,
+    ],
+    pasa: (l, filtro) =>
+      filtro === 'activas'
+        ? l.status === 'ACTIVE'
+        : filtro === 'suspendidas'
+          ? l.status === 'SUSPENDED'
+          : l.status === 'REVOKED',
+  });
+
+  readonly listaAlertas = new Listado(this.alertas, {
+    filtros: [
+      { valor: 'todas', etiqueta: 'Todas' },
+      { valor: 'graves', etiqueta: 'Sospecha alta' },
+      { valor: 'avisos', etiqueta: 'Avisos' },
+      { valor: 'sin-avisar', etiqueta: 'Sin avisar' },
+    ],
+    texto: (a) => [
+      a.license.user.email,
+      `${a.license.user.firstName} ${a.license.user.lastName}`,
+      a.license.productCode,
+      a.detalle,
+      this.nombreCorto(a),
+    ],
+    pasa: (a, filtro) =>
+      filtro === 'graves'
+        ? a.level === 'SOSPECHA_ALTA'
+        : filtro === 'avisos'
+          ? a.level === 'ALERTA'
+          : a.action === 'NINGUNA',
+  });
+
+  readonly listaPagos = new Listado(this.pagos, {
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'pagados', etiqueta: 'Pagados' },
+      { valor: 'pendientes', etiqueta: 'Pendientes' },
+      { valor: 'no-cobrados', etiqueta: 'No cobrados' },
+    ],
+    texto: (p) => [p.user.email, p.plan.name, p.provider, p.providerOrderId, p.providerCaptureId],
+    pasa: (p, filtro) =>
+      filtro === 'pagados'
+        ? p.status === 'PAID'
+        : filtro === 'pendientes'
+          ? p.status === 'PENDING'
+          : p.status === 'FAILED' || p.status === 'CANCELLED',
+  });
+
+  readonly listaBolsas = new Listado(this.bolsas, {
+    filtros: [
+      { valor: 'todas', etiqueta: 'Todas' },
+      { valor: 'con-saldo', etiqueta: 'Con saldo' },
+      { valor: 'agotadas', etiqueta: 'Agotadas' },
+    ],
+    texto: (b) => [
+      b.user.email,
+      `${b.user.firstName} ${b.user.lastName}`,
+      b.plan.name,
+      b.paymentMethod,
+      b.paymentRef,
+      b.note,
+    ],
+    // 'agotadas' es exactamente EXHAUSTED: una bolsa revocada no está agotada,
+    // y meterla ahí haría mentir a la cuenta de la pestaña.
+    pasa: (b, filtro) =>
+      filtro === 'con-saldo' ? b.status === 'ACTIVE' : b.status === 'EXHAUSTED',
+  });
+
+  readonly listaHistorial = new Listado(this.historial, {
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'aprobados', etiqueta: 'Aprobados' },
+      { valor: 'rechazados', etiqueta: 'Rechazados' },
+      { valor: 'sin-resolver', etiqueta: 'Sin resolver' },
+    ],
+    // Las cuatro cosas con las que llega una reclamación: «soy fulano», «pagué
+    // con este correo» o «mi operación es la 01234567».
+    texto: (p) => [
+      p.user.email,
+      `${p.user.firstName} ${p.user.lastName}`,
+      p.operationCode,
+      p.providerOrderId,
+      p.plan.name,
+    ],
+    pasa: (p, filtro) =>
+      filtro === 'aprobados'
+        ? p.status === 'PAID'
+        : filtro === 'rechazados'
+          ? p.status === 'REJECTED'
+          : p.status !== 'PAID' && p.status !== 'REJECTED',
+  });
 
   /** Códigos recién generados. Se muestran una vez y no vuelven. */
   readonly codigosNuevos = signal<string[]>([]);
@@ -1345,84 +1441,6 @@ export class Admin implements OnInit {
     });
   }
 
-  /** Cuántos hay en cada estado. Va en las pestañas del filtro. */
-  readonly conteoHistorial = computed(() => {
-    const pagos = this.historial();
-    return {
-      todos: pagos.length,
-      aprobados: pagos.filter((p) => p.status === 'PAID').length,
-      rechazados: pagos.filter((p) => p.status === 'REJECTED').length,
-      'sin-resolver': pagos.filter((p) => p.status !== 'PAID' && p.status !== 'REJECTED').length,
-    } satisfies Record<FiltroHistorial, number>;
-  });
-
-  /**
-   * El historial ya cribado por el filtro y el buscador.
-   *
-   * Se busca por correo, nombre, nº de operación y referencia porque son las
-   * cuatro cosas con las que llega una reclamación: «soy fulano», «pagué con
-   * este correo» o «mi operación es la 01234567».
-   */
-  readonly historialFiltrado = computed(() => {
-    const filtro = this.filtroHistorial();
-    const busca = this.buscaHistorial().trim().toLowerCase();
-
-    return this.historial().filter((pago) => {
-      if (filtro === 'aprobados' && pago.status !== 'PAID') return false;
-      if (filtro === 'rechazados' && pago.status !== 'REJECTED') return false;
-      if (filtro === 'sin-resolver' && (pago.status === 'PAID' || pago.status === 'REJECTED')) {
-        return false;
-      }
-      if (!busca) return true;
-
-      return [
-        pago.user.email,
-        `${pago.user.firstName} ${pago.user.lastName}`,
-        pago.operationCode ?? '',
-        pago.providerOrderId,
-        pago.plan.name,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(busca);
-    });
-  });
-
-  /** La tanda que se está enseñando ahora mismo. */
-  readonly historialVisible = computed(() =>
-    this.historialFiltrado().slice(0, this.visiblesHistorial()),
-  );
-
-  /** Cuántos quedan escondidos, para decirlo en el botón. */
-  readonly restanHistorial = computed(() =>
-    Math.max(0, this.historialFiltrado().length - this.visiblesHistorial()),
-  );
-
-  buscarHistorial(evento: Event): void {
-    this.buscaHistorial.set((evento.target as HTMLInputElement).value);
-    // Cambiar la búsqueda con veinte filas abiertas dejaba el resultado nuevo
-    // ya desplegado, sin que nadie lo pidiera.
-    this.visiblesHistorial.set(POR_TANDA);
-  }
-
-  filtrarHistorial(filtro: FiltroHistorial): void {
-    this.filtroHistorial.set(filtro);
-    this.visiblesHistorial.set(POR_TANDA);
-  }
-
-  limpiarBusquedaHistorial(): void {
-    this.buscaHistorial.set('');
-    this.visiblesHistorial.set(POR_TANDA);
-  }
-
-  verMasHistorial(): void {
-    this.visiblesHistorial.update((n) => n + POR_TANDA);
-  }
-
-  plegarHistorial(): void {
-    this.visiblesHistorial.set(POR_TANDA);
-  }
-
   /**
    * Abre la captura de un pago del historial en otra pestaña.
    *
@@ -1455,20 +1473,73 @@ export class Admin implements OnInit {
     });
   }
 
-  /** Cómo acabó el pago, en castellano y en una palabra. */
+  // ── Estados en castellano ────────────────────────────────────────────────
+  //
+  // El servidor guarda los códigos en inglés y mayúsculas, que es lo correcto
+  // para una columna. Enseñarlos tal cual en la tabla no: quien mira el panel
+  // lee «REVOKED» donde debería leer «Revocada».
+
+  /** Cómo acabó un pago. Sirve para la pasarela y para el historial de Yape. */
+  estadoPago(estado: string): string {
+    const nombres: Record<string, string> = {
+      PAID: 'Pagado',
+      PENDING: 'Pendiente',
+      IN_REVIEW: 'En revisión',
+      REJECTED: 'Rechazado',
+      FAILED: 'Fallido',
+      CANCELLED: 'Cancelado',
+    };
+    return nombres[estado] ?? estado;
+  }
+
+  /**
+   * Igual, pero para el historial de Yape.
+   *
+   * Cambia en dos: PAID es «Aprobado» —lo aprobó una persona, no una pasarela—
+   * y PENDING es «Sin comprobante», que es lo que de verdad significa ahí: se
+   * abrió el pago y nunca llegó la captura.
+   */
   estadoHistorial(pago: PagoRevisado): string {
-    switch (pago.status) {
-      case 'PAID':
-        return 'Aprobado';
-      case 'REJECTED':
-        return 'Rechazado';
-      case 'CANCELLED':
-        return 'Cancelado';
-      case 'FAILED':
-        return 'Fallido';
-      default:
-        return 'Sin comprobante';
-    }
+    if (pago.status === 'PAID') return 'Aprobado';
+    if (pago.status === 'PENDING') return 'Sin comprobante';
+    return this.estadoPago(pago.status);
+  }
+
+  estadoCodigo(estado: string): string {
+    const nombres: Record<string, string> = {
+      AVAILABLE: 'Disponible',
+      REDEEMED: 'Canjeado',
+      VOID: 'Anulado',
+    };
+    return nombres[estado] ?? estado;
+  }
+
+  estadoLicencia(estado: string): string {
+    const nombres: Record<string, string> = {
+      ACTIVE: 'Activa',
+      SUSPENDED: 'Suspendida',
+      REVOKED: 'Revocada',
+    };
+    return nombres[estado] ?? estado;
+  }
+
+  estadoBolsa(estado: string): string {
+    const nombres: Record<string, string> = {
+      ACTIVE: 'Con saldo',
+      EXHAUSTED: 'Agotada',
+      REVOKED: 'Revocada',
+    };
+    return nombres[estado] ?? estado;
+  }
+
+  /** Qué se hizo ya con una alerta. NINGUNA es «nada todavía», no un vacío. */
+  accionAlerta(accion: string): string {
+    const nombres: Record<string, string> = {
+      NINGUNA: 'Sin avisar',
+      NOTIFICADO: 'Comprador avisado',
+      REVOCADO: 'Licencia revocada',
+    };
+    return nombres[accion] ?? accion;
   }
 
   // ── Descuentos ───────────────────────────────────────────────────────────

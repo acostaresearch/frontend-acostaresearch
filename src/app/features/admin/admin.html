@@ -192,7 +192,7 @@
                         [class.espera]="codigo.status === 'AVAILABLE'"
                         [class.mala]="codigo.status === 'VOID'"
                       >
-                        {{ codigo.status }}
+                        {{ estadoCodigo(codigo.status) }}
                       </span>
                     </td>
                     <td class="derecha">
@@ -496,44 +496,16 @@
         </div>
       </div>
 
-      <div class="filtros-historial">
-        <div class="buscador">
-          <input
-            type="search"
-            [value]="buscaHistorial()"
-            (input)="buscarHistorial($event)"
-            placeholder="Correo, nombre, nº de operación o referencia"
-            aria-label="Buscar en el historial"
-          />
-          @if (buscaHistorial()) {
-            <button
-              type="button"
-              class="limpiar"
-              aria-label="Limpiar la búsqueda"
-              (click)="limpiarBusquedaHistorial()"
-            >
-              ✕
-            </button>
-          }
-        </div>
-
-        <div class="pestanas" role="group" aria-label="Filtrar por estado">
-          @for (opcion of filtrosHistorial; track opcion.valor) {
-            <button
-              type="button"
-              [class.activa]="filtroHistorial() === opcion.valor"
-              (click)="filtrarHistorial(opcion.valor)"
-            >
-              {{ opcion.etiqueta }}
-              <span class="cuenta">{{ conteoHistorial()[opcion.valor] }}</span>
-            </button>
-          }
-        </div>
-      </div>
+      @if (historial().length > 0) {
+        <app-filtros-lista
+          [lista]="listaHistorial"
+          placeholder="Correo, nombre, nº de operación o referencia"
+        />
+      }
 
       @if (historial().length === 0) {
         <p class="tenue">Todavía no se ha revisado ningún comprobante.</p>
-      } @else if (historialFiltrado().length === 0) {
+      } @else if (listaHistorial.filtrado().length === 0) {
         <p class="tenue">Nada coincide con lo que buscas.</p>
       } @else {
         <div class="tabla-scroll">
@@ -550,7 +522,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (pago of historialVisible(); track pago.id) {
+              @for (pago of listaHistorial.visible(); track pago.id) {
                 <tr>
                   <td class="tenue">{{ pago.createdAt | date: 'd MMM yy, HH:mm' }}</td>
                   <td>
@@ -593,21 +565,7 @@
           </table>
         </div>
 
-        <div class="pie-historial">
-          <span class="tenue">
-            {{ historialVisible().length }} de {{ historialFiltrado().length }}
-          </span>
-
-          @if (restanHistorial() > 0) {
-            <button type="button" class="boton secundario" (click)="verMasHistorial()">
-              Ver {{ restanHistorial() < porTanda ? restanHistorial() : porTanda }} más
-            </button>
-          } @else if (historialVisible().length > porTanda) {
-            <button type="button" class="boton secundario" (click)="plegarHistorial()">
-              Plegar
-            </button>
-          }
-        </div>
+        <app-pie-lista [lista]="listaHistorial" nombre="comprobantes" />
       }
     </section>
   }
@@ -933,7 +891,6 @@
                     Se aplican al guardar.
                   </span>
                 }
-
               </div>
 
               <!-- ── Subir capítulos nuevos a este grupo ────────────────────
@@ -1163,17 +1120,15 @@
               <div class="campo">
                 <label for="f-nombre">Nombre visible</label>
                 <input id="f-nombre" type="text" formControlName="displayName" maxlength="120" />
-                <span class="ayuda">
-                  Es como lo nombra el conector al listar los capítulos.
-                </span>
+                <span class="ayuda"> Es como lo nombra el conector al listar los capítulos. </span>
               </div>
 
               <div class="campo">
                 <label for="f-resumen">Resumen</label>
                 <input id="f-resumen" type="text" formControlName="summary" maxlength="500" />
                 <span class="ayuda">
-                  Una línea que explique qué hace. La lee el Claude del comprador para decidir
-                  cuál le toca, así que dice el qué, no el cómo.
+                  Una línea que explique qué hace. La lee el Claude del comprador para decidir cuál
+                  le toca, así que dice el qué, no el cómo.
                 </span>
               </div>
 
@@ -1190,7 +1145,9 @@
           </div>
 
           <div class="ventana-pie">
-            <button type="button" class="boton secundario" (click)="cancelarFicha()">Cancelar</button>
+            <button type="button" class="boton secundario" (click)="cancelarFicha()">
+              Cancelar
+            </button>
             <button
               type="button"
               class="boton"
@@ -1264,7 +1221,6 @@
       </div>
     }
   }
-
 
   <!-- ══ DESCUENTOS ═══════════════════════════════════════════════════════ -->
   @if (seccion() === 'descuentos') {
@@ -1398,8 +1354,18 @@
   @if (seccion() === 'licencias') {
     <section class="tarjeta">
       <h2>Licencias del conector</h2>
+
+      @if (licencias().length > 0) {
+        <app-filtros-lista
+          [lista]="listaLicencias"
+          placeholder="Correo, nombre, producto o final del token"
+        />
+      }
+
       @if (licencias().length === 0) {
         <p class="nota">Aún no hay ninguna licencia emitida.</p>
+      } @else if (listaLicencias.filtrado().length === 0) {
+        <p class="tenue">Ninguna licencia coincide con lo que buscas.</p>
       } @else {
         <div class="tabla-scroll">
           <table>
@@ -1414,7 +1380,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (licencia of licencias(); track licencia.id) {
+              @for (licencia of listaLicencias.visible(); track licencia.id) {
                 <tr [class.revocada]="licencia.status === 'REVOKED'">
                   <td>
                     <strong>{{ licencia.user.firstName }} {{ licencia.user.lastName }}</strong>
@@ -1436,7 +1402,7 @@
                       [class.buena]="licencia.status === 'ACTIVE'"
                       [class.mala]="licencia.status !== 'ACTIVE'"
                     >
-                      {{ licencia.status }}
+                      {{ estadoLicencia(licencia.status) }}
                     </span>
                     @if (licencia.revokedReason) {
                       <span class="tenue bloque">{{ licencia.revokedReason }}</span>
@@ -1458,6 +1424,8 @@
             </tbody>
           </table>
         </div>
+
+        <app-pie-lista [lista]="listaLicencias" nombre="licencias" />
       }
     </section>
   }
@@ -1471,11 +1439,17 @@
         12 horas se revoca sola. Aquí puedes adelantarte o descartarla.
       </p>
 
+      @if (alertas().length > 0) {
+        <app-filtros-lista [lista]="listaAlertas" placeholder="Correo, nombre, tipo o detalle" />
+      }
+
       @if (alertas().length === 0) {
         <p class="vacio-ok">Ninguna alerta abierta. Todo en orden.</p>
+      } @else if (listaAlertas.filtrado().length === 0) {
+        <p class="tenue">Ninguna alerta coincide con lo que buscas.</p>
       } @else {
         <ul class="alertas">
-          @for (alerta of alertas(); track alerta.id) {
+          @for (alerta of listaAlertas.visible(); track alerta.id) {
             <li [class.grave]="alerta.level === 'SOSPECHA_ALTA'">
               <div class="alerta-cabecera">
                 <strong>{{ nombreCorto(alerta) }}</strong>
@@ -1496,11 +1470,13 @@
                   {{ alerta.license.user.firstName }} {{ alerta.license.user.lastName }}
                   <span class="tenue">· {{ alerta.license.user.email }}</span>
                 </span>
-                <span class="tenue">Ya notificado: {{ alerta.action }}</span>
+                <span class="tenue">{{ accionAlerta(alerta.action) }}</span>
               </div>
             </li>
           }
         </ul>
+
+        <app-pie-lista [lista]="listaAlertas" nombre="alertas" />
       }
     </section>
   }
@@ -1509,8 +1485,15 @@
   @if (seccion() === 'movimientos') {
     <section class="tarjeta">
       <h2>Pagos por pasarela</h2>
+
+      @if (pagos().length > 0) {
+        <app-filtros-lista [lista]="listaPagos" placeholder="Correo, producto o nº de orden" />
+      }
+
       @if (pagos().length === 0) {
         <p class="nota">Todavía no hay pagos.</p>
+      } @else if (listaPagos.filtrado().length === 0) {
+        <p class="tenue">Ningún pago coincide con lo que buscas.</p>
       } @else {
         <div class="tabla-scroll">
           <table>
@@ -1524,7 +1507,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (pago of pagos(); track pago.id) {
+              @for (pago of listaPagos.visible(); track pago.id) {
                 <tr>
                   <td class="tenue">{{ pago.createdAt | date: 'd MMM HH:mm' }}</td>
                   <td>{{ pago.user.email }}</td>
@@ -1535,9 +1518,9 @@
                       class="pastilla"
                       [class.buena]="pago.status === 'PAID'"
                       [class.espera]="pago.status === 'PENDING'"
-                      [class.mala]="pago.status === 'FAILED'"
+                      [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
                     >
-                      {{ pago.status }}
+                      {{ estadoPago(pago.status) }}
                     </span>
                   </td>
                 </tr>
@@ -1545,13 +1528,22 @@
             </tbody>
           </table>
         </div>
+
+        <app-pie-lista [lista]="listaPagos" nombre="pagos" />
       }
     </section>
 
     <section class="tarjeta">
       <h2>Bolsas de palabras activadas</h2>
+
+      @if (bolsas().length > 0) {
+        <app-filtros-lista [lista]="listaBolsas" placeholder="Correo, nombre, plan o referencia" />
+      }
+
       @if (bolsas().length === 0) {
         <p class="nota">Todavía no hay bolsas.</p>
+      } @else if (listaBolsas.filtrado().length === 0) {
+        <p class="tenue">Ninguna bolsa coincide con lo que buscas.</p>
       } @else {
         <div class="tabla-scroll">
           <table>
@@ -1561,17 +1553,28 @@
                 <th>Comprador</th>
                 <th>Plan</th>
                 <th>Consumo</th>
+                <th>Estado</th>
                 <th>Pagó por</th>
               </tr>
             </thead>
             <tbody>
-              @for (bolsa of bolsas(); track bolsa.id) {
+              @for (bolsa of listaBolsas.visible(); track bolsa.id) {
                 <tr>
                   <td class="tenue">{{ bolsa.activatedAt | date: 'd MMM' }}</td>
                   <td>{{ bolsa.user.email }}</td>
                   <td>{{ bolsa.plan.name }}</td>
                   <td class="numero">
                     {{ bolsa.wordsUsed | number }} / {{ bolsa.wordsTotal | number }}
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="bolsa.status === 'ACTIVE'"
+                      [class.espera]="bolsa.status === 'EXHAUSTED'"
+                      [class.mala]="bolsa.status === 'REVOKED'"
+                    >
+                      {{ estadoBolsa(bolsa.status) }}
+                    </span>
                   </td>
                   <td class="tenue">
                     {{ bolsa.paymentMethod ?? '—' }}
@@ -1584,6 +1587,8 @@
             </tbody>
           </table>
         </div>
+
+        <app-pie-lista [lista]="listaBolsas" nombre="bolsas" />
       }
     </section>
   }
