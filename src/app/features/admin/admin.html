@@ -80,8 +80,9 @@
       <section class="tarjeta">
         <h2>Vender el método (código de activación)</h2>
         <p class="nota">
-          Para una venta por Yape o WhatsApp. Genera el código, se lo envías, y el comprador lo
-          canjea desde su perfil.
+          Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western
+          Union. Pon el correo del comprador y le llega el código con las instrucciones; después
+          él crea su cuenta y lo canjea desde su perfil.
         </p>
 
         <form [formGroup]="formCodigos" (ngSubmit)="generarCodigos()" novalidate>
@@ -101,8 +102,15 @@
           </div>
 
           <div class="campo">
-            <label for="comprador">Correo del comprador <span class="opcional">(opcional)</span></label>
-            <input id="comprador" type="email" formControlName="buyerEmail" placeholder="para tu registro" />
+            <label for="comprador">
+              Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
+            </label>
+            <input
+              id="comprador"
+              type="email"
+              formControlName="buyerEmail"
+              placeholder="Déjalo vacío y solo lo verás aquí"
+            />
           </div>
 
           <div class="campo">
@@ -120,6 +128,11 @@
             <p class="codigos-titulo">
               Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
             </p>
+            <!-- Que se hayan enviado no quita el copiar: un correo puede rebotar
+                 o caer en spam, y esta pantalla es la única otra copia. -->
+            @if (codigoEnviadoA(); as correo) {
+              <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+            }
             <ul>
               @for (codigo of codigosNuevos(); track codigo) {
                 <li>{{ codigo }}</li>

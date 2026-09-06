@@ -241,10 +241,13 @@
         </a>
       }
 
-      <!-- Códigos comprados por Yape o transferencia: se canjean aquí. -->
-      <!-- <div class="canje">
+      <!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
+           Western Union— y recibió el código por correo. Es el único sitio donde
+           se canjea, así que se enseña siempre, tenga o no licencia ya: quien
+           renueva también llega aquí con un código nuevo. -->
+      <div class="canje">
         <h3>¿Compraste por Yape o transferencia?</h3>
-        <p class="nota">Canjea aquí el código de activación que te enviamos.</p>
+        <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
         <div class="canje-fila">
           <input
             type="text"
@@ -256,7 +259,7 @@
             {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
           </button>
         </div>
-      </div> -->
+      </div>
     </section>
 
     <!-- ── Compras ──────────────────────────────────────────────────────────── -->

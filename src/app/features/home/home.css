@@ -103,7 +103,7 @@
   color: var(--color-texto-suave);
 }
 
-/* ── Los cuatro caminos ─────────────────────────────────────────────────── */
+/* ── Los tres caminos ─────────────────────────────────────────────────── */
 .caminos {
   display: grid;
   grid-template-columns: 1fr 1fr;

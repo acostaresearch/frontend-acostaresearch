@@ -25,12 +25,10 @@ export const routes: Routes = [
     title: 'Las 9 Skills · Acosta Research',
     loadComponent: () => import('./features/metodo/metodo').then((m) => m.Metodo),
   },
-  {
-    path: 'como-funciona',
-    title: 'Cómo funciona · Acosta Research',
-    loadComponent: () =>
-      import('./features/como-funciona/como-funciona').then((m) => m.ComoFunciona),
-  },
+  // «Cómo funciona» ya no es una página aparte: el arranque y las dos
+  // objeciones viven ahora debajo de las demostraciones. La ruta se conserva
+  // para no romper los enlaces ya repartidos.
+  { path: 'como-funciona', pathMatch: 'full', redirectTo: 'en-accion' },
   {
     path: 'quien-soy',
     title: 'Quién te acompaña · Acosta Research',

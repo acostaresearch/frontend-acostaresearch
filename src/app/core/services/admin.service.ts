@@ -32,10 +32,16 @@ export class AdminService {
   /**
    * Genera códigos. La respuesta trae los valores EN CLARO y es la única vez
    * que se pueden leer: en la base de datos solo queda su hash.
+   *
+   * `enviadoA` dice a qué correo los mandó el servidor, o null si no se indicó
+   * ninguno. Se enseña en pantalla para que quien genera sepa si le toca
+   * dictarlos por WhatsApp o si el comprador ya los tiene en su bandeja.
    */
-  generarCodigos(datos: GenerarCodigos): Observable<{ productCode: string; codes: string[] }> {
+  generarCodigos(
+    datos: GenerarCodigos,
+  ): Observable<{ productCode: string; codes: string[]; enviadoA: string | null }> {
     return this.http
-      .post<ApiResponse<{ productCode: string; codes: string[] }>>(
+      .post<ApiResponse<{ productCode: string; codes: string[]; enviadoA: string | null }>>(
         `${this.licencias}/codes`,
         datos,
       )

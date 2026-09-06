@@ -2,12 +2,18 @@ import { Component, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
-import { DEMOS } from '../../shared/contenido/metodo';
+import { DEMOS, OBJECIONES, PASOS } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { environment } from '../../../environments/environment';
 
-/** Las demostraciones grabadas. Es la página que más convence, así que va sola. */
+/**
+ * Las demostraciones grabadas y, pegado detrás, cómo se empieza.
+ *
+ * Es la página que más convence, y a quien acaba de ver el video le quedan dos
+ * preguntas: «¿yo cómo hago esto?» y «¿esto me lo aceptarán?». Responderlas en
+ * la misma página evita que se vaya con la duda encima.
+ */
 @Component({
   selector: 'app-demos',
   imports: [RouterLink, SiteHeader, SiteFooter],
@@ -18,6 +24,8 @@ export class Demos {
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly demos = DEMOS;
+  readonly pasos = PASOS;
+  readonly objeciones = OBJECIONES;
   readonly redes = environment.redes;
 
   /**

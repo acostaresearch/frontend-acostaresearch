@@ -102,6 +102,8 @@ export class Admin implements OnInit {
 
   /** Códigos recién generados. Se muestran una vez y no vuelven. */
   readonly codigosNuevos = signal<string[]>([]);
+  /** Correo al que el servidor acaba de mandarlos, si se indicó uno. */
+  readonly codigoEnviadoA = signal<string | null>(null);
   readonly copiados = signal(false);
   readonly trabajando = signal(false);
 
@@ -822,6 +824,7 @@ export class Admin implements OnInit {
     this.trabajando.set(true);
     this.error.set(null);
     this.codigosNuevos.set([]);
+    this.codigoEnviadoA.set(null);
 
     const { cantidad, productCode, buyerEmail, note } = this.formCodigos.getRawValue();
 
@@ -833,8 +836,9 @@ export class Admin implements OnInit {
         note: note || undefined,
       })
       .subscribe({
-        next: ({ codes }) => {
+        next: ({ codes, enviadoA }) => {
           this.codigosNuevos.set(codes);
+          this.codigoEnviadoA.set(enviadoA);
           this.formCodigos.patchValue({ buyerEmail: '', note: '' });
           this.trabajando.set(false);
           this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
