@@ -1,0 +1,31 @@
+/* La celda que acompaña al complemento.
+ *
+ * La rejilla de fases es de dos columnas y el Humanizador es uno solo, así que
+ * a su lado quedaba media fila vacía. Se llena con la captura en vez de con
+ * nada: es lo que hace la skill, y verlo explica mejor que el párrafo.
+ *
+ * La imagen es apaisada (2400×1060) y la celda casi cuadrada, así que va con
+ * `contain` y no con `cover`: recortar una comparación de «antes y después»
+ * por los lados se lleva justo la mitad que hay que comparar.
+ */
+.ilustracion {
+  display: block !important;
+  padding: 0 !important;
+  background: var(--color-fondo) !important;
+}
+
+.ilustracion img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+/* Apilada en móvil, la celda ya no tiene una hermana a la que igualar la
+   altura: se deja crecer a lo que mida la imagen. */
+@media (max-width: 900px) {
+  .ilustracion img {
+    height: auto;
+  }
+}

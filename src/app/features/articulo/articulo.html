@@ -46,7 +46,7 @@
       <p class="seccion-marca">Además</p>
       <h2 class="titulo-seccion">Incluido en el paquete</h2>
 
-      <ul class="capitulos">
+      <ol class="capitulos">
         @for (c of complementos(); track c.nombre) {
           <li>
             <span class="capitulo-numero" aria-hidden="true">+</span>
@@ -62,11 +62,23 @@
             </div>
           </li>
         }
-      </ul>
+
+        <!-- La rejilla es de dos columnas y el complemento es uno solo: sin
+             esto, a su lado quedaba media fila vacía en gris. -->
+        <li class="ilustracion">
+          <img
+            src="/humanizador/humanizador.png"
+            alt="Un texto antes y después de pasar por el Humanizador académico"
+            loading="lazy"
+            decoding="async"
+          />
+        </li>
+      </ol>
     </section>
   }
 
   
+
   <!-- La objeción que aparece justo al terminar de leer la lista: «¿y esto no
        se inventa los datos?». Se responde antes de pedir la decisión, y con lo
        que las Skills hacen de verdad, no con una promesa. -->

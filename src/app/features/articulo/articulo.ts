@@ -26,6 +26,7 @@ const GRUPO = 'ARTICULO_SCIENTIFICOS';
   selector: 'app-articulo',
   imports: [RouterLink, SiteHeader, SiteFooter],
   templateUrl: './articulo.html',
+  styleUrl: './articulo.css',
 })
 export class Articulo implements OnInit {
   private readonly skillsApi = inject(SkillService);
