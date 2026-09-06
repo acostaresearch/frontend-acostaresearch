@@ -1571,3 +1571,27 @@ td.acciones {
     grid-template-columns: 1fr;
   }
 }
+
+/* El código de descuento y su botón, en la misma línea. */
+.fila-descuento {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.fila-descuento input {
+  flex: 1;
+  min-width: 0;
+}
+
+.fila-descuento .boton {
+  flex: none;
+}
+
+.ayuda.descuento-ok {
+  color: var(--color-exito);
+}
+
+.ayuda.descuento-mal {
+  color: var(--color-error);
+}

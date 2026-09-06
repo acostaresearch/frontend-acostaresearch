@@ -511,6 +511,56 @@
                 </div>
               </div>
 
+              <!-- ── Código de descuento ─────────────────────────────────────
+                   No se guarda en el código de activación: lo que queda apuntado
+                   es el importe final, que es el dinero que entró. Esto solo
+                   evita restar el descuento a mano, y restar mal un descuento es
+                   cuadrar mal el mes. -->
+              <div class="campo">
+                <label for="descuento-codigo">
+                  Código de descuento <span class="opcional">(opcional)</span>
+                </label>
+                <div class="fila-descuento">
+                  <input
+                    id="descuento-codigo"
+                    type="text"
+                    formControlName="descuento"
+                    placeholder="TESIS20"
+                    autocomplete="off"
+                    [disabled]="descuentoAplicado() !== null"
+                  />
+                  @if (descuentoAplicado()) {
+                    <button type="button" class="boton secundario" (click)="quitarDescuento()">
+                      Quitar
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      (click)="aplicarDescuento()"
+                      [disabled]="comprobandoDescuento() || !formCodigos.controls.descuento.value"
+                    >
+                      {{ comprobandoDescuento() ? 'Comprobando…' : 'Aplicar' }}
+                    </button>
+                  }
+                </div>
+
+                @if (descuentoAplicado(); as d) {
+                  <span class="ayuda descuento-ok">
+                    <b>{{ d.code }}</b> aplicado: −S/ {{ d.amountCents / 100 | number: '1.2-2' }}.
+                    El importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b>.
+                  </span>
+                } @else if (errorDescuento(); as mensaje) {
+                  <span class="ayuda descuento-mal">{{ mensaje }}</span>
+                } @else {
+                  <span class="ayuda">
+                    Lo calcula el servidor, igual que en una compra por la web, y el cupón queda
+                    anotado en la nota para saber después por qué se cobró esa cifra.
+                  </span>
+                }
+              </div>
+
+
               <div class="campo">
                 <label for="operacion-codigo">
                   Nº de operación <span class="opcional">(MTCN, opcional)</span>

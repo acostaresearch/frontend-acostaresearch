@@ -14,6 +14,7 @@ import {
   PagoAdmin,
 } from '../../core/models/admin.model';
 import {
+  Descuento,
   MEDIOS_PAGO as MEDIOS,
   PagoPorRevisar,
   PagoRevisado,
@@ -494,7 +495,21 @@ export class Admin implements OnInit {
     paymentMethod: ['WESTERN_UNION' as MetodoDeCobro, Validators.required],
     paymentRef: [''],
     importe: [null as number | null, [Validators.min(0)]],
+    // El código promocional que se le aplicó a esta venta, si hubo uno.
+    descuento: [''],
   });
+
+  /**
+   * El descuento comprobado contra el servidor, listo para aplicar.
+   *
+   * No se guarda en el código de activación: lo que queda registrado es el
+   * importe final, que es el dinero que entró de verdad. El código promocional
+   * es cómo se llegó a esa cifra, y aquí sirve para no tener que calcularla a
+   * mano —restar mal un descuento es cuadrar mal el mes—.
+   */
+  readonly descuentoAplicado = signal<Descuento | null>(null);
+  readonly comprobandoDescuento = signal(false);
+  readonly errorDescuento = signal<string | null>(null);
 
   readonly formDescuento = this.fb.nonNullable.group({
     // En soles, que es como piensa el precio; se convierte a céntimos al enviar.
@@ -1800,7 +1815,54 @@ export class Admin implements OnInit {
     this.codigosNuevos.set([]);
     this.codigoEnviadoA.set(null);
     this.cobroApuntado.set(null);
+    this.limpiarDescuento();
     this.formularioCodigosAbierto.set(true);
+  }
+
+  private limpiarDescuento(): void {
+    this.descuentoAplicado.set(null);
+    this.errorDescuento.set(null);
+    this.formCodigos.controls.descuento.setValue('', { emitEvent: false });
+  }
+
+  /**
+   * Comprueba el código promocional y rellena el importe con el precio ya
+   * rebajado.
+   *
+   * Lo calcula el servidor, no esta pantalla: es el mismo cálculo que se le
+   * aplica a un comprador que paga por la web, así que una venta cobrada por
+   * Western Union con el mismo cupón queda apuntada por la misma cifra. Si se
+   * restara aquí a mano, dos caminos de venta acabarían con dos precios.
+   */
+  aplicarDescuento(): void {
+    const code = this.formCodigos.controls.descuento.value.trim();
+    const plan = this.formCodigos.controls.productCode.value;
+
+    if (!code || this.comprobandoDescuento()) return;
+
+    this.comprobandoDescuento.set(true);
+    this.errorDescuento.set(null);
+
+    this.billing.validarDescuento(code, plan).subscribe({
+      next: (descuento) => {
+        this.descuentoAplicado.set(descuento);
+        // El importe queda escrito, no solo enseñado: es el campo que viaja al
+        // servidor, y dejarlo vacío habría registrado el precio de catálogo.
+        this.formCodigos.controls.importe.setValue(descuento.finalPriceCents / 100);
+        this.comprobandoDescuento.set(false);
+      },
+      error: (e: unknown) => {
+        this.descuentoAplicado.set(null);
+        this.errorDescuento.set(mensajeDeError(e));
+        this.comprobandoDescuento.set(false);
+      },
+    });
+  }
+
+  /** Quita el descuento y deja el importe en blanco: vacío = precio del plan. */
+  quitarDescuento(): void {
+    this.limpiarDescuento();
+    this.formCodigos.controls.importe.setValue(null);
   }
 
   cerrarFormularioCodigos(): void {
@@ -1834,12 +1896,19 @@ export class Admin implements OnInit {
     const { cantidad, productCode, buyerEmail, note, paymentMethod, paymentRef, importe } =
       this.formCodigos.getRawValue();
 
+    // El cupón se anota en la nota. El importe final ya recoge la rebaja, pero
+    // dentro de un mes «S/ 159» a secas no dice si fue una promoción o un
+    // descuadre: la nota es el único sitio de este formulario donde queda por
+    // qué se cobró esa cifra.
+    const cupon = this.descuentoAplicado()?.code;
+    const notaFinal = [note, cupon ? `cupón ${cupon}` : null].filter(Boolean).join(' · ');
+
     this.admin
       .generarCodigos({
         cantidad,
         productCode: productCode || undefined,
         buyerEmail: buyerEmail || undefined,
-        note: note || undefined,
+        note: notaFinal || undefined,
         paymentMethod,
         paymentRef: paymentRef || undefined,
         // Vacío no es cero: significa «cobré el precio de la web» y lo resuelve
