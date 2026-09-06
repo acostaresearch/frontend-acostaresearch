@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { toApiError } from '../../core/http/api-error';
+import { mensajeDeError } from '../../core/http/api-error';
 import {
   ActivationCode,
   Alerta,
@@ -427,7 +427,7 @@ export class Admin implements OnInit {
   private cargarGrupos(): void {
     this.billing.grupos().subscribe({
       next: (grupos) => this.aplicarGrupos(grupos),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -576,7 +576,7 @@ export class Admin implements OnInit {
         this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.borrandoGrupo.set(null);
         this.confirmacionBorrado.set('');
         this.trabajando.set(false);
@@ -653,7 +653,7 @@ export class Admin implements OnInit {
           this.cargarSkills();
         },
         error: (e: unknown) => {
-          this.error.set(toApiError(e).message);
+          this.error.set(mensajeDeError(e));
           this.trabajando.set(false);
         },
       });
@@ -702,7 +702,7 @@ export class Admin implements OnInit {
         this.cargarGrupos();
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.trabajando.set(false);
       },
     });
@@ -772,7 +772,7 @@ export class Admin implements OnInit {
           // orden de esta lista, así que lo que se ve es lo que se aplicará.
           this.ordenarCola();
         },
-        error: (e: unknown) => this.marcar(item, { estado: 'error', error: toApiError(e).message }),
+        error: (e: unknown) => this.marcar(item, { estado: 'error', error: mensajeDeError(e) }),
       });
     }
   }
@@ -907,7 +907,7 @@ export class Admin implements OnInit {
         },
         // Que uno falle no detiene a los demás: se marca y se sigue.
         error: (e: unknown) => {
-          this.marcar(item, { estado: 'error', error: toApiError(e).message });
+          this.marcar(item, { estado: 'error', error: mensajeDeError(e) });
           this.publicarSiguiente(pendientes, i + 1, hechas, proximoOrden);
         },
       });
@@ -952,7 +952,7 @@ export class Admin implements OnInit {
         this.trabajando.set(false);
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.trabajando.set(false);
       },
     });
@@ -1016,7 +1016,7 @@ export class Admin implements OnInit {
           this.cargarSkills();
         },
         error: (e: unknown) => {
-          this.error.set(e instanceof Error ? e.message : toApiError(e).message);
+          this.error.set(e instanceof Error ? e.message : mensajeDeError(e));
           this.reemplazando.set(null);
         },
       });
@@ -1028,7 +1028,7 @@ export class Admin implements OnInit {
         this.skills.update((lista) =>
           lista.map((s) => (s.id === actualizada.id ? actualizada : s)),
         ),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1063,7 +1063,7 @@ export class Admin implements OnInit {
           this.cargarSkills();
         },
         error: (e: unknown) => {
-          this.error.set(toApiError(e).message);
+          this.error.set(mensajeDeError(e));
           this.trabajando.set(false);
           this.cargarSkills();
         },
@@ -1110,7 +1110,7 @@ export class Admin implements OnInit {
         this.trabajando.set(false);
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.trabajando.set(false);
         // Pudo quedarse oculta pero sin borrar: que la lista lo refleje.
         this.cargarSkills();
@@ -1124,7 +1124,7 @@ export class Admin implements OnInit {
         this.skills.set(skills);
         this.marcarLosQueYaSonDelGrupo(skills);
       },
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1175,7 +1175,7 @@ export class Admin implements OnInit {
     const tolerante = <T>(nombre: string, origen: Observable<T>): Observable<T | null> =>
       origen.pipe(
         catchError((e: unknown) => {
-          fallos.push(`${nombre} (${toApiError(e).message})`);
+          fallos.push(`${nombre} (${mensajeDeError(e)})`);
           return of(null);
         }),
       );
@@ -1235,7 +1235,7 @@ export class Admin implements OnInit {
   private cargarPorRevisar(): void {
     this.payments.porRevisar().subscribe({
       next: (pagos) => this.aplicarPorRevisar(pagos),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1292,7 +1292,7 @@ export class Admin implements OnInit {
         this.recargar();
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.revisando.set(null);
       },
     });
@@ -1320,7 +1320,7 @@ export class Admin implements OnInit {
         this.cargarHistorial();
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.revisando.set(null);
       },
     });
@@ -1449,7 +1449,7 @@ export class Admin implements OnInit {
         window.open(url, '_blank', 'noopener');
       },
       error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
+        this.error.set(mensajeDeError(e));
         this.abriendo.set(null);
       },
     });
@@ -1501,7 +1501,7 @@ export class Admin implements OnInit {
           this.trabajando.set(false);
         },
         error: (e: unknown) => {
-          this.error.set(toApiError(e).message);
+          this.error.set(mensajeDeError(e));
           this.trabajando.set(false);
         },
       });
@@ -1513,7 +1513,7 @@ export class Admin implements OnInit {
         this.descuentos.update((lista) =>
           lista.map((d) => (d.id === actualizado.id ? actualizado : d)),
         ),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1604,7 +1604,7 @@ export class Admin implements OnInit {
           this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
         },
         error: (e: unknown) => {
-          this.error.set(toApiError(e).message);
+          this.error.set(mensajeDeError(e));
           this.trabajando.set(false);
         },
       });
@@ -1653,7 +1653,7 @@ export class Admin implements OnInit {
           this.admin.bolsasRecientes().subscribe({ next: (b) => this.bolsas.set(b) });
         },
         error: (e: unknown) => {
-          this.error.set(toApiError(e).message);
+          this.error.set(mensajeDeError(e));
           this.trabajando.set(false);
         },
       });
@@ -1670,7 +1670,7 @@ export class Admin implements OnInit {
 
     this.admin.anularCodigo(codigo.id).subscribe({
       next: () => this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) }),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1697,7 +1697,7 @@ export class Admin implements OnInit {
         this.reemplazar(actualizada);
         this.aviso.set(`Licencia de ${licencia.user.email} revocada.`);
       },
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
@@ -1707,7 +1707,7 @@ export class Admin implements OnInit {
         this.reemplazar(actualizada);
         this.aviso.set(`Licencia de ${licencia.user.email} reactivada.`);
       },
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
   }
 
