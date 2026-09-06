@@ -12,8 +12,8 @@
     "prebuild": "node scripts/generar-environment.js",
     "postinstall": "node scripts/generar-environment.js",
     "deploy:hetzner": "node scripts/desplegar.js",
-    "deploy:cf": "npm run build && wrangler pages deploy dist/acostaresearch-frontend/browser --project-name=acostaresearch --branch=main",
-    "deploy": "npm run build && wrangler pages deploy dist/acostaresearch-frontend/browser --project-name=acostaresearch --branch=main"
+    "deploy:cf": "npm run build && wrangler deploy",
+    "deploy": "npm run build && wrangler deploy"
   },
   "private": true,
   "packageManager": "npm@11.19.0",

@@ -1,11 +1,20 @@
 /**
  * Lo que en Netlify eran tres líneas de `netlify.toml`.
  *
- * Cloudflare Pages no sabe reenviar a un origen externo con una simple regla de
+ * Cloudflare no sabe reenviar a un origen externo con una simple regla de
  * redirección, así que el proxy de la API y el enrutado de Angular se hacen
- * aquí. Este archivo vive en `public/`, de modo que Angular lo copia al build y
- * Cloudflare lo detecta solo; en el servidor propio es un archivo suelto que
- * nadie pide nunca.
+ * aquí.
+ *
+ * CUÁNDO SE EJECUTA ESTO
+ * ----------------------
+ * Solo cuando la petición NO coincide con un archivo del build. Los estáticos
+ * —el JavaScript, las imágenes, el PDF de la guía— los sirve Cloudflare
+ * directamente desde su borde sin pasar por aquí, que es lo que hace que la web
+ * cargue rápido desde Lima. A este código solo llegan `/api/*` y las rutas de
+ * Angular, que son las dos cosas que hay que resolver.
+ *
+ * Vive fuera de `public/` a propósito: ahí dentro acabaría dentro del propio
+ * build y Cloudflare lo serviría como un archivo estático más.
  *
  * POR QUÉ HAY QUE HACER DE PROXY Y NO LLAMAR A LA API DIRECTAMENTE
  * ----------------------------------------------------------------

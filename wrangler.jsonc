@@ -1,0 +1,40 @@
+/**
+ * Despliegue de la web en Cloudflare.
+ *
+ * Lo que ponga aquí gana sobre lo que se configure en el panel, igual que hacía
+ * `netlify.toml`: la configuración vive en el repositorio y no en una pantalla
+ * que nadie recuerda haber tocado.
+ *
+ * Se publica como un Worker con archivos estáticos, no como un sitio estático a
+ * secas, porque hace falta código propio para dos cosas que Cloudflare no
+ * resuelve sola: el proxy de `/api/*` hacia el backend y el enrutado del router
+ * de Angular. Están explicadas en `worker/index.js`.
+ */
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "frontend-acostaresearch",
+  "main": "worker/index.js",
+
+  // Fecha del comportamiento del runtime con el que se probó. Se deja fija a
+  // propósito: subirla cambia cómo se comporta la plataforma, y eso se hace
+  // adrede y comprobando, nunca por inercia.
+  "compatibility_date": "2026-09-06",
+
+  "assets": {
+    // Angular 17+ parte la salida en dos: `browser` es lo que va al navegador.
+    // Apuntar a `dist/` a secas serviría una carpeta sin index.html y el sitio
+    // entero respondería 404.
+    "directory": "./dist/acostaresearch-frontend/browser",
+
+    // El Worker recibe los estáticos por aquí. Sin este enlace, `env.ASSETS` no
+    // existe y el enrutado de Angular deja de funcionar: entrar directo a
+    // /metodo o recargar con F5 daría 404.
+    "binding": "ASSETS"
+
+    // NO se activa `not_found_handling: "single-page-application"`. Suena a
+    // justo lo que hace falta, pero devolvería el index.html a CUALQUIER ruta
+    // que no sea un archivo —`/api/v1/login` incluido—, y la web se quedaría
+    // sin backend con un error incomprensible. El respaldo a index.html lo hace
+    // el Worker, que sí sabe distinguir una página de una llamada a la API.
+  }
+}
