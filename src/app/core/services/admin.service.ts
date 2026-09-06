@@ -11,10 +11,22 @@ import {
   CrearDescuento,
   GenerarCodigos,
   LicenciaAdmin,
+  MetodoDeCobro,
   PackAdmin,
   PagoAdmin,
 } from '../models/admin.model';
 import { ApiResponse } from '../models/api.model';
+
+/** Lo que devuelve el servidor tras generar códigos. */
+export interface CodigosGenerados {
+  productCode: string;
+  /** Los valores EN CLARO. Es la única vez que se pueden leer. */
+  codes: string[];
+  /** Correo al que se enviaron, o null si no se indicó ninguno. */
+  enviadoA: string | null;
+  /** Cobro apuntado, o null si fue una cortesía. */
+  cobro: { paymentMethod: MetodoDeCobro; amountCents: number } | null;
+}
 
 /**
  * Operaciones del administrador. Todas exigen rol ADMIN en el servidor; el
@@ -37,11 +49,9 @@ export class AdminService {
    * ninguno. Se enseña en pantalla para que quien genera sepa si le toca
    * dictarlos por WhatsApp o si el comprador ya los tiene en su bandeja.
    */
-  generarCodigos(
-    datos: GenerarCodigos,
-  ): Observable<{ productCode: string; codes: string[]; enviadoA: string | null }> {
+  generarCodigos(datos: GenerarCodigos): Observable<CodigosGenerados> {
     return this.http
-      .post<ApiResponse<{ productCode: string; codes: string[]; enviadoA: string | null }>>(
+      .post<ApiResponse<CodigosGenerados>>(
         `${this.licencias}/codes`,
         datos,
       )

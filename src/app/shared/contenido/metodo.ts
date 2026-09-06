@@ -31,7 +31,7 @@ export interface Pregunta {
 export const CIFRAS = [
   { valor: '+500', pie: 'tesistas ya lo usan' },
   { valor: '9', pie: 'fases, 9 entregables' },
-  { valor: 'APA 7', pie: 'formato listo para tu asesor' },
+  { valor: 'APA 7 o IEEE Vancouver', pie: 'formato listo para tu asesor' },
   { valor: '0', pie: 'autores inventados' },
 ];
 

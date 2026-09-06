@@ -29,6 +29,23 @@ const ESTADOS: Record<UserStatus, string> = {
   SUSPENDED: 'Suspendida',
 };
 
+/**
+ * Cómo se llama cada medio de pago en la tabla de compras.
+ *
+ * El servidor guarda el código en mayúsculas y sin acentos, que es lo correcto
+ * para una columna, y horrible para el cliente que abre su perfil y lee
+ * «WESTERN_UNION» donde esperaba el nombre de algo que reconoce. Lo que no esté
+ * en la lista se enseña tal cual: es preferible un código feo a un hueco.
+ */
+const MEDIOS_PAGO: Record<string, string> = {
+  PAYPAL: 'PayPal',
+  YAPE: 'Yape',
+  PLIN: 'Plin',
+  TRANSFERENCIA: 'Transferencia',
+  WESTERN_UNION: 'Western Union',
+  CORTESIA: 'Cortesía',
+};
+
 const ESTADOS_PAGO: Record<Payment['status'], string> = {
   PENDING: 'Pendiente',
   // El comprobante llegó y está esperando a que un administrador lo mire. Al
@@ -236,6 +253,11 @@ export class Perfil implements OnInit {
 
   estadoPago(pago: Payment): string {
     return ESTADOS_PAGO[pago.status];
+  }
+
+  /** El medio de pago, con el nombre que el cliente reconoce. */
+  medioPago(pago: Payment): string {
+    return MEDIOS_PAGO[pago.provider] ?? pago.provider;
   }
 
   /** Porcentaje consumido de una bolsa, para la barra de progreso. */

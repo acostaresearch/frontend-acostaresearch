@@ -9,6 +9,7 @@ import {
   Alerta,
   CodigoDescuento,
   LicenciaAdmin,
+  MetodoDeCobro,
   PackAdmin,
   PagoAdmin,
 } from '../../core/models/admin.model';
@@ -104,6 +105,10 @@ export class Admin implements OnInit {
   readonly codigosNuevos = signal<string[]>([]);
   /** Correo al que el servidor acaba de mandarlos, si se indicó uno. */
   readonly codigoEnviadoA = signal<string | null>(null);
+  /** Cobro apuntado en los códigos recién generados. Null si fue cortesía. */
+  readonly cobroApuntado = signal<{ paymentMethod: MetodoDeCobro; amountCents: number } | null>(
+    null,
+  );
   readonly copiados = signal(false);
   readonly trabajando = signal(false);
 
@@ -132,6 +137,12 @@ export class Admin implements OnInit {
     productCode: ['METODO_9_SKILLS'],
     buyerEmail: [''],
     note: [''],
+    // El medio arranca en Western Union porque este formulario existe para las
+    // ventas cobradas fuera de la web; una cortesía es lo excepcional y se elige
+    // a propósito. Importe vacío = el precio del plan, que es lo habitual.
+    paymentMethod: ['WESTERN_UNION' as MetodoDeCobro, Validators.required],
+    paymentRef: [''],
+    importe: [null as number | null, [Validators.min(0)]],
   });
 
   readonly formDescuento = this.fb.nonNullable.group({
@@ -825,8 +836,10 @@ export class Admin implements OnInit {
     this.error.set(null);
     this.codigosNuevos.set([]);
     this.codigoEnviadoA.set(null);
+    this.cobroApuntado.set(null);
 
-    const { cantidad, productCode, buyerEmail, note } = this.formCodigos.getRawValue();
+    const { cantidad, productCode, buyerEmail, note, paymentMethod, paymentRef, importe } =
+      this.formCodigos.getRawValue();
 
     this.admin
       .generarCodigos({
@@ -834,12 +847,18 @@ export class Admin implements OnInit {
         productCode: productCode || undefined,
         buyerEmail: buyerEmail || undefined,
         note: note || undefined,
+        paymentMethod,
+        paymentRef: paymentRef || undefined,
+        // Vacío no es cero: significa «cobré el precio de la web» y lo resuelve
+        // el servidor. Mandar 0 sería decir que la venta fue gratis.
+        importe: importe === null || importe === undefined ? undefined : importe,
       })
       .subscribe({
-        next: ({ codes, enviadoA }) => {
+        next: ({ codes, enviadoA, cobro }) => {
           this.codigosNuevos.set(codes);
           this.codigoEnviadoA.set(enviadoA);
-          this.formCodigos.patchValue({ buyerEmail: '', note: '' });
+          this.cobroApuntado.set(cobro);
+          this.formCodigos.patchValue({ buyerEmail: '', note: '', paymentRef: '', importe: null });
           this.trabajando.set(false);
           this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
         },

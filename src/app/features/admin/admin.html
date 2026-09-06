@@ -113,6 +113,38 @@
             />
           </div>
 
+          <!-- El cobro. Se apunta aquí, al vender, porque es el único momento en
+               que alguien sabe cuánto entró y por dónde; el pago se crea solo
+               cuando el comprador canjea, que es cuando ya hay cuenta. -->
+          <div class="fila">
+            <div class="campo">
+              <label for="metodo-codigo">Cómo te pagó</label>
+              <select id="metodo-codigo" formControlName="paymentMethod">
+                @for (metodo of metodos; track metodo) {
+                  <option [value]="metodo">{{ metodo }}</option>
+                }
+              </select>
+            </div>
+            <div class="campo estrecho">
+              <label for="importe-codigo">
+                Importe S/ <span class="opcional">(vacío = precio del plan)</span>
+              </label>
+              <input id="importe-codigo" type="number" min="0" step="0.01" formControlName="importe" />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="operacion-codigo">
+              Nº de operación <span class="opcional">(MTCN, opcional)</span>
+            </label>
+            <input
+              id="operacion-codigo"
+              type="text"
+              formControlName="paymentRef"
+              placeholder="para cuadrarlo con tu extracto"
+            />
+          </div>
+
           <div class="campo">
             <label for="nota">Nota <span class="opcional">(opcional)</span></label>
             <input id="nota" type="text" formControlName="note" placeholder="Yape 3 sep · Ana G." />
@@ -132,6 +164,17 @@
                  o caer en spam, y esta pantalla es la única otra copia. -->
             @if (codigoEnviadoA(); as correo) {
               <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+            }
+            <!-- El pago aún no existe: nace al canjear, porque hasta entonces no
+                 hay cuenta a la que colgarlo. Decirlo evita buscarlo en las
+                 ventas y no encontrarlo. -->
+            @if (cobroApuntado(); as cobro) {
+              <p class="codigos-enviado">
+                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
+                {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
+              </p>
+            } @else {
+              <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
             }
             <ul>
               @for (codigo of codigosNuevos(); track codigo) {
@@ -204,6 +247,7 @@
                 <th>Código</th>
                 <th>Producto</th>
                 <th>Comprador</th>
+                <th>Cobro</th>
                 <th>Nota</th>
                 <th>Estado</th>
                 <th></th>
@@ -215,6 +259,17 @@
                   <td class="mono">…{{ codigo.hint }}</td>
                   <td>{{ codigo.productCode }}</td>
                   <td>{{ codigo.buyerEmail ?? '—' }}</td>
+                  <!-- Mientras esté sin canjear, este importe es dinero cobrado
+                       que todavía no figura en las ventas. Es el único sitio
+                       donde se ve. -->
+                  <td [class.tenue]="codigo.status !== 'AVAILABLE'">
+                    @if (codigo.amountCents) {
+                      S/ {{ codigo.amountCents / 100 | number: '1.2-2' }}
+                      <span class="tenue">· {{ codigo.paymentMethod }}</span>
+                    } @else {
+                      <span class="tenue">cortesía</span>
+                    }
+                  </td>
                   <td class="tenue">{{ codigo.note ?? '—' }}</td>
                   <td>
                     <span

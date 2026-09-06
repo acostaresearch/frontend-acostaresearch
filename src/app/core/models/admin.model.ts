@@ -9,6 +9,20 @@ export interface Comprador {
   lastName: string;
 }
 
+/**
+ * Medios por los que puede entrar el dinero fuera de la web.
+ *
+ * La misma lista sirve para las bolsas de palabras y para los códigos de
+ * activación, porque describen lo mismo: un cobro que no pasó por la pasarela.
+ */
+export type MetodoDeCobro =
+  | 'YAPE'
+  | 'PLIN'
+  | 'TRANSFERENCIA'
+  | 'PAYPAL'
+  | 'WESTERN_UNION'
+  | 'CORTESIA';
+
 /** Código de activación. El valor en claro solo existe al generarlo. */
 export interface ActivationCode {
   id: string;
@@ -18,6 +32,10 @@ export interface ActivationCode {
   status: 'AVAILABLE' | 'REDEEMED' | 'VOID';
   buyerEmail: string | null;
   note: string | null;
+  /** El cobro apuntado al generarlo. Nulo o CORTESIA = no hubo dinero. */
+  paymentMethod: MetodoDeCobro | null;
+  paymentRef: string | null;
+  amountCents: number | null;
   redeemedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
@@ -100,6 +118,12 @@ export interface GenerarCodigos {
   buyerEmail?: string;
   note?: string;
   expiraEnDias?: number;
+  /** Cómo entró el dinero. CORTESIA no registra cobro: es un regalo. */
+  paymentMethod?: MetodoDeCobro;
+  /** Nº de operación o MTCN, para cuadrarlo con el extracto. */
+  paymentRef?: string;
+  /** Lo cobrado, en soles. Omitirlo toma el precio del plan. */
+  importe?: number;
 }
 
 export interface ActivarBolsa {
