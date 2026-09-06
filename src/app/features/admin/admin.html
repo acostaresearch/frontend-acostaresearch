@@ -229,6 +229,9 @@
         <span class="contador-pestana">{{ alertas().length }}</span>
       }
     </button>
+    <button type="button" [class.activa]="seccion() === 'cuentas'" (click)="ir('cuentas')">
+      Cuentas
+    </button>
   </nav>
 
   @if (error(); as mensaje) {
@@ -557,6 +560,17 @@
 
           <div class="ventana-pie">
             <button type="button" class="boton secundario" (click)="cerrarAcceso()">Cerrar</button>
+            <!-- Borrar y anular no son lo mismo, y por eso están los dos:
+                 anular deja la fila con su venta apuntada; borrar la saca de
+                 la lista y de las cifras. -->
+            <button
+              type="button"
+              class="boton destructivo"
+              [disabled]="borrandoAcceso() === acceso.id"
+              (click)="eliminarAcceso(acceso)"
+            >
+              {{ borrandoAcceso() === acceso.id ? 'Borrando…' : 'Eliminar' }}
+            </button>
             @if (acceso.anulable) {
               <!-- Anular deja el código en la lista, marcado, con su venta
                    apuntada. No lo borra: el rastro de qué se emitió se queda. -->
@@ -1556,6 +1570,268 @@
         <app-pie-lista [lista]="listaAlertas" nombre="alertas" />
       }
     </section>
+  }
+
+
+  <!-- ══ CUENTAS ══════════════════════════════════════════════════════════
+       Tres cosas que van juntas porque se hacen desde el mismo sitio: tus
+       propios datos, quién más entra al panel, y quién está registrado. -->
+  @if (seccion() === 'cuentas') {
+    <section class="tarjeta">
+      <h2>Mi cuenta</h2>
+      <p class="nota">
+        Tus datos y tu contraseña. Es el mismo formulario que ve cualquier usuario en su perfil:
+        un administrador también es una persona con nombre y contraseña.
+      </p>
+
+      <app-ajustes-de-cuenta />
+    </section>
+
+    <section class="tarjeta">
+      <div class="tarjeta-cabecera">
+        <div>
+          <h2>Administradores</h2>
+          <p class="nota">
+            Da acceso al panel a otra persona. Solo crea administradores: los usuarios normales
+            se registran solos desde la web.
+          </p>
+        </div>
+        <button type="button" class="boton" (click)="abrirFormularioAdmin()">
+          Crear administrador
+        </button>
+      </div>
+
+      @if (administradores().length === 0) {
+        <p class="nota">Todavía no hay más administradores que tú.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Alta</th>
+                <th>Último acceso</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (admin of administradores(); track admin.id) {
+                <tr>
+                  <td>{{ admin.firstName }} {{ admin.lastName }}</td>
+                  <td>{{ admin.email }}</td>
+                  <td class="tenue">{{ admin.createdAt | date: 'd MMM y' }}</td>
+                  <td class="tenue">
+                    @if (admin.lastLoginAt) {
+                      {{ admin.lastLoginAt | date: 'd MMM, HH:mm' }}
+                    } @else {
+                      Nunca ha entrado
+                    }
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="admin.status === 'ACTIVE'"
+                      [class.mala]="admin.status === 'SUSPENDED'"
+                    >
+                      {{ estadoUsuario(admin.status) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="tarjeta">
+      <h2>Usuarios registrados</h2>
+      <p class="nota">Todo el que tiene cuenta. Esta lista solo la ve un administrador.</p>
+
+      <div class="fila-busqueda">
+        <input
+          type="search"
+          [value]="busquedaUsuarios()"
+          (input)="buscarUsuarios($any($event.target).value)"
+          placeholder="Correo, nombre o apellido"
+          aria-label="Buscar usuarios"
+        />
+      </div>
+
+      @if (cargandoUsuarios()) {
+        <p class="nota">Cargando…</p>
+      } @else if (usuarios().length === 0) {
+        <p class="tenue">Ningún usuario coincide con lo que buscas.</p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Alta</th>
+                <th>Último acceso</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of usuarios(); track u.id) {
+                <tr>
+                  <td>{{ u.firstName }} {{ u.lastName }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>
+                    <span class="pastilla" [class.buena]="u.role === 'ADMIN'">
+                      {{ rolUsuario(u.role) }}
+                    </span>
+                  </td>
+                  <td class="tenue">{{ u.createdAt | date: 'd MMM y' }}</td>
+                  <td class="tenue">
+                    @if (u.lastLoginAt) {
+                      {{ u.lastLoginAt | date: 'd MMM, HH:mm' }}
+                    } @else {
+                      Nunca ha entrado
+                    }
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="u.status === 'ACTIVE'"
+                      [class.espera]="u.status === 'PENDING'"
+                      [class.mala]="u.status === 'SUSPENDED'"
+                    >
+                      {{ estadoUsuario(u.status) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación propia: esta lista la pagina el servidor, no el
+             componente de listas que usa el resto del panel. -->
+        @if (paginasDeUsuarios() > 1) {
+          <div class="paginacion">
+            <button
+              type="button"
+              class="enlace"
+              [disabled]="paginaDeUsuarios() <= 1"
+              (click)="irAPaginaDeUsuarios(paginaDeUsuarios() - 1)"
+            >
+              Anteriores
+            </button>
+            <span class="tenue">
+              Página {{ paginaDeUsuarios() }} de {{ paginasDeUsuarios() }} ·
+              {{ totalDeUsuarios() }} en total
+            </span>
+            <button
+              type="button"
+              class="enlace"
+              [disabled]="paginaDeUsuarios() >= paginasDeUsuarios()"
+              (click)="irAPaginaDeUsuarios(paginaDeUsuarios() + 1)"
+            >
+              Siguientes
+            </button>
+          </div>
+        } @else {
+          <p class="tenue">{{ totalDeUsuarios() }} en total.</p>
+        }
+      }
+    </section>
+  }
+
+  <!-- ── Ventana de crear administrador ──────────────────────────────────── -->
+  @if (formularioAdminAbierto()) {
+    <div class="ventana-fondo" (click)="cerrarFormularioAdmin()">
+      <div
+        class="ventana"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-admin"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="ventana-cabecera">
+          <h3 id="titulo-admin">Crear una cuenta de administrador</h3>
+          <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarFormularioAdmin()">
+            ✕
+          </button>
+        </div>
+
+        <div class="ventana-cuerpo">
+          @if (adminCreado(); as creado) {
+            <!-- Cuenta creada. Si la contraseña la generó el servidor, esta es
+                 la única pantalla donde se puede leer. -->
+            <p class="aviso exito">Cuenta creada para <b>{{ creado.user.email }}</b>.</p>
+
+            @if (creado.password) {
+              <p class="nota">
+                Contraseña provisional. <b>Cópiala ahora</b>: no se puede volver a consultar.
+              </p>
+              <p class="codigo-generado">{{ creado.password }}</p>
+            }
+
+            @if (creado.emailSent) {
+              <p class="nota">Se la enviamos por correo con instrucciones para cambiarla.</p>
+            } @else {
+              <p class="aviso error">
+                La cuenta existe, pero el correo no salió. Hazle llegar tú estos datos.
+              </p>
+            }
+          } @else {
+            <form [formGroup]="formAdmin" class="formulario">
+              <div class="fila">
+                <div class="campo">
+                  <label for="a-nombre">Nombre</label>
+                  <input id="a-nombre" type="text" formControlName="firstName" maxlength="80" />
+                </div>
+                <div class="campo">
+                  <label for="a-apellido">Apellido</label>
+                  <input id="a-apellido" type="text" formControlName="lastName" maxlength="80" />
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="a-correo">Correo</label>
+                <input id="a-correo" type="email" formControlName="email" placeholder="persona@ejemplo.com" />
+                <span class="ayuda">
+                  Tiene que ser un correo sin cuenta. Si ya tiene una, hay que darle acceso sobre
+                  esa, no crear otra.
+                </span>
+              </div>
+
+              <div class="campo">
+                <label for="a-clave">Contraseña <span class="opcional">· opcional</span></label>
+                <input id="a-clave" type="text" formControlName="password" placeholder="La genera el sistema" />
+                <span class="ayuda">
+                  Si lo dejas vacío, el sistema crea una y se la manda por correo. Si la escribes:
+                  al menos 10 caracteres, con una mayúscula, una minúscula y un número.
+                </span>
+              </div>
+            </form>
+          }
+        </div>
+
+        <div class="ventana-pie">
+          @if (adminCreado()) {
+            <button type="button" class="boton" (click)="cerrarFormularioAdmin()">Listo</button>
+          } @else {
+            <button type="button" class="boton secundario" (click)="cerrarFormularioAdmin()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              [disabled]="creandoAdmin()"
+              (click)="crearAdministrador()"
+            >
+              {{ creandoAdmin() ? 'Creando…' : 'Crear la cuenta' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
   }
 
   <!-- ── Ventana de generar un código ────────────────────────────────────

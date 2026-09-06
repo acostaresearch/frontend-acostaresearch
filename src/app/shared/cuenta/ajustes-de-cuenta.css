@@ -1,0 +1,190 @@
+/* Los ajustes de la cuenta viven en dos pantallas —el perfil y el panel— con
+   hojas de estilo muy distintas. Por eso aquí no se hereda nada: cada cosa que
+   se ve está escrita, para que se vea igual en los dos sitios. */
+
+:host {
+  display: block;
+}
+
+.bloque + .bloque {
+  margin-top: 28px;
+  padding-top: 26px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.bloque h3 {
+  margin: 0 0 6px;
+  font-size: 1.02rem;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.nota {
+  margin: 0 0 18px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  max-width: 62ch;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Dos campos por fila cuando caben, uno debajo de otro cuando no. */
+.pareja {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.campo > span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.campo input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.925rem;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition: border-color var(--transicion), box-shadow var(--transicion);
+}
+
+.campo input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.campo input:disabled {
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo);
+  cursor: not-allowed;
+}
+
+/* El código se teclea mirando el correo: cifras grandes y separadas para poder
+   comprobar de un vistazo que se copió bien. */
+.campo.codigo input {
+  max-width: 220px;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: 0.28em;
+  text-align: center;
+}
+
+.campo small {
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.error {
+  color: var(--color-error);
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+}
+
+p.tenue {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.alerta {
+  margin: 0;
+  padding: 10px 13px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  border-radius: var(--radio-sm);
+  border: 1px solid transparent;
+}
+
+.alerta.mala {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-color: #f4cccc;
+}
+
+.alerta.buena {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border-color: #c5e8d8;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.boton {
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primario);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background var(--transicion);
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--color-primario-oscuro);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.boton.secundario {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border-color: var(--color-borde-fuerte);
+}
+
+.boton.secundario:hover:not(:disabled) {
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.enlace {
+  padding: 0;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.enlace:hover:not(:disabled) {
+  color: var(--color-primario);
+}
+
+.enlace:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

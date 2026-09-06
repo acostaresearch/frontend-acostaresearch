@@ -1,0 +1,146 @@
+<!-- ── Tus datos ────────────────────────────────────────────────────────────── -->
+<section class="bloque">
+  <h3>Tus datos</h3>
+  <p class="nota">
+    Así te llamamos en el sitio y en los correos que te enviamos.
+  </p>
+
+  <form [formGroup]="formDatos" (ngSubmit)="guardarDatos()" class="formulario">
+    <div class="pareja">
+      <label class="campo">
+        <span>Nombre</span>
+        <input type="text" formControlName="firstName" autocomplete="given-name" />
+        @if (formDatos.controls.firstName.touched && formDatos.controls.firstName.invalid) {
+          <small class="error">El nombre son al menos 2 letras.</small>
+        }
+      </label>
+
+      <label class="campo">
+        <span>Apellido</span>
+        <input type="text" formControlName="lastName" autocomplete="family-name" />
+        @if (formDatos.controls.lastName.touched && formDatos.controls.lastName.invalid) {
+          <small class="error">El apellido son al menos 2 letras.</small>
+        }
+      </label>
+    </div>
+
+    <!-- El correo se enseña pero no se edita: es con lo que se entra, con lo que
+         llegan los códigos y con lo que se cruzan las compras. Cambiarlo es otra
+         operación, no un campo más de este formulario. -->
+    @if (usuario(); as user) {
+      <label class="campo">
+        <span>Correo</span>
+        <input type="email" [value]="user.email" disabled />
+        <small class="tenue">
+          Con este correo entras y aquí te llegan los códigos. Para cambiarlo, escríbenos.
+        </small>
+      </label>
+    }
+
+    @if (errorDatos(); as e) {
+      <p class="alerta mala">{{ e }}</p>
+    }
+    @if (datosGuardados()) {
+      <p class="alerta buena">Datos guardados.</p>
+    }
+
+    <div class="acciones">
+      <button type="submit" class="boton" [disabled]="guardandoDatos() || !datosCambiados()">
+        {{ guardandoDatos() ? 'Guardando…' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </form>
+</section>
+
+<!-- ── Contraseña ───────────────────────────────────────────────────────────── -->
+<section class="bloque">
+  <h3>Contraseña</h3>
+
+  @if (paso() === 'cerrado') {
+    <p class="nota">
+      Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la
+      actual.
+    </p>
+
+    @if (avisoClave(); as a) {
+      <p class="alerta buena">{{ a }}</p>
+    }
+    @if (errorClave(); as e) {
+      <p class="alerta mala">{{ e }}</p>
+    }
+
+    <div class="acciones">
+      <button type="button" class="boton secundario" (click)="pedirCodigo()">
+        Cambiar la contraseña
+      </button>
+    </div>
+  } @else if (paso() === 'esperando-codigo') {
+    <p class="nota">Enviando el código a tu correo…</p>
+  } @else {
+    <p class="nota">
+      @if (correoDelCodigo(); as correo) {
+        Mira en <b>{{ correo }}</b> y escribe aquí el código de 6 dígitos.
+      } @else {
+        Escribe el código de 6 dígitos que te enviamos.
+      }
+    </p>
+
+    <form [formGroup]="formClave" (ngSubmit)="cambiarClave()" class="formulario">
+      <label class="campo codigo">
+        <span>Código del correo</span>
+        <input
+          type="text"
+          formControlName="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+        />
+        @if (formClave.controls.code.touched && formClave.controls.code.invalid) {
+          <small class="error">El código son 6 dígitos.</small>
+        }
+      </label>
+
+      <div class="pareja">
+        <label class="campo">
+          <span>Contraseña nueva</span>
+          <input type="password" formControlName="newPassword" autocomplete="new-password" />
+          <small class="tenue">
+            Al menos 10 caracteres, con una mayúscula, una minúscula y un número.
+          </small>
+        </label>
+
+        <label class="campo">
+          <span>Repítela</span>
+          <input type="password" formControlName="repetida" autocomplete="new-password" />
+          @if (noCoinciden()) {
+            <small class="error">Las dos contraseñas no son iguales.</small>
+          }
+        </label>
+      </div>
+
+      @if (errorClave(); as e) {
+        <p class="alerta mala">{{ e }}</p>
+      }
+
+      <p class="tenue">
+        Al cambiarla se cierran tus sesiones en otros dispositivos. Esta no.
+      </p>
+
+      <div class="acciones">
+        <button type="submit" class="boton" [disabled]="cambiando()">
+          {{ cambiando() ? 'Cambiando…' : 'Cambiar la contraseña' }}
+        </button>
+        <button type="button" class="enlace" (click)="cancelarCambio()">Cancelar</button>
+        <button
+          type="button"
+          class="enlace"
+          [disabled]="enviandoCodigo()"
+          (click)="pedirCodigo()"
+        >
+          {{ enviandoCodigo() ? 'Enviando…' : 'Enviar otro código' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

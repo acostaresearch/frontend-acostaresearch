@@ -97,6 +97,17 @@ export class AdminService {
     return this.http.delete<void>(`${this.licencias}/codes/${id}/permanent`);
   }
 
+  // ── Pagos ──────────────────────────────────────────────────────────────
+
+  /**
+   * Borra un apunte de pago y, con él, la captura que subió el comprador.
+   *
+   * Irreversible. Lo entregado NO se toca: si ese pago activó una licencia, la
+   * licencia sigue viva; lo que desaparece es el registro del cobro.
+   */
+  eliminarPago(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.pagos}/${id}`);
+  }
   // ── Licencias ──────────────────────────────────────────────────────────
 
   licenciasTodas(): Observable<LicenciaAdmin[]> {

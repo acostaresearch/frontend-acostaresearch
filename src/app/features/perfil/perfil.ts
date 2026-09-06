@@ -14,6 +14,7 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
+import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -48,7 +49,15 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
  */
 @Component({
   selector: 'app-perfil',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, DecimalPipe, SiteHeader, SiteFooter],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    DatePipe,
+    DecimalPipe,
+    AjustesDeCuenta,
+    SiteHeader,
+    SiteFooter,
+  ],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })

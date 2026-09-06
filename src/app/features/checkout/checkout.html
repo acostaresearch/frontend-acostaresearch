@@ -23,8 +23,8 @@
             </button>
           </div>
           <p class="aviso-url">
-            <strong>Guárdala ahora.</strong> Por seguridad no la almacenamos en claro, así que
-            no podemos volver a mostrártela. Si la pierdes, genera una nueva desde tu panel.
+            <strong>Guárdala ahora.</strong> Por seguridad no la almacenamos en claro, así que no
+            podemos volver a mostrártela. Si la pierdes, genera una nueva desde tu panel.
           </p>
         </div>
 
@@ -92,24 +92,27 @@
       <div class="aviso error" role="alert">{{ mensaje }}</div>
     }
 
-    <div class="columnas">
-      <section class="planes">
-        @if (cargando()) {
-          <p class="tenue">Cargando precios…</p>
-        }
+    <section class="planes">
+      @if (cargando()) {
+        <p class="tenue">Cargando precios…</p>
+      }
 
-        @if (metodo().length > 0) {
-          <h2 class="grupo">{{ metodo().length === 1 ? 'Método de tesis' : 'Elige tu paquete' }}</h2>
-          <div class="rejilla-planes" [class.varios]="metodo().length > 1">
+      @if (metodo().length > 0) {
+        <h2 class="grupo">{{ metodo().length === 1 ? 'Método de tesis' : 'Elige tu paquete' }}</h2>
+        <div class="rejilla-planes" [class.varios]="metodo().length > 1">
           @for (plan of metodo(); track plan.code) {
             <!-- Tarjeta de venta, no factura.
-                 Antes esto era una lista «Producto / Incluye / Vigencia / Total»
-                 que describía la operación en lugar de vender el producto. Lo
-                 que decide una compra es qué te llevas, así que manda la lista
-                 de lo incluido. -->
+               Antes esto era una lista «Producto / Incluye / Vigencia / Total»
+               que describía la operación en lugar de vender el producto. Lo
+               que decide una compra es qué te llevas, así que manda la lista
+               de lo incluido. -->
             <article class="tarjeta-plan" [class.elegido]="seleccionado()?.code === plan.code">
               <p class="cinta">
-                {{ plan.durationDays > 0 ? vigencia(plan) + ' de acceso' : 'Pago único · sin suscripción' }}
+                {{
+                  plan.durationDays > 0
+                    ? vigencia(plan) + ' de acceso'
+                    : 'Pago único · sin suscripción'
+                }}
               </p>
 
               <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
@@ -119,7 +122,6 @@
 
               <p class="tarjeta-precio">
                 <span class="importe">{{ precio(plan) }}</span>
-                <span class="periodo">{{ vigencia(plan) }}</span>
               </p>
 
               <button
@@ -143,160 +145,158 @@
               </ul>
             </article>
           }
+        </div>
+      }
+
+      <!-- @if (bolsas().length > 0) {
+        <h2 class="grupo">Humanizador · bolsas de palabras</h2>
+        @for (plan of bolsas(); track plan.code) {
+          <button
+            type="button"
+            class="plan"
+            [class.activo]="seleccionado()?.code === plan.code"
+            [attr.aria-pressed]="seleccionado()?.code === plan.code"
+            (click)="elegir(plan)"
+          >
+            <span class="plan-cabecera">
+              <strong>{{ plan.name }}</strong>
+              <span class="plan-precio">{{ precio(plan) }}</span>
+            </span>
+            <span class="plan-palabras">
+              {{ plan.words | number }} palabras · {{ plan.durationDays }} días
+            </span>
+            @if (plan.description) {
+              <span class="plan-detalle">{{ plan.description }}</span>
+            }
+            <span class="plan-unitario">{{ porMil(plan) }} por cada mil palabras</span>
+          </button>
+        }
+      } -->
+    </section>
+
+    <section class="panel pago" #panelPago>
+      @if (seleccionado(); as plan) {
+        <!-- El resumen en una línea. Ya eligió: no hace falta repetirle la
+             ficha del producto, solo qué va a pagar y por cuánto. -->
+        <div class="pago-cabecera">
+          <div>
+            <p class="pago-producto">{{ plan.name }}</p>
+            <p class="pago-total">
+              @if (descuento(); as promo) {
+                <span class="tachado">{{ precio(plan) }}</span>
+              }
+              <strong>{{ precioFinal(plan) }}</strong>
+              <span class="tenue">· {{ vigencia(plan) }}</span>
+            </p>
           </div>
+          <button type="button" class="enlace-quitar" (click)="cambiarPlan()">Cambiar</button>
+        </div>
+
+        <!-- ── Código promocional ─────────────────────────────────────── -->
+        @if (auth.isAuthenticated()) {
+          @if (descuento(); as promo) {
+            <p class="promo-aplicada">
+              Código <strong>{{ promo.code }}</strong> aplicado.
+              <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
+                Quitar
+              </button>
+            </p>
+          } @else {
+            <div class="promo">
+              <label for="promo">¿Tienes un código de descuento?</label>
+              <div class="promo-fila">
+                <input
+                  id="promo"
+                  type="text"
+                  [formControl]="codigoPromo"
+                  placeholder="Escríbelo aquí"
+                  autocomplete="off"
+                  (keyup.enter)="aplicarDescuento()"
+                />
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="comprobandoPromo()"
+                  (click)="aplicarDescuento()"
+                >
+                  {{ comprobandoPromo() ? '…' : 'Aplicar' }}
+                </button>
+              </div>
+              @if (errorPromo(); as mensaje) {
+                <p class="promo-error">{{ mensaje }}</p>
+              }
+            </div>
+          }
         }
 
-        <!-- @if (bolsas().length > 0) {
-          <h2 class="grupo">Humanizador · bolsas de palabras</h2>
-          @for (plan of bolsas(); track plan.code) {
+        @if (!auth.isAuthenticated()) {
+          <p class="nota">
+            Para comprar necesitas una cuenta: es donde queda registrado tu acceso y desde donde lo
+            recuperas si cambias de equipo.
+          </p>
+          <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
+          <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
+        } @else {
+          <!-- ── Elegir cómo pagar ──────────────────────────────────────
+               Un medio por vez. Enseñar PayPal y el QR de Yape a la vez
+               convertía la página en una lista sin fin, y encima obligaba a
+               decidir leyendo dos formularios abiertos. -->
+          <p class="pago-rotulo">¿Cómo prefieres pagar?</p>
+
+          <div class="medios">
             <button
               type="button"
-              class="plan"
-              [class.activo]="seleccionado()?.code === plan.code"
-              [attr.aria-pressed]="seleccionado()?.code === plan.code"
-              (click)="elegir(plan)"
+              class="medio"
+              [class.activo]="metodoPago() === 'yape'"
+              [attr.aria-pressed]="metodoPago() === 'yape'"
+              (click)="metodoPago.set('yape')"
             >
-              <span class="plan-cabecera">
-                <strong>{{ plan.name }}</strong>
-                <span class="plan-precio">{{ precio(plan) }}</span>
-              </span>
-              <span class="plan-palabras">
-                {{ plan.words | number }} palabras · {{ plan.durationDays }} días
-              </span>
-              @if (plan.description) {
-                <span class="plan-detalle">{{ plan.description }}</span>
-              }
-              <span class="plan-unitario">{{ porMil(plan) }} por cada mil palabras</span>
+              <span class="medio-nombre">Yape o Plin</span>
+              <span class="medio-detalle">Desde Perú, en soles</span>
             </button>
-          }
-        } -->
-      </section>
 
-      <section class="panel pago" #panelPago>
-        @if (seleccionado(); as plan) {
-          <!-- El resumen en una línea. Ya eligió: no hace falta repetirle la
-               ficha del producto, solo qué va a pagar y por cuánto. -->
-          <div class="pago-cabecera">
-            <div>
-              <p class="pago-producto">{{ plan.name }}</p>
-              <p class="pago-total">
-                @if (descuento(); as promo) {
-                  <span class="tachado">{{ precio(plan) }}</span>
-                }
-                <strong>{{ precioFinal(plan) }}</strong>
-                <span class="tenue">· {{ vigencia(plan) }}</span>
-              </p>
-            </div>
-            <button type="button" class="enlace-quitar" (click)="cambiarPlan()">Cambiar</button>
-          </div>
-          
-
-          <!-- ── Código promocional ─────────────────────────────────────── -->
-          @if (auth.isAuthenticated()) {
-            @if (descuento(); as promo) {
-              <p class="promo-aplicada">
-                Código <strong>{{ promo.code }}</strong> aplicado.
-                <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
-                  Quitar
-                </button>
-              </p>
-            } @else {
-              <div class="promo">
-                <label for="promo">¿Tienes un código de descuento?</label>
-                <div class="promo-fila">
-                  <input
-                    id="promo"
-                    type="text"
-                    [formControl]="codigoPromo"
-                    placeholder="Escríbelo aquí"
-                    autocomplete="off"
-                    (keyup.enter)="aplicarDescuento()"
-                  />
-                  <button
-                    type="button"
-                    class="boton secundario"
-                    [disabled]="comprobandoPromo()"
-                    (click)="aplicarDescuento()"
-                  >
-                    {{ comprobandoPromo() ? '…' : 'Aplicar' }}
-                  </button>
-                </div>
-                @if (errorPromo(); as mensaje) {
-                  <p class="promo-error">{{ mensaje }}</p>
-                }
-              </div>
-            }
-          }
-
-
-          @if (!auth.isAuthenticated()) {
-            <p class="nota">
-              Para comprar necesitas una cuenta: es donde queda registrado tu acceso y desde
-              donde lo recuperas si cambias de equipo.
-            </p>
-            <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
-            <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
-          } @else {
-            <!-- ── Elegir cómo pagar ──────────────────────────────────────
-                 Un medio por vez. Enseñar PayPal y el QR de Yape a la vez
-                 convertía la página en una lista sin fin, y encima obligaba a
-                 decidir leyendo dos formularios abiertos. -->
-            <p class="pago-rotulo">¿Cómo prefieres pagar?</p>
-
-            <div class="medios">
+            @if (pagoEnLinea()) {
               <button
                 type="button"
                 class="medio"
-                [class.activo]="metodoPago() === 'yape'"
-                [attr.aria-pressed]="metodoPago() === 'yape'"
-                (click)="metodoPago.set('yape')"
+                [class.activo]="metodoPago() === 'paypal'"
+                [attr.aria-pressed]="metodoPago() === 'paypal'"
+                (click)="metodoPago.set('paypal')"
               >
-                <span class="medio-nombre">Yape o Plin</span>
-                <span class="medio-detalle">Desde Perú, en soles</span>
+                <span class="medio-nombre">PayPal</span>
+                <span class="medio-detalle">Desde el extranjero, en dólares</span>
               </button>
-
-              @if (pagoEnLinea()) {
-                <button
-                  type="button"
-                  class="medio"
-                  [class.activo]="metodoPago() === 'paypal'"
-                  [attr.aria-pressed]="metodoPago() === 'paypal'"
-                  (click)="metodoPago.set('paypal')"
-                >
-                  <span class="medio-nombre">PayPal</span>
-                  <span class="medio-detalle">Desde el extranjero, en dólares</span>
-                </button>
-              }
-            </div>
-          }
-
-          @if (auth.isAuthenticated() && metodoPago() === 'paypal') {
-            @if (precioFinalDolares(plan); as dolares) {
-              <p class="nota">
-                PayPal no admite soles, así que el cobro sale en dólares:
-                <strong>{{ dolares }}</strong>. Tu banco te lo convertirá a soles.
-              </p>
-
-              <div class="boton-paypal" #paypalHost></div>
-
-              @if (procesando()) {
-                <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
-              }
-            } @else {
-              <p class="nota">
-                Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a
-                mano.
-              </p>
             }
-          }
+          </div>
+        }
 
-          <!-- ── Pago por Yape ──────────────────────────────────────────────
-               Solo si es el medio elegido. La opción de PayPal ni siquiera
-               aparece en el selector cuando la pasarela no está activa, así que
-               aquí ya no hace falta explicarlo. -->
-          @if (auth.isAuthenticated() && metodoPago() === 'yape') {
-            <section class="yape">
-              <h3 class="yape-titulo">Pagar con Yape</h3>
+        @if (auth.isAuthenticated() && metodoPago() === 'paypal') {
+          @if (precioFinalDolares(plan); as dolares) {
+            <p class="nota">
+              PayPal no admite soles, así que el cobro sale en dólares:
+              <strong>{{ dolares }}</strong
+              >. Tu banco te lo convertirá a soles.
+            </p>
+
+            <div class="boton-paypal" #paypalHost></div>
+
+            @if (procesando()) {
+              <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
+            }
+          } @else {
+            <p class="nota">
+              Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a mano.
+            </p>
+          }
+        }
+
+        <!-- ── Pago por Yape ──────────────────────────────────────────────
+             Solo si es el medio elegido. La opción de PayPal ni siquiera
+             aparece en el selector cuando la pasarela no está activa, así que
+             aquí ya no hace falta explicarlo. -->
+        @if (auth.isAuthenticated() && metodoPago() === 'yape') {
+          <section class="yape">
+            <h3 class="yape-titulo">Pagar con Yape</h3>
 
             @if (comprobanteEnviado(); as enviado) {
               <!-- Ya envió la captura: aquí solo se le dice qué pasa ahora. -->
@@ -304,12 +304,12 @@
                 <p class="yape-enviado-titulo">Comprobante recibido</p>
                 <p>
                   Estamos comprobando tu pago de
-                  <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong>. En cuanto
-                  quede confirmado te llega un correo y tu acceso aparece en tu panel.
+                  <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong
+                  >. En cuanto quede confirmado te llega un correo y tu acceso aparece en tu panel.
                 </p>
                 <p class="tenue">
-                  Referencia <strong>{{ enviado.reference }}</strong> · guárdala por si tienes
-                  que escribirnos.
+                  Referencia <strong>{{ enviado.reference }}</strong> · guárdala por si tienes que
+                  escribirnos.
                 </p>
                 @if (whatsappUrl) {
                   <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
@@ -320,7 +320,8 @@
             } @else {
               <p class="yape-instruccion">
                 Escanea el código con tu app y paga
-                <strong>{{ precioFinal(plan) }}</strong>. Luego súbenos la captura.
+                <strong>{{ precioFinal(plan) }}</strong
+                >. Luego súbenos la captura.
               </p>
 
               <div class="qr-pago">
@@ -342,8 +343,8 @@
 
               @if (!auth.isAuthenticated()) {
                 <p class="nota">
-                  Puedes pagar ahora, pero para enviarnos la captura necesitas una cuenta: es
-                  donde queda registrado tu acceso.
+                  Puedes pagar ahora, pero para enviarnos la captura necesitas una cuenta: es donde
+                  queda registrado tu acceso.
                 </p>
               } @else {
                 <div class="yape-formulario">
@@ -395,42 +396,41 @@
                   </button>
 
                   <p class="tenue campo-ayuda">
-                    Lo revisa una persona, no un robot. Suele estar listo el mismo día; si
-                    corre prisa, avísanos por WhatsApp después de enviarlo.
+                    Lo revisa una persona, no un robot. Suele estar listo el mismo día; si corre
+                    prisa, avísanos por WhatsApp después de enviarlo.
                   </p>
                 </div>
               }
-              }
-            </section>
-          }
-
-          <div class="alternativa">
-            <span class="tenue">¿Prefieres transferencia o tienes alguna duda?</span>
-            @if (whatsappUrl) {
-              <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
-                Escribir por WhatsApp
-              </a>
             }
-          </div>
-        } @else {
-          <!-- Sin plan elegido no se enseña ni un medio de pago. La columna no
-               se queda vacía, pero tampoco finge ser un formulario. -->
-          <div class="pago-en-espera">
-            <p class="espera-titulo">Elige el método para ver cómo pagar</p>
-            <p class="tenue">
-              Aceptamos Yape, Plin y transferencia desde Perú, y PayPal desde el extranjero. Los
-              medios aparecen aquí en cuanto elijas.
-            </p>
-
-            @if (whatsappUrl) {
-              <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
-                Tengo una duda antes de comprar
-              </a>
-            }
-          </div>
+          </section>
         }
-      </section>
-    </div>
+
+        <div class="alternativa">
+          <span class="tenue">¿Prefieres transferencia o tienes alguna duda?</span>
+          @if (whatsappUrl) {
+            <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+              Escribir por WhatsApp
+            </a>
+          }
+        </div>
+      } @else {
+        <!-- Sin plan elegido no se enseña ni un medio de pago. La columna no
+             se queda vacía, pero tampoco finge ser un formulario. -->
+        <div class="pago-en-espera">
+          <p class="espera-titulo">Elige el método para ver cómo pagar</p>
+          <p class="tenue">
+            Aceptamos Yape, Plin y transferencia desde Perú, y PayPal desde el extranjero. Los
+            medios aparecen aquí en cuanto elijas.
+          </p>
+
+          @if (whatsappUrl) {
+            <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+              Tengo una duda antes de comprar
+            </a>
+          }
+        </div>
+      }
+    </section>
   }
 </main>
 

@@ -31,6 +31,17 @@ import { INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
+/**
+ * Importe en soles, con los céntimos solo cuando los hay.
+ *
+ * Los precios del catálogo son redondos —199, 250, 399— y escribirlos como
+ * «S/ 199.00» mete tres caracteres de ruido en la cifra más grande de la
+ * página. Si un día uno cuesta S/ 199.50, los céntimos aparecen solos.
+ */
+function soles(cents: number): string {
+  const valor = cents / 100;
+  return `S/ ${Number.isInteger(valor) ? valor : valor.toFixed(2)}`;
+}
 @Component({
   selector: 'app-checkout',
   imports: [RouterLink, ReactiveFormsModule, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
@@ -109,7 +120,9 @@ export class Checkout implements OnInit {
   readonly metodo = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
   readonly bolsas = computed(() => this.planes().filter((p) => p.kind === 'WORDS'));
   readonly esLicencia = computed(() => this.seleccionado()?.kind === 'LICENSE');
-  readonly comprado = computed(() => this.bolsaComprada() !== null || this.licenciaComprada() !== null);
+  readonly comprado = computed(
+    () => this.bolsaComprada() !== null || this.licenciaComprada() !== null,
+  );
 
   readonly pasarelaPaypal = computed(
     () => this.pasarelas().find((p) => p.code === 'PAYPAL') ?? null,
@@ -191,7 +204,10 @@ export class Checkout implements OnInit {
    */
   private llevarAlPago(): void {
     const panel = this.panelPago()?.nativeElement;
-    if (!panel || window.matchMedia('(min-width: 861px)').matches) return;
+    // Antes esto solo pasaba en móvil, porque en pantalla ancha el pago era una
+    // columna a la derecha y ya estaba a la vista. Ahora vive debajo de las
+    // tarjetas, así que hay que llevar allí a cualquier ancho.
+    if (!panel) return;
 
     const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -255,7 +271,9 @@ export class Checkout implements OnInit {
     }
 
     if (archivo.size > this.MAX_BYTES) {
-      this.errorComprobante.set('La imagen pesa más de 6 MB. Hazle una captura en vez de una foto.');
+      this.errorComprobante.set(
+        'La imagen pesa más de 6 MB. Hazle una captura en vez de una foto.',
+      );
       return;
     }
 
@@ -331,7 +349,7 @@ export class Checkout implements OnInit {
   /** Precio a pagar, ya con la rebaja si la hay. */
   precioFinal(plan: Plan): string {
     const rebajado = this.descuento()?.finalPriceCents;
-    return `S/ ${((rebajado ?? plan.priceCents) / 100).toFixed(2)}`;
+    return soles(rebajado ?? plan.priceCents);
   }
 
   precioFinalDolares(plan: Plan): string | null {
@@ -382,8 +400,15 @@ export class Checkout implements OnInit {
     return meses === 1 ? '1 mes' : `${meses} meses`;
   }
 
+  /**
+   * El precio, sin céntimos cuando no los hay.
+   *
+   * «S/ 199.00» son tres caracteres de ruido en la cifra más grande de la
+   * página, y el «.00» solo sirve para que parezca una factura. Si algún plan
+   * llega a costar S/ 199.50, los céntimos vuelven a salir.
+   */
   precio(plan: Plan): string {
-    return `S/ ${(plan.priceCents / 100).toFixed(2)}`;
+    return soles(plan.priceCents);
   }
 
   precioDolares(plan: Plan): string | null {
@@ -420,10 +445,7 @@ export class Checkout implements OnInit {
             this.procesando.set(true);
             try {
               const orden = await firstValueFrom(
-                this.payments.createOrder(
-                  this.seleccionado()!.code,
-                  this.descuento()?.code,
-                ),
+                this.payments.createOrder(this.seleccionado()!.code, this.descuento()?.code),
               );
               return orden.orderId;
             } catch (error: unknown) {

@@ -63,17 +63,15 @@ h1 {
 }
 
 /* ── Distribución ───────────────────────────────────────────────────────── */
-.columnas {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  align-items: start;
-  gap: 20px;
-}
-
-@media (max-width: 860px) {
-  .columnas {
-    grid-template-columns: 1fr;
-  }
+/* El pago va DEBAJO de las tarjetas, no en una columna al lado.
+ *
+ * Como barra lateral dejaba dos problemas a la vez: robaba 360 píxeles a las
+ * tarjetas —con tres planes, la tercera caía a una segunda fila— y, mientras no
+ * se elegía nada, era una caja casi vacía con medio metro de blanco debajo.
+ * Abajo ocupa el ancho entero solo cuando hay algo que enseñar. */
+.pago {
+  max-width: 720px;
+  margin-top: 24px;
 }
 
 .panel {
@@ -108,7 +106,9 @@ h1 {
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
   cursor: pointer;
-  transition: border-color var(--transicion), box-shadow var(--transicion);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
 }
 
 .plan:hover {
@@ -383,7 +383,9 @@ h1 {
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm, 8px);
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .promo-fila input::placeholder {
@@ -437,7 +439,7 @@ h1 {
 /* Solución del colapso: deshace el width:100% heredado del botón global */
 .promo-fila .boton.secundario {
   flex: 0 0 auto; /* Evita que crezca o se encoja impredeciblemente */
-  width: auto;     /* Anula anchos globales */
+  width: auto; /* Anula anchos globales */
   height: 42px;
   padding: 0 18px;
   font-family: inherit;
@@ -450,7 +452,10 @@ h1 {
   border-radius: var(--radio-sm, 8px);
   cursor: pointer;
   box-sizing: border-box;
-  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .promo-fila .boton.secundario:hover:not(:disabled) {
@@ -596,7 +601,9 @@ h1 {
   border: 1px dashed var(--color-borde-fuerte);
   border-radius: var(--radio-sm);
   cursor: pointer;
-  transition: border-color var(--transicion), background-color var(--transicion);
+  transition:
+    border-color var(--transicion),
+    background-color var(--transicion);
 }
 
 .captura-elegir:hover {
@@ -749,6 +756,11 @@ h1 {
    te llevas, así que la lista de lo incluido ocupa la mitad de la tarjeta. */
 
 .tarjeta-plan {
+  /* Columna flexible para que el bloque de «Qué incluye» se pegue abajo y las
+     tarjetas de una fila acaben a la misma altura, tengan cuatro ventajas o
+     siete. Antes cada una terminaba donde le tocaba y la fila quedaba dentada. */
+  display: flex;
+  flex-direction: column;
   position: relative;
   padding: 28px 28px 26px;
   background: var(--color-superficie);
@@ -782,7 +794,10 @@ h1 {
   color: var(--color-texto);
 }
 
+/* Tres líneas de hueco reservado: es lo que hace que los precios de una fila
+   caigan a la misma altura aunque una descripción sea más larga que otra. */
 .tarjeta-lema {
+  min-height: 66px;
   max-width: 46ch;
   margin: 0 0 20px;
   font-size: 14.5px;
@@ -806,14 +821,11 @@ h1 {
   color: var(--color-texto);
 }
 
-.tarjeta-precio .periodo {
-  font-size: 14px;
-  color: var(--color-texto-suave);
-}
-
 .tarjeta-rotulo {
-  margin: 26px 0 10px;
-  padding-top: 20px;
+  /*  arriba: empuja el bloque de ventajas al fondo de la tarjeta, que es
+     lo que alinea el pie de todas las de una fila. */
+  margin: auto 0 10px;
+  padding-top: 22px;
   font-size: 12px;
   font-weight: 650;
   letter-spacing: 0.07em;
@@ -931,9 +943,10 @@ h1 {
  */
 .rejilla-planes.varios {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  /* `stretch`, y no `start`: es lo que iguala la altura de la fila. */
+  align-items: stretch;
 }
 
 /* Solo la tarjeta elegida lleva el borde fuerte: si todas gritan, ninguna

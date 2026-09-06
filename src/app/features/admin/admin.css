@@ -1767,3 +1767,60 @@ td.acciones {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Cuentas ───────────────────────────────────────────────────────────────
+   La búsqueda de usuarios, su paginación y la contraseña provisional de un
+   administrador recién creado. */
+
+.fila-busqueda {
+  margin-bottom: 14px;
+}
+
+.fila-busqueda input {
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.fila-busqueda input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+  font-size: 13px;
+}
+
+/* La contraseña provisional se lee para copiarla a mano o dictarla por
+   teléfono, así que va en monoespaciada y con las letras separadas: en una
+   proporcional, una l y una I son el mismo trazo. */
+.codigo-generado {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  user-select: all;
+  word-break: break-all;
+}
