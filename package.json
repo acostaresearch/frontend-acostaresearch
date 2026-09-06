@@ -10,7 +10,8 @@
     "env:generar": "node scripts/generar-environment.js",
     "prestart": "node scripts/generar-environment.js",
     "prebuild": "node scripts/generar-environment.js",
-    "postinstall": "node scripts/generar-environment.js"
+    "postinstall": "node scripts/generar-environment.js",
+    "deploy": "node scripts/desplegar.js"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
