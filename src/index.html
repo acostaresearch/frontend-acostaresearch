@@ -16,10 +16,15 @@
          antiguos; el PNG de 32 es el que usan los navegadores modernos, y el de
          180 es el que guarda iOS cuando alguien añade la web a su pantalla de
          inicio. Las rutas van absolutas: una relativa se rompe si algún día
-         cambia el `base href`. -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
-    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+         cambia el `base href`.
+
+         El `?v=2` es por el cambio de logotipo. El favicon se guarda en una
+         caché aparte y mucho más duradera que el resto: sin cambiar la URL,
+         quien ya haya entrado seguiría viendo el birrete morado durante
+         días. Se sube el número la próxima vez que cambie el icono. -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" href="/favicon-32.png?v=2" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" sizes="180x180" />
 
     <!-- Vista previa al compartir el enlace.
          Sin esto, pegar acostaresearch.com en WhatsApp deja un enlace desnudo,
