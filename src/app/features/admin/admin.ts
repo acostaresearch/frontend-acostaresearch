@@ -299,6 +299,28 @@ export class Admin implements OnInit {
     ),
   );
 
+  /**
+   * Los que se pueden marcar: los de este grupo y los que no son de nadie.
+   *
+   * Los que ya pertenecen a otro producto no se listan. Marcarlos aquí los
+   * MOVERÍA —un capítulo está en un grupo y solo en uno—, así que enseñarlos
+   * era ofrecer quitárselos a otro producto con una casilla, demasiado fácil de
+   * pulsar sin querer.
+   *
+   * Para mover uno a propósito se le desmarca en su grupo de origen; entonces
+   * queda libre y aparece aquí.
+   */
+  readonly capitulosDisponibles = computed(() => {
+    const actual = this.editandoGrupo();
+    const mio = actual ? (actual.productCode ?? actual.code) : null;
+    return this.capitulosOrdenados().filter((s) => !s.productCode || s.productCode === mio);
+  });
+
+  /** Cuántos hay en otros grupos, para explicar por qué no salen en la lista. */
+  readonly capitulosEnOtrosGrupos = computed(
+    () => this.capitulosOrdenados().length - this.capitulosDisponibles().length,
+  );
+
   /** Grupo cuyos capítulos se están mirando desde la tabla. */
   readonly viendoCapitulos = signal<Grupo | null>(null);
   readonly capitulosDelGrupo = computed(() => {
@@ -436,6 +458,11 @@ export class Admin implements OnInit {
           .map((s) => s.id),
       ),
     );
+    // Lo que se suelte en la zona de arrastre de esta ventana se publica dentro
+    // de ESTE grupo. La cola se vacía para no arrastrar archivos de una sesión
+    // anterior que acabarían en el producto equivocado.
+    this.grupoDestino.set(grupo.productCode ?? grupo.code);
+    this.cola.set([]);
     // El código no se toca nunca: lo llevan las licencias ya emitidas y los
     // capítulos que cuelgan de él. Cambiarlo dejaría a esos compradores
     // apuntando a un producto que ya no existe.
@@ -934,9 +961,33 @@ export class Admin implements OnInit {
 
   private cargarSkills(): void {
     this.skillsApi.list().subscribe({
-      next: (skills) => this.skills.set(skills),
+      next: (skills) => {
+        this.skills.set(skills);
+        this.marcarLosQueYaSonDelGrupo(skills);
+      },
       error: (e: unknown) => this.error.set(toApiError(e).message),
     });
+  }
+
+  /**
+   * Deja marcados los capítulos que el servidor dice que ya son del grupo.
+   *
+   * Hace falta al publicar desde la ventana: el capítulo recién subido nace con
+   * el grupo puesto, pero la selección de la pantalla no se entera. Sin esto
+   * aparecería sin marcar y, al pulsar «Guardar cambios», `moverCapitulos` lo
+   * habría entendido como «lo han desmarcado» y lo habría echado del grupo
+   * recién subido.
+   */
+  private marcarLosQueYaSonDelGrupo(skills: Skill[]): void {
+    const grupo = this.editandoGrupo();
+    if (!grupo) return;
+
+    const mio = grupo.productCode ?? grupo.code;
+    const seleccion = new Set(this.capitulosElegidos());
+    for (const skill of skills) {
+      if (skill.productCode === mio) seleccion.add(skill.id);
+    }
+    this.capitulosElegidos.set(seleccion);
   }
 
   /**

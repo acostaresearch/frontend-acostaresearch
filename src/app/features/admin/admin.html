@@ -687,14 +687,18 @@
               <div class="campo">
                 <label>Capítulos que incluye</label>
 
-                @if (capitulosOrdenados().length === 0) {
+                @if (capitulosDisponibles().length === 0) {
                   <span class="ayuda">
-                    Todavía no hay capítulos subidos. Se suben en «Capítulos» y luego se marcan
-                    aquí.
+                    @if (capitulosEnOtrosGrupos() > 0) {
+                      Todos los capítulos subidos pertenecen ya a otro grupo. Súbele los suyos a
+                      este arrastrándolos aquí abajo.
+                    } @else {
+                      Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
+                    }
                   </span>
                 } @else {
                   <ul class="lista-capitulos">
-                    @for (skill of capitulosOrdenados(); track skill.id) {
+                    @for (skill of capitulosDisponibles(); track skill.id) {
                       <li>
                         <label class="capitulo">
                           <input
@@ -706,14 +710,8 @@
                             <span class="capitulo-nombre">{{ skill.displayName }}</span>
                             <span class="capitulo-meta">
                               <span class="mono tenue">{{ skill.code }}</span>
-                              <!-- Marcarlo aquí lo MUEVE: un capítulo pertenece a
-                                   un grupo y solo a uno. Sin este aviso, añadirlo
-                                   a un producto se lo quitaría a otro sin que se
-                                   viera. Va en su propia línea porque el nombre
-                                   de un grupo es largo y, en la misma fila,
-                                   aplastaba el del capítulo. -->
-                              @if (grupoDe(skill.productCode); as otro) {
-                                <span class="pastilla aviso-mover">ahora en {{ otro }}</span>
+                              @if (!skill.productCode) {
+                                <span class="pastilla">sin grupo</span>
                               }
                               @if (!skill.active) {
                                 <span class="pastilla">oculto</span>
@@ -725,11 +723,134 @@
                     }
                   </ul>
                   <span class="ayuda">
-                    {{ capitulosElegidos().size }} de {{ capitulosOrdenados().length }} marcados. Se
-                    aplican al guardar.
+                    {{ capitulosElegidos().size }} de {{ capitulosDisponibles().length }} marcados.
+                    Se aplican al guardar.
+                  </span>
+                }
+
+                <!-- Los que ya son de otro producto no se listan: marcarlos aquí
+                     los movería, y eso no debe pasar por pulsar una casilla sin
+                     querer. Se dice cuántos hay para que su ausencia no parezca
+                     un fallo. -->
+                @if (capitulosEnOtrosGrupos() > 0) {
+                  <span class="ayuda">
+                    Hay {{ capitulosEnOtrosGrupos() }}
+                    {{ capitulosEnOtrosGrupos() === 1 ? 'capítulo' : 'capítulos' }} en otros grupos.
+                    No salen aquí porque marcarlos se los quitaría a su producto; para mover uno,
+                    desmárcalo primero en el grupo donde está.
                   </span>
                 }
               </div>
+
+              <!-- ── Subir capítulos nuevos a este grupo ────────────────────
+                   Solo al editar: un grupo que aún no existe no tiene código al
+                   que colgar un archivo. Lo que se suelte aquí se publica ya
+                   dentro de este producto, sin pasar por otra pestaña. -->
+              @if (editandoGrupo()) {
+                <div class="campo">
+                  <label>Subir capítulos nuevos</label>
+
+                  <label
+                    class="soltar compacta"
+                    for="bundle-grupo"
+                    [class.encima]="arrastrando()"
+                    (dragover)="arrastrar($event, true)"
+                    (dragleave)="arrastrar($event, false)"
+                    (drop)="soltar($event)"
+                  >
+                    <input
+                      id="bundle-grupo"
+                      class="entrada-archivo"
+                      type="file"
+                      multiple
+                      accept=".skill,.zip,application/zip"
+                      (change)="elegirArchivos($event)"
+                      [disabled]="publicando()"
+                    />
+                    <span class="soltar-titulo">Arrastra aquí tus archivos .skill</span>
+                    <span class="soltar-ayuda">
+                      o pulsa para elegirlos · entran directos en este grupo · máximo 15 MB cada uno
+                    </span>
+                  </label>
+
+                  @if (cola().length > 0) {
+                    <ul class="cola">
+                      @for (item of cola(); track item.archivo) {
+                        <li class="cola-fila" [class.fallida]="item.estado === 'error'">
+                          <span class="cola-punto {{ item.estado }}" aria-hidden="true"></span>
+
+                          <div class="cola-datos">
+                            <p class="cola-nombre">
+                              @if (item.analisis; as a) {
+                                {{ a.reemplaza?.displayName ?? a.displayNameSugerido }}
+                                @if (a.reemplaza) {
+                                  <span class="etiqueta aviso">reemplaza</span>
+                                } @else {
+                                  <span class="etiqueta">nuevo</span>
+                                }
+                              } @else {
+                                {{ item.archivo.name }}
+                              }
+                            </p>
+
+                            @if (item.analisis; as a) {
+                              <p class="cola-meta">
+                                <code>{{ a.code }}</code>
+                                · {{ a.pasos }} pasos · {{ a.archivos }} archivos
+                              </p>
+                            } @else if (item.estado === 'analizando') {
+                              <p class="cola-meta">Comprobando {{ item.archivo.name }}…</p>
+                            }
+
+                            @if (item.error) {
+                              <p class="cola-error">{{ item.error }}</p>
+                            }
+                          </div>
+
+                          <button
+                            type="button"
+                            class="enlace"
+                            (click)="quitarDeCola(item)"
+                            [disabled]="publicando()"
+                          >
+                            Quitar
+                          </button>
+                        </li>
+                      }
+                    </ul>
+
+                    @if (colaReemplazos() > 0) {
+                      <p class="nota atencion">
+                        {{
+                          colaReemplazos() === 1
+                            ? 'Uno de ellos pisa'
+                            : colaReemplazos() + ' de ellos pisan'
+                        }}
+                        un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y
+                        posición— y solo cambia el archivo.
+                      </p>
+                    }
+
+                    <!-- Publicar va aparte de «Guardar cambios»: sube los
+                         archivos ahora, sin cerrar la ventana, para poder
+                         marcarlos acto seguido en la lista de arriba. -->
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      (click)="publicarCola()"
+                      [disabled]="publicando() || colaAnalizando() || colaListas().length === 0"
+                    >
+                      @if (publicando()) {
+                        Publicando…
+                      } @else if (colaAnalizando()) {
+                        Comprobando…
+                      } @else {
+                        Publicar {{ colaListas().length }} en este grupo
+                      }
+                    </button>
+                  }
+                </div>
+              }
             </form>
           </div>
 

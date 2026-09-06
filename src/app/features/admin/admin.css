@@ -1265,3 +1265,15 @@ td.acciones {
 .mas:hover {
   background: var(--color-primario-suave);
 }
+
+/* La zona de arrastre dentro de la ventana de un grupo. Más baja que la de la
+   pestaña de capítulos: ahí es la protagonista y aquí es un paso más de un
+   formulario que ya viene largo. */
+.soltar.compacta {
+  padding: 18px 16px;
+  min-height: 0;
+}
+
+.soltar.compacta .soltar-titulo {
+  font-size: 14px;
+}
