@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, catchError, forkJoin, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { toApiError } from '../../core/http/api-error';
 import {
@@ -45,6 +45,40 @@ interface EnCola {
 
 /** Métodos de pago que acepta el backend para una activación manual. */
 const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CORTESIA'] as const;
+
+/**
+ * Cuántos códigos se enseñan de entrada.
+ *
+ * La lista crece con cada venta y no para. Ocho caben sin que la tarjeta se
+ * coma la pantalla, y son de sobra para el uso real: lo que se mira a diario
+ * son los últimos, y para lo demás está el buscador.
+ */
+const CODIGOS_VISIBLES = 8;
+
+/**
+ * Soles por dólar, y cuánto se carga encima para PayPal.
+ *
+ * El precio se piensa y se escribe en soles, que es lo que paga un tesista por
+ * Yape. El de PayPal se calcula: pedir dos precios a mano era pedir dos veces lo
+ * mismo, y garantizaba que un día se cambiara uno y no el otro.
+ *
+ * El recargo cubre lo que PayPal se queda —un 5,4 % más una comisión fija— para
+ * que lo que llega se parezca al precio anunciado. Con estos números, S/ 199
+ * salen $ 57,90, que es exactamente lo que hay hoy en el catálogo.
+ *
+ * El tipo de cambio se mueve, así que conviene revisarlo un par de veces al año.
+ * Está aquí y no en la base de datos a propósito: cambiarlo es una decisión de
+ * negocio que se toma mirando, no un ajuste que deba poder tocarse por descuido
+ * desde una pantalla.
+ */
+const SOLES_POR_DOLAR = 3.75;
+const RECARGO_PAYPAL = 0.09;
+
+/** Lo que se cobrará por PayPal. Se redondea hacia arriba a la décima. */
+function aDolares(soles: number): number {
+  if (!soles || soles <= 0) return 0;
+  return Math.ceil((soles / SOLES_POR_DOLAR) * (1 + RECARGO_PAYPAL) * 10) / 10;
+}
 
 /**
  * Panel de administración.
@@ -128,6 +162,52 @@ export class Admin implements OnInit {
     () => this.codigos().filter((c) => c.status === 'AVAILABLE').length,
   );
 
+  // ── Códigos: ventana, búsqueda y filtro ──────────────────────────────────
+  /** La ventana de generar. Vive fuera de la tarjeta, encima de la página. */
+  readonly formularioCodigosAbierto = signal(false);
+  readonly busquedaCodigos = signal('');
+  readonly filtroEstadoCodigos = signal<'' | 'AVAILABLE' | 'REDEEMED' | 'VOID'>('');
+  /** Si está desplegada la lista entera o solo los primeros. */
+  readonly todosLosCodigos = signal(false);
+
+  /**
+   * Los códigos que pasan el buscador y el filtro.
+   *
+   * Se busca por todo lo que uno recuerda de una venta: los cuatro caracteres
+   * del final, el correo, la nota, el número de operación y el producto. Quien
+   * viene a esta tabla llega con un dato suelto de una conversación de
+   * WhatsApp, no con el identificador.
+   */
+  readonly codigosFiltrados = computed(() => {
+    const texto = this.busquedaCodigos().trim().toLowerCase();
+    const estado = this.filtroEstadoCodigos();
+
+    return this.codigos().filter((codigo) => {
+      if (estado && codigo.status !== estado) return false;
+      if (!texto) return true;
+
+      return [
+        codigo.hint,
+        codigo.buyerEmail,
+        codigo.note,
+        codigo.paymentRef,
+        codigo.paymentMethod,
+        codigo.productCode,
+      ].some((campo) => (campo ?? '').toLowerCase().includes(texto));
+    });
+  });
+
+  /** Los que se pintan: los primeros, salvo que se pida ver el resto. */
+  readonly codigosEnPantalla = computed(() =>
+    this.todosLosCodigos()
+      ? this.codigosFiltrados()
+      : this.codigosFiltrados().slice(0, CODIGOS_VISIBLES),
+  );
+
+  readonly codigosOcultos = computed(
+    () => this.codigosFiltrados().length - this.codigosEnPantalla().length,
+  );
+
   // ── Formularios ──────────────────────────────────────────────────────────
   readonly formCodigos = this.fb.nonNullable.group({
     cantidad: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
@@ -194,6 +274,38 @@ export class Admin implements OnInit {
   readonly puedeBorrar = computed(
     () => this.confirmacionBorrado().trim().toLowerCase() === 'eliminar',
   );
+
+  /**
+   * El precio en soles que hay escrito ahora mismo, para poder enseñar debajo
+   * cuánto será en PayPal mientras se teclea.
+   */
+  readonly solesEscritos = signal(199);
+  readonly dolaresCalculados = computed(() => aDolares(this.solesEscritos()));
+
+  /**
+   * Qué capítulos quedan dentro del grupo que se está editando, por id.
+   *
+   * Se elige aquí y no capítulo a capítulo en la otra pantalla porque la
+   * pregunta natural es «qué lleva este producto», no «a qué producto pertenece
+   * este capítulo». Lo segundo obliga a recordar el grupo mientras se recorre
+   * una lista larga.
+   */
+  readonly capitulosElegidos = signal<ReadonlySet<string>>(new Set());
+
+  /** Capítulos ordenados como los ve el comprador. */
+  readonly capitulosOrdenados = computed(() =>
+    [...this.skills()].sort(
+      (a, b) => a.orden - b.orden || a.displayName.localeCompare(b.displayName),
+    ),
+  );
+
+  /** Grupo cuyos capítulos se están mirando desde la tabla. */
+  readonly viendoCapitulos = signal<Grupo | null>(null);
+  readonly capitulosDelGrupo = computed(() => {
+    const grupo = this.viendoCapitulos();
+    if (!grupo) return [];
+    return this.capitulosOrdenados().filter((s) => s.productCode === grupo.productCode);
+  });
   /** A qué grupo van los archivos que hay ahora mismo en la cola. */
   readonly grupoDestino = signal<string>('');
 
@@ -205,7 +317,6 @@ export class Admin implements OnInit {
     description: ['', [Validators.maxLength(255)]],
     // En soles, que es como se piensa un precio; se pasa a céntimos al enviar.
     soles: [199, [Validators.required, Validators.min(0)]],
-    dolares: [57.9, [Validators.min(0)]],
     // 0 = no caduca. 90 días es el trimestre por defecto.
     durationDays: [90, [Validators.required, Validators.min(0)]],
     mcpCallsPerDay: [200, [Validators.required, Validators.min(0)]],
@@ -245,6 +356,12 @@ export class Admin implements OnInit {
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
+
+    // El precio de PayPal se enseña mientras se teclea el de soles. El
+    // componente vive lo que la página, así que no hace falta soltar esto.
+    this.formGrupo.controls.soles.valueChanges.subscribe((soles) => {
+      this.solesEscritos.set(Number(soles) || 0);
+    });
   }
 
   // ── Grupos ───────────────────────────────────────────────────────────────
@@ -286,11 +403,13 @@ export class Admin implements OnInit {
       name: '',
       description: '',
       soles: 199,
-      dolares: 57.9,
       durationDays: 90,
       mcpCallsPerDay: 200,
       active: true,
     });
+    this.solesEscritos.set(199);
+    // Un grupo nuevo nace vacío: los capítulos se marcan a mano.
+    this.capitulosElegidos.set(new Set());
     this.formGrupo.controls.code.enable();
   }
 
@@ -305,15 +424,53 @@ export class Admin implements OnInit {
       name: grupo.name,
       description: grupo.description ?? '',
       soles: grupo.priceCents / 100,
-      dolares: grupo.priceUsdCents ? grupo.priceUsdCents / 100 : 0,
       durationDays: grupo.durationDays,
       mcpCallsPerDay: grupo.mcpCallsPerDay,
       active: grupo.active,
     });
+    this.solesEscritos.set(grupo.priceCents / 100);
+    this.capitulosElegidos.set(
+      new Set(
+        this.skills()
+          .filter((s) => s.productCode === grupo.productCode)
+          .map((s) => s.id),
+      ),
+    );
     // El código no se toca nunca: lo llevan las licencias ya emitidas y los
     // capítulos que cuelgan de él. Cambiarlo dejaría a esos compradores
     // apuntando a un producto que ya no existe.
     this.formGrupo.controls.code.disable();
+  }
+
+  /** Marca o desmarca un capítulo dentro del grupo que se está editando. */
+  alternarCapitulo(id: string): void {
+    const copia = new Set(this.capitulosElegidos());
+    if (copia.has(id)) copia.delete(id);
+    else copia.add(id);
+    this.capitulosElegidos.set(copia);
+  }
+
+  /** Abre la lista de capítulos de un grupo, desde la tabla. */
+  verCapitulos(grupo: Grupo): void {
+    this.viendoCapitulos.set(grupo);
+  }
+
+  cerrarCapitulos(): void {
+    this.viendoCapitulos.set(null);
+  }
+
+  /**
+   * De qué otro grupo viene un capítulo, si viene de alguno.
+   *
+   * Se enseña junto a la casilla porque marcarlo aquí lo MUEVE: un capítulo
+   * pertenece a un grupo y solo a uno. Sin este aviso, añadir un capítulo a un
+   * producto nuevo se lo quitaría a otro sin que nadie lo viera.
+   */
+  grupoDe(productCode: string | null): string | null {
+    if (!productCode) return null;
+    const actual = this.editandoGrupo();
+    if (actual && productCode === actual.productCode) return null;
+    return this.grupos().find((g) => g.productCode === productCode)?.name ?? productCode;
   }
 
   /** Cierra la ventana sin guardar. */
@@ -389,7 +546,8 @@ export class Admin implements OnInit {
       name: v.name,
       description: v.description || undefined,
       priceCents: Math.round(v.soles * 100),
-      priceUsdCents: v.dolares > 0 ? Math.round(v.dolares * 100) : undefined,
+      // El precio de PayPal no se pide: se calcula del de soles. Ver `aDolares`.
+      priceUsdCents: v.soles > 0 ? Math.round(aDolares(v.soles) * 100) : undefined,
       durationDays: v.durationDays,
       mcpCallsPerDay: v.mcpCallsPerDay,
       active: v.active,
@@ -400,25 +558,58 @@ export class Admin implements OnInit {
       ? this.billing.actualizarGrupo(enEdicion.code, datos)
       : this.billing.crearGrupo({ ...datos, code: v.code });
 
-    peticion.subscribe({
-      next: (grupo) => {
-        this.aviso.set(
-          enEdicion ? `Grupo «${grupo.name}» actualizado.` : `Grupo «${grupo.name}» creado.`,
-        );
-        this.editandoGrupo.set(null);
-        // Solo se cierra al guardar bien. Si el servidor rechaza, la ventana se
-        // queda abierta con lo escrito: cerrarla obligaría a teclearlo otra vez.
-        this.formularioAbierto.set(false);
-        this.trabajando.set(false);
-        this.cargarGrupos();
-        // El precio y la duración salen en la web de venta.
-        this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
-      },
-      error: (e: unknown) => {
-        this.error.set(toApiError(e).message);
-        this.trabajando.set(false);
-      },
-    });
+    // Los capítulos se mueven DESPUÉS de guardar el grupo, y no antes, porque
+    // uno nuevo todavía no tiene código al que engancharlos.
+    peticion
+      // `productCode` y `code` se mantienen iguales al crear un grupo; el tipo
+      // admite nulo por el modelo, así que el código hace de respaldo.
+      .pipe(
+        switchMap((grupo) =>
+          this.moverCapitulos(grupo.productCode ?? grupo.code).pipe(map(() => grupo)),
+        ),
+      )
+      .subscribe({
+        next: (grupo) => {
+          this.aviso.set(
+            enEdicion ? `Grupo «${grupo.name}» actualizado.` : `Grupo «${grupo.name}» creado.`,
+          );
+          this.editandoGrupo.set(null);
+          // Solo se cierra al guardar bien. Si el servidor rechaza, la ventana se
+          // queda abierta con lo escrito: cerrarla obligaría a teclearlo otra vez.
+          this.formularioAbierto.set(false);
+          this.trabajando.set(false);
+          this.cargarGrupos();
+          this.cargarSkills();
+          // El precio y la duración salen en la web de venta.
+          this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+        },
+        error: (e: unknown) => {
+          this.error.set(toApiError(e).message);
+          this.trabajando.set(false);
+        },
+      });
+  }
+
+  /**
+   * Aplica lo marcado en la lista de capítulos: mete los nuevos y saca los que
+   * se desmarcaron.
+   *
+   * Solo toca los que cambiaron. Reasignar los nueve capítulos cada vez que se
+   * corrige una errata en el nombre del grupo serían nueve escrituras inútiles
+   * y nueve líneas de log que no dicen nada.
+   */
+  private moverCapitulos(productCode: string): Observable<unknown> {
+    const elegidos = this.capitulosElegidos();
+
+    const cambios = this.skills()
+      .filter((s) => (s.productCode === productCode) !== elegidos.has(s.id))
+      .map((s) =>
+        // Cadena vacía saca el capítulo de todo grupo, que es lo que el
+        // servidor entiende por «sin grupo».
+        this.skillsApi.actualizar(s.id, { productCode: elegidos.has(s.id) ? productCode : '' }),
+      );
+
+    return cambios.length > 0 ? forkJoin(cambios) : of(null);
   }
 
   async alternarGrupo(grupo: Grupo): Promise<void> {
@@ -995,6 +1186,36 @@ export class Admin implements OnInit {
 
   // ── Vender ───────────────────────────────────────────────────────────────
 
+  abrirFormularioCodigos(): void {
+    this.error.set(null);
+    // Los códigos de la vez anterior se quitan al abrir, no al generar: si
+    // siguieran ahí, los nuevos aparecerían debajo de unos viejos ya copiados y
+    // no habría forma de saber cuáles son cuáles.
+    this.codigosNuevos.set([]);
+    this.codigoEnviadoA.set(null);
+    this.cobroApuntado.set(null);
+    this.formularioCodigosAbierto.set(true);
+  }
+
+  cerrarFormularioCodigos(): void {
+    if (this.trabajando()) return;
+    this.formularioCodigosAbierto.set(false);
+  }
+
+  /** El buscador y el filtro escriben aquí: en la plantilla no hay lógica. */
+  buscarCodigos(evento: Event): void {
+    this.busquedaCodigos.set((evento.target as HTMLInputElement).value);
+    // Con la lista recortada, buscar y no ver lo que se busca es lo peor que
+    // puede pasar: al filtrar se vuelve a los primeros de la nueva lista.
+    this.todosLosCodigos.set(false);
+  }
+
+  filtrarCodigos(evento: Event): void {
+    const valor = (evento.target as HTMLSelectElement).value;
+    this.filtroEstadoCodigos.set(valor as '' | 'AVAILABLE' | 'REDEEMED' | 'VOID');
+    this.todosLosCodigos.set(false);
+  }
+
   generarCodigos(): void {
     if (this.formCodigos.invalid || this.trabajando()) return;
 
@@ -1026,6 +1247,11 @@ export class Admin implements OnInit {
           this.cobroApuntado.set(cobro);
           this.formCodigos.patchValue({ buyerEmail: '', note: '', paymentRef: '', importe: null });
           this.trabajando.set(false);
+          // La ventana se cierra sola: los códigos en claro se enseñan en la
+          // tarjeta de detrás, que es donde además aparece la fila nueva. Con la
+          // ventana encima habría que cerrarla para verlos, y ese es justo el
+          // momento en el que alguien la cierra sin haberlos copiado.
+          this.formularioCodigosAbierto.set(false);
           this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
         },
         error: (e: unknown) => {

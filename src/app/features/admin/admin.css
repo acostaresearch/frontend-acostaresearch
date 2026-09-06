@@ -182,7 +182,9 @@
 }
 
 .campo input,
-.campo select {
+.campo select,
+.buscador,
+.filtro-estado {
   padding: 9px 11px;
   font: inherit;
   font-size: 14px;
@@ -193,7 +195,9 @@
 }
 
 .campo input:focus,
-.campo select:focus {
+.campo select:focus,
+.buscador:focus,
+.filtro-estado:focus {
   outline: 2px solid var(--color-primario);
   outline-offset: -1px;
 }
@@ -960,7 +964,9 @@ tbody tr.revocada {
   padding: 4px 6px;
   border-radius: var(--radio-sm);
   color: var(--color-texto-tenue);
-  transition: background var(--transicion), color var(--transicion);
+  transition:
+    background var(--transicion),
+    color var(--transicion);
 }
 
 .ventana-cabecera .cerrar:hover {
@@ -1024,4 +1030,158 @@ tbody tr.revocada {
   font-size: 0.92rem;
   line-height: 1.55;
   color: var(--color-error);
+}
+
+/* ── Capítulos dentro de la ventana de un grupo ───────────────────────────── */
+.lista-capitulos {
+  list-style: none;
+  margin: 4px 0 6px;
+  padding: 0;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  /* Con nueve capítulos cabe entero; con treinta, esto evita que el formulario
+     se estire hasta dejar el botón de guardar fuera de la pantalla. */
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.lista-capitulos li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+.capitulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 400;
+  transition: background var(--transicion);
+}
+
+.capitulo:hover {
+  background: var(--color-fondo);
+}
+
+.capitulo input[type='checkbox'] {
+  flex: none;
+  margin: 0;
+}
+
+.capitulo-texto {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+/* Que un capítulo pertenezca a otro grupo se avisa en ámbar: marcarlo no lo
+   copia, lo mueve. */
+.pastilla.aviso-mover {
+  background: var(--color-aviso-suave);
+  color: var(--color-aviso);
+  flex: none;
+}
+
+.capitulos-grupo {
+  list-style: none;
+  counter-reset: capitulo;
+  margin: 0;
+  padding: 0;
+}
+
+.capitulos-grupo li {
+  counter-increment: capitulo;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0 12px 30px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.capitulos-grupo li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+.capitulos-grupo li::before {
+  content: counter(capitulo);
+  position: absolute;
+  left: 0;
+  top: 12px;
+  color: var(--color-primario);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.capitulo-estado {
+  flex: none;
+}
+
+/* ── Cabecera de tarjeta, buscador y lista recortada ───────────────────────
+ *
+ * El botón de generar vive en la cabecera de la tarjeta —no en un formulario
+ * desplegado— porque la pantalla de vender es la LISTA: lo que se mira a
+ * diario es qué se emitió y qué se canjeó, y emitir es una acción puntual que
+ * se abre cuando toca.
+ */
+.tarjeta-cabecera {
+  /* Hereda el hueco que dejaba el h2 al que sustituye. */
+  margin-bottom: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tarjeta-cabecera h2 {
+  margin: 0;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0 14px;
+}
+
+.buscador {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.filtro-estado {
+  flex: 0 0 auto;
+}
+
+/* Cuántos se están viendo de cuántos hay. Sin esto, una lista recortada
+   parece una lista completa, y ese es el error que hace pensar que faltan
+   códigos. */
+.conteo {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+  white-space: nowrap;
+}
+
+.mas {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  cursor: pointer;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.mas:hover {
+  background: var(--color-primario-suave);
 }

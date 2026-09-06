@@ -77,127 +77,155 @@
 
   <!-- ══ VENDER ═══════════════════════════════════════════════════════════ -->
   @if (seccion() === 'ventas') {
-    <div class="columnas">
-      <!-- Códigos del método -->
-      <section class="tarjeta">
-        <h2>Vender el método (código de activación)</h2>
-        <p class="nota">
-          Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
-          Pon el correo del comprador y le llega el código con las instrucciones; después él crea su
-          cuenta y lo canjea desde su perfil.
-        </p>
+    <!-- Códigos generados. La tarjeta es la pantalla principal de vender: la
+         lista de lo emitido, y el botón que abre la ventana para emitir más. -->
+    <section class="tarjeta">
+      <div class="tarjeta-cabecera">
+        <h2>Códigos generados</h2>
+        <button type="button" class="boton" (click)="abrirFormularioCodigos()">
+          Generar código
+        </button>
+      </div>
+      <p class="nota">
+        Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
+        Pones el correo del comprador y le llega el código con las instrucciones; después él crea su
+        cuenta y lo canjea desde su perfil.
+      </p>
 
-        <form [formGroup]="formCodigos" (ngSubmit)="generarCodigos()" novalidate>
-          <div class="fila">
-            <div class="campo estrecho">
-              <label for="cantidad">Cantidad</label>
-              <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
-            </div>
-            <div class="campo">
-              <label for="producto">Producto</label>
-              <select id="producto" formControlName="productCode">
-                @for (plan of planesLicencia(); track plan.code) {
-                  <option [value]="plan.productCode ?? plan.code">{{ plan.name }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="campo">
-            <label for="comprador">
-              Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
-            </label>
-            <input
-              id="comprador"
-              type="email"
-              formControlName="buyerEmail"
-              placeholder="Déjalo vacío y solo lo verás aquí"
-            />
-          </div>
-
-          <!-- El cobro. Se apunta aquí, al vender, porque es el único momento en
-               que alguien sabe cuánto entró y por dónde; el pago se crea solo
-               cuando el comprador canjea, que es cuando ya hay cuenta. -->
-          <div class="fila">
-            <div class="campo">
-              <label for="metodo-codigo">Cómo te pagó</label>
-              <select id="metodo-codigo" formControlName="paymentMethod">
-                @for (metodo of metodos; track metodo) {
-                  <option [value]="metodo">{{ metodo }}</option>
-                }
-              </select>
-            </div>
-            <div class="campo estrecho">
-              <label for="importe-codigo">
-                Importe S/ <span class="opcional">(vacío = precio del plan)</span>
-              </label>
-              <input
-                id="importe-codigo"
-                type="number"
-                min="0"
-                step="0.01"
-                formControlName="importe"
-              />
-            </div>
-          </div>
-
-          <div class="campo">
-            <label for="operacion-codigo">
-              Nº de operación <span class="opcional">(MTCN, opcional)</span>
-            </label>
-            <input
-              id="operacion-codigo"
-              type="text"
-              formControlName="paymentRef"
-              placeholder="para cuadrarlo con tu extracto"
-            />
-          </div>
-
-          <div class="campo">
-            <label for="nota">Nota <span class="opcional">(opcional)</span></label>
-            <input id="nota" type="text" formControlName="note" placeholder="Yape 3 sep · Ana G." />
-          </div>
-
-          <button type="submit" class="boton" [disabled]="trabajando()">
-            {{ trabajando() ? 'Generando…' : 'Generar código' }}
-          </button>
-        </form>
-
-        @if (codigosNuevos().length > 0) {
-          <div class="codigos-nuevos">
-            <p class="codigos-titulo">
-              Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+      @if (codigosNuevos().length > 0) {
+        <div class="codigos-nuevos">
+          <p class="codigos-titulo">
+            Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+          </p>
+          <!-- Que se hayan enviado no quita el copiar: un correo puede rebotar
+               o caer en spam, y esta pantalla es la única otra copia. -->
+          @if (codigoEnviadoA(); as correo) {
+            <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+          }
+          <!-- El pago aún no existe: nace al canjear, porque hasta entonces no
+               hay cuenta a la que colgarlo. Decirlo evita buscarlo en las
+               ventas y no encontrarlo. -->
+          @if (cobroApuntado(); as cobro) {
+            <p class="codigos-enviado">
+              Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
+              {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
             </p>
-            <!-- Que se hayan enviado no quita el copiar: un correo puede rebotar
-                 o caer en spam, y esta pantalla es la única otra copia. -->
-            @if (codigoEnviadoA(); as correo) {
-              <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+          } @else {
+            <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
+          }
+          <ul>
+            @for (codigo of codigosNuevos(); track codigo) {
+              <li>{{ codigo }}</li>
             }
-            <!-- El pago aún no existe: nace al canjear, porque hasta entonces no
-                 hay cuenta a la que colgarlo. Decirlo evita buscarlo en las
-                 ventas y no encontrarlo. -->
-            @if (cobroApuntado(); as cobro) {
-              <p class="codigos-enviado">
-                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
-                {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
-              </p>
-            } @else {
-              <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
-            }
-            <ul>
-              @for (codigo of codigosNuevos(); track codigo) {
-                <li>{{ codigo }}</li>
-              }
-            </ul>
-            <button type="button" class="boton" (click)="copiarCodigos()">
-              {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
-            </button>
-          </div>
-        }
-      </section>
+          </ul>
+          <button type="button" class="boton" (click)="copiarCodigos()">
+            {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
+          </button>
+        </div>
+      }
 
-      <!-- Bolsas de palabras -->
-      <!-- <section class="tarjeta">
+      @if (codigos().length === 0) {
+        <p class="nota">Todavía no has generado ninguno.</p>
+      } @else {
+        <!-- Se busca por lo que uno recuerda de una venta —el final del código,
+             el correo, la nota, el nº de operación—, no por el identificador. -->
+        <div class="filtros">
+          <input
+            type="search"
+            class="buscador"
+            placeholder="Buscar por código, correo, nota u operación…"
+            aria-label="Buscar códigos"
+            [value]="busquedaCodigos()"
+            (input)="buscarCodigos($event)"
+          />
+          <select
+            class="filtro-estado"
+            aria-label="Filtrar por estado"
+            [value]="filtroEstadoCodigos()"
+            (change)="filtrarCodigos($event)"
+          >
+            <option value="">Todos los estados</option>
+            <option value="AVAILABLE">Sin canjear</option>
+            <option value="REDEEMED">Canjeados</option>
+            <option value="VOID">Anulados</option>
+          </select>
+          <span class="conteo">
+            {{ codigosEnPantalla().length }} de {{ codigosFiltrados().length }}
+          </span>
+        </div>
+
+        @if (codigosFiltrados().length === 0) {
+          <p class="nota">Ningún código coincide con lo que buscas.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Producto</th>
+                  <th>Comprador</th>
+                  <th>Cobro</th>
+                  <th>Nota</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (codigo of codigosEnPantalla(); track codigo.id) {
+                  <tr>
+                    <td class="mono">…{{ codigo.hint }}</td>
+                    <td>{{ codigo.productCode }}</td>
+                    <td>{{ codigo.buyerEmail ?? '—' }}</td>
+                    <!-- Mientras esté sin canjear, este importe es dinero cobrado
+                         que todavía no figura en las ventas. Es el único sitio
+                         donde se ve. -->
+                    <td [class.tenue]="codigo.status !== 'AVAILABLE'">
+                      @if (codigo.amountCents) {
+                        S/ {{ codigo.amountCents / 100 | number: '1.2-2' }}
+                        <span class="tenue">· {{ codigo.paymentMethod }}</span>
+                      } @else {
+                        <span class="tenue">cortesía</span>
+                      }
+                    </td>
+                    <td class="tenue">{{ codigo.note ?? '—' }}</td>
+                    <td>
+                      <span
+                        class="pastilla"
+                        [class.buena]="codigo.status === 'REDEEMED'"
+                        [class.espera]="codigo.status === 'AVAILABLE'"
+                        [class.mala]="codigo.status === 'VOID'"
+                      >
+                        {{ codigo.status }}
+                      </span>
+                    </td>
+                    <td class="derecha">
+                      @if (codigo.status === 'AVAILABLE') {
+                        <button type="button" class="enlace-peligro" (click)="anularCodigo(codigo)">
+                          Anular
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (codigosOcultos() > 0) {
+            <button type="button" class="mas" (click)="todosLosCodigos.set(true)">
+              Ver los {{ codigosOcultos() }} restantes
+            </button>
+          } @else if (todosLosCodigos()) {
+            <button type="button" class="mas" (click)="todosLosCodigos.set(false)">
+              Ver menos
+            </button>
+          }
+        }
+      }
+    </section>
+
+    <!-- Bolsas de palabras -->
+    <!-- <section class="tarjeta">
         <h2>Activar palabras a mano</h2>
         <p class="nota">
           Para el humanizador, cuando el pago no pasó por PayPal. El usuario ya debe tener cuenta.
@@ -240,69 +268,127 @@
           </button>
         </form>
       </section> -->
-    </div>
 
-    <!-- Códigos generados -->
-    <section class="tarjeta">
-      <h2>Códigos generados</h2>
-      @if (codigos().length === 0) {
-        <p class="nota">Todavía no has generado ninguno.</p>
-      } @else {
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Producto</th>
-                <th>Comprador</th>
-                <th>Cobro</th>
-                <th>Nota</th>
-                <th>Estado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (codigo of codigos(); track codigo.id) {
-                <tr>
-                  <td class="mono">…{{ codigo.hint }}</td>
-                  <td>{{ codigo.productCode }}</td>
-                  <td>{{ codigo.buyerEmail ?? '—' }}</td>
-                  <!-- Mientras esté sin canjear, este importe es dinero cobrado
-                       que todavía no figura en las ventas. Es el único sitio
-                       donde se ve. -->
-                  <td [class.tenue]="codigo.status !== 'AVAILABLE'">
-                    @if (codigo.amountCents) {
-                      S/ {{ codigo.amountCents / 100 | number: '1.2-2' }}
-                      <span class="tenue">· {{ codigo.paymentMethod }}</span>
-                    } @else {
-                      <span class="tenue">cortesía</span>
+    <!-- ── Ventana de generar ──────────────────────────────────────────────
+         Fuera de la tarjeta para que se superponga a toda la página. El fondo
+         cierra al pulsarlo; el contenido no, o un clic dentro del formulario lo
+         cerraría con todo escrito. -->
+    @if (formularioCodigosAbierto()) {
+      <div class="ventana-fondo" (click)="cerrarFormularioCodigos()">
+        <div
+          class="ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-codigos"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-codigos">Vender el método (código de activación)</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="cerrarFormularioCodigos()"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <form [formGroup]="formCodigos" class="formulario" (ngSubmit)="generarCodigos()">
+              <div class="fila">
+                <div class="campo estrecho">
+                  <label for="cantidad">Cantidad</label>
+                  <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
+                </div>
+                <div class="campo">
+                  <label for="producto">Producto</label>
+                  <select id="producto" formControlName="productCode">
+                    @for (plan of planesLicencia(); track plan.code) {
+                      <option [value]="plan.productCode ?? plan.code">{{ plan.name }}</option>
                     }
-                  </td>
-                  <td class="tenue">{{ codigo.note ?? '—' }}</td>
-                  <td>
-                    <span
-                      class="pastilla"
-                      [class.buena]="codigo.status === 'REDEEMED'"
-                      [class.espera]="codigo.status === 'AVAILABLE'"
-                      [class.mala]="codigo.status === 'VOID'"
-                    >
-                      {{ codigo.status }}
-                    </span>
-                  </td>
-                  <td class="derecha">
-                    @if (codigo.status === 'AVAILABLE') {
-                      <button type="button" class="enlace-peligro" (click)="anularCodigo(codigo)">
-                        Anular
-                      </button>
+                  </select>
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="comprador">
+                  Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
+                </label>
+                <input
+                  id="comprador"
+                  type="email"
+                  formControlName="buyerEmail"
+                  placeholder="Déjalo vacío y solo lo verás aquí"
+                />
+              </div>
+
+              <!-- El cobro. Se apunta aquí, al vender, porque es el único momento
+                   en que alguien sabe cuánto entró y por dónde; el pago se crea
+                   solo cuando el comprador canjea, que es cuando ya hay cuenta. -->
+              <div class="fila">
+                <div class="campo">
+                  <label for="metodo-codigo">Cómo te pagó</label>
+                  <select id="metodo-codigo" formControlName="paymentMethod">
+                    @for (metodo of metodos; track metodo) {
+                      <option [value]="metodo">{{ metodo }}</option>
                     }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                  </select>
+                </div>
+                <div class="campo estrecho">
+                  <label for="importe-codigo">
+                    Importe S/ <span class="opcional">(vacío = precio del plan)</span>
+                  </label>
+                  <input
+                    id="importe-codigo"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    formControlName="importe"
+                  />
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="operacion-codigo">
+                  Nº de operación <span class="opcional">(MTCN, opcional)</span>
+                </label>
+                <input
+                  id="operacion-codigo"
+                  type="text"
+                  formControlName="paymentRef"
+                  placeholder="para cuadrarlo con tu extracto"
+                />
+              </div>
+
+              <div class="campo">
+                <label for="nota">Nota <span class="opcional">(opcional)</span></label>
+                <input
+                  id="nota"
+                  type="text"
+                  formControlName="note"
+                  placeholder="Yape 3 sep · Ana G."
+                />
+              </div>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarFormularioCodigos()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              [disabled]="trabajando()"
+              (click)="generarCodigos()"
+            >
+              {{ trabajando() ? 'Generando…' : 'Generar código' }}
+            </button>
+          </div>
         </div>
-      }
-    </section>
+      </div>
+    }
   }
 
   <!-- ══ YAPES POR REVISAR ════════════════════════════════════════════════ -->
@@ -440,7 +526,9 @@
                   <td class="derecha numero">
                     S/ {{ (grupo.priceCents / 100).toFixed(2) }}
                     @if (grupo.priceUsdCents) {
-                      <span class="bloque tenue">$ {{ (grupo.priceUsdCents / 100).toFixed(2) }}</span>
+                      <span class="bloque tenue"
+                        >$ {{ (grupo.priceUsdCents / 100).toFixed(2) }}</span
+                      >
                     }
                   </td>
                   <td>{{ duracion(grupo.durationDays) }}</td>
@@ -452,7 +540,12 @@
                     }
                   </td>
                   <td class="derecha">
-                    <button type="button" class="enlace" (click)="editarGrupo(grupo)">Editar</button>
+                    <button type="button" class="enlace" (click)="verCapitulos(grupo)">
+                      Ver capítulos
+                    </button>
+                    <button type="button" class="enlace" (click)="editarGrupo(grupo)">
+                      Editar
+                    </button>
                     <button
                       type="button"
                       class="enlace"
@@ -543,45 +636,90 @@
 
               <div class="fila">
                 <div class="campo">
-                  <label for="g-soles">Precio en soles</label>
+                  <label for="g-soles">Precio</label>
                   <input id="g-soles" type="number" formControlName="soles" min="0" step="1" />
-                  <span class="ayuda">Lo que paga por Yape o Plin.</span>
-                </div>
-
-                <div class="campo">
-                  <label for="g-dolares">Precio en dólares</label>
-                  <input id="g-dolares" type="number" formControlName="dolares" min="0" step="0.01" />
                   <span class="ayuda">
-                    Para PayPal, que no cobra en soles. Algo por encima del cambio: se queda con un
-                    5,4 % más una comisión fija. En 0 se vende solo por Yape.
+                    Lo que paga por Yape o Plin. En PayPal:
+                    <b>$ {{ dolaresCalculados().toFixed(2) }}</b>
                   </span>
                 </div>
-              </div>
 
-              <div class="fila">
                 <div class="campo">
                   <label for="g-dias">Duración en días</label>
-                  <input id="g-dias" type="number" formControlName="durationDays" min="0" step="30" />
+                  <input
+                    id="g-dias"
+                    type="number"
+                    formControlName="durationDays"
+                    min="0"
+                    step="30"
+                  />
                   <span class="ayuda">
                     90 = tres meses. Con 0 no caduca nunca. Al renovar se alarga la misma licencia,
                     así que el comprador no reinstala el conector.
                   </span>
                 </div>
+              </div>
 
-                <div class="campo">
-                  <label for="g-tope">Consultas por día</label>
-                  <input id="g-tope" type="number" formControlName="mcpCallsPerDay" min="0" />
-                  <span class="ayuda">
-                    No es un límite de uso: trabajar de verdad son diez o quince al día. Es el freno
-                    contra vaciar el método de una sentada. 0 = sin freno.
-                  </span>
-                </div>
+              <div class="campo">
+                <label for="g-tope">Consultas por día</label>
+                <input id="g-tope" type="number" formControlName="mcpCallsPerDay" min="0" />
+                <span class="ayuda">
+                  No es un límite de uso: trabajar de verdad son diez o quince al día. Es el freno
+                  contra vaciar el método de una sentada. 0 = sin freno.
+                </span>
               </div>
 
               <label class="casilla">
                 <input type="checkbox" formControlName="active" />
                 <span>A la venta en la web</span>
               </label>
+
+              <!-- ── Qué capítulos lleva ────────────────────────────────────
+                   Se eligen aquí porque la pregunta natural es «qué lleva este
+                   producto», no «a qué producto pertenece este capítulo». Lo
+                   segundo obliga a recordar el grupo mientras se recorre una
+                   lista larga. -->
+              <div class="campo">
+                <label>Capítulos que incluye</label>
+
+                @if (capitulosOrdenados().length === 0) {
+                  <span class="ayuda">
+                    Todavía no hay capítulos subidos. Se suben en «Capítulos» y luego se marcan
+                    aquí.
+                  </span>
+                } @else {
+                  <ul class="lista-capitulos">
+                    @for (skill of capitulosOrdenados(); track skill.id) {
+                      <li>
+                        <label class="capitulo">
+                          <input
+                            type="checkbox"
+                            [checked]="capitulosElegidos().has(skill.id)"
+                            (change)="alternarCapitulo(skill.id)"
+                          />
+                          <span class="capitulo-texto">
+                            <b>{{ skill.displayName }}</b>
+                            <span class="bloque mono tenue">{{ skill.code }}</span>
+                          </span>
+                          <!-- Marcarlo aquí lo MUEVE: un capítulo pertenece a un
+                               grupo y solo a uno. Sin este aviso, añadirlo a un
+                               producto se lo quitaría a otro sin que se viera. -->
+                          @if (grupoDe(skill.productCode); as otro) {
+                            <span class="pastilla aviso-mover">ahora en «{{ otro }}»</span>
+                          }
+                          @if (!skill.active) {
+                            <span class="pastilla">oculto</span>
+                          }
+                        </label>
+                      </li>
+                    }
+                  </ul>
+                  <span class="ayuda">
+                    {{ capitulosElegidos().size }} de {{ capitulosOrdenados().length }} marcados. Se
+                    aplican al guardar.
+                  </span>
+                }
+              </div>
             </form>
           </div>
 
@@ -591,6 +729,68 @@
             </button>
             <button type="button" class="boton" (click)="guardarGrupo()" [disabled]="trabajando()">
               {{ editandoGrupo() ? 'Guardar cambios' : 'Crear grupo' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── Los capítulos de un grupo ───────────────────────────────────────
+         Solo mira: para cambiar cuáles lleva se usa «Editar», que es donde se
+         marcan. Tener dos sitios para lo mismo acaba con los dos a medias. -->
+    @if (viendoCapitulos(); as grupoVisto) {
+      <div class="ventana-fondo" (click)="cerrarCapitulos()">
+        <div
+          class="ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-capitulos"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-capitulos">Capítulos de «{{ grupoVisto.name }}»</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarCapitulos()">
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            @if (capitulosDelGrupo().length === 0) {
+              <p class="tenue">
+                Este grupo no tiene ningún capítulo todavía. Se le añaden desde «Editar».
+              </p>
+            } @else {
+              <ol class="capitulos-grupo">
+                @for (skill of capitulosDelGrupo(); track skill.id) {
+                  <li>
+                    <div>
+                      <b>{{ skill.displayName }}</b>
+                      <span class="bloque mono tenue">{{ skill.code }}</span>
+                      <span class="bloque tenue">{{ skill.summary }}</span>
+                    </div>
+                    <div class="capitulo-estado">
+                      @if (skill.active) {
+                        <span class="pastilla buena">Publicado</span>
+                      } @else {
+                        <span class="pastilla">Oculto</span>
+                      }
+                    </div>
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarCapitulos()">
+              Cerrar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              (click)="cerrarCapitulos(); editarGrupo(grupoVisto)"
+            >
+              Cambiar capítulos
             </button>
           </div>
         </div>
@@ -628,9 +828,7 @@
             </p>
 
             <div class="campo">
-              <label for="confirmar-borrado">
-                Escribe <b>eliminar</b> para confirmar
-              </label>
+              <label for="confirmar-borrado"> Escribe <b>"eliminar"</b> para confirmar </label>
               <input
                 id="confirmar-borrado"
                 type="text"
