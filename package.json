@@ -11,7 +11,9 @@
     "prestart": "node scripts/generar-environment.js",
     "prebuild": "node scripts/generar-environment.js",
     "postinstall": "node scripts/generar-environment.js",
-    "deploy": "node scripts/desplegar.js"
+    "deploy:hetzner": "node scripts/desplegar.js",
+    "deploy:cf": "npm run build && wrangler pages deploy dist/acostaresearch-frontend/browser --project-name=acostaresearch --branch=main",
+    "deploy": "npm run build && wrangler pages deploy dist/acostaresearch-frontend/browser --project-name=acostaresearch --branch=main"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -34,6 +36,7 @@
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "wrangler": "^4.129.0"
   }
 }
