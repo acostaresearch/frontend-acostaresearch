@@ -146,3 +146,23 @@ export interface Payment {
   reviewNote?: string | null;
   plan: { code: string; name: string; words: number; durationDays: number };
 }
+
+/**
+ * Cómo se llama cada medio de pago en pantalla.
+ *
+ * El servidor guarda el código en mayúsculas y sin acentos, que es lo correcto
+ * para una columna y horrible para quien lee «WESTERN_UNION» donde esperaba el
+ * nombre de algo que reconoce. Lo que no esté en la lista se enseña tal cual:
+ * es preferible un código feo a un hueco.
+ *
+ * Vive aquí, y no en cada pantalla, porque lo usan el perfil del comprador y
+ * los gráficos del panel: dos copias acabarían nombrando distinto lo mismo.
+ */
+export const MEDIOS_PAGO: Record<string, string> = {
+  PAYPAL: 'PayPal',
+  YAPE: 'Yape',
+  PLIN: 'Plin',
+  TRANSFERENCIA: 'Transferencia',
+  WESTERN_UNION: 'Western Union',
+  CORTESIA: 'Cortesía',
+};

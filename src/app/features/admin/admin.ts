@@ -13,7 +13,11 @@ import {
   PackAdmin,
   PagoAdmin,
 } from '../../core/models/admin.model';
-import { PagoPorRevisar, PagoRevisado } from '../../core/models/payment.model';
+import {
+  MEDIOS_PAGO as MEDIOS,
+  PagoPorRevisar,
+  PagoRevisado,
+} from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
 import { DialogoService } from '../../core/services/dialogo.service';
@@ -22,6 +26,7 @@ import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { columnas, lunes, porCategoria, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
@@ -44,6 +49,22 @@ interface EnCola {
   analisis: AnalisisBundle | null;
   estado: 'analizando' | 'lista' | 'subiendo' | 'publicada' | 'error';
   error: string | null;
+}
+
+/**
+ * Semanas que abarcan los gráficos.
+ *
+ * Ocho es lo que cabe legible en una tarjeta del ancho del panel sin que las
+ * etiquetas del eje se pisen, y a la vez suficiente para ver una tendencia en
+ * un negocio que vende por trimestres.
+ */
+const SEMANAS = 8;
+
+/** Importes cortos para los ejes: S/ 1,2k en vez de S/ 1.200. */
+function soles(cents: number): string {
+  const valor = cents / 100;
+  if (valor >= 1000) return `S/ ${(valor / 1000).toFixed(1).replace('.', ',')}k`;
+  return `S/ ${Math.round(valor)}`;
 }
 
 /** Métodos de pago que acepta el backend para una activación manual. */
@@ -76,6 +97,28 @@ const CODIGOS_VISIBLES = 8;
  */
 const SOLES_POR_DOLAR = 3.75;
 const RECARGO_PAYPAL = 0.09;
+
+/**
+ * Deja el código de un grupo como lo exige el servidor: `MAYUSCULAS_CON_GUION`.
+ *
+ * Se normaliza mientras se escribe en vez de rechazarlo al guardar. Ese código
+ * viaja en cada licencia emitida y en los logs, así que la regla es estricta a
+ * propósito —sin tildes, sin espacios, sin minúsculas—, pero nada de eso es
+ * evidente para quien escribe «Método_Tesis_Humanizador» y recibe un error
+ * después de haber rellenado el formulario entero.
+ *
+ * La descomposición Unicode separa la tilde de su letra («é» → «e» + acento) y
+ * el rango se lleva por delante los acentos sueltos, que es la forma corta de
+ * convertir É en E sin una tabla de equivalencias.
+ */
+function normalizarCodigoDeGrupo(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]+/g, '_')
+    .replace(/_{2,}/g, '_');
+}
 
 /** Lo que se cobrará por PayPal. Se redondea hacia arriba a la décima. */
 function aDolares(soles: number): number {
@@ -335,6 +378,97 @@ export class Admin implements OnInit {
     () => this.codigosFiltrados().length - this.codigosEnPantalla().length,
   );
 
+  // ── Gráficos ─────────────────────────────────────────────────────────────
+  //
+  // Se calculan sobre lo que el panel YA tiene cargado: ni una petición más.
+  // Eso pone un límite honesto que conviene tener presente —`/payments/recent`
+  // devuelve los últimos 50 cobros—, y por eso el pie de cada gráfico dice
+  // sobre qué está hecho en lugar de dejar creer que es todo el histórico.
+
+  /**
+   * Lo que se dice al pasar por encima de una barra.
+   *
+   * Lleva de qué gráfico es porque hay dos en la misma fila: sin eso, señalar
+   * una semana de ingresos pintaba también una pista sobre los vencimientos.
+   */
+  readonly pista = signal<{ texto: string; centro: number; grafico: string } | null>(null);
+
+  /** Cobros efectivos: los que fallaron o se cancelaron no son ingresos. */
+  private readonly cobrados = computed(() => this.pagos().filter((p) => p.status === 'PAID'));
+
+  readonly ingresosPorSemana = computed(() =>
+    columnas(
+      porSemana(
+        this.cobrados(),
+        (pago) => (pago.paidAt ? new Date(pago.paidAt) : null),
+        (pago) => pago.amountCents,
+        SEMANAS,
+      ).map((punto) => ({
+        ...punto,
+        detalle: `${punto.detalle}: ${soles(punto.valor)}`,
+      })),
+      soles,
+    ),
+  );
+
+  /**
+   * Por dónde entra el dinero.
+   *
+   * Categorías sin orden natural —PayPal, Yape, Western Union—, así que todas
+   * las barras van del mismo color: la longitud ya dice cuál es mayor, y teñir
+   * cada una de un tono distinto gastaría el color en repetir eso mismo.
+   */
+  readonly ingresosPorMedio = computed(() =>
+    porCategoria(
+      this.cobrados(),
+      (pago) => MEDIOS[pago.provider] ?? pago.provider,
+      (pago) => pago.amountCents,
+    ),
+  );
+
+  /**
+   * Licencias que caducan en las próximas semanas.
+   *
+   * Es el único sitio del panel que mira hacia adelante. Una licencia vencida
+   * es un cliente que se va sin avisar; verlas con semanas de margen es lo que
+   * permite escribirle antes y no después.
+   */
+  readonly vencimientos = computed(() =>
+    columnas(
+      porSemana(
+        this.licencias().filter((l) => l.status === 'ACTIVE'),
+        (licencia) => (licencia.expiresAt ? new Date(licencia.expiresAt) : null),
+        () => 1,
+        SEMANAS,
+        lunes(new Date()),
+        false,
+      ).map((punto) => ({
+        ...punto,
+        detalle: `${punto.detalle}: ${punto.valor} ${punto.valor === 1 ? 'licencia' : 'licencias'}`,
+      })),
+      (valor) => `${Math.round(valor)}`,
+    ),
+  );
+
+  mostrarPista(barra: { detalle: string; centro: number }, grafico: string): void {
+    this.pista.set({ texto: barra.detalle, centro: barra.centro, grafico });
+  }
+
+  /** La pista, solo si es de este gráfico. */
+  pistaDe(grafico: string): { texto: string; centro: number } | null {
+    const actual = this.pista();
+    return actual && actual.grafico === grafico ? actual : null;
+  }
+
+  ocultarPista(): void {
+    this.pista.set(null);
+  }
+
+  /** Importes en soles, para las etiquetas de los gráficos. */
+  soles(cents: number): string {
+    return soles(cents);
+  }
+
   // ── Formularios ──────────────────────────────────────────────────────────
   readonly formCodigos = this.fb.nonNullable.group({
     cantidad: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
@@ -500,6 +634,16 @@ export class Admin implements OnInit {
     // componente vive lo que la página, así que no hace falta soltar esto.
     this.formGrupo.controls.soles.valueChanges.subscribe((soles) => {
       this.solesEscritos.set(Number(soles) || 0);
+    });
+
+    // El código se corrige solo según se escribe. `emitEvent: false` corta el
+    // bucle: sin él, escribir el valor corregido dispararía otra vez este mismo
+    // suscriptor.
+    this.formGrupo.controls.code.valueChanges.subscribe((code) => {
+      const limpio = normalizarCodigoDeGrupo(code ?? '');
+      if (limpio !== code) {
+        this.formGrupo.controls.code.setValue(limpio, { emitEvent: false });
+      }
     });
   }
 

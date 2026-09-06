@@ -35,6 +35,171 @@
     </div>
   </section>
 
+  <!-- ── Gráficos ─────────────────────────────────────────────────────────
+       Debajo de las cifras y encima de las pestañas: es el vistazo, no una
+       sección donde haya que entrar. Se calculan con lo que el panel ya trae
+       cargado, así que no cuestan ni una petición más. -->
+  <section class="graficos">
+    <article class="grafico">
+      <h2>Ingresos por semana</h2>
+      <p class="grafico-cifra">{{ soles(ingresosPorSemana().total) }}</p>
+
+      @if (ingresosPorSemana().total === 0) {
+        <p class="nota">Todavía no hay cobros confirmados en estas semanas.</p>
+      } @else {
+        <div class="lienzo">
+          @if (pistaDe('ingresos'); as p) {
+            <span class="pista" [style.left.%]="p.centro">{{ p.texto }}</span>
+          }
+          <svg
+            [attr.viewBox]="'0 0 ' + ingresosPorSemana().ancho + ' ' + ingresosPorSemana().alto"
+            role="img"
+            aria-label="Ingresos cobrados por semana"
+          >
+            @for (guia of ingresosPorSemana().guias; track guia.y) {
+              <line
+                class="guia"
+                [attr.x1]="ingresosPorSemana().canal"
+                [attr.y1]="guia.y"
+                [attr.x2]="ingresosPorSemana().ancho"
+                [attr.y2]="guia.y"
+              />
+              <text class="marca" [attr.x]="ingresosPorSemana().canal - 6" [attr.y]="guia.y + 3">
+                {{ guia.texto }}
+              </text>
+            }
+
+            @for (barra of ingresosPorSemana().barras; track barra.etiqueta) {
+              <g
+                tabindex="0"
+                (mouseenter)="mostrarPista(barra, 'ingresos')"
+                (mouseleave)="ocultarPista()"
+                (focus)="mostrarPista(barra, 'ingresos')"
+                (blur)="ocultarPista()"
+              >
+                <!-- Zona sensible del alto del gráfico: apuntar a una barra de
+                     dos píxeles con el ratón no es razonable. -->
+                <rect
+                  class="zona"
+                  [attr.x]="barra.x - 4"
+                  y="0"
+                  [attr.width]="barra.ancho + 8"
+                  [attr.height]="ingresosPorSemana().base"
+                />
+                @if (barra.forma) {
+                  <path class="barra" [attr.d]="barra.forma" />
+                }
+              </g>
+            }
+
+            @for (barra of ingresosPorSemana().barras; track barra.etiqueta) {
+              <text
+                class="eje"
+                [attr.x]="barra.x + barra.ancho / 2"
+                [attr.y]="ingresosPorSemana().alto - 5"
+              >
+                {{ barra.etiqueta }}
+              </text>
+            }
+          </svg>
+        </div>
+        <p class="grafico-pie">Cobros confirmados de los últimos 50 movimientos.</p>
+      }
+    </article>
+
+    <article class="grafico">
+      <h2>Por dónde entra el dinero</h2>
+      <p class="grafico-cifra">{{ ingresosPorMedio().length }}</p>
+      <p class="grafico-subcifra">
+        {{ ingresosPorMedio().length === 1 ? 'medio de pago' : 'medios de pago' }}
+      </p>
+
+      @if (ingresosPorMedio().length === 0) {
+        <p class="nota">Todavía no hay cobros confirmados.</p>
+      } @else {
+        <ul class="barras">
+          @for (medio of ingresosPorMedio(); track medio.etiqueta) {
+            <li>
+              <span class="barra-nombre">{{ medio.etiqueta }}</span>
+              <span class="barra-pista">
+                <span class="barra-relleno" [style.width.%]="medio.parte"></span>
+              </span>
+              <span class="barra-valor">{{ soles(medio.valor) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <article class="grafico">
+      <h2>Vencen en 8 semanas</h2>
+      <p class="grafico-cifra">{{ vencimientos().total }}</p>
+      <p class="grafico-subcifra">
+        {{ vencimientos().total === 1 ? 'licencia por renovar' : 'licencias por renovar' }}
+      </p>
+
+      @if (vencimientos().total === 0) {
+        <p class="nota">Ninguna licencia activa caduca en las próximas ocho semanas.</p>
+      } @else {
+        <div class="lienzo">
+          @if (pistaDe('vencimientos'); as p) {
+            <span class="pista" [style.left.%]="p.centro">{{ p.texto }}</span>
+          }
+          <svg
+            [attr.viewBox]="'0 0 ' + vencimientos().ancho + ' ' + vencimientos().alto"
+            role="img"
+            aria-label="Licencias activas que caducan, por semana"
+          >
+            @for (guia of vencimientos().guias; track guia.y) {
+              <line
+                class="guia"
+                [attr.x1]="vencimientos().canal"
+                [attr.y1]="guia.y"
+                [attr.x2]="vencimientos().ancho"
+                [attr.y2]="guia.y"
+              />
+              <text class="marca" [attr.x]="vencimientos().canal - 6" [attr.y]="guia.y + 3">
+                {{ guia.texto }}
+              </text>
+            }
+
+            @for (barra of vencimientos().barras; track barra.etiqueta) {
+              <g
+                tabindex="0"
+                (mouseenter)="mostrarPista(barra, 'vencimientos')"
+                (mouseleave)="ocultarPista()"
+                (focus)="mostrarPista(barra, 'vencimientos')"
+                (blur)="ocultarPista()"
+              >
+                <rect
+                  class="zona"
+                  [attr.x]="barra.x - 4"
+                  y="0"
+                  [attr.width]="barra.ancho + 8"
+                  [attr.height]="vencimientos().base"
+                />
+                @if (barra.forma) {
+                  <path class="barra" [attr.d]="barra.forma" />
+                }
+              </g>
+            }
+
+            @for (barra of vencimientos().barras; track barra.etiqueta) {
+              <text
+                class="eje"
+                [attr.x]="barra.x + barra.ancho / 2"
+                [attr.y]="vencimientos().alto - 5"
+              >
+                {{ barra.etiqueta }}
+              </text>
+            }
+          </svg>
+        </div>
+        <p class="grafico-pie">Escríbeles antes de que caduque, no después.</p>
+      }
+    </article>
+  </section>
+
   <nav class="pestanas">
     <button type="button" [class.activa]="seccion() === 'ventas'" (click)="ir('ventas')">
       Vender
@@ -706,7 +871,7 @@
                     @if (editandoGrupo()) {
                       No se puede cambiar: lo llevan las licencias ya vendidas.
                     } @else {
-                      Mayúsculas y guion bajo. No se podrá cambiar después.
+                      Se pone en mayúsculas solo, sin tildes ni espacios. No se podrá cambiar después.
                     }
                   </span>
                 </div>

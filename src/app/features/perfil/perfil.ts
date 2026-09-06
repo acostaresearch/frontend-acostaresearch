@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
-import { License, Payment } from '../../core/models/payment.model';
+import { License, MEDIOS_PAGO, Payment } from '../../core/models/payment.model';
 import { Balance } from '../../core/models/rewrite.model';
 import { Role, UserStatus } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -28,23 +28,6 @@ const ESTADOS: Record<UserStatus, string> = {
   PENDING: 'Pendiente de verificar',
   ACTIVE: 'Activa',
   SUSPENDED: 'Suspendida',
-};
-
-/**
- * Cómo se llama cada medio de pago en la tabla de compras.
- *
- * El servidor guarda el código en mayúsculas y sin acentos, que es lo correcto
- * para una columna, y horrible para el cliente que abre su perfil y lee
- * «WESTERN_UNION» donde esperaba el nombre de algo que reconoce. Lo que no esté
- * en la lista se enseña tal cual: es preferible un código feo a un hueco.
- */
-const MEDIOS_PAGO: Record<string, string> = {
-  PAYPAL: 'PayPal',
-  YAPE: 'Yape',
-  PLIN: 'Plin',
-  TRANSFERENCIA: 'Transferencia',
-  WESTERN_UNION: 'Western Union',
-  CORTESIA: 'Cortesía',
 };
 
 const ESTADOS_PAGO: Record<Payment['status'], string> = {

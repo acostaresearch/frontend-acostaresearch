@@ -1379,3 +1379,189 @@ td.acciones {
   font-size: 14px;
   line-height: 1;
 }
+
+/* ── Gráficos ──────────────────────────────────────────────────────────────
+ *
+ * Sin librería: son barras sobre datos que ya están en memoria, y el SVG lo
+ * calcula `graficos.ts`. Aquí solo está el aspecto.
+ *
+ * Las tres reglas que gobiernan esto: marcas finas, rejilla que no compite con
+ * los datos, y ni un borde alrededor de las barras —lo que separa es el aire—.
+ */
+.graficos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.grafico {
+  padding: 16px 18px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.grafico h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+/* La cifra grande va con las figuras proporcionales de la fuente: `tabular-nums`
+   iguala el ancho de cada dígito y a este tamaño deja los números sueltos. */
+.grafico-cifra {
+  margin: 8px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-texto);
+}
+
+.grafico-subcifra {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.grafico .nota {
+  margin: 10px 0 0;
+}
+
+.grafico-pie {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+/* El lienzo se dimensiona con el SVG, que ya reserva la banda de las etiquetas
+   del eje. Fijarle un alto dejaría el eje fuera y la tarjeta con scroll. */
+.lienzo {
+  position: relative;
+  margin-top: 10px;
+}
+
+.lienzo svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.barra {
+  fill: var(--color-primario);
+}
+
+/* La zona sensible ocupa todo el alto: apuntar a una barra de dos píxeles con
+   el ratón no es razonable, y con el teclado directamente no se puede. */
+.zona {
+  fill: transparent;
+}
+
+.lienzo g:hover .barra,
+.lienzo g:focus-visible .barra {
+  fill: var(--color-primario-oscuro);
+}
+
+.lienzo g:focus {
+  outline: none;
+}
+
+.lienzo g:focus-visible .zona {
+  fill: var(--color-primario-suave);
+}
+
+/* Rejilla y ejes: un paso por encima del fondo, línea sólida de un píxel. Una
+   rejilla discontinua se lee como umbral o proyección, y aquí no es ninguna de
+   las dos cosas. */
+.guia {
+  stroke: var(--color-borde);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Las marcas del eje van dentro del canal, alineadas a su derecha. */
+.marca {
+  text-anchor: end;
+}
+
+.marca,
+.eje {
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  fill: var(--color-texto-tenue);
+}
+
+.eje {
+  text-anchor: middle;
+}
+
+/* La pista aparece al pasar por encima o al tabular. No es la única forma de
+   leer el dato: el eje da la escala y las tablas del panel tienen el detalle. */
+.pista {
+  position: absolute;
+  top: -4px;
+  z-index: 2;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  color: var(--color-superficie);
+  background: var(--color-texto);
+  border-radius: var(--radio-sm);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* ── Barras horizontales (por dónde entra el dinero) ───────────────────────
+ *
+ * Categorías sin orden natural, así que todas comparten color: la longitud ya
+ * dice cuál es mayor, y un tono por barra gastaría el color en repetirlo.
+ */
+.barras {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barras li {
+  display: grid;
+  grid-template-columns: minmax(64px, auto) 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.barra-nombre {
+  color: var(--color-texto-suave);
+}
+
+.barra-pista {
+  height: 8px;
+  background: var(--color-fondo);
+  border-radius: 4px;
+}
+
+.barra-relleno {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  background: var(--color-primario);
+  border-radius: 0 4px 4px 0;
+}
+
+.barra-valor {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
+}
+
+@media (max-width: 900px) {
+  .graficos {
+    grid-template-columns: 1fr;
+  }
+}
