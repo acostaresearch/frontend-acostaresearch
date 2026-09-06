@@ -22,6 +22,8 @@ export interface CodigosGenerados {
   productCode: string;
   /** Los valores EN CLARO. Es la única vez que se pueden leer. */
   codes: string[];
+  /** Identificadores de los códigos creados, para adjuntarles el comprobante. */
+  ids: string[];
   /** Correo al que se enviaron, o null si no se indicó ninguno. */
   enviadoA: string | null;
   /** Cobro apuntado, o null si fue una cortesía. */
@@ -53,6 +55,26 @@ export class AdminService {
     return this.http
       .post<ApiResponse<CodigosGenerados>>(`${this.licencias}/codes`, datos)
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Adjunta el comprobante de una venta cobrada fuera de la web.
+   *
+   * Va en una petición aparte porque la imagen viaja como cuerpo crudo: el
+   * resto de la API está limitada a 100 KB, que es demasiado poco para la foto
+   * de una pantalla.
+   */
+  subirComprobanteDeCodigo(id: string, imagen: File): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(`${this.licencias}/codes/${id}/proof`, imagen, {
+        headers: { 'Content-Type': imagen.type },
+      })
+      .pipe(map(() => undefined));
+  }
+
+  /** La imagen del comprobante. Se pide con el token, así que llega como blob. */
+  comprobanteDeCodigo(id: string): Observable<Blob> {
+    return this.http.get(`${this.licencias}/codes/${id}/proof`, { responseType: 'blob' });
   }
 
   codigos(): Observable<ActivationCode[]> {

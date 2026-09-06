@@ -31,6 +31,8 @@ export interface ActivationCode {
   paymentMethod: MetodoDeCobro | null;
   paymentRef: string | null;
   amountCents: number | null;
+  /** Presente solo si se guardó una captura de la venta. */
+  proofMime: string | null;
   redeemedAt: string | null;
   expiresAt: string | null;
   createdAt: string;

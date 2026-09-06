@@ -349,6 +349,8 @@ export class Admin implements OnInit {
   // ── Códigos: ventana, búsqueda y filtro ──────────────────────────────────
   /** La ventana de generar. Vive fuera de la tarjeta, encima de la página. */
   readonly formularioCodigosAbierto = signal(false);
+  /** La de crear un código promocional. Mismo trato: crear es algo puntual. */
+  readonly formularioDescuentoAbierto = signal(false);
   readonly busquedaCodigos = signal('');
   readonly filtroEstadoCodigos = signal<'' | 'AVAILABLE' | 'REDEEMED' | 'VOID'>('');
   /** Si está desplegada la lista entera o solo los primeros. */
@@ -510,6 +512,17 @@ export class Admin implements OnInit {
   readonly descuentoAplicado = signal<Descuento | null>(null);
   readonly comprobandoDescuento = signal(false);
   readonly errorDescuento = signal<string | null>(null);
+
+  /**
+   * Captura del pago que acompaña a esta venta, si el administrador quiere
+   * guardarla.
+   *
+   * Es opcional del todo: una cortesía no tiene comprobante y una transferencia
+   * que ya se vio en el extracto tampoco lo necesita. Cuando lo hay, es lo que
+   * permite reconstruir meses después de dónde salió ese dinero.
+   */
+  readonly capturaCodigo = signal<File | null>(null);
+  readonly capturaCodigoPrevia = signal<string | null>(null);
 
   readonly formDescuento = this.fb.nonNullable.group({
     // En soles, que es como piensa el precio; se convierte a céntimos al enviar.
@@ -1744,6 +1757,18 @@ export class Admin implements OnInit {
 
   // ── Descuentos ───────────────────────────────────────────────────────────
 
+  abrirFormularioDescuento(): void {
+    this.error.set(null);
+    // El código de la vez anterior se quita al abrir: dejarlo puesto haría
+    // pensar que el nuevo es ese, y son códigos que se reparten.
+    this.descuentoNuevo.set(null);
+    this.formularioDescuentoAbierto.set(true);
+  }
+
+  cerrarFormularioDescuento(): void {
+    if (this.trabajando()) return;
+    this.formularioDescuentoAbierto.set(false);
+  }
   crearDescuento(): void {
     if (this.formDescuento.invalid || this.trabajando()) {
       this.formDescuento.markAllAsTouched();
@@ -1771,6 +1796,7 @@ export class Admin implements OnInit {
           this.descuentos.update((lista) => [descuento, ...lista]);
           this.formDescuento.patchValue({ code: '', note: '' });
           this.trabajando.set(false);
+          this.formularioDescuentoAbierto.set(false);
         },
         error: (e: unknown) => {
           this.error.set(mensajeDeError(e));
@@ -1816,7 +1842,75 @@ export class Admin implements OnInit {
     this.codigoEnviadoA.set(null);
     this.cobroApuntado.set(null);
     this.limpiarDescuento();
+    this.quitarCapturaCodigo();
     this.formularioCodigosAbierto.set(true);
+  }
+
+  /**
+   * Sube la captura a los códigos recién creados.
+   *
+   * Se manda a todos los de la tanda: generar varios de golpe es repartir una
+   * misma venta —un colegio que compra diez—, y el comprobante es el mismo para
+   * todos. Adjuntarlo solo al primero dejaría los otros nueve sin justificante.
+   */
+  private adjuntarCaptura(ids: string[]): void {
+    const imagen = this.capturaCodigo();
+    if (!imagen || ids.length === 0) return;
+
+    forkJoin(ids.map((id) => this.admin.subirComprobanteDeCodigo(id, imagen))).subscribe({
+      next: () => {
+        this.quitarCapturaCodigo();
+        this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
+      },
+      error: (e: unknown) => {
+        // El código ya existe y es válido: esto solo avisa de que la imagen no
+        // se guardó, para que se pueda volver a intentar sin rehacer la venta.
+        this.error.set(`El código se generó, pero el comprobante no: ${mensajeDeError(e)}`);
+        this.quitarCapturaCodigo();
+      },
+    });
+  }
+
+  /**
+   * Abre el comprobante de un código en otra pestaña.
+   *
+   * No puede ser un enlace normal: la imagen se sirve por la API y exige el
+   * token, que un `<img src>` o un `target="_blank"` no mandan. Se descarga con
+   * la sesión puesta y se abre el blob ya en memoria.
+   */
+  verComprobanteDeCodigo(codigo: ActivationCode): void {
+    this.admin.comprobanteDeCodigo(codigo.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        // Se suelta pasado un momento: revocarlo de inmediato dejaría la
+        // pestaña nueva sin nada que enseñar.
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  /** Guarda la captura elegida y su vista previa. */
+  elegirCapturaCodigo(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0] ?? null;
+    entrada.value = '';
+
+    this.quitarCapturaCodigo();
+    if (!archivo) return;
+
+    this.capturaCodigo.set(archivo);
+    this.capturaCodigoPrevia.set(URL.createObjectURL(archivo));
+  }
+
+  quitarCapturaCodigo(): void {
+    const previa = this.capturaCodigoPrevia();
+    // La vista previa es un object URL: si no se suelta, el navegador se queda
+    // con la imagen en memoria hasta que se recargue la página.
+    if (previa) URL.revokeObjectURL(previa);
+    this.capturaCodigo.set(null);
+    this.capturaCodigoPrevia.set(null);
   }
 
   private limpiarDescuento(): void {
@@ -1916,10 +2010,16 @@ export class Admin implements OnInit {
         importe: importe === null || importe === undefined ? undefined : importe,
       })
       .subscribe({
-        next: ({ codes, enviadoA, cobro }) => {
+        next: ({ codes, ids, enviadoA, cobro }) => {
           this.codigosNuevos.set(codes);
           this.codigoEnviadoA.set(enviadoA);
           this.cobroApuntado.set(cobro);
+
+          // La captura se sube DESPUÉS, cuando ya existe el código al que
+          // engancharla, y sin bloquear: los códigos ya están generados y son
+          // lo que el administrador necesita en pantalla. Si la imagen falla se
+          // avisa, pero no se deshace una venta por una foto.
+          this.adjuntarCaptura(ids);
           this.formCodigos.patchValue({ buyerEmail: '', note: '', paymentRef: '', importe: null });
           this.trabajando.set(false);
           // La ventana se cierra sola: los códigos en claro se enseñan en la

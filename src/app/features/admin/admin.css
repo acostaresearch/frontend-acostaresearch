@@ -1584,8 +1584,13 @@ td.acciones {
   min-width: 0;
 }
 
+/* El .boton global lleva width:100%, pensado para el boton principal de un
+   formulario. Dentro de una fila hay que devolverle su ancho natural o se come
+   el hueco del campo que tiene al lado. */
 .fila-descuento .boton {
   flex: none;
+  width: auto;
+  white-space: nowrap;
 }
 
 .ayuda.descuento-ok {

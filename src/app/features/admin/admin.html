@@ -349,7 +349,21 @@
                         <span class="tenue">cortesía</span>
                       }
                     </td>
-                    <td class="tenue">{{ codigo.note ?? '—' }}</td>
+                    <td class="tenue">
+                      {{ codigo.note ?? '—' }}
+                      <!-- El comprobante se pide con el token, así que no puede
+                           ser un <img src>: se abre en una pestaña con el blob
+                           ya descargado. -->
+                      @if (codigo.proofMime) {
+                        <button
+                          type="button"
+                          class="enlace bloque"
+                          (click)="verComprobanteDeCodigo(codigo)"
+                        >
+                          Ver comprobante
+                        </button>
+                      }
+                    </td>
                     <td>
                       <span
                         class="pastilla"
@@ -548,7 +562,8 @@
                 @if (descuentoAplicado(); as d) {
                   <span class="ayuda descuento-ok">
                     <b>{{ d.code }}</b> aplicado: −S/ {{ d.amountCents / 100 | number: '1.2-2' }}.
-                    El importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b>.
+                    El importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b
+                    >.
                   </span>
                 } @else if (errorDescuento(); as mensaje) {
                   <span class="ayuda descuento-mal">{{ mensaje }}</span>
@@ -560,6 +575,39 @@
                 }
               </div>
 
+              <!-- ── Comprobante ─────────────────────────────────────────────
+                   Opcional de verdad: una cortesía no tiene captura y una
+                   transferencia que ya se vio en el extracto tampoco la
+                   necesita. Cuando la hay, es lo que permite reconstruir meses
+                   después de dónde salió ese dinero. -->
+              <div class="campo">
+                <label>Comprobante <span class="opcional">(opcional)</span></label>
+
+                @if (capturaCodigoPrevia(); as previa) {
+                  <div class="captura-codigo">
+                    <img [src]="previa" alt="Comprobante de esta venta" />
+                    <div class="captura-codigo-datos">
+                      <span class="tenue">{{ capturaCodigo()?.name }}</span>
+                      <button type="button" class="enlace-peligro" (click)="quitarCapturaCodigo()">
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <label class="captura-elegir">
+                    <input
+                      type="file"
+                      class="entrada-archivo"
+                      accept="image/png,image/jpeg,image/webp"
+                      (change)="elegirCapturaCodigo($event)"
+                    />
+                    <span>Adjuntar una captura del pago</span>
+                  </label>
+                  <span class="ayuda">
+                    Si no la tienes o no hace falta, déjalo así: el código se genera igual.
+                  </span>
+                }
+              </div>
 
               <div class="campo">
                 <label for="operacion-codigo">
@@ -1441,65 +1489,12 @@
   <!-- ══ DESCUENTOS ═══════════════════════════════════════════════════════ -->
   @if (seccion() === 'descuentos') {
     <section class="tarjeta">
-      <h2>Crear código promocional</h2>
-      <p class="nota">
-        Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para cualquiera;
-        si lo limitas, solo funcionará en ese.
-      </p>
-
-      <form [formGroup]="formDescuento" (ngSubmit)="crearDescuento()" novalidate>
-        <div class="fila">
-          <div class="campo estrecho">
-            <label for="soles">Descuenta (S/)</label>
-            <input id="soles" type="number" min="10" step="5" formControlName="soles" />
-          </div>
-          <div class="campo">
-            <label for="plan-promo">Válido para</label>
-            <select id="plan-promo" formControlName="planCode">
-              <option value="">Cualquier producto</option>
-              @for (plan of planes(); track plan.code) {
-                <option [value]="plan.code">{{ plan.name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="fila tres">
-          <div class="campo">
-            <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
-            <input
-              id="code-promo"
-              type="text"
-              formControlName="code"
-              placeholder="se inventa solo"
-            />
-          </div>
-          <div class="campo estrecho">
-            <label for="usos">Usos máx.</label>
-            <input id="usos" type="number" min="0" formControlName="maxUses" />
-            <span class="ayuda">0 = sin tope</span>
-          </div>
-          <div class="campo estrecho">
-            <label for="caduca">Caduca en (días)</label>
-            <input id="caduca" type="number" min="0" max="365" formControlName="expiraEnDias" />
-            <span class="ayuda">0 = no caduca</span>
-          </div>
-        </div>
-
-        <div class="campo">
-          <label for="nota-promo">Nota <span class="opcional">(opcional)</span></label>
-          <input
-            id="nota-promo"
-            type="text"
-            formControlName="note"
-            placeholder="promo TikTok septiembre"
-          />
-        </div>
-
-        <button type="submit" class="boton" [disabled]="trabajando()">
-          {{ trabajando() ? 'Creando…' : 'Crear código' }}
+      <div class="tarjeta-cabecera">
+        <h2>Códigos promocionales</h2>
+        <button type="button" class="boton" (click)="abrirFormularioDescuento()">
+          Crear código
         </button>
-      </form>
+      </div>
 
       @if (descuentoNuevo(); as promo) {
         <div class="codigos-nuevos">
@@ -1512,11 +1507,6 @@
           </button>
         </div>
       }
-    </section>
-
-    <section class="tarjeta">
-      <h2>Códigos promocionales</h2>
-
       @if (descuentos().length > 0) {
         <app-filtros-lista [lista]="listaDescuentos" placeholder="Código, producto o nota" />
       }
@@ -1587,6 +1577,109 @@
         <app-pie-lista [lista]="listaDescuentos" nombre="códigos" />
       }
     </section>
+
+    <!-- ── Ventana de crear ────────────────────────────────────────────────
+         Igual que la de los códigos de activación y la de los grupos: crear es
+         algo puntual, y la pantalla es el listado de lo que ya existe. -->
+    @if (formularioDescuentoAbierto()) {
+      <div class="ventana-fondo" (click)="cerrarFormularioDescuento()">
+        <div
+          class="ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-descuento"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-descuento">Crear código promocional</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="cerrarFormularioDescuento()"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <p class="nota">
+              Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para
+              cualquiera; si lo limitas, solo funcionará en ese.
+            </p>
+            <form [formGroup]="formDescuento" (ngSubmit)="crearDescuento()" novalidate>
+              <div class="fila">
+                <div class="campo estrecho">
+                  <label for="soles">Descuenta (S/)</label>
+                  <input id="soles" type="number" min="10" step="5" formControlName="soles" />
+                </div>
+                <div class="campo">
+                  <label for="plan-promo">Válido para</label>
+                  <select id="plan-promo" formControlName="planCode">
+                    <option value="">Cualquier producto</option>
+                    @for (plan of planes(); track plan.code) {
+                      <option [value]="plan.code">{{ plan.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="fila tres">
+                <div class="campo">
+                  <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
+                  <input
+                    id="code-promo"
+                    type="text"
+                    formControlName="code"
+                    placeholder="se inventa solo"
+                  />
+                </div>
+                <div class="campo estrecho">
+                  <label for="usos">Usos máx.</label>
+                  <input id="usos" type="number" min="0" formControlName="maxUses" />
+                  <span class="ayuda">0 = sin tope</span>
+                </div>
+                <div class="campo estrecho">
+                  <label for="caduca">Caduca en (días)</label>
+                  <input
+                    id="caduca"
+                    type="number"
+                    min="0"
+                    max="365"
+                    formControlName="expiraEnDias"
+                  />
+                  <span class="ayuda">0 = no caduca</span>
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="nota-promo">Nota <span class="opcional">(opcional)</span></label>
+                <input
+                  id="nota-promo"
+                  type="text"
+                  formControlName="note"
+                  placeholder="promo TikTok septiembre"
+                />
+              </div>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarFormularioDescuento()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              [disabled]="trabajando()"
+              (click)="crearDescuento()"
+            >
+              {{ trabajando() ? 'Creando…' : 'Crear código' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   <!-- ══ LICENCIAS ════════════════════════════════════════════════════════ -->
@@ -1771,7 +1864,7 @@
         <app-pie-lista [lista]="listaPagos" nombre="pagos" />
       }
     </section>
-
+<!-- 
     <section class="tarjeta">
       <h2>Bolsas de palabras activadas</h2>
 
@@ -1829,7 +1922,7 @@
 
         <app-pie-lista [lista]="listaBolsas" nombre="bolsas" />
       }
-    </section>
+    </section> -->
   }
 </main>
 
