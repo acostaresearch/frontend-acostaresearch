@@ -25,6 +25,7 @@ import {
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
+import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
 import { INCLUYE } from '../../shared/contenido/metodo';
@@ -74,6 +75,7 @@ function soles(cents: number): string {
 })
 export class Checkout implements OnInit {
   private readonly billing = inject(BillingService);
+  private readonly fondo = inject(FondoService);
   private readonly payments = inject(PaymentService);
   private readonly paypal = inject(PaypalSdkService);
   private readonly ruta = inject(ActivatedRoute);
@@ -164,6 +166,9 @@ export class Checkout implements OnInit {
         void this.montarBoton(host.nativeElement);
       }
     });
+
+    // La ventana del pago congela la página de detrás mientras está abierta.
+    effect(() => this.fondo.fijar('pago', this.seleccionado() !== null));
   }
 
   ngOnInit(): void {

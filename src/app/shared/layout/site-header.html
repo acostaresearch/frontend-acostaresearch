@@ -18,10 +18,16 @@
 
     <div class="acciones">
       @if (auth.isAuthenticated()) {
+        <!-- Un solo destino por persona, no dos. Al administrador le llevaba a
+             «Administrar» y a «Mi perfil» a la vez, y entre las dos gana siempre
+             la primera: al panel se entra a diario y al perfil casi nunca. Sus
+             datos y su contraseña están en la pestaña «Cuentas» del panel, que
+             es el mismo formulario que ve cualquiera en su perfil. -->
         @if (auth.hasRole('ADMIN')) {
-          <a class="enlace-entrar" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+          <a class="boton secundario" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+        } @else {
+          <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
         }
-        <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
         <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
       } @else {
         <a class="enlace-entrar" routerLink="/auth/login">Iniciar sesión</a>

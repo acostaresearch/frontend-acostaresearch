@@ -1069,8 +1069,8 @@ h1 {
 
 /* ══ La ventana del pago ════════════════════════════════════════════════════
  *
- * Se abre al pulsar «Comprar». El fondo cierra al pulsarlo; el contenido no, o
- * un clic dentro del formulario lo cerraría con el comprobante a medio subir.
+ * Se abre al pulsar «Comprar» y solo se cierra con la ✕: pulsar fuera no hace
+ * nada, porque un clic despistado con el comprobante a medio subir lo perdía.
  *
  * Cerrar es lo mismo que «Cambiar»: suelta el plan, el descuento y la captura.
  * Son de ESE importe, y dejarlos puestos al elegir otro plan es la forma segura

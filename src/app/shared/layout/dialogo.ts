@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 
 import { DialogoService } from '../../core/services/dialogo.service';
+import { FondoService } from '../../core/services/fondo.service';
 
 /**
  * La ventana de confirmar del sitio, montada una sola vez en la raíz.
@@ -26,6 +27,7 @@ import { DialogoService } from '../../core/services/dialogo.service';
 })
 export class Dialogo implements AfterViewChecked {
   private readonly dialogos = inject(DialogoService);
+  private readonly fondo = inject(FondoService);
 
   protected readonly abierto = this.dialogos.abierto;
 
@@ -54,6 +56,9 @@ export class Dialogo implements AfterViewChecked {
   });
 
   constructor() {
+    // Congela la página mientras la ventana está delante.
+    effect(() => this.fondo.fijar('dialogo', this.abierto() !== null));
+
     // El valor de partida se fija al abrirse, no al pintarse: escribirlo desde
     // `ngAfterViewChecked` obliga a otra pasada de detección en cada repintado.
     effect(() => {

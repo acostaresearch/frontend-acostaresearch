@@ -1,9 +1,7 @@
 <!-- ── Tus datos ────────────────────────────────────────────────────────────── -->
 <section class="bloque">
   <h3>Tus datos</h3>
-  <p class="nota">
-    Así te llamamos en el sitio y en los correos que te enviamos.
-  </p>
+  <p class="nota">Así te llamamos en el sitio y en los correos que te enviamos.</p>
 
   <form [formGroup]="formDatos" (ngSubmit)="guardarDatos()" class="formulario">
     <div class="pareja">
@@ -58,8 +56,7 @@
 
   @if (paso() === 'cerrado') {
     <p class="nota">
-      Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la
-      actual.
+      Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
     </p>
 
     @if (avisoClave(); as a) {
@@ -123,21 +120,14 @@
         <p class="alerta mala">{{ e }}</p>
       }
 
-      <p class="tenue">
-        Al cambiarla se cierran tus sesiones en otros dispositivos. Esta no.
-      </p>
+      <p class="tenue">Al cambiarla se cierran tus sesiones en otros dispositivos. Esta no.</p>
 
       <div class="acciones">
         <button type="submit" class="boton" [disabled]="cambiando()">
           {{ cambiando() ? 'Cambiando…' : 'Cambiar la contraseña' }}
         </button>
         <button type="button" class="enlace" (click)="cancelarCambio()">Cancelar</button>
-        <button
-          type="button"
-          class="enlace"
-          [disabled]="enviandoCodigo()"
-          (click)="pedirCodigo()"
-        >
+        <button type="button" class="enlace" [disabled]="enviandoCodigo()" (click)="pedirCodigo()">
           {{ enviandoCodigo() ? 'Enviando…' : 'Enviar otro código' }}
         </button>
       </div>

@@ -1,4 +1,13 @@
-import { Component, ElementRef, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterNextRender,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import { toApiError } from '../../../core/http/api-error';

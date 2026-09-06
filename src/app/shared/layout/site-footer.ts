@@ -64,7 +64,8 @@ export class SiteFooter {
     {
       nombre: 'Google Académico',
       url: environment.redes.scholar,
-      icono: 'M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm-7 9.28V16c0 2.21 3.13 4 7 4s7-1.79 7-4v-3.72l-7 3.82-7-3.82Z',
+      icono:
+        'M12 3 1 9l11 6 9-4.91V17h2V9L12 3Zm-7 9.28V16c0 2.21 3.13 4 7 4s7-1.79 7-4v-3.72l-7 3.82-7-3.82Z',
     },
     {
       nombre: 'CTI Vitae',

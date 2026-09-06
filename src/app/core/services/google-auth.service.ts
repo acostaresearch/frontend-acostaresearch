@@ -104,7 +104,8 @@ export class GoogleAuthService {
       etiqueta.async = true;
       etiqueta.defer = true;
       etiqueta.onload = () => {
-        const cargado = (this.documento.defaultView as Window & { google?: GoogleIdentity })?.google;
+        const cargado = (this.documento.defaultView as Window & { google?: GoogleIdentity })
+          ?.google;
         if (cargado) resolver(cargado);
         else rechazar(new Error('La librería de Google cargó pero no se inicializó.'));
       };

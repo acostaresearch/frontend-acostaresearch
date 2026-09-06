@@ -1,5 +1,5 @@
 import { ActivationCode, PagoAdmin } from '../../core/models/admin.model';
-import { MEDIOS_PAGO, PagoRevisado } from '../../core/models/payment.model';
+import { MEDIOS_PAGO, PagoPorRevisar, PagoRevisado } from '../../core/models/payment.model';
 
 /**
  * Una fila del historial de accesos.
@@ -98,6 +98,36 @@ function deComprobante(pago: PagoRevisado): Acceso {
   };
 }
 
+/**
+ * Un comprobante que todavía espera revisión.
+ *
+ * Va en la tabla aunque no esté resuelto, y es el arreglo de un despiste que se
+ * notaba justo cuando más molesta: el historial se pedía con los comprobantes
+ * YA revisados, así que lo de hoy —que es lo que está esperando— no salía, y la
+ * tabla parecía empezar anteayer. Quien abre esto suele venir de un «pagué esta
+ * mañana y no me llega nada», y esa fila era la única que no estaba.
+ *
+ * No se duplica con `deComprobante`: el historial del servidor excluye
+ * expresamente los que están en revisión, que son exactamente estos.
+ */
+function dePendiente(pago: PagoPorRevisar): Acceso {
+  return {
+    id: pago.id,
+    canal: 'yape',
+    canalNombre: 'Yape',
+    fecha: pago.createdAt,
+    comprador: pago.user.email,
+    producto: pago.plan.name,
+    amountCents: pago.amountCents,
+    moneda: pago.currency,
+    referencia: pago.operationCode,
+    tieneComprobante: Boolean(pago.proofMime),
+    anulable: false,
+    estado: 'En revisión',
+    tono: 'espera',
+  };
+}
+
 function dePasarela(pago: PagoAdmin): Acceso {
   return {
     id: pago.id,
@@ -118,22 +148,26 @@ function dePasarela(pago: PagoAdmin): Acceso {
 }
 
 /**
- * Junta las tres fuentes en una sola lista, de la más reciente a la más
+ * Junta las cuatro fuentes en una sola lista, de la más reciente a la más
  * antigua.
  *
- * Los pagos por Yape se excluyen del canal de pasarela a propósito: ya entran por su
- * comprobante, y contarlos dos veces era exactamente el problema que tenía el
- * panel —la misma venta aparecía en dos pantallas y borrarla en una la dejaba
- * viva en la otra—.
+ * Los pagos por Yape se excluyen del canal de pasarela a propósito: ya entran
+ * por su comprobante, y contarlos dos veces era exactamente el problema que
+ * tenía el panel —la misma venta aparecía en dos pantallas y borrarla en una la
+ * dejaba viva en la otra—.
  */
 export function unirAccesos(
   codigos: readonly ActivationCode[],
+  porRevisar: readonly PagoPorRevisar[],
   comprobantes: readonly PagoRevisado[],
   pagos: readonly PagoAdmin[],
 ): Acceso[] {
   return [
     ...codigos.map(deCodigo),
+    ...porRevisar.map(dePendiente),
     ...comprobantes.map(deComprobante),
     ...pagos.filter((pago) => pago.provider !== 'YAPE').map(dePasarela),
-  ].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    // Fechas ISO en UTC: se comparan como cadenas y salen en orden. La más
+    // reciente primero, que es por donde se empieza a mirar.
+  ].sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
 }

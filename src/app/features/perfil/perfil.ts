@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -11,6 +11,7 @@ import { Role, UserStatus } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { DialogoService } from '../../core/services/dialogo.service';
+import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
@@ -74,6 +75,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
 export class Perfil implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly dialogos = inject(DialogoService);
+  private readonly fondo = inject(FondoService);
   private readonly licencias = inject(LicenseService);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
@@ -162,6 +164,11 @@ export class Perfil implements OnInit {
 
   verPestana(pestana: PestanaDePerfil): void {
     this.pestana.set(pestana);
+  }
+
+  constructor() {
+    // Con la ventana de borrar la cuenta delante, la página no se mueve.
+    effect(() => this.fondo.fijar('perfil', this.borrandoCuenta()));
   }
 
   ngOnInit(): void {

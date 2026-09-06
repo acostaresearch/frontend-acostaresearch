@@ -183,16 +183,12 @@
          y, sin plan elegido, una caja que decía «elige el método» sin nada
          dentro: espacio ocupado por algo que no se podía usar todavía.
 
-         El fondo cierra al pulsarlo, y cerrar es lo mismo que «Cambiar»: se
-         suelta el plan, el descuento y la captura, porque son de OTRO importe. -->
+         Solo se cierra con la ✕: pulsar fuera no hace nada. Y cerrar es lo mismo
+         que «Cambiar» —suelta el plan, el descuento y la captura, que son de ESE
+         importe—. -->
     @if (seleccionado(); as plan) {
       <div class="pago-fondo">
-        <div
-          class="pago-ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-pago"
-        >
+        <div class="pago-ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-pago">
           <div class="pago-barra">
             <h2 id="titulo-pago">Cómo quieres pagar</h2>
             <button type="button" class="pago-cerrar" aria-label="Cerrar" (click)="cambiarPlan()">

@@ -105,18 +105,10 @@
       <button type="button" [class.activa]="pestana() === 'datos'" (click)="verPestana('datos')">
         Tus datos
       </button>
-      <button
-        type="button"
-        [class.activa]="pestana() === 'metodo'"
-        (click)="verPestana('metodo')"
-      >
+      <button type="button" [class.activa]="pestana() === 'metodo'" (click)="verPestana('metodo')">
         Método de tesis
       </button>
-      <button
-        type="button"
-        [class.activa]="pestana() === 'cuenta'"
-        (click)="verPestana('cuenta')"
-      >
+      <button type="button" [class.activa]="pestana() === 'cuenta'" (click)="verPestana('cuenta')">
         Datos de la cuenta
       </button>
       <button
@@ -352,8 +344,8 @@
           </div>
         } @else {
           <p class="nota">
-            Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando quieras
-            empezar.
+            Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando
+            quieras empezar.
           </p>
         }
       </section>
@@ -393,21 +385,16 @@
          alguien tiene abiertas la suya y la de otro. -->
     @if (borrandoCuenta()) {
       <div class="ventana-fondo">
-        <div
-          class="ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-borrar-cuenta"
-        >
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-borrar-cuenta">
           <h3 id="titulo-borrar-cuenta">Eliminar tu cuenta</h3>
 
           <p class="nota">
-            No podrás volver a entrar y <b>tu conector de Claude dejará de responder</b>. Si
-            tienes acceso al método, lo pierdes.
+            No podrás volver a entrar y <b>tu conector de Claude dejará de responder</b>. Si tienes
+            acceso al método, lo pierdes.
           </p>
           <p class="nota">
-            Guardamos el registro de tus compras, sin tu nombre ni tu correo, porque una
-            factura tiene que poder cuadrarse años después. Todo lo demás se borra.
+            Guardamos el registro de tus compras, sin tu nombre ni tu correo, porque una factura
+            tiene que poder cuadrarse años después. Todo lo demás se borra.
           </p>
 
           <label class="campo-borrado">
@@ -422,7 +409,9 @@
           </label>
 
           <label class="campo-borrado">
-            <span>Y tu correo, <b>{{ user.email }}</b></span>
+            <span
+              >Y tu correo, <b>{{ user.email }}</b></span
+            >
             <input
               type="email"
               [value]="correoBorrado()"
@@ -452,7 +441,6 @@
         </div>
       </div>
     }
-
   }
 </main>
 

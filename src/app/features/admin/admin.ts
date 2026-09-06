@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
@@ -21,6 +21,7 @@ import {
 } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
+import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -185,6 +186,7 @@ export class Admin implements OnInit {
   private readonly admin = inject(AdminService);
   private readonly billing = inject(BillingService);
   private readonly dialogos = inject(DialogoService);
+  private readonly fondo = inject(FondoService);
   private readonly payments = inject(PaymentService);
   private readonly usuariosApi = inject(UserService);
 
@@ -313,7 +315,9 @@ export class Admin implements OnInit {
   // Las tres listas de arriba contadas como una sola. No sustituye a ninguna:
   // vive en su propia pestaña para poder compararlas antes de decidir si las
   // otras sobran.
-  readonly accesos = computed(() => unirAccesos(this.codigos(), this.historial(), this.pagos()));
+  readonly accesos = computed(() =>
+    unirAccesos(this.codigos(), this.porRevisar(), this.historial(), this.pagos()),
+  );
 
   /**
    * Estado por el que se está cribando, o vacío para todos.
@@ -742,6 +746,23 @@ export class Admin implements OnInit {
     active: [true],
   });
 
+  constructor() {
+    // Con una ventana abierta, la página de detrás no se mueve. Se miran todas
+    // juntas porque el panel tiene ocho y se pueden apilar.
+    effect(() => {
+      const alguna =
+        this.accesoAbierto() !== null ||
+        this.formularioAbierto() ||
+        this.formularioCodigosAbierto() ||
+        this.formularioDescuentoAbierto() ||
+        this.formularioAdminAbierto() ||
+        this.viendoCapitulos() !== null ||
+        this.editando() !== null ||
+        this.borrandoGrupo() !== null;
+
+      this.fondo.fijar('admin', alguna);
+    });
+  }
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
@@ -1928,9 +1949,7 @@ export class Admin implements OnInit {
    * pasa, y montar una consulta aparte para un caso que no existe todavía sería
    * pagar por adelantado.
    */
-  readonly administradores = computed(() =>
-    this.usuarios().filter((u) => u.role === 'ADMIN'),
-  );
+  readonly administradores = computed(() => this.usuarios().filter((u) => u.role === 'ADMIN'));
 
   private busquedaPendiente?: ReturnType<typeof setTimeout>;
 
@@ -2355,60 +2374,6 @@ export class Admin implements OnInit {
     });
   }
 
-  /** Qué fila se está borrando, para bloquear solo su botón. */
-  readonly borrandoAcceso = signal<string | null>(null);
-
-  /**
-   * Borra la fila de verdad, sea del canal que sea.
-   *
-   * Por dentro son dos endpoints —un código y un pago viven en tablas
-   * distintas—, pero desde aquí es una sola acción: quien está limpiando una
-   * prueba no está pensando en qué tabla de la base de datos cae.
-   *
-   * Lo que se borra es el APUNTE, no lo entregado: si ese código o ese pago
-   * activaron una licencia, la licencia sigue viva y su dueño sigue entrando.
-   * Para cortarle el acceso hay que revocar la licencia, que es otra pantalla
-   * y otra decisión.
-   */
-  async eliminarAcceso(acceso: Acceso): Promise<void> {
-    if (this.borrandoAcceso()) return;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Borrar este registro',
-      mensaje:
-        `Se borra el ${acceso.canal === 'codigo' ? 'código' : 'cobro'} de ` +
-        `${acceso.comprador}${acceso.tieneComprobante ? ', junto con su captura' : ''}. ` +
-        'No se puede deshacer.',
-      nota: 'Si ya entregó una licencia, la licencia NO se borra: su dueño sigue entrando. Para quitarle el acceso, revócala desde Licencias.',
-      confirmar: 'Borrar definitivamente',
-      tono: 'peligro',
-    });
-    if (!seguro) return;
-
-    this.borrandoAcceso.set(acceso.id);
-
-    const peticion =
-      acceso.canal === 'codigo'
-        ? this.admin.eliminarCodigo(acceso.id)
-        : this.admin.eliminarPago(acceso.id);
-
-    peticion.subscribe({
-      next: () => {
-        // Se quita de las tres listas sin mirar en cuál estaba: la fila unida
-        // se recalcula sola a partir de ellas.
-        this.codigos.update((lista) => lista.filter((c) => c.id !== acceso.id));
-        this.historial.update((lista) => lista.filter((p) => p.id !== acceso.id));
-        this.pagos.update((lista) => lista.filter((p) => p.id !== acceso.id));
-        this.porRevisar.update((lista) => lista.filter((p) => p.id !== acceso.id));
-        this.borrandoAcceso.set(null);
-        this.cerrarAcceso();
-      },
-      error: (e: unknown) => {
-        this.error.set(mensajeDeError(e));
-        this.borrandoAcceso.set(null);
-      },
-    });
-  }
   /** Anula desde la ficha y la cierra: lo que se estaba mirando ya cambió. */
   async anularDesdeFicha(acceso: Acceso): Promise<void> {
     const codigo = this.codigos().find((c) => c.id === acceso.id);

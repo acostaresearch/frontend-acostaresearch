@@ -63,7 +63,9 @@
   background: var(--color-superficie);
   border: 1px solid var(--color-borde-fuerte);
   border-radius: var(--radio-sm);
-  transition: border-color var(--transicion), box-shadow var(--transicion);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
 }
 
 .campo input:focus {

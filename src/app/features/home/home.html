@@ -5,20 +5,16 @@
     <p class="eyebrow">9 Skills para Claude.ai · Método completo de tesis</p>
     <h1>Tú haces tu tesis.<br />No la compras.</h1>
     <p class="entrada">
-      Nueve skills que te acompañan paso a paso, desde elegir el tema hasta el abstract. Cada uno
-      te devuelve un entregable real en Word, con normas APA 7 y con tus propias fuentes. Tú
-      decides, tú escribes, tú la defiendes.
+      Nueve skills que te acompañan paso a paso, desde elegir el tema hasta el abstract. Cada uno te
+      devuelve un entregable real en Word, con normas APA 7 y con tus propias fuentes. Tú decides,
+      tú escribes, tú la defiendes.
     </p>
 
     <div class="hero-acciones">
       @if (metodo(); as plan) {
-        <a
-            class="boton grande"
-            routerLink="/planes"
-            [queryParams]="{ plan: plan.code }"
-          >
-            Acceder por {{ precio(plan) }}
-          </a>
+        <a class="boton grande" routerLink="/planes" [queryParams]="{ plan: plan.code }">
+          Acceder por {{ precio(plan) }}
+        </a>
       } @else {
         <a class="boton grande" routerLink="/planes">Quiero el paquete</a>
       }
@@ -74,8 +70,8 @@
       <a class="camino" routerLink="/en-accion">
         <h3>Míralo en acción</h3>
         <p>
-          Dos demostraciones completas y sin cortes, y cómo empiezas tú desde la instalación
-          hasta el primer capítulo.
+          Dos demostraciones completas y sin cortes, y cómo empiezas tú desde la instalación hasta
+          el primer capítulo.
         </p>
         <span class="camino-flecha" aria-hidden="true">→</span>
       </a>
@@ -91,7 +87,6 @@
       </a>
     </div>
   </section>
-
 </main>
 
 <app-site-footer />

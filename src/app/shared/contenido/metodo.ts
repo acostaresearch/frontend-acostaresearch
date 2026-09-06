@@ -97,7 +97,7 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'teóricas por variable y marco conceptual. Solo con las fuentes reales que tú subes.',
     entregable: 'Capítulo II + lista de referencias',
   },
-  'metodologia': {
+  metodologia: {
     descripcion:
       'Capítulo III: enfoque, tipo, nivel, diseño, población, muestra y muestreo, técnicas e ' +
       'instrumentos, operacionalización hasta indicadores y aspectos éticos.',
@@ -124,7 +124,7 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'y la prueba inferencial que corresponda según el árbol de decisión.',
     entregable: 'Capítulo IV con tablas APA listas',
   },
-  'discusion': {
+  discusion: {
     descripcion:
       'Se redacta en prosa continua, objetivo por objetivo, con el mismo ejercicio en cada uno: ' +
       'recordar el objetivo, presentar el hallazgo, contrastarlo con los antecedentes y con la ' +

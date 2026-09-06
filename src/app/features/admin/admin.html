@@ -559,17 +559,11 @@
 
           <div class="ventana-pie">
             <button type="button" class="boton secundario" (click)="cerrarAcceso()">Cerrar</button>
-            <!-- Borrar y anular no son lo mismo, y por eso están los dos:
-                 anular deja la fila con su venta apuntada; borrar la saca de
-                 la lista y de las cifras. -->
-            <button
-              type="button"
-              class="boton destructivo"
-              [disabled]="borrandoAcceso() === acceso.id"
-              (click)="eliminarAcceso(acceso)"
-            >
-              {{ borrandoAcceso() === acceso.id ? 'Borrando…' : 'Eliminar' }}
-            </button>
+            <!-- Aquí NO se borra. El historial es el rastro de lo que pasó, y
+                 un rastro con un botón de «que no haya pasado» al lado no sirve
+                 para lo que se consulta: cuadrar el extracto y responder a
+                 quien reclama. Lo que sí se puede es anular, que deja la fila
+                 marcada y con su venta apuntada. -->
             @if (acceso.anulable) {
               <!-- Anular deja el código en la lista, marcado, con su venta
                    apuntada. No lo borra: el rastro de qué se emitió se queda. -->
@@ -680,12 +674,7 @@
          Va fuera de la tarjeta para que se superponga a toda la página. El -->
     @if (formularioAbierto()) {
       <div class="ventana-fondo">
-        <div
-          class="ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-grupo"
-        >
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-grupo">
           <div class="ventana-cabecera">
             <h3 id="titulo-grupo">
               {{ editandoGrupo() ? 'Editar «' + editandoGrupo()!.name + '»' : 'Crear un grupo' }}
@@ -1056,12 +1045,7 @@
          marcan. Tener dos sitios para lo mismo acaba con los dos a medias. -->
     @if (viendoCapitulos(); as grupoVisto) {
       <div class="ventana-fondo">
-        <div
-          class="ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-capitulos"
-        >
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-capitulos">
           <div class="ventana-cabecera">
             <h3 id="titulo-capitulos">Capítulos de «{{ grupoVisto.name }}»</h3>
             <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarCapitulos()">
@@ -1335,12 +1319,7 @@
          algo puntual, y la pantalla es el listado de lo que ya existe. -->
     @if (formularioDescuentoAbierto()) {
       <div class="ventana-fondo">
-        <div
-          class="ventana"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-descuento"
-        >
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-descuento">
           <div class="ventana-cabecera">
             <h3 id="titulo-descuento">Crear código promocional</h3>
             <button
@@ -1564,7 +1543,6 @@
     </section>
   }
 
-
   <!-- ══ CUENTAS ══════════════════════════════════════════════════════════
        Tres cosas que van juntas porque se hacen desde el mismo sitio: tus
        propios datos, quién más entra al panel, y quién está registrado. -->
@@ -1572,8 +1550,8 @@
     <section class="tarjeta">
       <h2>Mi cuenta</h2>
       <p class="nota">
-        Tus datos y tu contraseña. Es el mismo formulario que ve cualquier usuario en su perfil:
-        un administrador también es una persona con nombre y contraseña.
+        Tus datos y tu contraseña. Es el mismo formulario que ve cualquier usuario en su perfil: un
+        administrador también es una persona con nombre y contraseña.
       </p>
 
       <app-ajustes-de-cuenta />
@@ -1584,8 +1562,8 @@
         <div>
           <h2>Administradores</h2>
           <p class="nota">
-            Da acceso al panel a otra persona. Solo crea administradores: los usuarios normales
-            se registran solos desde la web.
+            Da acceso al panel a otra persona. Solo crea administradores: los usuarios normales se
+            registran solos desde la web.
           </p>
         </div>
         <button type="button" class="boton" (click)="abrirFormularioAdmin()">
@@ -1737,15 +1715,15 @@
   <!-- ── Ventana de crear administrador ──────────────────────────────────── -->
   @if (formularioAdminAbierto()) {
     <div class="ventana-fondo">
-      <div
-        class="ventana"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="titulo-admin"
-      >
+      <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-admin">
         <div class="ventana-cabecera">
           <h3 id="titulo-admin">Crear una cuenta de administrador</h3>
-          <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarFormularioAdmin()">
+          <button
+            type="button"
+            class="cerrar"
+            aria-label="Cerrar"
+            (click)="cerrarFormularioAdmin()"
+          >
             ✕
           </button>
         </div>
@@ -1754,7 +1732,10 @@
           @if (adminCreado(); as creado) {
             <!-- Cuenta creada. Si la contraseña la generó el servidor, esta es
                  la única pantalla donde se puede leer. -->
-            <p class="aviso exito">Cuenta creada para <b>{{ creado.user.email }}</b>.</p>
+            <p class="aviso exito">
+              Cuenta creada para <b>{{ creado.user.email }}</b
+              >.
+            </p>
 
             @if (creado.password) {
               <p class="nota">
@@ -1785,7 +1766,12 @@
 
               <div class="campo">
                 <label for="a-correo">Correo</label>
-                <input id="a-correo" type="email" formControlName="email" placeholder="persona@ejemplo.com" />
+                <input
+                  id="a-correo"
+                  type="email"
+                  formControlName="email"
+                  placeholder="persona@ejemplo.com"
+                />
                 <span class="ayuda">
                   Tiene que ser un correo sin cuenta. Si ya tiene una, hay que darle acceso sobre
                   esa, no crear otra.
@@ -1794,7 +1780,12 @@
 
               <div class="campo">
                 <label for="a-clave">Contraseña <span class="opcional">· opcional</span></label>
-                <input id="a-clave" type="text" formControlName="password" placeholder="La genera el sistema" />
+                <input
+                  id="a-clave"
+                  type="text"
+                  formControlName="password"
+                  placeholder="La genera el sistema"
+                />
                 <span class="ayuda">
                   Si lo dejas vacío, el sistema crea una y se la manda por correo. Si la escribes:
                   al menos 10 caracteres, con una mayúscula, una minúscula y un número.
@@ -1830,16 +1821,11 @@
        «Accesos», y dentro del @if de una sección el botón de la otra pestaña
        no abriría nada.
 
-       El fondo cierra al pulsarlo; el contenido no, o un clic dentro del
-       formulario lo cerraría con todo escrito. -->
+       Solo se cierra con la ✕ o con Cancelar: pulsar fuera no hace nada, o un
+       descuido con el ratón se lleva por delante lo escrito. -->
   @if (formularioCodigosAbierto()) {
     <div class="ventana-fondo">
-      <div
-        class="ventana"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="titulo-codigos"
-      >
+      <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-codigos">
         <div class="ventana-cabecera">
           <h3 id="titulo-codigos">Vender el método (código de activación)</h3>
           <button

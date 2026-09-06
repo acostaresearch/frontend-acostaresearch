@@ -67,10 +67,9 @@ export class Register {
   private readonly valorPass = toSignal(this.formulario.controls.password.valueChanges, {
     initialValue: '',
   });
-  private readonly valorRepetida = toSignal(
-    this.formulario.controls.confirmPassword.valueChanges,
-    { initialValue: '' },
-  );
+  private readonly valorRepetida = toSignal(this.formulario.controls.confirmPassword.valueChanges, {
+    initialValue: '',
+  });
 
   /**
    * Requisitos de la contraseña, comprobados mientras se escribe.
