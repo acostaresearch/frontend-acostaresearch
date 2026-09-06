@@ -5,6 +5,34 @@
   padding: 60px 0 56px;
 }
 
+/* Texto y captura, lado a lado. El texto manda —es lo que hay que leer—, así
+   que se lleva la columna ancha; la imagen acompaña. */
+.hero-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  gap: 48px;
+  align-items: center;
+  margin-bottom: 44px;
+}
+
+.hero-imagen img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+/* Debajo de 900 px no caben dos columnas sin que el titular se rompa en
+   pedazos: la captura pasa a ir después del texto. */
+@media (max-width: 900px) {
+  .hero-columnas {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
 .eyebrow {
   margin: 0 0 16px;
   font-size: 12.5px;
@@ -39,8 +67,16 @@
   margin-bottom: 14px;
 }
 
+/* La regla global de .boton los estira al 100 %, pensada para el botón de un
+   formulario. Aquí son dos en fila y se estiraban a lo ancho, uno debajo del
+   otro, como si fueran dos filas de un menú. */
+.hero-acciones .boton {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .hero-nota {
-  margin: 0 0 44px;
+  margin: 0;
   font-size: 13px;
   color: var(--color-texto-tenue);
 }

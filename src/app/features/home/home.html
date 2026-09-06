@@ -2,22 +2,44 @@
 
 <main class="pagina">
   <section class="hero">
-    <p class="eyebrow">Skills para Claude.ai · Tesis y artículos científicos</p>
-    <h1>Tú haces tu investigación.<br />No la compras.</h1>
-    <p class="entrada">
-      Skills que te acompañan paso a paso: de elegir el tema hasta la sustentación, o de una idea
-      hasta el artículo enviado a una revista. Cada fase cierra con un entregable real en Word y
-      con tus propias fuentes. Tú decides, tú escribes, tú lo defiendes.
-    </p>
+    <!-- Texto a la izquierda y la captura a la derecha. El texto ya iba
+         estrecho a propósito —un titular de 16 caracteres por línea se lee
+         mejor—, así que la mitad derecha quedaba vacía y el hero parecía sin
+         terminar. La captura enseña lo que se vende antes de que nadie pulse
+         nada: esto vive dentro de Claude, no en otra web. -->
+    <div class="hero-columnas">
+      <div class="hero-texto">
+        <p class="eyebrow">Skills para Claude.ai · Tesis y artículos científicos</p>
+        <h1>Tú haces tu investigación.<br />No la compras.</h1>
+        <p class="entrada">
+          Skills que te acompañan paso a paso: de elegir el tema hasta la sustentación, o de una
+          idea hasta el artículo enviado a una revista. Cada fase cierra con un entregable real en
+          Word y con tus propias fuentes. Tú decides, tú escribes, tú lo defiendes.
+        </p>
 
-    <div class="hero-acciones">
-      <a class="boton grande" routerLink="/planes">Ver los paquetes</a>
-      <a class="boton secundario grande" routerLink="/en-accion">Míralo en acción</a>
+        <div class="hero-acciones">
+          <a class="boton grande" routerLink="/planes">Ver los paquetes</a>
+          <a class="boton secundario grande" routerLink="/en-accion">Míralo en acción</a>
+        </div>
+
+        <p class="hero-nota">
+          Se instalan en tu cuenta de Claude.ai · Funcionan también con el plan gratuito
+        </p>
+      </div>
+
+      <!-- Sin `loading="lazy"`: está en lo primero que se ve, y aplazarla solo
+           conseguiría que apareciera tarde. Las medidas van en el atributo para
+           que el navegador le reserve el hueco y el texto no dé un salto. -->
+      <div class="hero-imagen">
+        <img
+          src="/home-img/chat-azul.png"
+          alt="Una Skill del método trabajando dentro de una conversación de Claude"
+          width="1750"
+          height="1160"
+          decoding="async"
+        />
+      </div>
     </div>
-
-    <p class="hero-nota">
-      Se instalan en tu cuenta de Claude.ai · Funcionan también con el plan gratuito
-    </p>
 
     <ul class="cifras">
       @for (c of cifras; track c.pie) {
