@@ -1,0 +1,85 @@
+<!-- El fondo cierra al pulsarlo; la ventana no, o un clic dentro la cerraría
+     con lo escrito a medias. -->
+@if (abierto(); as ventana) {
+  <div class="fondo" (click)="cancelar()">
+    <div
+      class="ventana"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialogo-titulo"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="cuerpo">
+        <span class="icono" [class]="ventana.tono" aria-hidden="true">
+          @if (ventana.tono === 'peligro') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          } @else if (ventana.tono === 'aviso') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5m0 3h.01" stroke-linecap="round" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M9.2 9.3a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.5-2.8 2.5M12 17h.01"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          }
+        </span>
+
+        <div class="texto">
+          <h3 id="dialogo-titulo">{{ ventana.titulo }}</h3>
+
+          @for (parrafo of parrafos(); track $index) {
+            <p class="mensaje">{{ parrafo }}</p>
+          }
+
+          @if (ventana.nota) {
+            <p class="nota">{{ ventana.nota }}</p>
+          }
+
+          @if (ventana.campo; as campo) {
+            <div class="campo">
+              <label for="dialogo-campo">{{ campo.etiqueta }}</label>
+              <input
+                #campoTexto
+                id="dialogo-campo"
+                type="text"
+                autocomplete="off"
+                [attr.placeholder]="campo.placeholder ?? null"
+                [attr.maxlength]="campo.maxlength ?? null"
+                (input)="escribir($event)"
+                (keydown.enter)="confirmarConEnter($event)"
+              />
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="pie">
+        <button type="button" class="boton secundario" (click)="cancelar()">
+          {{ ventana.cancelar }}
+        </button>
+        <button
+          #botonConfirmar
+          type="button"
+          class="boton"
+          [class.destructivo]="ventana.tono === 'peligro'"
+          [disabled]="!puedeConfirmar()"
+          (click)="confirmar()"
+        >
+          {{ ventana.confirmar }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

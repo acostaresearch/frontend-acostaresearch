@@ -79,6 +79,19 @@ export class BillingService {
   }
 
   /**
+   * Borra un grupo. El servidor se niega —y dice por qué— si tiene licencias,
+   * pagos o capítulos: para eso está «Retirar», que lo saca de la venta sin
+   * tocar lo ya vendido.
+   */
+  eliminarGrupo(code: string): Observable<{ code: string; name: string }> {
+    return this.http
+      .delete<ApiResponse<{ product: { code: string; name: string } }>>(
+        `${this.base}/products/${code}`,
+      )
+      .pipe(map((res) => res.data.product));
+  }
+
+  /**
    * Comprueba un código promocional. El precio final lo calcula el servidor:
    * aquí solo viaja el código.
    */

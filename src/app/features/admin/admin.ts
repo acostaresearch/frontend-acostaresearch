@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { toApiError } from '../../core/http/api-error';
 import {
@@ -16,6 +16,7 @@ import {
 import { PagoPorRevisar } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
+import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
@@ -23,14 +24,7 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 type Seccion =
-  | 'ventas'
-  | 'yape'
-  | 'skills'
-  | 'grupos'
-  | 'descuentos'
-  | 'licencias'
-  | 'alertas'
-  | 'movimientos';
+  'ventas' | 'yape' | 'skills' | 'grupos' | 'descuentos' | 'licencias' | 'alertas' | 'movimientos';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -68,6 +62,7 @@ export class Admin implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly admin = inject(AdminService);
   private readonly billing = inject(BillingService);
+  private readonly dialogos = inject(DialogoService);
   private readonly payments = inject(PaymentService);
 
   readonly metodos = METODOS;
@@ -111,6 +106,8 @@ export class Admin implements OnInit {
   );
   readonly copiados = signal(false);
   readonly trabajando = signal(false);
+  /** Hay una recarga en marcha. Bloquea el botón y lo dice en el texto. */
+  readonly recargando = signal(false);
 
   readonly planesLicencia = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
   readonly planesPalabras = computed(() =>
@@ -174,6 +171,29 @@ export class Admin implements OnInit {
   // aquí y luego cada .skill se cuelga de uno al subirlo.
   readonly grupos = signal<Grupo[]>([]);
   readonly editandoGrupo = signal<Grupo | null>(null);
+
+  /**
+   * El formulario vive en una ventana emergente, no encima de la tabla.
+   *
+   * Lo primero que se ve al entrar es la lista, que es lo que uno viene a
+   * consultar el 90 % de las veces; crear y editar son acciones puntuales y no
+   * tienen por qué ocupar la pantalla mientras tanto.
+   */
+  readonly formularioAbierto = signal(false);
+
+  /**
+   * Grupo que se está a punto de borrar, y lo que el administrador lleva
+   * tecleado para confirmarlo.
+   *
+   * Borrar se pide escribiendo la palabra y no con un «¿seguro?», porque a un
+   * «¿seguro?» se le da que sí sin leerlo. Escribir obliga a mirar qué se está
+   * borrando.
+   */
+  readonly borrandoGrupo = signal<Grupo | null>(null);
+  readonly confirmacionBorrado = signal('');
+  readonly puedeBorrar = computed(
+    () => this.confirmacionBorrado().trim().toLowerCase() === 'eliminar',
+  );
   /** A qué grupo van los archivos que hay ahora mismo en la cola. */
   readonly grupoDestino = signal<string>('');
 
@@ -206,9 +226,7 @@ export class Admin implements OnInit {
 
   readonly skillsVisibles = computed(() => this.skills().filter((s) => s.active).length);
   /** Ordenados como se van a mostrar, que es lo que ven las flechas. */
-  readonly skillsOrdenadas = computed(() =>
-    [...this.skills()].sort((a, b) => a.orden - b.orden),
-  );
+  readonly skillsOrdenadas = computed(() => [...this.skills()].sort((a, b) => a.orden - b.orden));
 
   /**
    * Ficha editable de un capítulo ya publicado.
@@ -231,16 +249,24 @@ export class Admin implements OnInit {
 
   // ── Grupos ───────────────────────────────────────────────────────────────
 
+  /**
+   * Guarda los grupos y elige destino si aún no hay ninguno.
+   *
+   * Vive aparte de quien los pide porque llegan por dos caminos —este cargador
+   * y la recarga general— y el efecto tiene que ser el mismo en los dos.
+   */
+  private aplicarGrupos(grupos: Grupo[]): void {
+    this.grupos.set(grupos);
+    // Con un solo grupo no tiene sentido preguntar a cuál va cada archivo.
+    const activos = grupos.filter((g) => g.active);
+    if (!this.grupoDestino() && activos.length > 0) {
+      this.grupoDestino.set(activos[0].code);
+    }
+  }
+
   private cargarGrupos(): void {
     this.billing.grupos().subscribe({
-      next: (grupos) => {
-        this.grupos.set(grupos);
-        // Con un solo grupo no tiene sentido preguntar a cuál va cada archivo.
-        const activos = grupos.filter((g) => g.active);
-        if (!this.grupoDestino() && activos.length > 0) {
-          this.grupoDestino.set(activos[0].code);
-        }
-      },
+      next: (grupos) => this.aplicarGrupos(grupos),
       error: (e: unknown) => this.error.set(toApiError(e).message),
     });
   }
@@ -249,7 +275,9 @@ export class Admin implements OnInit {
     this.grupoDestino.set((evento.target as HTMLSelectElement).value);
   }
 
+  /** Abre la ventana en blanco, para crear. */
   nuevoGrupo(): void {
+    this.formularioAbierto.set(true);
     this.editandoGrupo.set(null);
     this.error.set(null);
     this.aviso.set(null);
@@ -266,7 +294,9 @@ export class Admin implements OnInit {
     this.formGrupo.controls.code.enable();
   }
 
+  /** Abre la ventana con los datos del grupo dentro. */
   editarGrupo(grupo: Grupo): void {
+    this.formularioAbierto.set(true);
     this.editandoGrupo.set(grupo);
     this.error.set(null);
     this.aviso.set(null);
@@ -284,6 +314,64 @@ export class Admin implements OnInit {
     // capítulos que cuelgan de él. Cambiarlo dejaría a esos compradores
     // apuntando a un producto que ya no existe.
     this.formGrupo.controls.code.disable();
+  }
+
+  /** Cierra la ventana sin guardar. */
+  cerrarFormularioGrupo(): void {
+    if (this.trabajando()) return;
+    this.formularioAbierto.set(false);
+    this.editandoGrupo.set(null);
+  }
+
+  /** Abre la confirmación de borrado con el campo vacío. */
+  pedirBorrarGrupo(grupo: Grupo): void {
+    this.error.set(null);
+    this.aviso.set(null);
+    this.confirmacionBorrado.set('');
+    this.borrandoGrupo.set(grupo);
+  }
+
+  cancelarBorrado(): void {
+    if (this.trabajando()) return;
+    this.borrandoGrupo.set(null);
+    this.confirmacionBorrado.set('');
+  }
+
+  escribirConfirmacion(evento: Event): void {
+    this.confirmacionBorrado.set((evento.target as HTMLInputElement).value);
+  }
+
+  /**
+   * Borra de verdad.
+   *
+   * El servidor comprueba otra vez que el grupo no tenga licencias, pagos ni
+   * capítulos, y se niega diciendo cuál de las tres cosas lo impide. Esa
+   * respuesta se enseña tal cual: es la información que el administrador
+   * necesita para saber que lo que quiere es «Retirar», no borrar.
+   */
+  confirmarBorrado(): void {
+    const grupo = this.borrandoGrupo();
+    if (!grupo || !this.puedeBorrar() || this.trabajando()) return;
+
+    this.trabajando.set(true);
+    this.error.set(null);
+
+    this.billing.eliminarGrupo(grupo.code).subscribe({
+      next: (borrado) => {
+        this.aviso.set(`Grupo «${borrado.name}» eliminado.`);
+        this.borrandoGrupo.set(null);
+        this.confirmacionBorrado.set('');
+        this.trabajando.set(false);
+        this.cargarGrupos();
+        this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+      },
+      error: (e: unknown) => {
+        this.error.set(toApiError(e).message);
+        this.borrandoGrupo.set(null);
+        this.confirmacionBorrado.set('');
+        this.trabajando.set(false);
+      },
+    });
   }
 
   guardarGrupo(): void {
@@ -318,6 +406,9 @@ export class Admin implements OnInit {
           enEdicion ? `Grupo «${grupo.name}» actualizado.` : `Grupo «${grupo.name}» creado.`,
         );
         this.editandoGrupo.set(null);
+        // Solo se cierra al guardar bien. Si el servidor rechaza, la ventana se
+        // queda abierta con lo escrito: cerrarla obligaría a teclearlo otra vez.
+        this.formularioAbierto.set(false);
         this.trabajando.set(false);
         this.cargarGrupos();
         // El precio y la duración salen en la web de venta.
@@ -330,11 +421,18 @@ export class Admin implements OnInit {
     });
   }
 
-  alternarGrupo(grupo: Grupo): void {
+  async alternarGrupo(grupo: Grupo): Promise<void> {
     if (this.trabajando()) return;
 
-    if (grupo.active && !confirm(`«${grupo.name}» dejará de venderse. Lo ya vendido sigue igual. ¿Continuar?`)) {
-      return;
+    if (grupo.active) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: `Retirar «${grupo.name}» de la venta`,
+        mensaje: 'Dejará de ofrecerse a partir de ahora.',
+        nota: 'Lo ya vendido sigue igual: quien lo compró conserva su licencia.',
+        confirmar: 'Retirar de la venta',
+        tono: 'aviso',
+      });
+      if (!seguro) return;
     }
 
     this.trabajando.set(true);
@@ -409,8 +507,7 @@ export class Admin implements OnInit {
     for (const item of nuevos) {
       this.skillsApi.inspeccionar(item.archivo).subscribe({
         next: (analisis) => this.marcar(item, { analisis, estado: 'lista' }),
-        error: (e: unknown) =>
-          this.marcar(item, { estado: 'error', error: toApiError(e).message }),
+        error: (e: unknown) => this.marcar(item, { estado: 'error', error: toApiError(e).message }),
       });
     }
   }
@@ -537,7 +634,9 @@ export class Admin implements OnInit {
 
     this.skillsApi.actualizar(skill.id, this.formSkill.getRawValue()).subscribe({
       next: (actualizada) => {
-        this.skills.update((lista) => lista.map((s) => (s.id === actualizada.id ? actualizada : s)));
+        this.skills.update((lista) =>
+          lista.map((s) => (s.id === actualizada.id ? actualizada : s)),
+        );
         this.aviso.set(`Ficha de «${actualizada.displayName}» actualizada.`);
         this.editando.set(null);
         this.trabajando.set(false);
@@ -553,7 +652,9 @@ export class Admin implements OnInit {
   alternarSkill(skill: Skill): void {
     this.skillsApi.actualizar(skill.id, { active: !skill.active }).subscribe({
       next: (actualizada) =>
-        this.skills.update((lista) => lista.map((s) => (s.id === actualizada.id ? actualizada : s))),
+        this.skills.update((lista) =>
+          lista.map((s) => (s.id === actualizada.id ? actualizada : s)),
+        ),
       error: (e: unknown) => this.error.set(toApiError(e).message),
     });
   }
@@ -600,15 +701,19 @@ export class Admin implements OnInit {
    * al administrador a ocultar primero y volver después: la advertencia ya le
    * dijo que está visible, y confirmarlo dos veces no protege de nada.
    */
-  eliminarSkill(skill: Skill): void {
+  async eliminarSkill(skill: Skill): Promise<void> {
     if (this.trabajando()) return;
 
-    const aviso = skill.active
-      ? `«${skill.displayName}» está visible en el conector ahora mismo.\n\n` +
-        'Se ocultará y se quitará del catálogo. El archivo .skill se conserva en el ' +
-        'servidor, así que puedes volver a subirlo.\n\n¿Continuar?'
-      : `¿Quitar «${skill.displayName}» del catálogo? El archivo .skill se conserva.`;
-    if (!confirm(aviso)) return;
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Quitar «${skill.displayName}» del catálogo`,
+      mensaje: skill.active
+        ? 'Está visible en el conector ahora mismo. Se ocultará y se quitará del catálogo.'
+        : 'Se quitará del catálogo del conector.',
+      nota: 'El archivo .skill se conserva en el servidor, así que puedes volver a subirlo.',
+      confirmar: 'Quitar del catálogo',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
 
     this.trabajando.set(true);
     this.error.set(null);
@@ -643,29 +748,90 @@ export class Admin implements OnInit {
     });
   }
 
+  /**
+   * Vuelve a pedirlo todo.
+   *
+   * Se lanzan a la vez y se espera a que terminen todas, y eso es lo que
+   * permite bloquear el botón mientras tanto: antes disparaba nueve peticiones
+   * sueltas y no cambiaba nada en pantalla, así que pulsarlo se parecía
+   * demasiado a que no hiciera nada.
+   *
+   * UNA QUE FALLE NO TIRA LAS DEMÁS
+   * -------------------------------
+   * Cada petición atrapa su propio error y sigue. Con un `forkJoin` a secas,
+   * que se cayera una sola —un 500 en alertas, pongamos— descartaría las ocho
+   * respuestas buenas y dejaría el panel entero con datos viejos. Así se
+   * refresca lo que sí llegó y el aviso dice exactamente qué no.
+   */
   recargar(): void {
-    this.cargarSkills();
-    this.cargarGrupos();
-    this.admin.licenciasTodas().subscribe({
-      next: (l) => this.licencias.set(l),
-      error: (e: unknown) => this.error.set(toApiError(e).message),
+    if (this.recargando()) return;
+
+    this.recargando.set(true);
+    this.error.set(null);
+    this.aviso.set(null);
+
+    const fallos: string[] = [];
+    const tolerante = <T>(nombre: string, origen: Observable<T>): Observable<T | null> =>
+      origen.pipe(
+        catchError((e: unknown) => {
+          fallos.push(`${nombre} (${toApiError(e).message})`);
+          return of(null);
+        }),
+      );
+
+    forkJoin({
+      skills: tolerante('capítulos', this.skillsApi.list()),
+      grupos: tolerante('grupos', this.billing.grupos()),
+      // Los planes NO se pedían aquí, solo al abrir el panel. Cambiar el precio
+      // de un grupo y pulsar Actualizar dejaba el desplegable de productos con
+      // el precio viejo hasta recargar la página entera.
+      planes: tolerante('planes', this.billing.plans()),
+      licencias: tolerante('licencias', this.admin.licenciasTodas()),
+      alertas: tolerante('alertas', this.admin.alertas()),
+      codigos: tolerante('códigos', this.admin.codigos()),
+      bolsas: tolerante('bolsas', this.admin.bolsasRecientes()),
+      pagos: tolerante('ventas', this.admin.pagosRecientes()),
+      descuentos: tolerante('descuentos', this.admin.descuentos()),
+      porRevisar: tolerante('yapes por revisar', this.payments.porRevisar()),
+    }).subscribe((datos) => {
+      if (datos.skills) this.skills.set(datos.skills);
+      if (datos.grupos) this.aplicarGrupos(datos.grupos);
+      if (datos.planes) this.planes.set(datos.planes);
+      if (datos.licencias) this.licencias.set(datos.licencias);
+      if (datos.alertas) this.alertas.set(datos.alertas);
+      if (datos.codigos) this.codigos.set(datos.codigos);
+      if (datos.bolsas) this.bolsas.set(datos.bolsas);
+      if (datos.pagos) this.pagos.set(datos.pagos);
+      if (datos.descuentos) this.descuentos.set(datos.descuentos);
+      if (datos.porRevisar) this.aplicarPorRevisar(datos.porRevisar);
+
+      this.recargando.set(false);
+
+      if (fallos.length > 0) {
+        this.error.set(`No se pudo actualizar: ${fallos.join('; ')}.`);
+        return;
+      }
+
+      // Se borra solo: es la confirmación de que el botón hizo algo, no un
+      // mensaje que haya que leer.
+      this.aviso.set('Datos actualizados.');
+      setTimeout(() => {
+        if (this.aviso() === 'Datos actualizados.') this.aviso.set(null);
+      }, 2500);
     });
-    this.admin.alertas().subscribe({ next: (a) => this.alertas.set(a) });
-    this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) });
-    this.admin.bolsasRecientes().subscribe({ next: (b) => this.bolsas.set(b) });
-    this.admin.pagosRecientes().subscribe({ next: (p) => this.pagos.set(p) });
-    this.admin.descuentos().subscribe({ next: (d) => this.descuentos.set(d) });
-    this.cargarPorRevisar();
   }
 
   // ── Comprobantes de Yape ─────────────────────────────────────────────────
 
+  /** Guarda los comprobantes pendientes y baja las miniaturas que falten. */
+  private aplicarPorRevisar(pagos: PagoPorRevisar[]): void {
+    this.porRevisar.set(pagos);
+    for (const pago of pagos) this.cargarCaptura(pago.id);
+  }
+
   private cargarPorRevisar(): void {
     this.payments.porRevisar().subscribe({
-      next: (pagos) => {
-        this.porRevisar.set(pagos);
-        for (const pago of pagos) this.cargarCaptura(pago.id);
-      },
+      next: (pagos) => this.aplicarPorRevisar(pagos),
       error: (e: unknown) => this.error.set(toApiError(e).message),
     });
   }
@@ -918,8 +1084,14 @@ export class Admin implements OnInit {
       });
   }
 
-  anularCodigo(codigo: ActivationCode): void {
-    if (!confirm(`Se anulará el código …${codigo.hint}. No se podrá canjear. ¿Continuar?`)) return;
+  async anularCodigo(codigo: ActivationCode): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Anular el código …${codigo.hint}`,
+      mensaje: 'Dejará de poder canjearse. No se puede deshacer.',
+      confirmar: 'Anular el código',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
 
     this.admin.anularCodigo(codigo.id).subscribe({
       next: () => this.admin.codigos().subscribe({ next: (c) => this.codigos.set(c) }),
@@ -929,12 +1101,20 @@ export class Admin implements OnInit {
 
   // ── Licencias ────────────────────────────────────────────────────────────
 
-  revocar(licencia: LicenciaAdmin): void {
-    const motivo = prompt(
-      `Revocar la licencia de ${licencia.user.email}. El conector dejará de responderle.\n\n` +
-        'Motivo (queda guardado):',
-      'Uso compartido',
-    );
+  async revocar(licencia: LicenciaAdmin): Promise<void> {
+    const motivo = await this.dialogos.pedirTexto({
+      titulo: 'Revocar la licencia',
+      mensaje: `El conector dejará de responder a ${licencia.user.email}.`,
+      nota: 'Se puede reactivar después desde esta misma tabla.',
+      campo: {
+        etiqueta: 'Motivo (queda guardado)',
+        valor: 'Uso compartido',
+        placeholder: 'Por qué se revoca',
+        maxlength: 120,
+      },
+      confirmar: 'Revocar',
+      tono: 'peligro',
+    });
     if (motivo === null) return;
 
     this.admin.revocar(licencia.id, motivo || undefined).subscribe({

@@ -10,6 +10,7 @@ import { Balance } from '../../core/models/rewrite.model';
 import { Role, UserStatus } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
+import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
@@ -70,6 +71,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
 })
 export class Perfil implements OnInit {
   private readonly billing = inject(BillingService);
+  private readonly dialogos = inject(DialogoService);
   private readonly licencias = inject(LicenseService);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
@@ -180,11 +182,16 @@ export class Perfil implements OnInit {
    * Genera una URL nueva para la licencia. La anterior deja de funcionar en el
    * acto, así que se avisa antes de hacerlo.
    */
-  regenerarUrl(licencia: License): void {
-    const seguro = confirm(
-      'Se generará una URL nueva y la anterior dejará de funcionar. ' +
-        'Tendrás que actualizarla en Claude. ¿Continuar?',
-    );
+  async regenerarUrl(licencia: License): Promise<void> {
+    if (this.rotando()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Generar una URL nueva',
+      mensaje: 'La anterior dejará de funcionar en el acto.',
+      nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
+      confirmar: 'Generar URL nueva',
+      tono: 'aviso',
+    });
     if (!seguro || this.rotando()) return;
 
     this.rotando.set(licencia.id);
@@ -278,10 +285,16 @@ export class Perfil implements OnInit {
   }
 
   /** Cierra la sesión en todos los dispositivos: útil si se perdió el equipo. */
-  salirDeTodos(): void {
-    const seguro = confirm(
-      'Se cerrará tu sesión en todos los dispositivos donde hayas entrado. ¿Continuar?',
-    );
+  async salirDeTodos(): Promise<void> {
+    if (this.cerrando()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Cerrar sesión en todos los dispositivos',
+      mensaje: 'Se cerrará tu sesión donde quiera que hayas entrado, incluido este equipo.',
+      nota: 'Tendrás que volver a entrar con tu correo y contraseña.',
+      confirmar: 'Cerrar todas las sesiones',
+      tono: 'aviso',
+    });
     if (!seguro || this.cerrando()) return;
 
     this.cerrando.set(true);

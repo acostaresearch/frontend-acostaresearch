@@ -6,7 +6,9 @@
       <p class="marca">Administración</p>
       <h1>Panel de control</h1>
     </div>
-    <button type="button" class="boton secundario" (click)="recargar()">Actualizar</button>
+    <button type="button" class="boton secundario" [disabled]="recargando()" (click)="recargar()">
+      {{ recargando() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
   </header>
 
   <!-- ── Resumen ────────────────────────────────────────────────────────── -->
@@ -80,9 +82,9 @@
       <section class="tarjeta">
         <h2>Vender el método (código de activación)</h2>
         <p class="nota">
-          Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western
-          Union. Pon el correo del comprador y le llega el código con las instrucciones; después
-          él crea su cuenta y lo canjea desde su perfil.
+          Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
+          Pon el correo del comprador y le llega el código con las instrucciones; después él crea su
+          cuenta y lo canjea desde su perfil.
         </p>
 
         <form [formGroup]="formCodigos" (ngSubmit)="generarCodigos()" novalidate>
@@ -129,7 +131,13 @@
               <label for="importe-codigo">
                 Importe S/ <span class="opcional">(vacío = precio del plan)</span>
               </label>
-              <input id="importe-codigo" type="number" min="0" step="0.01" formControlName="importe" />
+              <input
+                id="importe-codigo"
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="importe"
+              />
             </div>
           </div>
 
@@ -302,8 +310,8 @@
     <section class="bloque">
       <h2>Comprobantes por revisar</h2>
       <p class="comprobantes-ayuda">
-        Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla,
-        no que el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
+        Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla, no que
+        el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
       </p>
 
       @if (porRevisar().length === 0) {
@@ -394,101 +402,17 @@
   <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
   @if (seccion() === 'grupos') {
     <section class="tarjeta">
-      <h2>{{ editandoGrupo() ? 'Editar «' + editandoGrupo()!.name + '»' : 'Crear un grupo' }}</h2>
-      <p class="nota">
-        Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es uno;
-        «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia solo ve
-        los capítulos de <b>su</b> grupo.
-      </p>
-
-      <form [formGroup]="formGrupo" class="formulario">
-        <div class="fila">
-          <div class="campo">
-            <label for="g-code">Código</label>
-            <input
-              id="g-code"
-              type="text"
-              formControlName="code"
-              maxlength="40"
-              placeholder="HUMANIZAR_TEXTO"
-            />
-            <span class="ayuda">
-              @if (editandoGrupo()) {
-                No se puede cambiar: lo llevan las licencias ya vendidas.
-              } @else {
-                Mayúsculas y guion bajo. No se podrá cambiar después.
-              }
-            </span>
-          </div>
-
-          <div class="campo">
-            <label for="g-name">Nombre visible</label>
-            <input id="g-name" type="text" formControlName="name" maxlength="80" />
-            <span class="ayuda">Es el título de la tarjeta en la página de precios.</span>
-          </div>
+      <div class="cabecera-seccion">
+        <div>
+          <h2>Grupos</h2>
+          <p class="nota">
+            Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es
+            uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia
+            solo ve los capítulos de <b>su</b> grupo.
+          </p>
         </div>
-
-        <div class="campo">
-          <label for="g-desc">Descripción <span class="opcional">· opcional</span></label>
-          <input id="g-desc" type="text" formControlName="description" maxlength="255" />
-          <span class="ayuda">Una frase bajo el nombre, en la tarjeta de venta.</span>
-        </div>
-
-        <div class="fila">
-          <div class="campo">
-            <label for="g-soles">Precio en soles</label>
-            <input id="g-soles" type="number" formControlName="soles" min="0" step="1" />
-            <span class="ayuda">Lo que paga por Yape o Plin.</span>
-          </div>
-
-          <div class="campo">
-            <label for="g-dolares">Precio en dólares</label>
-            <input id="g-dolares" type="number" formControlName="dolares" min="0" step="0.01" />
-            <span class="ayuda">
-              Para PayPal, que no cobra en soles. Algo por encima del cambio: se queda con un 5,4 %
-              más una comisión fija. En 0 se vende solo por Yape.
-            </span>
-          </div>
-        </div>
-
-        <div class="fila">
-          <div class="campo">
-            <label for="g-dias">Duración en días</label>
-            <input id="g-dias" type="number" formControlName="durationDays" min="0" step="30" />
-            <span class="ayuda">
-              90 = tres meses. Con 0 no caduca nunca. Al renovar se alarga la misma licencia, así
-              que el comprador no reinstala el conector.
-            </span>
-          </div>
-
-          <div class="campo">
-            <label for="g-tope">Consultas por día</label>
-            <input id="g-tope" type="number" formControlName="mcpCallsPerDay" min="0" />
-            <span class="ayuda">
-              No es un límite de uso: trabajar de verdad son diez o quince al día. Es el freno
-              contra vaciar el método de una sentada. 0 = sin freno.
-            </span>
-          </div>
-        </div>
-
-        <label class="casilla">
-          <input type="checkbox" formControlName="active" />
-          <span>A la venta en la web</span>
-        </label>
-
-        <div class="acciones-formulario">
-          <button type="button" class="boton" (click)="guardarGrupo()" [disabled]="trabajando()">
-            {{ editandoGrupo() ? 'Guardar cambios' : 'Crear grupo' }}
-          </button>
-          @if (editandoGrupo()) {
-            <button type="button" class="boton secundario" (click)="nuevoGrupo()">Cancelar</button>
-          }
-        </div>
-      </form>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Grupos</h2>
+        <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
+      </div>
 
       @if (grupos().length === 0) {
         <p class="tenue">Todavía no hay ninguno.</p>
@@ -537,6 +461,16 @@
                     >
                       {{ grupo.active ? 'Retirar' : 'Poner a la venta' }}
                     </button>
+                    <!-- Borrar va en rojo y el último: es el único de los tres
+                         que no tiene vuelta atrás. -->
+                    <button
+                      type="button"
+                      class="enlace peligro"
+                      (click)="pedirBorrarGrupo(grupo)"
+                      [disabled]="trabajando()"
+                    >
+                      Eliminar
+                    </button>
                   </td>
                 </tr>
               }
@@ -545,6 +479,185 @@
         </div>
       }
     </section>
+
+    <!-- ── Ventana de crear/editar ─────────────────────────────────────────
+         Va fuera de la tarjeta para que se superponga a toda la página. El
+         fondo cierra al pulsarlo, pero el contenido no: sin `stopPropagation`,
+         un clic dentro del formulario lo cerraría con todo escrito. -->
+    @if (formularioAbierto()) {
+      <div class="ventana-fondo" (click)="cerrarFormularioGrupo()">
+        <div
+          class="ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-grupo"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-grupo">
+              {{ editandoGrupo() ? 'Editar «' + editandoGrupo()!.name + '»' : 'Crear un grupo' }}
+            </h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="cerrarFormularioGrupo()"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <form [formGroup]="formGrupo" class="formulario">
+              <div class="fila">
+                <div class="campo">
+                  <label for="g-code">Código</label>
+                  <input
+                    id="g-code"
+                    type="text"
+                    formControlName="code"
+                    maxlength="40"
+                    placeholder="HUMANIZAR_TEXTO"
+                  />
+                  <span class="ayuda">
+                    @if (editandoGrupo()) {
+                      No se puede cambiar: lo llevan las licencias ya vendidas.
+                    } @else {
+                      Mayúsculas y guion bajo. No se podrá cambiar después.
+                    }
+                  </span>
+                </div>
+
+                <div class="campo">
+                  <label for="g-name">Nombre visible</label>
+                  <input id="g-name" type="text" formControlName="name" maxlength="80" />
+                  <span class="ayuda">Es el título de la tarjeta en la página de precios.</span>
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="g-desc">Descripción <span class="opcional">· opcional</span></label>
+                <input id="g-desc" type="text" formControlName="description" maxlength="255" />
+                <span class="ayuda">Una frase bajo el nombre, en la tarjeta de venta.</span>
+              </div>
+
+              <div class="fila">
+                <div class="campo">
+                  <label for="g-soles">Precio en soles</label>
+                  <input id="g-soles" type="number" formControlName="soles" min="0" step="1" />
+                  <span class="ayuda">Lo que paga por Yape o Plin.</span>
+                </div>
+
+                <div class="campo">
+                  <label for="g-dolares">Precio en dólares</label>
+                  <input id="g-dolares" type="number" formControlName="dolares" min="0" step="0.01" />
+                  <span class="ayuda">
+                    Para PayPal, que no cobra en soles. Algo por encima del cambio: se queda con un
+                    5,4 % más una comisión fija. En 0 se vende solo por Yape.
+                  </span>
+                </div>
+              </div>
+
+              <div class="fila">
+                <div class="campo">
+                  <label for="g-dias">Duración en días</label>
+                  <input id="g-dias" type="number" formControlName="durationDays" min="0" step="30" />
+                  <span class="ayuda">
+                    90 = tres meses. Con 0 no caduca nunca. Al renovar se alarga la misma licencia,
+                    así que el comprador no reinstala el conector.
+                  </span>
+                </div>
+
+                <div class="campo">
+                  <label for="g-tope">Consultas por día</label>
+                  <input id="g-tope" type="number" formControlName="mcpCallsPerDay" min="0" />
+                  <span class="ayuda">
+                    No es un límite de uso: trabajar de verdad son diez o quince al día. Es el freno
+                    contra vaciar el método de una sentada. 0 = sin freno.
+                  </span>
+                </div>
+              </div>
+
+              <label class="casilla">
+                <input type="checkbox" formControlName="active" />
+                <span>A la venta en la web</span>
+              </label>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarFormularioGrupo()">
+              Cancelar
+            </button>
+            <button type="button" class="boton" (click)="guardarGrupo()" [disabled]="trabajando()">
+              {{ editandoGrupo() ? 'Guardar cambios' : 'Crear grupo' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── Confirmación de borrado ─────────────────────────────────────────
+         Se pide escribir la palabra en vez de un «¿seguro?»: a un «¿seguro?» se
+         le da que sí sin leerlo. Escribir obliga a mirar qué se está borrando. -->
+    @if (borrandoGrupo(); as aBorrar) {
+      <div class="ventana-fondo" (click)="cancelarBorrado()">
+        <div
+          class="ventana estrecha"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-borrado"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-borrado">Eliminar «{{ aBorrar.name }}»</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cancelarBorrado()">
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <p class="aviso-borrado">
+              Esto borra el grupo <b class="mono">{{ aBorrar.code }}</b> de la base de datos. No se
+              puede deshacer.
+            </p>
+            <p class="nota">
+              Solo funciona si nunca se vendió ni tiene capítulos. Si alguien lo compró, el servidor
+              lo rechazará y te dirá por qué: en ese caso lo que buscas es <b>Retirar</b>, que lo
+              saca de la venta sin tocar lo ya vendido.
+            </p>
+
+            <div class="campo">
+              <label for="confirmar-borrado">
+                Escribe <b>eliminar</b> para confirmar
+              </label>
+              <input
+                id="confirmar-borrado"
+                type="text"
+                autocomplete="off"
+                placeholder="eliminar"
+                [value]="confirmacionBorrado()"
+                (input)="escribirConfirmacion($event)"
+              />
+            </div>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cancelarBorrado()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton destructivo"
+              [disabled]="!puedeBorrar() || trabajando()"
+              (click)="confirmarBorrado()"
+            >
+              {{ trabajando() ? 'Eliminando…' : 'Eliminar definitivamente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   <!-- ══ CAPÍTULOS ════════════════════════════════════════════════════════ -->
@@ -565,7 +678,11 @@
       } @else {
         <div class="campo">
           <label for="grupo-destino">¿A qué grupo van?</label>
-          <select id="grupo-destino" (change)="elegirGrupoDestino($event)" [disabled]="publicando()">
+          <select
+            id="grupo-destino"
+            (change)="elegirGrupoDestino($event)"
+            [disabled]="publicando()"
+          >
             @for (grupo of gruposActivos(); track grupo.code) {
               <option [value]="grupo.code" [selected]="grupo.code === grupoDestino()">
                 {{ grupo.name }} · S/ {{ (grupo.priceCents / 100).toFixed(2) }} ·
@@ -652,9 +769,11 @@
 
         @if (colaReemplazos() > 0) {
           <p class="nota atencion">
-            {{ colaReemplazos() === 1 ? 'Uno de ellos pisa' : colaReemplazos() + ' de ellos pisan' }}
-            un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y
-            posición— y solo cambia el archivo.
+            {{
+              colaReemplazos() === 1 ? 'Uno de ellos pisa' : colaReemplazos() + ' de ellos pisan'
+            }}
+            un capítulo que ya está en el conector. Se queda su ficha —nombre, resumen y posición— y
+            solo cambia el archivo.
           </p>
         }
 
@@ -796,8 +915,8 @@
                 <p class="skill-resumen">{{ skill.summary }}</p>
                 <p class="skill-meta">
                   <code>{{ skill.code }}</code>
-                  · {{ nombreGrupo(skill.productCode) }}
-                  · {{ skill.skillMdBytes | number }} bytes · actualizado
+                  · {{ nombreGrupo(skill.productCode) }} · {{ skill.skillMdBytes | number }} bytes ·
+                  actualizado
                   {{ skill.updatedAt | date: 'dd/MM/yyyy' }}
                 </p>
               </div>
@@ -835,8 +954,8 @@
     <section class="tarjeta">
       <h2>Crear código promocional</h2>
       <p class="nota">
-        Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para
-        cualquiera; si lo limitas, solo funcionará en ese.
+        Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para cualquiera;
+        si lo limitas, solo funcionará en ese.
       </p>
 
       <form [formGroup]="formDescuento" (ngSubmit)="crearDescuento()" novalidate>
@@ -859,7 +978,12 @@
         <div class="fila">
           <div class="campo">
             <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
-            <input id="code-promo" type="text" formControlName="code" placeholder="se inventa solo" />
+            <input
+              id="code-promo"
+              type="text"
+              formControlName="code"
+              placeholder="se inventa solo"
+            />
           </div>
           <div class="campo estrecho">
             <label for="usos">Usos máx.</label>
@@ -869,7 +993,12 @@
 
         <div class="campo">
           <label for="nota-promo">Nota <span class="opcional">(opcional)</span></label>
-          <input id="nota-promo" type="text" formControlName="note" placeholder="promo TikTok septiembre" />
+          <input
+            id="nota-promo"
+            type="text"
+            formControlName="note"
+            placeholder="promo TikTok septiembre"
+          />
         </div>
 
         <button type="submit" class="boton" [disabled]="trabajando()">
@@ -879,9 +1008,7 @@
 
       @if (descuentoNuevo(); as promo) {
         <div class="codigos-nuevos">
-          <p class="codigos-titulo">
-            Listo. Este sí lo puedes volver a consultar cuando quieras.
-          </p>
+          <p class="codigos-titulo">Listo. Este sí lo puedes volver a consultar cuando quieras.</p>
           <ul>
             <li>{{ promo.code }}</li>
           </ul>
@@ -913,7 +1040,9 @@
             <tbody>
               @for (promo of descuentos(); track promo.id) {
                 <tr>
-                  <td class="mono"><strong>{{ promo.code }}</strong></td>
+                  <td class="mono">
+                    <strong>{{ promo.code }}</strong>
+                  </td>
                   <td class="numero">{{ importe(promo.amountCents) }}</td>
                   <td>{{ promo.planCode ?? 'Cualquiera' }}</td>
                   <td class="numero">
@@ -921,7 +1050,11 @@
                   </td>
                   <td class="tenue">{{ promo.note ?? '—' }}</td>
                   <td>
-                    <span class="pastilla" [class.buena]="promo.active" [class.mala]="!promo.active">
+                    <span
+                      class="pastilla"
+                      [class.buena]="promo.active"
+                      [class.mala]="!promo.active"
+                    >
                       {{ promo.active ? 'Activo' : 'Apagado' }}
                     </span>
                   </td>
@@ -976,7 +1109,9 @@
                   </td>
                   <td class="numero">{{ licencia.callsTotal | number }}</td>
                   <td class="tenue">
-                    {{ licencia.lastUsedAt ? (licencia.lastUsedAt | date: 'd MMM HH:mm') : 'nunca' }}
+                    {{
+                      licencia.lastUsedAt ? (licencia.lastUsedAt | date: 'd MMM HH:mm') : 'nunca'
+                    }}
                   </td>
                   <td>
                     <span
@@ -1015,8 +1150,8 @@
     <section class="tarjeta">
       <h2>Alertas de uso compartido</h2>
       <p class="nota">
-        A la primera sospecha alta se avisa al comprador por correo; solo si vuelve a saltar
-        pasadas 12 horas se revoca sola. Aquí puedes adelantarte o descartarla.
+        A la primera sospecha alta se avisa al comprador por correo; solo si vuelve a saltar pasadas
+        12 horas se revoca sola. Aquí puedes adelantarte o descartarla.
       </p>
 
       @if (alertas().length === 0) {

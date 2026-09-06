@@ -51,10 +51,7 @@ export class AdminService {
    */
   generarCodigos(datos: GenerarCodigos): Observable<CodigosGenerados> {
     return this.http
-      .post<ApiResponse<CodigosGenerados>>(
-        `${this.licencias}/codes`,
-        datos,
-      )
+      .post<ApiResponse<CodigosGenerados>>(`${this.licencias}/codes`, datos)
       .pipe(map((res) => res.data));
   }
 
@@ -126,10 +123,9 @@ export class AdminService {
   /** Apaga o vuelve a encender un código sin borrarlo. */
   activarDescuento(id: string, active: boolean): Observable<CodigoDescuento> {
     return this.http
-      .patch<ApiResponse<{ discount: CodigoDescuento }>>(
-        `${this.facturacion}/discounts/${id}`,
-        { active },
-      )
+      .patch<ApiResponse<{ discount: CodigoDescuento }>>(`${this.facturacion}/discounts/${id}`, {
+        active,
+      })
       .pipe(map((res) => res.data.discount));
   }
 

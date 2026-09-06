@@ -16,12 +16,7 @@ export interface Comprador {
  * activación, porque describen lo mismo: un cobro que no pasó por la pasarela.
  */
 export type MetodoDeCobro =
-  | 'YAPE'
-  | 'PLIN'
-  | 'TRANSFERENCIA'
-  | 'PAYPAL'
-  | 'WESTERN_UNION'
-  | 'CORTESIA';
+  'YAPE' | 'PLIN' | 'TRANSFERENCIA' | 'PAYPAL' | 'WESTERN_UNION' | 'CORTESIA';
 
 /** Código de activación. El valor en claro solo existe al generarlo. */
 export interface ActivationCode {

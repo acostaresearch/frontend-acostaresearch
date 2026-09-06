@@ -26,52 +26,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const RAIZ = path.resolve(__dirname, '..');
+const { RAIZ, v, vDev } = require('./leer-env');
+
 const DESTINO = path.join(RAIZ, 'src', 'environments');
-
-/** Lector mínimo de .env: pares CLAVE=valor, con # para comentarios. */
-function leerArchivoEnv() {
-  const ruta = path.join(RAIZ, '.env');
-  if (!fs.existsSync(ruta)) return {};
-
-  const valores = {};
-  for (const linea of fs.readFileSync(ruta, 'utf8').split('\n')) {
-    const limpia = linea.trim();
-    if (!limpia || limpia.startsWith('#')) continue;
-
-    const corte = limpia.indexOf('=');
-    if (corte < 1) continue;
-
-    const clave = limpia.slice(0, corte).trim();
-    // Se quitan las comillas si las hay: pegar un valor entrecomillado desde
-    // otra consola es lo más normal del mundo.
-    const valor = limpia
-      .slice(corte + 1)
-      .trim()
-      .replace(/^(['"])(.*)\1$/, '$2');
-
-    valores[clave] = valor;
-  }
-  return valores;
-}
-
-const archivo = leerArchivoEnv();
-
-/** Una cadena vacía en el entorno significa «sin configurar», no «vacío». */
-function v(clave, porDefecto = '') {
-  const delProceso = process.env[clave];
-  if (delProceso !== undefined && delProceso !== '') return delProceso;
-
-  const delArchivo = archivo[clave];
-  if (delArchivo !== undefined && delArchivo !== '') return delArchivo;
-
-  return porDefecto;
-}
-
-/** Igual, pero con una variante propia de desarrollo que cae a la general. */
-function vDev(clave, porDefecto = '') {
-  return v(`${clave}_DEV`, v(clave, porDefecto));
-}
 
 const REDES = {
   whatsapp: v('WHATSAPP_URL', 'https://wa.me/51923095940'),
@@ -158,9 +115,10 @@ fs.writeFileSync(
   path.join(DESTINO, 'environment.ts'),
   contenido({
     produccion: true,
-    // Relativa a propósito: Netlify reenvía /api al backend (ver netlify.toml),
-    // así el navegador y la API comparten origen y la cookie de sesión viaja
-    // sin necesitar SameSite=None ni CORS con credenciales.
+    // Relativa a propósito: el Worker reenvía /api al backend (ver
+    // `worker/index.js`), así el navegador y la API comparten origen y la
+    // cookie de sesión viaja sin necesitar SameSite=None ni CORS con
+    // credenciales.
     apiUrl: v('API_URL', '/api/v1'),
     googleClientId: v('GOOGLE_CLIENT_ID'),
     paypalClientId: v('PAYPAL_CLIENT_ID'),
@@ -171,7 +129,12 @@ fs.writeFileSync(
   path.join(DESTINO, 'environment.development.ts'),
   contenido({
     produccion: false,
-    apiUrl: vDev('API_URL', 'http://localhost:3000/api/v1'),
+    // Relativa, igual que en producción: `ng serve` reenvía /api al backend
+    // (ver `proxy.conf.js`), así que en local no hay CORS ni cookie cruzada y a
+    // qué backend se apunta se decide en un solo sitio, con API_PROXY_TARGET.
+    // Poner aquí una URL absoluta sigue funcionando, pero se salta el proxy y
+    // con él la sesión: es lo que había antes y es lo que se dejó de hacer.
+    apiUrl: vDev('API_URL', '/api/v1'),
     googleClientId: vDev('GOOGLE_CLIENT_ID'),
     // Con PAYPAL_CLIENT_ID en producción apuntando a la cuenta real, trabajar
     // en local con ese mismo identificador significaría enseñar botones que
@@ -180,7 +143,11 @@ fs.writeFileSync(
   }),
 );
 
-const origen = process.env.NETLIFY ? 'panel de Netlify' : fs.existsSync(path.join(RAIZ, '.env')) ? '.env' : 'valores por defecto';
+const origen = process.env.NETLIFY
+  ? 'panel de Netlify'
+  : fs.existsSync(path.join(RAIZ, '.env'))
+    ? '.env'
+    : 'valores por defecto';
 console.log(`environments generados desde ${origen}`);
 console.log(`  api           ${v('API_URL', '/api/v1')}`);
 console.log(`  google        ${v('GOOGLE_CLIENT_ID') || '(sin configurar)'}`);

@@ -1,0 +1,148 @@
+/* ── La ventana de confirmar ───────────────────────────────────────────────
+ *
+ * Misma familia visual que las ventanas del panel de administración: fondo
+ * oscurecido, tarjeta blanca con el radio y la sombra del sistema, y el pie
+ * con los botones a la derecha. Lo que la distingue es el icono de tono, que
+ * dice de un vistazo si lo que viene es reversible o no.
+ */
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: rgba(16, 24, 40, 0.55);
+  animation: aparecer 140ms ease;
+}
+
+.ventana {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
+  animation: subir 160ms ease;
+}
+
+.cuerpo {
+  display: flex;
+  gap: 14px;
+  padding: 24px 24px 18px;
+}
+
+.icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.icono.peligro {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.icono.aviso {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.icono svg {
+  width: 20px;
+  height: 20px;
+}
+
+.texto {
+  min-width: 0;
+}
+
+.texto h3 {
+  margin: 6px 0 0;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  color: var(--color-texto);
+}
+
+.mensaje {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.nota {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+/* `.campo` viene del sistema de diseño; aquí solo se ajusta la separación. */
+.texto .campo {
+  margin: 16px 0 0;
+}
+
+.pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Los botones del pie se ajustan al texto: a ancho completo, dos botones en
+   una ventana estrecha se leen como una barra partida en dos. */
+.pie .boton {
+  width: auto;
+}
+
+.boton.destructivo {
+  background: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.boton.destructivo:hover:not(:disabled) {
+  background: #a82323;
+  border-color: #a82323;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo,
+  .ventana {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .pie {
+    flex-direction: column-reverse;
+  }
+
+  .pie .boton {
+    width: 100%;
+  }
+}

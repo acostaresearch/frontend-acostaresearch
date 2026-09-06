@@ -898,3 +898,130 @@ tbody tr.revocada {
     width: 100%;
   }
 }
+
+/* ── Ventanas emergentes ──────────────────────────────────────────────────
+ *
+ * Crear y editar un grupo viven aquí en vez de encima de la tabla. Lo primero
+ * que se ve al entrar en la sección es la lista, que es lo que uno viene a
+ * consultar casi siempre; el formulario aparece cuando se pide.
+ */
+.ventana-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(16, 24, 40, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  /* En un móvil el formulario no cabe: el fondo scrollea con él dentro. */
+  overflow-y: auto;
+}
+
+.ventana {
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
+  width: 100%;
+  max-width: 760px;
+  /* La cabecera y el pie quedan fijos y solo scrollea el cuerpo: el botón de
+     guardar tiene que estar siempre a la vista, no al final de un formulario
+     largo. */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
+.ventana.estrecha {
+  max-width: 460px;
+}
+
+.ventana-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.ventana-cabecera h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.ventana-cabecera .cerrar {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: var(--radio-sm);
+  color: var(--color-texto-tenue);
+  transition: background var(--transicion), color var(--transicion);
+}
+
+.ventana-cabecera .cerrar:hover {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.ventana-cuerpo {
+  padding: 18px 24px;
+  overflow-y: auto;
+}
+
+.ventana-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Encabezado de sección con su acción a la derecha. */
+.cabecera-seccion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.cabecera-seccion h2 {
+  margin-bottom: 6px;
+}
+
+.cabecera-seccion .nota {
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* Borrar es el único de los tres botones de fila que no tiene vuelta atrás,
+   así que se distingue del resto. */
+.enlace.peligro {
+  color: var(--color-error);
+}
+
+.boton.destructivo {
+  background: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.boton.destructivo:hover:not(:disabled) {
+  background: #a82323;
+  border-color: #a82323;
+}
+
+.aviso-borrado {
+  background: var(--color-error-suave);
+  border-radius: var(--radio-sm);
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-error);
+}
