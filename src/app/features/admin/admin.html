@@ -111,7 +111,7 @@
       <h2>Por dónde entra el dinero</h2>
       <p class="grafico-cifra">{{ ingresosPorMedio().length }}</p>
       <p class="grafico-subcifra">
-        {{ ingresosPorMedio().length === 1 ? 'medio de pago' : 'medios de pago' }}
+        {{ ingresosPorMedio().length === 1 ? 'vía de cobro' : 'vías de cobro' }}
       </p>
 
       @if (ingresosPorMedio().length === 0) {
@@ -128,6 +128,9 @@
             </li>
           }
         </ul>
+        <p class="grafico-pie">
+          Los códigos de activación cuentan desde que se venden, sin esperar al canje.
+        </p>
       }
     </article>
 
@@ -1836,6 +1839,7 @@
                 <th>Producto</th>
                 <th>Importe</th>
                 <th>Estado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -1854,6 +1858,16 @@
                     >
                       {{ estadoPago(pago.status) }}
                     </span>
+                  </td>
+                  <td class="derecha">
+                    <button
+                      type="button"
+                      class="enlace-peligro"
+                      [disabled]="borrandoPago() === pago.id"
+                      (click)="eliminarPago(pago)"
+                    >
+                      {{ borrandoPago() === pago.id ? 'Borrando…' : 'Eliminar' }}
+                    </button>
                   </td>
                 </tr>
               }

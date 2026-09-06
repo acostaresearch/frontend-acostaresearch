@@ -428,19 +428,61 @@ export class Admin implements OnInit {
   );
 
   /**
-   * Por dónde entra el dinero.
+   * Ventas cobradas al generar un código de activación.
    *
-   * Categorías sin orden natural —PayPal, Yape, Western Union—, así que todas
-   * las barras van del mismo color: la longitud ya dice cuál es mayor, y teñir
-   * cada una de un tono distinto gastaría el color en repetir eso mismo.
+   * Van aparte de las barras de la pasarela porque no entran por el mismo sitio:
+   * aquí el dinero ya está cobrado —por Yape, por Western Union, por donde sea—
+   * y lo que se emite es la llave. Contarlas con el resto escondería el canal
+   * que, en la práctica, mueve la mayor parte de lo que se vende a mano.
+   *
+   * Se cuentan desde el código y NO desde el pago, y esa es la diferencia que
+   * importa: el pago no nace hasta que el comprador canjea, así que una venta
+   * cobrada el lunes y canjeada el viernes —o nunca— era dinero invisible en
+   * este gráfico. Un código anulado no cuenta: ese cobro se deshizo. Una
+   * cortesía tampoco: no hubo dinero.
    */
-  readonly ingresosPorMedio = computed(() =>
-    porCategoria(
-      this.cobrados(),
-      (pago) => MEDIOS[pago.provider] ?? pago.provider,
-      (pago) => pago.amountCents,
+  private readonly codigosVendidos = computed(() =>
+    this.codigos().filter(
+      (codigo) =>
+        codigo.status !== 'VOID' &&
+        codigo.paymentMethod !== null &&
+        codigo.paymentMethod !== 'CORTESIA' &&
+        (codigo.amountCents ?? 0) > 0,
     ),
   );
+
+  /**
+   * Por dónde entra el dinero.
+   *
+   * Categorías sin orden natural —PayPal, Yape, código de activación—, así que
+   * todas las barras van del mismo color: la longitud ya dice cuál es mayor, y
+   * teñir cada una de un tono distinto gastaría el color en repetir eso mismo.
+   *
+   * El canje de un código apunta su propio pago, con el medio con el que se
+   * cobró. Si se dejara pasar, esa venta saldría dos veces: una en la barra de
+   * su código y otra en la de Yape. Se reconocen porque el pago del canje lleva
+   * el identificador del código como número de orden.
+   */
+  readonly ingresosPorMedio = computed(() => {
+    const deCodigos = new Set(this.codigos().map((codigo) => codigo.id));
+
+    const entradas = this.cobrados()
+      .filter((pago) => !deCodigos.has(pago.providerOrderId))
+      .map((pago) => ({
+        etiqueta: MEDIOS[pago.provider] ?? pago.provider,
+        importe: pago.amountCents,
+      }));
+
+    for (const codigo of this.codigosVendidos()) {
+      entradas.push({ etiqueta: 'Código de activación', importe: codigo.amountCents ?? 0 });
+    }
+
+    return porCategoria(
+      entradas,
+      (entrada) => entrada.etiqueta,
+      (entrada) => entrada.importe,
+    );
+  });
 
   /**
    * Licencias que caducan en las próximas semanas.
@@ -1658,6 +1700,55 @@ export class Admin implements OnInit {
       error: (e: unknown) => {
         this.error.set(mensajeDeError(e));
         this.abriendo.set(null);
+      },
+    });
+  }
+
+  // ── Historial de pagos ───────────────────────────────────────────────────
+
+  /** Qué apunte se está borrando, para bloquear solo esa fila. */
+  readonly borrandoPago = signal<string | null>(null);
+
+  /**
+   * Borra un apunte del historial de cobros.
+   *
+   * El historial se llena de intentos que no llegaron a nada —órdenes de PayPal
+   * que el comprador abandonó a medias, pruebas nuestras— y un libro de cuentas
+   * que no se puede limpiar acaba sin leerse, que es peor que no tenerlo.
+   *
+   * Se avisa de lo que NO se lleva por delante porque es lo que uno teme al
+   * pulsar: la licencia que ese pago entregó sigue funcionando. Lo que se pierde
+   * es el rastro de por dónde entró ese dinero, y por eso un cobro confirmado se
+   * pregunta con más aspavientos que uno que quedó a medias.
+   */
+  async eliminarPago(pago: PagoAdmin): Promise<void> {
+    const cobrado = pago.status === 'PAID';
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Borrar este apunte',
+      mensaje: cobrado
+        ? `Es un cobro confirmado de ${this.importe(pago.amountCents, pago.currency)} ` +
+          `a nombre de ${pago.user.email}. Al borrarlo dejará de contar en los gráficos ` +
+          'y en el total del mes.'
+        : `Un intento de ${pago.user.email} que nunca llegó a cobrarse.`,
+      nota: 'Se borra el apunte, no la entrega: si activó una licencia, la licencia sigue viva.',
+      confirmar: 'Borrar el apunte',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoPago.set(pago.id);
+    this.admin.eliminarPago(pago.id).subscribe({
+      next: () => {
+        // Se quita de la lista en el sitio en vez de recargar: la tabla enseña
+        // los últimos 50 y volver a pedirlos haría subir uno del fondo, que es
+        // justo lo que hace dudar de si se borró el que era.
+        this.pagos.update((lista) => lista.filter((p) => p.id !== pago.id));
+        this.borrandoPago.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoPago.set(null);
       },
     });
   }

@@ -158,4 +158,14 @@ export class AdminService {
       .get<ApiResponse<{ payments: PagoAdmin[] }>>(`${this.pagos}/recent`)
       .pipe(map((res) => res.data.payments));
   }
+
+  /**
+   * Borra un apunte del historial de cobros.
+   *
+   * Se lleva el apunte, no la entrega: si ese pago activó una licencia, la
+   * licencia sigue viva. Lo que se pierde es el rastro de por dónde entró.
+   */
+  eliminarPago(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.pagos}/${id}`);
+  }
 }
