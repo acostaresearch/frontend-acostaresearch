@@ -209,3 +209,40 @@
     flex-wrap: wrap;
   }
 }
+
+/* El `.boton` global lleva `width: 100%`, que dentro de una fila flex se
+   traduce en una base enorme: el botón se comía el ancho y la URL quedaba en
+   una rendija de treinta píxeles. Aquí se le devuelve su tamaño natural. */
+.url-fila .boton {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
+}
+
+/* Que se vea entera la parte que importa. El principio de la URL es siempre el
+   mismo dominio; lo que distingue una licencia de otra está al final, así que
+   al enfocarla el cursor se va ahí. */
+.url-fila input {
+  flex: 1 1 auto;
+  direction: ltr;
+  text-overflow: ellipsis;
+}
+
+/* En móvil, uno debajo del otro: partidos, no cabe ni la URL ni el botón. */
+@media (max-width: 520px) {
+  .url-fila {
+    flex-direction: column;
+  }
+
+  .url-fila .boton {
+    width: 100%;
+  }
+}
+
+/* Un producto que ya no se vende. No es un error ni una revocación: es que se
+   retiró del catálogo, y decirlo así evita que parezca que algo se rompió. */
+.etiqueta.retirada {
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+}

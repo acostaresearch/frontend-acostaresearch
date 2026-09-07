@@ -20,7 +20,7 @@
     @for (licencia of misLicencias(); track licencia.id) {
       <li>
         <div>
-          <strong>{{ licencia.productCode }}</strong>
+          <strong>{{ licencia.productName || licencia.productCode }}</strong>
           <span class="tenue">
             @if (licencia.callsPerDay && licencia.usage) {
               hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
@@ -35,10 +35,17 @@
           </span>
         </div>
         <div class="licencia-acciones">
-          <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
-            {{ licencia.status }}
-          </span>
-          @if (licencia.status === 'ACTIVE') {
+          <!-- «Retirado» gana a «REVOKED»: dice POR QUÉ está apagada, que es
+               lo que hace falta saber. El estado a secas invita a pensar que
+               algo se rompió. -->
+          @if (licencia.retirado) {
+            <span class="etiqueta retirada">Retirado</span>
+          } @else {
+            <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
+              {{ licencia.status }}
+            </span>
+          }
+          @if (licencia.status === 'ACTIVE' && !licencia.retirado) {
             <button
               type="button"
               class="boton secundario"

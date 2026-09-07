@@ -34,6 +34,21 @@ export interface PaymentOrder {
 export interface License {
   id: string;
   productCode: string;
+  /**
+   * El nombre de venta del producto.
+   *
+   * La licencia guarda el código porque es lo que no cambia aunque el plan se
+   * renombre, pero eso no es lo que se le enseña a nadie: sin esto, el panel
+   * decía «METODO_DE_TESIS_HUMANIZADOR» donde tenía que leerse el nombre.
+   */
+  productName?: string;
+  /**
+   * El producto ya no se vende.
+   *
+   * No quiere decir que la licencia no sirva: quien lo compró antes conserva su
+   * acceso. Retirar un plan es dejar de venderlo, no quitarle lo pagado a nadie.
+   */
+  retirado?: boolean;
   tokenHint: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'REVOKED';
   callsTotal: number;
