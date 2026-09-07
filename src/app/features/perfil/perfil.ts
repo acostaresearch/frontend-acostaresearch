@@ -1,21 +1,19 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
-import { License, MEDIOS_PAGO, Payment } from '../../core/models/payment.model';
+import { MEDIOS_PAGO, Payment } from '../../core/models/payment.model';
 import { Balance } from '../../core/models/rewrite.model';
 import { Role, UserStatus } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { FondoService } from '../../core/services/fondo.service';
-import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
+import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -63,15 +61,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
  */
 @Component({
   selector: 'app-perfil',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    DatePipe,
-    DecimalPipe,
-    AjustesDeCuenta,
-    SiteHeader,
-    SiteFooter,
-  ],
+  imports: [RouterLink, DatePipe, DecimalPipe, AjustesDeCuenta, MiConector, SiteHeader, SiteFooter],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })
@@ -80,7 +70,6 @@ export class Perfil implements OnInit {
   private readonly dialogos = inject(DialogoService);
   private readonly fondo = inject(FondoService);
   private readonly ruta = inject(ActivatedRoute);
-  private readonly licencias = inject(LicenseService);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
   private readonly router = inject(Router);
@@ -113,42 +102,6 @@ export class Perfil implements OnInit {
   readonly bolsasActivas = computed(() =>
     (this.saldo()?.packs ?? []).filter((pack) => pack.status === 'ACTIVE'),
   );
-
-  // ── Licencias del conector ───────────────────────────────────────────────
-  readonly misLicencias = signal<License[]>([]);
-
-  /**
-   * Guía de instalación en PDF. Cadena vacía = el archivo no está y no se
-   * ofrece la descarga; lo resuelve el generador de environments al compilar.
-   */
-  readonly guiaUrl = environment.guiaUrl;
-
-  /**
-   * ¿Tiene acceso pagado y vigente?
-   *
-   * No basta con que exista una fila de licencia: una revocada o una caducada
-   * también aparecen ahí, y a quien está en cualquiera de esos dos casos no se
-   * le ofrece la guía de instalación. Lo que necesita es renovar o escribirnos,
-   * no un manual para conectar algo que ya no le va a responder.
-   */
-  readonly tieneAccesoVigente = computed(() =>
-    this.misLicencias().some(
-      (licencia) =>
-        licencia.status === 'ACTIVE' &&
-        (licencia.expiresAt === null || new Date(licencia.expiresAt) > new Date()),
-    ),
-  );
-  /** URL recién generada. Solo se puede mostrar en el momento de crearla. */
-  readonly urlNueva = signal<string | null>(null);
-  readonly rotando = signal<string | null>(null);
-  readonly errorLicencia = signal<string | null>(null);
-  readonly urlCopiada = signal(false);
-
-  readonly codigo = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.minLength(6)],
-  });
-  readonly canjeando = signal(false);
 
   // ── Compras ──────────────────────────────────────────────────────────────
   readonly compras = signal<Payment[]>([]);
@@ -195,11 +148,6 @@ export class Perfil implements OnInit {
       error: () => this.saldo.set(null),
     });
 
-    this.licencias.mine().subscribe({
-      next: (lista) => this.misLicencias.set(lista),
-      error: () => this.misLicencias.set([]),
-    });
-
     this.pagos.mine().subscribe({
       next: (lista) => {
         this.compras.set(lista);
@@ -210,81 +158,6 @@ export class Perfil implements OnInit {
         this.cargandoCompras.set(false);
       },
     });
-  }
-
-  // ── Método de tesis ──────────────────────────────────────────────────────
-
-  /**
-   * Genera una URL nueva para la licencia. La anterior deja de funcionar en el
-   * acto, así que se avisa antes de hacerlo.
-   */
-  async regenerarUrl(licencia: License): Promise<void> {
-    if (this.rotando()) return;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Generar una URL nueva',
-      mensaje: 'La anterior dejará de funcionar en el acto.',
-      nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
-      confirmar: 'Generar URL nueva',
-      tono: 'aviso',
-    });
-    if (!seguro || this.rotando()) return;
-
-    this.rotando.set(licencia.id);
-    this.errorLicencia.set(null);
-    this.urlNueva.set(null);
-
-    this.licencias.rotate(licencia.id).subscribe({
-      next: ({ license, connectorUrl }) => {
-        this.urlNueva.set(connectorUrl);
-        this.misLicencias.update((lista) =>
-          lista.map((item) => (item.id === license.id ? license : item)),
-        );
-        this.rotando.set(null);
-      },
-      error: (error: unknown) => {
-        this.errorLicencia.set(toApiError(error).message);
-        this.rotando.set(null);
-      },
-    });
-  }
-
-  /** Canjea un código comprado fuera de la web (Yape, transferencia). */
-  canjearCodigo(): void {
-    if (this.codigo.invalid || this.canjeando()) {
-      this.codigo.markAsTouched();
-      return;
-    }
-
-    this.canjeando.set(true);
-    this.errorLicencia.set(null);
-    this.urlNueva.set(null);
-
-    this.licencias.redeem(this.codigo.value.trim()).subscribe({
-      next: ({ license, connectorUrl }) => {
-        this.urlNueva.set(connectorUrl);
-        this.misLicencias.update((lista) => [license, ...lista]);
-        this.codigo.reset();
-        this.canjeando.set(false);
-      },
-      error: (error: unknown) => {
-        this.errorLicencia.set(toApiError(error).message);
-        this.canjeando.set(false);
-      },
-    });
-  }
-
-  async copiarUrlNueva(): Promise<void> {
-    const url = this.urlNueva();
-    if (!url) return;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      this.urlCopiada.set(true);
-      setTimeout(() => this.urlCopiada.set(false), 2500);
-    } catch {
-      this.errorLicencia.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
-    }
   }
 
   // ── Presentación ─────────────────────────────────────────────────────────

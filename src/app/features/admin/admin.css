@@ -1912,31 +1912,74 @@ td.acciones {
 }
 
 /* ── Mover una licencia de producto ──────────────────────────────────────
-   Va dentro de la ficha del acceso, encima del pie. Separado por una línea
-   porque es lo único de esa ventana que CAMBIA algo: el resto se consulta. */
+   Va al final del CUERPO de la ficha, no en el pie. El pie es una fila flex
+   alineada a la derecha, y meterlo ahí convertía el bloque en un elemento más
+   de esa fila: se salía del relleno de la ventana y el desplegable ocupaba de
+   borde a borde.
+
+   Separado por una línea porque es lo único de esa ventana que CAMBIA algo;
+   todo lo de arriba se consulta. */
 .mover-producto {
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 20px;
+  padding-top: 18px;
   border-top: 1px solid var(--color-borde);
 }
 
 .mover-producto h4 {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   font-size: 14px;
+  font-weight: 600;
 }
 
-.mover-producto .tenue {
-  margin: 0 0 12px;
-  line-height: 1.5;
+.mover-producto p {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
 }
 
 .mover-fila {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 
+/* El desplegable heredaba el aspecto crudo del navegador, que al lado de un
+   botón del panel canta. Se le da la misma caja que a los campos del resto. */
 .mover-fila select {
-  flex: 1 1 200px;
+  flex: 1 1 220px;
   min-width: 0;
+  padding: 9px 34px 9px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-chico, 8px);
+  /* La flecha va dibujada: quitando la del sistema, el alto deja de depender
+     de cómo la pinte cada navegador. */
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.mover-fila select:focus-visible {
+  outline: 2px solid var(--color-marca, #1a56db);
+  outline-offset: 1px;
+}
+
+.mover-fila .boton {
+  flex: 0 0 auto;
+}
+
+/* En pantalla estrecha, cada uno en su fila y a lo ancho: partidos, el
+   desplegable se queda sin sitio para el nombre del producto. */
+@media (max-width: 480px) {
+  .mover-fila select,
+  .mover-fila .boton {
+    flex: 1 1 100%;
+    width: 100%;
+  }
 }

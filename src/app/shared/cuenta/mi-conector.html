@@ -1,0 +1,119 @@
+@if (errorLicencia(); as mensaje) {
+  <p class="aviso error">{{ mensaje }}</p>
+}
+
+@if (urlNueva(); as url) {
+  <div class="url-nueva">
+    <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
+    <div class="url-fila">
+      <input type="text" [value]="url" readonly />
+      <button type="button" class="boton" (click)="copiarUrlNueva()">
+        {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+      </button>
+    </div>
+    <p class="url-pie">Pégala en Claude: Configuración → Conectores → Añadir personalizado.</p>
+  </div>
+}
+
+@if (misLicencias().length > 0) {
+  <ul class="licencias">
+    @for (licencia of misLicencias(); track licencia.id) {
+      <li>
+        <div>
+          <strong>{{ licencia.productCode }}</strong>
+          <span class="tenue">
+            @if (licencia.callsPerDay && licencia.usage) {
+              hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
+            } @else {
+              {{ licencia.callsTotal }} consultas ·
+            }
+            @if (licencia.expiresAt) {
+              vence el {{ licencia.expiresAt | date: 'd MMM y' }}
+            } @else {
+              sin caducidad
+            }
+          </span>
+        </div>
+        <div class="licencia-acciones">
+          <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
+            {{ licencia.status }}
+          </span>
+          @if (licencia.status === 'ACTIVE') {
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="rotando() === licencia.id"
+              (click)="regenerarUrl(licencia)"
+            >
+              {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+
+  <!-- La guía, debajo de la licencia y solo para quien tiene acceso
+       vigente: es material del producto, no un folleto.
+       Una licencia revocada o caducada no la ve — a quien está en ese
+       caso lo que le hace falta es renovar, no un manual para conectar
+       algo que ya no le va a responder.
+       Y solo aparece si el PDF existe de verdad: lo comprueba el build,
+       porque un enlace a un PDF ausente descargaría la portada de la web
+       con extensión .pdf en vez de dar un error honesto. -->
+  @if (guiaUrl && tieneAccesoVigente()) {
+    <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
+      <span class="guia-icono" aria-hidden="true">📄</span>
+      <span class="guia-texto">
+        <strong>Guía de instalación en PDF</strong>
+        <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
+      </span>
+      <span class="guia-accion">Descargar</span>
+    </a>
+  }
+} @else if (modo() === 'administrador') {
+  <!-- No debería verse nunca: las licencias del administrador se emiten solas
+       al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan
+       de licencia activo, y decirlo así ahorra buscar el fallo en el sitio
+       equivocado. -->
+  <p class="nota">
+    @if (cargando()) {
+      Emitiendo tus licencias…
+    } @else {
+      No hay ningún producto con plan de licencia activo en el catálogo, así que no hay nada que
+      emitir.
+    }
+  </p>
+} @else {
+  <p class="nota">
+    Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
+    funciona también en el plan gratuito.
+  </p>
+  <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+    Ver el método
+  </a>
+}
+
+@if (modo() === 'comprador') {
+  <!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
+       Western Union— y recibió el código por correo. Es el único sitio donde
+       se canjea, así que se enseña siempre, tenga o no licencia ya: quien
+       renueva también llega aquí con un código nuevo.
+       El administrador no lo ve: los códigos los genera él, y canjearse uno a
+       sí mismo apuntaría una venta que no existió. -->
+  <div class="canje">
+    <h3>¿Compraste por Yape o transferencia?</h3>
+    <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
+    <div class="canje-fila">
+      <input
+        type="text"
+        [formControl]="codigo"
+        placeholder="Tu código de activación"
+        autocomplete="off"
+      />
+      <button type="button" class="boton" [disabled]="canjeando()" (click)="canjearCodigo()">
+        {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
+      </button>
+    </div>
+  </div>
+}

@@ -558,47 +558,46 @@
                 }
               </div>
             }
-          </div>
+            <!-- ── Mover de producto ────────────────────────────────────────
+                 Solo si esta fila llegó a entregar una licencia: no se puede
+                 ampliar lo que todavía no existe. Un código sin canjear o un
+                 comprobante en revisión no tienen nada que mover.
 
-          <!-- ── Mover de producto ────────────────────────────────────────
-               Solo si esta fila llegó a entregar una licencia: no se puede
-               ampliar lo que todavía no existe. Un código sin canjear o un
-               comprobante en revisión no tienen nada que mover.
+                 No hace falta que el comprador toque nada: la URL del conector
+                 cuelga de la licencia, y la licencia sigue siendo la misma. Lo
+                 que cambia es qué capítulos le devuelve, y es inmediato. -->
+            @if (acceso.licenseId && productosDestino().length > 0) {
+              <div class="mover-producto">
+                <h4>Ampliar o cambiar el producto</h4>
+                <p class="tenue">
+                  Pasa esta licencia a otro producto sin cobrarle de nuevo. Le llega un correo
+                  avisándole, y la URL que ya tiene instalada sigue funcionando.
+                </p>
 
-               No hace falta que el comprador toque nada: la URL del conector
-               cuelga de la licencia, y la licencia sigue siendo la misma. Lo
-               que cambia es qué capítulos le devuelve, y es inmediato. -->
-          @if (acceso.licenseId && productosDestino().length > 0) {
-            <div class="mover-producto">
-              <h4>Ampliar o cambiar el producto</h4>
-              <p class="tenue">
-                Pasa esta licencia a otro producto sin cobrarle de nuevo. Le llega un correo
-                avisándole, y la URL que ya tiene instalada sigue funcionando.
-              </p>
+                <div class="mover-fila">
+                  <select
+                    aria-label="Producto de destino"
+                    [value]="productoElegido()"
+                    (change)="productoElegido.set($any($event.target).value)"
+                  >
+                    <option value="">Elige el producto…</option>
+                    @for (destino of productosDestino(); track destino.productCode) {
+                      <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                    }
+                  </select>
 
-              <div class="mover-fila">
-                <select
-                  aria-label="Producto de destino"
-                  [value]="productoElegido()"
-                  (change)="productoElegido.set($any($event.target).value)"
-                >
-                  <option value="">Elige el producto…</option>
-                  @for (destino of productosDestino(); track destino.productCode) {
-                    <option [value]="destino.productCode">{{ destino.nombre }}</option>
-                  }
-                </select>
-
-                <button
-                  type="button"
-                  class="boton"
-                  [disabled]="!productoElegido() || moviendoProducto()"
-                  (click)="cambiarProductoDelAcceso()"
-                >
-                  {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
-                </button>
+                  <button
+                    type="button"
+                    class="boton"
+                    [disabled]="!productoElegido() || moviendoProducto()"
+                    (click)="cambiarProductoDelAcceso()"
+                  >
+                    {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
+                  </button>
+                </div>
               </div>
-            </div>
-          }
+            }
+          </div>
 
           <div class="ventana-pie">
             <button type="button" class="boton secundario" (click)="cerrarAcceso()">Cerrar</button>
@@ -1802,6 +1801,13 @@
       <button type="button" [class.activa]="cuenta() === 'clave'" (click)="verCuenta('clave')">
         Contraseña
       </button>
+      <button
+        type="button"
+        [class.activa]="cuenta() === 'conector'"
+        (click)="verCuenta('conector')"
+      >
+        Mi conector
+      </button>
       <button type="button" [class.activa]="cuenta() === 'admins'" (click)="verCuenta('admins')">
         Administradores
       </button>
@@ -1827,6 +1833,20 @@
       <section class="tarjeta">
         <h2>Contraseña</h2>
         <app-ajustes-de-cuenta panel="clave" />
+      </section>
+    }
+
+    <!-- El conector del propio administrador. Sus licencias se emiten solas la
+         primera vez que se pide esta lista: una por producto del catálogo,
+         gratis y sin caducidad, porque el dueño no se compra lo que vende. -->
+    @if (cuenta() === 'conector') {
+      <section class="tarjeta">
+        <h2>Método de tesis · conector de Claude</h2>
+        <p class="nota">
+          Tus licencias, una por producto. No caducan y no gastan cupo: son las tuyas, no una
+          compra.
+        </p>
+        <app-mi-conector modo="administrador" />
       </section>
     }
 

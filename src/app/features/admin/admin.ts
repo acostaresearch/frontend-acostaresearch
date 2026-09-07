@@ -35,6 +35,7 @@ import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.s
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
+import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { Acceso, unirAccesos } from './accesos';
@@ -190,6 +191,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     FiltrosLista,
     PieLista,
     AjustesDeCuenta,
+    MiConector,
   ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
@@ -2094,14 +2096,19 @@ export class Admin implements OnInit {
   /**
    * Qué sub-pestaña de «Cuentas» se está viendo.
    *
-   * Las dos primeras son las de cualquier usuario —el mismo componente que se ve
-   * en el perfil— y las dos últimas solo existen aquí. Van en la misma fila
-   * porque todas responden a «quién entra y con qué», que es lo que se viene a
-   * hacer a esta pestaña.
+   * Las tres primeras son las de cualquier usuario —los mismos componentes que
+   * se ven en el perfil— y las dos últimas solo existen aquí. Van en la misma
+   * fila porque todas responden a «quién entra y con qué», que es lo que se
+   * viene a hacer a esta pestaña.
+   *
+   * «Mi conector» está aquí y no en el perfil porque el administrador no llega
+   * al perfil: su botón de la cabecera va a «Administrar», y de las dos gana
+   * siempre esa. Sin esta sub-pestaña, el dueño del producto era el único que no
+   * tenía dónde ver su propia URL del conector ni la guía de instalación.
    */
-  readonly cuenta = signal<'datos' | 'clave' | 'admins' | 'usuarios'>('datos');
+  readonly cuenta = signal<'datos' | 'clave' | 'conector' | 'admins' | 'usuarios'>('datos');
 
-  verCuenta(cuenta: 'datos' | 'clave' | 'admins' | 'usuarios'): void {
+  verCuenta(cuenta: 'datos' | 'clave' | 'conector' | 'admins' | 'usuarios'): void {
     this.cuenta.set(cuenta);
     // Las dos listas salen de la misma petición, así que basta con pedirla al
     // abrir cualquiera de las dos.
