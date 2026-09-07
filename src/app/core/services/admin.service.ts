@@ -128,6 +128,21 @@ export class AdminService {
       .pipe(map((res) => res.data.license));
   }
 
+  /**
+   * Mueve una licencia a otro producto y avisa al comprador por correo.
+   *
+   * NO cambia la URL del conector: el token cuelga de la licencia y la licencia
+   * sigue siendo la misma. Lo que cambia es qué capítulos le devuelve, y eso es
+   * inmediato.
+   */
+  cambiarProducto(id: string, productCode: string): Observable<{ license: LicenciaAdmin; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}/product`, {
+        productCode,
+      })
+      .pipe(map((res) => ({ license: res.data.license, mensaje: res.message ?? '' })));
+  }
+
   alertas(): Observable<Alerta[]> {
     return this.http
       .get<ApiResponse<{ alerts: Alerta[] }>>(`${this.licencias}/alerts`)

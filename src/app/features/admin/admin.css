@@ -1910,3 +1910,33 @@ td.acciones {
   color: var(--color-texto-suave);
   white-space: pre-line;
 }
+
+/* ── Mover una licencia de producto ──────────────────────────────────────
+   Va dentro de la ficha del acceso, encima del pie. Separado por una línea
+   porque es lo único de esa ventana que CAMBIA algo: el resto se consulta. */
+.mover-producto {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.mover-producto h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.mover-producto .tenue {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.mover-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mover-fila select {
+  flex: 1 1 200px;
+  min-width: 0;
+}

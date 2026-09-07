@@ -1141,3 +1141,41 @@ h1 {
   padding: 20px 22px 24px;
   overflow-y: auto;
 }
+
+/* ── Atajo al canje ──────────────────────────────────────────────────────
+   Quien pagó fuera de la web llega aquí con un código y sin saber dónde va.
+   Se distingue de las tarjetas de plan a propósito: no es algo que comprar,
+   es un camino para quien ya compró. */
+.canje-atajo {
+  margin: 0 0 28px;
+  padding: 18px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.canje-atajo h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.canje-atajo p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+/* En móvil el botón ocupa la fila entera: partido a la derecha de un texto
+   de dos líneas queda un objetivo diminuto en la esquina. */
+@media (max-width: 560px) {
+  .canje-atajo .boton {
+    width: 100%;
+    text-align: center;
+  }
+}

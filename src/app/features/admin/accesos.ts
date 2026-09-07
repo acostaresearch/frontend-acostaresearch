@@ -24,7 +24,17 @@ export interface Acceso {
   /** ISO. Se usa para ordenar y se formatea en la plantilla. */
   fecha: string;
   comprador: string;
+  /** El nombre que se enseña: el del plan si lo hay, y si no el del producto. */
   producto: string;
+  /**
+   * El producto de verdad, que no siempre se llama como el plan.
+   *
+   * Se guarda aparte del nombre porque es con lo que se compara al ofrecer los
+   * destinos: sin esto, en un cobro por Yape la lista incluía el producto que
+   * la licencia YA tiene, porque comparaba «Método completo · 9 Skills» con
+   * «METODO_9_SKILLS» y nunca coincidían.
+   */
+  productCode: string | null;
   /** Nulo en una cortesía: no es que valga cero, es que no hubo cobro. */
   amountCents: number | null;
   moneda: string;
@@ -37,6 +47,14 @@ export interface Acceso {
   tieneComprobante: boolean;
   /** Solo un código sin canjear se puede anular. */
   anulable: boolean;
+  /**
+   * La licencia que entregó este acceso, si llegó a entregarse.
+   *
+   * Nula en lo que todavía no entregó nada —un código sin canjear, un
+   * comprobante en revisión, un pago fallido—, y por eso decide si se ofrece
+   * moverla de producto: no se puede ampliar lo que no existe.
+   */
+  licenseId: string | null;
 }
 
 const ESTADO_CODIGO: Record<string, { estado: string; tono: Acceso['tono'] }> = {
@@ -66,11 +84,13 @@ function deCodigo(codigo: ActivationCode): Acceso {
     fecha: codigo.createdAt,
     comprador: codigo.buyerEmail ?? '—',
     producto: codigo.productCode,
+    productCode: codigo.productCode,
     amountCents: codigo.amountCents,
     moneda: 'PEN',
     referencia: `…${codigo.hint}`,
     tieneComprobante: Boolean(codigo.proofMime),
     anulable: codigo.status === 'AVAILABLE',
+    licenseId: codigo.license?.id ?? null,
     ...estadoDe(ESTADO_CODIGO, codigo.status),
   };
 }
@@ -88,11 +108,13 @@ function deComprobante(pago: PagoRevisado): Acceso {
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
+    productCode: pago.plan.productCode,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.operationCode,
     tieneComprobante: pago.tieneComprobante,
     anulable: false,
+    licenseId: pago.licenseId ?? null,
     estado: pago.status === 'PAID' ? 'Aprobado' : base.estado,
     tono: base.tono,
   };
@@ -118,9 +140,11 @@ function dePendiente(pago: PagoPorRevisar): Acceso {
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
+    productCode: pago.plan.productCode,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.operationCode,
+    licenseId: null,
     tieneComprobante: Boolean(pago.proofMime),
     anulable: false,
     estado: 'En revisión',
@@ -138,11 +162,13 @@ function dePasarela(pago: PagoAdmin): Acceso {
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
+    productCode: pago.plan.productCode,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.providerCaptureId ?? pago.providerOrderId,
     tieneComprobante: false,
     anulable: false,
+    licenseId: pago.licenseId ?? null,
     ...estadoDe(ESTADO_PAGO, pago.status),
   };
 }

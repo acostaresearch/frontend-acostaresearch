@@ -2505,6 +2505,60 @@ export class Admin implements OnInit {
 
   /** La fila abierta en la ficha, o null. */
   readonly accesoAbierto = signal<Acceso | null>(null);
+
+  // ── Mover una licencia de producto ───────────────────────────────────────
+  //
+  // Existe porque el catálogo crece: quien compró «las 9 skills» antes de que
+  // existiera la ruta del artículo tiene derecho a que se le amplíe sin volver a
+  // pagar. Hasta ahora la única salida era emitirle una licencia nueva y
+  // revocarle la vieja, lo que le rompe el conector ya instalado por una
+  // decisión que no tomó él.
+
+  /** Qué producto se ha elegido en el desplegable. Vacío = ninguno todavía. */
+  readonly productoElegido = signal('');
+  readonly moviendoProducto = signal(false);
+
+  /**
+   * Los productos a los que se puede mover, menos el que ya tiene.
+   *
+   * Solo planes de licencia y solo los que declaran producto: mover una licencia
+   * a un plan de palabras no significa nada, y sin `productCode` el servidor no
+   * sabría qué capítulos darle.
+   */
+  readonly productosDestino = computed(() => {
+    const actual = this.accesoAbierto()?.productCode ?? '';
+    const vistos = new Set<string>();
+
+    return this.planesLicencia()
+      .filter((plan) => plan.productCode && plan.productCode !== actual)
+      .filter((plan) => !vistos.has(plan.productCode!) && vistos.add(plan.productCode!))
+      .map((plan) => ({ productCode: plan.productCode!, nombre: plan.name }));
+  });
+
+  cambiarProductoDelAcceso(): void {
+    const acceso = this.accesoAbierto();
+    const destino = this.productoElegido();
+    if (!acceso?.licenseId || !destino || this.moviendoProducto()) return;
+
+    this.moviendoProducto.set(true);
+    this.error.set(null);
+
+    this.admin.cambiarProducto(acceso.licenseId, destino).subscribe({
+      next: ({ mensaje }) => {
+        this.moviendoProducto.set(false);
+        this.productoElegido.set('');
+        this.cerrarAcceso();
+        this.aviso.set(mensaje);
+        // El historial se arma de cuatro listas del servidor; con recargar se
+        // queda al día sin tener que parchear la fila a mano.
+        this.recargar();
+      },
+      error: (fallo) => {
+        this.moviendoProducto.set(false);
+        this.error.set(mensajeDeError(fallo));
+      },
+    });
+  }
   /**
    * La captura de esa fila, ya descargada.
    *
@@ -2523,6 +2577,7 @@ export class Admin implements OnInit {
 
   cerrarAcceso(): void {
     this.accesoAbierto.set(null);
+    this.productoElegido.set('');
     this.soltarCaptura();
   }
 

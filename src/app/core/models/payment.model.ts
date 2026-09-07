@@ -91,7 +91,7 @@ export interface PagoPorRevisar {
   createdAt: string;
   operationCode: string | null;
   proofMime: string | null;
-  plan: { code: string; name: string; words: number; durationDays: number };
+  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
@@ -120,7 +120,14 @@ export interface PagoRevisado {
   reviewNote: string | null;
   /** Si queda imagen que abrir. Los que nunca subieron captura no la tienen. */
   tieneComprobante: boolean;
-  plan: { code: string; name: string; words: number; durationDays: number };
+  /**
+   * La licencia que entregó este cobro. Nula mientras no haya entregado nada.
+   *
+   * Se expone para poder moverla de producto desde el historial de accesos, que
+   * es donde el administrador mira quién compró qué.
+   */
+  licenseId?: string | null;
+  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
@@ -144,7 +151,7 @@ export interface Payment {
   paidAt: string | null;
   /** Por qué se rechazó un pago manual. Se le enseña al comprador tal cual. */
   reviewNote?: string | null;
-  plan: { code: string; name: string; words: number; durationDays: number };
+  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
 }
 
 /**

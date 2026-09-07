@@ -88,6 +88,20 @@
       } -->
     </header>
 
+    <!-- Quien pagó por Yape o transferencia no vuelve aquí a comprar: viene
+         con un código en el correo y no sabe dónde meterlo. El formulario está
+         en su perfil, que es el último sitio donde se le ocurre mirar, así que
+         el camino se pone donde sí llega: en la página de precios. -->
+    <aside class="canje-atajo">
+      <div>
+        <h2>¿Compraste por Yape o transferencia?</h2>
+        <p>Canjea aquí el código de activación que te enviamos por correo.</p>
+      </div>
+      <a class="boton secundario" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
+        Canjear
+      </a>
+    </aside>
+
     @if (error(); as mensaje) {
       <div class="aviso error" role="alert">{{ mensaje }}</div>
     }

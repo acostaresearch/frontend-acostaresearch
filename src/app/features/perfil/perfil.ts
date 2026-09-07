@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
@@ -28,6 +28,9 @@ import { SiteHeader } from '../../shared/layout/site-header';
  * interesan para llegar a la que sí.
  */
 type PestanaDePerfil = 'datos' | 'clave' | 'metodo' | 'cuenta' | 'compras';
+
+/** Las mismas, en lista, para comprobar lo que llega por la URL. */
+const PESTANAS: readonly PestanaDePerfil[] = ['datos', 'clave', 'metodo', 'cuenta', 'compras'];
 
 /** Etiquetas en castellano: el backend solo maneja los códigos. */
 const ROLES: Record<Role, string> = {
@@ -76,6 +79,7 @@ export class Perfil implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly dialogos = inject(DialogoService);
   private readonly fondo = inject(FondoService);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly licencias = inject(LicenseService);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
@@ -169,6 +173,16 @@ export class Perfil implements OnInit {
   constructor() {
     // Con la ventana de borrar la cuenta delante, la página no se mueve.
     effect(() => this.fondo.fijar('perfil', this.borrandoCuenta()));
+
+    // Se puede llegar a una pestaña concreta desde fuera: /perfil?ver=metodo.
+    //
+    // Lo usa el atajo de la página de precios, para quien pagó por Yape y viene
+    // con un código que no sabe dónde meter. Sin esto aterrizaba en «Tus datos»
+    // y tenía que adivinar cuál de las cinco pestañas era la suya.
+    const pedida = this.ruta.snapshot.queryParamMap.get('ver');
+    if (pedida && PESTANAS.includes(pedida as PestanaDePerfil)) {
+      this.pestana.set(pedida as PestanaDePerfil);
+    }
   }
 
   ngOnInit(): void {

@@ -71,6 +71,8 @@ export interface PackAdmin extends WordPack {
 }
 
 export interface PagoAdmin {
+  /** La licencia que entregó este cobro, para poder moverla de producto. */
+  licenseId?: string | null;
   id: string;
   provider: string;
   providerOrderId: string;
@@ -82,7 +84,7 @@ export interface PagoAdmin {
   errorCode: string | null;
   createdAt: string;
   paidAt: string | null;
-  plan: { code: string; name: string; words: number; durationDays: number };
+  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
   user: Comprador;
 }
 

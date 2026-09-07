@@ -560,6 +560,46 @@
             }
           </div>
 
+          <!-- ── Mover de producto ────────────────────────────────────────
+               Solo si esta fila llegó a entregar una licencia: no se puede
+               ampliar lo que todavía no existe. Un código sin canjear o un
+               comprobante en revisión no tienen nada que mover.
+
+               No hace falta que el comprador toque nada: la URL del conector
+               cuelga de la licencia, y la licencia sigue siendo la misma. Lo
+               que cambia es qué capítulos le devuelve, y es inmediato. -->
+          @if (acceso.licenseId && productosDestino().length > 0) {
+            <div class="mover-producto">
+              <h4>Ampliar o cambiar el producto</h4>
+              <p class="tenue">
+                Pasa esta licencia a otro producto sin cobrarle de nuevo. Le llega un correo
+                avisándole, y la URL que ya tiene instalada sigue funcionando.
+              </p>
+
+              <div class="mover-fila">
+                <select
+                  aria-label="Producto de destino"
+                  [value]="productoElegido()"
+                  (change)="productoElegido.set($any($event.target).value)"
+                >
+                  <option value="">Elige el producto…</option>
+                  @for (destino of productosDestino(); track destino.productCode) {
+                    <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                  }
+                </select>
+
+                <button
+                  type="button"
+                  class="boton"
+                  [disabled]="!productoElegido() || moviendoProducto()"
+                  (click)="cambiarProductoDelAcceso()"
+                >
+                  {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
+                </button>
+              </div>
+            </div>
+          }
+
           <div class="ventana-pie">
             <button type="button" class="boton secundario" (click)="cerrarAcceso()">Cerrar</button>
             <!-- Aquí NO se borra. El historial es el rastro de lo que pasó, y
