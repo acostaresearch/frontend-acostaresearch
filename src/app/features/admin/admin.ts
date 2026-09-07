@@ -2522,6 +2522,19 @@ export class Admin implements OnInit {
   // decisión que no tomó él.
 
   /** Qué producto se ha elegido en el desplegable. Vacío = ninguno todavía. */
+  /**
+   * El nombre de un producto tal como se vende.
+   *
+   * La licencia guarda el código —METODO_9_SKILLS— y eso no es lo que hay que
+   * enseñarle a nadie. Si no hay plan que lo nombre se devuelve el código: es
+   * feo, pero es cierto, y es la señal de que falta un plan.
+   */
+  nombreDeProducto(productCode: string | null): string {
+    if (!productCode) return '';
+    const plan = this.planesLicencia().find((p) => p.productCode === productCode);
+    return plan?.name ?? productCode;
+  }
+
   readonly productoElegido = signal('');
   readonly moviendoProducto = signal(false);
 

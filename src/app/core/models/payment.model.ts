@@ -127,6 +127,14 @@ export interface PagoRevisado {
    * es donde el administrador mira quién compró qué.
    */
   licenseId?: string | null;
+  /**
+   * La licencia que entregó este cobro, con el producto que tiene HOY.
+   *
+   * No es lo mismo que `plan`: el plan es lo que se compró y no cambia nunca
+   * —reescribirlo falsearía la venta—, mientras que una licencia se puede mover
+   * de producto después.
+   */
+  license?: { productCode: string } | null;
   plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
   user: { id: string; email: string; firstName: string; lastName: string };
 }

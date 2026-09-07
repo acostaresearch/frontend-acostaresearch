@@ -35,6 +35,15 @@ export interface Acceso {
    * «METODO_9_SKILLS» y nunca coincidían.
    */
   productCode: string | null;
+  /**
+   * El producto que esa licencia tiene HOY, si se movió después de venderse.
+   *
+   * Nulo cuando no hay licencia o cuando sigue en lo que se compró. Se guarda
+   * aparte y no se pisa `producto`: el cobro dice qué se vendió y por cuánto, y
+   * reescribirlo falsearía el registro de ventas y el gráfico de ingresos. Lo
+   * que cambia es lo que esa persona tiene, no lo que pagó.
+   */
+  productoActual: string | null;
   /** Nulo en una cortesía: no es que valga cero, es que no hubo cobro. */
   amountCents: number | null;
   moneda: string;
@@ -85,6 +94,10 @@ function deCodigo(codigo: ActivationCode): Acceso {
     comprador: codigo.buyerEmail ?? '—',
     producto: codigo.productCode,
     productCode: codigo.productCode,
+    productoActual:
+      codigo.license && codigo.license.productCode !== codigo.productCode
+        ? codigo.license.productCode
+        : null,
     amountCents: codigo.amountCents,
     moneda: 'PEN',
     referencia: `…${codigo.hint}`,
@@ -109,6 +122,10 @@ function deComprobante(pago: PagoRevisado): Acceso {
     comprador: pago.user.email,
     producto: pago.plan.name,
     productCode: pago.plan.productCode,
+    productoActual:
+      pago.license && pago.license.productCode !== pago.plan.productCode
+        ? pago.license.productCode
+        : null,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.operationCode,
@@ -141,6 +158,7 @@ function dePendiente(pago: PagoPorRevisar): Acceso {
     comprador: pago.user.email,
     producto: pago.plan.name,
     productCode: pago.plan.productCode,
+    productoActual: null,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.operationCode,
@@ -163,6 +181,10 @@ function dePasarela(pago: PagoAdmin): Acceso {
     comprador: pago.user.email,
     producto: pago.plan.name,
     productCode: pago.plan.productCode,
+    productoActual:
+      pago.license && pago.license.productCode !== pago.plan.productCode
+        ? pago.license.productCode
+        : null,
     amountCents: pago.amountCents,
     moneda: pago.currency,
     referencia: pago.providerCaptureId ?? pago.providerOrderId,

@@ -1983,3 +1983,19 @@ td.acciones {
     width: 100%;
   }
 }
+
+/* Producto en el historial, cuando la licencia se movió después de venderse.
+   Arriba lo que tiene hoy; debajo y apagado, lo que compró. Las dos cosas son
+   verdad y las dos hacen falta: una para saber qué usa, otra para cuadrar la
+   venta. */
+.producto-hoy {
+  display: block;
+  color: var(--color-texto);
+}
+
+.producto-antes {
+  display: block;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+}

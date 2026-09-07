@@ -36,7 +36,7 @@ export interface ActivationCode {
   redeemedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
-  license: { id: string; status: string } | null;
+  license: { id: string; status: string; productCode: string } | null;
 }
 
 export interface LicenciaAdmin extends License {
@@ -73,6 +73,8 @@ export interface PackAdmin extends WordPack {
 export interface PagoAdmin {
   /** La licencia que entregó este cobro, para poder moverla de producto. */
   licenseId?: string | null;
+  /** La licencia entregada, con el producto que tiene hoy. */
+  license?: { productCode: string } | null;
   id: string;
   provider: string;
   providerOrderId: string;

@@ -448,7 +448,20 @@
                     <td>
                       <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
                     </td>
-                    <td class="tenue">{{ acceso.producto }}</td>
+                    <!-- Lo que esa persona tiene HOY, que no siempre es lo que
+                         compró: una licencia se puede mover de producto después.
+                         Lo vendido no se pisa —falsearía la venta y el gráfico
+                         de ingresos—, se enseña debajo y tachado. -->
+                    <td class="tenue">
+                      @if (acceso.productoActual) {
+                        <span class="producto-hoy">{{
+                          nombreDeProducto(acceso.productoActual)
+                        }}</span>
+                        <span class="producto-antes">{{ acceso.producto }}</span>
+                      } @else {
+                        {{ acceso.producto }}
+                      }
+                    </td>
                     <td>
                       @if (acceso.amountCents) {
                         {{ importe(acceso.amountCents, acceso.moneda) }}
@@ -522,6 +535,15 @@
                 <dt>Producto</dt>
                 <dd>{{ acceso.producto }}</dd>
               </div>
+              <!-- Solo cuando se movió. Se dice «Tiene ahora» y no se sustituye
+                   lo de arriba: lo de arriba es la venta —qué se cobró y por
+                   cuánto— y sigue siendo verdad. -->
+              @if (acceso.productoActual) {
+                <div>
+                  <dt>Tiene ahora</dt>
+                  <dd>{{ nombreDeProducto(acceso.productoActual) }}</dd>
+                </div>
+              }
               <div>
                 <dt>Importe</dt>
                 <dd>
