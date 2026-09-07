@@ -112,11 +112,19 @@
     <h3>¿Compraste por Yape o transferencia?</h3>
     <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
     <div class="canje-fila">
+      <!-- El marcador de posición enseña la FORMA del código, no lo que es. Los
+           códigos son ACR- y tres grupos de cuatro, y verlo dibujado evita el
+           error de teclear solo un trozo o de meter los guiones donde no van.
+           Se teclea en mayúsculas porque así se dictan y así se generan; da
+           igual cómo llegue, el servidor lo normaliza de todos modos. -->
       <input
         type="text"
         [formControl]="codigo"
-        placeholder="Tu código de activación"
+        placeholder="ACR-XXXX-XXXX-XXXX"
+        aria-label="Código de activación"
         autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
       />
       <button type="button" class="boton" [disabled]="canjeando()" (click)="canjearCodigo()">
         {{ canjeando() ? 'Canjeando…' : 'Canjear' }}

@@ -3,6 +3,18 @@
    están encapsulados, así que la pantalla que lo monta no tiene que saber nada
    de estas clases. */
 
+/* Los botones del sistema piden el 100 % del ancho. Aquí van sueltos y en
+   filas, así que se les devuelve su tamaño natural.
+
+   Esta regla vivía en `perfil.css` como `.perfil .boton`, y al mudar el bloque
+   a un componente propio dejó de alcanzarlo: los estilos de Angular están
+   encapsulados por componente. Sin ella, «Canjear» reclama la fila entera y
+   aplasta el campo del código hasta dejarlo en un cuadrado de treinta píxeles,
+   que es exactamente lo que pasaba. */
+.boton {
+  width: auto;
+}
+
 .nota {
   margin: -6px 0 14px;
   font-size: 13px;
@@ -95,6 +107,10 @@
   gap: 8px;
 }
 
+.url-fila .boton {
+  flex: 0 0 auto;
+}
+
 .url-fila input {
   flex: 1;
   min-width: 0;
@@ -127,14 +143,20 @@
 .canje-fila {
   display: flex;
   gap: 8px;
+  align-items: stretch;
 }
 
+/* El campo se queda con todo el ancho sobrante y el botón con el suyo: el
+   código son dieciocho caracteres y hay que poder leerlos enteros mientras se
+   teclean, que es cuando se detecta la letra que llegó mal por WhatsApp. */
 .canje-fila input {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 10px 12px;
-  font: inherit;
-  font-size: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-texto);
   background: var(--color-superficie);
   border: 1px solid var(--color-borde-fuerte);
@@ -144,10 +166,33 @@
     box-shadow var(--transicion);
 }
 
+.canje-fila input::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-texto-tenue);
+}
+
 .canje-fila input:focus {
   outline: none;
   border-color: var(--color-primario);
   box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+/* «Canjear» no encoge: partido en dos líneas no se entiende. */
+.canje-fila .boton {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 460px) {
+  /* Uno debajo del otro antes de que el campo deje de mostrar el código
+     entero. Apilados, ninguno de los dos se queda corto. */
+  .canje-fila {
+    flex-direction: column;
+  }
+
+  .canje-fila .boton {
+    width: 100%;
+  }
 }
 
 /* ── Guía de instalación ────────────────────────────────────────────────── */
