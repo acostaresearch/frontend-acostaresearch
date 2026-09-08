@@ -34,6 +34,13 @@ export const routes: Routes = [
   // objeciones viven ahora debajo de las demostraciones. La ruta se conserva
   // para no romper los enlaces ya repartidos.
   { path: 'como-funciona', pathMatch: 'full', redirectTo: 'en-accion' },
+  // Pública a propósito: la alcanza quien compró y no ha vuelto a entrar a la
+  // web, que es justo quien necesita el primer video. Ver la nota del componente.
+  {
+    path: 'tutoriales',
+    title: 'Cómo usar tu conector · Acosta Research',
+    loadComponent: () => import('./features/tutoriales/tutoriales').then((m) => m.Tutoriales),
+  },
   {
     path: 'quien-soy',
     title: 'Quién te acompaña · Acosta Research',

@@ -68,6 +68,17 @@
        Y solo aparece si el PDF existe de verdad: lo comprueba el build,
        porque un enlace a un PDF ausente descargaría la portada de la web
        con extensión .pdf en vez de dar un error honesto. -->
+  <!-- Los videos van ANTES que la guía en PDF, y antes que nada que haya que
+       descargar: tres de cada dieciséis compradores no llegaron a abrir el
+       conector nunca, y a ese no se le arregla con un adjunto. -->
+  <a class="tutoriales-enlace" routerLink="/tutoriales">
+    <span class="tutoriales-icono" aria-hidden="true">▶</span>
+    <span class="tutoriales-texto">
+      <strong>Cómo usarlo, en video</strong>
+      <span>Conectarlo, tu primer capítulo, tus fuentes, y qué hacer si algo falla.</span>
+    </span>
+  </a>
+
   @if (guiaUrl && tieneAccesoVigente()) {
     <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
       <span class="guia-icono" aria-hidden="true">📄</span>

@@ -1,0 +1,88 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">Cómo usarlo</p>
+    <h1 class="titulo-seccion ancho">Del correo de compra al primer capítulo</h1>
+    <p class="seccion-entrada">
+      Cuatro videos, en el orden en que hacen falta. El primero se ve una vez y no se vuelve a
+      tocar; el segundo es el que de verdad hay que ver.
+    </p>
+  </header>
+
+  <section class="seccion">
+    <ol class="tutoriales">
+      @for (tutorial of tutoriales; track tutorial.titulo; let i = $index) {
+        <li>
+          <div class="tutorial-cabecera">
+            <span class="tutorial-numero">{{ i + 1 }}</span>
+            <div>
+              <h2>{{ tutorial.titulo }}</h2>
+              <span class="tutorial-duracion">{{ tutorial.duracion }}</span>
+            </div>
+          </div>
+
+          <p class="tutorial-entrada">{{ tutorial.entrada }}</p>
+
+          <!-- Sin video grabado la tarjeta se enseña igual, con su contenido.
+               Lo que se ve escrito ya sirve; el hueco solo dice que además
+               vendrá en imagen. Una página en blanco esperando a que alguien
+               grabe no ayuda a nadie, y el correo de entrega ya la enlaza. -->
+          @if (tutorial.video) {
+            <div class="video">
+              <iframe
+                [src]="embed(tutorial.video)"
+                [title]="tutorial.titulo"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+          } @else {
+            <p class="video-pendiente">
+              <span aria-hidden="true">🎬</span>
+              En grabación. Mientras tanto, lo de abajo es exactamente lo que se ve en el video.
+            </p>
+          }
+
+          <ul class="tutorial-puntos">
+            @for (punto of tutorial.puntos; track punto) {
+              <li>{{ punto }}</li>
+            }
+          </ul>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <!-- Los tropiezos, por escrito y buscables. Un video no se recorre con
+       Ctrl+F: quien tiene el problema delante a las once de la noche quiere
+       leer la línea que lo arregla, no ver ocho minutos para llegar al seis. -->
+  <section class="seccion">
+    <p class="seccion-marca">Si algo falla</p>
+    <h2 class="titulo-seccion">Lo que le pasa a todo el mundo alguna vez</h2>
+
+    <dl class="tropiezos">
+      @for (tropiezo of tropiezos; track tropiezo.problema) {
+        <div>
+          <dt>{{ tropiezo.problema }}</dt>
+          <dd>{{ tropiezo.solucion }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section class="seccion">
+    <div class="cierre-pagina">
+      <a class="boton grande" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
+        Ir a mi conector
+      </a>
+      <span>
+        ¿Sigues atascado? Escríbenos. No hace falta que sepas explicar qué falla: con una captura
+        de lo que ves nos suele bastar.
+      </span>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />

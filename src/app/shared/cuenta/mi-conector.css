@@ -291,3 +291,58 @@
   background: var(--color-fondo);
   border: 1px solid var(--color-borde);
 }
+
+/* Los videos, con la misma caja que la guía en PDF pero destacada.
+ *
+ * Va marcada y va primero porque las cuentas lo piden: de dieciséis licencias
+ * repartidas, tres no llegaron a abrir el conector NUNCA. A ese comprador no lo
+ * rescata un adjunto —el PDF ya existía y no bastó—, y desde luego no lo
+ * rescata algo puesto debajo. */
+.tutoriales-enlace {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--color-primario-suave, var(--color-fondo));
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.tutoriales-enlace:hover {
+  background: var(--color-superficie);
+}
+
+.tutoriales-icono {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 50%;
+}
+
+.tutoriales-texto {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tutoriales-texto strong {
+  font-size: 14px;
+}
+
+.tutoriales-texto span {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-texto-suave);
+}

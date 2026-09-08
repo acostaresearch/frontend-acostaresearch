@@ -305,3 +305,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Los tres pasos del arranque.
+ *
+ * Existían solo dentro de /en-accion, y ahí llega quien ya decidió mirar. Quien
+ * duda se iba de la portada sin saber si esto era complicado, y «pegar una URL»
+ * es justo el dato que quita ese miedo. */
+.arranque {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.arranque li {
+  padding: 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.arranque-numero {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 50%;
+}
+
+.arranque h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.arranque p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.arranque-pie {
+  margin: 16px 0 0;
+  font-size: 14px;
+}
+
+@media (max-width: 780px) {
+  .arranque {
+    grid-template-columns: 1fr;
+  }
+}

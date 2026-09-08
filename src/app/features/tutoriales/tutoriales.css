@@ -1,0 +1,137 @@
+/* Los cuatro videos, uno debajo de otro y numerados.
+ *
+ * En columna y no en rejilla a propósito: tienen orden. El primero se ve una
+ * vez y no se vuelve a tocar; el segundo es el que hay que ver. Puestos en
+ * cuadrícula parecerían cuatro opciones equivalentes entre las que elegir, y no
+ * lo son. */
+.tutoriales {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.tutoriales > li {
+  padding: 22px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tutorial-cabecera {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tutorial-numero {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 50%;
+}
+
+.tutorial-cabecera h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+/* Que se sepa antes de empezar si hay tiempo de verlo ahora o hay que dejarlo
+   para luego. Sin el dato, lo dejan para luego siempre. */
+.tutorial-duracion {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.tutorial-entrada {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--color-texto);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.video iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* El hueco de lo que aún no está grabado. Se dice de frente y se remata con que
+   lo escrito debajo ya sirve: prometer sin entregar molesta menos que
+   prometer y dejar al lector sin saber si hay algo más. */
+.video-pendiente {
+  margin: 0;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tutorial-puntos {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+/* Los tropiezos. Pregunta en negrita y respuesta debajo, que es como se lee
+   cuando uno viene buscando la suya y va saltando. */
+.tropiezos {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tropiezos dt {
+  margin-bottom: 5px;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.tropiezos dd {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 640px) {
+  .tutoriales > li {
+    padding: 18px 16px;
+  }
+
+  .tutoriales {
+    gap: 26px;
+  }
+}
