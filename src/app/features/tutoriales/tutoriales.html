@@ -11,8 +11,16 @@
   </header>
 
   <section class="seccion">
+    @if (cargando()) {
+      <p class="cargando">Cargando los videos…</p>
+    } @else if (tutoriales().length === 0) {
+      <p class="cargando">
+        Todavía no hay videos publicados. Lo de más abajo te saca de casi cualquier atasco.
+      </p>
+    }
+
     <ol class="tutoriales">
-      @for (tutorial of tutoriales; track tutorial.titulo; let i = $index) {
+      @for (tutorial of tutoriales(); track tutorial.titulo; let i = $index) {
         <li>
           <div class="tutorial-cabecera">
             <span class="tutorial-numero">{{ i + 1 }}</span>
@@ -28,10 +36,10 @@
                Lo que se ve escrito ya sirve; el hueco solo dice que además
                vendrá en imagen. Una página en blanco esperando a que alguien
                grabe no ayuda a nadie, y el correo de entrega ya la enlaza. -->
-          @if (tutorial.video) {
+          @if (tutorial.videoUrl) {
             <div class="video">
               <iframe
-                [src]="embed(tutorial.video)"
+                [src]="embed(tutorial.videoUrl)"
                 [title]="tutorial.titulo"
                 loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

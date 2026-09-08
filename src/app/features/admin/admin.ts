@@ -26,6 +26,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
 import {
   EstadoCorpus,
   Referencia,
@@ -51,6 +52,7 @@ type Seccion =
   | 'licencias'
   | 'alertas'
   | 'corpus'
+  | 'tutoriales'
   | 'cuentas';
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
@@ -1958,6 +1960,8 @@ export class Admin implements OnInit {
     // El corpus tampoco: es una llamada a la base por una lista que solo
     // mira quien viene a curar bibliografía, no quien entra a revisar cobros.
     if (seccion === 'corpus' && this.corpus() === null) this.cargarCorpus();
+
+    if (seccion === 'tutoriales' && this.tutoriales().length === 0) this.cargarTutoriales();
   }
 
   // ── Corpus bibliográfico ─────────────────────────────────────────────────
@@ -2089,6 +2093,113 @@ export class Admin implements OnInit {
   productosDe(referencia: Referencia): string {
     if (referencia.groups.length === 0) return 'Todas';
     return referencia.groups.map((g) => g.productCode).join(', ');
+  }
+
+  // ── Tutoriales ───────────────────────────────────────────────────────────
+  //
+  // Los videos viven en la base y no en el código porque quien los graba no
+  // despliega. Antes había que editar TypeScript y empujar a git para publicar
+  // una URL de YouTube, que es pedirle a alguien que aprenda git para hacer su
+  // trabajo.
+
+  private readonly tutorialesApi = inject(TutorialService);
+
+  readonly tutoriales = signal<Tutorial[]>([]);
+  readonly guardandoTutorial = signal(false);
+
+  /** Cuál se está editando. Null = ninguno; '' = uno nuevo sin guardar. */
+  readonly tutorialAbierto = signal<Tutorial | null>(null);
+
+  readonly formTutorial = this.fb.nonNullable.group({
+    orden: [1, [Validators.required]],
+    titulo: ['', [Validators.required, Validators.maxLength(160)]],
+    duracion: [''],
+    entrada: [''],
+    puntos: [''],
+    videoUrl: [''],
+    active: [true],
+  });
+
+  cargarTutoriales(): void {
+    this.tutorialesApi.todos().subscribe({
+      next: (lista) => this.tutoriales.set(lista),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  /** Abre uno para editarlo, o el formulario en blanco para crear otro. */
+  editarTutorial(tutorial: Tutorial | null): void {
+    this.error.set(null);
+    this.aviso.set(null);
+    this.tutorialAbierto.set(tutorial);
+
+    this.formTutorial.reset({
+      orden: tutorial?.orden ?? this.tutoriales().length + 1,
+      titulo: tutorial?.titulo ?? '',
+      duracion: tutorial?.duracion ?? '',
+      entrada: tutorial?.entrada ?? '',
+      // De lista a texto: en el panel se escriben en un cuadro normal, una
+      // línea por punto, sin corchetes que cerrar.
+      puntos: (tutorial?.puntos ?? []).join('\n'),
+      videoUrl: tutorial?.videoUrl ?? '',
+      active: tutorial?.active ?? true,
+    });
+  }
+
+  cerrarTutorial(): void {
+    this.tutorialAbierto.set(null);
+    this.formTutorial.reset();
+  }
+
+  guardarTutorial(): void {
+    if (this.formTutorial.invalid || this.guardandoTutorial()) return;
+
+    const datos = this.formTutorial.getRawValue() as TutorialEnvio;
+    const abierto = this.tutorialAbierto();
+
+    this.guardandoTutorial.set(true);
+    this.error.set(null);
+
+    const peticion = abierto?.id
+      ? this.tutorialesApi.actualizar(abierto.id, datos)
+      : this.tutorialesApi.crear(datos);
+
+    peticion.subscribe({
+      next: (tutorial) => {
+        this.guardandoTutorial.set(false);
+        this.cerrarTutorial();
+        this.cargarTutoriales();
+        this.aviso.set(
+          tutorial.videoUrl
+            ? `«${tutorial.titulo}» guardado. Ya se ve en la web.`
+            : `«${tutorial.titulo}» guardado. Sigue sin video: la tarjeta lo dice.`,
+        );
+      },
+      error: (e: unknown) => {
+        this.guardandoTutorial.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  async borrarTutorial(tutorial: Tutorial): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: `¿Borrar «${tutorial.titulo}»?`,
+      mensaje:
+        'Desaparece de la web y se pierde su texto. Si solo quieres retirarlo mientras lo ' +
+        'regrabas, desactívalo en vez de borrarlo.',
+      confirmar: 'Borrar',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.tutorialesApi.borrar(tutorial.id).subscribe({
+      next: () => {
+        this.cargarTutoriales();
+        this.aviso.set(`«${tutorial.titulo}» borrado.`);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
   }
 
   // ── Cuentas ──────────────────────────────────────────────────────────────

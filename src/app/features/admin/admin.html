@@ -232,6 +232,9 @@
     <button type="button" [class.activa]="seccion() === 'corpus'" (click)="ir('corpus')">
       Bibliografía
     </button>
+    <button type="button" [class.activa]="seccion() === 'tutoriales'" (click)="ir('tutoriales')">
+      Tutoriales
+    </button>
     <button type="button" [class.activa]="seccion() === 'cuentas'" (click)="ir('cuentas')">
       Cuentas
     </button>
@@ -1751,6 +1754,148 @@
         <p class="tenue">Cargando el corpus…</p>
       }
     </section>
+  }
+
+  <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════
+       Los videos de acostaresearch.com/tutoriales. Se editan aquí y no en el
+       código porque quien los graba no despliega: antes había que tocar
+       TypeScript y empujar a git para publicar una URL de YouTube. -->
+  @if (seccion() === 'tutoriales') {
+    <section class="tarjeta">
+      <div class="tarjeta-cabecera">
+        <h2>Videos del conector</h2>
+        <button type="button" class="boton" (click)="editarTutorial(null)">Añadir video</button>
+      </div>
+
+      <p class="nota">
+        Es lo que se ve en <strong>acostaresearch.com/tutoriales</strong>. Pega el enlace de
+        YouTube y aparece al instante, sin desplegar nada. Sin enlace, la tarjeta se enseña igual
+        con su texto y avisa de que está en grabación.
+      </p>
+
+      @if (tutoriales().length === 0) {
+        <p class="tenue">Todavía no hay ninguno.</p>
+      } @else {
+        <ul class="lista-tutoriales">
+          @for (tutorial of tutoriales(); track tutorial.id) {
+            <li [class.apagado]="!tutorial.active">
+              <div class="tutorial-datos">
+                <p class="tutorial-titulo">
+                  <span class="tutorial-orden">{{ tutorial.orden }}</span>
+                  {{ tutorial.titulo }}
+                  @if (!tutorial.active) {
+                    <span class="pastilla">Oculto</span>
+                  }
+                </p>
+                <p class="tenue">
+                  {{ tutorial.duracion || 'sin duración' }} ·
+                  {{ tutorial.puntos.length }} puntos ·
+                  @if (tutorial.videoUrl) {
+                    <a [href]="tutorial.videoUrl" target="_blank" rel="noopener">ver en YouTube</a>
+                  } @else {
+                    <span class="sin-doi">sin video</span>
+                  }
+                </p>
+              </div>
+
+              <div class="tutorial-acciones">
+                <button type="button" class="boton secundario" (click)="editarTutorial(tutorial)">
+                  Editar
+                </button>
+                <button type="button" class="enlace-peligro" (click)="borrarTutorial(tutorial)">
+                  Borrar
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (tutorialAbierto() !== null || formTutorial.dirty) {
+      <div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-tutorial">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-tutorial">
+              {{ tutorialAbierto()?.id ? 'Editar video' : 'Video nuevo' }}
+            </h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarTutorial()">
+              ✕
+            </button>
+          </div>
+
+          <form [formGroup]="formTutorial" (ngSubmit)="guardarTutorial()">
+            <div class="ventana-cuerpo">
+              <!-- El enlace va PRIMERO. Es lo único a lo que se entra la mayoría
+                   de las veces: el texto se escribe una vez y la URL se pega
+                   cuando por fin se grabó. -->
+              <label class="campo">
+                <span>Enlace de YouTube</span>
+                <input
+                  type="url"
+                  formControlName="videoUrl"
+                  placeholder="https://www.youtube.com/watch?v=…"
+                />
+                <small class="ayuda">
+                  Vale cualquier forma: la de la barra, la de «Compartir» o solo el código.
+                  Déjalo vacío mientras no esté grabado.
+                </small>
+              </label>
+
+              <div class="fila">
+                <label class="campo">
+                  <span>Título</span>
+                  <input type="text" formControlName="titulo" />
+                </label>
+                <label class="campo estrecho">
+                  <span>Duración</span>
+                  <input type="text" formControlName="duracion" placeholder="8 min" />
+                </label>
+                <label class="campo estrecho">
+                  <span>Orden</span>
+                  <input type="number" formControlName="orden" min="0" />
+                </label>
+              </div>
+
+              <label class="campo">
+                <span>De qué va</span>
+                <textarea formControlName="entrada" rows="3"></textarea>
+              </label>
+
+              <label class="campo">
+                <span>Puntos que cubre</span>
+                <textarea formControlName="puntos" rows="7"></textarea>
+                <small class="ayuda">
+                  Uno por línea. Salen como lista debajo del video, y te sirven de guion al
+                  grabar.
+                </small>
+              </label>
+
+              <label class="casilla">
+                <input type="checkbox" formControlName="active" />
+                <span>
+                  Visible en la web.
+                  <small>Desactívalo para retirarlo mientras lo regrabas, sin perder el texto.</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="ventana-pie">
+              <button type="button" class="boton secundario" (click)="cerrarTutorial()">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="boton"
+                [disabled]="formTutorial.invalid || guardandoTutorial()"
+              >
+                {{ guardandoTutorial() ? 'Guardando…' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
   }
 
   @if (seccion() === 'cuentas') {

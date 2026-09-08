@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
-import { TROPIEZOS, TUTORIALES } from '../../shared/contenido/tutoriales';
+import { TROPIEZOS } from '../../shared/contenido/tutoriales';
+import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -27,11 +28,29 @@ import { SiteHeader } from '../../shared/layout/site-header';
   templateUrl: './tutoriales.html',
   styleUrl: './tutoriales.css',
 })
-export class Tutoriales {
+export class Tutoriales implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly api = inject(TutorialService);
 
-  readonly tutoriales = TUTORIALES;
+  readonly tutoriales = signal<Tutorial[]>([]);
+  readonly cargando = signal(true);
+
+  // Los tropiezos siguen en código: es texto que cambia cuando cambia el
+  // producto, no cuando se graba un video, y no hay nadie esperando para
+  // editarlos sin desplegar.
   readonly tropiezos = TROPIEZOS;
+
+  ngOnInit(): void {
+    this.api.publicos().subscribe({
+      next: (lista) => {
+        this.tutoriales.set(lista);
+        this.cargando.set(false);
+      },
+      // Sin lista no se enseña un error: los tropiezos escritos de más abajo
+      // siguen sirviendo, que es la mitad útil de esta página.
+      error: () => this.cargando.set(false),
+    });
+  }
 
   /**
    * URL para incrustar, acepte lo que acepte quien la pegue.

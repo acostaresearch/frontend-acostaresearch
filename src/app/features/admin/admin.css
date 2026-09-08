@@ -2028,3 +2028,80 @@ td.acciones {
   color: var(--color-texto-tenue);
   text-decoration: line-through;
 }
+
+/* ── Videos del conector ─────────────────────────────────────────────────
+   Lista sencilla: son cuatro o cinco, no una tabla que comparar. Lo que se
+   mira de un vistazo es cuál tiene video y cuál no. */
+.lista-tutoriales {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lista-tutoriales li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+/* Oculto en la web: se ve apagado aquí para no confundirlo con uno publicado. */
+.lista-tutoriales li.apagado {
+  opacity: 0.62;
+}
+
+.tutorial-datos {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.tutorial-titulo {
+  margin: 0 0 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tutorial-orden {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 50%;
+}
+
+.tutorial-datos .tenue {
+  margin: 0;
+}
+
+.tutorial-acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tutorial-acciones .boton {
+  width: auto;
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+/* El campo estrecho de una fila de tres: duración y orden no necesitan ancho. */
+.campo.estrecho {
+  flex: 0 1 120px;
+}
