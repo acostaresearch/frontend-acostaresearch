@@ -36,7 +36,7 @@
                Lo que se ve escrito ya sirve; el hueco solo dice que además
                vendrá en imagen. Una página en blanco esperando a que alguien
                grabe no ayuda a nadie, y el correo de entrega ya la enlaza. -->
-          @if (tutorial.videoUrl) {
+          @if (reproducible(tutorial.videoUrl)) {
             <div class="video">
               <iframe
                 [src]="embed(tutorial.videoUrl)"

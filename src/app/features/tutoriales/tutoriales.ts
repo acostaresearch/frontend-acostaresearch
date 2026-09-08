@@ -53,15 +53,35 @@ export class Tutoriales implements OnInit {
   }
 
   /**
-   * URL para incrustar, acepte lo que acepte quien la pegue.
+   * El identificador del video, o null si el enlace no lleva ninguno.
    *
-   * Mismo criterio que en las demostraciones: da igual si va el identificador
-   * suelto, el enlace de la barra del navegador o el corto de youtu.be.
+   * El null importa. Antes esto daba por hecho que lo que no encajara con
+   * ningún patrón YA era un identificador suelto, y así una URL de Studio de
+   * 165 caracteres —la de la barra del navegador, que es la que uno copia sin
+   * darse cuenta— pasó por identificador y produjo un reproductor en negro con
+   * un error de YouTube que no explicaba nada.
    */
-  embed(video: string): SafeResourceUrl {
-    const id = /(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/.exec(video)?.[1] ?? video.trim();
-    // Angular bloquea cualquier `src` de iframe sin marcar. La URL se construye
-    // con un identificador nuestro, no con nada que escriba el visitante.
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}`);
+  private identificador(enlace: string): string | null {
+    const texto = (enlace ?? '').trim();
+    if (/^[\w-]{11}$/.test(texto)) return texto;
+
+    const encontrado = /(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/.exec(texto);
+    return encontrado ? encontrado[1] : null;
+  }
+
+  /** Si ese enlace se puede reproducir. Decide si se pinta el marco o el aviso. */
+  reproducible(enlace: string): boolean {
+    return this.identificador(enlace) !== null;
+  }
+
+  embed(enlace: string): SafeResourceUrl | null {
+    const id = this.identificador(enlace);
+    if (!id) return null;
+
+    // Angular bloquea cualquier `src` de iframe sin marcar. Aquí la URL se
+    // construye con un identificador ya validado, no con lo que venga.
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube.com/embed/${id}`,
+    );
   }
 }
