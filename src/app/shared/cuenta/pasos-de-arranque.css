@@ -1,0 +1,125 @@
+/* La puesta en marcha, encima de todo lo demás.
+ *
+ * Se distingue del resto de la pantalla a propósito: no es información de la
+ * cuenta, es algo que hay que hacer. Cuando no queda nada por hacer, el
+ * componente entero se quita de en medio. */
+.arranque {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+}
+
+.arranque-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.arranque-cabecera h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.arranque-cabecera p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.arranque-barra {
+  flex: 1 1 140px;
+  max-width: 240px;
+  height: 6px;
+  overflow: hidden;
+  background: var(--color-borde);
+  border-radius: 999px;
+}
+
+.arranque-barra span {
+  display: block;
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 999px;
+  transition: width var(--transicion);
+}
+
+.arranque-pasos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arranque-pasos li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* El número, o el visto cuando ya está. Mismo hueco en los dos casos para que
+   los títulos no bailen al completarse un paso. */
+.arranque-marca {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 50%;
+}
+
+.arranque-pasos li.hecho .arranque-marca {
+  color: #fff;
+  background: var(--color-exito, #12734b);
+  border-color: transparent;
+}
+
+.arranque-pasos li.en-curso .arranque-marca {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: transparent;
+}
+
+.arranque-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.arranque-cuerpo h4 {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Lo hecho se apaga: ya no hay nada que hacer ahí, y en gris deja de competir
+   por la atención con el paso que sí toca. */
+.arranque-pasos li.hecho .arranque-cuerpo h4 {
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.arranque-cuerpo p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.arranque-cuerpo .boton {
+  width: auto;
+  margin-top: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
+}

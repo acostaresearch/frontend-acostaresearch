@@ -1,3 +1,10 @@
+<!-- La puesta en marcha, lo primero de la pantalla. Solo para el comprador:
+     el administrador no está arrancando nada, sus licencias se le emiten
+     solas y ya tiene el panel entero delante. -->
+@if (modo() === 'comprador' && progreso(); as p) {
+  <app-pasos-de-arranque [progreso]="p" />
+}
+
 @if (errorLicencia(); as mensaje) {
   <p class="aviso error">{{ mensaje }}</p>
 }

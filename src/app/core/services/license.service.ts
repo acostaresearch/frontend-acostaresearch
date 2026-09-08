@@ -4,17 +4,25 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
-import { License } from '../models/payment.model';
+import { License, ProgresoDeArranque } from '../models/payment.model';
 
 @Injectable({ providedIn: 'root' })
 export class LicenseService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/licenses`;
 
-  mine(): Observable<License[]> {
+  /**
+   * Las licencias del comprador y por dónde va su puesta en marcha.
+   *
+   * Viajan juntas porque el panel las pinta juntas: partirlo en dos llamadas
+   * serían dos viajes para una sola pantalla.
+   */
+  mine(): Observable<{ licencias: License[]; progreso: ProgresoDeArranque }> {
     return this.http
-      .get<ApiResponse<{ licenses: License[] }>>(`${this.base}/mine`)
-      .pipe(map((res) => res.data.licenses));
+      .get<ApiResponse<{ licenses: License[]; progreso: ProgresoDeArranque }>>(
+        `${this.base}/mine`,
+      )
+      .pipe(map((res) => ({ licencias: res.data.licenses, progreso: res.data.progreso })));
   }
 
   /** Canjea un código de activación comprado fuera de la web. */

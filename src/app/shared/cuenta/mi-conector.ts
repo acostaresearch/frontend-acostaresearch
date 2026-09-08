@@ -5,9 +5,10 @@ import { RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
-import { License } from '../../core/models/payment.model';
+import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
+import { PasosDeArranque } from './pasos-de-arranque';
 
 /**
  * El conector de Claude de quien está mirando: sus licencias, la URL y la guía.
@@ -24,7 +25,7 @@ import { LicenseService } from '../../core/services/license.service';
  */
 @Component({
   selector: 'app-mi-conector',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, PasosDeArranque],
   templateUrl: './mi-conector.html',
   styleUrl: './mi-conector.css',
 })
@@ -36,6 +37,12 @@ export class MiConector implements OnInit {
   readonly modo = input<'comprador' | 'administrador'>('comprador');
 
   readonly misLicencias = signal<License[]>([]);
+
+  /**
+   * Por dónde va la puesta en marcha. Nulo mientras no ha contestado el
+   * servidor: los pasos no se pintan a medias, se pintan cuando se saben.
+   */
+  readonly progreso = signal<ProgresoDeArranque | null>(null);
   readonly cargando = signal(true);
 
   /**
@@ -74,8 +81,9 @@ export class MiConector implements OnInit {
 
   ngOnInit(): void {
     this.licencias.mine().subscribe({
-      next: (lista) => {
-        this.misLicencias.set(lista);
+      next: ({ licencias, progreso }) => {
+        this.misLicencias.set(licencias);
+        this.progreso.set(progreso);
         this.cargando.set(false);
       },
       error: () => {

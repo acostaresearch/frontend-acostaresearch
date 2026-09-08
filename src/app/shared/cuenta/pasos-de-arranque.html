@@ -1,0 +1,52 @@
+<!-- Terminado, desaparece. Un panel de puesta en marcha que sigue ahí cuando ya
+     arrancaste es estorbo permanente a cambio de ayuda de una semana. -->
+@if (!completo()) {
+  <section class="arranque" aria-labelledby="titulo-arranque">
+    <header class="arranque-cabecera">
+      <div>
+        <h3 id="titulo-arranque">Para empezar</h3>
+        <p>{{ hechos() }} de {{ pasos().length }} listos</p>
+      </div>
+
+      <!-- La barra dice de un vistazo si esto va de un empujón o de empezar de
+           cero. El número solo obliga a leerlo. -->
+      <div
+        class="arranque-barra"
+        role="progressbar"
+        [attr.aria-valuenow]="hechos()"
+        [attr.aria-valuemin]="0"
+        [attr.aria-valuemax]="pasos().length"
+      >
+        <span [style.width.%]="(hechos() / pasos().length) * 100"></span>
+      </div>
+    </header>
+
+    <ol class="arranque-pasos">
+      @for (paso of pasos(); track paso.titulo; let i = $index) {
+        <li [class.hecho]="paso.hecho" [class.en-curso]="i === enCurso()">
+          <span class="arranque-marca" aria-hidden="true">
+            @if (paso.hecho) {
+              ✓
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+
+          <div class="arranque-cuerpo">
+            <h4>{{ paso.titulo }}</h4>
+
+            <!-- Solo el paso en curso se explica y ofrece su botón. Los de más
+                 abajo se ven apagados: enseñar cuatro acciones a la vez obliga
+                 a elegir por dónde empezar, que es la duda que esto quita. -->
+            @if (i === enCurso()) {
+              <p>{{ paso.texto }}</p>
+              @if (paso.accion; as accion) {
+                <a class="boton secundario" [routerLink]="accion.ruta">{{ accion.texto }}</a>
+              }
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  </section>
+}

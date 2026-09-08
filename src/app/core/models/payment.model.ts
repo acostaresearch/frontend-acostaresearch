@@ -31,6 +31,21 @@ export interface PaymentOrder {
 }
 
 /** Licencia del conector MCP. El token solo se ve en la URL, y solo una vez. */
+/**
+ * Por dónde va el comprador en su puesta en marcha.
+ *
+ * Cada campo se calcula en el servidor a partir de lo que OCURRIÓ, no de lo que
+ * alguien marcó: `conectado` es cierto porque el servidor oyó una llamada de esa
+ * licencia, que es la prueba de que la URL se pegó bien en Claude.
+ */
+export interface ProgresoDeArranque {
+  cuenta: boolean;
+  acceso: boolean;
+  conectado: boolean;
+  capitulo: boolean;
+  fuentes: boolean;
+}
+
 export interface License {
   id: string;
   productCode: string;
