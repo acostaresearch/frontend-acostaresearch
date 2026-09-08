@@ -779,7 +779,8 @@ export class Admin implements OnInit {
         this.formularioAdminAbierto() ||
         this.viendoCapitulos() !== null ||
         this.editando() !== null ||
-        this.borrandoGrupo() !== null;
+        this.borrandoGrupo() !== null ||
+        this.formularioTutorial();
 
       this.fondo.fijar('admin', alguna);
     });
@@ -2107,7 +2108,17 @@ export class Admin implements OnInit {
   readonly tutoriales = signal<Tutorial[]>([]);
   readonly guardandoTutorial = signal(false);
 
-  /** Cuál se está editando. Null = ninguno; '' = uno nuevo sin guardar. */
+  /**
+   * Si la ventana del formulario está abierta.
+   *
+   * Va aparte de `tutorialAbierto` y no se deduce de él: para uno NUEVO no hay
+   * tutorial que abrir, así que `tutorialAbierto` vale null —que es también lo
+   * que vale cuando no hay nada abierto—. Con una sola señal, «añadir video» no
+   * podía abrir nada porque su estado era idéntico al de estar cerrada.
+   */
+  readonly formularioTutorial = signal(false);
+
+  /** Cuál se está editando. Null con la ventana abierta = uno nuevo. */
   readonly tutorialAbierto = signal<Tutorial | null>(null);
 
   readonly formTutorial = this.fb.nonNullable.group({
@@ -2132,6 +2143,7 @@ export class Admin implements OnInit {
     this.error.set(null);
     this.aviso.set(null);
     this.tutorialAbierto.set(tutorial);
+    this.formularioTutorial.set(true);
 
     this.formTutorial.reset({
       orden: tutorial?.orden ?? this.tutoriales().length + 1,
@@ -2147,6 +2159,7 @@ export class Admin implements OnInit {
   }
 
   cerrarTutorial(): void {
+    this.formularioTutorial.set(false);
     this.tutorialAbierto.set(null);
     this.formTutorial.reset();
   }
