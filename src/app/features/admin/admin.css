@@ -79,25 +79,54 @@
 }
 
 /* ── Pestañas ───────────────────────────────────────────────────────────── */
+/* En móvil las siete pestañas no caben a lo ancho: la fila se desplaza en
+   horizontal en lugar de desbordar la pantalla, y llega hasta los bordes para
+   que la pestaña cortada se vea a medias y se entienda que hay más a la
+   derecha. */
 .pestanas {
   display: flex;
   gap: 4px;
   margin-bottom: 18px;
   border-bottom: 1px solid var(--color-borde);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pestanas::-webkit-scrollbar {
+  display: none;
 }
 
 .pestanas button {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 7px;
   padding: 10px 16px;
   font: inherit;
   font-size: 14px;
+  white-space: nowrap;
   color: var(--color-texto-suave);
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
   cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .pestanas {
+    margin-right: -20px;
+    margin-left: -20px;
+    padding-right: 20px;
+    padding-left: 20px;
+    scroll-padding-right: 20px;
+    scroll-padding-left: 20px;
+  }
+
+  .pestanas button {
+    padding: 10px 12px;
+  }
 }
 
 .pestanas button:hover {
