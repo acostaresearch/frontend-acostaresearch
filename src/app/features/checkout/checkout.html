@@ -230,12 +230,44 @@
             <!-- ── Código promocional ─────────────────────────────────────── -->
             @if (auth.isAuthenticated()) {
               @if (descuento(); as promo) {
-                <p class="promo-aplicada">
-                  Código <strong>{{ promo.code }}</strong> aplicado.
-                  <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
-                    Quitar
-                  </button>
-                </p>
+                <div class="promo-aplicada">
+                  <p class="promo-linea">
+                    Código <strong>{{ promo.code }}</strong> aplicado.
+                    <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
+                      Quitar
+                    </button>
+                  </p>
+
+                  <!-- El plazo, solo si el código lo tiene de verdad. Un código
+                       sin caducidad y sin tope de usos no enseña nada aquí:
+                       inventarle una cuenta atrás sería apurar al comprador con
+                       algo que no va a pasar, y eso se descubre recargando. -->
+                  @if (promo.expiresAt || promo.usesLeft !== null) {
+                    <p class="promo-plazo">
+                      @if (promo.expiresAt) {
+                        <span>
+                          Vence en
+                          <app-cuenta-atras
+                            [hasta]="promo.expiresAt"
+                            (vencido)="descuentoVencido()"
+                          />
+                        </span>
+                      }
+                      @if (promo.expiresAt && promo.usesLeft !== null) {
+                        <span aria-hidden="true">·</span>
+                      }
+                      @if (promo.usesLeft !== null) {
+                        <span>
+                          @if (promo.usesLeft === 1) {
+                            queda 1 uso
+                          } @else {
+                            quedan {{ promo.usesLeft }} usos
+                          }
+                        </span>
+                      }
+                    </p>
+                  }
+                </div>
               } @else {
                 <div class="promo">
                   <label for="promo">¿Tienes un código de descuento?</label>

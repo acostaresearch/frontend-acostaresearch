@@ -17,6 +17,16 @@ export interface Descuento {
   discountUsdCents: number;
   finalPriceCents: number;
   finalPriceUsdCents: number | null;
+  /**
+   * Hasta cuándo vale. Nulo = no caduca, y entonces no se enseña nada.
+   *
+   * Es la fecha que el servidor compara al resolver el código, no una duración
+   * que se invente el navegador: el contador del modal cuenta hacia algo que
+   * de verdad ocurre.
+   */
+  expiresAt: string | null;
+  /** Canjes que le quedan. Nulo = sin límite de usos. */
+  usesLeft: number | null;
 }
 
 /** Orden abierta en la pasarela. Todavía no se ha cobrado nada. */
@@ -121,7 +131,13 @@ export interface PagoPorRevisar {
   createdAt: string;
   operationCode: string | null;
   proofMime: string | null;
-  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
+  plan: {
+    code: string;
+    productCode: string | null;
+    name: string;
+    words: number;
+    durationDays: number;
+  };
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
@@ -165,7 +181,13 @@ export interface PagoRevisado {
    * de producto después.
    */
   license?: { productCode: string } | null;
-  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
+  plan: {
+    code: string;
+    productCode: string | null;
+    name: string;
+    words: number;
+    durationDays: number;
+  };
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
@@ -189,7 +211,13 @@ export interface Payment {
   paidAt: string | null;
   /** Por qué se rechazó un pago manual. Se le enseña al comprador tal cual. */
   reviewNote?: string | null;
-  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
+  plan: {
+    code: string;
+    productCode: string | null;
+    name: string;
+    words: number;
+    durationDays: number;
+  };
 }
 
 /**

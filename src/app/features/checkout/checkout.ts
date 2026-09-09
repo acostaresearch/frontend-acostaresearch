@@ -31,6 +31,7 @@ import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
 import { INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 
 /**
  * Cuántos acentos hay para las tarjetas de plan.
@@ -69,7 +70,15 @@ function soles(cents: number): string {
 }
 @Component({
   selector: 'app-checkout',
-  imports: [RouterLink, ReactiveFormsModule, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    DecimalPipe,
+    DatePipe,
+    CuentaAtras,
+    SiteHeader,
+    SiteFooter,
+  ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
 })
@@ -339,6 +348,25 @@ export class Checkout implements OnInit {
         this.comprobandoPromo.set(false);
       },
     });
+  }
+
+  /**
+   * El código venció con el modal abierto.
+   *
+   * Se quita la rebaja y se dice por qué. La alternativa —dejar el precio
+   * rebajado en pantalla— convierte un plazo cumplido en un cobro que falla al
+   * pulsar pagar, y ahí el comprador no entiende que se le acabó el plazo:
+   * entiende que la web está rota.
+   */
+  descuentoVencido(): void {
+    const promo = this.descuento();
+    if (!promo) return;
+
+    this.descuento.set(null);
+    this.codigoPromo.reset();
+    this.errorPromo.set(
+      `El código ${promo.code} venció mientras decidías. El precio vuelve a ser el de catálogo.`,
+    );
   }
 
   quitarDescuento(): void {
