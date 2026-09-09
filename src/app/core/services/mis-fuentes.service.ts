@@ -8,6 +8,14 @@ import { ApiResponse } from '../models/api.model';
 /** Lo que el comprador tiene subido de su propio export. */
 export interface MisFuentes {
   total: number;
+  /**
+   * Cuántas se guardaron sin resumen.
+   *
+   * Síntoma de haber exportado sin marcar «Abstract & keywords» en Scopus, que
+   * no viene marcado. Se pueden citar igual, pero para encontrarlas solo queda
+   * el título.
+   */
+  sinResumen: number;
   ultimaCarga: string | null;
   /** Máximo que admite su biblioteca. */
   tope: number;
@@ -24,7 +32,11 @@ export interface ResultadoDeImportacion {
   repetidas: number;
   /** Filas sin título utilizable. Casi siempre, relleno del export. */
   descartadas: number;
+  /** De ESTE archivo, cuántas llegaron sin resumen. */
+  sinResumen: number;
   total: number;
+  /** Cuántas hay sin resumen en toda su biblioteca, contando las de antes. */
+  sinResumenEnTotal: number;
 }
 
 /**

@@ -17,6 +17,23 @@
         {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
       </button>
     </div>
+
+    <!-- Fichas sin resumen: se exportó sin marcar «Abstract & keywords».
+         Va como estado y no solo en el parte de la subida porque es una
+         situación que sigue ahí mañana, y el parte desaparece al recargar. -->
+    @if (datos.sinResumen > 0) {
+      <p class="sin-resumen">
+        @if (datos.sinResumen === datos.total) {
+          <strong>Ninguna trae resumen.</strong>
+        } @else {
+          <strong>{{ datos.sinResumen }} de tus {{ datos.total }} no traen resumen.</strong>
+        }
+        Se pueden citar igual, pero Claude solo puede buscarlas por el título, así que muchas
+        veces no las va a encontrar. Vuelve a exportar desde Scopus marcando
+        <strong>«Abstract &amp; keywords»</strong> y sube el archivo otra vez: no se duplica nada,
+        se completan las que ya están.
+      </p>
+    }
   }
 }
 
@@ -50,7 +67,11 @@
 <!-- El parte de la subida. Un import que no dice nada deja al comprador sin
      saber si funcionó, y es cuando vuelve a subir el mismo archivo tres veces. -->
 @if (resultado(); as parte) {
-  <div class="parte">
+  <!-- Si el archivo vino entero sin resúmenes, el recuadro deja de ser verde:
+       la subida técnicamente fue bien, pero el resultado no sirve para lo que
+       el tesista quería, y darle el mismo verde que a una subida buena es
+       decirle que puede olvidarse del asunto. -->
+  <div class="parte" [class.parte-incompleta]="parte.sinResumen === parte.leidas">
     <p class="parte-titulo">
       @if (parte.guardadas > 0) {
         Añadimos {{ parte.guardadas }} fuentes a tu biblioteca.
@@ -58,6 +79,21 @@
         Ya tenías todas las de ese archivo.
       }
     </p>
+
+    @if (parte.sinResumen > 0) {
+      <p class="parte-aviso">
+        @if (parte.sinResumen === parte.leidas) {
+          Pero <strong>ninguna trae resumen</strong>: se te pasó marcar
+          <strong>«Abstract &amp; keywords»</strong> al exportar de Scopus. No viene marcado por
+          defecto.
+        } @else {
+          <strong>{{ parte.sinResumen }} venían sin resumen</strong>, seguramente de un export
+          hecho sin marcar «Abstract &amp; keywords».
+        }
+        Vuelve a exportar con esa casilla y sube el archivo otra vez — se completan sin duplicar
+        nada.
+      </p>
+    }
     <p class="tenue">
       Leímos {{ parte.leidas }} fichas del archivo ({{ parte.formato | uppercase }}).
       @if (parte.repetidas > 0) {
