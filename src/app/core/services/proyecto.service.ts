@@ -14,6 +14,8 @@ export interface EtapaDelProyecto {
   estado: EstadoDeEtapa;
   /** Qué quedó decidido, en dos o tres frases. Nulo si no se guardó nada. */
   resumen: string | null;
+  /** Palabras del capítulo escrito. Cero = todavía no hay texto guardado. */
+  palabras: number;
   updatedAt: string | null;
 }
 
@@ -54,4 +56,31 @@ export class ProyectoService {
       .get<ApiResponse<Proyecto[]>>(this.base)
       .pipe(map((r) => r.data ?? []));
   }
+
+  /**
+   * La tesis en Word, con todo lo escrito hasta ahora.
+   *
+   * Se pide en crudo porque no es JSON: llega el archivo. El nombre lo manda el
+   * servidor en la cabecera —lleva la fecha, que es lo que distingue una
+   * descarga de la siguiente— y se respeta en vez de inventarlo aquí.
+   */
+  word(productCode: string): Observable<{ archivo: Blob; nombre: string }> {
+    return this.http
+      .get(`${this.base}/${encodeURIComponent(productCode)}/word`, {
+        observe: 'response',
+        responseType: 'blob',
+      })
+      .pipe(
+        map((respuesta) => ({
+          archivo: respuesta.body as Blob,
+          nombre: nombreDeLaCabecera(respuesta.headers.get('Content-Disposition')),
+        })),
+      );
+  }
+}
+
+/** Saca el nombre del archivo de la cabecera, con un respaldo si no viene. */
+function nombreDeLaCabecera(cabecera: string | null): string {
+  const encontrado = cabecera?.match(/filename="?([^"]+)"?/);
+  return encontrado?.[1] ?? 'tesis.docx';
 }

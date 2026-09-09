@@ -38,6 +38,29 @@
         <p class="siguiente completo">Tienes todos los capítulos dados por buenos.</p>
       }
 
+      <!-- La descarga solo aparece cuando hay algo que descargar. Un botón que
+           siempre lleva a «todavía no hay nada» enseña a no pulsarlo. -->
+      @if (palabrasTotales(p) > 0) {
+        <div class="descarga">
+          <button
+            type="button"
+            class="boton"
+            [disabled]="bajando() === p.productCode"
+            (click)="descargar(p)"
+          >
+            {{ bajando() === p.productCode ? 'Armando el documento…' : 'Descargar mi tesis en Word' }}
+          </button>
+          <p class="descarga-pie">
+            {{ palabrasTotales(p) }} palabras escritas. Sale con portada, índice y los capítulos
+            en orden. Al abrirlo, Word te ofrecerá actualizar el índice: acéptalo.
+          </p>
+        </div>
+      }
+
+      @if (errorDescarga(); as mensaje) {
+        <p class="aviso-descarga">{{ mensaje }}</p>
+      }
+
       <ol class="capitulos">
         @for (e of p.etapas; track e.code) {
           <li [class]="'capitulo ' + marca(e.estado)">
@@ -50,7 +73,7 @@
               >
                 <span class="punto" aria-hidden="true"></span>
                 <span class="nombre">{{ e.displayName }}</span>
-                <span class="estado">{{ etiqueta(e.estado) }}</span>
+                <span class="estado">{{ etiqueta(e.estado) }}@if (e.palabras > 0) { · {{ e.palabras }} palabras }</span>
                 <span class="flecha" aria-hidden="true">{{ estaAbierto(e.code) ? '▴' : '▾' }}</span>
               </button>
 
@@ -66,7 +89,7 @@
               <div class="fila">
                 <span class="punto" aria-hidden="true"></span>
                 <span class="nombre">{{ e.displayName }}</span>
-                <span class="estado">{{ etiqueta(e.estado) }}</span>
+                <span class="estado">{{ etiqueta(e.estado) }}@if (e.palabras > 0) { · {{ e.palabras }} palabras }</span>
               </div>
             }
           </li>

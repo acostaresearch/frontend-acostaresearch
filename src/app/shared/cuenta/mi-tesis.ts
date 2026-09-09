@@ -33,6 +33,10 @@ export class MiTesis implements OnInit {
 
   readonly hayAlgo = computed(() => this.lista().length > 0);
 
+  /** Mientras se arma el Word, para no pedirlo dos veces de un doble clic. */
+  readonly bajando = signal<string | null>(null);
+  readonly errorDescarga = signal<string | null>(null);
+
   ngOnInit(): void {
     this.proyectos.mios().subscribe({
       next: (datos) => {
@@ -46,6 +50,68 @@ export class MiTesis implements OnInit {
         this.cargando.set(false);
       },
     });
+  }
+
+  /** Palabras escritas en todo el proyecto. Cero = no hay nada que descargar. */
+  palabrasTotales(p: Proyecto): number {
+    return p.etapas.reduce((suma, e) => suma + (e.palabras ?? 0), 0);
+  }
+
+  /**
+   * Baja el Word.
+   *
+   * El archivo llega como datos, no como un enlace: la ruta va autenticada y un
+   * `<a href>` normal no lleva la sesión. Se crea una dirección temporal en el
+   * navegador, se pulsa sola y se suelta enseguida — si no se suelta, el archivo
+   * se queda en memoria hasta que el tesista recargue la página.
+   */
+  descargar(p: Proyecto): void {
+    if (this.bajando()) return;
+
+    this.bajando.set(p.productCode);
+    this.errorDescarga.set(null);
+
+    this.proyectos.word(p.productCode).subscribe({
+      next: ({ archivo, nombre }) => {
+        const url = URL.createObjectURL(archivo);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombre;
+        enlace.click();
+        URL.revokeObjectURL(url);
+        this.bajando.set(null);
+      },
+      error: (e) => {
+        this.bajando.set(null);
+        void this.explicar(e).then((mensaje) => this.errorDescarga.set(mensaje));
+      },
+    });
+  }
+
+  /**
+   * Saca el mensaje de un error de descarga.
+   *
+   * Al pedir el archivo en crudo, el cuerpo de un error también llega en crudo:
+   * el «todavía no hay ningún capítulo escrito» del servidor viene envuelto como
+   * datos binarios, y leerlo con el camino de siempre daría un mensaje genérico
+   * justo en el caso más probable.
+   */
+  private async explicar(error: unknown): Promise<string> {
+    const cuerpo = (error as { error?: unknown })?.error;
+
+    if (cuerpo instanceof Blob) {
+      try {
+        const { message } = JSON.parse(await cuerpo.text());
+        if (message) return message;
+      } catch {
+        // Cuerpo que no era JSON: se cae al mensaje de abajo.
+      }
+    }
+
+    return (
+      toApiError(error).message ||
+      'No se pudo armar el documento. Inténtalo otra vez en un momento.'
+    );
   }
 
   porcentaje(p: Proyecto): number {

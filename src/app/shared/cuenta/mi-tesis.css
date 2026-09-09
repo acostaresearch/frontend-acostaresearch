@@ -84,6 +84,31 @@
   background: var(--color-exito-suave);
 }
 
+/* ── La descarga ──────────────────────────────────────────────────────────── */
+.descarga {
+  margin-bottom: 16px;
+  padding: 14px 15px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.descarga-pie {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+.aviso-descarga {
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
+}
+
 /* ── Los capítulos ────────────────────────────────────────────────────────── */
 .capitulos {
   margin: 0;
