@@ -4,6 +4,9 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toApiError } from '../../core/http/api-error';
 import { Proyecto, ProyectoService } from '../../core/services/proyecto.service';
 
+/** Qué se está bajando: el documento o solo la bibliografía. */
+type Formato = 'word' | 'bib';
+
 /**
  * Por dónde va su tesis.
  *
@@ -33,8 +36,14 @@ export class MiTesis implements OnInit {
 
   readonly hayAlgo = computed(() => this.lista().length > 0);
 
-  /** Mientras se arma el Word, para no pedirlo dos veces de un doble clic. */
-  readonly bajando = signal<string | null>(null);
+  /**
+   * Qué se está bajando, si es que hay algo.
+   *
+   * Lleva el formato además del producto porque hay dos botones por proyecto:
+   * con solo el código, pulsar «Word» dejaba también el `.bib` en «Preparando…»
+   * y parecía que se estaban armando los dos.
+   */
+  readonly bajando = signal<{ productCode: string; formato: Formato } | null>(null);
   readonly errorDescarga = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -57,21 +66,30 @@ export class MiTesis implements OnInit {
     return p.etapas.reduce((suma, e) => suma + (e.palabras ?? 0), 0);
   }
 
+  /** ¿Se está armando este archivo de este proyecto? */
+  seEstaBajando(p: Proyecto, formato: Formato): boolean {
+    const enCurso = this.bajando();
+    return enCurso?.productCode === p.productCode && enCurso.formato === formato;
+  }
+
   /**
-   * Baja el Word.
+   * Baja el Word o la bibliografía en BibTeX.
    *
    * El archivo llega como datos, no como un enlace: la ruta va autenticada y un
    * `<a href>` normal no lleva la sesión. Se crea una dirección temporal en el
    * navegador, se pulsa sola y se suelta enseguida — si no se suelta, el archivo
    * se queda en memoria hasta que el tesista recargue la página.
    */
-  descargar(p: Proyecto): void {
+  descargar(p: Proyecto, formato: Formato = 'word'): void {
     if (this.bajando()) return;
 
-    this.bajando.set(p.productCode);
+    this.bajando.set({ productCode: p.productCode, formato });
     this.errorDescarga.set(null);
 
-    this.proyectos.word(p.productCode).subscribe({
+    const peticion =
+      formato === 'bib' ? this.proyectos.bib(p.productCode) : this.proyectos.word(p.productCode);
+
+    peticion.subscribe({
       next: ({ archivo, nombre }) => {
         const url = URL.createObjectURL(archivo);
         const enlace = document.createElement('a');
@@ -112,6 +130,64 @@ export class MiTesis implements OnInit {
       toApiError(error).message ||
       'No se pudo armar el documento. Inténtalo otra vez en un momento.'
     );
+  }
+
+  // ── La plantilla de su facultad ──────────────────────────────────────────
+  readonly subiendoPlantilla = signal(false);
+  readonly errorPlantilla = signal<string | null>(null);
+  readonly plantillaPuesta = signal<string | null>(null);
+
+  elegirPlantilla(evento: Event, p: Proyecto): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // Se limpia el input para que elegir el MISMO archivo otra vez —tras
+    // corregirlo en Word— vuelva a disparar el evento.
+    entrada.value = '';
+    if (archivo) this.subirPlantilla(archivo, p);
+  }
+
+  private subirPlantilla(archivo: File, p: Proyecto): void {
+    this.subiendoPlantilla.set(true);
+    this.errorPlantilla.set(null);
+    this.plantillaPuesta.set(null);
+
+    this.proyectos.subirPlantilla(p.productCode, archivo).subscribe({
+      next: ({ cuantos }) => {
+        this.subiendoPlantilla.set(false);
+        this.plantillaPuesta.set(
+          `Listo: ${cuantos} estilos de «${archivo.name}». Tu próxima descarga sale con ese formato.`,
+        );
+        this.recargar();
+      },
+      error: (e) => {
+        this.subiendoPlantilla.set(false);
+        // El servidor manda aquí mensajes escritos para el tesista —«eso es un
+        // .doc antiguo, guárdalo como .docx»—, así que se enseñan tal cual.
+        this.errorPlantilla.set(toApiError(e).message);
+      },
+    });
+  }
+
+  quitarPlantilla(p: Proyecto): void {
+    this.subiendoPlantilla.set(true);
+    this.errorPlantilla.set(null);
+    this.plantillaPuesta.set(null);
+
+    this.proyectos.quitarPlantilla(p.productCode).subscribe({
+      next: () => {
+        this.subiendoPlantilla.set(false);
+        this.recargar();
+      },
+      error: (e) => {
+        this.subiendoPlantilla.set(false);
+        this.errorPlantilla.set(toApiError(e).message);
+      },
+    });
+  }
+
+  /** Vuelve a pedir los proyectos, para que la pantalla diga lo que hay. */
+  private recargar(): void {
+    this.proyectos.mios().subscribe({ next: (datos) => this.lista.set(datos) });
   }
 
   porcentaje(p: Proyecto): number {

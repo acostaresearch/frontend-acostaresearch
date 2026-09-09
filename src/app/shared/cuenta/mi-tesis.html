@@ -45,14 +45,33 @@
           <button
             type="button"
             class="boton"
-            [disabled]="bajando() === p.productCode"
-            (click)="descargar(p)"
+            [disabled]="bajando() !== null"
+            (click)="descargar(p, 'word')"
           >
-            {{ bajando() === p.productCode ? 'Armando el documento…' : 'Descargar mi tesis en Word' }}
+            {{
+              seEstaBajando(p, 'word') ? 'Armando el documento…' : 'Descargar mi tesis en Word'
+            }}
           </button>
           <p class="descarga-pie">
             {{ palabrasTotales(p) }} palabras escritas. Sale con portada, índice y los capítulos
             en orden. Al abrirlo, Word te ofrecerá actualizar el índice: acéptalo.
+          </p>
+
+          <!-- El .bib va como enlace y no como botón: lo necesita quien escribe
+               en LaTeX, que es una minoría, y ponerlo con el mismo peso que el
+               Word haría dudar al resto sobre cuál de los dos le toca. -->
+          <p class="descarga-latex">
+            ¿Escribes en LaTeX?
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="bajando() !== null"
+              (click)="descargar(p, 'bib')"
+            >
+              {{ seEstaBajando(p, 'bib') ? 'Armando el .bib…' : 'Baja tu bibliografía en BibTeX' }}
+            </button>
+            — las claves son las mismas que ya llevas entre corchetes en el texto, así que
+            <code>[AR97D22F86]</code> es <code>\cite&#123;AR97D22F86&#125;</code>.
           </p>
         </div>
       }
@@ -60,6 +79,69 @@
       @if (errorDescarga(); as mensaje) {
         <p class="aviso-descarga">{{ mensaje }}</p>
       }
+
+      <!-- La plantilla de su facultad. Va debajo de la descarga porque es lo
+           que la cambia: primero se ve qué se baja, luego con qué formato. -->
+      <div class="plantilla">
+        @if (p.plantilla; as puesta) {
+          <p class="plantilla-estado">
+            <strong>Formato de tu facultad puesto.</strong>
+            @if (puesta.nombre) {
+              <span class="plantilla-archivo">{{ puesta.nombre }}</span>
+            }
+            <span class="plantilla-fecha">desde el {{ puesta.desde | date: 'd MMM y' }}</span>
+          </p>
+          <p class="plantilla-acciones">
+            <label class="boton enlace">
+              Cambiarla
+              <input
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                hidden
+                [disabled]="subiendoPlantilla()"
+                (change)="elegirPlantilla($event, p)"
+              />
+            </label>
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="subiendoPlantilla()"
+              (click)="quitarPlantilla(p)"
+            >
+              Quitarla
+            </button>
+          </p>
+        } @else {
+          <p class="plantilla-invitacion">
+            ¿Tu facultad te dio un documento con el formato exigido?
+            <label class="boton enlace">
+              Súbelo aquí
+              <input
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                hidden
+                [disabled]="subiendoPlantilla()"
+                (change)="elegirPlantilla($event, p)"
+              />
+            </label>
+            y tu tesis saldrá con sus títulos, sus fuentes y sus márgenes.
+          </p>
+          <p class="plantilla-nota">
+            Solo se guarda el formato: <strong>el contenido de ese archivo no se conserva</strong>.
+            Si no subes ninguno, sale en Times New Roman 12 a doble espacio.
+          </p>
+        }
+
+        @if (subiendoPlantilla()) {
+          <p class="plantilla-nota">Leyendo el archivo…</p>
+        }
+        @if (plantillaPuesta(); as mensaje) {
+          <p class="plantilla-ok">{{ mensaje }}</p>
+        }
+        @if (errorPlantilla(); as mensaje) {
+          <p class="aviso-descarga">{{ mensaje }}</p>
+        }
+      </div>
 
       <ol class="capitulos">
         @for (e of p.etapas; track e.code) {
