@@ -5,6 +5,13 @@
   <app-pasos-de-arranque [progreso]="p" />
 }
 
+<!-- Por dónde va su tesis, justo después de la puesta en marcha y antes que
+     nada más. Quien vuelve al panel con el conector ya instalado no viene a
+     mirar su URL: viene a ver dónde lo dejó. El componente no pinta nada
+     mientras no haya avance guardado, así que no estorba a quien acaba de
+     llegar. -->
+<app-mi-tesis />
+
 @if (errorLicencia(); as mensaje) {
   <p class="aviso error">{{ mensaje }}</p>
 }

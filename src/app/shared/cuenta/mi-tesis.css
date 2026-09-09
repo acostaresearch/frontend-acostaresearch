@@ -1,0 +1,231 @@
+.tesis {
+  margin-bottom: 18px;
+}
+
+/* ── Cabecera ─────────────────────────────────────────────────────────────── */
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.titulo h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+/* El tema puede ser largo —es una delimitación, no un titular—, así que se le
+   deja respirar en varias líneas en vez de recortarlo. Recortarlo escondería
+   justo la parte que lo delimita, que suele ir al final. */
+.tema {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-texto);
+}
+
+.donde {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.cuenta {
+  flex-shrink: 0;
+  text-align: right;
+  line-height: 1.15;
+}
+
+.cuenta .numero {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.cuenta .de {
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Avance ───────────────────────────────────────────────────────────────── */
+.barra {
+  height: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: var(--color-borde);
+  border-radius: 999px;
+}
+
+.relleno {
+  display: block;
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.siguiente {
+  margin: 0 0 14px;
+  padding: 10px 13px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  border-radius: var(--radio-sm);
+}
+
+.siguiente.completo {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+/* ── Los capítulos ────────────────────────────────────────────────────────── */
+.capitulos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capitulo {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.capitulo:last-child {
+  border-bottom: none;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 2px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+}
+
+.fila.desplegable {
+  cursor: pointer;
+}
+
+.fila.desplegable:hover .nombre {
+  color: var(--color-primario);
+}
+
+/* El punto lleva el estado. Es lo primero que se busca al mirar una lista así,
+   antes de leer una sola palabra. */
+.punto {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-borde-fuerte);
+}
+
+.listo .punto {
+  background: var(--color-exito);
+}
+
+.en-curso .punto {
+  background: var(--color-primario);
+  /* Un anillo, para que se distinga del verde sin depender del color: quien no
+     separa bien verde y azul sigue viendo que este es distinto. */
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.listo .nombre {
+  color: var(--color-texto-suave);
+}
+
+.pendiente .nombre {
+  color: var(--color-texto-tenue);
+}
+
+.estado {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.listo .estado {
+  color: var(--color-exito);
+}
+
+.en-curso .estado {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.flecha {
+  flex-shrink: 0;
+  width: 12px;
+  font-size: 10px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Lo que quedó decidido ────────────────────────────────────────────────── */
+.resumen {
+  padding: 2px 2px 12px 19px;
+}
+
+.resumen p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.resumen .fecha {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.nota {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+@media (max-width: 520px) {
+  .cabecera {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cuenta {
+    text-align: left;
+  }
+
+  .cuenta .numero {
+    display: inline;
+    font-size: 18px;
+  }
+
+  /* En pantalla estrecha el estado se va debajo del nombre en vez de apretarlo
+     contra el borde. */
+  .fila {
+    flex-wrap: wrap;
+  }
+
+  .estado {
+    width: 100%;
+    padding-left: 19px;
+  }
+}

@@ -1,0 +1,82 @@
+@if (hayAlgo()) {
+  @for (p of lista(); track p.id) {
+    <section class="tesis">
+      <header class="cabecera">
+        <div class="titulo">
+          <h3>Por dónde vas</h3>
+          @if (p.tema) {
+            <p class="tema">{{ p.tema }}</p>
+          }
+          @if (p.carrera || p.universidad) {
+            <p class="donde">
+              {{ p.carrera }}@if (p.carrera && p.universidad) { · }{{ p.universidad }}
+            </p>
+          }
+        </div>
+
+        <div class="cuenta" [attr.aria-label]="p.avance.listos + ' de ' + p.avance.total + ' capítulos dados por buenos'">
+          <span class="numero">{{ p.avance.listos }}</span>
+          <span class="de">de {{ p.avance.total }}</span>
+        </div>
+      </header>
+
+      <div
+        class="barra"
+        role="progressbar"
+        [attr.aria-valuenow]="porcentaje(p)"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <span class="relleno" [style.width.%]="porcentaje(p)"></span>
+      </div>
+
+      @if (p.siguiente) {
+        <p class="siguiente">
+          Lo siguiente: <strong>{{ p.siguiente.displayName }}</strong>
+        </p>
+      } @else {
+        <p class="siguiente completo">Tienes todos los capítulos dados por buenos.</p>
+      }
+
+      <ol class="capitulos">
+        @for (e of p.etapas; track e.code) {
+          <li [class]="'capitulo ' + marca(e.estado)">
+            @if (e.resumen) {
+              <button
+                type="button"
+                class="fila desplegable"
+                (click)="alternar(e.code)"
+                [attr.aria-expanded]="estaAbierto(e.code)"
+              >
+                <span class="punto" aria-hidden="true"></span>
+                <span class="nombre">{{ e.displayName }}</span>
+                <span class="estado">{{ etiqueta(e.estado) }}</span>
+                <span class="flecha" aria-hidden="true">{{ estaAbierto(e.code) ? '▴' : '▾' }}</span>
+              </button>
+
+              @if (estaAbierto(e.code)) {
+                <div class="resumen">
+                  <p>{{ e.resumen }}</p>
+                  @if (e.updatedAt) {
+                    <p class="fecha">Anotado el {{ e.updatedAt | date: 'd MMM y' }}</p>
+                  }
+                </div>
+              }
+            } @else {
+              <div class="fila">
+                <span class="punto" aria-hidden="true"></span>
+                <span class="nombre">{{ e.displayName }}</span>
+                <span class="estado">{{ etiqueta(e.estado) }}</span>
+              </div>
+            }
+          </li>
+        }
+      </ol>
+
+      <p class="nota">
+        Esto lo va anotando Claude según trabajáis. Cuando abras una conversación nueva, el
+        conector se lo cuenta solo: no tienes que volver a explicarle tu tema.
+      </p>
+    </section>
+  }
+}
