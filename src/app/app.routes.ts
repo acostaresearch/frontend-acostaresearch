@@ -73,12 +73,22 @@ export const routes: Routes = [
     title: 'Mi perfil · Acosta Research',
     loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
   },
-  {
-    path: 'humanizador',
-    canActivate: [authGuard],
-    title: 'Humanizador · Acosta Research',
-    loadComponent: () => import('./features/rewriter/rewriter').then((m) => m.Rewriter),
-  },
+  /*
+   * `/humanizador` se retiró el 9 de septiembre de 2026.
+   *
+   * Era el reescritor por packs de palabras, que ejecutaba en nuestro servidor.
+   * NO es el humanizador que se vende: ese es la Skill `humanizador-academico`,
+   * que va dentro del conector y funciona. Los dos compartían nombre y eso hizo
+   * creer durante meses que el producto vivo estaba roto.
+   *
+   * Lo que había aquí no llegó a funcionar nunca —cero reescrituras—, así que
+   * quitarlo no le quita nada a nadie. La ruta cae en el comodín del final y
+   * lleva a la portada; quien tuviera el enlace guardado no ve un error.
+   *
+   * El componente y el módulo del backend se quedan donde están, apagados: de
+   * ellos cuelgan los pagos y las bolsas ya emitidas, y borrarlos sería tocar
+   * el histórico de ventas para ahorrarse unos archivos.
+   */
   {
     path: 'planes',
     title: 'Precios · Acosta Research',
