@@ -1,0 +1,139 @@
+.explicacion {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+  font-size: 13px;
+}
+
+.nota-pie {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Cuántas tiene ────────────────────────────────────────────────────────── */
+.fuentes-estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 13px 15px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.fuentes-estado strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+/* «Borrar todas» va como enlace y no como botón: es la salida de emergencia de
+   quien subió el archivo equivocado, no una acción que se ofrezca. */
+.fuentes-estado .boton.enlace.peligro {
+  flex-shrink: 0;
+  color: var(--color-error);
+}
+
+@media (max-width: 520px) {
+  .fuentes-estado {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* ── La zona de soltar ────────────────────────────────────────────────────── */
+.soltar {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 16px;
+  cursor: pointer;
+  background: var(--color-fondo);
+  /* Discontinuo: dice «aquí se suelta algo» sin necesidad de explicarlo. */
+  border: 1.5px dashed var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.soltar:hover,
+.soltar.encima {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+/* El campo de verdad, escondido: el que se ve es la etiqueta entera, para que
+   se pueda soltar el archivo en cualquier punto de la caja y no solo sobre un
+   botón de dos centímetros. */
+.soltar input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Se ve al navegar con teclado, que de otro modo enfocaría algo invisible. */
+.soltar:has(input:focus-visible) {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.soltar-icono {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-primario);
+}
+
+.soltar-texto {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.soltar-texto strong {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.soltar-texto span {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+/* ── El parte de la subida ────────────────────────────────────────────────── */
+.parte {
+  margin-top: 12px;
+  padding: 13px 15px;
+  background: var(--color-exito-suave);
+  border: 1px solid rgba(18, 115, 75, 0.22);
+  border-radius: var(--radio-sm);
+}
+
+.parte-titulo {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-exito);
+}
+
+.parte .tenue {
+  display: block;
+  margin: 0;
+  line-height: 1.55;
+}

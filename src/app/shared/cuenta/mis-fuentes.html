@@ -1,0 +1,76 @@
+<p class="explicacion">
+  Pídele a Claude la ecuación de búsqueda, pégala en Scopus, Web of Science o SciELO con el acceso
+  de tu universidad, y sube aquí el archivo que te descargues. Desde ese momento tus fuentes
+  aparecen cuando Claude busca para tus capítulos.
+</p>
+
+@if (resumen(); as datos) {
+  @if (datos.total > 0) {
+    <div class="fuentes-estado">
+      <div>
+        <strong>{{ datos.total }} fuentes tuyas</strong>
+        @if (datos.ultimaCarga) {
+          <span class="tenue">· última carga el {{ datos.ultimaCarga | date: 'd MMM y' }}</span>
+        }
+      </div>
+      <button type="button" class="boton enlace peligro" [disabled]="vaciando()" (click)="vaciar()">
+        {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
+      </button>
+    </div>
+  }
+}
+
+<!-- Arrastrar o pulsar. Las dos, porque el archivo acaba de bajarse y muchas
+     veces sigue visible en la barra de descargas del navegador: arrastrarlo
+     desde ahí es un gesto menos que abrir el explorador y buscarlo. -->
+<label
+  class="soltar"
+  [class.encima]="encima()"
+  (dragover)="arrastraEncima($event)"
+  (dragleave)="encima.set(false)"
+  (drop)="soltar($event)"
+>
+  <input type="file" [accept]="acepta" [disabled]="subiendo()" (change)="elegir($event)" />
+  <span class="soltar-icono" aria-hidden="true">⬆</span>
+  <span class="soltar-texto">
+    @if (subiendo()) {
+      <strong>Leyendo tu archivo…</strong>
+      <span>Con varios cientos de fuentes tarda unos segundos.</span>
+    } @else {
+      <strong>Arrastra aquí tu archivo, o pulsa para buscarlo</strong>
+      <span>CSV, RIS o BibTeX. Es lo que descargas en «Export» sin cambiar nada.</span>
+    }
+  </span>
+</label>
+
+@if (error(); as mensaje) {
+  <p class="aviso error">{{ mensaje }}</p>
+}
+
+<!-- El parte de la subida. Un import que no dice nada deja al comprador sin
+     saber si funcionó, y es cuando vuelve a subir el mismo archivo tres veces. -->
+@if (resultado(); as parte) {
+  <div class="parte">
+    <p class="parte-titulo">
+      @if (parte.guardadas > 0) {
+        Añadimos {{ parte.guardadas }} fuentes a tu biblioteca.
+      } @else {
+        Ya tenías todas las de ese archivo.
+      }
+    </p>
+    <p class="tenue">
+      Leímos {{ parte.leidas }} fichas del archivo ({{ parte.formato | uppercase }}).
+      @if (parte.repetidas > 0) {
+        {{ parte.repetidas }} ya las tenías y se actualizaron.
+      }
+      @if (parte.descartadas > 0) {
+        {{ parte.descartadas }} filas venían sin título y se dejaron fuera.
+      }
+    </p>
+  </div>
+}
+
+<p class="nota-pie">
+  Solo tú las ves. No se mezclan con la biblioteca de Acosta ni se le sirven a nadie más, y se
+  borran con tu cuenta: ese archivo lo descargaste tú con el acceso de tu universidad.
+</p>

@@ -346,3 +346,18 @@
   line-height: 1.45;
   color: var(--color-texto-suave);
 }
+
+/* Sus propias fuentes, separadas del bloque del conector por una línea: son
+   dos tareas distintas —una se hace al empezar y la otra cada vez que amplía
+   su búsqueda— y juntas se leían como una sola. */
+.mis-fuentes {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.mis-fuentes h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 650;
+}

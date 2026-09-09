@@ -8,6 +8,7 @@ import { toApiError } from '../../core/http/api-error';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
+import { MisFuentesPanel } from './mis-fuentes';
 import { PasosDeArranque } from './pasos-de-arranque';
 
 /**
@@ -25,7 +26,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
  */
 @Component({
   selector: 'app-mi-conector',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, PasosDeArranque],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, MisFuentesPanel, PasosDeArranque],
   templateUrl: './mi-conector.html',
   styleUrl: './mi-conector.css',
 })

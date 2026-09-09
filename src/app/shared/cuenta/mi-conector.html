@@ -96,6 +96,19 @@
       <span class="guia-accion">Descargar</span>
     </a>
   }
+
+  <!-- Sus propias fuentes. Solo con acceso vigente, como la guía: sin conector
+       que las lea, subir un export no serviría de nada.
+
+       Va aquí, y no en una pestaña aparte, porque es parte de la puesta en
+       marcha: quien acaba de conectar Claude es exactamente quien está a punto
+       de descubrir que su tema no está en la biblioteca de la casa. -->
+  @if (tieneAccesoVigente()) {
+    <section class="mis-fuentes">
+      <h3>Tus fuentes de Scopus</h3>
+      <app-mis-fuentes />
+    </section>
+  }
 } @else if (modo() === 'administrador') {
   <!-- No debería verse nunca: las licencias del administrador se emiten solas
        al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan
