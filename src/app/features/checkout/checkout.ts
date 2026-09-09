@@ -114,6 +114,32 @@ export class Checkout implements OnInit {
   readonly saldo = signal<Balance | null>(null);
   readonly seleccionado = signal<Plan | null>(null);
 
+  /**
+   * Cuánto vive la ventana de pago abierta sin tocarla.
+   *
+   * No reserva nada —no hay nada escaso que reservar: la licencia se emite
+   * infinitas veces y el precio no cambia mientras espera—. Lo que hace es
+   * cerrar la ventana y soltar el plan, el descuento y la captura.
+   *
+   * Y eso es lo que se anuncia, literalmente: «esta ventana se cierra». La
+   * frase es verdad porque la cumple esta misma pantalla, no porque haya un
+   * plazo en el servidor. Prometer una reserva que no existe sería otra cosa.
+   */
+  private readonly MINUTOS_DE_VENTANA = 5;
+
+  /**
+   * La fecha en que se cierra, en ISO. Null = no hay ventana abierta.
+   *
+   * Se guarda como FECHA y no como cuenta de segundos porque `CuentaAtras`
+   * solo acepta fechas, a propósito: un contador al que se le da una duración
+   * se reinicia en cada recarga. Aquí no hay recarga que valga —recargar cierra
+   * la ventana— así que el reloj y lo que anuncia dicen lo mismo.
+   */
+  readonly cierraEn = signal<string | null>(null);
+
+  /** Aviso de que se cerró sola, para que no parezca que se rompió algo. */
+  readonly cerradaPorTiempo = signal(false);
+
   // ── Código promocional ─────────────────────────────────────────────────
   readonly codigoPromo = new FormControl('', { nonNullable: true });
   readonly descuento = signal<Descuento | null>(null);
@@ -234,6 +260,7 @@ export class Checkout implements OnInit {
 
     this.seleccionado.set(null);
     this.metodoPago.set(null);
+    this.cierraEn.set(null);
     this.quitarDescuento();
     this.quitarCaptura();
     this.comprobanteEnviado.set(null);
@@ -241,11 +268,32 @@ export class Checkout implements OnInit {
     this.error.set(null);
   }
 
+  /**
+   * Se acabó el tiempo de la ventana.
+   *
+   * Hace exactamente lo que anuncia el cartel, ni mas ni menos: cerrar y soltar
+   * lo elegido. Y deja dicho por qué, porque una ventana que desaparece sola
+   * sin explicacion se lee como un fallo.
+   *
+   * NO se cierra a media subida. Si esta enviando el comprobante o procesando
+   * el pago, `cambiarPlan` se niega, y aqui se respeta: cerrarle la ventana a
+   * alguien que ya esta pagando seria el peor momento posible.
+   */
+  cerrarPorTiempo(): void {
+    if (this.procesando() || this.enviandoComprobante()) return;
+    this.cambiarPlan();
+    this.cerradaPorTiempo.set(true);
+  }
+
   elegir(plan: Plan): void {
     if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
     this.seleccionado.set(plan);
     this.metodoPago.set(null);
+    this.cerradaPorTiempo.set(false);
+    this.cierraEn.set(
+      new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString(),
+    );
 
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();

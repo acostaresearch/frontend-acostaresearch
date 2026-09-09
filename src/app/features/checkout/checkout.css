@@ -1208,3 +1208,65 @@ h1 {
     text-align: center;
   }
 }
+
+/* ── El plazo de la ventana de pago ──────────────────────────────────────
+   Va pegado bajo el título, antes que nada: si se anuncia un plazo, se ve
+   al abrir, no al hacer scroll. Y no promete ninguna reserva, porque no la
+   hay: dice que la ventana se cierra, que es lo que de verdad ocurre. */
+.pago-plazo {
+  position: relative;
+  padding: 12px 20px 14px;
+  background: var(--color-error-suave, #fdeeee);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pago-plazo-linea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.pago-plazo-texto {
+  display: inline-flex;
+  gap: 7px;
+  align-items: baseline;
+}
+
+.pago-plazo-nota {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-error);
+  opacity: 0.85;
+}
+
+/* La barra se vacía sola con CSS y sin un segundo temporizador: arranca
+   cuando se monta el cartel, igual que el contador. Dos relojes que cuentan
+   lo mismo por su cuenta acaban discrepando. */
+.pago-plazo-barra {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--color-error);
+  animation: vaciar-plazo 300s linear forwards;
+}
+
+@keyframes vaciar-plazo {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* Quien pidió que no se le muevan las cosas en pantalla no ve la barra
+   correr; el número le sigue diciendo lo mismo. */
+@media (prefers-reduced-motion: reduce) {
+  .pago-plazo-barra {
+    animation: none;
+    width: 100%;
+  }
+}

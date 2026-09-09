@@ -200,6 +200,15 @@
          Solo se cierra con la ✕: pulsar fuera no hace nada. Y cerrar es lo mismo
          que «Cambiar» —suelta el plan, el descuento y la captura, que son de ESE
          importe—. -->
+    <!-- Se cerró sola. Sin esto, la ventana desaparece y el comprador cree
+         que algo falló. -->
+    @if (cerradaPorTiempo()) {
+      <div class="aviso" role="status">
+        Cerramos la ventana de pago porque pasaron unos minutos. No se cobró nada: elige tu
+        paquete otra vez y sigues donde estabas.
+      </div>
+    }
+
     @if (seleccionado(); as plan) {
       <div class="pago-fondo">
         <div class="pago-ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-pago">
@@ -209,6 +218,30 @@
               ✕
             </button>
           </div>
+
+          <!-- Lo que dice el cartel ocurre de verdad: al llegar a cero esta
+               misma pantalla cierra la ventana y suelta el plan. No promete
+               ninguna reserva —no hay nada escaso que reservar— y por eso no
+               dice que la haya.
+
+               La barra se vacía con una animación de CSS, no con otro
+               temporizador: arranca cuando se abre la ventana, igual que el
+               contador, y así no hay dos relojes que puedan discrepar. -->
+          @if (cierraEn(); as limite) {
+            <div class="pago-plazo" role="status">
+              <div class="pago-plazo-linea">
+                <span class="pago-plazo-texto">
+                  <span aria-hidden="true">🕐</span>
+                  Esta ventana se cierra en
+                </span>
+                <app-cuenta-atras [hasta]="limite" (vencido)="cerrarPorTiempo()" />
+              </div>
+              <p class="pago-plazo-nota">
+                Si no completas el pago, se cerrará y tendrás que elegir tu paquete de nuevo.
+              </p>
+              <span class="pago-plazo-barra" aria-hidden="true"></span>
+            </div>
+          }
 
           <div class="pago-cuerpo">
             <!-- El resumen en una línea. Ya eligió: no hace falta repetirle la
