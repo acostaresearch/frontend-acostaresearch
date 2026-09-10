@@ -1,9 +1,9 @@
 .pagina {
   /* Ancho casi completo: son cuatro paneles con código dentro, y a 1000 px
      cada uno queda en una rendija donde no se lee nada. */
-  max-width: 1500px;
+  max-width: 1560px;
   margin: 0 auto;
-  padding: 20px 16px 32px;
+  padding: 16px 16px 28px;
 }
 
 /* ── Antes de arrancar ────────────────────────────────────────────────────── */
@@ -72,18 +72,52 @@ h1 {
   color: var(--color-texto-suave);
 }
 
+.arranque .boton {
+  width: auto;
+}
+
 /* ── La barra de herramientas ─────────────────────────────────────────────── */
 .barra {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   margin-bottom: 10px;
+  padding: 7px 10px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
 }
 
-.barra-error {
+.barra .boton {
+  width: auto;
+}
+
+.boton.pequeno {
+  padding: 5px 12px;
   font-size: 12.5px;
-  color: var(--color-error);
+}
+
+/* Mientras no haya matriz, el botón que la pide es el único en color: en una
+   barra donde todo pesa igual, nadie sabe cuál es el primero. */
+.boton.destacado {
+  animation: latido 2.4s ease-in-out 3;
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--color-primario-suave);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton.destacado {
+    animation: none;
+  }
 }
 
 /* El <label> hace de botón porque el input va oculto: es la única forma de
@@ -92,46 +126,136 @@ h1 {
   cursor: pointer;
 }
 
-.boton.pequeno {
-  padding: 5px 12px;
+.separador {
+  width: 1px;
+  height: 20px;
+  background: var(--color-borde);
+}
+
+.barra-hueco {
+  flex: 1;
+}
+
+.barra-error {
   font-size: 12.5px;
+  color: var(--color-error);
 }
 
-.atajos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.barra-estado {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
 }
 
-.atajo {
-  padding: 5px 11px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-primario);
-  cursor: pointer;
+/* ── Primeros pasos ───────────────────────────────────────────────────────── */
+.guia {
+  position: relative;
+  margin-bottom: 10px;
+  padding: 14px 16px;
   background: var(--color-primario-suave);
-  border: 1px solid transparent;
-  border-radius: 999px;
-  transition: border-color var(--transicion);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-sm);
 }
 
-.atajo:hover {
-  border-color: var(--color-primario);
+.guia-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-primario);
+}
+
+.guia-cuenta {
+  padding: 1px 8px;
+  font-size: 11.5px;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border-radius: 999px;
+}
+
+.guia-pasos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  .guia-pasos {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guia-pasos li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.guia-pasos strong {
+  display: block;
+  font-size: 13px;
+  color: var(--color-texto);
+}
+
+.guia-marca {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 50%;
+}
+
+.guia-pasos li.hecho .guia-marca {
+  background: var(--color-exito);
+}
+
+.guia-pasos li.hecho strong {
+  text-decoration: line-through;
+  color: var(--color-texto-tenue);
+}
+
+.guia-cerrar {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  margin: 0;
+}
+
+kbd {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-bottom-width: 2px;
+  border-radius: 4px;
 }
 
 /* ── Los cuatro paneles ───────────────────────────────────────────────────── */
 
-/* La disposición de RStudio: guion y consola a la izquierda, entorno y archivos
-   a la derecha. El alto se reparte para que ninguno quede inservible. */
+/* La disposición de RStudio: guion y consola a la izquierda, entorno y lo
+   auxiliar a la derecha. El alto se reparte para que ninguno quede inservible. */
 .rejilla {
   display: grid;
   grid-template-columns: 1.25fr 1fr;
-  grid-template-rows: minmax(240px, 42vh) minmax(240px, 42vh);
+  grid-template-rows: minmax(230px, 40vh) minmax(230px, 40vh);
   grid-template-areas:
     'guion entorno'
-    'consola archivos';
-  gap: 10px;
+    'consola auxiliar';
+  gap: 8px;
 }
 
 .guion {
@@ -143,8 +267,32 @@ h1 {
 .consola {
   grid-area: consola;
 }
-.archivos {
-  grid-area: archivos;
+.auxiliar {
+  grid-area: auxiliar;
+}
+
+/* Un panel maximizado, como el de RStudio: los otros tres se apartan en vez de
+   encogerse. Encogerlos deja cuatro cajas inservibles en lugar de una útil. */
+.rejilla[data-grande='guion'],
+.rejilla[data-grande='consola'],
+.rejilla[data-grande='entorno'],
+.rejilla[data-grande='auxiliar'] {
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(420px, 74vh);
+}
+
+.rejilla[data-grande='guion'] .panel:not(.guion),
+.rejilla[data-grande='consola'] .panel:not(.consola),
+.rejilla[data-grande='entorno'] .panel:not(.entorno),
+.rejilla[data-grande='auxiliar'] .panel:not(.auxiliar) {
+  display: none;
+}
+
+.rejilla[data-grande='guion'] .guion,
+.rejilla[data-grande='consola'] .consola,
+.rejilla[data-grande='entorno'] .entorno,
+.rejilla[data-grande='auxiliar'] .auxiliar {
+  grid-area: auto;
 }
 
 /* En pantalla estrecha se apilan en el orden en que se usan: primero se
@@ -156,8 +304,8 @@ h1 {
     grid-template-areas:
       'guion'
       'consola'
-      'entorno'
-      'archivos';
+      'auxiliar'
+      'entorno';
   }
 }
 
@@ -173,47 +321,95 @@ h1 {
 
 .panel-barra {
   display: flex;
-  gap: 10px;
-  align-items: center;
+  gap: 2px;
+  align-items: stretch;
   flex-shrink: 0;
-  padding: 6px 10px;
+  padding: 0 6px;
   background: var(--color-fondo);
   border-bottom: 1px solid var(--color-borde);
 }
 
 .panel-barra.oscura {
-  color: #dbe6ff;
   background: #0b1424;
   border-bottom-color: #0b1424;
 }
 
-.panel-nombre {
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
+.panel-hueco {
+  flex: 1;
 }
 
-.panel-barra.oscura .panel-nombre {
-  color: #8b95a6;
+/* Las fichas de cada panel, como las pestañas de RStudio: la activa se pega al
+   cuerpo con una línea de color, no con un fondo distinto. */
+.ficha {
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.ficha:hover {
+  color: var(--color-texto);
+}
+
+.ficha.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+
+.ficha.activa.clara {
+  color: #9fc0ff;
+  border-bottom-color: #5b8cff;
+}
+
+.ruta {
+  align-self: center;
+  padding-left: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #56637a;
 }
 
 /* La pista del atajo, junto al nombre: es lo que separa una caja de texto de
    una forma de trabajar, y nadie la descubre sola. */
 .panel-pista {
-  flex: 1;
-  font-size: 11.5px;
+  align-self: center;
+  padding-right: 6px;
+  font-size: 11px;
   color: var(--color-texto-tenue);
 }
 
-.boton.enlace.pequeno {
-  margin-left: auto;
-  font-size: 12px;
+.icono {
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 4px;
 }
 
-.boton.enlace.clara {
-  color: #8b95a6;
+.icono:hover {
+  color: var(--color-texto);
+  background: var(--color-borde);
+}
+
+.icono.claro {
+  color: #6b7a94;
+}
+
+.icono.claro:hover {
+  color: #dbe6ff;
+  background: #1c2a44;
 }
 
 .panel-cuerpo {
@@ -224,51 +420,148 @@ h1 {
 }
 
 .panel-cuerpo.negro {
+  padding: 8px 0 0;
   color: #dbe6ff;
   background: #101a2e;
 }
 
 .vacio {
-  margin: 0;
+  margin: 0 0 10px;
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--color-texto-tenue);
 }
 
-.vacio.claro {
-  color: #8b95a6;
-}
-
 /* ── El editor ────────────────────────────────────────────────────────────── */
-.editor {
+
+/* Tres capas encajadas y con la MISMA métrica: la banda de números, el código
+   coloreado, y encima el área de texto transparente que recibe el teclado.
+   Cualquier diferencia de fuente, tamaño, interlineado o relleno entre las dos
+   últimas descoloca el cursor respecto al color, y eso se nota enseguida. */
+.editor-caja {
+  display: flex;
   flex: 1;
   min-height: 0;
+  background: var(--color-superficie);
+}
+
+.numeros {
+  flex: 0 0 auto;
+  padding: 10px 8px 10px 10px;
+  overflow: hidden;
+  text-align: right;
+  background: var(--color-fondo);
+  border-right: 1px solid var(--color-borde);
+  user-select: none;
+}
+
+.numeros span {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--color-texto-tenue);
+}
+
+/* La línea del cursor, marcada como en RStudio: en un guion de cuarenta líneas
+   es lo que dice qué se va a ejecutar con Ctrl+Enter. */
+.numeros span.actual {
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.editor-lienzo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.fondo,
+.editor {
+  position: absolute;
+  inset: 0;
+  margin: 0;
   padding: 10px 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12.5px;
   line-height: 1.65;
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  border: 0;
-  resize: none;
-  /* Sin esto, una línea larga de R desborda el panel y descoloca la rejilla. */
-  white-space: pre;
-  overflow: auto;
   tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  border: 0;
+}
+
+.fondo {
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--color-texto);
+}
+
+/* El área va encima y transparente: se ve el color de abajo y se teclea aquí.
+   El cursor sí se pinta, que para eso es el único que sabe dónde está. */
+.editor {
+  color: transparent;
+  background: transparent;
+  caret-color: var(--color-texto);
+  resize: none;
+  overflow: auto;
 }
 
 .editor:focus {
   outline: none;
 }
 
+/* La selección tiene que verse pese al texto transparente. */
+.editor::selection {
+  color: transparent;
+  background: #b9d3ff;
+}
+
+/* Los colores del código. Los de RStudio con su tema claro: comentarios en
+   verde, cadenas en teal, números y palabras clave en azul. */
+/* Sin cursiva, aunque tiente: el fondo de color y el area de texto que va
+   encima tienen que medir EXACTAMENTE lo mismo, y la cursiva de una fuente
+   monoespaciada de reserva puede no respetar el ancho. El color ya distingue
+   un comentario, y RStudio tampoco los inclina. */
+.tk-com {
+  color: #3f7f3f;
+}
+
+.tk-cad {
+  color: #067d68;
+}
+
+.tk-cla {
+  color: #0b5fa5;
+  font-weight: 600;
+}
+
+.tk-num {
+  color: #9b4a16;
+}
+
+.tk-fun {
+  color: #2f4a86;
+}
+
+.tk-ope {
+  color: #7a3e9d;
+}
+
 /* ── La consola ───────────────────────────────────────────────────────────── */
 .consola pre {
   margin: 0;
+  padding: 0 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12.5px;
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.consola pre.bienvenida {
+  margin-bottom: 8px;
+  color: #6b7a94;
 }
 
 /* Los errores de R vuelven por stderr y son parte del trabajo, no un fallo de
@@ -277,19 +570,18 @@ h1 {
   color: #ffb4a8;
 }
 
+/* El prompt va DENTRO del cuerpo y detrás de la salida, como en RStudio: una
+   caja aparte con su borde se lee como un formulario, no como una consola. */
 .orden {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  flex-shrink: 0;
-  padding: 7px 12px;
-  background: #0b1424;
-  border-top: 1px solid #1c2a44;
+  padding: 2px 12px 10px;
 }
 
 .orden-punta {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #5b8cff;
 }
@@ -300,6 +592,7 @@ h1 {
   padding: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12.5px;
+  line-height: 1.6;
   color: #dbe6ff;
   background: none;
   border: 0;
@@ -309,11 +602,37 @@ h1 {
   outline: none;
 }
 
-.orden input::placeholder {
-  color: #56637a;
+/* ── Entorno ──────────────────────────────────────────────────────────────── */
+.grupo-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 12px 0 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
 }
 
-/* ── Entorno y archivos ───────────────────────────────────────────────────── */
+.grupo-titulo:first-child {
+  margin-top: 0;
+}
+
+/* El nombre del objeto va como codigo, no como parte del rotulo: en
+   versalitas, «datos» deja de parecer lo que hay que escribir. */
+.grupo-titulo code {
+  font-size: 10.5px;
+  text-transform: none;
+}
+
+.grupo-pista {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .tabla-entorno,
 .tabla-archivos {
   width: 100%;
@@ -336,12 +655,7 @@ h1 {
   overflow-wrap: anywhere;
 }
 
-.obj-detalle {
-  text-align: right;
-  color: var(--color-texto-tenue);
-  white-space: nowrap;
-}
-
+.obj-detalle,
 .arch-peso {
   text-align: right;
   color: var(--color-texto-tenue);
@@ -353,26 +667,148 @@ h1 {
   white-space: nowrap;
 }
 
-/* Las pestañas de archivos y gráficos, como en RStudio. */
-.pestana {
-  padding: 3px 10px;
-  font: inherit;
+/* Las columnas del archivo, pulsables. Es lo que más se busca y lo que peor se
+   recuerda: cómo se llamaba exactamente esa columna. */
+.columnas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.columna {
+  padding: 3px 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
+  color: var(--color-primario);
+  cursor: pointer;
+  background: var(--color-primario-suave);
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+.columna:hover {
+  border-color: var(--color-primario);
+}
+
+/* Las de texto en gris: con ellas se agrupa y se hacen frecuencias, no medias,
+   y confundirlas es el error que más veces rompe una prueba. */
+.columna.texto {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-color: var(--color-borde);
+}
+
+.columna.texto:hover {
+  border-color: var(--color-borde-fuerte);
+}
+
+/* ── El catálogo de análisis ──────────────────────────────────────────────── */
+.grupo {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.grupo:last-child {
+  border-bottom: 0;
+}
+
+.grupo-cabecera {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 9px 2px;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
   background: none;
   border: 0;
-  border-bottom: 2px solid transparent;
 }
 
-.pestana.activa {
-  color: var(--color-primario);
-  border-bottom-color: var(--color-primario);
+.grupo-cabecera strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
 }
 
+.grupo-resumen {
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-texto-suave);
+}
+
+.grupo-flecha {
+  flex: 0 0 auto;
+  padding-top: 1px;
+  font-size: 10px;
+  color: var(--color-texto-tenue);
+}
+
+.comando {
+  padding: 8px 10px 8px 24px;
+  border-top: 1px dashed var(--color-borde);
+}
+
+.comando-fila {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.comando-texto strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.comando-texto span {
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-texto-suave);
+}
+
+.comando-acciones {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.comando-acciones .boton {
+  width: auto;
+  white-space: nowrap;
+}
+
+/* Cómo se lee el resultado. Es la parte que falta en todos los tutoriales y la
+   que decide si el capítulo sale: va destacada, no en letra pequeña. */
+.comando-lee {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-aviso-suave);
+  border-left: 3px solid var(--color-aviso);
+  border-radius: var(--radio-sm);
+}
+
+.comando-codigo {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+/* ── Gráficos y ayuda ─────────────────────────────────────────────────────── */
 .grafico {
   display: block;
   width: 100%;
@@ -380,6 +816,40 @@ h1 {
   background: #fff;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
+}
+
+.ayuda h3 {
+  margin: 16px 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.ayuda h3:first-child {
+  margin-top: 0;
+}
+
+.ayuda-nota {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.ayuda dl {
+  margin: 0;
+}
+
+.ayuda dt {
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.ayuda dd {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
 }
 
 code {
@@ -392,8 +862,12 @@ code {
 }
 
 .nota {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-texto-tenue);
+}
+
+.nota strong {
+  color: var(--color-texto-suave);
 }

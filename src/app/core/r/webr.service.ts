@@ -62,6 +62,57 @@ alfa_de_cronbach <- function(items) {
   invisible(alfa)
 }
 
+frecuencias <- function(x, etiqueta = NULL) {
+  x <- x[!is.na(x)]
+  conteo <- table(x)
+  tabla <- data.frame(
+    categoria = names(conteo),
+    n = as.integer(conteo),
+    porcentaje = round(as.numeric(conteo) / length(x) * 100, 1)
+  )
+  tabla$acumulado <- cumsum(tabla$porcentaje)
+
+  if (!is.null(etiqueta)) cat(etiqueta, "\n")
+  print(tabla, row.names = FALSE)
+  cat("Total:", length(x), "casos\n")
+
+  invisible(tabla)
+}
+
+puntaje <- function(datos, columnas) {
+  faltan <- setdiff(columnas, names(datos))
+  if (length(faltan) > 0) {
+    stop("Estas columnas no estan en tus datos: ", paste(faltan, collapse = ", "))
+  }
+  rowMeans(datos[, columnas, drop = FALSE], na.rm = TRUE)
+}
+
+normalidad <- function(x, etiqueta = "la variable") {
+  x <- x[!is.na(x)]
+  n <- length(x)
+
+  if (n < 3) stop("Hacen falta al menos tres casos.")
+  if (n > 5000) stop("Shapiro-Wilk no admite mas de 5000 casos.")
+
+  sw <- stats::shapiro.test(x)
+  p <- sw$p.value
+
+  cat("Shapiro-Wilk sobre", etiqueta, "\n")
+  cat("  W =", round(sw$statistic, 4), "   p =", format.pval(p, digits = 4), "   n =", n, "\n\n")
+
+  # El veredicto escrito, no solo el numero: es la frase que decide las tres
+  # pruebas siguientes, y equivocarse de lado invalida el capitulo entero.
+  if (p >= 0.05) {
+    cat("p >= 0.05: los datos NO se apartan de la normal.\n")
+    cat("Puedes usar pruebas parametricas: Pearson, t de Student, ANOVA.\n")
+  } else {
+    cat("p < 0.05: los datos SI se apartan de la normal.\n")
+    cat("Usa pruebas no parametricas: Spearman, Mann-Whitney, Kruskal-Wallis.\n")
+  }
+
+  invisible(sw)
+}
+
 descriptivos <- function(datos) {
   datos <- as.data.frame(datos)
   numericas <- datos[, sapply(datos, is.numeric), drop = FALSE]
@@ -94,6 +145,12 @@ export interface ObjetoDelEntorno {
   clase: string;
   /** «60 obs. de 14 variables», «num [1:60]»… el resumen de una línea. */
   detalle: string;
+}
+
+/** Una columna del data.frame que subio el tesista. */
+export interface ColumnaDeDatos {
+  nombre: string;
+  numerica: boolean;
 }
 
 /** Un archivo de la carpeta de trabajo. */
@@ -403,6 +460,81 @@ export class WebrService {
       // El entorno es información de apoyo: que falle no puede estropear la
       // ejecución que el tesista acaba de hacer.
       return [];
+    }
+  }
+
+  /**
+   * Las columnas de un data.frame de la sesion, con su tipo.
+   *
+   * Sirve para que los ejemplos del catalogo lleven las columnas DE SU archivo
+   * y no `cd1, cd2, cd3`. Un ejemplo que falla al pulsarlo es peor que ninguno:
+   * el primer error que ve alguien que no programa no deberia ser culpa
+   * nuestra.
+   */
+  async columnas(objeto = 'datos'): Promise<ColumnaDeDatos[]> {
+    const webR = await this.arrancar();
+
+    const codigo = `
+      local({
+        if (!exists("${objeto}", envir = globalenv())) return("")
+        d <- get("${objeto}", envir = globalenv())
+        if (!is.data.frame(d)) return("")
+        paste(vapply(names(d), function(n) {
+          paste(n, if (is.numeric(d[[n]])) "num" else "texto", sep = "\\u001f")
+        }, character(1)), collapse = "\\u001e")
+      })
+    `;
+
+    try {
+      const crudo = await webR.evalRString(codigo);
+      if (!crudo) return [];
+
+      return crudo.split(SEPARADOR_FILA).map((fila) => {
+        const [nombre, tipo] = fila.split(SEPARADOR_CAMPO);
+        return { nombre, numerica: tipo === 'num' };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Vuelve a dejar la sesion como recien arrancada.
+   *
+   * Borra los objetos y los archivos, y vuelve a definir las funciones de la
+   * casa. NO vuelve a descargar R: los 30 MB ya estan en la pestaña. Es el
+   * «Restart R» de RStudio, que es lo que se pulsa cuando algo se enredo y no
+   * se sabe por que.
+   */
+  async reiniciar(): Promise<void> {
+    const webR = await this.arrancar();
+
+    await webR.evalRVoid('rm(list = ls(envir = globalenv()), envir = globalenv())');
+
+    try {
+      const carpeta = await webR.FS.lookupPath(CASA);
+      for (const nombre of Object.keys(carpeta.contents ?? {})) {
+        if (nombre.startsWith('.')) continue;
+        try {
+          await webR.FS.unlink(`${CASA}/${nombre}`);
+        } catch {
+          // Es una carpeta. Se queda.
+        }
+      }
+    } catch {
+      // Sin carpeta que limpiar.
+    }
+
+    await webR.evalRVoid(PREAMBULO);
+  }
+
+  /** La version de R que corre dentro, para la cabecera de la consola. */
+  async version(): Promise<string> {
+    const webR = await this.arrancar();
+    try {
+      return await webR.evalRString('paste0("R ", R.version$major, ".", R.version$minor)');
+    } catch {
+      return 'R';
     }
   }
 
