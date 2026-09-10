@@ -84,6 +84,8 @@
         decidir si merece la pena construir la pantalla de verdad.
       </div>
 
+      <p id="arranque" class="error" hidden></p>
+
       <div class="caja">
         <h2>1 · Cargar R</h2>
         <p class="pista">
@@ -130,10 +132,39 @@
       </div>
     </main>
 
+    <!--
+      Un fallo del módulo tiene que verse.
+
+      La primera versión de esta página importaba WebR desde un CDN. Cuando ese
+      import falla, el script entero no llega a ejecutarse: no se registra un
+      solo manejador, los botones quedan muertos y no aparece nada en pantalla.
+      «No funciona» y ni un mensaje. Esto lo convierte en un error legible.
+    -->
+    <script>
+      window.addEventListener('error', (e) => {
+        const caja = document.getElementById('arranque');
+        if (caja) {
+          caja.hidden = false;
+          caja.textContent =
+            'No se pudo arrancar: ' + (e.message || e.error?.message || 'error desconocido') +
+            (e.filename ? '  (' + e.filename + ')' : '');
+        }
+      });
+    </script>
+
     <script type="module">
-      import { WebR, ChannelType } from 'https://cdn.jsdelivr.net/npm/webr/dist/webr.mjs';
+      import { WebR, ChannelType } from '/webr/webr.mjs';
 
       /*
+       * R se sirve desde ESTE dominio, no desde un CDN.
+       *
+       * WebR arranca con new Worker(baseUrl + "webr-worker.js"), y un navegador
+       * no deja crear un Worker desde otro dominio. WebR trae un rodeo para eso
+       * —bajarlo por XHR y convertirlo en blob— pero solo en el canal
+       * SharedArrayBuffer, que es justo el que no podemos usar. Sirviéndolo
+       * desde aquí no hay Worker cruzado, ni CORS, ni depender de que jsDelivr
+       * responda desde Perú.
+       *
        * Canal PostMessage, y es la decisión que hace viable todo esto.
        *
        * El canal rápido de WebR necesita SharedArrayBuffer, que a su vez exige
@@ -142,7 +173,7 @@
        * sus botones en iframes—. PostMessage va más lento pero no toca nada de
        * lo que ya funciona, y de eso trata esta prueba: saber cuánto más lento.
        */
-      const webR = new WebR({ channelType: ChannelType.PostMessage });
+      const webR = new WebR({ channelType: ChannelType.PostMessage, baseUrl: '/webr/' });
 
       const $ = (id) => document.getElementById(id);
       const marcas = {};

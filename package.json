@@ -9,11 +9,12 @@
     "test": "ng test",
     "env:generar": "node scripts/generar-environment.js",
     "prestart": "node scripts/generar-environment.js",
-    "prebuild": "node scripts/generar-environment.js",
+    "prebuild": "node scripts/generar-environment.js && node scripts/copiar-webr.js",
     "postinstall": "node scripts/generar-environment.js",
     "deploy:hetzner": "node scripts/desplegar.js",
     "deploy:cf": "npm run build && wrangler deploy",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "webr:copiar": "node scripts/copiar-webr.js"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -27,7 +28,8 @@
     "dotenv": "^17.4.2",
     "resend": "^6.25.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "webr": "^0.6.0"
   },
   "devDependencies": {
     "@angular/build": "^22.1.6",

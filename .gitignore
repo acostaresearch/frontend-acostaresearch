@@ -52,3 +52,7 @@ Thumbs.db
 # quedaba vieja en cuanto alguien cambiaba una variable.
 src/environments/environment.ts
 src/environments/environment.development.ts
+
+# R para el navegador: 47 MB que ya vienen versionados en el paquete webr de npm.
+# Se copian al compilar con scripts/copiar-webr.js.
+public/webr/
