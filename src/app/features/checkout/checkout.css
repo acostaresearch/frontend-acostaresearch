@@ -826,6 +826,32 @@ h1 {
   color: var(--color-texto);
 }
 
+/* El precio de antes.
+   La raya va en rojo y el número en gris: el rojo tiene que marcar que ESA
+   cifra ya no vale, no gritar más que la que se cobra. Al revés —número rojo,
+   raya gris— la vista se va al precio viejo, que es justo lo contrario de lo
+   que se quiere.
+   `text-decoration-thickness` fijo porque a 22px la raya por defecto sale casi
+   invisible sobre un número en negrita. */
+.tarjeta-precio .antes {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
+}
+
+/* El rótulo de la oferta va debajo del precio y no en la cinta de arriba: la
+   cinta dice cuánto dura el acceso, que es otra cosa y ya estaba ahí. */
+.tarjeta-oferta {
+  margin: -12px 0 20px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-error);
+}
+
 .tarjeta-rotulo {
   /* Margen superior automático: empuja el bloque de ventajas al fondo, que es
      lo que alinea el pie de todas las de una fila. */
@@ -878,6 +904,15 @@ h1 {
   align-items: baseline;
   margin: 0;
   font-size: 13px;
+}
+
+/* El importe que ya no se paga: el de antes de la oferta, o el de catálogo
+   cuando hay código promocional. Nunca los dos a la vez. */
+.pago-total .tachado {
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
 }
 
 .pago-total strong {

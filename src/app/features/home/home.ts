@@ -66,6 +66,7 @@ export class Home implements OnInit {
           'un Word en APA 7 que puedes llevar a asesoría. Incluye 30 minutos conmigo.',
         detalle: `9 fases · ${tesis.durationDays} días de acceso`,
         precio: this.precio(tesis),
+        antes: this.precioAntes(tesis),
         desde: true,
         enlace: '/metodo',
         verbo: 'Ver las 9 Skills',
@@ -77,6 +78,7 @@ export class Home implements OnInit {
           'escribe en estructura IMRyD y se responde a los revisores. Incluye el Humanizador.',
         detalle: `10 fases · ${articulo.durationDays} días de acceso`,
         precio: this.precio(articulo),
+        antes: this.precioAntes(articulo),
         desde: false,
         enlace: '/articulo',
         verbo: 'Ver la ruta completa',
@@ -90,5 +92,19 @@ export class Home implements OnInit {
 
   precio(plan: Plan): string {
     return `S/ ${(plan.priceCents / 100).toFixed(0)}`;
+  }
+
+  /**
+   * Lo que costaba antes, para tacharlo. Null = este plan no está de oferta.
+   *
+   * Sale del catálogo, igual que el precio: si mañana se quita la oferta desde
+   * el panel, la portada deja de anunciarla sola. Se exige que sea mayor que
+   * el vigente porque un tachado por debajo del precio que se cobra sería
+   * anunciar una rebaja al revés.
+   */
+  precioAntes(plan: Plan): string | null {
+    const antes = plan.listPriceCents;
+    if (!antes || antes <= plan.priceCents) return null;
+    return `S/ ${(antes / 100).toFixed(0)}`;
   }
 }

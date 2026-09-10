@@ -300,6 +300,18 @@
   color: var(--color-texto-tenue);
 }
 
+/* El precio de antes. La raya en rojo marca que esa cifra ya no vale; el número
+   se queda en gris para que el que se cobra siga siendo el que se lee. */
+.ruta-antes {
+  margin-right: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 2px;
+}
+
 @media (max-width: 760px) {
   .rutas {
     grid-template-columns: 1fr;
