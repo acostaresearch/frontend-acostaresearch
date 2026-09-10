@@ -2,68 +2,108 @@
 
 <main class="pagina">
   <header class="cabecera">
-    <div>
-      <h1>Analiza tus datos</h1>
-      <p class="subtitulo">
-        RStudio, aquí dentro. No instales nada: sube tu matriz de Excel y trabaja.
-      </p>
-    </div>
-
-    @if (urlCruda) {
-      <!-- La salida de emergencia, siempre visible y no solo cuando algo falla.
-           Un iframe se queda pequeño en un portátil de trece pulgadas, y para
-           una sesión larga se trabaja mejor en su propia pestaña. -->
-      <a class="boton secundario" [href]="urlCruda" target="_blank" rel="noopener">
-        Abrir en otra pestaña
-      </a>
-    }
+    <h1>Analiza tus datos</h1>
+    <p class="subtitulo">
+      R corriendo en esta pestaña. Sube tu matriz y trabaja: no instalas nada y
+      <strong>tus datos no salen de tu equipo</strong>.
+    </p>
   </header>
 
-  <!-- Los tres pasos, arriba y cortos. El tesista que llega aquí ya sabe
-       estadística; lo que no sabe es dónde poner su archivo. -->
-  <ol class="pasos">
-    <li>
-      <strong>Sube tu matriz.</strong> Abajo a la derecha, en <em>Files</em>, pulsa
-      <em>Upload</em> y elige tu Excel.
-    </li>
-    <li>
-      <strong>Pídele el script a Claude</strong> desde tu conector, con el capítulo de análisis
-      de datos. Te lo escribe comentado línea por línea.
-    </li>
-    <li>
-      <strong>Pégalo y ejecútalo</strong> con Ctrl+Enter, línea a línea. Lo que salga en la
-      consola es lo que se guarda como respaldo de tus cifras.
-    </li>
-  </ol>
+  <!-- Lo que esto NO es, arriba y sin letra pequeña.
+       Prometer RStudio y entregar otra cosa sería peor que no ofrecerlo: el
+       tesista lo descubriría delante de su asesor. -->
+  <p class="franqueza">
+    <strong>Esto es R, no RStudio.</strong> Es el mismo R que se declara en una tesis y el
+    mismo código, pero sin la interfaz de RStudio. Si tu asesor te pide ver esa pantalla, abre
+    RStudio y ejecuta el mismo guion: sale igual.
+  </p>
 
-  <!-- El aviso de que no cargó. Se enseña ANTES del marco para que no haya que
-       desplazarse hasta abajo del rectángulo en blanco para encontrarlo. -->
-  @if (hayProblema()) {
-    <p class="aviso" role="status">
-      RStudio está tardando más de lo normal en aparecer aquí dentro. No has hecho nada mal:
-      algunos navegadores no permiten mostrarlo empotrado.
-      <a [href]="urlCruda" target="_blank" rel="noopener">Ábrelo en otra pestaña</a> y funciona
-      igual.
-    </p>
+  @if (error(); as mensaje) {
+    <p class="aviso error">{{ mensaje }}</p>
   }
 
-  <div class="marco" [class.esperando]="!cargado()">
-    @if (!cargado()) {
-      <p class="esperando-texto">Abriendo tu sesión de RStudio…</p>
-    }
+  @if (!listo()) {
+    <!-- R se pide, no se impone: son 30 MB y la mayoría de quien entra aquí
+         solo está mirando. -->
+    <section class="arranque">
+      @if (r.estado() === 'arrancando') {
+        <p class="arranque-titulo">Preparando R…</p>
+        <p class="arranque-paso">{{ r.paso() }}</p>
+      } @else {
+        <p class="arranque-titulo">R todavía no está cargado</p>
+        <p class="arranque-paso">
+          Son unos 30 MB y se descargan una sola vez. Después funciona sin conexión.
+        </p>
+        <button type="button" class="boton" (click)="encender()">Cargar R</button>
+      }
+    </section>
+  } @else {
+    <div class="taller">
+      <!-- ── Izquierda: el archivo y el guion ──────────────────────────── -->
+      <section class="columna">
+        <div class="fila-archivo">
+          <label class="boton secundario">
+            {{ archivo() ? 'Cambiar archivo' : 'Subir mi matriz' }}
+            <input type="file" accept=".csv,.txt" hidden (change)="elegirArchivo($event)" />
+          </label>
 
-    <iframe
-      [src]="url"
-      title="RStudio"
-      (load)="alCargar()"
-      allow="clipboard-read; clipboard-write"
-    ></iframe>
-  </div>
+          @if (archivo(); as nombre) {
+            <span class="archivo-puesto">
+              <strong>{{ nombre }}</strong> cargado como <code>datos.csv</code>
+            </span>
+          } @else {
+            <span class="tenue">Guárdala como CSV desde Excel</span>
+          }
+        </div>
 
-  <p class="nota">
-    Tus archivos se quedan en tu sesión y solo los ves tú. Esta máquina es únicamente para
-    analizar: no guarda tu tesis ni tus datos de pago, que viven en otro sitio.
-  </p>
+        <!-- Los atajos AÑADEN al guion, no lo reemplazan: se va componiendo el
+             análisis sin perder lo escrito. -->
+        <div class="atajos">
+          @for (a of atajos; track a.nombre) {
+            <button type="button" class="atajo" [title]="a.ayuda" (click)="anadir(a.codigo)">
+              {{ a.nombre }}
+            </button>
+          }
+        </div>
+
+        <textarea
+          class="editor"
+          [formControl]="codigo"
+          spellcheck="false"
+          aria-label="Tu guion de R"
+        ></textarea>
+
+        <div class="acciones">
+          <button type="button" class="boton" [disabled]="ejecutando()" (click)="ejecutar()">
+            {{ ejecutando() ? 'Ejecutando…' : 'Ejecutar' }}
+          </button>
+          <button type="button" class="boton enlace" (click)="limpiar()">Limpiar la salida</button>
+        </div>
+      </section>
+
+      <!-- ── Derecha: la consola ───────────────────────────────────────── -->
+      <section class="columna">
+        <p class="rotulo">Salida</p>
+
+        <div class="consola">
+          @if (salida().length === 0) {
+            <p class="consola-vacia">
+              Aquí sale lo mismo que saldría en la consola de RStudio. Pulsa «Ejecutar».
+            </p>
+          } @else {
+            @for (linea of salida(); track $index) {
+              <pre [class.error]="linea.tipo === 'stderr'">{{ linea.texto }}</pre>
+            }
+          }
+        </div>
+
+        <p class="nota">
+          Copia esta salida y guárdala con <code>guardar_analisis</code> desde tu conector: es el
+          respaldo de las cifras de tu Capítulo IV, y sin ella ninguna puede aparecer en tu tesis.
+        </p>
+      </section>
+    </div>
+  }
 </main>
 
 <app-site-footer />

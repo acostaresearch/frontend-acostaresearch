@@ -24,6 +24,7 @@
     "@angular/forms": "^22.1.0",
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
+    "@r-wasm/webr": "^0.2.0",
     "dotenv": "^17.4.2",
     "resend": "^6.25.0",
     "rxjs": "~7.8.0",

@@ -1,87 +1,152 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
-import { environment } from '../../../environments/environment';
+import { LineaDeSalida, WebrService } from '../../core/r/webr.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 /**
+ * El guion con el que empieza todo el mundo.
+ *
+ * Va relleno y no en blanco a propósito: una caja de código vacía delante de
+ * alguien que no programa es una pared. Con esto puede pulsar «Ejecutar» antes
+ * de entender nada, ver salir números, y a partir de ahí cambiar cosas.
+ *
+ * Y es el guion real de un Capítulo IV, no un ejemplo de manual: leer la
+ * matriz, descriptivos, alfa de Cronbach y normalidad, en ese orden.
+ */
+const GUION_INICIAL = `# Tus datos. Cambia el nombre por el de tu archivo.
+datos <- read.csv("datos.csv")
+
+# Un vistazo: cuántas filas y qué columnas hay
+dim(datos)
+head(datos)
+
+# Descriptivos — la primera tabla del Capítulo IV
+library(psych)
+describe(datos)
+`;
+
+/**
  * Analizar los datos sin instalar nada.
  *
- * RStudio de verdad, servido desde una máquina nuestra y metido en esta página.
- * El tesista entra, sube su matriz de Excel y trabaja: no descarga R, no
- * descarga RStudio, no configura nada.
+ * R de verdad, dentro de la pestaña del tesista. Sube su matriz, escribe su
+ * script y ve la salida — sin descargar R, sin configurar nada y sin que sus
+ * datos salgan de su equipo.
  *
- * POR QUÉ RSTUDIO Y NO R EN EL NAVEGADOR
- * --------------------------------------
- * Se probó WebR —R compilado a WebAssembly— y funcionaba: cargaba, instalaba
- * `psych` en 2,7 segundos y el análisis tardaba 0,6. Se retiró por una razón
- * que no arregla ninguna cantidad de código: **el jurado y el asesor piden
- * RStudio**. Un análisis hecho en otro sitio, por bien que salga, no le sirve
- * al tesista que tiene que declarar el software y enseñar cómo lo hizo.
+ * POR QUÉ NO ES RSTUDIO, DICHO AQUÍ Y TAMBIÉN EN LA PANTALLA
+ * ----------------------------------------------------------
+ * Se descartó RStudio Server porque necesita un servidor —uno nuevo cuesta
+ * dinero, y el actual guarda los secretos y las tesis de todos—. Lo que queda
+ * es R en el navegador.
  *
- * Esto sí es RStudio. La misma interfaz, los mismos scripts, la misma captura
- * de pantalla. Puede decir «usé RStudio» y es verdad.
- *
- * POR QUÉ EN OTRO SERVIDOR
- * ------------------------
- * Una sesión de RStudio es prácticamente una consola en la máquina que la
- * sirve: `system()` es una función normal de R. En la máquina de la API viven
- * los secretos, los capítulos de todos y los comprobantes de pago. Por eso
- * RStudio va en una aparte y vacía, y por eso `rstudioUrl` es otro dominio.
- *
- * SIN CONFIGURAR, ESTA PÁGINA NO EXISTE
- * -------------------------------------
- * `rstudioUrl` vacío quita la ruta del router. Nadie llega aquí a ver un hueco:
- * una función a medio conectar enseña a desconfiar del resto de la plataforma.
+ * Ejecuta R auténtico, que es lo que se declara en una tesis. Lo que no da es
+ * la interfaz de RStudio para una captura de pantalla. Quien la necesite abre
+ * RStudio y corre el MISMO script: sale igual. Eso está escrito en la página
+ * porque prometer RStudio y entregar otra cosa sería peor que no ofrecerlo.
  */
 @Component({
   selector: 'app-analisis',
-  imports: [SiteHeader, SiteFooter],
+  imports: [ReactiveFormsModule, SiteHeader, SiteFooter],
   templateUrl: './analisis.html',
   styleUrl: './analisis.css',
 })
 export class Analisis {
-  private readonly sanitizer = inject(DomSanitizer);
+  protected readonly r = inject(WebrService);
 
-  /**
-   * La dirección del iframe, marcada como de confianza.
-   *
-   * Angular bloquea las URL de iframe por defecto, y hace bien: un iframe con
-   * una dirección que venga de fuera es una vía de entrada. Esta NO viene de
-   * fuera —la fija el build desde `RSTUDIO_URL`, que solo puede poner quien
-   * despliega—, así que marcarla de confianza es decir lo que ya es cierto.
-   */
-  readonly url: SafeResourceUrl | null = environment.rstudioUrl
-    ? this.sanitizer.bypassSecurityTrustResourceUrl(environment.rstudioUrl)
-    : null;
+  readonly codigo = new FormControl(GUION_INICIAL, { nonNullable: true });
 
-  /** Para el enlace de «ábrelo en una pestaña», que no pasa por el sanitizador. */
-  readonly urlCruda = environment.rstudioUrl;
+  readonly salida = signal<LineaDeSalida[]>([]);
+  readonly ejecutando = signal(false);
+  readonly archivo = signal<string | null>(null);
+  readonly error = signal<string | null>(null);
 
-  /**
-   * Si el iframe llegó a cargar.
-   *
-   * RStudio Server bloquea el enmarcado salvo que se le configure
-   * `www-frame-origin`, y la directiva que usa —`ALLOW-FROM`— está obsoleta:
-   * los navegadores modernos la ignoran. Cuando eso pasa, el iframe se queda
-   * EN BLANCO y no lanza ningún error que se pueda capturar.
-   *
-   * Por eso se cuenta el tiempo en vez de escuchar un fallo: si a los ocho
-   * segundos no ha avisado de que cargó, se enseña la salida —abrirlo en una
-   * pestaña— en lugar de dejar al tesista mirando un rectángulo vacío sin
-   * saber si tarda o está roto.
-   */
-  readonly cargado = signal(false);
-  readonly tardaDemasiado = signal(false);
+  readonly listo = computed(() => this.r.estado() === 'listo');
 
-  readonly hayProblema = computed(() => this.tardaDemasiado() && !this.cargado());
-
-  constructor() {
-    setTimeout(() => this.tardaDemasiado.set(true), 8000);
+  /** Arranca R. Va tras un botón porque son 30 MB y se pide, no se impone. */
+  encender(): void {
+    this.error.set(null);
+    this.r.arrancar().catch(() =>
+      this.error.set(
+        'No se pudo cargar R. Suele ser la conexión: vuelve a intentarlo en un momento.',
+      ),
+    );
   }
 
-  alCargar(): void {
-    this.cargado.set(true);
+  /**
+   * Mete el archivo del tesista en R.
+   *
+   * Se le pone SIEMPRE el nombre `datos.csv`, se llame como se llame el suyo.
+   * Así el guion de arriba funciona sin que tenga que editar la primera línea,
+   * que es donde se atasca quien no programa —y donde una barra invertida de
+   * Windows rompe la ruta sin decir por qué—.
+   */
+  async elegirArchivo(evento: Event): Promise<void> {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo) return;
+
+    this.error.set(null);
+
+    try {
+      await this.r.subirArchivo('datos.csv', await archivo.arrayBuffer());
+      this.archivo.set(archivo.name);
+    } catch {
+      this.error.set('No se pudo leer ese archivo. Guárdalo como CSV y vuelve a subirlo.');
+    }
   }
+
+  async ejecutar(): Promise<void> {
+    if (this.ejecutando()) return;
+
+    this.ejecutando.set(true);
+    this.error.set(null);
+
+    try {
+      this.salida.set(await this.r.ejecutar(this.codigo.value));
+    } finally {
+      this.ejecutando.set(false);
+    }
+  }
+
+  limpiar(): void {
+    this.salida.set([]);
+  }
+
+  /**
+   * Añade un bloque al final del guion en vez de reemplazarlo.
+   *
+   * Los atajos son para ir componiendo el análisis paso a paso. Si sustituyeran
+   * lo escrito, el tesista perdería lo que llevaba cada vez que pulsa uno.
+   */
+  anadir(bloque: string): void {
+    this.codigo.setValue(`${this.codigo.value.trimEnd()}\n\n${bloque}\n`);
+  }
+
+  /** Los bloques que cubren lo que pide una tesis, en el orden en que se usan. */
+  readonly atajos = [
+    {
+      nombre: 'Alfa de Cronbach',
+      ayuda: 'Confiabilidad del instrumento',
+      codigo: '# Cambia cd1:cd4 por las columnas de TU variable\nalpha(datos[, c("cd1","cd2","cd3","cd4")])',
+    },
+    {
+      nombre: 'Normalidad',
+      ayuda: 'Decide si la prueba es paramétrica',
+      codigo:
+        '# Sobre el puntaje total, no ítem por ítem\ndatos$total <- rowMeans(datos[, c("cd1","cd2","cd3","cd4")])\nshapiro.test(datos$total)',
+    },
+    {
+      nombre: 'Correlación',
+      ayuda: 'Pearson si hubo normalidad; si no, Spearman',
+      codigo:
+        'datos$emp <- rowMeans(datos[, c("emp1","emp2","emp3","emp4")])\ncor.test(datos$total, datos$emp, method = "pearson")',
+    },
+    {
+      nombre: 'Frecuencias',
+      ayuda: 'Para las variables categóricas',
+      codigo: 'table(datos$sexo)\nprop.table(table(datos$sexo)) * 100',
+    },
+  ];
 }
