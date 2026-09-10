@@ -1,44 +1,129 @@
 <app-site-header />
 
-<main class="panel-admin">
-  <header class="cabecera">
-    <div>
-      <p class="marca">Administración</p>
-      <h1>Panel de control</h1>
-    </div>
-    <button type="button" class="boton secundario" [disabled]="recargando()" (click)="recargar()">
-      {{ recargando() ? 'Actualizando…' : 'Actualizar' }}
-    </button>
-  </header>
+<div class="panel-admin">
+  <!-- ── Barra lateral ───────────────────────────────────────────────────
+       Ocho pestañas en una fila no se leían: había que recorrerlas de una en
+       una para saber cuál era cuál, y tres de ellas —administradores, usuarios
+       y el conector del propio dueño— vivían escondidas dentro de «Cuentas».
+       En columna y agrupadas por lo que se viene a hacer (vender, mantener el
+       producto, vigilar, cuidar el equipo) el destino se encuentra sin leerlas
+       todas, y las que estaban enterradas tienen nombre propio. -->
+  <aside class="lateral">
+    <p class="lateral-titulo">Panel de control</p>
 
-  <!-- ── Resumen ────────────────────────────────────────────────────────── -->
-  <!-- <section class="resumen">
-    <div class="dato" [class.alarma]="alertasGraves() > 0">
-      <span class="cifra">{{ alertasGraves() }}</span>
-      <span class="etiqueta-dato">sospechas altas</span>
-    </div>
-    <div class="dato">
-      <span class="cifra">{{ licenciasActivas() }}</span>
-      <span class="etiqueta-dato">licencias activas</span>
-    </div>
-    <div class="dato" [class.apagado]="licenciasRevocadas() === 0">
-      <span class="cifra">{{ licenciasRevocadas() }}</span>
-      <span class="etiqueta-dato">revocadas</span>
-    </div>
-    <div class="dato" [class.alarma]="porRevisar().length > 0">
-      <span class="cifra">{{ porRevisar().length }}</span>
-      <span class="etiqueta-dato">yapes por revisar</span>
-    </div>
-    <div class="dato">
-      <span class="cifra">{{ codigosSinUsar() }}</span>
-      <span class="etiqueta-dato">códigos sin canjear</span>
-    </div>
-  </section> -->
+    <nav class="lateral-nav" aria-label="Secciones del panel">
+      <p class="lateral-grupo">Ventas</p>
+      <button type="button" [class.activa]="seccion() === 'accesos'" (click)="ir('accesos')">
+        <span>Accesos</span>
+        <!-- El contador venía de la pestaña Yapes: la revisión vive aquí ahora,
+             y es lo único del panel que hay que atender el mismo día. -->
+        @if (porRevisar().length > 0) {
+          <span class="lateral-contador">{{ porRevisar().length }}</span>
+        }
+      </button>
+      <button type="button" [class.activa]="seccion() === 'descuentos'" (click)="ir('descuentos')">
+        <span>Descuentos</span>
+      </button>
 
-  <!-- ── Gráficos ─────────────────────────────────────────────────────────
-       Debajo de las cifras y encima de las pestañas: es el vistazo, no una
-       sección donde haya que entrar. Se calculan con lo que el panel ya trae
-       cargado, así que no cuestan ni una petición más. -->
+      <p class="lateral-grupo">Productos</p>
+      <button type="button" [class.activa]="seccion() === 'grupos'" (click)="ir('grupos')">
+        <span>Grupos</span>
+      </button>
+      <button type="button" [class.activa]="seccion() === 'licencias'" (click)="ir('licencias')">
+        <span>Licencias</span>
+      </button>
+      <button type="button" [class.activa]="seccion() === 'corpus'" (click)="ir('corpus')">
+        <span>Bibliografía</span>
+      </button>
+      <button type="button" [class.activa]="seccion() === 'tutoriales'" (click)="ir('tutoriales')">
+        <span>Tutoriales</span>
+      </button>
+
+      <p class="lateral-grupo">Vigilancia</p>
+      <button type="button" [class.activa]="seccion() === 'alertas'" (click)="ir('alertas')">
+        <span>Alertas</span>
+        @if (alertas().length > 0) {
+          <span class="lateral-contador">{{ alertas().length }}</span>
+        }
+      </button>
+
+      <p class="lateral-grupo">Equipo</p>
+      <button type="button" [class.activa]="seccion() === 'admins'" (click)="ir('admins')">
+        <span>Administradores</span>
+      </button>
+      <button type="button" [class.activa]="seccion() === 'usuarios'" (click)="ir('usuarios')">
+        <span>Usuarios</span>
+      </button>
+
+      <p class="lateral-grupo">Tu cuenta</p>
+      <button type="button" [class.activa]="seccion() === 'perfil'" (click)="ir('perfil')">
+        <span>Mi perfil</span>
+      </button>
+    </nav>
+
+    <!-- Con quién estás mirando el panel. Abajo del todo y sin acciones: es una
+         firma, no un menú. -->
+    @if (yo(); as user) {
+      <div class="lateral-yo">
+        <span class="lateral-avatar" aria-hidden="true">{{ iniciales() }}</span>
+        <span class="lateral-yo-texto">
+          <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+          <span>{{ rolUsuario(user.role) }}</span>
+        </span>
+      </div>
+    }
+  </aside>
+
+  <main class="contenido">
+    <!-- Cada sección dice su nombre y para qué sirve, y trae a la derecha lo
+         único que se viene a hacer en ella. Ese texto vivía dentro de las
+         tarjetas: repetido en unas, ausente en otras. -->
+    <header class="cabecera">
+      <div>
+        <h1>{{ pagina().titulo }}</h1>
+        <p class="nota cabecera-nota">{{ pagina().nota }}</p>
+      </div>
+
+      @switch (seccion()) {
+        @case ('descuentos') {
+          <button type="button" class="boton" (click)="abrirFormularioDescuento()">
+            Crear código
+          </button>
+        }
+        @case ('grupos') {
+          <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
+        }
+        @case ('admins') {
+          <button type="button" class="boton" (click)="abrirFormularioAdmin()">
+            Crear administrador
+          </button>
+        }
+        @case ('perfil') {}
+        @default {
+          <button
+            type="button"
+            class="boton secundario"
+            [disabled]="recargando()"
+            (click)="recargar()"
+          >
+            {{ recargando() ? 'Actualizando…' : 'Actualizar' }}
+          </button>
+        }
+      }
+    </header>
+
+    @if (error(); as mensaje) {
+      <div class="aviso error" role="alert">{{ mensaje }}</div>
+    }
+    @if (aviso(); as mensaje) {
+      <div class="aviso exito" role="status">{{ mensaje }}</div>
+    }
+
+  <!-- ══ ACCESOS ══════════════════════════════════════════════════════════
+       Las tres pantallas de venta contadas como una. Arriba, lo que hay que
+       hacer hoy: revisar comprobantes y emitir códigos. Abajo, todo lo que ya
+       pasó, sin importar por dónde entró. -->
+  @if (seccion() === 'accesos') {
   <section class="graficos">
     <article class="grafico">
       <h2>Ingresos por semana</h2>
@@ -205,53 +290,6 @@
     </article>
   </section>
 
-  <nav class="pestanas">
-    <button type="button" [class.activa]="seccion() === 'accesos'" (click)="ir('accesos')">
-      Accesos
-      <!-- El contador venía de la pestaña Yapes: la revisión vive aquí ahora, y
-           es lo único del panel que hay que atender el mismo día. -->
-      @if (porRevisar().length > 0) {
-        <span class="contador-pestana">{{ porRevisar().length }}</span>
-      }
-    </button>
-    <button type="button" [class.activa]="seccion() === 'grupos'" (click)="ir('grupos')">
-      Grupos
-    </button>
-    <button type="button" [class.activa]="seccion() === 'descuentos'" (click)="ir('descuentos')">
-      Descuentos
-    </button>
-    <button type="button" [class.activa]="seccion() === 'licencias'" (click)="ir('licencias')">
-      Licencias
-    </button>
-    <button type="button" [class.activa]="seccion() === 'alertas'" (click)="ir('alertas')">
-      Alertas
-      @if (alertas().length > 0) {
-        <span class="contador-pestana">{{ alertas().length }}</span>
-      }
-    </button>
-    <button type="button" [class.activa]="seccion() === 'corpus'" (click)="ir('corpus')">
-      Bibliografía
-    </button>
-    <button type="button" [class.activa]="seccion() === 'tutoriales'" (click)="ir('tutoriales')">
-      Tutoriales
-    </button>
-    <button type="button" [class.activa]="seccion() === 'cuentas'" (click)="ir('cuentas')">
-      Cuentas
-    </button>
-  </nav>
-
-  @if (error(); as mensaje) {
-    <div class="aviso error" role="alert">{{ mensaje }}</div>
-  }
-  @if (aviso(); as mensaje) {
-    <div class="aviso exito" role="status">{{ mensaje }}</div>
-  }
-
-  <!-- ══ ACCESOS ══════════════════════════════════════════════════════════
-       Las tres pantallas de venta contadas como una. Arriba, lo que hay que
-       hacer hoy: revisar comprobantes y emitir códigos. Abajo, todo lo que ya
-       pasó, sin importar por dónde entró. -->
-  @if (seccion() === 'accesos') {
     <div class="columnas accesos-cabecera">
       <section class="tarjeta">
         <h2>Comprobantes por revisar</h2>
@@ -274,10 +312,12 @@
         }
       </section>
       <section class="tarjeta">
-        <h2>Códigos generados</h2>
-        <button type="button" class="boton" (click)="abrirFormularioCodigos()">
-          Generar código
-        </button>
+        <div class="tarjeta-cabecera">
+          <h2>Códigos generados</h2>
+          <button type="button" class="boton" (click)="abrirFormularioCodigos()">
+            Generar código
+          </button>
+        </div>
         <p class="nota nota-suelta">
           Para una venta cobrada fuera de la web: Yape al WhatsApp, transferencia o Western Union.
           Pones el correo del comprador y le llega el código con las instrucciones; después él crea
@@ -646,9 +686,6 @@
 
   <!-- ══ GRUPOS ═══════════════════════════════════════════════════════════ -->
   @if (seccion() === 'grupos') {
-    <!-- La tabla va primero y la explicación debajo, con el botón de crear.
-         Quien entra aquí viene a mirar qué hay vendiéndose; el texto explica
-         qué es un grupo y eso solo hace falta leerlo una vez. -->
     <section class="tarjeta">
       @if (grupos().length === 0) {
         <p class="tenue">Todavía no hay ninguno.</p>
@@ -724,20 +761,6 @@
           </table>
         </div>
       }
-    </section>
-
-    <section class="tarjeta">
-      <div class="cabecera-seccion">
-        <div>
-          <h2>Grupos</h2>
-          <p class="nota">
-            Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es
-            uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia
-            solo ve los capítulos de <b>su</b> grupo.
-          </p>
-        </div>
-        <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
-      </div>
     </section>
 
     <!-- ── Ventana de crear/editar ─────────────────────────────────────────
@@ -1309,12 +1332,7 @@
   <!-- ══ DESCUENTOS ═══════════════════════════════════════════════════════ -->
   @if (seccion() === 'descuentos') {
     <section class="tarjeta">
-      <div class="tarjeta-cabecera">
-        <h2>Códigos promocionales</h2>
-        <button type="button" class="boton" (click)="abrirFormularioDescuento()">
-          Crear código
-        </button>
-      </div>
+      <h2>Códigos promocionales</h2>
 
       @if (descuentoNuevo(); as promo) {
         <div class="codigos-nuevos">
@@ -1517,8 +1535,6 @@
   <!-- ══ LICENCIAS ════════════════════════════════════════════════════════ -->
   @if (seccion() === 'licencias') {
     <section class="tarjeta">
-      <h2>Licencias del conector</h2>
-
       @if (licencias().length > 0) {
         <app-filtros-lista
           [lista]="listaLicencias"
@@ -1597,12 +1613,6 @@
   <!-- ══ ALERTAS ══════════════════════════════════════════════════════════ -->
   @if (seccion() === 'alertas') {
     <section class="tarjeta">
-      <h2>Alertas de uso compartido</h2>
-      <p class="nota">
-        A la primera sospecha alta se avisa al comprador por correo; solo si vuelve a saltar pasadas
-        12 horas se revoca sola. Aquí puedes adelantarte o descartarla.
-      </p>
-
       @if (alertas().length > 0) {
         <app-filtros-lista [lista]="listaAlertas" placeholder="Correo, nombre, tipo o detalle" />
       }
@@ -1657,8 +1667,6 @@
   @if (seccion() === 'corpus') {
     <section class="tarjeta">
       <div class="tarjeta-cabecera">
-        <h2>Bibliografía</h2>
-
         @if (corpus()?.configurado) {
           <div class="filtros">
             <button
@@ -1933,37 +1941,33 @@
     }
   }
 
-  @if (seccion() === 'cuentas') {
-    <!-- Lo que hay registrado de ti, siempre a la vista y fuera de las pestañas.
-         Es de consulta, no de edición: mirarlo no debería costar un clic, y
-         además da contexto a lo que hay debajo —quién eres y con qué rol estás
-         mirando esta pantalla—. Al administrador le importa porque su barra ya
-         no le lleva a su perfil: entra a «Administrar». -->
+  @if (seccion() === 'perfil') {
+    <!-- Quién eres y con qué rol estás mirando esta pantalla. De consulta, no
+         de edición: lo que se toca está debajo. Al administrador le importa
+         porque su barra ya no le lleva a su perfil: entra a «Administrar». -->
     @if (yo(); as user) {
-      <section class="tarjeta">
-        <h2>Datos de la cuenta</h2>
-        <p class="nota">Lo que hay registrado de ti, para consultarlo de un vistazo.</p>
+      <section class="tarjeta identidad">
+        <span class="identidad-avatar" aria-hidden="true">{{ iniciales() }}</span>
+        <div class="identidad-quien">
+          <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+          <p class="identidad-correo">{{ user.email }}</p>
+          <p class="identidad-insignias">
+            <span class="pastilla">{{ rolUsuario(user.role) }}</span>
+            <span
+              class="pastilla"
+              [class.buena]="user.status === 'ACTIVE'"
+              [class.espera]="user.status === 'PENDING'"
+              [class.mala]="user.status === 'SUSPENDED'"
+            >
+              {{ estadoUsuario(user.status) }}
+            </span>
+          </p>
+        </div>
 
-        <dl class="datos">
+        <dl class="identidad-datos">
           <div>
-            <dt>Nombre</dt>
-            <dd>{{ user.firstName }}</dd>
-          </div>
-          <div>
-            <dt>Apellidos</dt>
-            <dd>{{ user.lastName }}</dd>
-          </div>
-          <div>
-            <dt>Correo</dt>
-            <dd>{{ user.email }}</dd>
-          </div>
-          <div>
-            <dt>Rol</dt>
-            <dd>{{ rolUsuario(user.role) }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>{{ estadoUsuario(user.status) }}</dd>
+            <dt>Miembro desde</dt>
+            <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
           </div>
           <div>
             <dt>Verificación</dt>
@@ -1974,10 +1978,6 @@
                 Pendiente
               }
             </dd>
-          </div>
-          <div>
-            <dt>Miembro desde</dt>
-            <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
           </div>
           <div>
             <dt>Último acceso</dt>
@@ -1993,80 +1993,40 @@
       </section>
     }
 
-    <!-- Sub-pestañas, no cuatro tarjetas apiladas: cambiar tu contraseña y
-         revisar quién está registrado no se hacen en el mismo rato, y juntas
-         obligaban a bajar por las tres que no interesan. -->
-    <nav class="pestanas">
-      <button type="button" [class.activa]="cuenta() === 'datos'" (click)="verCuenta('datos')">
-        Tus datos
-      </button>
-      <button type="button" [class.activa]="cuenta() === 'clave'" (click)="verCuenta('clave')">
-        Contraseña
-      </button>
-      <button
-        type="button"
-        [class.activa]="cuenta() === 'conector'"
-        (click)="verCuenta('conector')"
-      >
-        Mi conector
-      </button>
-      <button type="button" [class.activa]="cuenta() === 'admins'" (click)="verCuenta('admins')">
-        Administradores
-      </button>
-      <button
-        type="button"
-        [class.activa]="cuenta() === 'usuarios'"
-        (click)="verCuenta('usuarios')"
-      >
-        Usuarios
-      </button>
-    </nav>
-
     <!-- El mismo componente que ve cualquier usuario en su perfil: un
-         administrador también es una persona con nombre y contraseña. -->
-    @if (cuenta() === 'datos') {
+         administrador también es una persona con nombre y contraseña. Los dos
+         van uno al lado del otro porque ninguno llena media pantalla, y
+         apilados obligaban a bajar para cambiar la clave. -->
+    <div class="columnas">
       <section class="tarjeta">
         <h2>Tus datos</h2>
+        <p class="nota">Así te llamamos en el sitio y en los correos que te enviamos.</p>
         <app-ajustes-de-cuenta panel="datos" />
       </section>
-    }
 
-    @if (cuenta() === 'clave') {
       <section class="tarjeta">
         <h2>Contraseña</h2>
+        <p class="nota">
+          Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
+        </p>
         <app-ajustes-de-cuenta panel="clave" />
       </section>
-    }
+    </div>
 
     <!-- El conector del propio administrador. Sus licencias se emiten solas la
          primera vez que se pide esta lista: una por producto del catálogo,
          gratis y sin caducidad, porque el dueño no se compra lo que vende. -->
-    @if (cuenta() === 'conector') {
-      <section class="tarjeta">
-        <h2>Método de tesis · conector de Claude</h2>
-        <p class="nota">
-          Tus licencias, una por producto. No caducan y no gastan cupo: son las tuyas, no una
-          compra.
-        </p>
-        <app-mi-conector modo="administrador" />
-      </section>
-    }
-
-    @if (cuenta() === 'admins') {
     <section class="tarjeta">
-      <div class="tarjeta-cabecera">
-        <div>
-          <h2>Administradores</h2>
-          <p class="nota">
-            Da acceso al panel a otra persona. Solo crea administradores: los usuarios normales se
-            registran solos desde la web.
-          </p>
-        </div>
-        <button type="button" class="boton" (click)="abrirFormularioAdmin()">
-          Crear administrador
-        </button>
-      </div>
+      <h2>Mi conector</h2>
+      <p class="nota">
+        Tus licencias, una por producto. No caducan y no gastan cupo: son las tuyas, no una compra.
+      </p>
+      <app-mi-conector modo="administrador" />
+    </section>
+  }
 
+  @if (seccion() === 'admins') {
+    <section class="tarjeta">
       @if (administradores().length === 0) {
         <p class="nota">Todavía no hay más administradores que tú.</p>
       } @else {
@@ -2110,13 +2070,10 @@
         </div>
       }
     </section>
-    }
+  }
 
-    @if (cuenta() === 'usuarios') {
+  @if (seccion() === 'usuarios') {
     <section class="tarjeta">
-      <h2>Usuarios registrados</h2>
-      <p class="nota">Todo el que tiene cuenta. Esta lista solo la ve un administrador.</p>
-
       <div class="fila-busqueda">
         <input
           type="search"
@@ -2208,9 +2165,7 @@
         }
       }
     </section>
-    }
   }
-
   <!-- ── Ventana de crear administrador ──────────────────────────────────── -->
   @if (formularioAdminAbierto()) {
     <div class="ventana-fondo">
@@ -2511,6 +2466,5 @@
       </div>
     </div>
   }
-</main>
-
-<app-site-footer />
+  </main>
+</div>

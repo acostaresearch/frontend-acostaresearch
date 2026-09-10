@@ -37,7 +37,6 @@ import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
-import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { Acceso, unirAccesos } from './accesos';
 import { columnas, lunes, porCategoria, porSemana } from './graficos';
@@ -53,7 +52,66 @@ type Seccion =
   | 'alertas'
   | 'corpus'
   | 'tutoriales'
-  | 'cuentas';
+  | 'admins'
+  | 'usuarios'
+  | 'perfil';
+
+/**
+ * El nombre y el para qué de cada sección, tal y como salen en la cabecera.
+ *
+ * Vivían dentro de las tarjetas —repetidos en unas, ausentes en otras—, así que
+ * la pantalla no decía qué era hasta que se leía la primera tabla. Aquí están
+ * los diez en una sola lista, que es donde se ve si uno desentona.
+ */
+const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
+  accesos: {
+    titulo: 'Accesos',
+    nota: 'Lo que entra, lo que falta revisar y todo lo emitido o cobrado.',
+  },
+  descuentos: {
+    titulo: 'Descuentos',
+    nota: 'Códigos promocionales que rebajan el precio de un producto.',
+  },
+  grupos: {
+    titulo: 'Grupos',
+    nota:
+      'Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es ' +
+      'uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia ' +
+      'solo ve los capítulos de su grupo.',
+  },
+  licencias: {
+    titulo: 'Licencias',
+    nota: 'Quién tiene el conector encendido, con qué producto y cuánto lo está usando.',
+  },
+  alertas: {
+    titulo: 'Alertas',
+    nota:
+      'Sospechas de uso compartido. A la primera alta se avisa al comprador por correo; solo si ' +
+      'vuelve a saltar pasadas 12 horas se revoca sola. Aquí puedes adelantarte o descartarla.',
+  },
+  corpus: {
+    titulo: 'Bibliografía',
+    nota: 'El corpus que citan las Skills. Se cura en Zotero; aquí solo se trae y se comprueba.',
+  },
+  tutoriales: {
+    titulo: 'Tutoriales',
+    nota: 'Los videos que se ven en acostaresearch.com/tutoriales.',
+  },
+  admins: {
+    titulo: 'Administradores',
+    nota:
+      'Da acceso al panel a otra persona. Solo se crean administradores: los usuarios normales ' +
+      'se registran solos desde la web.',
+  },
+  usuarios: {
+    titulo: 'Usuarios',
+    nota: 'Todo el que tiene cuenta en la web. Esta lista solo la ve un administrador.',
+  },
+  perfil: {
+    titulo: 'Mi perfil',
+    nota: 'Tus datos, tu contraseña y tu propio conector.',
+  },
+};
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -189,7 +247,6 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     DatePipe,
     DecimalPipe,
     SiteHeader,
-    SiteFooter,
     FiltrosLista,
     PieLista,
     AjustesDeCuenta,
@@ -213,6 +270,16 @@ export class Admin implements OnInit {
 
   readonly metodos = METODOS;
   readonly seccion = signal<Seccion>('accesos');
+
+  /** Título y descripción de la sección abierta, para la cabecera. */
+  readonly pagina = computed(() => PAGINAS[this.seccion()]);
+
+  /** Las dos letras del avatar de la barra lateral. */
+  readonly iniciales = computed(() => {
+    const user = this.yo();
+    if (!user) return '';
+    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  });
 
   readonly error = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
@@ -1994,8 +2061,12 @@ export class Admin implements OnInit {
 
     // Los usuarios NO se cargan con el resto del panel: es la única lista que
     // pagina en el servidor y la única que no hace falta para nada de lo que se
-    // ve al entrar. Se pide la primera vez que se abre su pestaña.
-    if (seccion === 'cuentas' && this.usuarios().length === 0) this.cargarUsuarios();
+    // ve al entrar. Se pide la primera vez que se abre su sección. Las dos
+    // listas —administradores y usuarios— salen de la misma petición, así que
+    // basta con pedirla al abrir cualquiera de las dos.
+    if ((seccion === 'admins' || seccion === 'usuarios') && this.usuarios().length === 0) {
+      this.cargarUsuarios();
+    }
 
     // El corpus tampoco: es una llamada a la base por una lista que solo
     // mira quien viene a curar bibliografía, no quien entra a revisar cobros.
@@ -2254,31 +2325,12 @@ export class Admin implements OnInit {
     });
   }
 
-  // ── Cuentas ──────────────────────────────────────────────────────────────
+  // ── Equipo y perfil ──────────────────────────────────────────────────────
 
-  /**
-   * Qué sub-pestaña de «Cuentas» se está viendo.
-   *
-   * Las tres primeras son las de cualquier usuario —los mismos componentes que
-   * se ven en el perfil— y las dos últimas solo existen aquí. Van en la misma
-   * fila porque todas responden a «quién entra y con qué», que es lo que se
-   * viene a hacer a esta pestaña.
-   *
-   * «Mi conector» está aquí y no en el perfil porque el administrador no llega
-   * al perfil: su botón de la cabecera va a «Administrar», y de las dos gana
-   * siempre esa. Sin esta sub-pestaña, el dueño del producto era el único que no
-   * tenía dónde ver su propia URL del conector ni la guía de instalación.
-   */
-  readonly cuenta = signal<'datos' | 'clave' | 'conector' | 'admins' | 'usuarios'>('datos');
-
-  verCuenta(cuenta: 'datos' | 'clave' | 'conector' | 'admins' | 'usuarios'): void {
-    this.cuenta.set(cuenta);
-    // Las dos listas salen de la misma petición, así que basta con pedirla al
-    // abrir cualquiera de las dos.
-    if ((cuenta === 'admins' || cuenta === 'usuarios') && this.usuarios().length === 0) {
-      this.cargarUsuarios();
-    }
-  }
+  // «Mi perfil» existe en el panel y no solo en /perfil porque el administrador
+  // no llega al perfil: su botón de la cabecera va a «Administrar», y de las dos
+  // gana siempre esa. Sin él, el dueño del producto era el único que no tenía
+  // dónde ver su propia URL del conector ni la guía de instalación.
 
   readonly usuarios = signal<User[]>([]);
   readonly cargandoUsuarios = signal(false);
