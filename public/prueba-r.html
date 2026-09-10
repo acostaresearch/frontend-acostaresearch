@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Prueba de R en el navegador · Acosta Research</title>
+    <style>
+      :root {
+        --fondo: #f5f6f8;
+        --superficie: #fff;
+        --borde: #e2e5ea;
+        --texto: #1a2233;
+        --suave: #5c6779;
+        --tenue: #8b95a6;
+        --primario: #1a56db;
+        --primario-suave: #eaf0fd;
+        --exito: #12734b;
+        --exito-suave: #e7f6ef;
+        --error: #c22b2b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 28px 16px 60px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        color: var(--texto);
+        background: var(--fondo);
+        line-height: 1.55;
+      }
+      main { max-width: 760px; margin: 0 auto; }
+      h1 { margin: 0 0 6px; font-size: 21px; }
+      .sub { margin: 0 0 22px; font-size: 13.5px; color: var(--tenue); }
+      .aviso {
+        padding: 12px 14px; margin-bottom: 20px; font-size: 13px;
+        background: #fdf3e3; color: #96590d; border-radius: 8px;
+      }
+      .caja {
+        padding: 20px; margin-bottom: 16px;
+        background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px;
+      }
+      h2 { margin: 0 0 4px; font-size: 15px; }
+      .pista { margin: 0 0 14px; font-size: 12.5px; color: var(--tenue); }
+      button {
+        padding: 10px 18px; font: inherit; font-weight: 600; color: #fff;
+        background: var(--primario); border: none; border-radius: 9px; cursor: pointer;
+      }
+      button:disabled { background: var(--tenue); cursor: default; }
+      .soltar {
+        display: block; padding: 26px 18px; text-align: center; cursor: pointer;
+        font-size: 13.5px; color: var(--suave);
+        background: var(--fondo); border: 2px dashed var(--borde); border-radius: 10px;
+      }
+      .soltar:hover, .soltar.encima { border-color: var(--primario); background: var(--primario-suave); }
+      .soltar input { display: none; }
+      pre {
+        max-height: 340px; overflow: auto; padding: 14px; margin: 12px 0 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px; line-height: 1.5; white-space: pre-wrap;
+        background: #1a2233; color: #e6ebf2; border-radius: 8px;
+      }
+      .reloj {
+        display: flex; gap: 10px; flex-wrap: wrap;
+        margin: 14px 0 0; padding: 12px 14px;
+        font-size: 13px; background: var(--exito-suave); color: var(--exito); border-radius: 8px;
+      }
+      .reloj b { font-variant-numeric: tabular-nums; }
+      .error { color: var(--error); font-size: 13px; margin: 10px 0 0; }
+      table { width: 100%; margin-top: 12px; font-size: 12.5px; border-collapse: collapse; }
+      td { padding: 5px 8px; border-bottom: 1px solid var(--borde); }
+      td:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>R corriendo en tu navegador</h1>
+      <p class="sub">
+        Prueba técnica. Mide cuánto tarda R en cargarse aquí, si los paquetes de estadística
+        instalan, y si un análisis real sale bien.
+      </p>
+
+      <div class="aviso">
+        <strong>Esta página es temporal</strong> y no está enlazada desde ningún sitio. Sirve para
+        decidir si merece la pena construir la pantalla de verdad.
+      </div>
+
+      <div class="caja">
+        <h2>1 · Cargar R</h2>
+        <p class="pista">
+          Son unos 17 MB la primera vez. Después queda guardado en el navegador.
+        </p>
+        <button id="cargar">Cargar R</button>
+        <div id="relojCarga"></div>
+        <pre id="salidaCarga" hidden></pre>
+      </div>
+
+      <div class="caja">
+        <h2>2 · Instalar <code>psych</code></h2>
+        <p class="pista">
+          Es el paquete del alfa de Cronbach, el que usa cualquier tesis con instrumento.
+        </p>
+        <button id="instalar" disabled>Instalar psych</button>
+        <div id="relojInstalar"></div>
+      </div>
+
+      <div class="caja">
+        <h2>3 · Analizar unos datos</h2>
+        <p class="pista">
+          Arrastra un CSV tuyo, o pulsa «Usar datos de ejemplo» para probar sin buscar nada.
+          <strong>El archivo no se sube:</strong> lo lee tu navegador de tu propio disco.
+        </p>
+
+        <label class="soltar" id="soltar">
+          Arrastra aquí tu CSV, o pulsa para elegirlo
+          <input type="file" id="archivo" accept=".csv,text/csv" />
+        </label>
+
+        <p style="margin: 12px 0 0">
+          <button id="ejemplo" disabled>Usar datos de ejemplo</button>
+        </p>
+
+        <div id="relojAnalisis"></div>
+        <div id="resumen"></div>
+        <pre id="salida" hidden></pre>
+      </div>
+
+      <div class="caja">
+        <h2>El veredicto</h2>
+        <div id="veredicto" class="pista">Todavía sin datos. Ejecuta los tres pasos.</div>
+      </div>
+    </main>
+
+    <script type="module">
+      import { WebR, ChannelType } from 'https://cdn.jsdelivr.net/npm/webr/dist/webr.mjs';
+
+      /*
+       * Canal PostMessage, y es la decisión que hace viable todo esto.
+       *
+       * El canal rápido de WebR necesita SharedArrayBuffer, que a su vez exige
+       * las cabeceras COOP/COEP en toda la página. Y esas cabeceras rompen el
+       * SDK de PayPal —comprobado: no manda Cross-Origin-Resource-Policy y pinta
+       * sus botones en iframes—. PostMessage va más lento pero no toca nada de
+       * lo que ya funciona, y de eso trata esta prueba: saber cuánto más lento.
+       */
+      const webR = new WebR({ channelType: ChannelType.PostMessage });
+
+      const $ = (id) => document.getElementById(id);
+      const marcas = {};
+
+      function reloj(donde, texto, segundos) {
+        $(donde).innerHTML =
+          `<div class="reloj"><span>${texto}</span><b>${segundos.toFixed(1)} s</b></div>`;
+      }
+
+      function fallo(donde, error) {
+        $(donde).innerHTML = `<p class="error">Falló: ${error.message ?? error}</p>`;
+      }
+
+      // ── 1. Cargar R ────────────────────────────────────────────────────────
+      $('cargar').addEventListener('click', async () => {
+        $('cargar').disabled = true;
+        $('cargar').textContent = 'Descargando R…';
+        const desde = performance.now();
+
+        try {
+          await webR.init();
+          marcas.carga = (performance.now() - desde) / 1000;
+          reloj('relojCarga', 'R cargado en', marcas.carga);
+          $('cargar').textContent = 'R listo';
+          $('instalar').disabled = false;
+          $('ejemplo').disabled = false;
+
+          const version = await webR.evalRString('paste(R.version$major, R.version$minor, sep=".")');
+          $('salidaCarga').hidden = false;
+          $('salidaCarga').textContent = `R ${version} — corriendo en esta pestaña.`;
+        } catch (error) {
+          fallo('relojCarga', error);
+          $('cargar').disabled = false;
+          $('cargar').textContent = 'Reintentar';
+        }
+        actualizarVeredicto();
+      });
+
+      // ── 2. Instalar psych ──────────────────────────────────────────────────
+      $('instalar').addEventListener('click', async () => {
+        $('instalar').disabled = true;
+        $('instalar').textContent = 'Instalando…';
+        const desde = performance.now();
+
+        try {
+          await webR.installPackages(['psych']);
+          marcas.instalar = (performance.now() - desde) / 1000;
+          reloj('relojInstalar', 'psych instalado en', marcas.instalar);
+          $('instalar').textContent = 'psych listo';
+        } catch (error) {
+          fallo('relojInstalar', error);
+          $('instalar').disabled = false;
+          $('instalar').textContent = 'Reintentar';
+        }
+        actualizarVeredicto();
+      });
+
+      // ── 3. Analizar ────────────────────────────────────────────────────────
+      const CODIGO = `
+        library(psych)
+        datos <- read.csv("/datos.csv")
+        numericas <- datos[sapply(datos, is.numeric)]
+        cat("Filas:", nrow(datos), " Columnas numericas:", ncol(numericas), "\\n\\n")
+        cat("--- Descriptivos ---\\n")
+        print(round(describe(numericas)[, c("n","mean","sd","min","max")], 3))
+        cat("\\n--- Fiabilidad (alfa de Cronbach) ---\\n")
+        a <- alpha(numericas, warnings = FALSE)
+        cat("raw_alpha =", round(a$total$raw_alpha, 4), "\\n")
+        cat("std.alpha =", round(a$total$std.alpha, 4), "\\n")
+      `;
+
+      async function analizar(texto) {
+        $('salida').hidden = false;
+        $('salida').textContent = 'Ejecutando…';
+        $('resumen').innerHTML = '';
+        const desde = performance.now();
+
+        try {
+          await webR.FS.writeFile('/datos.csv', new TextEncoder().encode(texto));
+
+          const shelter = await new webR.Shelter();
+          try {
+            const resultado = await shelter.captureR(CODIGO, { withAutoprint: true });
+            const lineas = resultado.output
+              .filter((o) => o.type === 'stdout' || o.type === 'stderr')
+              .map((o) => o.data)
+              .join('\n');
+
+            marcas.analisis = (performance.now() - desde) / 1000;
+            reloj('relojAnalisis', 'Análisis ejecutado en', marcas.analisis);
+            $('salida').textContent = lineas || '(sin salida)';
+
+            const alfa = lineas.match(/raw_alpha = ([\d.]+)/);
+            if (alfa) {
+              $('resumen').innerHTML =
+                `<table><tr><td>Alfa de Cronbach</td><td><b>${alfa[1]}</b></td></tr></table>`;
+            }
+          } finally {
+            await shelter.purge();
+          }
+        } catch (error) {
+          fallo('relojAnalisis', error);
+          $('salida').textContent = String(error?.message ?? error);
+        }
+        actualizarVeredicto();
+      }
+
+      // Datos de ejemplo: doce ítems tipo Likert de 120 respuestas, con una
+      // consistencia interna razonable para que el alfa salga creíble.
+      $('ejemplo').addEventListener('click', () => {
+        const filas = ['id,' + Array.from({ length: 12 }, (_, i) => `it${i + 1}`).join(',')];
+        for (let p = 1; p <= 120; p += 1) {
+          const rasgo = Math.random() * 2 - 1;
+          const items = Array.from({ length: 12 }, () => {
+            const v = Math.round(3 + rasgo * 1.2 + (Math.random() * 2 - 1));
+            return Math.min(5, Math.max(1, v));
+          });
+          filas.push(`${p},${items.join(',')}`);
+        }
+        analizar(filas.join('\n'));
+      });
+
+      const soltar = $('soltar');
+      $('archivo').addEventListener('change', (e) => {
+        const f = e.target.files?.[0];
+        if (f) f.text().then(analizar);
+      });
+      ['dragover', 'dragenter'].forEach((ev) =>
+        soltar.addEventListener(ev, (e) => {
+          e.preventDefault();
+          soltar.classList.add('encima');
+        }),
+      );
+      ['dragleave', 'drop'].forEach((ev) =>
+        soltar.addEventListener(ev, () => soltar.classList.remove('encima')),
+      );
+      soltar.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const f = e.dataTransfer?.files?.[0];
+        if (f) f.text().then(analizar);
+      });
+
+      // ── El veredicto ───────────────────────────────────────────────────────
+      function actualizarVeredicto() {
+        const filas = [];
+        if (marcas.carga) filas.push(['Cargar R (17 MB)', `${marcas.carga.toFixed(1)} s`]);
+        if (marcas.instalar) filas.push(['Instalar psych', `${marcas.instalar.toFixed(1)} s`]);
+        if (marcas.analisis) filas.push(['Análisis completo', `${marcas.analisis.toFixed(1)} s`]);
+
+        if (filas.length === 0) return;
+
+        const total = (marcas.carga ?? 0) + (marcas.instalar ?? 0);
+        const juicio = marcas.analisis
+          ? total < 45
+            ? '<strong style="color:var(--exito)">Va bien.</strong> La espera de la primera vez es asumible y el análisis es inmediato.'
+            : '<strong style="color:#96590d">La primera carga es larga.</strong> Habría que enseñar en qué va mientras espera.'
+          : '';
+
+        $('veredicto').innerHTML =
+          '<table>' +
+          filas.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') +
+          '</table>' +
+          (juicio ? `<p style="margin-top:12px">${juicio}</p>` : '');
+      }
+    </script>
+  </body>
+</html>
