@@ -1,8 +1,11 @@
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
+import { doisDeLosPdf, normalizarDoi } from '../../core/pdf/doi-del-pdf';
 import {
+  ImportacionPorDoi,
   MisFuentes,
   MisFuentesService,
   ResultadoDeImportacion,
@@ -10,7 +13,7 @@ import {
 import { DialogoService } from '../../core/services/dialogo.service';
 
 /** Lo que el navegador ofrece al abrir el diálogo. El servidor lo recomprueba. */
-const ACEPTA = '.csv,.ris,.bib,.bibtex,.txt';
+const ACEPTA = '.csv,.ris,.bib,.bibtex,.txt,.pdf';
 
 /** Techo local, para no subir ocho megas y que el servidor los rechace. */
 const MAXIMO_BYTES = 8 * 1024 * 1024;
@@ -32,7 +35,7 @@ const MAXIMO_BYTES = 8 * 1024 * 1024;
  */
 @Component({
   selector: 'app-mis-fuentes',
-  imports: [DatePipe, UpperCasePipe],
+  imports: [DatePipe, UpperCasePipe, ReactiveFormsModule],
   templateUrl: './mis-fuentes.html',
   styleUrl: './mis-fuentes.css',
 })
@@ -64,18 +67,38 @@ export class MisFuentesPanel implements OnInit {
 
   elegir(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
+    const archivos = [...(entrada.files ?? [])];
     // El campo se limpia siempre: sin esto, volver a elegir el MISMO archivo no
     // dispara ningún evento y parece que la página se quedó colgada.
     entrada.value = '';
-    if (archivo) this.subir(archivo);
+    this.recibir(archivos);
   }
 
   soltar(evento: DragEvent): void {
     evento.preventDefault();
     this.encima.set(false);
-    const archivo = evento.dataTransfer?.files?.[0];
-    if (archivo) this.subir(archivo);
+    this.recibir([...(evento.dataTransfer?.files ?? [])]);
+  }
+
+  /**
+   * Reparte lo que llegó según lo que sea.
+   *
+   * Los PDF y los exports son dos caminos distintos: del PDF solo se saca el
+   * DOI, aquí en el navegador, y el archivo no sale del equipo; el export sí se
+   * sube y lo lee el servidor. Se aceptan por la misma caja porque para el
+   * tesista es lo mismo —«tengo esto, tómalo»— y saber cuál va por dónde es
+   * problema nuestro.
+   */
+  private recibir(archivos: File[]): void {
+    if (archivos.length === 0 || this.subiendo()) return;
+
+    const pdfs = archivos.filter((a) => /\.pdf$/i.test(a.name) || a.type === 'application/pdf');
+    const exports = archivos.filter((a) => !pdfs.includes(a));
+
+    if (pdfs.length > 0) return void this.desdePdf(pdfs);
+    // Los exports van de uno en uno: cada uno es una biblioteca entera y su
+    // parte por separado, y juntarlos escondería cuál vino mal.
+    this.subir(exports[0]);
   }
 
   arrastraEncima(evento: DragEvent): void {
@@ -103,6 +126,93 @@ export class MisFuentesPanel implements OnInit {
       next: (resultado) => {
         this.resultado.set(resultado);
         this.subiendo.set(false);
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.error.set(toApiError(error).message);
+        this.subiendo.set(false);
+      },
+    });
+  }
+
+  // ── Los PDF ──────────────────────────────────────────────────────────────
+  /** Por dónde va la lectura de los archivos, para que se vea que pasa algo. */
+  readonly leyendo = signal<{ hechos: number; total: number } | null>(null);
+  readonly porDoi = signal<ImportacionPorDoi | null>(null);
+  /** Los archivos que no declaran su DOI. Se piden a mano. */
+  readonly sinDoi = signal<string[]>([]);
+  readonly doiAMano = new FormControl('', { nonNullable: true });
+
+  /**
+   * De unos PDF a fuentes citables.
+   *
+   * El archivo NO se sube. Se lee aquí, se le saca el DOI y al servidor solo
+   * viaja esa lista: veinte caracteres por artículo en vez de tres megas. Los
+   * metadatos buenos —autores, año, revista, resumen— llegan del catálogo
+   * abierto, no de interpretar el maquetado del PDF.
+   */
+  private async desdePdf(pdfs: File[]): Promise<void> {
+    this.subiendo.set(true);
+    this.error.set(null);
+    this.resultado.set(null);
+    this.porDoi.set(null);
+    this.sinDoi.set([]);
+    this.leyendo.set({ hechos: 0, total: pdfs.length });
+
+    const leidos = await doisDeLosPdf(pdfs, (hechos, total) =>
+      this.leyendo.set({ hechos, total }),
+    );
+    this.leyendo.set(null);
+
+    const dois = leidos.map((l) => l.doi).filter((d): d is string => d !== null);
+    this.sinDoi.set(leidos.filter((l) => l.doi === null).map((l) => l.archivo));
+
+    if (dois.length === 0) {
+      this.subiendo.set(false);
+      this.error.set(
+        pdfs.length === 1
+          ? 'Ese PDF no lleva su DOI escrito dentro. Ábrelo, cópialo de la primera página y ' +
+            'pégalo abajo.'
+          : 'Ninguno de esos PDF lleva su DOI escrito dentro. Puedes pegarlos abajo, uno por ' +
+            'línea.',
+      );
+      return;
+    }
+
+    this.pedirPorDoi(dois);
+  }
+
+  /** Los DOI que el tesista pega a mano, uno por línea o separados por comas. */
+  enviarDoisAMano(): void {
+    const dois = this.doiAMano.value
+      .split(/[\n,;]+/)
+      .map((d) => normalizarDoi(d))
+      .filter((d): d is string => d !== null);
+
+    if (dois.length === 0) {
+      this.error.set(
+        'Eso no parece un DOI. Tiene esta forma: 10.1145/3770762.3772598, y suele estar en la ' +
+          'primera página del artículo.',
+      );
+      return;
+    }
+
+    this.pedirPorDoi(dois);
+  }
+
+  private pedirPorDoi(dois: string[]): void {
+    this.subiendo.set(true);
+    this.error.set(null);
+
+    this.fuentes.porDoi(dois).subscribe({
+      next: (resultado) => {
+        this.porDoi.set(resultado);
+        this.subiendo.set(false);
+        this.doiAMano.reset();
+        // Los que sí entraron dejan de estar pendientes; los que el catálogo no
+        // conoce se quedan a la vista con su DOI, que es lo que hace falta para
+        // buscarlos a mano.
+        this.sinDoi.set(resultado.noEncontrados);
         this.cargar();
       },
       error: (error: unknown) => {

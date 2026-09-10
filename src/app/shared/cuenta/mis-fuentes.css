@@ -116,6 +116,59 @@
   color: var(--color-texto-suave);
 }
 
+/* Lo que gana subiendo el PDF aquí en vez de a Claude. Va pegado a la caja
+   porque es donde se decide, no en una ayuda que nadie abre. */
+.pdf-nota {
+  margin: 10px 0 0;
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  background: var(--color-primario-suave);
+  border-radius: var(--radio-sm);
+}
+
+/* ── Los PDF que no declaran su DOI ───────────────────────────────────────── */
+.sin-doi {
+  margin-top: 12px;
+  padding: 13px 15px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.sin-doi-titulo {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.sin-doi-lista {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  /* Un nombre de archivo largo no puede desbordar la tarjeta. */
+  overflow-wrap: anywhere;
+}
+
+.sin-doi .tenue {
+  display: block;
+  margin: 0 0 9px;
+  line-height: 1.6;
+}
+
+.sin-doi code {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+}
+
 /* ── El parte de la subida ────────────────────────────────────────────────── */
 .parte {
   margin-top: 12px;

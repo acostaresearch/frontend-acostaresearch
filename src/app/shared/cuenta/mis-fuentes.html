@@ -47,21 +47,102 @@
   (dragleave)="encima.set(false)"
   (drop)="soltar($event)"
 >
-  <input type="file" [accept]="acepta" [disabled]="subiendo()" (change)="elegir($event)" />
+  <input
+    type="file"
+    multiple
+    [accept]="acepta"
+    [disabled]="subiendo()"
+    (change)="elegir($event)"
+  />
   <span class="soltar-icono" aria-hidden="true">⬆</span>
   <span class="soltar-texto">
-    @if (subiendo()) {
-      <strong>Leyendo tu archivo…</strong>
+    @if (leyendo(); as paso) {
+      <strong>Leyendo tus PDF… {{ paso.hechos }} de {{ paso.total }}</strong>
+      <span>Se quedan en tu equipo: solo viaja el DOI de cada uno.</span>
+    } @else if (subiendo()) {
+      <strong>Buscando las fichas…</strong>
       <span>Con varios cientos de fuentes tarda unos segundos.</span>
     } @else {
-      <strong>Arrastra aquí tu archivo, o pulsa para buscarlo</strong>
-      <span>CSV, RIS o BibTeX. Es lo que descargas en «Export» sin cambiar nada.</span>
+      <strong>Arrastra aquí tus archivos, o pulsa para buscarlos</strong>
+      <span>
+        El export de tu base de datos (CSV, RIS o BibTeX) o los PDF de los artículos.
+      </span>
     }
   </span>
 </label>
 
+<!-- Lo que hace esto, dicho donde se decide usarlo. Es la diferencia con subir
+     el PDF a Claude, y si no se dice aquí no se entera nadie. -->
+<p class="pdf-nota">
+  <strong>¿Tienes los PDF?</strong> Suéltalos también. Se leen en tu navegador para sacarles el
+  DOI —<strong>el archivo no se sube a ningún sitio</strong>— y de ahí salen los datos de la
+  ficha. Después, cuando Claude busque, recibe esa ficha en vez de cuarenta páginas: unas cien
+  veces menos de conversación gastada por fuente.
+</p>
+
 @if (error(); as mensaje) {
   <p class="aviso error">{{ mensaje }}</p>
+}
+
+<!-- El parte de los PDF. -->
+@if (porDoi(); as parte) {
+  <div class="parte" [class.parte-incompleta]="parte.guardadas === 0">
+    <p class="parte-titulo">
+      @if (parte.guardadas > 0) {
+        Añadimos {{ parte.guardadas }} fuentes a tu biblioteca.
+      } @else {
+        No se añadió ninguna nueva.
+      }
+    </p>
+    <p class="tenue">
+      @if (parte.repetidas > 0) {
+        {{ parte.repetidas }} ya las tenías y se actualizaron.
+      }
+      Los datos vienen del catálogo abierto, así que traen resumen aunque el PDF no lo dijera.
+    </p>
+  </div>
+}
+
+<!-- Los que no declaran su DOI. NO es un error del tesista ni del archivo: hay
+     editoriales que no lo escriben dentro, y los escaneados no llevan texto.
+     Se pide a mano porque son diez segundos con el artículo ya abierto. -->
+@if (sinDoi().length > 0) {
+  <div class="sin-doi">
+    <p class="sin-doi-titulo">
+      @if (sinDoi().length === 1) {
+        Un archivo no dice cuál es su DOI:
+      } @else {
+        {{ sinDoi().length }} archivos no dicen cuál es su DOI:
+      }
+    </p>
+    <ul class="sin-doi-lista">
+      @for (nombre of sinDoi(); track nombre) {
+        <li>{{ nombre }}</li>
+      }
+    </ul>
+    <p class="tenue">
+      Ábrelos y copia el DOI de la primera página — tiene esta forma:
+      <code>10.1145/3770762.3772598</code>. Pega uno por línea.
+    </p>
+    <div class="canje-fila">
+      <input
+        type="text"
+        [formControl]="doiAMano"
+        placeholder="10.1145/3770762.3772598"
+        aria-label="DOI del artículo"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button
+        type="button"
+        class="boton"
+        [disabled]="subiendo()"
+        (click)="enviarDoisAMano()"
+      >
+        {{ subiendo() ? 'Buscando…' : 'Añadir' }}
+      </button>
+    </div>
+  </div>
 }
 
 <!-- El parte de la subida. Un import que no dice nada deja al comprador sin

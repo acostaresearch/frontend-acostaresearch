@@ -39,6 +39,17 @@ export interface ResultadoDeImportacion {
   sinResumenEnTotal: number;
 }
 
+/** Qué pasó al pedir fuentes por DOI. */
+export interface ImportacionPorDoi {
+  pedidos: number;
+  guardadas: number;
+  repetidas: number;
+  /** Los que el catálogo abierto no conoce. Se nombran para poder decirlo. */
+  noEncontrados: string[];
+  total: number;
+  sinResumenEnTotal: number;
+}
+
 /**
  * La biblioteca propia del comprador.
  *
@@ -64,6 +75,18 @@ export class MisFuentesService {
         // basta con que el tipo esté en su lista de aceptados.
         headers: { 'Content-Type': archivo.type || 'text/plain' },
       })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Fuentes a partir de los DOI que se sacaron de unos PDF.
+   *
+   * Viaja la lista de DOI, no los archivos: el PDF no sale del equipo del
+   * tesista. Ver `doi-del-pdf.ts`.
+   */
+  porDoi(dois: string[]): Observable<ImportacionPorDoi> {
+    return this.http
+      .post<ApiResponse<ImportacionPorDoi>>(`${this.base}/doi`, { dois })
       .pipe(map((res) => res.data));
   }
 
