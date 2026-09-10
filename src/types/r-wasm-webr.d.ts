@@ -17,6 +17,19 @@
  * Si algún día publican el paquete con sus tipos bien, este archivo se borra.
  */
 declare module '@r-wasm/webr' {
+  /**
+   * Un nodo del sistema de archivos virtual.
+   *
+   * `contents` es un objeto —no una lista— con un hijo por nombre. En los
+   * archivos viene vacío o con los bytes, así que para listar una carpeta se
+   * miran sus claves.
+   */
+  export interface WebRNodoFS {
+    name: string;
+    isFolder?: boolean;
+    contents?: { [nombre: string]: WebRNodoFS };
+  }
+
   /** Una línea de la consola de R, tal como la devuelve `captureR`. */
   export interface WebRSalida {
     type: 'stdout' | 'stderr' | string;
@@ -72,9 +85,15 @@ declare module '@r-wasm/webr' {
     /** Ejecuta código sin devolver nada. Para definir funciones al arrancar. */
     evalRVoid(code: string): Promise<void>;
 
+    /** Devuelve el resultado ya convertido a texto. Para consultas cortas. */
+    evalRString(code: string): Promise<string>;
+
     /** El sistema de archivos virtual: donde aterriza la matriz del tesista. */
     FS: {
       writeFile(path: string, data: ArrayBufferView, flags?: string): Promise<void>;
+      readFile(path: string, flags?: string): Promise<Uint8Array>;
+      lookupPath(path: string): Promise<WebRNodoFS>;
+      unlink(path: string): Promise<void>;
     };
 
     /** Se instancia con `await new webR.Shelter()`, que devuelve una promesa. */

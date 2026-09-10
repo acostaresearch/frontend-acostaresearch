@@ -1,36 +1,10 @@
 <app-site-header />
 
 <main class="pagina">
-  <header class="cabecera">
-    <h1>Analiza tus datos</h1>
-    <p class="subtitulo">
-      R corriendo en esta pestaña. Sube tu matriz y trabaja: no instalas nada y
-      <strong>tus datos no salen de tu equipo</strong>.
-    </p>
-  </header>
-
-  <!-- Lo que esto NO es, arriba y sin letra pequeña.
-       Prometer RStudio y entregar otra cosa sería peor que no ofrecerlo: el
-       tesista lo descubriría delante de su asesor. -->
-  <p class="franqueza">
-    <strong>Esto es R, no RStudio.</strong> Es el mismo R que se declara en una tesis y el
-    mismo código, pero sin la interfaz de RStudio. Si tu asesor te pide ver esa pantalla, abre
-    RStudio y ejecuta el mismo guion: sale igual.
-  </p>
-
-  @if (error(); as mensaje) {
-    <p class="aviso error">{{ mensaje }}</p>
-  }
-
   @if (!aislada()) {
     <!-- Llegó navegando por dentro de la aplicación, así que el navegador no
          recibió las cabeceras que R necesita: viajan con el documento, y por
-         dentro no se pide documento nuevo.
-
-         Se ofrece recargar y no se intenta arrancar igualmente: WebR tiene un
-         canal de reserva para este caso, pero falla más tarde y de forma
-         confusa —en mitad de un análisis— y eso se lee como «la web está
-         rota». Mejor no empezar. -->
+         dentro no se pide documento nuevo. -->
     <section class="arranque">
       <p class="arranque-titulo">Recarga la página para empezar</p>
       <p class="arranque-paso">
@@ -40,8 +14,26 @@
       <button type="button" class="boton" (click)="recargar()">Recargar</button>
     </section>
   } @else if (!listo()) {
-    <!-- R se pide, no se impone: son 30 MB y la mayoría de quien entra aquí
-         solo está mirando. -->
+    <header class="cabecera">
+      <h1>Analiza tus datos</h1>
+      <p class="subtitulo">
+        R corriendo en esta pestaña. Sube tu matriz y trabaja: no instalas nada y
+        <strong>tus datos no salen de tu equipo</strong>.
+      </p>
+    </header>
+
+    <!-- Lo que esto NO es, antes de empezar y sin letra pequeña. Prometer
+         RStudio y entregar otra cosa lo descubriría delante de su asesor. -->
+    <p class="franqueza">
+      <strong>Esto es R, no el programa RStudio.</strong> Es el mismo R que se declara en una
+      tesis y el mismo código, con los paneles ordenados igual. Si tu asesor te pide ver RStudio,
+      abre RStudio y ejecuta el mismo guion: sale igual.
+    </p>
+
+    @if (error(); as mensaje) {
+      <p class="aviso error">{{ mensaje }}</p>
+    }
+
     <section class="arranque">
       @if (r.estado() === 'arrancando') {
         <p class="arranque-titulo">Preparando R…</p>
@@ -55,57 +47,97 @@
       }
     </section>
   } @else {
-    <div class="taller">
-      <!-- ── Izquierda: el archivo y el guion ──────────────────────────── -->
-      <section class="columna">
-        <div class="fila-archivo">
-          <label class="boton secundario">
-            {{ archivo() ? 'Cambiar archivo' : 'Subir mi matriz' }}
-            <input type="file" accept=".csv,.txt" hidden (change)="elegirArchivo($event)" />
-          </label>
+    <!-- ── Los cuatro paneles ────────────────────────────────────────────
+         La misma disposición de RStudio, porque es donde el tesista va a
+         buscar cada cosa: el guion arriba a la izquierda, la consola debajo,
+         lo que existe en la sesión arriba a la derecha, y los archivos y
+         gráficos abajo. -->
+    <div class="barra">
+      <label class="boton secundario pequeno">
+        Subir mi matriz
+        <input type="file" accept=".csv,.txt" hidden (change)="elegirArchivo($event)" />
+      </label>
 
-          @if (archivo(); as nombre) {
-            <span class="archivo-puesto">
-              <strong>{{ nombre }}</strong> cargado como <code>datos.csv</code>
-            </span>
-          } @else {
-            <span class="tenue">Guárdala como CSV desde Excel</span>
-          }
-        </div>
+      <div class="atajos">
+        @for (a of atajos; track a.nombre) {
+          <button type="button" class="atajo" [title]="a.ayuda" (click)="anadir(a.codigo)">
+            {{ a.nombre }}
+          </button>
+        }
+      </div>
 
-        <!-- Los atajos AÑADEN al guion, no lo reemplazan: se va componiendo el
-             análisis sin perder lo escrito. -->
-        <div class="atajos">
-          @for (a of atajos; track a.nombre) {
-            <button type="button" class="atajo" [title]="a.ayuda" (click)="anadir(a.codigo)">
-              {{ a.nombre }}
-            </button>
-          }
-        </div>
+      @if (error(); as mensaje) {
+        <span class="barra-error">{{ mensaje }}</span>
+      }
+    </div>
+
+    <div class="rejilla">
+      <!-- ① Guion ─────────────────────────────────────────────────────── -->
+      <section class="panel guion">
+        <header class="panel-barra">
+          <span class="panel-nombre">Guion</span>
+          <span class="panel-pista">Ctrl+Enter ejecuta una línea</span>
+          <button
+            type="button"
+            class="boton pequeno"
+            [disabled]="ejecutando()"
+            (click)="ejecutarTodo()"
+          >
+            {{ ejecutando() ? 'Ejecutando…' : 'Ejecutar todo' }}
+          </button>
+        </header>
 
         <textarea
+          #editor
           class="editor"
           [formControl]="codigo"
           spellcheck="false"
           aria-label="Tu guion de R"
+          (keydown.control.enter)="ejecutarLinea()"
+          (keydown.meta.enter)="ejecutarLinea()"
         ></textarea>
+      </section>
 
-        <div class="acciones">
-          <button type="button" class="boton" [disabled]="ejecutando()" (click)="ejecutar()">
-            {{ ejecutando() ? 'Ejecutando…' : 'Ejecutar' }}
-          </button>
-          <button type="button" class="boton enlace" (click)="limpiar()">Limpiar la salida</button>
+      <!-- ② Entorno ───────────────────────────────────────────────────── -->
+      <section class="panel entorno">
+        <header class="panel-barra">
+          <span class="panel-nombre">Entorno</span>
+          @if (objetos().length > 0) {
+            <button type="button" class="boton enlace pequeno" (click)="limpiarEntorno()">
+              Vaciar
+            </button>
+          }
+        </header>
+
+        <div class="panel-cuerpo">
+          @if (objetos().length === 0) {
+            <p class="vacio">Aquí aparece lo que vas creando: tus datos, tus variables.</p>
+          } @else {
+            <table class="tabla-entorno">
+              @for (o of objetos(); track o.nombre) {
+                <tr>
+                  <td class="obj-nombre">{{ o.nombre }}</td>
+                  <td class="obj-detalle">{{ o.detalle }}</td>
+                </tr>
+              }
+            </table>
+          }
         </div>
       </section>
 
-      <!-- ── Derecha: la consola ───────────────────────────────────────── -->
-      <section class="columna">
-        <p class="rotulo">Salida</p>
+      <!-- ③ Consola ───────────────────────────────────────────────────── -->
+      <section class="panel consola">
+        <header class="panel-barra oscura">
+          <span class="panel-nombre">Consola</span>
+          <button type="button" class="boton enlace pequeno clara" (click)="limpiarConsola()">
+            Limpiar
+          </button>
+        </header>
 
-        <div class="consola">
+        <div class="panel-cuerpo negro" #consola>
           @if (salida().length === 0) {
-            <p class="consola-vacia">
-              Aquí sale lo mismo que saldría en la consola de RStudio. Pulsa «Ejecutar».
+            <p class="vacio claro">
+              Aquí sale lo mismo que en la consola de RStudio. Ejecuta algo del guion.
             </p>
           } @else {
             @for (linea of salida(); track $index) {
@@ -114,12 +146,82 @@
           }
         </div>
 
-        <p class="nota">
-          Copia esta salida y guárdala con <code>guardar_analisis</code> desde tu conector: es el
-          respaldo de las cifras de tu Capítulo IV, y sin ella ninguna puede aparecer en tu tesis.
-        </p>
+        <!-- Se puede teclear directamente, como en RStudio: para una consulta
+             suelta —«¿cuántas filas tiene?»— abrir el guion es un rodeo. -->
+        <div class="orden">
+          <span class="orden-punta" aria-hidden="true">&gt;</span>
+          <input
+            type="text"
+            [formControl]="ordenSuelta"
+            placeholder="Escribe una orden y pulsa Enter"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Orden para la consola"
+            (keyup.enter)="ejecutarOrden()"
+          />
+        </div>
+      </section>
+
+      <!-- ④ Archivos y gráficos ───────────────────────────────────────── -->
+      <section class="panel archivos">
+        <header class="panel-barra">
+          <button
+            type="button"
+            class="pestana"
+            [class.activa]="pestana() === 'archivos'"
+            (click)="pestana.set('archivos')"
+          >
+            Archivos
+          </button>
+          <button
+            type="button"
+            class="pestana"
+            [class.activa]="pestana() === 'graficos'"
+            (click)="pestana.set('graficos')"
+          >
+            Gráficos @if (graficos().length > 0) { ({{ graficos().length }}) }
+          </button>
+        </header>
+
+        <div class="panel-cuerpo">
+          @if (pestana() === 'archivos') {
+            @if (archivos().length === 0) {
+              <p class="vacio">Sube tu matriz, o guarda algo desde el guion.</p>
+            } @else {
+              <table class="tabla-archivos">
+                @for (a of archivos(); track a.nombre) {
+                  <tr>
+                    <td class="arch-nombre">{{ a.nombre }}</td>
+                    <td class="arch-peso">{{ peso(a.bytes) }}</td>
+                    <td class="arch-accion">
+                      <button type="button" class="boton enlace pequeno" (click)="descargar(a.nombre)">
+                        Descargar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </table>
+            }
+          } @else {
+            @if (graficos().length === 0) {
+              <p class="vacio">
+                Los gráficos aparecen aquí. Prueba con <code>hist(datos$total)</code>.
+              </p>
+            } @else {
+              @for (g of graficos(); track $index) {
+                <img class="grafico" [src]="g" alt="Gráfico generado por tu análisis" />
+              }
+            }
+          }
+        </div>
       </section>
     </div>
+
+    <p class="nota">
+      Copia la salida y guárdala con <code>guardar_analisis</code> desde tu conector: es el
+      respaldo de las cifras de tu Capítulo IV. Todo lo de esta pantalla vive en tu navegador y
+      desaparece al cerrarla — descarga lo que quieras conservar.
+    </p>
   }
 </main>
 

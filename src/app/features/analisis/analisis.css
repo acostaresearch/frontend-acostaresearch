@@ -1,11 +1,12 @@
 .pagina {
-  /* Más ancho que el resto del sitio: son dos columnas con código dentro, y a
-     1000 px cada una queda en una rendija donde no se lee. */
-  max-width: 1360px;
+  /* Ancho casi completo: son cuatro paneles con código dentro, y a 1000 px
+     cada uno queda en una rendija donde no se lee nada. */
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 24px 20px 40px;
+  padding: 20px 16px 32px;
 }
 
+/* ── Antes de arrancar ────────────────────────────────────────────────────── */
 .cabecera {
   margin-bottom: 14px;
 }
@@ -24,8 +25,8 @@ h1 {
   color: var(--color-texto-suave);
 }
 
-/* Lo que esto no es. En su propio recuadro y arriba del todo: si estuviera al
-   pie, el tesista lo leería después de haber hecho el análisis. */
+/* Lo que esto no es. En su propio recuadro y antes de empezar: al pie, se
+   leería después de haber hecho el análisis. */
 .franqueza {
   max-width: 78ch;
   margin: 0 0 18px;
@@ -46,7 +47,6 @@ h1 {
   margin: 0 0 16px;
 }
 
-/* ── Antes de cargar R ────────────────────────────────────────────────────── */
 .arranque {
   display: grid;
   justify-items: center;
@@ -72,69 +72,31 @@ h1 {
   color: var(--color-texto-suave);
 }
 
-/* ── El taller ────────────────────────────────────────────────────────────── */
-.taller {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 980px) {
-  .taller {
-    grid-template-columns: 1fr;
-  }
-}
-
-.columna {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.rotulo {
-  margin: 0;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
-}
-
-/* ── El archivo ───────────────────────────────────────────────────────────── */
-.fila-archivo {
+/* ── La barra de herramientas ─────────────────────────────────────────────── */
+.barra {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
+  margin-bottom: 10px;
 }
 
-/* El <label> hace de botón porque el input va oculto: es la única forma de que
-   abra el diálogo sin enseñar el control gris del navegador. */
-.fila-archivo label.boton {
+.barra-error {
+  font-size: 12.5px;
+  color: var(--color-error);
+}
+
+/* El <label> hace de botón porque el input va oculto: es la única forma de
+   abrir el diálogo sin enseñar el control gris del navegador. */
+.barra label.boton {
   cursor: pointer;
 }
 
-.archivo-puesto strong {
-  color: var(--color-texto);
+.boton.pequeno {
+  padding: 5px 12px;
+  font-size: 12.5px;
 }
 
-.tenue {
-  color: var(--color-texto-tenue);
-}
-
-code {
-  padding: 1px 5px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: 4px;
-}
-
-/* ── Los atajos ───────────────────────────────────────────────────────────── */
 .atajos {
   display: flex;
   flex-wrap: wrap;
@@ -158,25 +120,138 @@ code {
   border-color: var(--color-primario);
 }
 
-/* ── El editor y la consola ───────────────────────────────────────────────── */
-.editor,
+/* ── Los cuatro paneles ───────────────────────────────────────────────────── */
+
+/* La disposición de RStudio: guion y consola a la izquierda, entorno y archivos
+   a la derecha. El alto se reparte para que ninguno quede inservible. */
+.rejilla {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  grid-template-rows: minmax(240px, 42vh) minmax(240px, 42vh);
+  grid-template-areas:
+    'guion entorno'
+    'consola archivos';
+  gap: 10px;
+}
+
+.guion {
+  grid-area: guion;
+}
+.entorno {
+  grid-area: entorno;
+}
 .consola {
-  height: 46vh;
-  min-height: 320px;
-  padding: 12px 14px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  line-height: 1.65;
+  grid-area: consola;
+}
+.archivos {
+  grid-area: archivos;
+}
+
+/* En pantalla estrecha se apilan en el orden en que se usan: primero se
+   escribe, luego se mira la salida, y lo demás es de apoyo. */
+@media (max-width: 1080px) {
+  .rejilla {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(260px, 38vh));
+    grid-template-areas:
+      'guion'
+      'consola'
+      'entorno'
+      'archivos';
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
 }
 
+.panel-barra {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  background: var(--color-fondo);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-barra.oscura {
+  color: #dbe6ff;
+  background: #0b1424;
+  border-bottom-color: #0b1424;
+}
+
+.panel-nombre {
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+.panel-barra.oscura .panel-nombre {
+  color: #8b95a6;
+}
+
+/* La pista del atajo, junto al nombre: es lo que separa una caja de texto de
+   una forma de trabajar, y nadie la descubre sola. */
+.panel-pista {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.boton.enlace.pequeno {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.boton.enlace.clara {
+  color: #8b95a6;
+}
+
+.panel-cuerpo {
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.panel-cuerpo.negro {
+  color: #dbe6ff;
+  background: #101a2e;
+}
+
+.vacio {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-texto-tenue);
+}
+
+.vacio.claro {
+  color: #8b95a6;
+}
+
+/* ── El editor ────────────────────────────────────────────────────────────── */
 .editor {
-  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
   color: var(--color-texto);
   background: var(--color-superficie);
-  border: 1px solid var(--color-borde-fuerte);
-  resize: vertical;
-  /* Sin esto, una línea larga de R desborda la columna y descoloca la rejilla. */
+  border: 0;
+  resize: none;
+  /* Sin esto, una línea larga de R desborda el panel y descoloca la rejilla. */
   white-space: pre;
   overflow: auto;
   tab-size: 2;
@@ -184,22 +259,14 @@ code {
 
 .editor:focus {
   outline: none;
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 3px var(--color-primario-suave);
 }
 
-/* Fondo oscuro: es una consola, y así se distingue de un vistazo de la caja
-   donde se escribe. */
-.consola {
-  overflow: auto;
-  color: #dbe6ff;
-  background: #101a2e;
-  border: 1px solid #101a2e;
-}
-
+/* ── La consola ───────────────────────────────────────────────────────────── */
 .consola pre {
   margin: 0;
-  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -210,23 +277,122 @@ code {
   color: #ffb4a8;
 }
 
-.consola-vacia {
-  margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: #8b95a6;
+.orden {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 7px 12px;
+  background: #0b1424;
+  border-top: 1px solid #1c2a44;
 }
 
-.acciones {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.orden-punta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b8cff;
+}
+
+.orden input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: #dbe6ff;
+  background: none;
+  border: 0;
+}
+
+.orden input:focus {
+  outline: none;
+}
+
+.orden input::placeholder {
+  color: #56637a;
+}
+
+/* ── Entorno y archivos ───────────────────────────────────────────────────── */
+.tabla-entorno,
+.tabla-archivos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.tabla-entorno td,
+.tabla-archivos td {
+  padding: 4px 6px 4px 0;
+  border-bottom: 1px solid var(--color-borde);
+  vertical-align: baseline;
+}
+
+.obj-nombre,
+.arch-nombre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  color: var(--color-texto);
+  overflow-wrap: anywhere;
+}
+
+.obj-detalle {
+  text-align: right;
+  color: var(--color-texto-tenue);
+  white-space: nowrap;
+}
+
+.arch-peso {
+  text-align: right;
+  color: var(--color-texto-tenue);
+  white-space: nowrap;
+}
+
+.arch-accion {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Las pestañas de archivos y gráficos, como en RStudio. */
+.pestana {
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.pestana.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+code {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
 }
 
 .nota {
-  margin: 0;
+  margin: 12px 0 0;
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-texto-tenue);

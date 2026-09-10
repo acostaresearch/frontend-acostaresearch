@@ -87,6 +87,45 @@ export interface LineaDeSalida {
   texto: string;
 }
 
+/** Un objeto vivo en la sesión, como se ve en el panel de entorno. */
+export interface ObjetoDelEntorno {
+  nombre: string;
+  /** «data.frame», «numeric»… lo que diga `class()`. */
+  clase: string;
+  /** «60 obs. de 14 variables», «num [1:60]»… el resumen de una línea. */
+  detalle: string;
+}
+
+/** Un archivo de la carpeta de trabajo. */
+export interface ArchivoDeLaSesion {
+  nombre: string;
+  bytes: number;
+}
+
+/** Lo que devuelve una ejecución: la consola y los gráficos que salieron. */
+export interface Resultado {
+  salida: LineaDeSalida[];
+  /** Cada gráfico como `data:` URL, listo para un `<img>`. */
+  graficos: string[];
+}
+
+/**
+ * Con qué se separan los campos que R devuelve para el panel de entorno.
+ *
+ * Caracteres de control y no comas ni tabuladores: el nombre de una columna
+ * puede llevar una coma dentro, y entonces la fila se partiría en dos. Van
+ * como escape y no como el carácter literal porque literales son invisibles,
+ * y un reformateo que los pierda dejaría el panel vacío sin un solo error.
+ */
+const SEPARADOR_FILA = '\u001e';
+const SEPARADOR_CAMPO = '\u001f';
+
+/** La carpeta donde vive todo lo del tesista. Es el `getwd()` de la sesión. */
+const CASA = '/home/web_user';
+
+/** Dónde caen los gráficos antes de recogerlos. Aparte, para no listarlos. */
+const GRAFICOS = '/tmp/graficos';
+
 /**
  * R corriendo dentro del navegador del tesista.
  *
@@ -233,27 +272,186 @@ export class WebrService {
    * `stderr`, que es como los ve en la consola. Un error de sintaxis es parte
    * del trabajo, no un fallo de la página.
    */
-  async ejecutar(codigo: string): Promise<LineaDeSalida[]> {
+  async ejecutar(codigo: string): Promise<Resultado> {
     const webR = await this.arrancar();
     const shelter = await new webR.Shelter();
 
     try {
-      const resultado = await shelter.captureR(codigo, {
+      /**
+       * El código va envuelto para recoger los gráficos.
+       *
+       * Se abre un dispositivo PNG antes y se cierra después, así que un
+       * `hist()` o un `plot()` del tesista acaban en archivos que luego se
+       * leen. Va dentro de `try` porque no todas las compilaciones de R para
+       * WebAssembly traen el dispositivo: si no está, el `try` se lo traga y
+       * lo único que pasa es que no hay gráficos. El análisis sigue igual.
+       *
+       * Y el `dev.off()` va en `on.exit` para que también se cierre si el
+       * código del tesista falla a mitad: un dispositivo abierto se queda
+       * capturando las ejecuciones siguientes, y entonces el gráfico aparece
+       * una vez y no vuelve a aparecer nunca.
+       */
+      const envuelto = [
+        `try({ dir.create("${GRAFICOS}", showWarnings = FALSE, recursive = TRUE)`,
+        `  unlink(list.files("${GRAFICOS}", full.names = TRUE))`,
+        `  grDevices::png("${GRAFICOS}/g%03d.png", width = 900, height = 620)`,
+        `  on.exit(try(grDevices::dev.off(), silent = TRUE), add = TRUE) }, silent = TRUE)`,
+        codigo,
+      ].join('\n');
+
+      const resultado = await shelter.captureR(envuelto, {
         withAutoprint: true,
         captureStreams: true,
         captureConditions: false,
       });
 
-      return (resultado.output ?? []).map((linea) => ({
-        tipo: linea.type === 'stderr' ? ('stderr' as const) : ('stdout' as const),
-        texto: String(linea.data),
-      }));
+      // El dispositivo se cierra aparte además del `on.exit`: `captureR` evalúa
+      // en su propio ámbito y el `on.exit` de arriba puede dispararse antes de
+      // que el código haya pintado. Cerrarlo dos veces es inofensivo.
+      await webR.evalRVoid('try(while (grDevices::dev.cur() > 1) grDevices::dev.off(), silent = TRUE)');
+
+      return {
+        salida: (resultado.output ?? []).map((linea) => ({
+          tipo: linea.type === 'stderr' ? ('stderr' as const) : ('stdout' as const),
+          texto: String(linea.data),
+        })),
+        graficos: await this.recogerGraficos(webR),
+      };
     } catch (error) {
-      return [{ tipo: 'stderr', texto: error instanceof Error ? error.message : String(error) }];
+      return {
+        salida: [
+          { tipo: 'stderr', texto: error instanceof Error ? error.message : String(error) },
+        ],
+        graficos: [],
+      };
     } finally {
       // Sin esto, cada ejecución deja objetos de R vivos y la pestaña va
       // engordando durante la sesión.
       await shelter.purge();
     }
   }
+
+  /** Los PNG que dejó la ejecución, convertidos a `data:` URL. */
+  private async recogerGraficos(webR: import('@r-wasm/webr').WebR): Promise<string[]> {
+    let nombres: string[] = [];
+
+    try {
+      const carpeta = await webR.FS.lookupPath(GRAFICOS);
+      nombres = Object.keys(carpeta.contents ?? {}).sort();
+    } catch {
+      // No se llegó a crear: no hubo gráficos, o no hay dispositivo PNG.
+      return [];
+    }
+
+    const graficos: string[] = [];
+
+    for (const nombre of nombres) {
+      try {
+        const bytes = await webR.FS.readFile(`${GRAFICOS}/${nombre}`);
+        // Un PNG vacío es un dispositivo que se abrió y no llegó a pintar.
+        if (bytes.length === 0) continue;
+        graficos.push(`data:image/png;base64,${aBase64(bytes)}`);
+      } catch {
+        // Un gráfico que no se puede leer no puede tumbar el análisis entero.
+      }
+    }
+
+    return graficos;
+  }
+
+  /**
+   * Lo que hay vivo en la sesión, para el panel de entorno.
+   *
+   * Se pide a R en una sola llamada y se devuelve ya formateado: preguntar
+   * objeto por objeto serían tantas idas y vueltas como variables, y esto se
+   * refresca después de CADA ejecución.
+   */
+  async entorno(): Promise<ObjetoDelEntorno[]> {
+    const webR = await this.arrancar();
+
+    const codigo = `
+      local({
+        nombres <- ls(envir = globalenv())
+        nombres <- nombres[!startsWith(nombres, ".")]
+        if (length(nombres) == 0) return("")
+        paste(vapply(nombres, function(n) {
+          x <- get(n, envir = globalenv())
+          clase <- paste(class(x), collapse = "/")
+          detalle <- if (is.data.frame(x)) {
+            paste0(nrow(x), " obs. de ", ncol(x), " variables")
+          } else if (is.function(x)) {
+            "funcion"
+          } else if (is.null(dim(x))) {
+            paste0(class(x)[1], " [1:", length(x), "]")
+          } else {
+            paste(dim(x), collapse = " x ")
+          }
+          paste(n, clase, detalle, sep = "\\u001f")
+        }, character(1)), collapse = "\\u001e")
+      })
+    `;
+
+    try {
+      const crudo = await webR.evalRString(codigo);
+      if (!crudo) return [];
+
+      return crudo.split(SEPARADOR_FILA).map((fila) => {
+        const [nombre, clase, detalle] = fila.split(SEPARADOR_CAMPO);
+        return { nombre, clase, detalle };
+      });
+    } catch {
+      // El entorno es información de apoyo: que falle no puede estropear la
+      // ejecución que el tesista acaba de hacer.
+      return [];
+    }
+  }
+
+  /** Los archivos de su carpeta de trabajo, para el panel de archivos. */
+  async archivos(): Promise<ArchivoDeLaSesion[]> {
+    const webR = await this.arrancar();
+
+    try {
+      const carpeta = await webR.FS.lookupPath(CASA);
+      const nombres = Object.keys(carpeta.contents ?? {}).filter((n) => !n.startsWith('.'));
+
+      const archivos: ArchivoDeLaSesion[] = [];
+
+      for (const nombre of nombres.sort()) {
+        try {
+          const bytes = await webR.FS.readFile(`${CASA}/${nombre}`);
+          archivos.push({ nombre, bytes: bytes.length });
+        } catch {
+          // Es una carpeta, no un archivo. No se listan.
+        }
+      }
+
+      return archivos;
+    } catch {
+      return [];
+    }
+  }
+
+  /** Los bytes de un archivo, para poder descargarlo al equipo del tesista. */
+  async leerArchivo(nombre: string): Promise<Uint8Array> {
+    const webR = await this.arrancar();
+    return webR.FS.readFile(`${CASA}/${nombre}`);
+  }
+}
+
+/**
+ * Bytes a base64, por trozos.
+ *
+ * `String.fromCharCode(...bytes)` de una vez revienta la pila con un PNG de
+ * medio mega: son cientos de miles de argumentos en una sola llamada. De 8 en
+ * 8 kB no.
+ */
+function aBase64(bytes: Uint8Array): string {
+  let binario = '';
+  const TROZO = 8192;
+
+  for (let i = 0; i < bytes.length; i += TROZO) {
+    binario += String.fromCharCode(...bytes.subarray(i, i + TROZO));
+  }
+
+  return btoa(binario);
 }
