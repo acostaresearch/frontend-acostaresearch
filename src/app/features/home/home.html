@@ -1,7 +1,20 @@
 <app-site-header />
 
 <main class="pagina">
-  <section class="hero">
+  <!-- Quien ya entró, lo primero y a sangre. Era una tarjeta a media página y
+       había que bajar a buscarla: quien tiene sesión abierta no viene a que le
+       vendan otra vez, viene a su conector. -->
+  @if (auth.isAuthenticated()) {
+    <section class="saludo">
+      <p>
+        Hola, <b>{{ nombre() }}</b
+        >. Tu conector y tus compras están en tu perfil.
+      </p>
+      <a routerLink="/perfil">Ver mi conector y mis datos</a>
+    </section>
+  }
+
+  <section class="seccion hero">
     <!-- Texto a la izquierda y la captura a la derecha. El texto ya iba
          estrecho a propósito —un titular de 16 caracteres por línea se lee
          mejor—, así que la mitad derecha quedaba vacía y el hero parecía sin
@@ -9,7 +22,7 @@
          nada: esto vive dentro de Claude, no en otra web. -->
     <div class="hero-columnas">
       <div class="hero-texto">
-        <p class="eyebrow">Skills para Claude.ai · Tesis y artículos científicos</p>
+        <p class="seccion-marca">Skills para Claude.ai · Tesis y artículos científicos</p>
         <h1>Tú haces tu investigación.<br />No la compras.</h1>
         <p class="entrada">
           Skills que te acompañan paso a paso: de elegir el tema hasta la sustentación, o de una
@@ -44,31 +57,23 @@
     <ul class="cifras">
       @for (c of cifras; track c.pie) {
         <li>
-          <span class="cifra-valor">{{ c.valor }}</span>
+          <span class="cifra-valor" [class.texto]="c.valor.length > 4">{{ c.valor }}</span>
           <span class="cifra-pie">{{ c.pie }}</span>
         </li>
       }
     </ul>
   </section>
 
-  @if (auth.isAuthenticated()) {
-    <section class="mi-panel">
-      <div>
-        <p class="mi-panel-marca">Tu cuenta</p>
-        <h2>Hola, {{ nombre() }}</h2>
-      </div>
-      <a class="boton secundario" routerLink="/perfil">Ver mi conector y mis datos</a>
-    </section>
-  }
-
   <!-- Las dos rutas, lo primero después del hero. Antes la portada hablaba solo
        de tesis y quien venía a publicar un artículo se iba creyendo que aquí no
        había nada para él. Cada tarjeta lleva a su página, donde está el detalle
        fase por fase; el precio sale de la API, no escrito aquí. -->
   @if (rutas().length > 0) {
-    <section class="seccion">
-      <p class="seccion-marca">Dos rutas</p>
-      <h2 class="titulo-seccion">Elige por dónde vas</h2>
+    <section class="seccion gris">
+      <div class="cab">
+        <p class="seccion-marca">Dos rutas</p>
+        <h2 class="titulo-seccion">Elige por dónde vas</h2>
+      </div>
 
       <div class="rutas">
         @for (ruta of rutas(); track ruta.titulo) {
@@ -81,13 +86,13 @@
               @if (ruta.desde) {
                 <span class="ruta-desde">desde</span>
               }
+              <b>{{ ruta.precio }}</b>
               @if (ruta.antes; as antes) {
-                <span class="ruta-antes">{{ antes }}</span>
+                <s>{{ antes }}</s>
               }
-              {{ ruta.precio }}
             </p>
 
-            <a class="boton secundario" [routerLink]="ruta.enlace">{{ ruta.verbo }}</a>
+            <a class="boton" [routerLink]="ruta.enlace">{{ ruta.verbo }}</a>
           </article>
         }
       </div>
@@ -95,9 +100,11 @@
   }
 
   <section class="seccion">
-    <h2 class="titulo-seccion ancho">
-      Cuando tú la haces, la conoces a detalle. Y eso se nota el día de la sustentación.
-    </h2>
+    <div class="cab">
+      <h2 class="titulo-seccion ancho">
+        Cuando tú la haces, la conoces a detalle. Y eso se nota el día de la sustentación.
+      </h2>
+    </div>
 
     <div class="razones">
       @for (razon of razones; track razon.titulo) {
@@ -113,9 +120,11 @@
        Estaba solo dentro de /en-accion, y ahí llega quien ya decidió mirar.
        Quien duda se va sin saber si esto es complicado — y «pegar una URL» es
        precisamente lo que quita el miedo. Cada paso enlaza a su video. -->
-  <section class="seccion">
-    <p class="seccion-marca">Cómo se empieza</p>
-    <h2 class="titulo-seccion">Tres pasos, y el tercero ya es tu capítulo</h2>
+  <section class="seccion gris">
+    <div class="cab">
+      <p class="seccion-marca">Cómo se empieza</p>
+      <h2 class="titulo-seccion">Tres pasos, y el tercero ya es tu capítulo</h2>
+    </div>
 
     <ol class="arranque">
       <li>
@@ -143,8 +152,10 @@
   <!-- Los tres caminos desde el inicio. Sustituyen al desplazamiento: quien
        llega puede elegir por dónde entrar en vez de recorrerlo todo. -->
   <section class="seccion">
-    <p class="seccion-marca">Por dónde seguir</p>
-    <h2 class="titulo-seccion">Mira antes de decidir</h2>
+    <div class="cab">
+      <p class="seccion-marca">Por dónde seguir</p>
+      <h2 class="titulo-seccion">Mira antes de decidir</h2>
+    </div>
 
     <div class="caminos">
       <a class="camino" routerLink="/en-accion">
@@ -153,18 +164,33 @@
           Dos demostraciones completas y sin cortes, y cómo empiezas tú desde la instalación hasta
           el primer capítulo.
         </p>
-        <span class="camino-flecha" aria-hidden="true">→</span>
+        <span class="camino-ir">Ver las demostraciones →</span>
       </a>
       <a class="camino" routerLink="/preguntas">
         <h3>Preguntas frecuentes</h3>
         <p>Si detectan IA, si sirve para tu carrera, qué pasa cuando se acaba el acceso.</p>
-        <span class="camino-flecha" aria-hidden="true">→</span>
+        <span class="camino-ir">Leer las respuestas →</span>
       </a>
       <a class="camino" routerLink="/quien-soy">
         <h3>Quién te acompaña</h3>
         <p>Investigador Renacyt II, docente y jurado de tesis.</p>
-        <span class="camino-flecha" aria-hidden="true">→</span>
+        <span class="camino-ir">Conocerme →</span>
       </a>
+    </div>
+  </section>
+
+  <!-- El cierre. Va en oscuro porque es donde se pide la decisión, y en un
+       sitio entero de blanco y gris una sección más no se distingue. -->
+  <section class="seccion noche corta">
+    <div class="cierre-pagina">
+      <div>
+        <h2 class="titulo-seccion">Empieza por la fase en la que estás hoy.</h2>
+        <p class="seccion-entrada">No tienes que empezar por la primera: entra por donde estés.</p>
+      </div>
+      <div class="acciones">
+        <a class="boton oro grande" routerLink="/planes">Ver los paquetes</a>
+        <a class="boton claro grande" routerLink="/en-accion">Míralo en acción</a>
+      </div>
     </div>
   </section>
 </main>

@@ -21,10 +21,13 @@
     } @else {
       <ol class="capitulos">
         @for (f of fases(); track f.nombre) {
-          <li>
+          <li [class.ancho]="f.alternativa">
             <span class="capitulo-numero" aria-hidden="true">{{ f.numero }}</span>
             <div class="capitulo-cuerpo">
               <h2>{{ f.nombre }}</h2>
+              @if (f.alternativa) {
+                <p class="capitulo-alterna">{{ f.alternativa }}</p>
+              }
               <p>{{ f.descripcion }}</p>
               @if (f.entregable) {
                 <p class="entregable">
@@ -42,9 +45,11 @@
   <!-- Lo que viene en el paquete sin ser una fase de la ruta. Va después del
        listado y sin número, para no dar a entender que hay un paso once. -->
   @if (complementos().length > 0) {
-    <section class="seccion">
-      <p class="seccion-marca">Además</p>
-      <h2 class="titulo-seccion">Incluido en el paquete</h2>
+    <section class="seccion gris">
+      <div class="cab">
+        <p class="seccion-marca">Además</p>
+        <h2 class="titulo-seccion">Incluido en el paquete</h2>
+      </div>
 
       <ol class="capitulos">
         @for (c of complementos(); track c.nombre) {
@@ -93,12 +98,21 @@
     </p>
   </section>
 
-  <section class="seccion">
+  <section class="seccion noche corta">
     <div class="cierre-pagina">
-      <a class="boton grande" routerLink="/planes" [queryParams]="{ plan: 'ARTICULO_SCIENTIFICOS' }">
-        Quiero la ruta completa
+      <div>
+        <h2 class="titulo-seccion">Quiero la ruta completa</h2>
+        <p class="seccion-entrada">
+          Doce meses de acceso, renovables. Incluye el Humanizador académico.
+        </p>
+      </div>
+      <a
+        class="boton oro grande"
+        routerLink="/planes"
+        [queryParams]="{ plan: 'ARTICULO_SCIENTIFICOS' }"
+      >
+        Ver el precio
       </a>
-      <span>Cuatro meses de acceso, renovables. Incluye el Humanizador académico.</span>
     </div>
   </section>
 </main>

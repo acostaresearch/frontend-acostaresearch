@@ -34,10 +34,26 @@ export class Articulo implements OnInit {
   readonly publicadas = signal<SkillPublica[]>([]);
   readonly cargando = signal(true);
 
+  /**
+   * De qué fase es cada skill, sacado de su código.
+   *
+   * `articulo-fase3-…` es la fase 3; `articulo-fase3b-…` es una VARIANTE de la
+   * 3, no la cuarta de la fila. La letra es lo que las distingue, y estaba ahí
+   * desde que se publicaron: antes se ignoraba y la lista contaba 3B como un
+   * paso más, así que numeraba once fases donde hay diez y desplazaba una
+   * posición todo lo que venía detrás.
+   */
+  private static readonly FASE = /^articulo-fase(\d+)([a-z])?/;
+
   /** Quita del nombre la posición que ya pinta la propia lista («3 · …»). */
-  private ficha(skill: SkillPublica, numero?: number) {
+  private ficha(skill: SkillPublica, conNumero = true) {
+    const parte = Articulo.FASE.exec(skill.code);
+    const letra = parte?.[2]?.toUpperCase() ?? '';
+
     return {
-      numero: numero === undefined ? '' : String(numero).padStart(2, '0'),
+      numero: conNumero && parte ? parte[1] + letra : '',
+      /** Una variante ocupa la fila entera y dice a cuál sustituye. */
+      alternativa: letra ? `En lugar de la fase ${parte?.[1]}` : '',
       nombre: skill.displayName.replace(/^\s*\d+\s*·\s*/, ''),
       ...(DESCRIPCIONES[skill.code] ?? { descripcion: skill.summary, entregable: '' }),
     };
@@ -54,7 +70,7 @@ export class Articulo implements OnInit {
   readonly fases = computed(() =>
     this.publicadas()
       .filter((skill) => skill.code.startsWith('articulo-fase'))
-      .map((skill, i) => this.ficha(skill, i + 1)),
+      .map((skill) => this.ficha(skill)),
   );
 
   /**
@@ -69,7 +85,7 @@ export class Articulo implements OnInit {
   readonly complementos = computed(() =>
     this.publicadas()
       .filter((skill) => !skill.code.startsWith('articulo-fase'))
-      .map((skill) => this.ficha(skill)),
+      .map((skill) => this.ficha(skill, false)),
   );
 
   ngOnInit(): void {

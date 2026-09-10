@@ -1,23 +1,43 @@
 /* ── Sistema de diseño ──────────────────────────────────────────────────── */
 :root {
-  --color-fondo: #f5f6f8;
+  --color-fondo: #f4f5f8;
   --color-superficie: #ffffff;
-  --color-borde: #e2e5ea;
-  --color-borde-fuerte: #cbd2dc;
-  --color-texto: #1a2233;
-  --color-texto-suave: #5c6779;
-  --color-texto-tenue: #8b95a6;
+  --color-borde: #e6e8ee;
+  --color-borde-fuerte: #d5d9e2;
+  --color-texto: #161a23;
+  --color-texto-suave: #5b6272;
+  --color-texto-tenue: #8a91a0;
 
-  --color-primario: #1a56db;
-  --color-primario-oscuro: #1544ae;
-  --color-primario-suave: #eaf0fd;
+  --color-primario: #1d4ed8;
+  --color-primario-oscuro: #1740ad;
+  --color-primario-suave: #e8eefc;
 
-  --color-error: #c22b2b;
+  --color-error: #c62828;
   --color-error-suave: #fdecec;
-  --color-exito: #12734b;
-  --color-exito-suave: #e7f6ef;
+  --color-exito: #177a45;
+  --color-exito-suave: #e3f5ea;
   --color-aviso: #96590d;
   --color-aviso-suave: #fdf3e3;
+
+  /*
+   * El segundo tema: azul noche y dorado.
+   *
+   * No es decoración. Las bandas de cierre y el pie son los sitios donde se
+   * pide la decisión, y en un sitio entero de blanco y azul claro ninguno
+   * destacaba: se leían como una sección más. En oscuro, cada una corta la
+   * página y se ve desde lejos que ahí hay algo que hacer.
+   */
+  --noche: #0a1128;
+  --noche-2: #141c3d;
+  --dorado: #e0b973;
+  --dorado-claro: #ffe9b8;
+  --gris-noche: #a8b4d4;
+  --crema: #fff6e8;
+
+  /* El aire de las bandas y el margen que dejan a los lados. */
+  --banda: 88px;
+  --lado: 56px;
+  --centro: 1480px;
 
   --radio: 10px;
   --radio-sm: 8px;
@@ -25,7 +45,15 @@
   --transicion: 150ms ease;
 
   --fuente:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --banda: 56px;
+    --lado: 20px;
+  }
 }
 
 *,
@@ -316,10 +344,131 @@ a:hover {
    garantizar que un día dejen de parecerse entre sí.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/*
+ * La página va a sangre y quien centra el contenido es cada banda.
+ *
+ * Antes la página era una columna de 1120 px sobre fondo gris, y todas las
+ * secciones caían dentro. Con eso no se puede cambiar de fondo: una sección
+ * oscura saldría como un rectángulo flotando en medio, no como una banda que
+ * corta la página de lado a lado. Y esa alternancia —blanco, gris, noche— es
+ * la que da el ritmo de lectura.
+ */
 .pagina {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 20px;
+  /* Llega al pie de la ventana aunque la pagina sea corta. Sin esto, en
+     «Quien soy» —que es media pantalla de texto— el pie quedaba a media altura
+     y debajo se veia el gris del cuerpo, como si faltara algo. */
+  min-height: calc(100vh - 69px);
+  background: var(--color-superficie);
+}
+
+/*
+ * Una banda: fondo a todo lo ancho y contenido centrado, sin envoltorio.
+ *
+ * La rejilla de tres columnas hace las dos cosas a la vez. Los hijos caen
+ * solos en la del medio, así que ninguna plantilla necesita un `<div>` de más
+ * para centrarse; y el que quiera ir a sangre —una imagen, una franja— pide
+ * `grid-column: 1 / -1` y ya está.
+ */
+.seccion,
+.encabezado-pagina {
+  display: grid;
+  grid-template-columns:
+    minmax(var(--lado), 1fr)
+    minmax(0, var(--centro))
+    minmax(var(--lado), 1fr);
+  align-content: start;
+  padding: var(--banda) 0;
+}
+
+.seccion > *,
+.encabezado-pagina > * {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* Las dos variantes de fondo. La clara separa bloques; la oscura es donde se
+   pide algo, y por eso corta. */
+.seccion.gris {
+  background: var(--color-fondo);
+}
+
+.seccion.noche {
+  color: #fff;
+  background: var(--noche);
+}
+
+/* Las preguntas: una columna de lectura, no una tabla a 1480 px. */
+.faq {
+  max-width: 900px;
+}
+
+/* Media banda: para los cierres, que son dos frases y un botón. */
+.seccion.corta {
+  padding: 56px 0;
+}
+
+/* En un cierre, el título y la entrada van pegados: son una sola frase partida
+   en dos, no una sección con su contenido debajo. */
+.seccion.corta .titulo-seccion,
+.seccion.corta .seccion-entrada {
+  max-width: 720px;
+  margin-bottom: 0;
+}
+
+.seccion.corta .seccion-entrada {
+  margin-top: 12px;
+}
+
+/* El bloque de rótulo, título y entrada que abre una sección. Con su propio
+   ancho, más estrecho que la banda: un titular a 1480 px no se lee. */
+.cab {
+  max-width: 760px;
+  margin-bottom: 40px;
+}
+
+.cab .titulo-seccion,
+.cab .seccion-entrada {
+  margin-bottom: 0;
+}
+
+.cab .seccion-entrada {
+  margin-top: 18px;
+}
+
+.seccion.noche .seccion-marca {
+  color: var(--dorado);
+}
+
+.seccion.noche .titulo-seccion,
+.seccion.noche h1,
+.seccion.noche h2,
+.seccion.noche h3 {
+  color: #fff;
+}
+
+.seccion.noche .seccion-entrada,
+.seccion.noche p {
+  color: var(--gris-noche);
+}
+
+/*
+ * La escala tipográfica del sitio público, y solo del público.
+ *
+ * Va colgada de `.pagina` a propósito: el panel, el perfil y el checkout usan
+ * los mismos `h1`/`h2` para cosas que no son titulares de portada, y un `h1`
+ * de 72 px en «Accesos» sería absurdo.
+ */
+.pagina h1 {
+  font-size: clamp(40px, 5vw, 72px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.pagina h3 {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .boton.grande {
@@ -333,49 +482,90 @@ a:hover {
   text-align: center;
 }
 
-.seccion {
-  padding: 64px 0;
+/* En el sitio público los botones van sueltos y en fila, no ocupando el ancho
+   de un formulario. */
+.pagina .boton {
+  width: auto;
 }
 
-.seccion + .seccion {
-  border-top: 1px solid var(--color-borde);
+/* El botón de las bandas oscuras. En dorado y no en azul: sobre el noche, el
+   azul de marca casi no se despega del fondo. */
+.boton.oro {
+  color: var(--noche);
+  background: var(--dorado);
+  border-color: var(--dorado);
 }
 
+.boton.oro:hover:not(:disabled) {
+  background: var(--dorado-claro);
+}
+
+/* El secundario de las bandas oscuras: solo contorno. */
+.boton.claro {
+  color: #fff;
+  background: none;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.boton.claro:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* El rótulo de la sección. Sin versalitas: a 14,5 px y en azul ya se separa
+   del título, y en mayúsculas competía con él. */
 .seccion-marca {
   margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-size: 14.5px;
+  font-weight: 700;
   color: var(--color-primario);
 }
 
 .titulo-seccion {
-  max-width: 22ch;
-  margin: 0 0 14px;
-  font-size: clamp(26px, 3.4vw, 36px);
-  font-weight: 700;
-  line-height: 1.18;
+  max-width: 24ch;
+  margin: 0 0 18px;
+  font-size: clamp(30px, 3vw, 42px);
+  font-weight: 800;
+  line-height: 1.12;
   letter-spacing: -0.015em;
   text-wrap: balance;
   color: var(--color-texto);
 }
 
+/* Un `h1` de portada dentro de una página interior: grande, pero no tanto como
+   el del inicio. */
+h1.titulo-seccion {
+  max-width: 20ch;
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
 .titulo-seccion.ancho {
-  max-width: 26ch;
+  max-width: 30ch;
 }
 
 .seccion-entrada {
-  max-width: 62ch;
-  margin: 0 0 34px;
-  font-size: 16px;
-  line-height: 1.65;
+  max-width: 640px;
+  margin: 0 0 40px;
+  font-size: 18.5px;
+  line-height: 1.55;
   color: var(--color-texto-suave);
+}
+
+.seccion-entrada.ancho {
+  max-width: 78ch;
 }
 
 /* Encabezado de una página interior: marca, título y entrada. */
 .encabezado-pagina {
-  padding: 56px 0 8px;
+  padding: var(--banda) 0 40px;
+}
+
+/* El encabezado y lo primero que viene debajo son la misma banda: cada uno
+   ponía su propio relleno y entre el titular y el contenido quedaban 176 px
+   de nada. */
+.encabezado-pagina + .seccion:not(.gris):not(.noche) {
+  padding-top: 0;
 }
 
 .lista-check {
@@ -406,49 +596,50 @@ a:hover {
 }
 
 /* Rejilla de cifras: se usa en el inicio y en la página del autor. */
+/* Cuatro cifras separadas por una línea, no cuatro cajas. Encajonadas pesaban
+   tanto como una tarjeta de producto, y son un apunte al pie del titular. */
 .cifras {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--color-borde);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-  overflow: hidden;
+  border-top: 1px solid var(--color-borde);
 }
 
 .cifras li {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 20px 18px;
-  background: var(--color-superficie);
+  gap: 2px;
+  padding: 26px 28px 0 0;
+}
+
+.cifras li + li {
+  padding-left: 28px;
+  border-left: 1px solid var(--color-borde);
 }
 
 .cifra-valor {
-  font-size: 26px;
-  font-weight: 750;
-  line-height: 1;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.05;
   letter-spacing: -0.02em;
   color: var(--color-primario);
 }
 
-.cifra-pie {
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--color-texto-suave);
+/* Una cifra que es una palabra —«APA 7 o IEEE Vancouver»— a 40 px ocuparía
+   tres renglones y descuadraría la fila. */
+.cifra-valor:not(:has(+ .cifra-pie)),
+.cifra-valor.texto {
+  font-size: 24px;
+  line-height: 1.2;
+  padding-top: 8px;
 }
 
-@media (max-width: 900px) {
-  .seccion {
-    padding: 48px 0;
-  }
-
-  .cifras {
-    grid-template-columns: 1fr 1fr;
-  }
+.cifra-pie {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
 }
 
 /* La página no se mueve mientras hay una ventana modal abierta. Lo pone y lo
@@ -465,39 +656,66 @@ body.sin-scroll {
  * .titulo-seccion: es el mobiliario de una página de producto, y duplicarlo
  * sería garantizar que un día se vean distintas.
  */
+/* Las fases: una rejilla de dos, con la línea por dentro y el borde por fuera.
+   Cada una respira lo que respira una tarjeta, porque cada una es una fase de
+   trabajo de varias semanas y no una viñeta. */
 .capitulos {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1px;
   margin: 0 0 34px;
   padding: 0;
   list-style: none;
-  background: var(--color-borde);
+  background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  border-radius: 16px;
   overflow: hidden;
 }
 
 .capitulos li {
   display: grid;
   grid-template-columns: 44px 1fr;
-  gap: 14px;
-  padding: 24px;
-  background: var(--color-superficie);
+  gap: 4px 16px;
+  align-content: start;
+  padding: 34px 36px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.capitulos li:nth-child(odd) {
+  border-right: 1px solid var(--color-borde);
+}
+
+.capitulos li:nth-last-child(-n + 2):not(.ancho) {
+  border-bottom: 0;
+}
+
+.capitulos li:last-child {
+  border-bottom: 0;
+}
+
+/* Una fase que no es un paso más de la fila: la alternativa a otra, o lo que
+   viene incluido sin ser fase. Ocupa el ancho entero. */
+.capitulos li.ancho {
+  grid-column: 1 / -1;
+  border-right: 0;
 }
 
 .capitulo-numero {
   font-size: 15px;
-  font-weight: 750;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.3;
-  color: var(--color-borde-fuerte);
+  padding-top: 2px;
+  color: var(--color-texto-tenue);
+}
+
+.capitulo-cuerpo {
+  grid-column: 2;
 }
 
 .capitulo-cuerpo h2,
 .capitulo-cuerpo h3 {
   margin: 0 0 8px;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   line-height: 1.3;
   color: var(--color-texto);
@@ -505,26 +723,37 @@ body.sin-scroll {
 
 .capitulo-cuerpo p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.62;
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
+/* «En lugar de la fase 3» y parecidos: la etiqueta que dice que esa fase no se
+   suma a las otras, sino que sustituye a una. */
+.capitulo-alterna {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
 .entregable {
-  margin-top: 14px !important;
-  padding-top: 12px;
+  margin-top: 18px !important;
+  padding-top: 14px;
   border-top: 1px solid var(--color-borde);
-  font-size: 13px !important;
+  font-size: 15px !important;
   color: var(--color-texto) !important;
 }
 
 .entregable-rotulo {
   display: block;
   margin-bottom: 2px;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: 13.5px;
+  font-weight: 700;
   color: var(--color-exito);
 }
 
@@ -534,11 +763,19 @@ body.sin-scroll {
   color: var(--color-texto-tenue);
 }
 
+/* El cierre: lo que se pide, a la izquierda, y el botón al otro extremo. */
 .cierre-pagina {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px 40px;
   align-items: center;
+  justify-content: space-between;
+}
+
+.cierre-pagina .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .cierre-pagina span {
@@ -550,5 +787,33 @@ body.sin-scroll {
 @media (max-width: 900px) {
   .capitulos {
     grid-template-columns: 1fr;
+  }
+
+  .capitulos li:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .capitulos li:nth-last-child(-n + 2):not(.ancho) {
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cifras li:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .cifras {
+    grid-template-columns: 1fr;
+  }
+
+  .cifras li + li {
+    padding-left: 0;
+    border-left: 0;
   }
 }

@@ -1,3 +1,10 @@
+/* La asesoría es la única sección oscura de esta página: las fotos pierden el
+   marco claro, que sobre el noche se veía como un recorte mal pegado. */
+.asesoria-fotos img {
+  background: var(--noche-2);
+  border-color: rgba(168, 180, 212, 0.25);
+}
+
 /* ── Asesoría personalizada ───────────────────────────────────────────────
  *
  * Texto a la izquierda y las tres fotos a la derecha en una tira: la primera
@@ -77,7 +84,7 @@
 
 .libros-lista h3 {
   margin: 0 0 4px;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   line-height: 1.35;
   color: var(--color-texto);
@@ -85,7 +92,7 @@
 
 .libros-lista p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 1.55;
   color: var(--color-texto-tenue);
 }

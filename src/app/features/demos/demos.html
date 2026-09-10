@@ -24,13 +24,15 @@
 
   <!-- Explicado el arranque, toca enseñarlo: los videos son la prueba de que
        los tres pasos de arriba terminan en un documento de verdad. -->
-  <section class="seccion">
-    <p class="seccion-marca">Demostración en vivo</p>
-    <h2 class="titulo-seccion">Antes de decidir, siéntate a verme trabajar</h2>
-    <p class="seccion-entrada">
-      Dos demostraciones completas, en tiempo real y sin cortes. Prefiero que lo veas con tus
-      propios ojos antes de que gastes un sol.
-    </p>
+  <section class="seccion noche">
+    <div class="cab">
+      <p class="seccion-marca">Demostración en vivo</p>
+      <h2 class="titulo-seccion">Antes de decidir, siéntate a verme trabajar</h2>
+      <p class="seccion-entrada">
+        Dos demostraciones completas, en tiempo real y sin cortes. Prefiero que lo veas con tus
+        propios ojos antes de que gastes un sol.
+      </p>
+    </div>
 
     <div class="demos">
       @for (demo of demos; track demo.titulo) {
@@ -58,7 +60,7 @@
     </div>
 
     <p class="pie-demos">
-      <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+      <a class="boton oro" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
         Quiero avanzar así
       </a>
       <span>
@@ -69,7 +71,9 @@
   </section>
 
   <section class="seccion">
-    <h2 class="titulo-seccion">Las dos dudas que siempre aparecen</h2>
+    <div class="cab">
+      <h2 class="titulo-seccion">Las dos dudas que siempre aparecen</h2>
+    </div>
 
     <div class="objeciones">
       @for (o of objeciones; track o.pregunta) {

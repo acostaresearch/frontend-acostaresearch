@@ -41,34 +41,38 @@
 
   <!-- Lo que las Skills no resuelven. Va justo después del listado porque es
        la objeción que aparece al terminar de leerlo: «¿y si me trabo?». -->
-  <section class="seccion asesoria">
-    <div class="asesoria-texto">
-      <p class="seccion-marca">Cuando lo necesites</p>
-      <h2 class="titulo-seccion">Asesoría personalizada conmigo</h2>
-      <p class="seccion-entrada">
-        El método resuelve casi todo. Para lo que no, tienes 30 minutos conmigo, uno a uno, para
-        destrabar tu caso puntual.
-      </p>
-    </div>
+  <section class="seccion noche">
+    <div class="asesoria">
+      <div class="asesoria-texto">
+        <p class="seccion-marca">Cuando lo necesites</p>
+        <h2 class="titulo-seccion">Asesoría personalizada conmigo</h2>
+        <p class="seccion-entrada">
+          El método resuelve casi todo. Para lo que no, tienes 30 minutos conmigo, uno a uno, para
+          destrabar tu caso puntual.
+        </p>
+      </div>
 
-    <ul class="asesoria-fotos">
-      @for (foto of asesoria; track foto.src) {
-        <li>
-          <img [src]="foto.src" [alt]="foto.alt" loading="lazy" decoding="async" />
-        </li>
-      }
-    </ul>
+      <ul class="asesoria-fotos">
+        @for (foto of asesoria; track foto.src) {
+          <li>
+            <img [src]="foto.src" [alt]="foto.alt" loading="lazy" decoding="async" />
+          </li>
+        }
+      </ul>
+    </div>
   </section>
 
   <!-- El respaldo bibliográfico. Después de la asesoría y antes del precio:
        es el último argumento antes de pedir la decisión. -->
   <section class="seccion libros">
-    <p class="seccion-marca">Respaldo académico</p>
-    <h2 class="titulo-seccion">No es un método improvisado</h2>
-    <p class="seccion-entrada ancho">
-      Cada Skill sigue la estructura de los libros de metodología que tu asesor ya conoce y exige.
-      Es un plus, no una sorpresa en tu sustentación.
-    </p>
+    <div class="cab">
+      <p class="seccion-marca">Respaldo académico</p>
+      <h2 class="titulo-seccion">No es un método improvisado</h2>
+      <p class="seccion-entrada ancho">
+        Cada Skill sigue la estructura de los libros de metodología que tu asesor ya conoce y exige.
+        Es un plus, no una sorpresa en tu sustentación.
+      </p>
+    </div>
 
     <ul class="libros-lista">
       @for (libro of libros; track libro.titulo) {
@@ -86,12 +90,17 @@
     </ul>
   </section>
 
-  <section class="seccion">
+  <section class="seccion gris corta">
     <div class="cierre-pagina">
+      <div>
+        <h2 class="titulo-seccion">Quiero el paquete completo</h2>
+        <p class="seccion-entrada">
+          Doce meses de acceso, renovables, y 30 minutos de asesoría conmigo.
+        </p>
+      </div>
       <a class="boton grande" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
-        Quiero el paquete completo
+        Ver el precio
       </a>
-      <span>Tres meses de acceso, renovables, y 30 minutos de asesoría conmigo.</span>
     </div>
   </section>
 </main>

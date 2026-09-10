@@ -13,52 +13,64 @@ import { RouterLink } from '@angular/router';
   selector: 'app-paso-siguiente',
   imports: [RouterLink],
   template: `
-    <nav class="salto">
-      <div>
-        <p class="salto-marca">Siguiente</p>
-        <p class="salto-titulo">{{ titulo() }}</p>
-        <p class="salto-texto">{{ texto() }}</p>
+    <nav class="seccion noche corta">
+      <div class="salto">
+        <div>
+          <p class="salto-marca">Siguiente</p>
+          <p class="salto-titulo">{{ titulo() }}</p>
+          <p class="salto-texto">{{ texto() }}</p>
+        </div>
+        <a class="boton oro" [routerLink]="enlace()">{{ etiqueta() }}</a>
       </div>
-      <a class="boton" [routerLink]="enlace()">{{ etiqueta() }}</a>
     </nav>
   `,
   styles: `
+    /* El anfitrion no pinta caja por defecto, y sin esto la banda no llega a
+       los bordes de la pagina. */
+    :host {
+      display: block;
+    }
+
+    /* Es una banda de la página, no una tarjeta dentro de ella: la rejilla y el
+       fondo los pone .seccion.noche de los estilos globales, para que sea la
+       misma banda de cierre en las seis páginas. */
     .salto {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 24px 40px;
       align-items: center;
       justify-content: space-between;
-      margin: 8px 0 64px;
-      padding: 26px 28px;
-      background: var(--color-superficie);
-      border: 1px solid var(--color-borde);
-      border-radius: var(--radio);
     }
 
     .salto-marca {
-      margin: 0 0 4px;
-      font-size: 11.5px;
-      font-weight: 650;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: var(--color-primario);
+      margin: 0 0 6px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--dorado);
     }
 
     .salto-titulo {
-      margin: 0 0 4px;
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: var(--color-texto);
+      margin: 0 0 6px;
+      font-size: clamp(26px, 2.4vw, 34px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+      color: #fff;
     }
 
     .salto-texto {
-      max-width: 52ch;
+      max-width: 56ch;
       margin: 0;
-      font-size: 14px;
+      font-size: 17px;
       line-height: 1.55;
-      color: var(--color-texto-suave);
+      color: var(--gris-noche);
+    }
+
+    .boton {
+      flex: 0 0 auto;
+      width: auto;
+      padding: 13px 26px;
+      font-size: 15.5px;
     }
   `,
 })

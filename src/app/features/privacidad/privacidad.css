@@ -1,3 +1,11 @@
+/* Un documento seguido, no una página de bandas. Ahora que la página va a
+   sangre, esta se pone su propia columna de lectura. */
+.pagina {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--banda) var(--lado);
+}
+
 /* =========================================================
    POLÍTICA DE PRIVACIDAD
    Diseño limpio, profesional y cómodo para lectura larga

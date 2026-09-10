@@ -1,3 +1,24 @@
+/* Los videos van sobre el azul noche: es una sala a oscuras, y un reproductor
+   sobre blanco pide menos que se le mire. */
+.seccion.noche .demo h3 {
+  color: #fff;
+}
+
+.seccion.noche .demo p,
+.seccion.noche .pie-demos span {
+  color: var(--gris-noche);
+}
+
+.seccion.noche .demo-video.vacio {
+  color: var(--gris-noche);
+  background: var(--noche-2);
+  border-color: rgba(168, 180, 212, 0.25);
+}
+
+.seccion.noche .pie-demos a:not(.boton) {
+  color: var(--dorado);
+}
+
 .demos {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -93,41 +114,41 @@
 .pasos {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  gap: 40px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .pasos li {
-  padding-top: 18px;
-  border-top: 2px solid var(--color-primario);
+  padding: 22px 40px 0 0;
+  border-top: 3px solid var(--color-primario);
 }
 
 .paso-numero {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
+  width: 34px;
+  height: 34px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--color-primario);
   border-radius: 50%;
 }
 
 .pasos h2 {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0;
+  font-size: 19px;
   font-weight: 700;
   color: var(--color-texto);
 }
 
 .pasos p {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.65;
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
@@ -135,29 +156,30 @@
 .objeciones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 26px;
-  margin-top: 30px;
+  gap: 28px;
 }
 
+/* Las dos objeciones, en crema y no en blanco: no son una sección más de la
+   página, son la conversación incómoda que hay que tener antes de cobrar. */
 .objecion {
-  padding: 26px;
-  background: var(--color-aviso-suave);
-  border-radius: var(--radio);
+  padding: 34px;
+  background: var(--crema);
+  border-radius: 16px;
 }
 
 .objecion h3 {
-  margin: 0 0 10px;
-  font-size: 18px;
+  margin: 0;
+  font-size: 19px;
   font-weight: 700;
   line-height: 1.32;
   color: var(--color-texto);
 }
 
 .objecion p {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.68;
-  color: var(--color-texto-suave);
+  margin: 12px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: #5e5448;
 }
 
 @media (max-width: 900px) {

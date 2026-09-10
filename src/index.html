@@ -9,7 +9,23 @@
       name="description"
       content="Nueve capítulos que acompañan la redacción de tu tesis desde tu propio Claude: preguntan, explican el criterio metodológico y ordenan lo que tú decides."
     />
-    <meta name="theme-color" content="#1a56db" />
+    <meta name="theme-color" content="#1d4ed8" />
+
+    <!-- La tipografia del sitio.
+         Se precarga la conexion a los dos dominios de Google Fonts antes de
+         pedir la hoja: sin `preconnect`, el navegador descubre el segundo
+         (donde estan los archivos de la fuente) solo despues de leer el CSS, y
+         se pagan dos negociaciones TLS en serie.
+
+         `display=swap` para que el texto se lea desde el primer momento con la
+         fuente del sistema y cambie cuando llegue la buena. Una pagina en
+         blanco esperando una fuente es peor que una pagina con otra fuente. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    />
 
     <!-- Iconos.
          El .ico lleva 16, 32 y 48 px dentro y lo entienden hasta los clientes

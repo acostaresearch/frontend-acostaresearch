@@ -10,10 +10,11 @@
 .contenido {
   display: flex;
   align-items: center;
-  gap: 28px;
-  max-width: 1120px;
+  gap: 36px;
+  height: 68px;
+  max-width: var(--centro);
   margin: 0 auto;
-  padding: 12px 20px;
+  padding: 0 var(--lado);
 }
 
 /* ── Marca ──────────────────────────────────────────────────────────────── */
@@ -26,34 +27,42 @@
 }
 
 .marca-nombre {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--color-texto);
 }
 
 .marca-cola {
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--color-primario);
 }
 
 /* ── Navegación ─────────────────────────────────────────────────────────── */
 .navegacion {
   display: flex;
-  gap: 22px;
+  gap: 6px;
   margin-right: auto;
 }
 
+/* Cada destino con su propia zona pulsable, no un texto suelto: en una barra
+   de cinco enlaces seguidos, acertar con el ratón es parte del problema. */
 .navegacion a {
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 15px;
+  white-space: nowrap;
   color: var(--color-texto-suave);
   text-decoration: none;
-  transition: color var(--transicion);
+  border-radius: 7px;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
 }
 
 .navegacion a:hover {
   color: var(--color-texto);
+  background: var(--color-fondo);
 }
 
 .navegacion a.activo {

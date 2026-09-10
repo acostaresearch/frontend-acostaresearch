@@ -1,16 +1,23 @@
+/*
+ * El pie, en azul noche.
+ *
+ * En blanco no se distinguía del final de la página: la última sección y el
+ * pie eran la misma mancha, y no se sabía dónde acababa el contenido. En
+ * oscuro cierra el documento, que es lo único que un pie tiene que hacer.
+ */
 .pie {
-  margin-top: 72px;
-  padding: 48px 20px 28px;
-  color: var(--color-texto-suave);
-  background: var(--color-superficie);
-  border-top: 1px solid var(--color-borde);
+  padding: 64px var(--lado) 40px;
+  font-size: 15px;
+  color: var(--gris-noche);
+  background: #060b1c;
+  border-top: 1px solid rgba(224, 185, 115, 0.25);
 }
 
 .contenido {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr;
-  gap: 36px;
-  max-width: 1120px;
+  grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
+  gap: 40px;
+  max-width: var(--centro);
   margin: 0 auto;
 }
 
@@ -36,46 +43,44 @@
 
 .columna h3 {
   margin: 0 0 2px;
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-texto);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dorado);
 }
 
 .columna a {
-  font-size: 13.5px;
-  color: var(--color-texto-suave);
+  font-size: 15px;
+  color: var(--gris-noche);
   text-decoration: none;
 }
 
 .columna a:hover {
-  color: var(--color-primario);
+  color: #fff;
 }
 
 .marca .nombre {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-texto);
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
 }
 
 .marca .nombre span {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--color-primario);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dorado-claro);
 }
 
 .marca .descripcion {
-  max-width: 34ch;
+  max-width: 340px;
   margin: 0;
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.6;
 }
 
 .tenue {
-  font-size: 12.5px;
-  color: var(--color-texto-tenue);
+  font-size: 13px;
+  color: rgba(168, 180, 212, 0.75);
 }
 
 /* ── Redes y perfiles ───────────────────────────────────────────────────── */
@@ -93,8 +98,8 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  color: var(--color-texto-suave);
-  border: 1px solid var(--color-borde);
+  color: var(--gris-noche);
+  border: 1px solid rgba(168, 180, 212, 0.3);
   border-radius: var(--radio-sm);
   transition:
     color var(--transicion),
@@ -108,28 +113,28 @@
 }
 
 .redes a:hover {
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-color: var(--color-primario);
+  color: var(--noche);
+  background: var(--dorado);
+  border-color: var(--dorado);
 }
 
 .redes a:focus-visible {
-  outline: 2px solid var(--color-primario);
+  outline: 2px solid var(--dorado);
   outline-offset: 2px;
 }
 
 /* ── Línea legal ────────────────────────────────────────────────────────── */
 .legal {
-  max-width: 1120px;
-  margin: 36px auto 0;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-borde);
+  max-width: var(--centro);
+  margin: 44px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(168, 180, 212, 0.18);
 }
 
 .legal p {
   margin: 0;
-  font-size: 12.5px;
-  color: var(--color-texto-tenue);
+  font-size: 13.5px;
+  color: var(--gris-noche);
 }
 
 /* El aviso no es relleno legal: es la promesa que sí se puede sostener. */
