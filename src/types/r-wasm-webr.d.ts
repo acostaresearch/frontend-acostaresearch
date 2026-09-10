@@ -69,6 +69,8 @@ declare module '@r-wasm/webr' {
     constructor(options?: WebROpciones);
     init(): Promise<unknown>;
     installPackages(packages: string[], quiet?: boolean): Promise<void>;
+    /** Ejecuta código sin devolver nada. Para definir funciones al arrancar. */
+    evalRVoid(code: string): Promise<void>;
 
     /** El sistema de archivos virtual: donde aterriza la matriz del tesista. */
     FS: {

@@ -13,6 +13,74 @@ import { Injectable, signal } from '@angular/core';
  */
 const VERSION = '0.2.0';
 
+/**
+ * Las funciones que una tesis necesita y que R no trae con ese nombre.
+ *
+ * POR QUÉ NO SE USA `psych`
+ * -------------------------
+ * Era lo natural —`alpha()` y `describe()` salen de ahí— pero **no se puede
+ * instalar en WebR**: `psych` importa `mnormt`, y `mnormt` no está compilado
+ * para WebAssembly en el repositorio de WebR. El paquete se baja, y luego
+ * `library(psych)` falla por la dependencia que falta.
+ *
+ * Escribirlas aquí no es un apaño: el alfa de Cronbach son cinco líneas de
+ * fórmula, y lo demás que pide una tesis —Shapiro-Wilk, Pearson, Spearman, t de
+ * Student, ANOVA, chi-cuadrado— ya viene en `stats`, que es parte de R. Con
+ * esto la página no depende de ningún paquete externo, arranca varios segundos
+ * antes y no puede romperse porque un repositorio de terceros cambie.
+ *
+ * Probadas con Rscript contra la matriz de ejemplo: alfa 0,886, Shapiro
+ * p=0,148, Pearson r=0,511.
+ */
+const PREAMBULO = String.raw`
+alfa_de_cronbach <- function(items) {
+  items <- as.data.frame(items)
+  items <- items[stats::complete.cases(items), , drop = FALSE]
+  k <- ncol(items)
+
+  if (k < 2) stop("El alfa necesita al menos dos items.")
+
+  total <- rowSums(items)
+  alfa <- (k / (k - 1)) * (1 - sum(apply(items, 2, stats::var)) / stats::var(total))
+
+  por_item <- t(sapply(seq_len(k), function(i) {
+    resto <- items[, -i, drop = FALSE]
+    kk <- ncol(resto)
+    sin_el <- if (kk < 2) NA else {
+      (kk / (kk - 1)) * (1 - sum(apply(resto, 2, stats::var)) / stats::var(rowSums(resto)))
+    }
+    c(r_item_resto = stats::cor(items[, i], rowSums(resto)), alfa_si_se_quita = sin_el)
+  }))
+
+  rownames(por_item) <- names(items)
+
+  cat("Alfa de Cronbach:", round(alfa, 3), "\n")
+  cat("Items:", k, " Casos:", nrow(items), "\n\n")
+  cat("Si el alfa SUBE al quitar un item, ese item mide otra cosa:\n")
+  print(round(as.data.frame(por_item), 3))
+
+  invisible(alfa)
+}
+
+descriptivos <- function(datos) {
+  datos <- as.data.frame(datos)
+  numericas <- datos[, sapply(datos, is.numeric), drop = FALSE]
+
+  if (ncol(numericas) == 0) stop("No hay ninguna columna numerica.")
+
+  resumen <- data.frame(
+    n = sapply(numericas, function(x) sum(!is.na(x))),
+    media = round(sapply(numericas, mean, na.rm = TRUE), 2),
+    de = round(sapply(numericas, stats::sd, na.rm = TRUE), 2),
+    minimo = sapply(numericas, min, na.rm = TRUE),
+    maximo = sapply(numericas, max, na.rm = TRUE)
+  )
+
+  print(resumen)
+  invisible(resumen)
+}
+`;
+
 /** Una línea de la consola de R, con su origen. */
 export interface LineaDeSalida {
   tipo: 'stdout' | 'stderr';
@@ -132,11 +200,9 @@ export class WebrService {
 
     await webR.init();
 
-    this.paso.set('Instalando los paquetes de estadística…');
-    // `psych` trae el alfa de Cronbach y los descriptivos, que es el 80% de lo
-    // que hace una tesis. Se instala al arrancar y no cuando se necesita: son
-    // dos segundos aquí y una espera desconcertante a mitad de análisis.
-    await webR.installPackages(['psych']);
+    // Las funciones de la casa. No se instala ningún paquete: ver `PREAMBULO`.
+    this.paso.set('Preparando las funciones de análisis…');
+    await webR.evalRVoid(PREAMBULO);
 
     this.paso.set('');
     this.estado.set('listo');

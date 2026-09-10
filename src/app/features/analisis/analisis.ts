@@ -15,16 +15,14 @@ import { SiteHeader } from '../../shared/layout/site-header';
  * Y es el guion real de un Capítulo IV, no un ejemplo de manual: leer la
  * matriz, descriptivos, alfa de Cronbach y normalidad, en ese orden.
  */
-const GUION_INICIAL = `# Tus datos. Cambia el nombre por el de tu archivo.
+const GUION_INICIAL = `# Tus datos, ya cargados. Ejecuta y mira qué hay dentro.
 datos <- read.csv("datos.csv")
 
-# Un vistazo: cuántas filas y qué columnas hay
-dim(datos)
-head(datos)
+dim(datos)    # cuántas filas y columnas
+head(datos)   # las primeras filas
 
 # Descriptivos — la primera tabla del Capítulo IV
-library(psych)
-describe(datos)
+descriptivos(datos)
 `;
 
 /**
@@ -173,7 +171,8 @@ export class Analisis {
     {
       nombre: 'Alfa de Cronbach',
       ayuda: 'Confiabilidad del instrumento',
-      codigo: '# Cambia cd1:cd4 por las columnas de TU variable\nalpha(datos[, c("cd1","cd2","cd3","cd4")])',
+      codigo:
+        '# Cambia los nombres por las columnas de TU variable\nalfa_de_cronbach(datos[, c("cd1","cd2","cd3","cd4")])',
     },
     {
       nombre: 'Normalidad',
