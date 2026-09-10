@@ -1,8 +1,31 @@
 import { inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
+import { Route, Router, Routes } from '@angular/router';
 
+import { environment } from '../environments/environment';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+
+/**
+ * La sección de análisis, solo si hay un RStudio al que apuntar.
+ *
+ * Sin `RSTUDIO_URL` configurada la ruta NO se monta: `/analisis` cae en el
+ * comodín y va a la portada, igual que cualquier dirección inventada. Es el
+ * mismo criterio que la guía en PDF —si el archivo no está, no hay botón— y por
+ * lo mismo: una función a medio conectar enseña a desconfiar del resto.
+ *
+ * Va detrás de `authGuard` porque abre una sesión en una máquina nuestra, y eso
+ * no se le da a quien pasaba por ahí.
+ */
+const analisis: Route[] = environment.rstudioUrl
+  ? [
+      {
+        path: 'analisis',
+        canActivate: [authGuard],
+        title: 'Analiza tus datos · Acosta Research',
+        loadComponent: () => import('./features/analisis/analisis').then((m) => m.Analisis),
+      },
+    ]
+  : [];
 
 export const routes: Routes = [
   // La portada es pública: un visitante tiene que poder ver qué se vende antes
@@ -73,6 +96,7 @@ export const routes: Routes = [
     title: 'Mi perfil · Acosta Research',
     loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
   },
+  ...analisis,
   /*
    * `/humanizador` se retiró el 9 de septiembre de 2026.
    *

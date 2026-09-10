@@ -1,0 +1,69 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="cabecera">
+    <div>
+      <h1>Analiza tus datos</h1>
+      <p class="subtitulo">
+        RStudio, aquí dentro. No instales nada: sube tu matriz de Excel y trabaja.
+      </p>
+    </div>
+
+    @if (urlCruda) {
+      <!-- La salida de emergencia, siempre visible y no solo cuando algo falla.
+           Un iframe se queda pequeño en un portátil de trece pulgadas, y para
+           una sesión larga se trabaja mejor en su propia pestaña. -->
+      <a class="boton secundario" [href]="urlCruda" target="_blank" rel="noopener">
+        Abrir en otra pestaña
+      </a>
+    }
+  </header>
+
+  <!-- Los tres pasos, arriba y cortos. El tesista que llega aquí ya sabe
+       estadística; lo que no sabe es dónde poner su archivo. -->
+  <ol class="pasos">
+    <li>
+      <strong>Sube tu matriz.</strong> Abajo a la derecha, en <em>Files</em>, pulsa
+      <em>Upload</em> y elige tu Excel.
+    </li>
+    <li>
+      <strong>Pídele el script a Claude</strong> desde tu conector, con el capítulo de análisis
+      de datos. Te lo escribe comentado línea por línea.
+    </li>
+    <li>
+      <strong>Pégalo y ejecútalo</strong> con Ctrl+Enter, línea a línea. Lo que salga en la
+      consola es lo que se guarda como respaldo de tus cifras.
+    </li>
+  </ol>
+
+  <!-- El aviso de que no cargó. Se enseña ANTES del marco para que no haya que
+       desplazarse hasta abajo del rectángulo en blanco para encontrarlo. -->
+  @if (hayProblema()) {
+    <p class="aviso" role="status">
+      RStudio está tardando más de lo normal en aparecer aquí dentro. No has hecho nada mal:
+      algunos navegadores no permiten mostrarlo empotrado.
+      <a [href]="urlCruda" target="_blank" rel="noopener">Ábrelo en otra pestaña</a> y funciona
+      igual.
+    </p>
+  }
+
+  <div class="marco" [class.esperando]="!cargado()">
+    @if (!cargado()) {
+      <p class="esperando-texto">Abriendo tu sesión de RStudio…</p>
+    }
+
+    <iframe
+      [src]="url"
+      title="RStudio"
+      (load)="alCargar()"
+      allow="clipboard-read; clipboard-write"
+    ></iframe>
+  </div>
+
+  <p class="nota">
+    Tus archivos se quedan en tu sesión y solo los ves tú. Esta máquina es únicamente para
+    analizar: no guarda tu tesis ni tus datos de pago, que viven en otro sitio.
+  </p>
+</main>
+
+<app-site-footer />

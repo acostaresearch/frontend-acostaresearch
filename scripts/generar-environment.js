@@ -70,6 +70,16 @@ function rutaGuia() {
 
 const GUIA = rutaGuia();
 
+/**
+ * Dónde vive RStudio Server. Vacío = la sección de análisis no existe.
+ *
+ * NO puede ser el mismo servidor que la API. Una sesión de RStudio es
+ * prácticamente una consola en la máquina, y en la de la API viven los
+ * secretos, los capítulos de todos los tesistas y los comprobantes de pago.
+ * Va en una máquina aparte y vacía, que se pueda borrar y rehacer.
+ */
+const RSTUDIO = v('RSTUDIO_URL', '');
+
 /** `JSON.stringify` escapa comillas y acentos sin que haya que pensarlo. */
 const s = (valor) => JSON.stringify(valor);
 
@@ -105,6 +115,18 @@ export const environment = {
   paypalClientId: ${s(paypalClientId)},
   /** Guía de instalación en PDF. Vacío = no se ofrece la descarga. */
   guiaUrl: ${s(GUIA)},
+  /**
+   * RStudio Server, para analizar sin instalar nada.
+   *
+   * VACÍO = la sección no existe: no sale en el menú, la ruta no se monta y
+   * nadie llega a una pantalla que no puede funcionar. Es el mismo criterio
+   * que la guía en PDF, y por lo mismo: una función a medio conectar enseña a
+   * desconfiar del resto.
+   *
+   * Cuando el servidor esté en pie, se pone aquí su dirección —algo como
+   * https://analisis.acostaresearch.com— y aparece sola en el siguiente build.
+   */
+  rstudioUrl: ${s(RSTUDIO)},
 };
 `;
 }
