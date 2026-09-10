@@ -41,7 +41,25 @@ declare module '@r-wasm/webr' {
     purge(): Promise<void>;
   }
 
+  export interface WebROpciones {
+    /**
+     * De dónde se bajan los binarios de R.
+     *
+     * El paquete de npm la trae vacía, y entonces el hilo de trabajo la
+     * resuelve relativa a sí mismo. Como sus scripts se sirven desde la raíz de
+     * nuestro dominio, sin esto pide `/R.bin.js` y falla.
+     */
+    baseUrl?: string;
+    /** De dónde se bajan los paquetes de R. Por defecto, repo.r-wasm.org. */
+    repoUrl?: string;
+    /** Dónde están los scripts del canal por Service Worker. Vacío = la raíz. */
+    serviceWorkerUrl?: string;
+    /** El directorio de trabajo dentro de R. Por defecto `/home/web_user`. */
+    homedir?: string;
+  }
+
   export class WebR {
+    constructor(options?: WebROpciones);
     init(): Promise<unknown>;
     installPackages(packages: string[], quiet?: boolean): Promise<void>;
 

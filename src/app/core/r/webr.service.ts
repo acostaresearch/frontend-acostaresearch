@@ -1,5 +1,18 @@
 import { Injectable, signal } from '@angular/core';
 
+/**
+ * La versión de WebR de la que se bajan los binarios.
+ *
+ * Tiene que coincidir con la de `@r-wasm/webr` en `package.json`. Van juntas
+ * porque los scripts que se copian a `public/` salen del paquete y los binarios
+ * del CDN: si se separan, el hilo de trabajo de una versión intenta cargar el R
+ * de otra, y eso falla de formas que no se parecen a su causa.
+ *
+ * No hay que acordarse de cambiarla a mano: `scripts/copiar-webr.js` compara
+ * este número con el del paquete instalado y corta el build si no coinciden.
+ */
+const VERSION = '0.2.0';
+
 /** Una línea de la consola de R, con su origen. */
 export interface LineaDeSalida {
   tipo: 'stdout' | 'stderr';
@@ -72,7 +85,23 @@ export class WebrService {
 
     const { WebR } = await import('@r-wasm/webr');
 
-    const webR = new WebR();
+    const webR = new WebR({
+      /**
+       * De dónde se baja R, dicho a las claras.
+       *
+       * El paquete de npm trae la dirección VACÍA, así que el hilo de trabajo
+       * la resuelve relativa a sí mismo — y como sus scripts se copian a la
+       * raíz de nuestro dominio, acababa pidiendo `acostaresearch.com/R.bin.js`
+       * y fallando con un NetworkError que en realidad era un 404.
+       *
+       * Se apunta al CDN oficial, y CON LA VERSIÓN CLAVADA, no con «latest»:
+       * los binarios tienen que corresponderse con el paquete instalado, y un
+       * «latest» que avance por su cuenta rompería la página sin que nadie
+       * hubiera tocado nada aquí.
+       */
+      baseUrl: `https://webr.r-wasm.org/v${VERSION}/`,
+    });
+
     await webR.init();
 
     this.paso.set('Instalando los paquetes de estadística…');

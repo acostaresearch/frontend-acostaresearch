@@ -65,4 +65,28 @@ for (const archivo of ARCHIVOS) {
   fs.copyFileSync(desde, path.join(DESTINO, archivo));
 }
 
-console.log(`· webr: ${ARCHIVOS.length} scripts copiados a public/`);
+/**
+ * Los binarios de R se bajan del CDN por versión, y esa versión está escrita en
+ * `webr.service.ts`. Si no coincide con la del paquete instalado, el hilo de
+ * trabajo de una versión intenta cargar el R de otra.
+ *
+ * Eso falla de una forma que no se parece a su causa —un `NetworkError` al
+ * importar un script— así que se comprueba aquí y se corta el build. Es el
+ * único sitio donde las dos cosas se ven a la vez.
+ */
+const instalada = require(path.join(ORIGEN, '..', 'package.json')).version;
+const servicio = path.join(RAIZ, 'src', 'app', 'core', 'r', 'webr.service.ts');
+
+if (fs.existsSync(servicio)) {
+  const escrita = /const VERSION = '([^']+)'/.exec(fs.readFileSync(servicio, 'utf8'))?.[1];
+
+  if (escrita !== instalada) {
+    console.error(
+      `· webr: DESAJUSTE DE VERSIÓN. El paquete es ${instalada} y webr.service.ts dice ` +
+        `${escrita}. Cambia la constante VERSION a ${instalada}.`,
+    );
+    process.exit(1);
+  }
+}
+
+console.log(`· webr: ${ARCHIVOS.length} scripts copiados a public/ (v${instalada})`);
