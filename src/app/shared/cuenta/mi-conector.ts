@@ -53,6 +53,45 @@ export class MiConector implements OnInit {
    */
   readonly guiaUrl = environment.guiaUrl;
 
+  /** El WhatsApp de la casa, para quien ya probó el video y la guía. */
+  readonly whatsappUrl = environment.whatsappUrl;
+
+  /**
+   * El mismo número, escrito para leerlo.
+   *
+   * Sale del enlace y no de una constante aparte para que no puedan
+   * discrepar: el que se enseña es siempre al que se llama.
+   */
+  readonly whatsappTexto = MiConector.telefonoDe(environment.whatsappUrl);
+
+  private static telefonoDe(url: string): string {
+    const digitos = url.replace(/\D/g, '');
+    if (digitos.length < 8) return '';
+    // +51 923 095 940: prefijo de dos y el resto en grupos de tres.
+    const pais = digitos.slice(0, digitos.length - 9);
+    const resto = digitos.slice(-9);
+    return `+${pais} ${resto.slice(0, 3)} ${resto.slice(3, 6)} ${resto.slice(6)}`;
+  }
+
+  /**
+   * Cuántos días le quedan a una licencia, o `null` si ya pasó su fecha.
+   *
+   * Se cuenta por días enteros hacia arriba: a quien le caduca esta noche le
+   * queda «1 día», no «0». Cero se lee como caducada y no lo está todavía.
+   */
+  diasQueFaltan(licencia: License): number | null {
+    if (!licencia.expiresAt) return null;
+    const faltan = new Date(licencia.expiresAt).getTime() - Date.now();
+    return faltan > 0 ? Math.ceil(faltan / 86_400_000) : null;
+  }
+
+  /** Porcentaje del tope diario ya gastado, para la barra. */
+  gastoDelDia(licencia: License): number {
+    const tope = licencia.callsPerDay ?? 0;
+    if (tope <= 0) return 0;
+    return Math.min(100, Math.round(((licencia.usage?.callsToday ?? 0) / tope) * 100));
+  }
+
   /**
    * ¿Tiene acceso vigente?
    *

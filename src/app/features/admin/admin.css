@@ -310,27 +310,6 @@
   }
 }
 
-.tarjeta {
-  margin-bottom: 16px;
-  padding: 20px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-}
-
-.tarjeta h2 {
-  margin: 0 0 6px;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.nota {
-  margin: 0 0 16px;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
-}
-
 .fila {
   display: grid;
   grid-template-columns: 1fr 1fr;

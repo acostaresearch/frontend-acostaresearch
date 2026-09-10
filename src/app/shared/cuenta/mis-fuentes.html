@@ -1,18 +1,23 @@
-<p class="explicacion">
-  Pídele a Claude la ecuación de búsqueda, pégala en Scopus, Web of Science o SciELO con el acceso
-  de tu universidad, y sube aquí el archivo que te descargues. Desde ese momento tus fuentes
-  aparecen cuando Claude busca para tus capítulos.
-</p>
-
 @if (resumen(); as datos) {
   @if (datos.total > 0) {
-    <div class="fuentes-estado">
-      <div>
-        <strong>{{ datos.total }} fuentes tuyas</strong>
+    <p class="fuentes-cifra">
+      <strong>{{ datos.total }}</strong>
+      <span>
+        fuentes tuyas
         @if (datos.ultimaCarga) {
-          <span class="tenue">· última carga el {{ datos.ultimaCarga | date: 'd MMM y' }}</span>
+          · última carga el {{ datos.ultimaCarga | date: 'd MMM y' }}
         }
-      </div>
+      </span>
+    </p>
+
+    <!-- La caja de arrastrar se pide, no está siempre puesta: con las fuentes
+         ya cargadas es lo más grande de la tarjeta y lo que menos se usa. -->
+    <div class="fuentes-acciones">
+      @if (!cajaVisible()) {
+        <button type="button" class="boton secundario" (click)="subiendoMas.set(true)">
+          Cargar más fuentes
+        </button>
+      }
       <button type="button" class="boton enlace peligro" [disabled]="vaciando()" (click)="vaciar()">
         {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
       </button>
@@ -37,48 +42,50 @@
   }
 }
 
-<!-- Arrastrar o pulsar. Las dos, porque el archivo acaba de bajarse y muchas
-     veces sigue visible en la barra de descargas del navegador: arrastrarlo
-     desde ahí es un gesto menos que abrir el explorador y buscarlo. -->
-<label
-  class="soltar"
-  [class.encima]="encima()"
-  (dragover)="arrastraEncima($event)"
-  (dragleave)="encima.set(false)"
-  (drop)="soltar($event)"
->
-  <input
-    type="file"
-    multiple
-    [accept]="acepta"
-    [disabled]="subiendo()"
-    (change)="elegir($event)"
-  />
-  <span class="soltar-icono" aria-hidden="true">⬆</span>
-  <span class="soltar-texto">
-    @if (leyendo(); as paso) {
-      <strong>Leyendo tus PDF… {{ paso.hechos }} de {{ paso.total }}</strong>
-      <span>Se quedan en tu equipo: solo viaja el DOI de cada uno.</span>
-    } @else if (subiendo()) {
-      <strong>Buscando las fichas…</strong>
-      <span>Con varios cientos de fuentes tarda unos segundos.</span>
-    } @else {
-      <strong>Arrastra aquí tus archivos, o pulsa para buscarlos</strong>
-      <span>
-        El export de tu base de datos (CSV, RIS o BibTeX) o los PDF de los artículos.
-      </span>
-    }
-  </span>
-</label>
+@if (cajaVisible()) {
+  <!-- Arrastrar o pulsar. Las dos, porque el archivo acaba de bajarse y muchas
+       veces sigue visible en la barra de descargas del navegador: arrastrarlo
+       desde ahí es un gesto menos que abrir el explorador y buscarlo. -->
+  <label
+    class="soltar"
+    [class.encima]="encima()"
+    (dragover)="arrastraEncima($event)"
+    (dragleave)="encima.set(false)"
+    (drop)="soltar($event)"
+  >
+    <input
+      type="file"
+      multiple
+      [accept]="acepta"
+      [disabled]="subiendo()"
+      (change)="elegir($event)"
+    />
+    <span class="soltar-icono" aria-hidden="true">⬆</span>
+    <span class="soltar-texto">
+      @if (leyendo(); as paso) {
+        <strong>Leyendo tus PDF… {{ paso.hechos }} de {{ paso.total }}</strong>
+        <span>Se quedan en tu equipo: solo viaja el DOI de cada uno.</span>
+      } @else if (subiendo()) {
+        <strong>Buscando las fichas…</strong>
+        <span>Con varios cientos de fuentes tarda unos segundos.</span>
+      } @else {
+        <strong>Arrastra aquí tus archivos, o pulsa para buscarlos</strong>
+        <span>
+          El export de tu base de datos (CSV, RIS o BibTeX) o los PDF de los artículos.
+        </span>
+      }
+    </span>
+  </label>
 
-<!-- Lo que hace esto, dicho donde se decide usarlo. Es la diferencia con subir
-     el PDF a Claude, y si no se dice aquí no se entera nadie. -->
-<p class="pdf-nota">
-  <strong>¿Tienes los PDF?</strong> Suéltalos también. Se leen en tu navegador para sacarles el
-  DOI —<strong>el archivo no se sube a ningún sitio</strong>— y de ahí salen los datos de la
-  ficha. Después, cuando Claude busque, recibe esa ficha en vez de cuarenta páginas: unas cien
-  veces menos de conversación gastada por fuente.
-</p>
+  <!-- Lo que hace esto, dicho donde se decide usarlo. Es la diferencia con subir
+       el PDF a Claude, y si no se dice aquí no se entera nadie. -->
+  <p class="pdf-nota">
+    <strong>¿Tienes los PDF?</strong> Suéltalos también. Se leen en tu navegador para sacarles el
+    DOI —<strong>el archivo no se sube a ningún sitio</strong>— y de ahí salen los datos de la
+    ficha. Después, cuando Claude busque, recibe esa ficha en vez de cuarenta páginas: unas cien
+    veces menos de conversación gastada por fuente.
+  </p>
+}
 
 @if (error(); as mensaje) {
   <p class="aviso error">{{ mensaje }}</p>

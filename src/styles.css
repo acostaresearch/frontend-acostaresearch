@@ -199,6 +199,84 @@ a:hover {
   }
 }
 
+/* ── Tarjetas ───────────────────────────────────────────────────────────────
+   La caja blanca en la que va todo. Es global desde que las tarjetas de un
+   componente comparten rejilla con las de la pantalla que lo monta: si cada
+   uno se la pinta por su cuenta, dos tarjetas de la misma fila salen con
+   distinto grosor de borde. Quien necesite otra cosa la redefine en su propio
+   CSS, que se carga después de este. */
+.tarjeta {
+  margin-bottom: 16px;
+  padding: 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tarjeta h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+/* El renglón que explica de qué va la tarjeta, debajo de su título. */
+.nota {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+/* ── Rejilla de tarjetas ────────────────────────────────────────────────────
+   Seis columnas, y cada tarjeta dice cuántas ocupa. Es global —no de un
+   componente— porque las tarjetas de una pantalla y las de un componente suyo
+   tienen que caber en la MISMA rejilla: el conector pone «¿Compraste por Yape?»
+   y el perfil pone «Mis compras», y van en la misma fila.
+
+   Eso lo permite `display: contents` en el componente hijo: su elemento deja de
+   pintar caja y sus tarjetas pasan a ser casillas de la rejilla del padre. Y
+   `dense` rellena los huecos que quedan atrás, para que una tarjeta ancha
+   metida en medio —los pasos de arranque, por ejemplo— no deje media fila en
+   blanco encima. */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 16px;
+}
+
+.rejilla > app-mi-conector {
+  display: contents;
+}
+
+/* Las tarjetas de la rejilla no llevan el margen suelto que usan apiladas. */
+.rejilla .tarjeta {
+  margin-bottom: 0;
+}
+
+.tramo-6 {
+  grid-column: span 6;
+}
+.tramo-4 {
+  grid-column: span 4;
+}
+.tramo-3 {
+  grid-column: span 3;
+}
+.tramo-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  /* Una debajo de otra: a dos tercios de pantalla, una tabla de compras en
+     cuatro columnas de rejilla ya no enseña sus columnas de verdad. */
+  .tramo-4,
+  .tramo-3,
+  .tramo-2 {
+    grid-column: span 6;
+  }
+}
+
 /* ── Avisos ─────────────────────────────────────────────────────────────── */
 .aviso {
   display: flex;

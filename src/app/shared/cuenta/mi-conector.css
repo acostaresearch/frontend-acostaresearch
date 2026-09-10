@@ -1,24 +1,12 @@
-/* Copiadas de `perfil.css` al extraer el bloque a este componente. Van aquí y
-   no en los estilos globales porque solo las usa él: los estilos de Angular
-   están encapsulados, así que la pantalla que lo monta no tiene que saber nada
-   de estas clases. */
-
 /* Los botones del sistema piden el 100 % del ancho. Aquí van sueltos y en
    filas, así que se les devuelve su tamaño natural.
 
-   Esta regla vivía en `perfil.css` como `.perfil .boton`, y al mudar el bloque
-   a un componente propio dejó de alcanzarlo: los estilos de Angular están
-   encapsulados por componente. Sin ella, «Canjear» reclama la fila entera y
-   aplasta el campo del código hasta dejarlo en un cuadrado de treinta píxeles,
-   que es exactamente lo que pasaba. */
+   Esta regla vivía en `perfil.css`, y al mudar el bloque a un componente propio
+   dejó de alcanzarlo: los estilos de Angular están encapsulados por componente.
+   Sin ella, «Canjear» reclama la fila entera y aplasta el campo del código
+   hasta dejarlo en un cuadrado de treinta píxeles. */
 .boton {
   width: auto;
-}
-
-.nota {
-  margin: -6px 0 14px;
-  font-size: 13px;
-  color: var(--color-texto-suave);
 }
 
 .tenue {
@@ -26,26 +14,14 @@
   font-size: 13px;
 }
 
-.etiqueta {
-  display: inline-block;
-  padding: 2px 9px;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 999px;
-}
-
-.etiqueta.revocada {
-  color: var(--color-error);
-  background: var(--color-error-suave);
-}
-
-/* ── Licencias ──────────────────────────────────────────────────────────── */
+/* ── Licencias ──────────────────────────────────────────────────────────────
+   Una ficha por acceso, no una fila de lista. De cada licencia hay cuatro cosas
+   que saber —qué producto, cuánto se ha gastado hoy, hasta cuándo vale y si
+   sigue viva— y en una fila solo cabían dos: el nombre y un botón. */
 .licencias {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -53,42 +29,120 @@
 
 .licencias li {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 15px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px 16px;
   background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
 }
 
 .licencias strong {
-  display: block;
   font-size: 14px;
   font-weight: 650;
+  line-height: 1.35;
 }
 
-.licencia-acciones {
+.licencia-uso {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.licencia-cifra {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
+}
+
+.licencia-barra {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  background: var(--color-borde);
+  border-radius: 999px;
+}
+
+.licencia-barra > span {
+  display: block;
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 999px;
+  transition: width var(--transicion);
+}
+
+.licencia-vence {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+/* Los días que quedan, destacados: la fecha sola obliga a restar de cabeza, y
+   de esa resta depende si toca renovar hoy o dentro de un año. */
+.licencia-vence b {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.licencia-vence b.poco {
+  color: var(--color-error);
+}
+
+/* El pie, pegado al fondo de la ficha: con `auto` se come el hueco que sobra,
+   y así los «Nueva URL» de la fila quedan en línea aunque un nombre de producto
+   ocupe dos renglones y el de al lado uno. */
+.licencia-pie {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 2px;
 }
 
-.licencia-acciones .boton {
+.licencia-pie .boton {
   padding: 7px 13px;
   font-size: 13px;
 }
 
-@media (max-width: 600px) {
-  .licencias li {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+/* El estado, como un punto de color y su palabra: una pastilla más en una
+   ficha que ya lleva barra y cifras era una mancha de color de sobra. */
+.punto {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.punto::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.punto.activa {
+  color: var(--color-exito);
+}
+
+.punto.revocada {
+  color: var(--color-error);
+}
+
+/* Un producto que ya no se vende. No es un error ni una revocación: es que se
+   retiró del catálogo, y decirlo así evita que parezca que algo se rompió. */
+.punto.retirada {
+  color: var(--color-texto-tenue);
 }
 
 /* ── URL recién generada ────────────────────────────────────────────────── */
 .url-nueva {
-  margin-bottom: 16px;
   padding: 16px;
   background: var(--color-exito-suave);
   border: 1px solid var(--color-exito);
@@ -107,20 +161,28 @@
   gap: 8px;
 }
 
-.url-fila .boton {
-  flex: 0 0 auto;
-}
-
+/* Que se vea entera la parte que importa. El principio de la URL es siempre el
+   mismo dominio; lo que distingue una licencia de otra está al final. */
 .url-fila input {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 9px 11px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12.5px;
+  text-overflow: ellipsis;
   color: var(--color-texto);
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
+}
+
+/* El `.boton` global lleva `width: 100%`, que dentro de una fila flex se
+   traduce en una base enorme: el botón se comía el ancho y la URL quedaba en
+   una rendija de treinta píxeles. */
+.url-fila .boton {
+  flex: 0 0 auto;
+  width: auto;
+  white-space: nowrap;
 }
 
 .url-pie {
@@ -129,28 +191,29 @@
   color: var(--color-texto-suave);
 }
 
+/* En móvil, uno debajo del otro: partidos, no cabe ni la URL ni el botón. */
+@media (max-width: 520px) {
+  .url-fila {
+    flex-direction: column;
+  }
+
+  .url-fila .boton {
+    width: 100%;
+  }
+}
+
 /* ── Canje de códigos ───────────────────────────────────────────────────── */
-.canje {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-borde);
-}
-
-.canje .nota {
-  margin: 0 0 10px;
-}
-
+/* Campo arriba y boton abajo, los dos a todo lo ancho: la tarjeta del canje es
+   estrecha —un tercio de fila— y lado a lado el campo no llegaba a enseñar los
+   dieciocho caracteres del codigo, que es justo mientras se teclean cuando se
+   detecta la letra que llego mal por WhatsApp. */
 .canje-fila {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: stretch;
 }
 
-/* El campo se queda con todo el ancho sobrante y el botón con el suyo: el
-   código son dieciocho caracteres y hay que poder leerlos enteros mientras se
-   teclean, que es cuando se detecta la letra que llegó mal por WhatsApp. */
 .canje-fila input {
-  flex: 1 1 auto;
   min-width: 0;
   padding: 10px 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -178,186 +241,83 @@
   box-shadow: 0 0 0 3px var(--color-primario-suave);
 }
 
-/* «Canjear» no encoge: partido en dos líneas no se entiende. */
 .canje-fila .boton {
-  flex: 0 0 auto;
+  width: 100%;
 }
 
-@media (max-width: 460px) {
-  /* Uno debajo del otro antes de que el campo deje de mostrar el código
-     entero. Apilados, ninguno de los dos se queda corto. */
-  .canje-fila {
-    flex-direction: column;
-  }
-
-  .canje-fila .boton {
-    width: 100%;
-  }
-}
-
-/* ── Guía de instalación ────────────────────────────────────────────────── */
-.guia {
+/* ── Ayuda ──────────────────────────────────────────────────────────────────
+   Video, guía y WhatsApp con la misma caja: son tres puertas a lo mismo y
+   ninguna es más importante que las otras por su tamaño. El orden sí importa
+   —el video primero—: de dieciséis licencias repartidas, tres no llegaron a
+   abrir el conector NUNCA, y a ese comprador no lo rescata un adjunto, porque
+   el PDF ya existía y no bastó. */
+.recurso {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  margin-top: 18px;
-  padding: 14px 16px;
+  margin-bottom: 8px;
+  padding: 11px 13px;
   text-decoration: none;
   color: inherit;
   background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
+  border: 1px solid transparent;
   border-radius: var(--radio-sm);
   transition:
     border-color var(--transicion),
     background var(--transicion);
 }
 
-.guia:hover {
+.recurso:last-child {
+  margin-bottom: 0;
+}
+
+.recurso:hover {
+  background: var(--color-superficie);
   border-color: var(--color-primario);
-  background: var(--color-superficie);
 }
 
-.guia-icono {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.guia-texto {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.guia-texto strong {
-  font-size: 14.5px;
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-.guia-texto span {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.guia-accion {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primario);
-}
-
-@media (max-width: 520px) {
-  /* En pantalla estrecha, «Descargar» debajo del texto en vez de comprimirlo. */
-  .guia {
-    flex-wrap: wrap;
-  }
-}
-
-/* El `.boton` global lleva `width: 100%`, que dentro de una fila flex se
-   traduce en una base enorme: el botón se comía el ancho y la URL quedaba en
-   una rendija de treinta píxeles. Aquí se le devuelve su tamaño natural. */
-.url-fila .boton {
-  flex: 0 0 auto;
-  width: auto;
-  white-space: nowrap;
-}
-
-/* Que se vea entera la parte que importa. El principio de la URL es siempre el
-   mismo dominio; lo que distingue una licencia de otra está al final, así que
-   al enfocarla el cursor se va ahí. */
-.url-fila input {
-  flex: 1 1 auto;
-  direction: ltr;
-  text-overflow: ellipsis;
-}
-
-/* En móvil, uno debajo del otro: partidos, no cabe ni la URL ni el botón. */
-@media (max-width: 520px) {
-  .url-fila {
-    flex-direction: column;
-  }
-
-  .url-fila .boton {
-    width: 100%;
-  }
-}
-
-/* Un producto que ya no se vende. No es un error ni una revocación: es que se
-   retiró del catálogo, y decirlo así evita que parezca que algo se rompió. */
-.etiqueta.retirada {
-  color: var(--color-texto-tenue);
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-}
-
-/* Los videos, con la misma caja que la guía en PDF pero destacada.
- *
- * Va marcada y va primero porque las cuentas lo piden: de dieciséis licencias
- * repartidas, tres no llegaron a abrir el conector NUNCA. A ese comprador no lo
- * rescata un adjunto —el PDF ya existía y no bastó—, y desde luego no lo
- * rescata algo puesto debajo. */
-.tutoriales-enlace {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  margin-top: 18px;
-  padding: 14px 16px;
-  text-decoration: none;
-  color: inherit;
-  background: var(--color-primario-suave, var(--color-fondo));
-  border: 1px solid var(--color-primario);
-  border-radius: var(--radio-sm);
-  transition:
-    border-color var(--transicion),
-    background var(--transicion);
-}
-
-.tutoriales-enlace:hover {
-  background: var(--color-superficie);
-}
-
-.tutoriales-icono {
+.recurso-icono {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  font-size: 13px;
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
   color: #fff;
   background: var(--color-primario);
   border-radius: 50%;
 }
 
-.tutoriales-texto {
+.recurso-texto {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   flex: 1;
   min-width: 0;
 }
 
-.tutoriales-texto strong {
-  font-size: 14px;
+.recurso-texto strong {
+  font-size: 13.5px;
+  font-weight: 650;
 }
 
-.tutoriales-texto span {
-  font-size: 12.5px;
+.recurso-texto span {
+  font-size: 12px;
   line-height: 1.45;
   color: var(--color-texto-suave);
 }
 
-/* Sus propias fuentes, separadas del bloque del conector por una línea: son
-   dos tareas distintas —una se hace al empezar y la otra cada vez que amplía
-   su búsqueda— y juntas se leían como una sola. */
-.mis-fuentes {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-borde);
+.recurso-accion {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primario);
 }
 
-.mis-fuentes h3 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 650;
+@media (max-width: 520px) {
+  /* En pantalla estrecha, la acción debajo del texto en vez de comprimirlo. */
+  .recurso {
+    flex-wrap: wrap;
+  }
 }

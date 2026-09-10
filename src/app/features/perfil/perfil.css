@@ -1,75 +1,73 @@
-/* ── Estructura ─────────────────────────────────────────────────────────── */
+/* ── Armazón ────────────────────────────────────────────────────────────────
+   El mismo de «Administrar»: barra a la izquierda, fija a toda la altura de la
+   ventana, y el contenido desplazándose al lado. Lo que cambia es qué va en la
+   barra — aquí no hay a dónde navegar, porque todo cabe a la vista. */
 .perfil {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 28px 20px 64px;
+  --lateral: 300px;
+  --alto-cabecera: 65px;
+
+  display: grid;
+  grid-template-columns: var(--lateral) minmax(0, 1fr);
+  align-items: start;
+  min-height: calc(100vh - var(--alto-cabecera));
 }
 
-/* Los botones del sistema ocupan el ancho completo; aquí casi siempre van
-   sueltos, así que se les devuelve su tamaño natural. */
-.perfil .boton {
-  width: auto;
-}
-
-.perfil .boton.peligro {
-  color: var(--color-error);
+.lateral {
+  position: sticky;
+  top: var(--alto-cabecera);
+  height: calc(100vh - var(--alto-cabecera));
+  padding: 28px 24px 24px;
+  overflow-y: auto;
   background: var(--color-superficie);
-  border-color: #f3c9c9;
+  border-right: 1px solid var(--color-borde);
 }
 
-.perfil .boton.peligro:hover:not(:disabled) {
-  background: var(--color-error-suave);
+.contenido {
+  min-width: 0;
+  padding: 30px 38px 56px;
 }
 
-/* ── Cabecera de la cuenta ──────────────────────────────────────────────── */
-.identidad {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-  box-shadow: var(--sombra);
+@media (max-width: 1000px) {
+  /* Sin sitio para las dos columnas, la barra pasa a ser la cabecera de la
+     página: deja de ser fija y el contenido va debajo, a todo lo ancho. */
+  .perfil {
+    display: block;
+  }
+
+  .lateral {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .contenido {
+    padding: 22px 20px 48px;
+  }
 }
 
+/* ── Quién eres ─────────────────────────────────────────────────────────── */
 .avatar {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  font-size: 17px;
+  font-weight: 650;
   color: var(--color-primario);
   background: var(--color-primario-suave);
-  border-radius: 50%;
+  border-radius: 999px;
 }
 
-.identidad-texto {
-  flex: 1;
-  min-width: 0;
-}
-
-.marca {
-  margin: 0 0 4px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--color-primario);
-}
-
-.identidad h1 {
-  margin: 0;
-  font-size: 24px;
+.lateral h1 {
+  font-size: 19px;
   font-weight: 650;
 }
 
 .correo {
-  margin: 4px 0 0;
-  font-size: 14px;
+  margin: 3px 0 0;
+  font-size: 13px;
   color: var(--color-texto-suave);
   overflow-wrap: anywhere;
 }
@@ -77,75 +75,8 @@
 .insignias {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 12px;
-}
-
-.identidad-acciones {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.identidad-acciones .boton {
-  width: 100%;
-  white-space: nowrap;
-}
-
-@media (max-width: 700px) {
-  .identidad {
-    flex-wrap: wrap;
-  }
-
-  .identidad-acciones {
-    width: 100%;
-    flex-direction: row;
-  }
-
-  .identidad-acciones .boton {
-    flex: 1;
-  }
-}
-
-/* ── Tarjetas ───────────────────────────────────────────────────────────── */
-.tarjeta {
-  display: block;
-  padding: 22px;
-  margin-top: 18px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-  box-shadow: var(--sombra);
-}
-
-.tarjeta > h2 {
-  margin: 0 0 14px;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.tarjeta h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 650;
-}
-
-.nota {
-  margin: -6px 0 14px;
-  font-size: 13px;
-  color: var(--color-texto-suave);
-}
-
-.nota-pie {
-  margin: 14px 0 0;
-  font-size: 13px;
-  color: var(--color-texto-suave);
-}
-
-.tenue {
-  color: var(--color-texto-tenue);
-  font-size: 13px;
+  gap: 6px;
+  margin: 12px 0 0;
 }
 
 .etiqueta {
@@ -164,230 +95,74 @@
   background: var(--color-exito-suave);
 }
 
-.etiqueta.mala,
-.etiqueta.revocada {
+.etiqueta.mala {
   color: var(--color-error);
   background: var(--color-error-suave);
 }
 
-/* ── Datos de la cuenta ─────────────────────────────────────────────────── */
-.datos {
+/* Las tres fechas de la cuenta. Eran una pestaña entera —«Datos de la cuenta»—
+   con ocho campos, de los que cinco ya se leen aquí arriba o en «Tus datos»:
+   el nombre, el correo, el rol y el estado. Quedan las tres que no están en
+   ningún otro sitio. */
+.ficha {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px 22px;
-  margin: 0;
-}
-
-.datos dt {
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
-}
-
-.datos dd {
-  margin: 3px 0 0;
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-
-/* ── Saldo ──────────────────────────────────────────────────────────────── */
-.saldo {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 16px 18px;
-  background: var(--color-fondo);
-  border-radius: var(--radio-sm);
-}
-
-.saldo-cifra {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.saldo-cifra strong {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-primario);
-}
-
-.saldo-cifra span {
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
-}
-
-.saldo-cifra.agotado strong {
-  color: var(--color-error);
-}
-
-.saldo-detalle p {
-  margin: 0;
-  font-size: 13.5px;
-}
-
-.saldo-detalle p + p {
-  margin-top: 4px;
-}
-
-.bolsas {
-  display: grid;
-  gap: 14px;
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.bolsa-cabecera {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-bottom: 6px;
-}
-
-.bolsa-cabecera strong {
-  font-size: 14px;
-  font-weight: 650;
-}
-
-.barra {
-  height: 6px;
-  background: var(--color-borde);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.barra span {
-  display: block;
-  height: 100%;
-  background: var(--color-primario);
-  border-radius: 999px;
-}
-
-/* ── Licencias del conector ─────────────────────────────────────────────── */
-.licencias {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.licencias li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 15px;
-  background: var(--color-fondo);
-  border-radius: var(--radio-sm);
-}
-
-.licencias strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 650;
-}
-
-.licencia-acciones {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.licencia-acciones .boton {
-  padding: 7px 13px;
-  font-size: 13px;
-}
-
-@media (max-width: 600px) {
-  .licencias li {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* ── URL recién generada ────────────────────────────────────────────────── */
-.url-nueva {
-  margin-bottom: 16px;
-  padding: 16px;
-  background: var(--color-exito-suave);
-  border: 1px solid var(--color-exito);
-  border-radius: var(--radio);
-}
-
-.url-titulo {
-  margin: 0 0 10px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--color-exito);
-}
-
-.url-fila {
-  display: flex;
-  gap: 8px;
-}
-
-.url-fila input {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 11px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-sm);
-}
-
-.url-pie {
-  margin: 9px 0 0;
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
-}
-
-/* ── Canje de códigos ───────────────────────────────────────────────────── */
-.canje {
-  margin-top: 20px;
+  gap: 12px;
+  margin: 20px 0 0;
   padding-top: 18px;
   border-top: 1px solid var(--color-borde);
 }
 
-.canje .nota {
-  margin: 0 0 10px;
+.ficha dt {
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
 }
 
-.canje-fila {
-  display: flex;
-  gap: 8px;
+.ficha dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 
-.canje-fila input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
-  font: inherit;
+/* ── Sesión y seguridad ─────────────────────────────────────────────────────
+   Arriba, no al fondo de la página: cerrar la sesión en un ordenador ajeno es
+   lo que se busca con prisa, y antes había que bajar por cinco tarjetas. */
+.seguridad {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.seguridad h2 {
+  margin: 0 0 6px;
   font-size: 14px;
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde-fuerte);
-  border-radius: var(--radio-sm);
-  transition:
-    border-color var(--transicion),
-    box-shadow var(--transicion);
+  font-weight: 650;
 }
 
-.canje-fila input:focus {
-  outline: none;
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 3px var(--color-primario-suave);
+.seguridad .nota {
+  margin-bottom: 12px;
+  font-size: 12.5px;
+}
+
+/* En columna y a todo el ancho de la barra: son tres frases largas, y en fila
+   ninguna de las tres se leía entera. */
+.seguridad .boton {
+  margin-bottom: 8px;
+}
+
+.seguridad .boton:last-child {
+  margin-bottom: 0;
+}
+
+/* Los dos peligrosos van en hueco y no en rojo macizo: son irreversibles, pero
+   también son la razón legítima por la que alguien entra aquí con prisa. */
+.boton.peligro {
+  color: var(--color-error);
+  background: var(--color-superficie);
+  border-color: var(--color-error);
+}
+
+.boton.peligro:hover:not(:disabled) {
+  background: var(--color-error-suave);
 }
 
 /* ── Compras ────────────────────────────────────────────────────────────── */
@@ -403,13 +178,11 @@
 
 .compras th {
   padding: 0 12px 8px 0;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
   text-align: left;
   white-space: nowrap;
-  color: var(--color-texto-tenue);
+  color: var(--color-texto-suave);
   border-bottom: 1px solid var(--color-borde);
 }
 
@@ -419,130 +192,35 @@
   border-bottom: 1px solid var(--color-borde);
 }
 
+/* La fecha y el importe no se parten: «S/ 220.00» en dos renglones deja de
+   leerse como una cifra. El nombre del plan sí se parte, que para eso es el
+   único que puede. */
+.compras td:first-child,
+.compras .derecha {
+  white-space: nowrap;
+}
+
+.compras .derecha {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .compras td .tenue {
   display: block;
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+  font-size: 13px;
 }
 
 .compras tr:last-child td {
   border-bottom: none;
 }
 
-/* ── Sesión ─────────────────────────────────────────────────────────────── */
-.acciones-sesion {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* ── Guía de instalación en PDF ────────────────────────────────────────────
- *
- * Va después de los tres pasos, no antes: quien puede seguirlos en pantalla
- * ya ha terminado, y el PDF es para quien se atasca o lo quiere a mano. Se
- * pinta como una fila y no como un botón grande para no competir con la URL
- * del conector, que es lo que de verdad hay que copiar ahora.
- */
-.guia {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  margin-top: 18px;
-  padding: 14px 16px;
-  text-decoration: none;
-  color: inherit;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-sm);
-  transition:
-    border-color var(--transicion),
-    background var(--transicion);
-}
-
-.guia:hover {
-  border-color: var(--color-primario);
-  background: var(--color-superficie);
-}
-
-.guia-icono {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.guia-texto {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-
-.guia-texto strong {
-  font-size: 14.5px;
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-.guia-texto span {
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.guia-accion {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primario);
-}
-
-@media (max-width: 520px) {
-  /* En pantalla estrecha, «Descargar» debajo del texto en vez de comprimirlo. */
-  .guia {
-    flex-wrap: wrap;
-  }
-
-  .guia-accion {
-    width: 100%;
-    padding-left: 36px;
-  }
-}
-
-/* ── Pestañas ──────────────────────────────────────────────────────────────
-   Las mismas del panel de administración, y a propósito: quien administra
-   también tiene perfil, y dos formas distintas de cambiar de sección en el
-   mismo sitio se leen como dos sitios distintos. */
-
-.pestanas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 18px;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.pestanas button {
-  padding: 10px 16px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--color-texto-suave);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.pestanas button:hover {
-  color: var(--color-texto);
-}
-
-.pestanas button.activa {
-  font-weight: 600;
-  color: var(--color-primario);
-  border-bottom-color: var(--color-primario);
-}
-
-/* ── Ventana de borrar la cuenta ───────────────────────────────────────────
-   No hay ventanas modales en el resto del perfil, así que las suyas viven
-   aquí y no en una hoja compartida. */
-
+/* ── Ventana de borrar la cuenta ────────────────────────────────────────────
+   No hay más ventanas modales en el perfil, así que las suyas viven aquí y no
+   en una hoja compartida. */
 .ventana-fondo {
   position: fixed;
   inset: 0;
@@ -601,4 +279,16 @@
   outline: none;
   border-color: var(--color-error);
   box-shadow: 0 0 0 3px var(--color-error-suave);
+}
+
+.acciones-sesion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Los botones del sistema piden el 100 % del ancho. En la barra lateral eso es
+   justo lo que se quiere; en la fila de la ventana, no. */
+.acciones-sesion .boton {
+  width: auto;
 }

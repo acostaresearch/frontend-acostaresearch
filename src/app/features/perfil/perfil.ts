@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
 import { MEDIOS_PAGO, Payment } from '../../core/models/payment.model';
@@ -14,21 +14,7 @@ import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
-import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
-
-/**
- * Las cuatro pestañas del perfil.
- *
- * Se miran en momentos distintos: los datos se cambian una vez al año, el
- * conector se consulta al instalarlo y las compras se buscan cuando algo no
- * cuadra. Apiladas en una columna obligaban a recorrer las tres que no
- * interesan para llegar a la que sí.
- */
-type PestanaDePerfil = 'datos' | 'clave' | 'metodo' | 'cuenta' | 'compras';
-
-/** Las mismas, en lista, para comprobar lo que llega por la URL. */
-const PESTANAS: readonly PestanaDePerfil[] = ['datos', 'clave', 'metodo', 'cuenta', 'compras'];
 
 /** Etiquetas en castellano: el backend solo maneja los códigos. */
 const ROLES: Record<Role, string> = {
@@ -61,7 +47,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
  */
 @Component({
   selector: 'app-perfil',
-  imports: [RouterLink, DatePipe, DecimalPipe, AjustesDeCuenta, MiConector, SiteHeader, SiteFooter],
+  imports: [RouterLink, DatePipe, DecimalPipe, AjustesDeCuenta, MiConector, SiteHeader],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })
@@ -69,7 +55,6 @@ export class Perfil implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly dialogos = inject(DialogoService);
   private readonly fondo = inject(FondoService);
-  private readonly ruta = inject(ActivatedRoute);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
   private readonly router = inject(Router);
@@ -110,32 +95,15 @@ export class Perfil implements OnInit {
   // ── Sesión ───────────────────────────────────────────────────────────────
   readonly cerrando = signal(false);
 
-  /**
-   * Qué pestaña se está viendo.
-   *
-   * Arranca en «Tus datos» y no en el conector porque quien entra a su perfil
-   * suele venir a cambiar algo suyo; quien busca la URL del conector ya sabe
-   * dónde está y viene a por ella.
-   */
-  readonly pestana = signal<PestanaDePerfil>('datos');
-
-  verPestana(pestana: PestanaDePerfil): void {
-    this.pestana.set(pestana);
-  }
-
   constructor() {
     // Con la ventana de borrar la cuenta delante, la página no se mueve.
     effect(() => this.fondo.fijar('perfil', this.borrandoCuenta()));
 
-    // Se puede llegar a una pestaña concreta desde fuera: /perfil?ver=metodo.
-    //
-    // Lo usa el atajo de la página de precios, para quien pagó por Yape y viene
-    // con un código que no sabe dónde meter. Sin esto aterrizaba en «Tus datos»
-    // y tenía que adivinar cuál de las cinco pestañas era la suya.
-    const pedida = this.ruta.snapshot.queryParamMap.get('ver');
-    if (pedida && PESTANAS.includes(pedida as PestanaDePerfil)) {
-      this.pestana.set(pedida as PestanaDePerfil);
-    }
+    // `/perfil?ver=metodo` ya no lleva a ninguna parte, y no hace falta: lo
+    // usaba el atajo de la página de precios para quien pagó por Yape y venía
+    // con un código sin saber dónde meterlo. Ahora «¿Compraste por Yape o
+    // transferencia?» está en la primera fila, sin pestaña que abrir. El enlace
+    // sigue funcionando; el parámetro, sencillamente, ya no hace nada.
   }
 
   ngOnInit(): void {

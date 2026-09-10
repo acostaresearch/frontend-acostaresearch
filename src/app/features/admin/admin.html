@@ -1993,36 +1993,33 @@
       </section>
     }
 
-    <!-- El mismo componente que ve cualquier usuario en su perfil: un
-         administrador también es una persona con nombre y contraseña. Los dos
-         van uno al lado del otro porque ninguno llena media pantalla, y
-         apilados obligaban a bajar para cambiar la clave. -->
-    <div class="columnas">
-      <section class="tarjeta">
+    <!-- La misma rejilla que el perfil del comprador, y por lo mismo: las
+         tarjetas del conector —sus accesos, sus fuentes, la ayuda— las pinta
+         `app-mi-conector` y tienen que caber en la misma cuadrícula que «Tus
+         datos» y «Contraseña».
+
+         El mismo componente de cuenta que ve cualquier usuario: un
+         administrador también es una persona con nombre y contraseña. Y sus
+         licencias se emiten solas la primera vez que se pide la lista: una por
+         producto del catálogo, gratis y sin caducidad, porque el dueño no se
+         compra lo que vende. -->
+    <div class="rejilla">
+      <section class="tarjeta tramo-3">
         <h2>Tus datos</h2>
         <p class="nota">Así te llamamos en el sitio y en los correos que te enviamos.</p>
         <app-ajustes-de-cuenta panel="datos" />
       </section>
 
-      <section class="tarjeta">
+      <section class="tarjeta tramo-3">
         <h2>Contraseña</h2>
         <p class="nota">
           Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
         </p>
         <app-ajustes-de-cuenta panel="clave" />
       </section>
-    </div>
 
-    <!-- El conector del propio administrador. Sus licencias se emiten solas la
-         primera vez que se pide esta lista: una por producto del catálogo,
-         gratis y sin caducidad, porque el dueño no se compra lo que vende. -->
-    <section class="tarjeta">
-      <h2>Mi conector</h2>
-      <p class="nota">
-        Tus licencias, una por producto. No caducan y no gastan cupo: son las tuyas, no una compra.
-      </p>
       <app-mi-conector modo="administrador" />
-    </section>
+    </div>
   }
 
   @if (seccion() === 'admins') {

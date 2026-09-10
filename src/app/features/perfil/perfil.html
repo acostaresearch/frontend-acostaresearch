@@ -1,216 +1,101 @@
 <app-site-header />
 
-<main class="perfil">
-  @if (usuario(); as user) {
-    <!-- ── Cabecera de la cuenta ────────────────────────────────────────────── -->
-    <section class="identidad">
+@if (usuario(); as user) {
+  <div class="perfil">
+    <!-- ── Quién eres ─────────────────────────────────────────────────────────
+         La misma barra lateral del panel del administrador, con otro contenido:
+         aquí no hay a dónde navegar —todo cabe a la vista— así que la columna
+         la ocupa lo que antes obligaba a abrir dos pestañas: quién eres, desde
+         cuándo, y el cierre de sesión.
+
+         «Sesión y seguridad» vive aquí y no abajo del todo por lo mismo de
+         siempre: cerrar la sesión en un ordenador ajeno es lo que se busca con
+         prisa, y ahora se encuentra sin bajar la página. -->
+    <aside class="lateral">
       <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
+      <h1>{{ nombre() }}</h1>
+      <p class="correo">{{ user.email }}</p>
 
-      <div class="identidad-texto">
-        <p class="marca">Mi cuenta</p>
-        <h1>{{ nombre() }}</h1>
-        <p class="correo">{{ user.email }}</p>
-
-        <div class="insignias">
-          <span class="etiqueta">{{ rol() }}</span>
-          <span
-            class="etiqueta"
-            [class.buena]="user.status === 'ACTIVE'"
-            [class.mala]="user.status === 'SUSPENDED'"
-          >
-            {{ estado() }}
-          </span>
-          @if (user.emailVerifiedAt) {
-            <span class="etiqueta buena">Correo verificado</span>
-          } @else {
-            <span class="etiqueta mala">Correo sin verificar</span>
-          }
-        </div>
-      </div>
-
-      <!-- «Comprar palabras» llevaba al reescritor por packs, retirado el 9 de
-           septiembre de 2026. El humanizador que sí se vende es una Skill del
-           conector y no se compra por palabras: entra con el producto. -->
-      <div class="identidad-acciones">
-        <a class="boton secundario" routerLink="/planes">Ver productos</a>
-      </div>
-    </section>
-
-    <!-- ── Saldo del humanizador ────────────────────────────────────────────── -->
-    <!-- <section class="tarjeta">
-      <h2>Saldo del humanizador</h2>
-
-      @if (saldo(); as s) {
-        <div class="saldo">
-          <div class="saldo-cifra" [class.agotado]="s.wordsAvailable === 0">
-            <strong>{{ s.wordsAvailable | number }}</strong>
-            <span>palabras disponibles</span>
-          </div>
-          <div class="saldo-detalle">
-            <p>
-              <span class="tenue">Máximo por reescritura:</span>
-              {{ s.maxWordsPerRequest | number }} palabras
-            </p>
-            @if (s.expiresAt) {
-              <p>
-                <span class="tenue">Tu saldo vence el:</span> {{ s.expiresAt | date: 'd MMM y' }}
-              </p>
-            }
-          </div>
-        </div>
-
-        @if (bolsasActivas().length > 0) {
-          <ul class="bolsas">
-            @for (bolsa of bolsasActivas(); track bolsa.id) {
-              <li>
-                <div class="bolsa-cabecera">
-                  <strong>{{ bolsa.plan.name }}</strong>
-                  <span class="tenue">
-                    {{ bolsa.wordsUsed | number }} de {{ bolsa.wordsTotal | number }} usadas · vence
-                    el {{ bolsa.expiresAt | date: 'd MMM y' }}
-                  </span>
-                </div>
-                <div
-                  class="barra"
-                  role="progressbar"
-                  [attr.aria-valuenow]="consumido(bolsa.wordsUsed, bolsa.wordsTotal)"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                >
-                  <span [style.width.%]="consumido(bolsa.wordsUsed, bolsa.wordsTotal)"></span>
-                </div>
-              </li>
-            }
-          </ul>
+      <p class="insignias">
+        <span class="etiqueta">{{ rol() }}</span>
+        <span
+          class="etiqueta"
+          [class.buena]="user.status === 'ACTIVE'"
+          [class.mala]="user.status === 'SUSPENDED'"
+        >
+          {{ estado() }}
+        </span>
+        @if (user.emailVerifiedAt) {
+          <span class="etiqueta buena">Correo verificado</span>
+        } @else {
+          <span class="etiqueta mala">Correo sin verificar</span>
         }
+      </p>
 
-        @if (s.wordsAvailable === 0) {
-          <p class="nota-pie">
-            Te quedaste sin palabras. <a routerLink="/planes">Recarga tu bolsa</a> — 30 días, sin
-            suscripción.
-          </p>
-        }
-      } @else {
+      <dl class="ficha">
+        <div>
+          <dt>Miembro desde</dt>
+          <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
+        </div>
+        <div>
+          <dt>Verificación</dt>
+          <dd>
+            @if (user.emailVerifiedAt) {
+              {{ user.emailVerifiedAt | date: 'd MMM y' }}
+            } @else {
+              Pendiente
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Último acceso</dt>
+          <dd>
+            @if (user.lastLoginAt) {
+              {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
+            } @else {
+              Este es tu primer acceso
+            }
+          </dd>
+        </div>
+      </dl>
+
+      <div class="seguridad">
+        <h2>Sesión y seguridad</h2>
         <p class="nota">
-          Todavía no tienes saldo activo. <a routerLink="/planes">Elige una bolsa de palabras</a>
-          y empieza a pulir tu texto.
+          Si usaste la web en un ordenador que no es tuyo, cierra la sesión en todos los
+          dispositivos.
         </p>
-      }
-    </section> -->
 
-    <!-- ── Pestañas ─────────────────────────────────────────────────────────
-         Cuatro secciones que se miran en momentos distintos: los datos se
-         cambian una vez al año, el conector se consulta al instalarlo y las
-         compras se buscan cuando algo no cuadra. Apiladas obligaban a
-         desplazarse por las tres que no interesan. -->
-    <nav class="pestanas">
-      <button type="button" [class.activa]="pestana() === 'datos'" (click)="verPestana('datos')">
-        Tus datos
-      </button>
-      <button type="button" [class.activa]="pestana() === 'clave'" (click)="verPestana('clave')">
-        Contraseña
-      </button>
-      <button type="button" [class.activa]="pestana() === 'metodo'" (click)="verPestana('metodo')">
-        Método de tesis
-      </button>
-      <button type="button" [class.activa]="pestana() === 'cuenta'" (click)="verPestana('cuenta')">
-        Datos de la cuenta
-      </button>
-      <button
-        type="button"
-        [class.activa]="pestana() === 'compras'"
-        (click)="verPestana('compras')"
-      >
-        Mis compras
-      </button>
-    </nav>
+        <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
+          Cerrar sesión
+        </button>
+        <button
+          type="button"
+          class="boton peligro"
+          [disabled]="cerrando()"
+          (click)="salirDeTodos()"
+        >
+          Cerrar sesión en todos los dispositivos
+        </button>
+        <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
+          Eliminar cuenta
+        </button>
+      </div>
+    </aside>
 
-    <!-- El mismo componente que usa el panel del administrador: un administrador
-         también es una persona con nombre y contraseña. Las pestañas las pone
-         cada pantalla; él solo pinta la mitad que se le pide. -->
-    @if (pestana() === 'datos') {
-      <section class="tarjeta">
-        <h2>Tus datos</h2>
-        <app-ajustes-de-cuenta panel="datos" />
-      </section>
-    }
+    <!-- ── Lo que tienes ──────────────────────────────────────────────────────
+         Todo a la vista, sin pestañas. Eran cinco, y para ver si un pago entró
+         y a la vez copiar la URL del conector había que ir y volver entre dos
+         de ellas. En una rejilla de seis columnas cabe todo sin que nada se
+         quede a medio ancho.
 
-    @if (pestana() === 'clave') {
-      <section class="tarjeta">
-        <h2>Contraseña</h2>
-        <app-ajustes-de-cuenta panel="clave" />
-      </section>
-    }
-
-    @if (pestana() === 'metodo') {
-      <!-- ── Método de tesis ──────────────────────────────────────────────────── -->
-      <section class="tarjeta">
-        <h2>Método de tesis · conector de Claude</h2>
-
-        <!-- El mismo componente que el panel del administrador: él tiene sus dos
-             licencias emitidas de oficio y también necesita ver su URL. -->
-        <app-mi-conector />
-      </section>
-    }
-
-    @if (pestana() === 'cuenta') {
-      <!-- ── Datos de la cuenta ───────────────────────────────────────────────── -->
-      <section class="tarjeta">
-        <h2>Datos de la cuenta</h2>
-        <p class="nota">Lo que hay registrado de ti, para consultarlo de un vistazo.</p>
-
-        <dl class="datos">
-          <div>
-            <dt>Nombre</dt>
-            <dd>{{ user.firstName }}</dd>
-          </div>
-          <div>
-            <dt>Apellidos</dt>
-            <dd>{{ user.lastName }}</dd>
-          </div>
-          <div>
-            <dt>Correo</dt>
-            <dd>{{ user.email }}</dd>
-          </div>
-          <div>
-            <dt>Rol</dt>
-            <dd>{{ rol() }}</dd>
-          </div>
-          <div>
-            <dt>Estado</dt>
-            <dd>{{ estado() }}</dd>
-          </div>
-          <div>
-            <dt>Verificación</dt>
-            <dd>
-              @if (user.emailVerifiedAt) {
-                {{ user.emailVerifiedAt | date: 'd MMM y' }}
-              } @else {
-                Pendiente
-              }
-            </dd>
-          </div>
-          <div>
-            <dt>Miembro desde</dt>
-            <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
-          </div>
-          <div>
-            <dt>Último acceso</dt>
-            <dd>
-              @if (user.lastLoginAt) {
-                {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
-              } @else {
-                Este es tu primer acceso
-              }
-            </dd>
-          </div>
-        </dl>
-      </section>
-    }
-
-    @if (pestana() === 'compras') {
-      <!-- ── Compras ──────────────────────────────────────────────────────────── -->
-      <section class="tarjeta">
+         Las tarjetas del conector —el canje, los accesos, las fuentes y la
+         ayuda— las pinta `app-mi-conector`, y entran en ESTA rejilla: la regla
+         global le quita la caja al componente para que sus tarjetas sean
+         casillas de aquí. Por eso «¿Compraste por Yape?» sale al lado de «Mis
+         compras» sin que ninguno de los dos sepa del otro. -->
+    <main class="contenido rejilla">
+      <section class="tarjeta tramo-4">
         <h2>Mis compras</h2>
 
         @if (cargandoCompras()) {
@@ -222,7 +107,7 @@
                 <tr>
                   <th>Fecha</th>
                   <th>Plan</th>
-                  <th>Importe</th>
+                  <th class="derecha">Importe</th>
                   <th>Medio</th>
                   <th>Estado</th>
                 </tr>
@@ -237,7 +122,7 @@
                         <span class="tenue">{{ pago.plan.words | number }} palabras</span>
                       }
                     </td>
-                    <td>{{ precio(pago) }}</td>
+                    <td class="derecha">{{ precio(pago) }}</td>
                     <td class="tenue">{{ medioPago(pago) }}</td>
                     <td>
                       <span
@@ -260,99 +145,90 @@
           </p>
         }
       </section>
-    }
 
-    <!-- Sesión y seguridad va SIEMPRE abajo y fuera de las pestañas: cerrar la
-         sesión en un ordenador ajeno es lo que se busca con prisa, y esconderlo
-         detrás de una pestaña sería ponérselo difícil justo cuando corre. -->
-    <!-- ── Sesión y seguridad ───────────────────────────────────────────────── -->
-    <section class="tarjeta">
-      <h2>Sesión y seguridad</h2>
-      <p class="nota">
-        Si usaste la web en un ordenador que no es tuyo, cierra la sesión en todos los dispositivos.
-      </p>
+      <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
+           componente que usa el panel del administrador, que también es una
+           persona con licencias que mirar. -->
+      <app-mi-conector />
 
-      <div class="acciones-sesion">
-        <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
-          Cerrar sesión
-        </button>
-        <button
-          type="button"
-          class="boton peligro"
-          [disabled]="cerrando()"
-          (click)="salirDeTodos()"
-        >
-          Cerrar sesión en todos los dispositivos
-        </button>
-        <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
-          Eliminar cuenta
-        </button>
-      </div>
-    </section>
+      <!-- El mismo componente que usa el panel del administrador: la mitad que
+           se le pida, con la caja que ponga cada pantalla. -->
+      <section class="tarjeta tramo-3">
+        <h2>Tus datos</h2>
+        <p class="nota">Así te llamamos en el sitio y en los correos que te enviamos.</p>
+        <app-ajustes-de-cuenta panel="datos" />
+      </section>
 
-    <!-- ── Ventana de borrar la cuenta ──────────────────────────────────────
-         Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide
-         el clic sin querer, y el correo impide equivocarse de cuenta cuando
-         alguien tiene abiertas la suya y la de otro. -->
-    @if (borrandoCuenta()) {
-      <div class="ventana-fondo">
-        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-borrar-cuenta">
-          <h3 id="titulo-borrar-cuenta">Eliminar tu cuenta</h3>
+      <section class="tarjeta tramo-3">
+        <h2>Contraseña</h2>
+        <p class="nota">
+          Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
+        </p>
+        <app-ajustes-de-cuenta panel="clave" />
+      </section>
+    </main>
+  </div>
 
-          <p class="nota">
-            No podrás volver a entrar y <b>tu conector de Claude dejará de responder</b>. Si tienes
-            acceso al método, lo pierdes.
-          </p>
-          <p class="nota">
-            Guardamos el registro de tus compras, sin tu nombre ni tu correo, porque una factura
-            tiene que poder cuadrarse años después. Todo lo demás se borra.
-          </p>
+  <!-- ── Ventana de borrar la cuenta ────────────────────────────────────────
+       Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide el
+       clic sin querer, y el correo impide equivocarse de cuenta cuando alguien
+       tiene abiertas la suya y la de otro. -->
+  @if (borrandoCuenta()) {
+    <div class="ventana-fondo">
+      <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-borrar-cuenta">
+        <h3 id="titulo-borrar-cuenta">Eliminar tu cuenta</h3>
 
-          <label class="campo-borrado">
-            <span>Escribe <b>eliminar</b></span>
-            <input
-              type="text"
-              [value]="palabraBorrado()"
-              (input)="palabraBorrado.set($any($event.target).value)"
-              placeholder="eliminar"
-              autocomplete="off"
-            />
-          </label>
+        <p class="nota">
+          No podrás volver a entrar y <b>tu conector de Claude dejará de responder</b>. Si tienes
+          acceso al método, lo pierdes.
+        </p>
+        <p class="nota">
+          Guardamos el registro de tus compras, sin tu nombre ni tu correo, porque una factura
+          tiene que poder cuadrarse años después. Todo lo demás se borra.
+        </p>
 
-          <label class="campo-borrado">
-            <span
-              >Y tu correo, <b>{{ user.email }}</b></span
-            >
-            <input
-              type="email"
-              [value]="correoBorrado()"
-              (input)="correoBorrado.set($any($event.target).value)"
-              [placeholder]="user.email"
-              autocomplete="off"
-            />
-          </label>
+        <label class="campo-borrado">
+          <span>Escribe <b>eliminar</b></span>
+          <input
+            type="text"
+            [value]="palabraBorrado()"
+            (input)="palabraBorrado.set($any($event.target).value)"
+            placeholder="eliminar"
+            autocomplete="off"
+          />
+        </label>
 
-          @if (errorBorrado(); as mensaje) {
-            <p class="aviso error">{{ mensaje }}</p>
-          }
+        <label class="campo-borrado">
+          <span
+            >Y tu correo, <b>{{ user.email }}</b></span
+          >
+          <input
+            type="email"
+            [value]="correoBorrado()"
+            (input)="correoBorrado.set($any($event.target).value)"
+            [placeholder]="user.email"
+            autocomplete="off"
+          />
+        </label>
 
-          <div class="acciones-sesion">
-            <button type="button" class="boton secundario" (click)="cerrarBorradoDeCuenta()">
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="boton peligro"
-              [disabled]="!puedeBorrarCuenta() || borrando()"
-              (click)="eliminarCuenta()"
-            >
-              {{ borrando() ? 'Eliminando…' : 'Eliminar mi cuenta' }}
-            </button>
-          </div>
+        @if (errorBorrado(); as mensaje) {
+          <p class="aviso error">{{ mensaje }}</p>
+        }
+
+        <div class="acciones-sesion">
+          <button type="button" class="boton secundario" (click)="cerrarBorradoDeCuenta()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="boton peligro"
+            [disabled]="!puedeBorrarCuenta() || borrando()"
+            (click)="eliminarCuenta()"
+          >
+            {{ borrando() ? 'Eliminando…' : 'Eliminar mi cuenta' }}
+          </button>
         </div>
       </div>
-    }
+    </div>
   }
-</main>
-
-<app-site-footer />
+}

@@ -2,7 +2,7 @@
      el administrador no está arrancando nada, sus licencias se le emiten
      solas y ya tiene el panel entero delante. -->
 @if (modo() === 'comprador' && progreso(); as p) {
-  <app-pasos-de-arranque [progreso]="p" />
+  <app-pasos-de-arranque class="tramo-6" [progreso]="p" />
 }
 
 <!-- Por dónde va su tesis, justo después de la puesta en marcha y antes que
@@ -10,14 +10,14 @@
      mirar su URL: viene a ver dónde lo dejó. El componente no pinta nada
      mientras no haya avance guardado, así que no estorba a quien acaba de
      llegar. -->
-<app-mi-tesis />
+<app-mi-tesis class="tramo-6" />
 
 @if (errorLicencia(); as mensaje) {
-  <p class="aviso error">{{ mensaje }}</p>
+  <p class="aviso error tramo-6">{{ mensaje }}</p>
 }
 
 @if (urlNueva(); as url) {
-  <div class="url-nueva">
+  <div class="url-nueva tramo-6">
     <p class="url-titulo">Tu URL nueva. Cópiala ahora: no volveremos a mostrarla.</p>
     <div class="url-fila">
       <input type="text" [value]="url" readonly />
@@ -29,126 +29,22 @@
   </div>
 }
 
-@if (misLicencias().length > 0) {
-  <ul class="licencias">
-    @for (licencia of misLicencias(); track licencia.id) {
-      <li>
-        <div>
-          <strong>{{ licencia.productName || licencia.productCode }}</strong>
-          <span class="tenue">
-            @if (licencia.callsPerDay && licencia.usage) {
-              hoy {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }} consultas ·
-            } @else {
-              {{ licencia.callsTotal }} consultas ·
-            }
-            @if (licencia.expiresAt) {
-              vence el {{ licencia.expiresAt | date: 'd MMM y' }}
-            } @else {
-              sin caducidad
-            }
-          </span>
-        </div>
-        <div class="licencia-acciones">
-          <!-- «Retirado» gana a «REVOKED»: dice POR QUÉ está apagada, que es
-               lo que hace falta saber. El estado a secas invita a pensar que
-               algo se rompió. -->
-          @if (licencia.retirado) {
-            <span class="etiqueta retirada">Retirado</span>
-          } @else {
-            <span class="etiqueta" [class.revocada]="licencia.status !== 'ACTIVE'">
-              {{ licencia.status }}
-            </span>
-          }
-          @if (licencia.status === 'ACTIVE' && !licencia.retirado) {
-            <button
-              type="button"
-              class="boton secundario"
-              [disabled]="rotando() === licencia.id"
-              (click)="regenerarUrl(licencia)"
-            >
-              {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
-            </button>
-          }
-        </div>
-      </li>
-    }
-  </ul>
+<!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
+     Western Union— y recibió el código por correo. Es el único sitio donde se
+     canjea, así que se enseña siempre, tenga o no licencia ya: quien renueva
+     también llega aquí con un código nuevo.
 
-  <!-- La guía, debajo de la licencia y solo para quien tiene acceso
-       vigente: es material del producto, no un folleto.
-       Una licencia revocada o caducada no la ve — a quien está en ese
-       caso lo que le hace falta es renovar, no un manual para conectar
-       algo que ya no le va a responder.
-       Y solo aparece si el PDF existe de verdad: lo comprueba el build,
-       porque un enlace a un PDF ausente descargaría la portada de la web
-       con extensión .pdf en vez de dar un error honesto. -->
-  <!-- Los videos van ANTES que la guía en PDF, y antes que nada que haya que
-       descargar: tres de cada dieciséis compradores no llegaron a abrir el
-       conector nunca, y a ese no se le arregla con un adjunto. -->
-  <a class="tutoriales-enlace" routerLink="/tutoriales">
-    <span class="tutoriales-icono" aria-hidden="true">▶</span>
-    <span class="tutoriales-texto">
-      <strong>Cómo usarlo, en video</strong>
-      <span>Conectarlo, tu primer capítulo, tus fuentes, y qué hacer si algo falla.</span>
-    </span>
-  </a>
+     Va arriba y estrecho, al lado de «Mis compras»: las dos responden a «¿qué
+     he pagado y qué tengo?», que es con lo que se entra aquí después de pagar
+     por Yape.
 
-  @if (guiaUrl && tieneAccesoVigente()) {
-    <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
-      <span class="guia-icono" aria-hidden="true">📄</span>
-      <span class="guia-texto">
-        <strong>Guía de instalación en PDF</strong>
-        <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
-      </span>
-      <span class="guia-accion">Descargar</span>
-    </a>
-  }
-
-  <!-- Sus propias fuentes. Solo con acceso vigente, como la guía: sin conector
-       que las lea, subir un export no serviría de nada.
-
-       Va aquí, y no en una pestaña aparte, porque es parte de la puesta en
-       marcha: quien acaba de conectar Claude es exactamente quien está a punto
-       de descubrir que su tema no está en la biblioteca de la casa. -->
-  @if (tieneAccesoVigente()) {
-    <section class="mis-fuentes">
-      <h3>Tus fuentes de Scopus</h3>
-      <app-mis-fuentes />
-    </section>
-  }
-} @else if (modo() === 'administrador') {
-  <!-- No debería verse nunca: las licencias del administrador se emiten solas
-       al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan
-       de licencia activo, y decirlo así ahorra buscar el fallo en el sitio
-       equivocado. -->
-  <p class="nota">
-    @if (cargando()) {
-      Emitiendo tus licencias…
-    } @else {
-      No hay ningún producto con plan de licencia activo en el catálogo, así que no hay nada que
-      emitir.
-    }
-  </p>
-} @else {
-  <p class="nota">
-    Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
-    funciona también en el plan gratuito.
-  </p>
-  <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
-    Ver el método
-  </a>
-}
-
+     El administrador no lo ve: los códigos los genera él, y canjearse uno a sí
+     mismo apuntaría una venta que no existió. -->
 @if (modo() === 'comprador') {
-  <!-- Códigos de quien pagó fuera de la web —Yape al WhatsApp, transferencia,
-       Western Union— y recibió el código por correo. Es el único sitio donde
-       se canjea, así que se enseña siempre, tenga o no licencia ya: quien
-       renueva también llega aquí con un código nuevo.
-       El administrador no lo ve: los códigos los genera él, y canjearse uno a
-       sí mismo apuntaría una venta que no existió. -->
-  <div class="canje">
-    <h3>¿Compraste por Yape o transferencia?</h3>
+  <section class="tarjeta tramo-2">
+    <h2>¿Compraste por Yape o transferencia?</h2>
     <p class="nota">Canjea aquí el código de activación que te enviamos por correo.</p>
+
     <div class="canje-fila">
       <!-- El marcador de posición enseña la FORMA del código, no lo que es. Los
            códigos son ACR- y tres grupos de cuatro, y verlo dibujado evita el
@@ -168,5 +64,175 @@
         {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
       </button>
     </div>
-  </div>
+  </section>
+}
+
+@if (misLicencias().length > 0) {
+  <!-- Una ficha por licencia y no una fila de lista: lo que hay que saber de
+       cada acceso son cuatro cosas —qué producto, cuánto se ha usado hoy,
+       hasta cuándo vale y si sigue vivo—, y en una fila solo cabían dos. -->
+  <section class="tarjeta tramo-6">
+    <h2>Conector de Claude</h2>
+    <p class="nota">Tus accesos activos y el enlace para conectarlos.</p>
+
+    <ul class="licencias">
+      @for (licencia of misLicencias(); track licencia.id) {
+        <li>
+          <strong>{{ licencia.productName || licencia.productCode }}</strong>
+
+          <!-- El gasto del día, con barra. El número solo —«12 consultas»— no
+               dice si eso es mucho: contra el tope, sí. Sin tope contratado no
+               hay barra que pintar, así que se enseña el total y ya está. -->
+          @if (licencia.callsPerDay && licencia.usage) {
+            <p class="licencia-uso">
+              <span>Consultas de hoy</span>
+              <span class="licencia-cifra">
+                {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }}
+              </span>
+            </p>
+            <span
+              class="licencia-barra"
+              role="progressbar"
+              [attr.aria-valuenow]="gastoDelDia(licencia)"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <span [style.width.%]="gastoDelDia(licencia)"></span>
+            </span>
+          } @else {
+            <p class="licencia-uso">
+              <span>Consultas</span>
+              <span class="licencia-cifra">{{ licencia.callsTotal }}</span>
+            </p>
+          }
+
+          <p class="licencia-vence">
+            @if (licencia.expiresAt) {
+              Vence el {{ licencia.expiresAt | date: 'd MMM y' }}
+              <!-- Los días que quedan, destacados: la fecha sola obliga a
+                   restar mentalmente, y de eso depende si toca renovar hoy. -->
+              @if (diasQueFaltan(licencia); as dias) {
+                · <b [class.poco]="dias <= 15">faltan {{ dias }} días</b>
+              } @else {
+                · <b class="poco">caducada</b>
+              }
+            } @else {
+              Sin caducidad
+            }
+          </p>
+
+          <div class="licencia-pie">
+            <!-- «Retirado» gana a «REVOKED»: dice POR QUÉ está apagada, que es
+                 lo que hace falta saber. El estado a secas invita a pensar que
+                 algo se rompió. -->
+            @if (licencia.retirado) {
+              <span class="punto retirada">Retirado</span>
+            } @else if (licencia.status === 'ACTIVE') {
+              <span class="punto activa">Activo</span>
+            } @else {
+              <span class="punto revocada">{{ licencia.status }}</span>
+            }
+
+            @if (licencia.status === 'ACTIVE' && !licencia.retirado) {
+              <button
+                type="button"
+                class="boton secundario"
+                [disabled]="rotando() === licencia.id"
+                (click)="regenerarUrl(licencia)"
+              >
+                {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <!-- Sus propias fuentes. Solo con acceso vigente, como la guía: sin conector
+       que las lea, subir un export no serviría de nada.
+
+       Va aquí, y no en una pantalla aparte, porque es parte de la puesta en
+       marcha: quien acaba de conectar Claude es exactamente quien está a punto
+       de descubrir que su tema no está en la biblioteca de la casa. -->
+  @if (tieneAccesoVigente()) {
+    <section class="tarjeta tramo-3">
+      <h2>Tus fuentes de Scopus</h2>
+      <p class="nota">Desde que las subes, aparecen cuando Claude busca para tus capítulos.</p>
+      <app-mis-fuentes />
+    </section>
+  }
+
+  <!-- Todo lo que se le puede dar a quien se ha atascado, junto y en el mismo
+       sitio. Los videos van PRIMERO, antes que nada que haya que descargar:
+       tres de cada dieciséis compradores no llegaron a abrir el conector nunca,
+       y a ese no se le arregla con un adjunto.
+
+       El PDF solo si existe de verdad —lo comprueba el build, porque un enlace
+       a un PDF ausente descargaría la portada de la web con extensión .pdf en
+       vez de dar un error honesto— y solo con acceso vigente: a quien caducó lo
+       que le hace falta es renovar, no un manual para conectar algo que ya no
+       le va a responder. -->
+  <section class="tarjeta tramo-3">
+    <h2>¿Necesitas ayuda?</h2>
+    <p class="nota">Todo lo que te sirve para conectar y usar tus skills.</p>
+
+    <a class="recurso" routerLink="/tutoriales">
+      <span class="recurso-icono" aria-hidden="true">▶</span>
+      <span class="recurso-texto">
+        <strong>Cómo usarlo, en video</strong>
+        <span>Conectarlo, tu primer capítulo, tus fuentes, y qué hacer si algo falla.</span>
+      </span>
+      <span class="recurso-accion">Ver video</span>
+    </a>
+
+    @if (guiaUrl && tieneAccesoVigente()) {
+      <a class="recurso" [href]="guiaUrl" download target="_blank" rel="noopener">
+        <span class="recurso-icono pdf" aria-hidden="true">PDF</span>
+        <span class="recurso-texto">
+          <strong>Guía de instalación en PDF</strong>
+          <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
+        </span>
+        <span class="recurso-accion">Descargar</span>
+      </a>
+    }
+
+    <!-- Una persona al otro lado, no una página de ayuda más. Quien llega aquí
+         ya probó el video y el PDF. -->
+    <a class="recurso" [href]="whatsappUrl" target="_blank" rel="noopener">
+      <span class="recurso-icono" aria-hidden="true">WA</span>
+      <span class="recurso-texto">
+        <strong>Escríbenos por WhatsApp</strong>
+        <span>{{ whatsappTexto }}</span>
+      </span>
+      <span class="recurso-accion">Abrir chat</span>
+    </a>
+  </section>
+} @else if (modo() === 'administrador') {
+  <!-- No debería verse nunca: las licencias del administrador se emiten solas
+       al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan
+       de licencia activo, y decirlo así ahorra buscar el fallo en el sitio
+       equivocado. -->
+  <section class="tarjeta tramo-6">
+    <h2>Conector de Claude</h2>
+    <p class="nota">
+      @if (cargando()) {
+        Emitiendo tus licencias…
+      } @else {
+        No hay ningún producto con plan de licencia activo en el catálogo, así que no hay nada que
+        emitir.
+      }
+    </p>
+  </section>
+} @else {
+  <section class="tarjeta tramo-4">
+    <h2>Conector de Claude</h2>
+    <p class="nota">
+      Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y
+      funciona también en el plan gratuito.
+    </p>
+    <a class="boton" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+      Ver el método
+    </a>
+  </section>
 }

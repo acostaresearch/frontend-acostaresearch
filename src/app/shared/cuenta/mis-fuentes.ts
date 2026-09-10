@@ -1,5 +1,5 @@
 import { DatePipe, UpperCasePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
@@ -53,6 +53,20 @@ export class MisFuentesPanel implements OnInit {
   readonly resultado = signal<ResultadoDeImportacion | null>(null);
   /** Para el resaltado al arrastrar un archivo encima. */
   readonly encima = signal(false);
+
+  /**
+   * ¿Se pidió la caja de subir?
+   *
+   * Con fuentes ya cargadas, la caja de arrastrar es lo más grande de la
+   * tarjeta y lo que menos se usa: subir un export es cosa de un rato al
+   * empezar, y después se vuelve aquí a mirar cuántas hay. Así que se pliega
+   * detrás de «Cargar más fuentes» y la tarjeta enseña la cifra, que es a lo
+   * que se viene.
+   */
+  readonly subiendoMas = signal(false);
+
+  /** Sin ninguna fuente todavía no hay nada que plegar: la caja ES la tarjeta. */
+  readonly cajaVisible = computed(() => this.subiendoMas() || (this.resumen()?.total ?? 0) === 0);
 
   ngOnInit(): void {
     this.cargar();
