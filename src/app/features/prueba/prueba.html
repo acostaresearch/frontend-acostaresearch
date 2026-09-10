@@ -1,0 +1,107 @@
+<app-site-header />
+
+<main class="pagina prueba">
+  <section class="tarjeta">
+    @if (cargando()) {
+      <p class="nota">Cargando la prueba…</p>
+    } @else if (conector(); as c) {
+      <!-- ── Ya tiene su conector ─────────────────────────────────────────── -->
+      <p class="antetitulo">Prueba gratuita{{ prueba() ? ' · ' + prueba()!.name : '' }}</p>
+      <h1>Tu conector está listo</h1>
+
+      @if (prueba()?.estado === 'APAGADO') {
+        <div class="aviso error" role="alert">
+          Esta prueba ya terminó: el conector dejó de funcionar.
+        </div>
+      } @else {
+        <p>
+          Es solo tuyo: lo que trabajes con él no lo ve nadie más del grupo. Funciona hasta el
+          <strong>{{ c.expiresAt | date: 'd MMM y' }}</strong>.
+        </p>
+      }
+
+      <div class="url-conector">
+        <label for="url">Tu URL del conector</label>
+        <div class="url-fila">
+          <input id="url" type="text" [value]="c.connectorUrl" readonly />
+          <button type="button" class="boton" (click)="copiar(c.connectorUrl)">
+            {{ copiada() ? '¡Copiada!' : 'Copiar' }}
+          </button>
+        </div>
+        <p class="aviso-url">
+          <strong>Guárdala ahora.</strong> Este navegador la recuerda, pero en otro equipo no
+          podrás volver a verla.
+        </p>
+      </div>
+
+      <ol class="instrucciones">
+        <li>Abre Claude y entra en <strong>Configuración → Conectores</strong>.</li>
+        <li>Pulsa <strong>Añadir conector personalizado</strong> y pega la URL de arriba.</li>
+        <li>
+          Escríbele a Claude «trabajemos mi tesis» y pídele que use el conector. Empieza por el
+          capítulo que te toque.
+        </li>
+      </ol>
+
+      @if (guiaUrl) {
+        <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
+          <span aria-hidden="true">📄</span>
+          <span><strong>Guía de instalación en PDF</strong> · los mismos pasos, con capturas</span>
+        </a>
+      }
+
+      <p class="nota">
+        Es un conector de prueba: no lo compartas, cada persona del grupo tiene el suyo.
+      </p>
+    } @else if (prueba(); as p) {
+      <!-- ── Aún no lo ha recogido ────────────────────────────────────────── -->
+      <p class="antetitulo">Prueba gratuita · {{ p.name }}</p>
+      <h1>Prueba el conector de {{ p.productName }}</h1>
+
+      @switch (p.estado) {
+        @case ('ABIERTO') {
+          <p>
+            Recibe tu propio conector para Claude, sin registrarte y sin pagar. Te dura
+            <strong>{{ p.accessDays }} {{ p.accessDays === 1 ? 'día' : 'días' }}</strong>
+            @if (cupo(p); as limite) {
+              , con {{ limite }}
+            }
+            .
+          </p>
+
+          <p class="cupos">
+            Quedan <strong>{{ p.quedan }}</strong> de {{ p.seats }} conectores.
+          </p>
+
+          @if (error(); as mensaje) {
+            <div class="aviso error" role="alert">{{ mensaje }}</div>
+          }
+
+          <button type="button" class="boton grande" [disabled]="pidiendo()" (click)="pedir()">
+            {{ pidiendo() ? 'Preparando tu conector…' : 'Obtener mi conector' }}
+          </button>
+        }
+        @case ('LLENO') {
+          <div class="aviso info" role="status">
+            Ya se entregaron los {{ p.seats }} conectores de esta prueba.
+          </div>
+          <p>
+            Si te quedaste sin el tuyo, pídele otro enlace a quien te lo pasó, o mira los
+            <a routerLink="/planes">planes</a>.
+          </p>
+        }
+        @case ('APAGADO') {
+          <div class="aviso info" role="status">Esta prueba del conector ya terminó.</div>
+          <p>Si quieres seguir, tienes los <a routerLink="/planes">planes</a>.</p>
+        }
+      }
+    } @else {
+      <!-- ── Enlace que no existe ─────────────────────────────────────────── -->
+      <h1>Este enlace no funciona</h1>
+      <div class="aviso error" role="alert">
+        {{ error() ?? 'Este enlace de prueba no existe. Revisa que esté bien copiado.' }}
+      </div>
+      <p><a routerLink="/">Ir a la portada</a></p>
+    }
+  </section>
+</main>

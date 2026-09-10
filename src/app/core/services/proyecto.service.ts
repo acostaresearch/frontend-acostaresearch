@@ -113,6 +113,25 @@ export class ProyectoService {
       .pipe(map((r) => r.data ?? { cuantos: 0 }));
   }
 
+  /**
+   * El análisis de la página de R, a su proyecto.
+   *
+   * Se guarda donde lo guarda «guardar_analisis», y «mi_proyecto» le avisa a
+   * Claude de que hay uno sin leer. Es lo que ahorra copiar la consola y
+   * pegársela a mano, que es donde se pierde media salida.
+   */
+  enviarAnalisis(
+    productCode: string,
+    analisis: { script: string; salida: string },
+  ): Observable<{ capitulo: string }> {
+    return this.http
+      .post<ApiResponse<{ capitulo: string }>>(
+        `${this.base}/${encodeURIComponent(productCode)}/analisis`,
+        analisis,
+      )
+      .pipe(map((r) => ({ capitulo: r.data?.capitulo ?? '' })));
+  }
+
   quitarPlantilla(productCode: string): Observable<void> {
     return this.http
       .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/plantilla`)

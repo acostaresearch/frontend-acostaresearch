@@ -132,6 +132,25 @@ descriptivos <- function(datos) {
 }
 `;
 
+/**
+ * Las funciones que define `PREAMBULO`.
+ *
+ * Viven en el entorno global, como cualquier objeto del tesista, y eso tiene
+ * dos consecuencias que hay que corregir a mano: salían en el panel de Entorno
+ * como si las hubiera creado él, y «Vaciar» se las llevaba por delante —después
+ * de eso `descriptivos()` no existía hasta recargar la página—.
+ *
+ * La lista va aquí, al lado de las definiciones, para que añadir una función
+ * y olvidarse de esto sea difícil.
+ */
+export const FUNCIONES_DE_LA_CASA = [
+  'alfa_de_cronbach',
+  'descriptivos',
+  'frecuencias',
+  'normalidad',
+  'puntaje',
+];
+
 /** Una línea de la consola de R, con su origen. */
 export interface LineaDeSalida {
   tipo: 'stdout' | 'stderr';
@@ -343,16 +362,28 @@ export class WebrService {
        * WebAssembly traen el dispositivo: si no está, el `try` se lo traga y
        * lo único que pasa es que no hay gráficos. El análisis sigue igual.
        *
-       * Y el `dev.off()` va en `on.exit` para que también se cierre si el
-       * código del tesista falla a mitad: un dispositivo abierto se queda
-       * capturando las ejecuciones siguientes, y entonces el gráfico aparece
-       * una vez y no vuelve a aparecer nunca.
+       * El de captura se abre SOLO si no hay otro abierto, y al terminar se
+       * cierra SOLO el suyo, por número. Antes se abría siempre y al final se
+       * cerraban todos, y eso rompía guardar una figura línea a línea: el
+       * `png("figura1.png")` de una línea moría al acabar esa ejecución, el
+       * `hist()` de la siguiente iba a la pestaña, y en disco quedaba un PNG en
+       * blanco. Se comprobó con R: 1.046 bytes línea a línea contra 10.125 con
+       * todo de una vez. Ejecutar línea a línea es justo como se enseña a
+       * trabajar aquí, así que el fallo le tocaba a todo el que siguiera el
+       * método.
+       *
+       * Con un dispositivo del tesista abierto, el gráfico va a su archivo y no
+       * a la pestaña. Es lo mismo que hace RStudio: mientras hay un `png()`
+       * abierto, el panel de gráficos no se entera.
        */
       const envuelto = [
         `try({ dir.create("${GRAFICOS}", showWarnings = FALSE, recursive = TRUE)`,
         `  unlink(list.files("${GRAFICOS}", full.names = TRUE))`,
-        `  grDevices::png("${GRAFICOS}/g%03d.png", width = 900, height = 620)`,
-        `  on.exit(try(grDevices::dev.off(), silent = TRUE), add = TRUE) }, silent = TRUE)`,
+        `  assign(".acosta_captura", NULL, envir = globalenv())`,
+        `  if (grDevices::dev.cur() == 1) {`,
+        `    grDevices::png("${GRAFICOS}/g%03d.png", width = 900, height = 620)`,
+        `    assign(".acosta_captura", grDevices::dev.cur(), envir = globalenv())`,
+        `  } }, silent = TRUE)`,
         codigo,
       ].join('\n');
 
@@ -362,10 +393,13 @@ export class WebrService {
         captureConditions: false,
       });
 
-      // El dispositivo se cierra aparte además del `on.exit`: `captureR` evalúa
-      // en su propio ámbito y el `on.exit` de arriba puede dispararse antes de
-      // que el código haya pintado. Cerrarlo dos veces es inofensivo.
-      await webR.evalRVoid('try(while (grDevices::dev.cur() > 1) grDevices::dev.off(), silent = TRUE)');
+      // Solo el de captura, y por su número: el que haya abierto el tesista
+      // sigue abierto para la línea siguiente. Ver el comentario de arriba.
+      await webR.evalRVoid(
+        'try({ captura <- get0(".acosta_captura", envir = globalenv()); ' +
+          'if (!is.null(captura) && captura %in% grDevices::dev.list()) ' +
+          'grDevices::dev.off(captura) }, silent = TRUE)',
+      );
 
       return {
         salida: (resultado.output ?? []).map((linea) => ({
@@ -430,6 +464,8 @@ export class WebrService {
       local({
         nombres <- ls(envir = globalenv())
         nombres <- nombres[!startsWith(nombres, ".")]
+        # Las de la casa no son objetos del tesista: no se enseñan.
+        nombres <- setdiff(nombres, c(${FUNCIONES_DE_LA_CASA.map((f) => `"${f}"`).join(', ')}))
         if (length(nombres) == 0) return("")
         paste(vapply(nombres, function(n) {
           x <- get(n, envir = globalenv())
@@ -509,6 +545,9 @@ export class WebrService {
   async reiniciar(): Promise<void> {
     const webR = await this.arrancar();
 
+    // Reiniciar también cierra los gráficos que el tesista dejara abiertos: un
+    // `png()` sin su `dev.off()` es de lo que más enreda una sesión.
+    await webR.evalRVoid('try(grDevices::graphics.off(), silent = TRUE)');
     await webR.evalRVoid('rm(list = ls(envir = globalenv()), envir = globalenv())');
 
     try {

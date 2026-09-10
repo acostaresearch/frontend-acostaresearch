@@ -108,6 +108,13 @@ export const routes: Routes = [
     title: 'Precios · Acosta Research',
     loadComponent: () => import('./features/checkout/checkout').then((m) => m.Checkout),
   },
+  // El enlace de prueba que el administrador reparte a un grupo. Sin sesión a
+  // propósito: quien lo recibe no se registra, solo recoge su conector.
+  {
+    path: 'prueba/:slug',
+    title: 'Prueba el conector · Acosta Research',
+    loadComponent: () => import('./features/prueba/prueba').then((m) => m.Prueba),
+  },
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard('ADMIN')],

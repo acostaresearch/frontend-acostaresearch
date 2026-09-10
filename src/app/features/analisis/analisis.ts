@@ -1,10 +1,14 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
+import { toApiError } from '../../core/http/api-error';
 import { resaltarR } from '../../core/r/resaltado-r';
+import { LicenseService } from '../../core/services/license.service';
+import { ProyectoService } from '../../core/services/proyecto.service';
 import {
   ArchivoDeLaSesion,
   ColumnaDeDatos,
+  FUNCIONES_DE_LA_CASA,
   LineaDeSalida,
   ObjetoDelEntorno,
   WebrService,
@@ -31,6 +35,14 @@ head(datos)     # las primeras filas, para comprobar que entró bien
 # Tabla de descriptivos: media, desviación, mínimo y máximo
 descriptivos(datos)
 `;
+
+/**
+ * Lo más que se manda de guion y de salida al conector.
+ *
+ * El mismo techo que «guardar_analisis»: lo que se guarda por un lado tiene que
+ * poder guardarse por el otro.
+ */
+const MAXIMO_ANALISIS = 30000;
 
 /** Qué pestaña se ve en cada uno de los dos paneles de la derecha. */
 type PestanaArriba = 'entorno' | 'historial';
@@ -83,6 +95,8 @@ type PanelGrande = 'ninguno' | 'guion' | 'consola' | 'entorno' | 'auxiliar';
 })
 export class Analisis {
   protected readonly r = inject(WebrService);
+  private readonly licencias = inject(LicenseService);
+  private readonly proyectos = inject(ProyectoService);
 
   private readonly cajaConsola = viewChild<ElementRef<HTMLDivElement>>('consola');
   private readonly editor = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
@@ -165,6 +179,7 @@ export class Analisis {
 
   constructor() {
     this.codigo.valueChanges.subscribe((valor) => this.texto.set(valor));
+    this.cargarProductos();
 
     /**
      * Se retira el Service Worker del canal antiguo.
@@ -259,11 +274,17 @@ export class Analisis {
       // pasárselo al Blob directamente lo deja del tamaño equivocado.
       const url = URL.createObjectURL(new Blob([bytes.slice()]));
 
+      // El enlace entra en la página antes del clic y la URL se suelta después,
+      // no en el acto: hay navegadores que ignoran el clic de un enlace suelto y
+      // otros que cortan la descarga si la dirección desaparece antes de que
+      // empiece. Las dos cosas fallan en silencio.
       const enlace = document.createElement('a');
       enlace.href = url;
       enlace.download = nombre;
+      document.body.appendChild(enlace);
       enlace.click();
-      URL.revokeObjectURL(url);
+      enlace.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch {
       this.error.set(`No se pudo leer «${nombre}».`);
     }
@@ -378,9 +399,16 @@ export class Analisis {
     this.salida.set([]);
   }
 
-  /** Vacía el entorno, como el escobón de RStudio. */
+  /**
+   * Vacía el entorno, como el escobón de RStudio.
+   *
+   * Menos las funciones de la casa: `rm(list = ls())` a secas se las llevaba, y
+   * a partir de ahí `descriptivos()` no existía hasta recargar la página. Quien
+   * pulsa «Vaciar» quiere soltar sus datos, no desmontar la pantalla.
+   */
   async limpiarEntorno(): Promise<void> {
-    await this.correr('rm(list = ls())', 'rm(list = ls())');
+    const casa = FUNCIONES_DE_LA_CASA.map((f) => `"${f}"`).join(', ');
+    await this.correr(`rm(list = setdiff(ls(), c(${casa})))`, 'rm(list = ls())');
   }
 
   /**
@@ -500,7 +528,19 @@ export class Analisis {
     const prefijos = new Set(dimensiones.map(([prefijo]) => prefijo));
     const puntajes = utiles.filter((n) => prefijos.has(n.toLowerCase()));
 
-    const sueltas = puntajes.length >= 2 ? puntajes : [...puntajes, ...utiles];
+    // Si los puntajes no están en el archivo pero sus ítems sí, se crean. Es
+    // el paso que la tesis pide antes de correlacionar, y sin él los ejemplos
+    // se quedaban con la edad contra un ítem suelto.
+    const porCrear = puntajes.length >= 2 ? [] : dimensiones;
+    const nombresCreados = porCrear.map(([prefijo]) => prefijo.toUpperCase());
+
+    const lineas = porCrear.map(
+      ([prefijo, items]) =>
+        `datos$${prefijo.toUpperCase()} <- puntaje(datos, ` +
+        `c(${items.map((n) => `"${n}"`).join(', ')}))`,
+    );
+
+    const sueltas = puntajes.length >= 2 ? puntajes : [...nombresCreados, ...utiles];
 
     return {
       items: dimensiones[0]?.[1] ?? utiles.slice(0, 4),
@@ -508,6 +548,15 @@ export class Analisis {
       num2: sueltas[1] ?? sueltas[0],
       cat: textos[0],
       cat2: textos[1] ?? textos[0],
+      // Con una línea en blanco detrás: el análisis empieza después, y pegado
+      // se lee como si formara parte del mismo paso.
+      prepara: lineas.length > 0 ? `${lineas.join('\n')}\n\n` : '',
+      puntajes:
+        lineas.length > 0
+          ? `${lineas.join('\n')}\ndescriptivos(datos[c(${nombresCreados
+              .map((n) => `"${n}"`)
+              .join(', ')})])`
+          : 'datos$puntaje <- puntaje(datos, {{ITEMS}})\ndescriptivos(datos["puntaje"])',
     };
   });
 
@@ -530,6 +579,8 @@ export class Analisis {
       num2: e.num2 ?? 'variable2',
       cat: e.cat ?? e.num ?? 'grupo',
       cat2: e.cat2 ?? e.cat ?? 'grupo2',
+      prepara: e.prepara,
+      puntajes: e.puntajes,
     });
   }
 
@@ -562,20 +613,33 @@ export class Analisis {
     });
   }
 
-  /** Pone el nombre de una columna donde esté el cursor del guion. */
+  /**
+   * Pone una columna donde esté el cursor, escrita como se usa en R.
+   *
+   * `datos$cd2`, no `cd2`. Pegar el nombre pelado daba «object 'cd2' not
+   * found»: R no busca una columna, busca una variable con ese nombre, y no
+   * existe. Es el primer error que se lleva quien pulsa el panel esperando que
+   * le escriba algo que funcione.
+   *
+   * La excepción es cuando el cursor está justo detrás de una comilla —dentro
+   * de un `c("…")`, que es como se pasan los ítems al alfa—: ahí lo que hace
+   * falta es el nombre solo.
+   */
   insertarColumna(nombre: string): void {
     const caja = this.editor()?.nativeElement;
     if (!caja) return;
 
     const texto = caja.value;
     const corte = caja.selectionStart;
-    const nuevo = texto.slice(0, corte) + nombre + texto.slice(caja.selectionEnd);
+    const enCadena = texto[corte - 1] === '"' || texto[corte - 1] === "'";
+    const trozo = enCadena ? nombre : `datos$${nombre}`;
 
+    const nuevo = texto.slice(0, corte) + trozo + texto.slice(caja.selectionEnd);
     this.codigo.setValue(nuevo);
 
     setTimeout(() => {
       caja.focus();
-      caja.setSelectionRange(corte + nombre.length, corte + nombre.length);
+      caja.setSelectionRange(corte + trozo.length, corte + trozo.length);
       this.sincronizarFondo();
     });
   }
@@ -631,6 +695,104 @@ export class Analisis {
   }
 
   // ── Panel a pantalla completa ────────────────────────────────────────────
+
+  // ── Enviar al conector ───────────────────────────────────────────────────
+
+  /**
+   * Los métodos a los que puede mandar su análisis: los que tiene vigentes.
+   *
+   * El backend lo comprueba igual —es quien manda—, pero enseñar un botón que
+   * va a devolver «no tienes licencia» es hacerle pulsar para nada.
+   */
+  readonly productos = signal<{ code: string; corto: string }[]>([]);
+  readonly enviando = signal(false);
+  /** El aviso de que llegó, con lo que tiene que hacer a continuación. */
+  readonly enviado = signal<string | null>(null);
+
+  private cargarProductos(): void {
+    this.licencias.mine().subscribe({
+      next: ({ licencias }) => {
+        const ahora = Date.now();
+        // «Retirado» no cuenta en contra: es un producto que se dejó de
+        // vender, y quien lo compró conserva su conector — y con él, esto. El
+        // backend tampoco lo mira.
+        const vigentes = licencias.filter(
+          (l) =>
+            l.status === 'ACTIVE' &&
+            (!l.expiresAt || new Date(l.expiresAt).getTime() > ahora),
+        );
+        // Uno por método: quien renovó puede tener dos filas del mismo.
+        const vistos = new Set<string>();
+        this.productos.set(
+          vigentes
+            .filter((l) => !vistos.has(l.productCode) && vistos.add(l.productCode))
+            .map((l) => ({
+              code: l.productCode,
+              corto: l.productCode.startsWith('ARTICULO') ? 'mi artículo' : 'mi tesis',
+            })),
+        );
+      },
+      // Sin licencias no hay botón: el resto de la página funciona igual.
+      error: () => this.productos.set([]),
+    });
+  }
+
+  /**
+   * Manda el guion y lo que salió en la consola a su proyecto.
+   *
+   * Desde ahí, «mi_proyecto» le avisa a Claude de que hay un análisis sin leer,
+   * y «ver_analisis» se lo entrega. Las cifras no se mandan: cuáles de todos
+   * los números van al texto lo decide Claude al leerlo, y las guarda él.
+   */
+  enviarAlConector(productCode: string): void {
+    if (this.enviando()) return;
+
+    const script = this.codigo.value.trim();
+    let salida = this.salida()
+      .map((l) => l.texto)
+      .join('\n')
+      .trim();
+
+    if (!script && !salida) {
+      this.error.set('No hay nada que enviar todavía: ejecuta tu guion primero.');
+      return;
+    }
+    if (script.length > MAXIMO_ANALISIS) {
+      this.error.set(
+        `Tu guion pasa de ${MAXIMO_ANALISIS} caracteres. Deja en él solo lo que vaya al capítulo.`,
+      );
+      return;
+    }
+
+    // De la salida se queda el FINAL: es lo último que se ejecutó, y lo que
+    // se acaba de correr es lo que se quiere mandar. El techo es el del
+    // conector, y el cuerpo entero tiene que caber en los 100 KB del servidor.
+    if (salida.length > MAXIMO_ANALISIS) {
+      salida = `[… recortado: van los últimos ${MAXIMO_ANALISIS} caracteres de la consola …]\n${salida.slice(-(MAXIMO_ANALISIS - 100))}`;
+    }
+    const bytes = (texto: string) => new TextEncoder().encode(texto).length;
+    while (bytes(JSON.stringify({ script, salida })) > 90_000 && salida.length > 1000) {
+      salida = salida.slice(Math.floor(salida.length * 0.2));
+    }
+
+    this.enviando.set(true);
+    this.error.set(null);
+    this.enviado.set(null);
+
+    this.proyectos.enviarAnalisis(productCode, { script, salida }).subscribe({
+      next: () => {
+        this.enviando.set(false);
+        this.enviado.set(
+          'Enviado a tu conector. Abre Claude y dile «revisa mi análisis»: ya puede leer tu ' +
+            'guion y lo que salió en la consola.',
+        );
+      },
+      error: (fallo: unknown) => {
+        this.enviando.set(false);
+        this.error.set(toApiError(fallo).message);
+      },
+    });
+  }
 
   /** Como el maximizar de cada panel de RStudio. */
   maximizar(panel: PanelGrande): void {

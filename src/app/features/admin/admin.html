@@ -25,6 +25,13 @@
         <span>Descuentos</span>
       </button>
 
+      <!-- Grupo propio y no dentro de Ventas: una prueba no vende nada ni
+           deja rastro en ninguna de sus listas. -->
+      <p class="lateral-grupo">Pruebas</p>
+      <button type="button" [class.activa]="seccion() === 'pruebas'" (click)="ir('pruebas')">
+        <span>Pruebas del conector</span>
+      </button>
+
       <p class="lateral-grupo">Productos</p>
       <button type="button" [class.activa]="seccion() === 'grupos'" (click)="ir('grupos')">
         <span>Grupos</span>
@@ -92,6 +99,9 @@
         }
         @case ('grupos') {
           <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
+        }
+        @case ('pruebas') {
+          <button type="button" class="boton" (click)="abrirFormularioPrueba()">Crear enlace</button>
         }
         @case ('admins') {
           <button type="button" class="boton" (click)="abrirFormularioAdmin()">
@@ -1525,6 +1535,281 @@
               (click)="crearDescuento()"
             >
               {{ trabajando() ? 'Creando…' : 'Crear código' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ══ PRUEBAS DEL CONECTOR ══════════════════════════════════════════════
+       Un enlace por grupo. Lo que se comparte es la página del enlace; cada
+       invitado recoge ahí su propio conector. -->
+  @if (seccion() === 'pruebas') {
+    <section class="tarjeta">
+      <h2>Enlaces de prueba</h2>
+
+      @if (pruebaNueva(); as nueva) {
+        <div class="codigos-nuevos">
+          <p class="codigos-titulo">
+            Listo. Comparte este enlace con el grupo: cada persona que lo abra recibe su propio
+            conector, hasta {{ nueva.seats }}.
+          </p>
+          <ul>
+            <li>{{ nueva.url }}</li>
+          </ul>
+          <button type="button" class="boton" (click)="copiarEnlacePrueba(nueva)">
+            {{ pruebaCopiada() === nueva.id ? '¡Copiado!' : 'Copiar enlace' }}
+          </button>
+        </div>
+      }
+
+      @if (pruebas() === null) {
+        <p class="nota">Cargando…</p>
+      } @else if (pruebas()!.length === 0) {
+        <p class="nota">
+          Todavía no has creado ninguno. Crea uno para un taller o un grupo: tú compartes un solo
+          enlace y cada persona recoge el suyo, sin registrarse.
+        </p>
+      } @else {
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Producto</th>
+                <th>Entregados</th>
+                <th>Lo usaron</th>
+                <th>Cada conector</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (enlace of pruebas(); track enlace.id) {
+                <tr>
+                  <td>
+                    <strong>{{ enlace.name }}</strong>
+                    <div class="tenue">creado {{ enlace.createdAt | date: 'd MMM yy' }}</div>
+                  </td>
+                  <td>{{ enlace.productName }}</td>
+                  <td class="numero">{{ enlace.claimed }} / {{ enlace.seats }}</td>
+                  <td class="numero">
+                    {{ enlace.conectados }}
+                    <div class="tenue">{{ enlace.consultas }} consultas</div>
+                  </td>
+                  <td class="tenue">
+                    {{ enlace.accessDays }} {{ enlace.accessDays === 1 ? 'día' : 'días' }}
+                    <div>{{ topesPrueba(enlace) }}</div>
+                  </td>
+                  <td>
+                    <span
+                      class="pastilla"
+                      [class.buena]="enlace.estado === 'ABIERTO'"
+                      [class.espera]="enlace.estado === 'LLENO'"
+                      [class.mala]="enlace.estado === 'APAGADO'"
+                    >
+                      {{
+                        enlace.estado === 'ABIERTO'
+                          ? 'Abierto'
+                          : enlace.estado === 'LLENO'
+                            ? 'Lleno'
+                            : 'Apagado'
+                      }}
+                    </span>
+                  </td>
+                  <td class="derecha acciones-promo">
+                    <button type="button" class="enlace" (click)="copiarEnlacePrueba(enlace)">
+                      {{ pruebaCopiada() === enlace.id ? '¡Copiado!' : 'Copiar enlace' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="enlace"
+                      [disabled]="enlace.claimed === 0"
+                      (click)="verInvitados(enlace)"
+                    >
+                      Conectores
+                    </button>
+                    <button
+                      type="button"
+                      [class.enlace]="!enlace.active"
+                      [class.enlace-peligro]="enlace.active"
+                      (click)="alternarPrueba(enlace)"
+                    >
+                      {{ enlace.active ? 'Apagar' : 'Encender' }}
+                    </button>
+                    <button type="button" class="enlace-peligro" (click)="borrarPrueba(enlace)">
+                      Borrar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ── Ventana de crear ──────────────────────────────────────────────── -->
+    @if (formularioPruebaAbierto()) {
+      <div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-prueba">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-prueba">Crear enlace de prueba</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="cerrarFormularioPrueba()"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <p class="nota">
+              Compartes un solo enlace. Cada persona que lo abre recibe su propio conector, sin
+              registrarse ni pagar, y trabaja por separado: nadie ve lo del de al lado.
+            </p>
+            <form [formGroup]="formPrueba" (ngSubmit)="crearPrueba()" novalidate>
+              <div class="fila">
+                <div class="campo">
+                  <label for="nombre-prueba">Para quién es</label>
+                  <input
+                    id="nombre-prueba"
+                    type="text"
+                    formControlName="name"
+                    placeholder="Taller UNMSM, septiembre"
+                  />
+                  <span class="ayuda">Lo verán los invitados al abrir el enlace.</span>
+                </div>
+                <div class="campo">
+                  <label for="producto-prueba">Producto</label>
+                  <select id="producto-prueba" formControlName="productCode">
+                    @for (producto of productosPrueba(); track producto.code) {
+                      <option [value]="producto.code">{{ producto.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="fila">
+                <div class="campo estrecho">
+                  <label for="cupos-prueba">Cupos</label>
+                  <input id="cupos-prueba" type="number" min="1" max="500" formControlName="seats" />
+                  <span class="ayuda">Personas que pueden recogerlo</span>
+                </div>
+                <div class="campo estrecho">
+                  <label for="dias-prueba">Días de acceso</label>
+                  <input
+                    id="dias-prueba"
+                    type="number"
+                    min="1"
+                    max="365"
+                    formControlName="accessDays"
+                  />
+                  <span class="ayuda">Desde que cada uno lo recoge</span>
+                </div>
+              </div>
+
+              <div class="fila">
+                <div class="campo estrecho">
+                  <label for="dia-prueba">Consultas al día</label>
+                  <input
+                    id="dia-prueba"
+                    type="number"
+                    min="0"
+                    max="1000"
+                    formControlName="callsPerDay"
+                  />
+                  <span class="ayuda">Por persona · 0 = sin tope</span>
+                </div>
+                <div class="campo estrecho">
+                  <label for="total-prueba">Consultas en total</label>
+                  <input
+                    id="total-prueba"
+                    type="number"
+                    min="0"
+                    max="10000"
+                    formControlName="callsLimitTotal"
+                  />
+                  <span class="ayuda">Por persona · 0 = sin tope</span>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cerrarFormularioPrueba()">
+              Cancelar
+            </button>
+            <button type="button" class="boton" [disabled]="trabajando()" (click)="crearPrueba()">
+              {{ trabajando() ? 'Creando…' : 'Crear enlace' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── Ventana de conectores entregados ──────────────────────────────── -->
+    @if (viendoInvitados(); as enlace) {
+      <div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-invitados">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-invitados">Conectores de «{{ enlace.name }}»</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="viendoInvitados.set(null)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            @if (invitados(); as lista) {
+              <div class="tabla-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Invitado</th>
+                      <th>Lo recogió</th>
+                      <th>Consultas</th>
+                      <th>Último uso</th>
+                      <th>Caduca</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (invitado of lista; track invitado.numero) {
+                      <tr>
+                        <td>
+                          #{{ invitado.numero }}
+                          <span class="tenue mono">{{ invitado.tokenHint }}…</span>
+                        </td>
+                        <td class="tenue">{{ invitado.recibidoAt | date: 'd MMM, HH:mm' }}</td>
+                        <td class="numero">{{ invitado.consultas }}</td>
+                        <td class="tenue">
+                          {{
+                            invitado.ultimoUso
+                              ? (invitado.ultimoUso | date: 'd MMM, HH:mm')
+                              : 'Aún no lo usó'
+                          }}
+                        </td>
+                        <td class="tenue">{{ invitado.expiresAt | date: 'd MMM yy' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="nota">Cargando…</p>
+            }
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="viendoInvitados.set(null)">
+              Cerrar
             </button>
           </div>
         </div>

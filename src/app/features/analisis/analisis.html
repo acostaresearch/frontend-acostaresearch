@@ -88,6 +88,39 @@
         Reiniciar R
       </button>
 
+      <span class="separador" aria-hidden="true"></span>
+
+      <!-- Lo que hace que Claude vea el análisis sin copiar y pegar la consola.
+           Un botón por método vigente; sin ninguno, apagado y diciendo por qué. -->
+      @if (productos().length === 0) {
+        <button
+          type="button"
+          class="boton pequeno"
+          disabled
+          title="Necesitas una licencia vigente del método para enviarlo a tu conector"
+        >
+          Enviar a mi conector
+        </button>
+      } @else {
+        @for (p of productos(); track p.code) {
+          <button
+            type="button"
+            class="boton pequeno"
+            [disabled]="enviando() || ejecutando()"
+            (click)="enviarAlConector(p.code)"
+            title="Manda tu guion y lo que salió en la consola, para que Claude los lea"
+          >
+            @if (enviando()) {
+              Enviando…
+            } @else if (productos().length > 1) {
+              Enviar a {{ p.corto }}
+            } @else {
+              Enviar a mi conector
+            }
+          </button>
+        }
+      }
+
       <span class="barra-hueco"></span>
 
       @if (error(); as mensaje) {
@@ -96,6 +129,10 @@
         <span class="barra-estado">{{ versionR() }} · en tu navegador</span>
       }
     </div>
+
+    @if (enviado(); as mensaje) {
+      <p class="aviso exito enviado" role="status">{{ mensaje }}</p>
+    }
 
     <!-- ── Primeros pasos ────────────────────────────────────────────────
          Cuatro paneles y una caja de código no dicen por dónde se empieza, y
@@ -558,6 +595,14 @@ Escribe una orden aquí abajo, o ejecuta el guion de arriba.</pre>
                   <dd>El promedio de esos ítems por persona, para crear la variable de una dimensión.</dd>
                 </dl>
 
+                <h3>Enviar a mi conector</h3>
+                <p class="ayuda-nota">
+                  Manda tu guion y todo lo que salió en la consola a tu proyecto. La próxima vez
+                  que hables con Claude lo verá: dile <b>«revisa mi análisis»</b> y sacará de ahí
+                  las cifras de tu Capítulo IV, sin que tengas que copiar y pegar nada. Si lo
+                  vuelves a enviar, se guarda el último.
+                </p>
+
                 <h3>Si algo va mal</h3>
                 <dl>
                   <dt>«object 'datos' not found»</dt>
@@ -588,8 +633,8 @@ Escribe una orden aquí abajo, o ejecuta el guion de arriba.</pre>
     <p class="nota">
       <strong>Esto es R, no el programa RStudio</strong> — el mismo R que se declara en una tesis,
       con los paneles ordenados igual. Todo lo de esta pantalla vive en tu navegador y desaparece
-      al cerrarla: descarga desde «Archivos» lo que quieras conservar, y guarda la salida con
-      <code>guardar_analisis</code> desde tu conector.
+      al cerrarla: descarga desde «Archivos» lo que quieras conservar, y pulsa «Enviar a mi
+      conector» para que Claude lea tu análisis.
     </p>
   }
 </main>

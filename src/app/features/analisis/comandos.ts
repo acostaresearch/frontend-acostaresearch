@@ -55,11 +55,24 @@ export interface Columnas {
   num2: string;
   cat: string;
   cat2: string;
+  /**
+   * Las líneas que hay que ejecutar ANTES del análisis, o cadena vacía.
+   *
+   * Cuando la matriz trae los ítems pero no los puntajes de cada dimensión,
+   * aquí vienen los `puntaje()` que los crean. Sin eso, el ejemplo tendría que
+   * conformarse con correlacionar dos ítems sueltos —o la edad—, que es lo que
+   * hacía y no le sirve a nadie.
+   */
+  prepara: string;
+  /** Las mismas líneas, sueltas, para el paso «Crear el puntaje». */
+  puntajes: string;
 }
 
 /** Cambia las marcas por las columnas de verdad. */
 export function conColumnas(codigo: string, c: Columnas): string {
   return codigo
+    .replaceAll('{{PUNTAJES}}', c.puntajes)
+    .replaceAll('{{PREPARA}}', c.prepara)
     .replaceAll('{{ITEMS}}', c.items)
     .replaceAll('{{NUM2}}', c.num2)
     .replaceAll('{{NUM}}', c.num)
@@ -148,7 +161,7 @@ export const CATALOGO: GrupoDeComandos[] = [
         comoLee:
           'Añade una columna nueva a «datos» con el promedio de esos ítems por persona. A partir ' +
           'de ahí se usa esa columna, no los ítems sueltos.',
-        codigo: 'datos$puntaje <- puntaje(datos, {{ITEMS}})\ndescriptivos(datos["puntaje"])',
+        codigo: '{{PUNTAJES}}',
       },
     ],
   },
@@ -163,7 +176,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'Si p ≥ 0,05 los datos NO se apartan de la normal: puedes usar Pearson, t de Student y ' +
           'ANOVA. Si p < 0,05, usa Spearman, Mann-Whitney y Kruskal-Wallis. La función te lo dice ' +
           'escrito, para que puedas copiarlo a tu capítulo.',
-        codigo: 'normalidad(datos${{NUM}})',
+        codigo: '{{PREPARA}}normalidad(datos${{NUM}})',
       },
       {
         nombre: 'Histograma y gráfico Q-Q',
@@ -172,7 +185,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'En el histograma buscas una campana. En el Q-Q, que los puntos sigan la línea: si se ' +
           'curvan en los extremos, la distribución tiene colas y no es normal.',
         codigo:
-          'hist(datos${{NUM}}, main = "Distribución", xlab = "Puntaje", col = "grey90")\nqqnorm(datos${{NUM}}); qqline(datos${{NUM}}, col = "red")',
+          '{{PREPARA}}hist(datos${{NUM}}, main = "Distribución", xlab = "Puntaje", col = "grey90")\nqqnorm(datos${{NUM}}); qqline(datos${{NUM}}, col = "red")',
       },
     ],
   },
@@ -188,7 +201,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'cor va de −1 a 1: por debajo de 0,3 la relación es débil, hasta 0,5 moderada, y por ' +
           'encima fuerte. El signo dice la dirección.',
         codigo:
-          'cor.test(datos${{NUM}}, datos${{NUM2}}, method = "pearson")\nplot(datos${{NUM}}, datos${{NUM2}}, xlab = "{{NUM}}", ylab = "{{NUM2}}", pch = 19)',
+          '{{PREPARA}}cor.test(datos${{NUM}}, datos${{NUM2}}, method = "pearson")\nplot(datos${{NUM}}, datos${{NUM2}}, xlab = "{{NUM}}", ylab = "{{NUM2}}", pch = 19)',
       },
       {
         nombre: 'Correlación de Spearman',
@@ -196,7 +209,7 @@ export const CATALOGO: GrupoDeComandos[] = [
         comoLee:
           'Se lee igual que Pearson, pero el coeficiente se llama rho. El aviso sobre empates que ' +
           'a veces sale es normal con escalas Likert y no invalida nada.',
-        codigo: 'cor.test(datos${{NUM}}, datos${{NUM2}}, method = "spearman")',
+        codigo: '{{PREPARA}}cor.test(datos${{NUM}}, datos${{NUM2}}, method = "spearman")',
       },
       {
         nombre: 'Regresión lineal simple',
@@ -204,7 +217,7 @@ export const CATALOGO: GrupoDeComandos[] = [
         comoLee:
           'En el resumen busca «Adjusted R-squared»: es la proporción de la variación explicada ' +
           '(0,25 = 25 %). Y en la fila de tu predictor, «Pr(>|t|)» es su p-valor.',
-        codigo: 'modelo <- lm({{NUM2}} ~ {{NUM}}, data = datos)\nsummary(modelo)',
+        codigo: '{{PREPARA}}modelo <- lm({{NUM2}} ~ {{NUM}}, data = datos)\nsummary(modelo)',
       },
     ],
   },
@@ -218,7 +231,7 @@ export const CATALOGO: GrupoDeComandos[] = [
         comoLee:
           'Si p < 0,05 hay diferencia significativa entre los grupos. Debajo salen las dos medias, ' +
           'que es lo que reportas junto al p.',
-        codigo: 't.test(datos${{NUM}} ~ datos${{CAT}})\nboxplot(datos${{NUM}} ~ datos${{CAT}}, xlab = "{{CAT}}", ylab = "{{NUM}}")',
+        codigo: '{{PREPARA}}t.test(datos${{NUM}} ~ datos${{CAT}})\nboxplot(datos${{NUM}} ~ datos${{CAT}}, xlab = "{{CAT}}", ylab = "{{NUM}}")',
       },
       {
         nombre: 'U de Mann-Whitney (dos grupos, no normales)',
@@ -227,7 +240,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'Mismo criterio: p < 0,05 significa que los grupos difieren. Aquí se comparan rangos, no ' +
           'medias, así que reporta la mediana de cada grupo.',
         codigo:
-          'wilcox.test(datos${{NUM}} ~ datos${{CAT}})\ntapply(datos${{NUM}}, datos${{CAT}}, median)',
+          '{{PREPARA}}wilcox.test(datos${{NUM}} ~ datos${{CAT}})\ntapply(datos${{NUM}}, datos${{CAT}}, median)',
       },
       {
         nombre: 'ANOVA o Kruskal-Wallis (tres grupos o más)',
@@ -236,7 +249,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'Un p < 0,05 dice que AL MENOS un grupo se diferencia, pero no cuál: para eso está la ' +
           'prueba post-hoc de la última línea.',
         codigo:
-          '# Paramétrico\nsummary(aov(datos${{NUM}} ~ factor(datos${{CAT}})))\n\n# No paramétrico\nkruskal.test(datos${{NUM}} ~ factor(datos${{CAT}}))\n\n# Post-hoc: qué pares difieren\npairwise.wilcox.test(datos${{NUM}}, datos${{CAT}}, p.adjust.method = "holm")',
+          '{{PREPARA}}# Paramétrico\nsummary(aov(datos${{NUM}} ~ factor(datos${{CAT}})))\n\n# No paramétrico\nkruskal.test(datos${{NUM}} ~ factor(datos${{CAT}}))\n\n# Post-hoc: qué pares difieren\npairwise.wilcox.test(datos${{NUM}}, datos${{CAT}}, p.adjust.method = "holm")',
       },
       {
         nombre: 'Chi-cuadrado (dos variables categóricas)',
@@ -266,7 +279,7 @@ export const CATALOGO: GrupoDeComandos[] = [
           'También sale en «Archivos». Los gráficos de la pestaña «Gráficos» son para mirar; este ' +
           'es el que se descarga.',
         codigo:
-          'png("figura1.png", width = 1200, height = 800, res = 150)\nhist(datos${{NUM}}, main = "", xlab = "Puntaje", col = "grey90")\ndev.off()',
+          '{{PREPARA}}png("figura1.png", width = 1200, height = 800, res = 150)\nhist(datos${{NUM}}, main = "", xlab = "Puntaje", col = "grey90")\ndev.off()',
       },
     ],
   },

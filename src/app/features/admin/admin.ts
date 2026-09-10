@@ -26,6 +26,11 @@ import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
+import {
+  EnlacePrueba,
+  InvitadoPrueba,
+  PruebaService,
+} from '../../core/services/prueba.service';
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
 import {
   EstadoCorpus,
@@ -48,6 +53,7 @@ type Seccion =
   | 'accesos'
   | 'grupos'
   | 'descuentos'
+  | 'pruebas'
   | 'licencias'
   | 'alertas'
   | 'corpus'
@@ -61,7 +67,7 @@ type Seccion =
  *
  * Vivían dentro de las tarjetas —repetidos en unas, ausentes en otras—, así que
  * la pantalla no decía qué era hasta que se leía la primera tabla. Aquí están
- * los diez en una sola lista, que es donde se ve si uno desentona.
+ * todos en una sola lista, que es donde se ve si uno desentona.
  */
 const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   accesos: {
@@ -71,6 +77,12 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   descuentos: {
     titulo: 'Descuentos',
     nota: 'Códigos promocionales que rebajan el precio de un producto.',
+  },
+  pruebas: {
+    titulo: 'Pruebas del conector',
+    nota:
+      'Un enlace para un grupo: cada persona que lo abre recibe su propio conector, sin ' +
+      'registrarse ni pagar, hasta agotar los cupos. Apagarlo corta todos sus conectores a la vez.',
   },
   grupos: {
     titulo: 'Grupos',
@@ -845,6 +857,8 @@ export class Admin implements OnInit {
         this.formularioAbierto() ||
         this.formularioCodigosAbierto() ||
         this.formularioDescuentoAbierto() ||
+        this.formularioPruebaAbierto() ||
+        this.viendoInvitados() !== null ||
         this.formularioAdminAbierto() ||
         this.viendoCapitulos() !== null ||
         this.editando() !== null ||
@@ -2073,6 +2087,188 @@ export class Admin implements OnInit {
     if (seccion === 'corpus' && this.corpus() === null) this.cargarCorpus();
 
     if (seccion === 'tutoriales' && this.tutoriales().length === 0) this.cargarTutoriales();
+
+    // Las pruebas se miran de vez en cuando —antes y después de un taller—, no
+    // a diario: tampoco se piden al entrar. Se vuelven a pedir cada vez que se
+    // abre la sección, porque los cupos se van llenando mientras tanto.
+    if (seccion === 'pruebas') this.cargarPruebas();
+  }
+
+  // ── Pruebas del conector ─────────────────────────────────────────────────
+  //
+  // Un enlace para un grupo; cada invitado recibe su propio conector. Va aparte
+  // de códigos, pagos y licencias: no es una venta ni una cortesía a alguien
+  // con cuenta, y no deja nada en ninguna de esas listas.
+
+  private readonly pruebasApi = inject(PruebaService);
+
+  /** `null` mientras no se ha abierto la sección ni una vez. */
+  readonly pruebas = signal<EnlacePrueba[] | null>(null);
+  readonly formularioPruebaAbierto = signal(false);
+  /** El enlace recién creado, para copiarlo nada más cerrarse la ventana. */
+  readonly pruebaNueva = signal<EnlacePrueba | null>(null);
+  /** Qué enlace se acaba de copiar, para que su botón lo diga. */
+  readonly pruebaCopiada = signal<string | null>(null);
+  readonly viendoInvitados = signal<EnlacePrueba | null>(null);
+  readonly invitados = signal<InvitadoPrueba[] | null>(null);
+
+  /** Un producto por grupo de licencia: varios planes pueden venderlo. */
+  readonly productosPrueba = computed(() => {
+    const vistos = new Map<string, string>();
+    for (const plan of this.planesLicencia()) {
+      if (plan.productCode && !vistos.has(plan.productCode)) {
+        vistos.set(plan.productCode, plan.name);
+      }
+    }
+    return [...vistos].map(([code, name]) => ({ code, name }));
+  });
+
+  /**
+   * Los topes vienen puestos y bajos a propósito: cada consulta del conector se
+   * paga, y el enlace se reparte entre gente que no ha pagado nada. Quien quiera
+   * más los sube; lo que no conviene es que el valor por defecto sea «sin tope».
+   */
+  readonly formPrueba = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    productCode: ['', Validators.required],
+    seats: [30, [Validators.required, Validators.min(1), Validators.max(500)]],
+    accessDays: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
+    callsPerDay: [20, [Validators.required, Validators.min(0), Validators.max(1000)]],
+    callsLimitTotal: [60, [Validators.required, Validators.min(0), Validators.max(10000)]],
+  });
+
+  private cargarPruebas(): void {
+    this.pruebasApi.enlaces().subscribe({
+      next: (enlaces) => this.pruebas.set(enlaces),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  abrirFormularioPrueba(): void {
+    this.error.set(null);
+    this.pruebaNueva.set(null);
+    this.formPrueba.reset({
+      name: '',
+      productCode: this.productosPrueba()[0]?.code ?? '',
+      seats: 30,
+      accessDays: 7,
+      callsPerDay: 20,
+      callsLimitTotal: 60,
+    });
+    this.formularioPruebaAbierto.set(true);
+  }
+
+  cerrarFormularioPrueba(): void {
+    if (this.trabajando()) return;
+    this.formularioPruebaAbierto.set(false);
+  }
+
+  crearPrueba(): void {
+    if (this.formPrueba.invalid || this.trabajando()) {
+      this.formPrueba.markAllAsTouched();
+      return;
+    }
+
+    this.trabajando.set(true);
+    this.error.set(null);
+
+    this.pruebasApi.crear(this.formPrueba.getRawValue()).subscribe({
+      next: (enlace) => {
+        this.pruebas.update((lista) => [enlace, ...(lista ?? [])]);
+        this.pruebaNueva.set(enlace);
+        this.trabajando.set(false);
+        this.formularioPruebaAbierto.set(false);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.trabajando.set(false);
+      },
+    });
+  }
+
+  async copiarEnlacePrueba(enlace: EnlacePrueba): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(enlace.url);
+      this.pruebaCopiada.set(enlace.id);
+      setTimeout(() => {
+        if (this.pruebaCopiada() === enlace.id) this.pruebaCopiada.set(null);
+      }, 2500);
+    } catch {
+      this.error.set('No pudimos copiar. Selecciona el enlace y cópialo a mano.');
+    }
+  }
+
+  /**
+   * Apaga o enciende el enlace.
+   *
+   * Apagar se pregunta: corta en el acto a todos los que ya lo recogieron, y
+   * alguien puede estar a mitad de un capítulo. Encender no, que no quita nada.
+   */
+  async alternarPrueba(enlace: EnlacePrueba): Promise<void> {
+    if (enlace.active) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: `Apagar «${enlace.name}»`,
+        mensaje:
+          `Los ${enlace.claimed} conectores entregados dejarán de funcionar ahora mismo, ` +
+          'y el enlace no entregará ninguno más.',
+        nota: 'Puedes volver a encenderlo: los conectores vuelven tal como estaban.',
+        confirmar: 'Apagar',
+        tono: 'peligro',
+      });
+      if (!seguro) return;
+    }
+
+    this.pruebasApi.encender(enlace.id, !enlace.active).subscribe({
+      next: ({ enlace: actualizado, mensaje }) => {
+        this.pruebas.update((lista) =>
+          (lista ?? []).map((e) => (e.id === actualizado.id ? { ...e, ...actualizado } : e)),
+        );
+        this.aviso.set(mensaje);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  async borrarPrueba(enlace: EnlacePrueba): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Borrar «${enlace.name}»`,
+      mensaje:
+        `Se borran el enlace, sus ${enlace.claimed} conectores y todo lo que guardaron los ` +
+        'invitados con ellos.',
+      nota: 'No hay vuelta atrás. Si solo quieres cortarlos, apágalo.',
+      confirmar: 'Borrar',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.pruebasApi.borrar(enlace.id).subscribe({
+      next: (mensaje) => {
+        this.pruebas.update((lista) => (lista ?? []).filter((e) => e.id !== enlace.id));
+        if (this.pruebaNueva()?.id === enlace.id) this.pruebaNueva.set(null);
+        this.aviso.set(mensaje);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  verInvitados(enlace: EnlacePrueba): void {
+    this.viendoInvitados.set(enlace);
+    this.invitados.set(null);
+    this.pruebasApi.invitados(enlace.id).subscribe({
+      next: (lista) => this.invitados.set(lista),
+      error: (e: unknown) => {
+        this.viendoInvitados.set(null);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  /** Los topes de un enlace, con el periodo pegado al número. */
+  topesPrueba(enlace: EnlacePrueba): string {
+    const partes: string[] = [];
+    if (enlace.callsPerDay > 0) partes.push(`${enlace.callsPerDay}/día`);
+    if (enlace.callsLimitTotal > 0) partes.push(`${enlace.callsLimitTotal} en total`);
+    return partes.length > 0 ? partes.join(' · ') : 'Sin tope';
   }
 
   // ── Corpus bibliográfico ─────────────────────────────────────────────────
