@@ -1378,7 +1378,25 @@
                       {{ etiquetaDescuento(promo) }}
                     </span>
                   </td>
-                  <td class="derecha">
+                  <td class="derecha acciones-promo">
+                    <!-- Publicar y encender son dos cosas distintas: un código
+                         vivo puede no anunciarse —el negociado con alguien
+                         concreto— y uno anunciado que se apaga deja de salir
+                         sin tener que despublicarlo. Por eso van dos botones. -->
+                    <button
+                      type="button"
+                      class="enlace"
+                      [class.publicado]="promo.publico"
+                      [disabled]="!promo.active"
+                      [title]="
+                        promo.active
+                          ? 'Sale o no en la página de precios, junto a su plan'
+                          : 'Un código apagado no se anuncia aunque esté publicado'
+                      "
+                      (click)="alternarPublicacion(promo)"
+                    >
+                      {{ promo.publico ? 'En la web' : 'Publicar' }}
+                    </button>
                     <button
                       type="button"
                       [class.enlace]="!promo.active"

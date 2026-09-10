@@ -348,6 +348,21 @@ tbody tr.revocada {
 }
 
 /* ── Pastillas de estado ────────────────────────────────────────────────── */
+/* Los dos botones de un código: publicarlo y apagarlo. En fila y separados,
+   para que no se pulse uno creyendo que es el otro. */
+.acciones-promo {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+/* Ya está en la web: el botón lo dice en vez de invitar a pulsarlo. */
+.acciones-promo .enlace.publicado {
+  font-weight: 650;
+  color: var(--color-exito);
+}
+
 .pastilla {
   display: inline-block;
   padding: 2px 9px;

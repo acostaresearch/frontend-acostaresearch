@@ -1945,6 +1945,38 @@ export class Admin implements OnInit {
     });
   }
 
+  /**
+   * Anuncia el código en la página de precios, o lo esconde.
+   *
+   * Publicar un código es enseñárselo a cualquiera que mire los precios, así
+   * que se pregunta antes: un código negociado con una persona concreta,
+   * publicado por descuido, se lo lleva todo el mundo y no hay forma de
+   * deshacerlo salvo apagarlo. Esconderlo no se pregunta, que deshacer no
+   * cuesta nada.
+   */
+  async alternarPublicacion(descuento: CodigoDescuento): Promise<void> {
+    const publicar = !descuento.publico;
+
+    if (publicar) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: `Anunciar «${descuento.code}» en la web`,
+        mensaje: `Cualquiera que mire los precios lo verá y podrá usarlo.`,
+        nota: 'Para un código negociado con una persona concreta, no lo publiques.',
+        confirmar: 'Anunciarlo',
+        tono: 'aviso',
+      });
+      if (!seguro) return;
+    }
+
+    this.admin.publicarDescuento(descuento.id, publicar).subscribe({
+      next: (actualizado) =>
+        this.descuentos.update((lista) =>
+          lista.map((d) => (d.id === actualizado.id ? actualizado : d)),
+        ),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
   async copiarDescuento(code: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(code);

@@ -165,6 +165,29 @@
                 }
               </button>
 
+              <!-- El código de campaña de ESTE plan.
+                   Es un botón y no un cartel: el código está en pantalla, así
+                   que hacerle copiarlo, abrir la ventana, buscar el campo y
+                   pegarlo son cuatro pasos que no aportan nada y en los que se
+                   pierde gente. Al pulsarlo se elige el plan y se aplica.
+                   El precio final lo sigue calculando el servidor. -->
+              @if (promoDe(plan); as promo) {
+                <button
+                  type="button"
+                  class="promo-tarjeta"
+                  (click)="elegirConPromo(plan, promo)"
+                  [attr.aria-label]="
+                    'Aplicar el código ' + promo.code + ' y pagar ' + precioConPromo(plan, promo)
+                  "
+                >
+                  <span class="promo-tarjeta-etiqueta">Código promocional</span>
+                  <span class="promo-tarjeta-codigo">{{ promo.code }}</span>
+                  <span class="promo-tarjeta-efecto">
+                    Págalo por <strong>{{ precioConPromo(plan, promo) }}</strong>
+                  </span>
+                </button>
+              }
+
               <p class="tarjeta-rotulo">Qué incluye</p>
               <ul class="tarjeta-lista">
                 @for (item of loQueIncluye(plan); track item) {

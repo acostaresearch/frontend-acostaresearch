@@ -101,6 +101,14 @@ export interface CodigoDescuento {
   active: boolean;
   expiresAt: string | null;
   note: string | null;
+  /**
+   * Si se anuncia en la página de precios, junto a su plan.
+   *
+   * Distinto de `active`: un código puede estar vivo y no anunciarse —el que se
+   * negoció con una persona concreta— y uno anunciado que se apaga deja de
+   * salir sin tener que despublicarlo.
+   */
+  publico: boolean;
   createdAt: string;
 }
 

@@ -47,6 +47,20 @@ export interface DatosGrupo {
   active?: boolean;
 }
 
+/**
+ * Un código anunciado en la página de precios.
+ *
+ * Lleva lo justo: el código, cuánto rebaja y a qué plan. Ni los usos que quedan
+ * —eso invita a correr y es una urgencia que nadie ha comprobado— ni la nota,
+ * que es del administrador y suele decir de qué campaña salió.
+ */
+export interface Promo {
+  code: string;
+  amountCents: number;
+  /** Nulo = vale para cualquier plan. */
+  planCode: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BillingService {
   private readonly http = inject(HttpClient);
@@ -57,6 +71,19 @@ export class BillingService {
     return this.http
       .get<ApiResponse<{ plans: Plan[] }>>(`${this.base}/plans`)
       .pipe(map((res) => res.data.plans));
+  }
+
+  /**
+   * Los códigos que se anuncian junto a cada plan.
+   *
+   * Público por lo mismo que los precios: quien mira cuánto cuesta todavía no
+   * tiene cuenta, y es a quien hay que enseñarle que existe un código. El
+   * servidor solo devuelve los marcados como públicos y utilizables hoy.
+   */
+  promos(): Observable<Promo[]> {
+    return this.http
+      .get<ApiResponse<{ promos: Promo[] }>>(`${this.base}/promos`)
+      .pipe(map((res) => res.data.promos));
   }
 
   // ── Grupos de skills (administración) ────────────────────────────────────

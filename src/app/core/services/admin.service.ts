@@ -187,6 +187,21 @@ export class AdminService {
       .pipe(map((res) => res.data.discount));
   }
 
+  /**
+   * Anuncia el código en la página de precios, o lo esconde.
+   *
+   * Va aparte de encender y apagar porque son dos cosas distintas: un código
+   * puede estar vivo y no anunciarse —el negociado con una persona concreta—, y
+   * uno anunciado que se apaga deja de salir sin tener que despublicarlo.
+   */
+  publicarDescuento(id: string, publico: boolean): Observable<CodigoDescuento> {
+    return this.http
+      .patch<ApiResponse<{ discount: CodigoDescuento }>>(`${this.facturacion}/discounts/${id}`, {
+        publico,
+      })
+      .pipe(map((res) => res.data.discount));
+  }
+
   // ── Pagos ──────────────────────────────────────────────────────────────
 
   pagosRecientes(): Observable<PagoAdmin[]> {

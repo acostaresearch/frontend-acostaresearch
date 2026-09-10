@@ -24,7 +24,7 @@ import {
 } from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
-import { BillingService } from '../../core/services/billing.service';
+import { BillingService, Promo } from '../../core/services/billing.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
@@ -110,6 +110,9 @@ export class Checkout implements OnInit {
   readonly metodoPago = signal<'yape' | 'paypal' | null>(null);
 
   readonly planes = signal<Plan[]>([]);
+
+  /** Los códigos que se anuncian en las tarjetas. */
+  readonly promos = signal<Promo[]>([]);
   readonly pasarelas = signal<PaymentProvider[]>([]);
   readonly saldo = signal<Balance | null>(null);
   readonly seleccionado = signal<Plan | null>(null);
@@ -216,6 +219,13 @@ export class Checkout implements OnInit {
     this.payments.providers().subscribe({
       next: (pasarelas) => this.pasarelas.set(pasarelas),
       error: () => this.pasarelas.set([]),
+    });
+
+    // Que esto falle no puede dejar la página sin precios: sin promos, las
+    // tarjetas se pintan igual y quien tenga un código lo teclea a mano.
+    this.billing.promos().subscribe({
+      next: (promos) => this.promos.set(promos),
+      error: () => this.promos.set([]),
     });
 
     // El titular y el número son opcionales: si no están configurados, el QR
@@ -492,6 +502,48 @@ export class Checkout implements OnInit {
 
   precio(plan: Plan): string {
     return soles(plan.priceCents);
+  }
+
+  /**
+   * El código que se anuncia en la tarjeta de este plan, si hay alguno.
+   *
+   * Gana el que está atado a ESE plan sobre el que vale para todos: un código
+   * hecho para el método de tesis es más pertinente en su tarjeta que uno
+   * general, aunque el general rebaje más. Y solo se enseña uno: dos códigos en
+   * la misma tarjeta obligan a comparar cuál conviene, que es trabajo que no le
+   * toca al comprador.
+   */
+  promoDe(plan: Plan): Promo | null {
+    const suyas = this.promos().filter((p) => p.planCode === plan.code);
+    if (suyas.length > 0) return suyas[0];
+    return this.promos().find((p) => p.planCode === null) ?? null;
+  }
+
+  /** Lo que quedaría por pagar con ese código puesto. */
+  precioConPromo(plan: Plan, promo: Promo): string {
+    // El mismo tope que aplica el servidor: la rebaja no puede dejar el precio
+    // en cero. Se repite aquí para que el número anunciado y el cobrado no
+    // puedan discrepar en el caso raro de un código enorme.
+    const rebaja = Math.min(promo.amountCents, plan.priceCents - 100);
+    return soles(plan.priceCents - rebaja);
+  }
+
+  /**
+   * Elige el plan y aplica su código de una vez.
+   *
+   * El código se anuncia para usarlo, no para que el comprador lo copie, abra
+   * la ventana, busque el campo y lo pegue. Cada uno de esos pasos pierde gente,
+   * y ninguno aporta nada: el código ya está en pantalla.
+   *
+   * Se valida contra el servidor igual que si lo hubiera tecleado —el precio lo
+   * decide el backend, nunca esta pantalla— así que si el código dejó de valer
+   * entre que se pintó la página y el clic, el descuento sencillamente no
+   * aparece y el precio sigue siendo el de siempre.
+   */
+  elegirConPromo(plan: Plan, promo: Promo): void {
+    this.elegir(plan);
+    this.codigoPromo.setValue(promo.code);
+    this.aplicarDescuento();
   }
 
   /**
