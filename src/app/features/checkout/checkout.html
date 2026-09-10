@@ -138,17 +138,32 @@
                 <p class="tarjeta-lema">{{ plan.description }}</p>
               }
 
-              <!-- El tachado va DELANTE del importe y más pequeño: lo que hay
-                   que leer primero es lo que se paga hoy. Las dos cifras salen
-                   del catálogo, así que no pueden discrepar del cobro. -->
+              <!-- El importe grande es LO QUE SE PAGA, con el código anunciado
+                   ya descontado. Puede serlo porque elegir el plan lo aplica
+                   solo: si hubiera que teclearlo, la tarjeta diría 159 y la
+                   ventana de pago 199.
+
+                   El tachado va al lado y arriba, pequeño. Detrás y no delante
+                   porque lo primero que tiene que leerse es lo que cuesta hoy;
+                   el precio viejo es el contexto, no el titular. -->
               <p class="tarjeta-precio">
-                @if (precioAntes(plan); as antes) {
+                <span class="importe">{{ precioTarjeta(plan) }}</span>
+                @if (precioTachado(plan); as antes) {
                   <span class="antes">{{ antes }}</span>
                 }
-                <span class="importe">{{ precio(plan) }}</span>
               </p>
 
-              @if (ahorro(plan); as rebaja) {
+              <!-- El código, pegado al precio: es el motivo de esa cifra.
+                   Va aquí y no en un recuadro aparte porque no es una acción
+                   —ya está aplicado— sino la explicación de por qué son 159. -->
+              @if (promoDe(plan); as promo) {
+                <p class="tarjeta-cupon">
+                  <span class="cupon-codigo">{{ promo.code }}</span>
+                  <span class="cupon-texto">
+                    aplicado · te ahorras {{ ahorro(plan) }}
+                  </span>
+                </p>
+              } @else if (ahorro(plan); as rebaja) {
                 <p class="tarjeta-oferta">Precio por tiempo limitado · te ahorras {{ rebaja }}</p>
               }
 
@@ -161,32 +176,9 @@
                 @if (seleccionado()?.code === plan.code) {
                   Elige abajo cómo pagar ↓
                 } @else {
-                  Comprar por {{ precio(plan) }}
+                  Comprar por {{ precioTarjeta(plan) }}
                 }
               </button>
-
-              <!-- El código de campaña de ESTE plan.
-                   Es un botón y no un cartel: el código está en pantalla, así
-                   que hacerle copiarlo, abrir la ventana, buscar el campo y
-                   pegarlo son cuatro pasos que no aportan nada y en los que se
-                   pierde gente. Al pulsarlo se elige el plan y se aplica.
-                   El precio final lo sigue calculando el servidor. -->
-              @if (promoDe(plan); as promo) {
-                <button
-                  type="button"
-                  class="promo-tarjeta"
-                  (click)="elegirConPromo(plan, promo)"
-                  [attr.aria-label]="
-                    'Aplicar el código ' + promo.code + ' y pagar ' + precioConPromo(plan, promo)
-                  "
-                >
-                  <span class="promo-tarjeta-etiqueta">Código promocional</span>
-                  <span class="promo-tarjeta-codigo">{{ promo.code }}</span>
-                  <span class="promo-tarjeta-efecto">
-                    Págalo por <strong>{{ precioConPromo(plan, promo) }}</strong>
-                  </span>
-                </button>
-              }
 
               <p class="tarjeta-rotulo">Qué incluye</p>
               <ul class="tarjeta-lista">

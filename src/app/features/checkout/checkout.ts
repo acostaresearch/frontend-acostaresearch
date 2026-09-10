@@ -311,6 +311,26 @@ export class Checkout implements OnInit {
     this.quitarCaptura();
     this.comprobanteEnviado.set(null);
     this.errorComprobante.set(null);
+
+    /**
+     * El código anunciado se aplica solo.
+     *
+     * Porque la tarjeta ya enseña el precio CON él puesto. Si hubiera que
+     * teclearlo, quien pulsara el botón principal vería 159 en la tarjeta y 199
+     * en la ventana de pago, y eso no es un detalle de interfaz: es anunciar un
+     * precio y cobrar otro.
+     *
+     * Se valida contra el servidor como cualquier otro código —el importe lo
+     * decide el backend, nunca esta pantalla—, así que si dejó de valer entre
+     * que se pintó la página y el clic, el descuento no se aplica y la ventana
+     * enseña el precio de catálogo. Es la única forma de que las dos cifras no
+     * puedan discrepar.
+     */
+    const promo = this.promoDe(plan);
+    if (promo) {
+      this.codigoPromo.setValue(promo.code);
+      this.aplicarDescuento();
+    }
   }
 
   // ── Pago por Yape ────────────────────────────────────────────────────────
@@ -519,32 +539,6 @@ export class Checkout implements OnInit {
     return this.promos().find((p) => p.planCode === null) ?? null;
   }
 
-  /** Lo que quedaría por pagar con ese código puesto. */
-  precioConPromo(plan: Plan, promo: Promo): string {
-    // El mismo tope que aplica el servidor: la rebaja no puede dejar el precio
-    // en cero. Se repite aquí para que el número anunciado y el cobrado no
-    // puedan discrepar en el caso raro de un código enorme.
-    const rebaja = Math.min(promo.amountCents, plan.priceCents - 100);
-    return soles(plan.priceCents - rebaja);
-  }
-
-  /**
-   * Elige el plan y aplica su código de una vez.
-   *
-   * El código se anuncia para usarlo, no para que el comprador lo copie, abra
-   * la ventana, busque el campo y lo pegue. Cada uno de esos pasos pierde gente,
-   * y ninguno aporta nada: el código ya está en pantalla.
-   *
-   * Se valida contra el servidor igual que si lo hubiera tecleado —el precio lo
-   * decide el backend, nunca esta pantalla— así que si el código dejó de valer
-   * entre que se pintó la página y el clic, el descuento sencillamente no
-   * aparece y el precio sigue siendo el de siempre.
-   */
-  elegirConPromo(plan: Plan, promo: Promo): void {
-    this.elegir(plan);
-    this.codigoPromo.setValue(promo.code);
-    this.aplicarDescuento();
-  }
 
   /**
    * El precio de antes, para tacharlo. Null = este plan no está de oferta.
@@ -563,11 +557,46 @@ export class Checkout implements OnInit {
     return antes && antes > plan.priceCents ? soles(antes) : null;
   }
 
+  /**
+   * Lo que de verdad va a pagar por este plan, en céntimos.
+   *
+   * Si el plan tiene un código anunciado, ese código YA VA APLICADO al elegirlo
+   * —lo hace `elegir`—, así que la cifra grande de la tarjeta es la rebajada. Y
+   * tiene que serlo: anunciar S/159 y cobrar S/199 a quien pulse el botón
+   * principal en vez del cupón sería mentir con la cifra más visible de la
+   * página.
+   */
+  private centimosAPagar(plan: Plan): number {
+    const promo = this.promoDe(plan);
+    if (!promo) return plan.priceCents;
+
+    // El mismo tope que aplica el servidor: la rebaja no deja el precio en cero.
+    return plan.priceCents - Math.min(promo.amountCents, plan.priceCents - 100);
+  }
+
+  /** La cifra grande: lo que se paga. */
+  precioTarjeta(plan: Plan): string {
+    return soles(this.centimosAPagar(plan));
+  }
+
+  /**
+   * La cifra tachada, o null si no hay nada que tachar.
+   *
+   * Con código anunciado se tacha el precio de catálogo, que es exactamente lo
+   * que pagaría quien no lo usara. Sin código, el precio de lista de la oferta.
+   * Nunca las dos: dos cifras tachadas seguidas no se leen, se calculan.
+   */
+  precioTachado(plan: Plan): string | null {
+    if (this.promoDe(plan)) return soles(plan.priceCents);
+    return this.precioAntes(plan);
+  }
+
   /** Cuánto se ahorra, en soles enteros. Null si no hay oferta. */
   ahorro(plan: Plan): string | null {
-    const antes = plan.listPriceCents;
-    if (!antes || antes <= plan.priceCents) return null;
-    return soles(antes - plan.priceCents);
+    const pagando = this.centimosAPagar(plan);
+    const antes = this.promoDe(plan) ? plan.priceCents : (plan.listPriceCents ?? 0);
+    if (!antes || antes <= pagando) return null;
+    return soles(antes - pagando);
   }
 
   precioDolares(plan: Plan): string | null {
