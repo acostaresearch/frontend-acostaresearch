@@ -8,9 +8,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "env:generar": "node scripts/generar-environment.js",
-    "prestart": "node scripts/generar-environment.js",
-    "prebuild": "node scripts/generar-environment.js",
-    "postinstall": "node scripts/generar-environment.js",
+    "prestart": "node scripts/generar-environment.js && node scripts/copiar-webr.js",
+    "prebuild": "node scripts/generar-environment.js && node scripts/copiar-webr.js",
+    "postinstall": "node scripts/generar-environment.js && node scripts/copiar-webr.js",
     "deploy:hetzner": "node scripts/desplegar.js",
     "deploy:cf": "npm run build && wrangler deploy",
     "deploy": "npm run build && wrangler deploy"
