@@ -153,7 +153,16 @@
     </script>
 
     <script type="module">
-      import { WebR, ChannelType } from '/webr/webr.mjs';
+      /*
+       * `webr.js`, no `webr.mjs`.
+       *
+       * El paquete trae tres builds y su `package.json` lo dice: `browser` →
+       * `webr.js`. El `.mjs` es el de Node y empieza por
+       * `import { createRequire } from 'module'`, que en un navegador es
+       * «Failed to resolve module specifier "module"» y el script entero no
+       * arranca. Los dos pesan lo mismo y se llaman casi igual.
+       */
+      import { WebR, ChannelType } from '/webr/webr.js';
 
       /*
        * R se sirve desde ESTE dominio, no desde un CDN.

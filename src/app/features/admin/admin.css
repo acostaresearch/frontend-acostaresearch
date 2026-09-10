@@ -338,6 +338,15 @@ tbody tr.revocada {
   display: block;
 }
 
+/* El precio de antes, en la tabla de grupos. Tachado en rojo para que en una
+   columna llena de cifras se lea de un vistazo cuál es la que se cobra. */
+.antes {
+  margin-right: 6px;
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-error);
+}
+
 /* ── Pastillas de estado ────────────────────────────────────────────────── */
 .pastilla {
   display: inline-block;

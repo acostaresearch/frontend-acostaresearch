@@ -64,6 +64,11 @@ export interface Plan {
   currency: string;
   /** Precio para las pasarelas que cobran en dólares. Nulo = solo pago manual. */
   priceUsdCents: number | null;
+  /**
+   * Lo que costaba antes de la oferta, para enseñarlo tachado. Nulo = no hay
+   * oferta. Nunca se cobra: lo que se paga es siempre `priceCents`.
+   */
+  listPriceCents: number | null;
   durationDays: number;
 }
 

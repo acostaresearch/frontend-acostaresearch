@@ -674,6 +674,9 @@
                   </td>
                   <td class="numero">{{ grupo.skills }}</td>
                   <td class="derecha numero">
+                    @if (grupo.listPriceCents) {
+                      <span class="antes">S/ {{ (grupo.listPriceCents / 100).toFixed(2) }}</span>
+                    }
                     S/ {{ (grupo.priceCents / 100).toFixed(2) }}
                     @if (grupo.priceUsdCents) {
                       <span class="bloque tenue"
@@ -798,6 +801,20 @@
                   <span class="ayuda">
                     Lo que paga por Yape o Plin. En PayPal:
                     <b>$ {{ dolaresCalculados().toFixed(2) }}</b>
+                  </span>
+                </div>
+
+                <!-- El precio tachado. No se cobra: solo se enseña al lado del
+                     de arriba, que es el único que llega a la pasarela. Para
+                     rebajar se baja «Precio» y se pone aquí el importe viejo. -->
+                <div class="campo">
+                  <label for="g-antes">
+                    Precio antes <span class="opcional">· opcional</span>
+                  </label>
+                  <input id="g-antes" type="number" formControlName="antes" min="0" step="1" />
+                  <span class="ayuda">
+                    Sale tachado junto al precio. Vacío o 0 = sin oferta. Si no supera al precio de
+                    arriba, se ignora: tacharlo por debajo sería anunciar una rebaja que no existe.
                   </span>
                 </div>
 

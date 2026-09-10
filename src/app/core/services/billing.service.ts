@@ -22,6 +22,8 @@ export interface Grupo {
   description: string | null;
   priceCents: number;
   priceUsdCents: number | null;
+  /** Precio tachado. Nulo = sin oferta. No se cobra nunca. */
+  listPriceCents: number | null;
   currency: string;
   durationDays: number;
   active: boolean;
@@ -38,6 +40,8 @@ export interface DatosGrupo {
   description?: string;
   priceCents?: number;
   priceUsdCents?: number;
+  /** Nulo = quitar la oferta; ausente = no tocarla. */
+  listPriceCents?: number | null;
   durationDays?: number;
   mcpCallsPerDay?: number;
   active?: boolean;

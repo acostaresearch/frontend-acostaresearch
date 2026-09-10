@@ -494,6 +494,30 @@ export class Checkout implements OnInit {
     return soles(plan.priceCents);
   }
 
+  /**
+   * El precio de antes, para tacharlo. Null = este plan no está de oferta.
+   *
+   * Sale del catálogo, no de una cifra escrita en la plantilla: el día que
+   * alguien cambie el precio desde el panel, el tachado cambia con él o deja
+   * de salir. Un «antes» escrito a mano se queda ahí para siempre y acaba
+   * anunciando una rebaja sobre un precio que ya no existió nunca.
+   *
+   * Se comprueba que de verdad sea mayor. El servidor ya descarta los que no
+   * lo son, pero esta pantalla no puede permitirse pintar un tachado por
+   * debajo del precio que cobra.
+   */
+  precioAntes(plan: Plan): string | null {
+    const antes = plan.listPriceCents;
+    return antes && antes > plan.priceCents ? soles(antes) : null;
+  }
+
+  /** Cuánto se ahorra, en soles enteros. Null si no hay oferta. */
+  ahorro(plan: Plan): string | null {
+    const antes = plan.listPriceCents;
+    if (!antes || antes <= plan.priceCents) return null;
+    return soles(antes - plan.priceCents);
+  }
+
   precioDolares(plan: Plan): string | null {
     return plan.priceUsdCents ? `$ ${(plan.priceUsdCents / 100).toFixed(2)}` : null;
   }

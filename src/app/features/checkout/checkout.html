@@ -138,9 +138,21 @@
                 <p class="tarjeta-lema">{{ plan.description }}</p>
               }
 
+              <!-- El tachado va DELANTE del importe y más pequeño: lo que hay
+                   que leer primero es lo que se paga hoy. Las dos cifras salen
+                   del catálogo, así que no pueden discrepar del cobro. -->
               <p class="tarjeta-precio">
+                @if (precioAntes(plan); as antes) {
+                  <span class="antes">{{ antes }}</span>
+                }
                 <span class="importe">{{ precio(plan) }}</span>
               </p>
+
+              @if (ahorro(plan); as rebaja) {
+                <p class="tarjeta-oferta">
+                  Precio por tiempo limitado · te ahorras {{ rebaja }}
+                </p>
+              }
 
               <button
                 type="button"
@@ -249,9 +261,15 @@
             <div class="pago-cabecera">
               <div>
                 <p class="pago-producto">{{ plan.name }}</p>
+                <!-- Un solo tachado, el que corresponda: con código promocional
+                     se tacha el precio de catálogo —que ya es el de oferta si la
+                     hay—, y sin código, el de antes de la oferta. Dos cifras
+                     tachadas seguidas no se leen; se calculan. -->
                 <p class="pago-total">
-                  @if (descuento(); as promo) {
+                  @if (descuento()) {
                     <span class="tachado">{{ precio(plan) }}</span>
+                  } @else if (precioAntes(plan); as antes) {
+                    <span class="tachado">{{ antes }}</span>
                   }
                   <strong>{{ precioFinal(plan) }}</strong>
                   <span class="tenue">· {{ vigencia(plan) }}</span>

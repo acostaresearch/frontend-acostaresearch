@@ -729,6 +729,8 @@ export class Admin implements OnInit {
     description: ['', [Validators.maxLength(255)]],
     // En soles, que es como se piensa un precio; se pasa a céntimos al enviar.
     soles: [199, [Validators.required, Validators.min(0)]],
+    // El precio tachado, en soles. 0 = sin oferta. No se cobra: solo se enseña.
+    antes: [0, [Validators.min(0)]],
     // 0 = no caduca. 90 días es el trimestre por defecto.
     durationDays: [90, [Validators.required, Validators.min(0)]],
     mcpCallsPerDay: [200, [Validators.required, Validators.min(0)]],
@@ -851,6 +853,7 @@ export class Admin implements OnInit {
       name: '',
       description: '',
       soles: 199,
+      antes: 0,
       durationDays: 90,
       mcpCallsPerDay: 200,
       active: true,
@@ -877,6 +880,7 @@ export class Admin implements OnInit {
       name: grupo.name,
       description: grupo.description ?? '',
       soles: grupo.priceCents / 100,
+      antes: (grupo.listPriceCents ?? 0) / 100,
       durationDays: grupo.durationDays,
       mcpCallsPerDay: grupo.mcpCallsPerDay,
       active: grupo.active,
@@ -1010,6 +1014,9 @@ export class Admin implements OnInit {
       priceCents: Math.round(v.soles * 100),
       // El precio de PayPal no se pide: se calcula del de soles. Ver `aDolares`.
       priceUsdCents: v.soles > 0 ? Math.round(aDolares(v.soles) * 100) : undefined,
+      // 0 o vacío es quitar la oferta, no dejarla como estaba: por eso va null y
+      // no undefined. El servidor descarta el que no supere al precio vigente.
+      listPriceCents: v.antes > 0 ? Math.round(v.antes * 100) : null,
       durationDays: v.durationDays,
       mcpCallsPerDay: v.mcpCallsPerDay,
       active: v.active,
