@@ -22,7 +22,24 @@
     <p class="aviso error">{{ mensaje }}</p>
   }
 
-  @if (!listo()) {
+  @if (!aislada()) {
+    <!-- Llegó navegando por dentro de la aplicación, así que el navegador no
+         recibió las cabeceras que R necesita: viajan con el documento, y por
+         dentro no se pide documento nuevo.
+
+         Se ofrece recargar y no se intenta arrancar igualmente: WebR tiene un
+         canal de reserva para este caso, pero falla más tarde y de forma
+         confusa —en mitad de un análisis— y eso se lee como «la web está
+         rota». Mejor no empezar. -->
+    <section class="arranque">
+      <p class="arranque-titulo">Recarga la página para empezar</p>
+      <p class="arranque-paso">
+        R necesita permisos que el navegador solo concede al cargar la página directamente. Es un
+        clic y no pierdes nada.
+      </p>
+      <button type="button" class="boton" (click)="recargar()">Recargar</button>
+    </section>
+  } @else if (!listo()) {
     <!-- R se pide, no se impone: son 30 MB y la mayoría de quien entra aquí
          solo está mirando. -->
     <section class="arranque">

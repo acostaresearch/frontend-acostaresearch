@@ -63,14 +63,58 @@ export class Analisis {
 
   readonly listo = computed(() => this.r.estado() === 'listo');
 
+  constructor() {
+    /**
+     * Se retira el Service Worker del canal antiguo.
+     *
+     * Quien abrió esta página antes tiene uno registrado con alcance sobre TODO
+     * el dominio. Ya no se usa —R va por memoria compartida— pero un trabajador
+     * que intercepta peticiones en toda la web y que nadie mantiene es una
+     * pieza que solo puede dar problemas.
+     *
+     * Se hace en silencio y sin esperar: si falla, no cambia nada de lo que el
+     * tesista viene a hacer.
+     */
+    void navigator.serviceWorker
+      ?.getRegistrations()
+      .then((registros) =>
+        registros
+          .filter((r) => r.active?.scriptURL.includes('webr'))
+          .forEach((r) => void r.unregister()),
+      )
+      .catch(() => undefined);
+  }
+
+  /**
+   * ¿Puede esta pestaña ejecutar R?
+   *
+   * Depende de dos cabeceras que solo llegan con el documento. Si el tesista
+   * entró por otra página y navegó hasta aquí por dentro de la aplicación, no
+   * llegaron — y la solución es recargar, que sí pide el documento.
+   */
+  readonly aislada = signal(globalThis.crossOriginIsolated === true);
+
+  /** Recarga de verdad, para que el servidor vuelva a mandar las cabeceras. */
+  recargar(): void {
+    location.reload();
+  }
+
   /** Arranca R. Va tras un botón porque son 30 MB y se pide, no se impone. */
   encender(): void {
     this.error.set(null);
-    this.r.arrancar().catch(() =>
+
+    this.r.arrancar().catch((fallo: unknown) => {
+      // El fallo de aislamiento no se cuenta aquí: tiene su propia pantalla,
+      // con el botón de recargar, porque su solución es distinta de «reintenta».
+      if (fallo instanceof Error && fallo.message === 'SIN_AISLAMIENTO') {
+        this.aislada.set(false);
+        return;
+      }
+
       this.error.set(
         'No se pudo cargar R. Suele ser la conexión: vuelve a intentarlo en un momento.',
-      ),
-    );
+      );
+    });
   }
 
   /**

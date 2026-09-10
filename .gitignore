@@ -54,7 +54,3 @@ src/environments/environment.ts
 src/environments/environment.development.ts
 
 
-# Scripts de WebR: los copia scripts/copiar-webr.js desde node_modules en cada
-# build, para que no puedan quedarse desfasados respecto al paquete instalado.
-/public/webr-serviceworker.js
-/public/webr-worker.js

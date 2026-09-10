@@ -54,6 +54,13 @@ declare module '@r-wasm/webr' {
     repoUrl?: string;
     /** Dónde están los scripts del canal por Service Worker. Vacío = la raíz. */
     serviceWorkerUrl?: string;
+    /**
+     * Qué canal usar: 0 automático, 1 memoria compartida, 2 Service Worker.
+     *
+     * Se pide el 1 explícitamente. Ver la nota en `webr.service.ts`: el
+     * automático cae al 2 en silencio, y el 2 falla tarde y de forma confusa.
+     */
+    channelType?: 0 | 1 | 2;
     /** El directorio de trabajo dentro de R. Por defecto `/home/web_user`. */
     homedir?: string;
   }

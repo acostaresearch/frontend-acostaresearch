@@ -80,6 +80,24 @@ export class WebrService {
   }
 
   private async arrancarDeVerdad(): Promise<import('@r-wasm/webr').WebR> {
+    /**
+     * Sin aislamiento no se arranca, y no es rigidez.
+     *
+     * WebR tiene un canal de reserva para páginas no aisladas que simula la
+     * memoria compartida con un Service Worker. Se probó, y falla de formas que
+     * no se relacionan con su causa: lecturas fuera de rango en mitad de un
+     * análisis, peticiones que no vuelven. Un tesista lo leería como «la web
+     * está rota» a los diez minutos de trabajo, no al abrir.
+     *
+     * Es preferible no arrancar y decir por qué. La causa casi siempre es haber
+     * llegado navegando por dentro de la aplicación: las cabeceras viajan con
+     * el documento, y por dentro no se pide documento nuevo.
+     */
+    if (!globalThis.crossOriginIsolated) {
+      this.estado.set('error');
+      throw new Error('SIN_AISLAMIENTO');
+    }
+
     this.estado.set('arrancando');
     this.paso.set('Descargando R… (unos 30 MB, solo la primera vez)');
 
@@ -100,6 +118,16 @@ export class WebrService {
        * hubiera tocado nada aquí.
        */
       baseUrl: `https://webr.r-wasm.org/v${VERSION}/`,
+      /**
+       * El canal bueno, exigido y no elegido.
+       *
+       * `Automatic` prueba la memoria compartida y, si no puede, cae al Service
+       * Worker sin decir nada. Ese silencio es el problema: la página parece
+       * funcionar y se rompe más tarde, dentro de un análisis. Pidiéndolo
+       * explícitamente, o va por memoria compartida o falla al arrancar, que es
+       * el momento en que un fallo se entiende.
+       */
+      channelType: 1 /* ChannelType.SharedArrayBuffer */,
     });
 
     await webR.init();
