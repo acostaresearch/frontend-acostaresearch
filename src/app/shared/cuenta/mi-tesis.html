@@ -143,7 +143,10 @@
         }
       </div>
 
-      <ol class="capitulos">
+      <!-- «etapas» y no «capitulos»: `.capitulos` es la rejilla global de la
+           portada (dos columnas, 44 px para el número) y se colaba aquí,
+           partiendo cada nombre en una palabra por línea. -->
+      <ol class="etapas">
         @for (e of p.etapas; track e.code) {
           <li [class]="'capitulo ' + marca(e.estado)">
             @if (e.resumen) {
