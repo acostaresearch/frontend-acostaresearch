@@ -2116,6 +2116,9 @@
                   }
                 </p>
                 <p class="tenue">
+                  @if (tutorial.grupo) {
+                    {{ tutorial.grupo }} ·
+                  }
                   {{ tutorial.duracion || 'sin duración' }} ·
                   {{ tutorial.puntos.length }} puntos ·
                   @if (tutorial.videoUrl) {
@@ -2182,6 +2185,22 @@
                 <label class="campo estrecho">
                   <span>Orden</span>
                   <input type="number" formControlName="orden" min="0" />
+                </label>
+              </div>
+
+              <div class="fila">
+                <label class="campo">
+                  <span>Grupo</span>
+                  <input type="text" formControlName="grupo" placeholder="Para empezar" />
+                  <small class="ayuda">
+                    El rótulo del bloque en la lista. Los videos seguidos con el mismo grupo van
+                    juntos.
+                  </small>
+                </label>
+                <label class="campo estrecho">
+                  <span>Etiqueta</span>
+                  <input type="text" formControlName="etiqueta" placeholder="S4" maxlength="8" />
+                  <small class="ayuda">Vacío = su número.</small>
                 </label>
               </div>
 

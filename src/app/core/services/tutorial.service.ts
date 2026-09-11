@@ -9,6 +9,10 @@ import { ApiResponse } from '../models/api.model';
 export interface Tutorial {
   id: string;
   orden: number;
+  /** El bloque de la lista: «Para empezar», «Una por Skill». */
+  grupo: string;
+  /** Lo que va en el círculo en lugar del número, como «S4». Vacío = su número. */
+  etiqueta: string;
   titulo: string;
   duracion: string;
   entrada: string;
@@ -22,6 +26,8 @@ export interface Tutorial {
 /** Lo que se manda al crear o editar. `puntos` va como texto, uno por línea. */
 export interface TutorialEnvio {
   orden: number;
+  grupo: string;
+  etiqueta: string;
   titulo: string;
   duracion: string;
   entrada: string;

@@ -2,12 +2,26 @@
 
 <main class="pagina">
   <header class="encabezado-pagina">
-    <p class="seccion-marca">Cómo usarlo</p>
-    <h1 class="titulo-seccion ancho">Del correo de compra al primer capítulo</h1>
-    <p class="seccion-entrada">
-      Cuatro videos, en el orden en que hacen falta. El primero se ve una vez y no se vuelve a
-      tocar; el segundo es el que de verdad hay que ver.
-    </p>
+    <div class="cab-top">
+      <div>
+        <p class="seccion-marca">Cómo usarlo</p>
+        <h1 class="titulo-seccion ancho">Del correo de compra al primer capítulo</h1>
+        <p class="seccion-entrada">
+          Primero los videos para empezar; después, uno por cada Skill, para cuando llegues a esa
+          fase.
+        </p>
+      </div>
+
+      <!-- Quien llega con un problema no quiere ver videos: quiere la línea que
+           lo arregla. Este atajo se lo pone delante sin bajar a buscarla. -->
+      <a class="atajo" href="#fallas" (click)="irAFallas($event)">
+        <span>
+          <b>¿Algo no funciona?</b>
+          <span>Las soluciones a lo que le pasa a todo el mundo</span>
+        </span>
+        <span class="ir">Ver soluciones</span>
+      </a>
+    </div>
   </header>
 
   <section class="seccion">
@@ -17,78 +31,161 @@
       <p class="cargando">
         Todavía no hay videos publicados. Lo de más abajo te saca de casi cualquier atasco.
       </p>
-    }
+    } @else {
+      <div class="sala">
+        @if (seleccionado(); as video) {
+          <div class="reproductor" #reproductor>
+            <div class="pantalla" [class.en-marcha]="reproduciendo()">
+              @if (reproduciendo() && embedActual()) {
+                <iframe
+                  [src]="embedActual()"
+                  [title]="video.titulo"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              } @else {
+                @if (miniaturaActual(); as miniatura) {
+                  <img class="miniatura" [src]="miniatura" alt="" />
+                }
+                <div class="pantalla-titulo">
+                  {{ video.titulo }}
+                  <small>Acosta | IA &amp; Research</small>
+                </div>
 
-    <ol class="tutoriales">
-      @for (tutorial of tutoriales(); track tutorial.titulo; let i = $index) {
-        <li>
-          <div class="tutorial-cabecera">
-            <span class="tutorial-numero">{{ i + 1 }}</span>
-            <div>
-              <h2>{{ tutorial.titulo }}</h2>
-              <span class="tutorial-duracion">{{ tutorial.duracion }}</span>
+                <!-- Sin video grabado no hay play que no lleve a nada: se dice
+                     que está en grabación y que lo escrito debajo ya sirve. -->
+                @if (reproducible(video.videoUrl)) {
+                  <button
+                    type="button"
+                    class="play"
+                    [attr.aria-label]="'Reproducir: ' + video.titulo"
+                    (click)="reproducir()"
+                  >
+                    <span aria-hidden="true">▶</span>
+                  </button>
+                } @else {
+                  <p class="pantalla-pendiente">
+                    <span aria-hidden="true">🎬</span>
+                    En grabación. Mientras tanto, lo de abajo es exactamente lo que se ve en el video.
+                  </p>
+                }
+              }
+            </div>
+
+            <div class="info-video">
+              <div class="meta">
+                @if (video.grupo) {
+                  <span class="etiqueta-grupo">{{ video.grupo }}</span>
+                }
+                @if (video.duracion) {
+                  <span>{{ video.duracion }}</span>
+                }
+              </div>
+              <h2>{{ video.titulo }}</h2>
+              @if (video.entrada) {
+                <p class="entrada">{{ video.entrada }}</p>
+              }
+
+              @if (video.puntos.length) {
+                <ul class="puntos">
+                  @for (punto of video.puntos; track $index) {
+                    <li>{{ punto }}</li>
+                  }
+                </ul>
+              }
+
+              <div class="nav-video">
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="actual() === 0"
+                  (click)="elegir(actual() - 1)"
+                >
+                  Video anterior
+                </button>
+                <button
+                  type="button"
+                  class="boton"
+                  [disabled]="actual() === tutoriales().length - 1"
+                  (click)="elegir(actual() + 1)"
+                >
+                  Siguiente video
+                </button>
+              </div>
             </div>
           </div>
+        }
 
-          <p class="tutorial-entrada">{{ tutorial.entrada }}</p>
-
-          <!-- Sin video grabado la tarjeta se enseña igual, con su contenido.
-               Lo que se ve escrito ya sirve; el hueco solo dice que además
-               vendrá en imagen. Una página en blanco esperando a que alguien
-               grabe no ayuda a nadie, y el correo de entrega ya la enlaza. -->
-          @if (reproducible(tutorial.videoUrl)) {
-            <div class="video">
-              <iframe
-                [src]="embed(tutorial.videoUrl)"
-                [title]="tutorial.titulo"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-              ></iframe>
+        <nav class="lista" aria-label="Videos">
+          @for (grupo of grupos(); track $index) {
+            <div class="grupo">
+              @if (grupo.nombre) {
+                <h3>{{ grupo.nombre }}</h3>
+              }
+              <ol>
+                @for (item of grupo.videos; track item.tutorial.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="item"
+                      [class.activo]="item.indice === actual()"
+                      [class.pendiente]="!reproducible(item.tutorial.videoUrl)"
+                      [attr.aria-current]="item.indice === actual() ? 'true' : null"
+                      (click)="elegir(item.indice)"
+                    >
+                      <span class="numero">{{ etiqueta(item.tutorial, item.indice) }}</span>
+                      <span class="item-titulo">
+                        {{ item.tutorial.titulo }}
+                        @if (!reproducible(item.tutorial.videoUrl)) {
+                          <small>En grabación</small>
+                        }
+                      </span>
+                      <span class="duracion">{{ item.tutorial.duracion }}</span>
+                    </button>
+                  </li>
+                }
+              </ol>
             </div>
-          } @else {
-            <p class="video-pendiente">
-              <span aria-hidden="true">🎬</span>
-              En grabación. Mientras tanto, lo de abajo es exactamente lo que se ve en el video.
-            </p>
           }
-
-          <ul class="tutorial-puntos">
-            @for (punto of tutorial.puntos; track punto) {
-              <li>{{ punto }}</li>
-            }
-          </ul>
-        </li>
-      }
-    </ol>
+        </nav>
+      </div>
+    }
   </section>
 
   <!-- Los tropiezos, por escrito y buscables. Un video no se recorre con
        Ctrl+F: quien tiene el problema delante a las once de la noche quiere
        leer la línea que lo arregla, no ver ocho minutos para llegar al seis. -->
-  <section class="seccion">
+  <section class="seccion gris" id="fallas" #fallas>
     <p class="seccion-marca">Si algo falla</p>
     <h2 class="titulo-seccion">Lo que le pasa a todo el mundo alguna vez</h2>
 
-    <dl class="tropiezos">
-      @for (tropiezo of tropiezos; track tropiezo.problema) {
-        <div>
-          <dt>{{ tropiezo.problema }}</dt>
-          <dd>{{ tropiezo.solucion }}</dd>
-        </div>
+    <div class="fallas">
+      @for (tropiezo of tropiezos; track tropiezo.problema; let primero = $first) {
+        <details [open]="primero">
+          <summary>{{ tropiezo.problema }}</summary>
+          <p>{{ tropiezo.solucion }}</p>
+        </details>
       }
-    </dl>
+    </div>
   </section>
 
-  <section class="seccion">
+  <section class="seccion noche corta">
     <div class="cierre-pagina">
-      <a class="boton grande" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
-        Ir a mi conector
-      </a>
-      <span>
-        ¿Sigues atascado? Escríbenos. No hace falta que sepas explicar qué falla: con una captura
-        de lo que ves nos suele bastar.
-      </span>
+      <div>
+        <h2 class="titulo-seccion">¿Sigues atascado? Escríbenos.</h2>
+        <p class="seccion-entrada">
+          Te responde una persona, no un bot. No hace falta que sepas explicar qué falla: con una
+          captura de lo que ves nos suele bastar.
+        </p>
+      </div>
+      <div class="acciones">
+        <a class="boton oro grande" [href]="whatsappUrl" target="_blank" rel="noopener">
+          WhatsApp · +51 923 095 940
+        </a>
+        <a class="boton claro grande" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
+          Ir a mi conector
+        </a>
+      </div>
     </div>
   </section>
 </main>

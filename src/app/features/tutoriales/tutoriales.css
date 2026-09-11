@@ -1,137 +1,394 @@
-/* Los cuatro videos, uno debajo de otro y numerados.
- *
- * En columna y no en rejilla a propósito: tienen orden. El primero se ve una
- * vez y no se vuelve a tocar; el segundo es el que hay que ver. Puestos en
- * cuadrícula parecerían cuatro opciones equivalentes entre las que elegir, y no
- * lo son. */
-.tutoriales {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* El encabezado: el titular a la izquierda y, al otro lado, el atajo a «Si
+ * algo falla» para quien no viene a ver videos sino a arreglar algo. */
+.cab-top {
   display: flex;
-  flex-direction: column;
-  gap: 34px;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-end;
+  justify-content: space-between;
 }
 
-.tutoriales > li {
-  padding: 22px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+.cab-top .seccion-entrada {
+  margin-bottom: 0;
 }
 
-.tutorial-cabecera {
+.atajo {
   display: flex;
   gap: 14px;
   align-items: center;
-  margin-bottom: 12px;
+  max-width: 420px;
+  padding: 16px 20px;
+  color: var(--color-texto);
+  text-decoration: none;
+  background: var(--crema);
+  border-radius: 12px;
+  transition: box-shadow var(--transicion);
 }
 
-.tutorial-numero {
-  flex: 0 0 auto;
+.atajo:hover {
+  box-shadow: var(--sombra);
+}
+
+.atajo b {
+  display: block;
+}
+
+.atajo b + span {
+  font-size: 14.5px;
+  color: #6b5e4a;
+}
+
+.atajo .ir {
+  margin-left: auto;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-primario);
+}
+
+/* La sala: un reproductor y la lista al lado, como en un curso. Uno solo y no
+ * uno por video: con ocho apilados la página era eterna y cargaba ocho
+ * reproductores de YouTube. */
+.sala {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Fijo mientras se recorre la lista: al elegir un video se ve cambiar. */
+.reproductor {
+  position: sticky;
+  top: 92px;
+  scroll-margin-top: 84px;
+}
+
+.pantalla {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  background: var(--color-primario);
-  border-radius: 50%;
-}
-
-.tutorial-cabecera h2 {
-  margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.3;
-}
-
-/* Que se sepa antes de empezar si hay tiempo de verlo ahora o hay que dejarlo
-   para luego. Sin el dato, lo dejan para luego siempre. */
-.tutorial-duracion {
-  font-size: 12.5px;
-  color: var(--color-texto-tenue);
-}
-
-.tutorial-entrada {
-  margin: 0 0 16px;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-}
-
-.video {
-  position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: var(--color-texto);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  background: var(--noche-2);
+  border-radius: 16px;
 }
 
-.video iframe {
+.pantalla.en-marcha {
+  background: #000;
+}
+
+.pantalla iframe {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
 }
 
-/* El hueco de lo que aún no está grabado. Se dice de frente y se remata con que
-   lo escrito debajo ya sirve: prometer sin entregar molesta menos que
-   prometer y dejar al lector sin saber si hay algo más. */
-.video-pendiente {
-  margin: 0;
+/* La miniatura del propio video, oscurecida para que el título y el play se
+ * lean encima. Es una imagen: no carga nada de YouTube hasta pulsar play. */
+.miniatura {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55);
+}
+
+.pantalla-titulo {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  left: 22px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.pantalla-titulo small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gris-noche);
+}
+
+.play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  padding-left: 6px;
+  font-size: 28px;
+  color: var(--noche);
+  cursor: pointer;
+  background: var(--dorado);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition:
+    transform var(--transicion),
+    background var(--transicion);
+}
+
+.play:hover {
+  background: var(--dorado-claro);
+  transform: scale(1.06);
+}
+
+.pantalla-pendiente {
+  position: relative;
+  max-width: 440px;
+  margin: 0 24px;
   padding: 14px 16px;
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
-  color: var(--color-texto-suave);
-  background: var(--color-fondo);
-  border: 1px dashed var(--color-borde);
+  color: var(--gris-noche);
+  border: 1px dashed rgba(224, 185, 115, 0.5);
   border-radius: var(--radio);
 }
 
-.tutorial-puntos {
-  margin: 16px 0 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
+.info-video {
+  margin-top: 20px;
 }
 
-/* Los tropiezos. Pregunta en negrita y respuesta debajo, que es como se lee
-   cuando uno viene buscando la suya y va saltando. */
-.tropiezos {
-  margin: 0;
+.meta {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.tropiezos dt {
-  margin-bottom: 5px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
   font-size: 14.5px;
-  font-weight: 600;
+  color: var(--color-texto-tenue);
 }
 
-.tropiezos dd {
+.etiqueta-grupo {
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.info-video h2 {
   margin: 0;
-  max-width: 72ch;
-  font-size: 14px;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.entrada {
+  max-width: 760px;
+  margin: 8px 0 0;
   line-height: 1.6;
   color: var(--color-texto-suave);
 }
 
-@media (max-width: 640px) {
-  .tutoriales > li {
-    padding: 18px 16px;
+/* Lo que se ve, punto por punto. Sirve aunque el video no esté grabado, y se
+ * busca con Ctrl+F, que un video no. */
+.puntos {
+  max-width: 760px;
+  margin: 14px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.nav-video {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* La lista de videos. */
+.lista {
+  padding: 18px;
+  background: var(--color-fondo);
+  border-radius: 16px;
+}
+
+.grupo + .grupo {
+  margin-top: 18px;
+}
+
+.grupo h3 {
+  margin: 0;
+  padding: 4px 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+}
+
+.grupo ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radio);
+  transition: background var(--transicion);
+}
+
+.item:hover {
+  background: var(--color-superficie);
+}
+
+.item.activo {
+  background: var(--color-superficie);
+  box-shadow: inset 3px 0 0 var(--color-primario);
+}
+
+.numero {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 50%;
+}
+
+.item.activo .numero {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.item-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.item.activo .item-titulo {
+  color: var(--color-primario);
+}
+
+.item-titulo small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.duracion {
+  font-size: 13.5px;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+}
+
+/* Si algo falla: plegables en dos columnas. El primero va abierto para que se
+ * vea que dentro hay la respuesta, no un enlace a otra parte. */
+.fallas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 28px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.fallas details {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.fallas summary {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 20px 22px;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.fallas summary::-webkit-details-marker {
+  display: none;
+}
+
+.fallas summary::after {
+  content: '+';
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-primario);
+}
+
+.fallas details[open] summary {
+  color: var(--color-primario);
+}
+
+.fallas details[open] summary::after {
+  content: '–';
+}
+
+.fallas details p {
+  margin: 0;
+  padding: 0 22px 20px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+/* Pantalla estrecha: la lista baja debajo del reproductor, que deja de ir fijo
+ * —fijo taparía la lista entera—. Al elegir un video la página sube sola. */
+@media (max-width: 1100px) {
+  .sala {
+    grid-template-columns: 1fr;
   }
 
-  .tutoriales {
-    gap: 26px;
+  .reproductor {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .fallas {
+    grid-template-columns: 1fr;
+  }
+
+  .info-video h2 {
+    font-size: 22px;
+  }
+
+  .pantalla-titulo {
+    font-size: 15px;
+  }
+
+  .play {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  /* En un móvil el aviso no cabe encima de la miniatura con el título. */
+  .pantalla-pendiente {
+    font-size: 12.5px;
   }
 }

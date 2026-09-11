@@ -2429,6 +2429,8 @@ export class Admin implements OnInit {
 
   readonly formTutorial = this.fb.nonNullable.group({
     orden: [1, [Validators.required]],
+    grupo: ['', [Validators.maxLength(60)]],
+    etiqueta: ['', [Validators.maxLength(8)]],
     titulo: ['', [Validators.required, Validators.maxLength(160)]],
     duracion: [''],
     entrada: [''],
@@ -2453,6 +2455,10 @@ export class Admin implements OnInit {
 
     this.formTutorial.reset({
       orden: tutorial?.orden ?? this.tutoriales().length + 1,
+      // Uno nuevo cae en el grupo del último: casi siempre se añade al final
+      // del bloque que se está grabando.
+      grupo: tutorial?.grupo ?? this.tutoriales().at(-1)?.grupo ?? '',
+      etiqueta: tutorial?.etiqueta ?? '',
       titulo: tutorial?.titulo ?? '',
       duracion: tutorial?.duracion ?? '',
       entrada: tutorial?.entrada ?? '',
