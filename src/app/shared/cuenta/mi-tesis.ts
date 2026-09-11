@@ -2,10 +2,20 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { toApiError } from '../../core/http/api-error';
-import { Proyecto, ProyectoService } from '../../core/services/proyecto.service';
+import {
+  EtapaDelProyecto,
+  Proyecto,
+  ProyectoService,
+} from '../../core/services/proyecto.service';
 
 /** Qué se está bajando: el documento o solo la bibliografía. */
 type Formato = 'word' | 'bib';
+
+/** Media lista de fases, con su rótulo: «Fases 1 a 6». */
+interface Columna {
+  rotulo: string;
+  fases: EtapaDelProyecto[];
+}
 
 /**
  * Por dónde va su tesis.
@@ -34,7 +44,76 @@ export class MiTesis implements OnInit {
   /** Qué capítulos se ven desplegados. Empiezan todos cerrados. */
   private readonly abiertos = signal<ReadonlySet<string>>(new Set());
 
-  readonly hayAlgo = computed(() => this.lista().length > 0);
+  /**
+   * El proyecto que se ve, cuando tiene más de uno (tesis y artículo).
+   *
+   * Uno a la vez, en pestañas: los dos apilados eran dos pantallas enteras de
+   * capítulos, y el segundo quedaba tan abajo que parecía otra sección. Sin
+   * elegir, el primero, que es el último que tocó.
+   */
+  private readonly elegido = signal<string | null>(null);
+  readonly proyecto = computed(
+    () => this.lista().find((p) => p.productCode === this.elegido()) ?? this.lista()[0] ?? null,
+  );
+
+  readonly fases = computed(() => this.proyecto()?.etapas.filter((e) => !e.apoyo) ?? []);
+  readonly apoyos = computed(() => this.proyecto()?.etapas.filter((e) => e.apoyo) ?? []);
+
+  /**
+   * Las fases en dos columnas, partidas por la mitad.
+   *
+   * Por la mitad y no por capítulos: el artículo tiene once fases con una 3B
+   * en medio, y cualquier corte «por sentido» habría que mantenerlo a mano cada
+   * vez que cambie el catálogo.
+   */
+  readonly columnas = computed<Columna[]>(() => {
+    const fases = this.fases();
+    const mitad = Math.ceil(fases.length / 2);
+    return [fases.slice(0, mitad), fases.slice(mitad)]
+      .filter((trozo) => trozo.length > 0)
+      .map((trozo) => ({ rotulo: this.rotulo(trozo), fases: trozo }));
+  });
+
+  /** Si se ve el recuadro de cómo retomarlo en Claude. */
+  readonly retomarAbierto = signal(false);
+  readonly copiado = signal(false);
+
+  elegir(productCode: string): void {
+    this.elegido.set(productCode);
+    this.retomarAbierto.set(false);
+    this.copiado.set(false);
+  }
+
+  /** «Método de Tesis · 9 Capítulos + …» → «Método de Tesis», para la pestaña. */
+  nombreCorto(p: Proyecto): string {
+    return (p.productName ?? p.productCode).split(' · ')[0];
+  }
+
+  /** Lo que se le escribe a Claude para seguir por donde lo dejó. */
+  frase(p: Proyecto): string {
+    return p.siguiente ? `Sigamos con «${p.siguiente.displayName}», con el método.` : '';
+  }
+
+  copiarFrase(p: Proyecto): void {
+    navigator.clipboard?.writeText(this.frase(p)).then(
+      () => this.copiado.set(true),
+      // Sin permiso para el portapapeles la frase sigue a la vista para
+      // copiarla a mano, que es lo que se haría de todos modos.
+      () => this.copiado.set(false),
+    );
+  }
+
+  /** «7 · Capítulo IV…» → «7»; «Fase 3B — …» → «3B». */
+  private numero(fase: EtapaDelProyecto): string {
+    return /^\s*(?:fase\s+)?(\d+[a-z]?)/i.exec(fase.displayName)?.[1] ?? '';
+  }
+
+  private rotulo(fases: EtapaDelProyecto[]): string {
+    const primera = this.numero(fases[0]);
+    const ultima = this.numero(fases[fases.length - 1]);
+    if (!primera || !ultima) return 'Fases';
+    return primera === ultima ? `Fase ${primera}` : `Fases ${primera} a ${ultima}`;
+  }
 
   /**
    * Qué se está bajando, si es que hay algo.
@@ -190,11 +269,6 @@ export class MiTesis implements OnInit {
     this.proyectos.mios().subscribe({ next: (datos) => this.lista.set(datos) });
   }
 
-  porcentaje(p: Proyecto): number {
-    if (p.avance.total === 0) return 0;
-    return Math.round((p.avance.listos / p.avance.total) * 100);
-  }
-
   estaAbierto(code: string): boolean {
     return this.abiertos().has(code);
   }
@@ -214,7 +288,7 @@ export class MiTesis implements OnInit {
   }
 
   etiqueta(estado: string): string {
-    if (estado === 'LISTO') return 'Dado por bueno';
+    if (estado === 'LISTO') return 'Terminada';
     if (estado === 'EN_CURSO') return 'En curso';
     return 'Sin empezar';
   }

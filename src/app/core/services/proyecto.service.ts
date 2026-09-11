@@ -11,6 +11,11 @@ export type EstadoDeEtapa = 'PENDIENTE' | 'EN_CURSO' | 'LISTO';
 export interface EtapaDelProyecto {
   code: string;
   displayName: string;
+  /**
+   * Herramienta de apoyo (el humanizador) y no fase del método. Va aparte en
+   * el panel y no cuenta en el avance: se usa cuando hace falta, no en orden.
+   */
+  apoyo: boolean;
   estado: EstadoDeEtapa;
   /** Qué quedó decidido, en dos o tres frases. Nulo si no se guardó nada. */
   resumen: string | null;
@@ -36,14 +41,20 @@ export interface PlantillaPuesta {
 export interface Proyecto {
   id: string;
   productCode: string;
+  /** El nombre de venta del producto: «Método de Tesis · 9 Capítulos + …». */
+  productName: string;
   tema: string | null;
   carrera: string | null;
   universidad: string | null;
   plantilla: PlantillaPuesta | null;
   updatedAt: string;
   etapas: EtapaDelProyecto[];
+  /** Solo de las fases: las herramientas de apoyo no cuentan. */
   avance: { listos: number; total: number };
-  /** El primer capítulo sin dar por bueno. Nulo cuando ya no queda ninguno. */
+  /**
+   * Donde lo dejó: la fase en curso, o si no hay, la primera sin dar por buena.
+   * Nulo cuando ya no queda ninguna.
+   */
   siguiente: EtapaDelProyecto | null;
 }
 

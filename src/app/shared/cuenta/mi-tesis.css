@@ -2,19 +2,87 @@
   margin-bottom: 18px;
 }
 
-/* ── Cabecera ─────────────────────────────────────────────────────────────── */
-.cabecera {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+/* ── Presentación ─────────────────────────────────────────────────────────── */
+.intro h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-texto);
 }
 
-.titulo h3 {
-  margin: 0 0 6px;
-  font-size: 15px;
-  font-weight: 650;
+.intro p {
+  max-width: 620px;
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+/* ── Pestañas, una por proyecto ───────────────────────────────────────────── */
+.pestanas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 26px;
+  padding: 5px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.pestana {
+  display: inline-flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 9px;
+  transition:
+    background var(--transicion),
+    color var(--transicion);
+}
+
+.pestana:hover {
+  color: var(--color-texto);
+}
+
+.pestana small {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+}
+
+.pestana.activa {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+}
+
+.pestana.activa small {
+  color: var(--color-primario);
+}
+
+/* ── Cabecera del proyecto ────────────────────────────────────────────────── */
+.cabecera {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.titulo h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
   color: var(--color-texto);
 }
 
@@ -22,7 +90,7 @@
    deja respirar en varias líneas en vez de recortarlo. Recortarlo escondería
    justo la parte que lo delimita, que suele ir al final. */
 .tema {
-  margin: 0;
+  margin: 6px 0 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--color-texto);
@@ -42,68 +110,351 @@
 
 .cuenta .numero {
   display: block;
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: var(--color-primario);
 }
 
 .cuenta .de {
-  font-size: 12px;
-  color: var(--color-texto-tenue);
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
 }
 
-/* ── Avance ───────────────────────────────────────────────────────────────── */
-.barra {
-  height: 6px;
+/* ── Avance: un tramo por fase ────────────────────────────────────────────── */
+.tramos {
+  display: flex;
+  gap: 4px;
   margin-bottom: 12px;
-  overflow: hidden;
+}
+
+.tramo {
+  flex: 1;
+  height: 7px;
   background: var(--color-borde);
   border-radius: 999px;
 }
 
-.relleno {
-  display: block;
-  height: 100%;
-  background: var(--color-primario);
-  border-radius: 999px;
-  transition: width 0.3s ease;
+.tramo.listo {
+  background: var(--color-exito);
 }
 
-.siguiente {
-  margin: 0 0 14px;
-  padding: 10px 13px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--color-texto);
+/* A medias, literalmente: se pinta la mitad. */
+.tramo.en-curso {
+  background: linear-gradient(
+    90deg,
+    var(--color-primario) 50%,
+    color-mix(in srgb, var(--color-primario) 30%, white) 50%
+  );
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.leyenda li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.leyenda .icono {
+  width: 11px;
+  height: 11px;
+}
+
+/* ── El icono de estado ───────────────────────────────────────────────────── */
+/* Lleva el estado por la forma y no solo por el color: vacío, a medias,
+   lleno. Quien no separa bien verde y azul sigue viendo cuál es cuál. */
+.icono {
+  flex-shrink: 0;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 50%;
+}
+
+.listo .icono,
+.icono.listo {
+  background: var(--color-exito);
+  border-color: var(--color-exito);
+}
+
+.en-curso .icono,
+.icono.en-curso {
+  background: linear-gradient(90deg, var(--color-primario) 50%, var(--color-superficie) 50%);
+  border-color: var(--color-primario);
+}
+
+/* ── Dónde retomarlo ──────────────────────────────────────────────────────── */
+.retomar {
+  margin: 0 0 30px;
+  padding: 20px 20px 20px 22px;
   background: var(--color-primario-suave);
-  border-radius: var(--radio-sm);
+  border-radius: 12px;
 }
 
-.siguiente.completo {
+.retomar.completo {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--color-exito);
   background: var(--color-exito-suave);
 }
 
-/* ── La descarga ──────────────────────────────────────────────────────────── */
-.descarga {
-  margin-bottom: 16px;
-  padding: 14px 15px;
-  background: var(--color-fondo);
+.retomar-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.retomar-marca {
+  margin: 0 0 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.retomar-fase {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-texto);
+}
+
+.retomar-como {
+  margin-top: 16px;
+  padding-top: 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+  border-top: 1px solid color-mix(in srgb, var(--color-primario) 18%, transparent);
+}
+
+.retomar-como p {
+  margin: 0;
+}
+
+.frase {
+  margin: 8px 0 12px !important;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
 }
 
-.descarga-pie {
-  margin: 9px 0 0;
+.retomar-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.retomar-nota {
+  margin-top: 12px !important;
   font-size: 12.5px;
-  line-height: 1.55;
   color: var(--color-texto-tenue);
+}
+
+/* ── Las fases, en dos columnas ───────────────────────────────────────────── */
+.columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 36px;
+  align-items: start;
+  margin-bottom: 30px;
+}
+
+.rotulo {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+}
+
+.etapas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etapa {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.etapa:last-child {
+  border-bottom: 0;
+}
+
+.fila {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  padding: 11px 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+}
+
+.fila.desplegable {
+  cursor: pointer;
+}
+
+.fila.desplegable:hover .nombre {
+  color: var(--color-primario);
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
+}
+
+.en-curso .nombre {
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.estado {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.listo .estado {
+  color: var(--color-exito);
+}
+
+.en-curso .estado {
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.flecha {
+  flex-shrink: 0;
+  width: 12px;
+  font-size: 10px;
+  color: var(--color-texto-tenue);
+}
+
+/* Lo que quedó decidido, al desplegar una fase. */
+.resumen {
+  padding: 0 0 12px 34px;
+}
+
+.resumen p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.resumen .fecha {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Herramientas de apoyo ────────────────────────────────────────────────── */
+.apoyos {
+  margin-top: 26px;
+}
+
+.apoyos ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apoyo {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 13px 9px 11px;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-radius: 9px;
+}
+
+.apoyo .icono {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Los recuadros de abajo: descarga y formato ───────────────────────────── */
+.caja {
+  margin-bottom: 14px;
+  padding: 18px 20px;
+  border-radius: 12px;
+}
+
+.caja-fila {
+  display: flex;
+  gap: 16px 28px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.caja-titulo {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.caja-texto {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.caja .boton {
+  flex-shrink: 0;
+}
+
+.descarga {
+  background: var(--color-fondo);
+}
+
+.plantilla {
+  background: var(--crema);
+}
+
+.plantilla .boton.secundario {
+  cursor: pointer;
+}
+
+.plantilla .boton.inactivo {
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 /* Separado por una línea del Word y en tamaño menor: quien escribe en LaTeX lo
    busca y lo encuentra; el resto pasa de largo sin preguntarse qué es. */
 .descarga-latex {
-  margin: 12px 0 0;
-  padding-top: 11px;
+  margin: 14px 0 0;
+  padding-top: 12px;
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--color-texto-tenue);
@@ -124,8 +475,38 @@
   border-radius: 4px;
 }
 
+/* El nombre del archivo en monoespaciado: es lo que el tesista compara de un
+   vistazo para saber si subió el bueno o el borrador que tenía al lado. */
+.plantilla-archivo {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border-radius: 4px;
+}
+
+.plantilla-acciones {
+  display: flex;
+  flex-shrink: 0;
+  gap: 14px;
+  align-items: center;
+}
+
+.plantilla-nota {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.plantilla-nota.ok {
+  color: var(--color-exito);
+}
+
 .aviso-descarga {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   padding: 11px 13px;
   font-size: 13px;
   line-height: 1.55;
@@ -134,189 +515,37 @@
   border-radius: var(--radio-sm);
 }
 
-/* ── La plantilla de su facultad ──────────────────────────────────────────── */
-.plantilla {
-  margin-bottom: 16px;
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--color-texto-tenue);
+.plantilla .aviso-descarga {
+  margin: 10px 0 0;
 }
 
-.plantilla p {
-  margin: 0;
-}
-
-.plantilla-estado strong {
-  color: var(--color-exito);
-}
-
-/* El nombre del archivo en monoespaciado: es lo que el tesista compara de un
-   vistazo para saber si subió el bueno o el borrador que tenía al lado. */
-.plantilla-archivo {
-  display: inline-block;
-  margin: 0 4px;
-  padding: 1px 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--color-texto);
-  background: var(--color-fondo);
-  border-radius: 4px;
-}
-
-.plantilla-fecha {
+/* El `.boton` global ocupa todo el ancho, que es lo que toca en un formulario.
+   Aquí van al lado del texto. */
+.tesis .boton {
+  width: auto;
   white-space: nowrap;
 }
 
-.plantilla-acciones {
-  display: flex;
-  gap: 14px;
-  margin-top: 4px !important;
-}
+/* ── Pantalla estrecha ────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .columnas {
+    grid-template-columns: 1fr;
+  }
 
-/* El <label> hace de botón porque el <input type="file"> va oculto: es la única
-   forma de que abra el diálogo sin enseñar el control gris del navegador, que
-   ni se puede estilar ni dice nada útil. */
-.plantilla label.boton.enlace {
-  padding: 0;
-  font-size: 12.5px;
-  cursor: pointer;
-}
+  .columnas > div + div {
+    margin-top: 18px;
+  }
 
-.plantilla-nota,
-.plantilla-ok {
-  margin-top: 4px !important;
-}
-
-.plantilla-ok {
-  color: var(--color-exito);
-}
-
-/* ── Los capítulos ────────────────────────────────────────────────────────── */
-/* En dos columnas cuando hay ancho: el panel mide más de 1400 px, y una sola
-   fila de 13 px de lado a lado dejaba el estado a un metro del nombre. En
-   columnas —y no en rejilla— para que el orden se lea hacia abajo, que es el
-   orden en que se hacen. */
-.etapas {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  columns: 2 340px;
-  column-gap: 48px;
-}
-
-.capitulo {
-  break-inside: avoid;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.fila {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 2px;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  background: none;
-  border: none;
-}
-
-.fila.desplegable {
-  cursor: pointer;
-}
-
-.fila.desplegable:hover .nombre {
-  color: var(--color-primario);
-}
-
-/* El punto lleva el estado. Es lo primero que se busca al mirar una lista así,
-   antes de leer una sola palabra. */
-.punto {
-  flex-shrink: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--color-borde-fuerte);
-}
-
-.listo .punto {
-  background: var(--color-exito);
-}
-
-.en-curso .punto {
-  background: var(--color-primario);
-  /* Un anillo, para que se distinga del verde sin depender del color: quien no
-     separa bien verde y azul sigue viendo que este es distinto. */
-  box-shadow: 0 0 0 3px var(--color-primario-suave);
-}
-
-.nombre {
-  flex: 1;
-  min-width: 0;
-  font-size: 13.5px;
-  line-height: 1.4;
-}
-
-.listo .nombre {
-  color: var(--color-texto-suave);
-}
-
-.pendiente .nombre {
-  color: var(--color-texto-tenue);
-}
-
-.estado {
-  flex-shrink: 0;
-  font-size: 11.5px;
-  color: var(--color-texto-tenue);
-}
-
-.listo .estado {
-  color: var(--color-exito);
-}
-
-.en-curso .estado {
-  font-weight: 600;
-  color: var(--color-primario);
-}
-
-.flecha {
-  flex-shrink: 0;
-  width: 12px;
-  font-size: 10px;
-  color: var(--color-texto-tenue);
-}
-
-/* ── Lo que quedó decidido ────────────────────────────────────────────────── */
-.resumen {
-  padding: 2px 2px 12px 19px;
-}
-
-.resumen p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-}
-
-.resumen .fecha {
-  margin-top: 5px;
-  font-size: 11.5px;
-  color: var(--color-texto-tenue);
-}
-
-.nota {
-  margin: 14px 0 0;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--color-texto-tenue);
+  .caja-fila {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 520px) {
   .cabecera {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .cuenta {
@@ -325,17 +554,26 @@
 
   .cuenta .numero {
     display: inline;
-    font-size: 18px;
+    margin-right: 4px;
+    font-size: 20px;
   }
 
-  /* En pantalla estrecha el estado se va debajo del nombre en vez de apretarlo
-     contra el borde. */
+  .pestanas {
+    display: flex;
+  }
+
+  .pestana {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* El estado se va debajo del nombre en vez de apretarlo contra el borde. */
   .fila {
     flex-wrap: wrap;
   }
 
   .estado {
     width: 100%;
-    padding-left: 19px;
+    padding-left: 34px;
   }
 }
