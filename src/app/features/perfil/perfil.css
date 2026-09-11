@@ -126,18 +126,23 @@
 /* ── Sesión y seguridad ─────────────────────────────────────────────────────
    Arriba, no al fondo de la página: cerrar la sesión en un ordenador ajeno es
    lo que se busca con prisa, y antes había que bajar por cinco tarjetas. */
+/* «Análisis de datos» va con la misma forma: otro bloque de la columna,
+   separado por su raya. */
+.herramientas,
 .seguridad {
   margin-top: 22px;
   padding-top: 18px;
   border-top: 1px solid var(--color-borde);
 }
 
+.herramientas h2,
 .seguridad h2 {
   margin: 0 0 6px;
   font-size: 14px;
   font-weight: 650;
 }
 
+.herramientas .nota,
 .seguridad .nota {
   margin-bottom: 12px;
   font-size: 12.5px;

@@ -208,31 +208,6 @@
       <span class="recurso-accion">Abrir chat</span>
     </a>
   </section>
-
-  <!-- La página de R, para el Capítulo IV. A lo ancho y al final: es una
-       herramienta que se usa en un momento concreto de la tesis, no algo que
-       se mire cada vez que se entra.
-
-       `href` y NO `routerLink`, a propósito. R necesita dos cabeceras que solo
-       llegan con el documento (ver `aislamiento` en worker/index.js), y el
-       router cambia de página sin pedir documento nuevo: se llegaría a la
-       pantalla de «Recarga la página para empezar». -->
-  <section class="tarjeta tramo-6">
-    <h2>Analiza tus datos</h2>
-    <p class="nota">Sin instalar nada: R corre en tu navegador, con tu matriz.</p>
-
-    <a class="recurso" href="/analisis">
-      <span class="recurso-icono" aria-hidden="true">R</span>
-      <span class="recurso-texto">
-        <strong>R en tu navegador, con los paneles de RStudio</strong>
-        <span>
-          Sube tu matriz, corre descriptivos, alfa, normalidad y correlaciones, y envía el
-          resultado a tu conector para el Capítulo IV.
-        </span>
-      </span>
-      <span class="recurso-accion">Abrir</span>
-    </a>
-  </section>
 } @else if (modo() === 'administrador') {
   <!-- No debería verse nunca: las licencias del administrador se emiten solas
        al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan

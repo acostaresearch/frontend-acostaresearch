@@ -59,6 +59,19 @@
         </div>
       </dl>
 
+      <!-- La página de R, a mano en la columna y en azul: es lo único de la
+           barra que lleva a trabajar, no a administrar la cuenta.
+
+           `href` y NO `routerLink`, a propósito. R necesita dos cabeceras que
+           solo llegan con el documento (ver `aislamiento` en worker/index.js),
+           y el router cambia de página sin pedir documento nuevo: se llegaría
+           a la pantalla de «Recarga la página para empezar». -->
+      <div class="herramientas">
+        <h2>Análisis de datos</h2>
+        <p class="nota">R en tu navegador, con los paneles de RStudio. Sin instalar nada.</p>
+        <a class="boton" href="/analisis">Analiza tus datos</a>
+      </div>
+
       <div class="seguridad">
         <h2>Sesión y seguridad</h2>
         <p class="nota">
