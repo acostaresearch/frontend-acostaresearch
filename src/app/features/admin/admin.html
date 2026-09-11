@@ -46,6 +46,15 @@
         <span>Tutoriales</span>
       </button>
 
+      <!-- Un enlace y no un botón de sección: sale del panel. Con `href` y no
+           `routerLink`, porque R necesita las cabeceras que solo llegan al pedir
+           el documento (ver `aislamiento` en worker/index.js). -->
+      <p class="lateral-grupo">Herramientas</p>
+      <a href="/analisis">
+        <span>Analiza tus datos</span>
+        <span class="lateral-salida" aria-hidden="true">↗</span>
+      </a>
+
       <p class="lateral-grupo">Vigilancia</p>
       <button type="button" [class.activa]="seccion() === 'alertas'" (click)="ir('alertas')">
         <span>Alertas</span>

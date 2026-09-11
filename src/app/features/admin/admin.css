@@ -53,7 +53,10 @@
   margin-top: 0;
 }
 
-.lateral-nav button {
+/* El enlace a /analisis va con los botones: sale del panel, pero se busca en
+   el mismo sitio y tiene que parecer lo mismo. */
+.lateral-nav button,
+.lateral-nav a {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -67,15 +70,23 @@
   background: none;
   border: 0;
   border-radius: var(--radio-sm);
+  text-decoration: none;
   cursor: pointer;
   transition:
     background var(--transicion),
     color var(--transicion);
 }
 
-.lateral-nav button:hover {
+.lateral-nav button:hover,
+.lateral-nav a:hover {
   color: var(--color-texto);
   background: var(--color-fondo);
+}
+
+/* La flecha dice que ese destino abre otra página, no otra sección. */
+.lateral-salida {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
 }
 
 .lateral-nav button.activa {
@@ -178,7 +189,8 @@
     display: none;
   }
 
-  .lateral-nav button {
+  .lateral-nav button,
+  .lateral-nav a {
     width: auto;
     flex: 0 0 auto;
     white-space: nowrap;
