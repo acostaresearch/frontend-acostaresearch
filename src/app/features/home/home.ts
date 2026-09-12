@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Plan } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
+import { LicenseService } from '../../core/services/license.service';
 import { CIFRAS, RAZONES } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
@@ -28,6 +29,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
 })
 export class Home implements OnInit {
   private readonly billing = inject(BillingService);
+  private readonly licencias = inject(LicenseService);
   protected readonly auth = inject(AuthService);
 
   readonly cifras = CIFRAS;
@@ -35,6 +37,35 @@ export class Home implements OnInit {
 
   readonly nombre = this.auth.fullName;
   readonly planes = signal<Plan[]>([]);
+
+  /**
+   * Si quien mira tiene conector. Nulo mientras no ha contestado el servidor.
+   *
+   * No se pregunta para el administrador: su banda no depende de esto y
+   * pedírselo sería un viaje para nada.
+   */
+  private readonly tieneConector = signal<boolean | null>(null);
+
+  /**
+   * Qué banda de saludo toca a quien ya entró.
+   *
+   * La misma frase valía para los tres y no era verdad para ninguno salvo el
+   * comprador. Al administrador se le mandaba a «Mi perfil» cuando su sitio es
+   * el panel —igual que hace la cabecera—, y a quien acaba de crear la cuenta
+   * se le prometía «tu conector y tus compras» sin tener ni lo uno ni lo otro:
+   * llegaba a un perfil vacío sin que nadie le dijera qué le faltaba.
+   *
+   * Mientras no se sabe se saluda y nada más. Es un instante, pero enseñar el
+   * enlace que luego cambia deja peor sabor que enseñarlo un momento después.
+   */
+  readonly saludo = computed<'admin' | 'cliente' | 'nuevo' | 'cargando' | null>(() => {
+    if (!this.auth.isAuthenticated()) return null;
+    if (this.auth.hasRole('ADMIN')) return 'admin';
+
+    const conector = this.tieneConector();
+    if (conector === null) return 'cargando';
+    return conector ? 'cliente' : 'nuevo';
+  });
 
   /**
    * Las dos rutas, con su precio de verdad.
@@ -88,6 +119,18 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+
+    if (this.auth.isAuthenticated() && !this.auth.hasRole('ADMIN')) {
+      this.licencias.mine().subscribe({
+        // Cuenta cualquier licencia, incluidas las caducadas o revocadas: quien
+        // ya compró una vez no es a quien hay que invitar a comprar, es a quien
+        // hay que llevar a su perfil, que es donde se ve en qué estado está.
+        next: ({ licencias }) => this.tieneConector.set(licencias.length > 0),
+        // Si la consulta falla no se empuja a comprar a quien quizá ya compró.
+        // Se le manda al perfil, que es el enlace que nunca sobra.
+        error: () => this.tieneConector.set(true),
+      });
+    }
   }
 
   precio(plan: Plan): string {

@@ -29,6 +29,44 @@
   text-decoration: underline;
 }
 
+/* ── La banda de quien todavía no ha comprado ──────────────────────────────
+   Misma banda, otro tono y un botón de verdad en vez de un enlace: es la única
+   de las tres que pide algo. En ámbar y no en azul para que no se lea como el
+   aviso de siempre, y sin animación: una banda que parpadea encima del titular
+   es un anuncio, y lo que hay debajo también se vende solo. */
+.saludo.invita {
+  background: var(--color-aviso-suave);
+  border-bottom: 1px solid rgba(150, 89, 13, 0.18);
+}
+
+.saludo.invita p {
+  color: var(--color-aviso);
+}
+
+/* El nombre y el botón, en el azul de marca: sobre el ámbar el botón sigue
+   siendo la única cosa pulsable de la banda y tiene que verse como tal. */
+.saludo.invita p b {
+  color: var(--color-texto);
+}
+
+.saludo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+}
+
+/* El color se repite porque `.saludo a` es más específico que `.boton` y le
+   pintaba el texto de azul sobre el azul del propio botón. */
+.saludo-acciones .boton {
+  padding: 9px 18px;
+  color: #fff;
+}
+
+.saludo-acciones .boton:hover {
+  text-decoration: none;
+}
+
 /* ── El hero ────────────────────────────────────────────────────────────── */
 /*
  * Texto y foto, juntos y centrados en la banda.

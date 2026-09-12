@@ -3,15 +3,53 @@
 <main class="pagina">
   <!-- Quien ya entró, lo primero y a sangre. Era una tarjeta a media página y
        había que bajar a buscarla: quien tiene sesión abierta no viene a que le
-       vendan otra vez, viene a su conector. -->
-  @if (auth.isAuthenticated()) {
-    <section class="saludo">
-      <p>
-        Hola, <b>{{ nombre() }}</b
-        >. Tu conector y tus compras están en tu perfil.
-      </p>
-      <a routerLink="/perfil">Ver mi conector y mis datos</a>
-    </section>
+       vendan otra vez, viene a su conector.
+
+       Pero no todos vienen a lo mismo: el administrador vive en el panel, el
+       comprador en su conector y quien acaba de registrarse todavía no tiene
+       ninguno de los dos. Ver la nota de `saludo` en el componente. -->
+  @switch (saludo()) {
+    @case ('admin') {
+      <section class="saludo">
+        <p>
+          Hola, <b>{{ nombre() }}</b
+          >. Entraste como administrador: las ventas, las cuentas y los grupos están en el panel.
+        </p>
+        <a routerLink="/admin">Ir al panel de administración</a>
+      </section>
+    }
+    @case ('cliente') {
+      <section class="saludo">
+        <p>
+          Hola, <b>{{ nombre() }}</b
+          >. Tu conector y tus compras están en tu perfil.
+        </p>
+        <a routerLink="/perfil">Ver mi conector y mis datos</a>
+      </section>
+    }
+    @case ('nuevo') {
+      <!-- Tiene cuenta y no tiene nada más. Se le dice qué le falta y se le da
+           el botón, en vez de mandarle a un perfil vacío a que lo adivine. -->
+      <section class="saludo invita">
+        <p>
+          Hola, <b>{{ nombre() }}</b
+          >. Tu cuenta ya está lista, pero todavía no tienes conector: se activa en cuanto eliges
+          una de las dos rutas.
+        </p>
+        <span class="saludo-acciones">
+          <a class="boton" routerLink="/planes">Ver los paquetes</a>
+          <a routerLink="/en-accion">Míralo en acción primero</a>
+        </span>
+      </section>
+    }
+    @case ('cargando') {
+      <section class="saludo">
+        <p>
+          Hola, <b>{{ nombre() }}</b
+          >.
+        </p>
+      </section>
+    }
   }
 
   <section class="seccion hero">
