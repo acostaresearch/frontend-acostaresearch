@@ -37,6 +37,41 @@ descriptivos(datos)
 `;
 
 /**
+ * Con qué separa las columnas el archivo que acaba de subir.
+ *
+ * POR QUÉ HAY QUE MIRARLO
+ * -----------------------
+ * Porque el Excel en español NO guarda los CSV con comas: usa punto y coma,
+ * porque la coma ya está ocupada haciendo de decimal. Un tesista de aquí que
+ * haga «Guardar como CSV» obtiene `id;sexo;edad`, y `read.csv()` —que da por
+ * hecha la coma— le devuelve UNA columna llamada `id.sexo.edad` con todo
+ * dentro. No da error: da una matriz de una columna, y el análisis entero se
+ * construye encima de eso.
+ *
+ * Se cuentan fuera de las comillas: un archivo con una columna «Apellidos,
+ * nombre» entre comillas tiene comas que no separan nada, y contarlas a lo
+ * bruto elegiría mal justo en el archivo más enredado.
+ */
+export const separadorDe = (cabecera: string): ',' | ';' => {
+  let comas = 0;
+  let puntoYComas = 0;
+  let dentroDeComillas = false;
+
+  for (const caracter of cabecera) {
+    if (caracter === '"') dentroDeComillas = !dentroDeComillas;
+    else if (dentroDeComillas) continue;
+    else if (caracter === ',') comas += 1;
+    else if (caracter === ';') puntoYComas += 1;
+  }
+
+  return puntoYComas > comas ? ';' : ',';
+};
+
+/** La orden de R que lee su archivo, según con qué esté separado. */
+export const lectorPara = (separador: ',' | ';'): 'read.csv' | 'read.csv2' =>
+  separador === ';' ? 'read.csv2' : 'read.csv';
+
+/**
  * Lo más que se manda de guion y de salida al conector.
  *
  * El mismo techo que «guardar_analisis»: lo que se guarda por un lado tiene que
@@ -251,13 +286,50 @@ export class Analisis {
     this.error.set(null);
 
     try {
-      await this.r.subirArchivo('datos.csv', await archivo.arrayBuffer());
+      const contenido = await archivo.arrayBuffer();
+      await this.r.subirArchivo('datos.csv', contenido);
       this.subioArchivo.set(true);
       this.anotar(`Cargado «${archivo.name}» como datos.csv`);
-      await this.correr('datos <- read.csv("datos.csv")\ndim(datos)\nhead(datos)', null);
+
+      // Solo la cabecera: con la primera línea basta para saber con qué separa,
+      // y decodificar un archivo de 30.000 filas para eso sería tirarlo entero
+      // a la memoria por segunda vez.
+      const cabecera = new TextDecoder('utf-8')
+        .decode(new Uint8Array(contenido.slice(0, 4096)))
+        .split('\n')[0];
+      const lector = lectorPara(separadorDe(cabecera));
+
+      if (lector === 'read.csv2') {
+        this.anotar(
+          'Tu archivo separa las columnas con punto y coma —así las guarda el Excel en ' +
+            'español—, así que se lee con read.csv2 en vez de read.csv.',
+        );
+      }
+      this.ajustarElLector(lector);
+
+      await this.correr(`datos <- ${lector}("datos.csv")\ndim(datos)\nhead(datos)`, null);
     } catch {
       this.error.set('No se pudo leer ese archivo. Guárdalo como CSV y vuelve a subirlo.');
     }
+  }
+
+  /**
+   * Deja el guion leyendo su archivo con la orden que le toca.
+   *
+   * Sin esto, la primera línea del guion seguiría diciendo `read.csv` y al
+   * pulsar «Ejecutar todo» volvería a machacar `datos` con la matriz de una
+   * sola columna —después de que la subida la hubiera leído bien—. Es el peor
+   * de los casos: funciona una vez y se rompe al segundo clic.
+   *
+   * Solo se toca si la línea sigue como vino. Si el tesista ya la ha editado,
+   * su guion es suyo.
+   */
+  private ajustarElLector(lector: 'read.csv' | 'read.csv2'): void {
+    const otro = lector === 'read.csv2' ? 'read.csv' : 'read.csv2';
+    const guion = this.codigo.value;
+    if (!guion.includes(`${otro}("datos.csv")`)) return;
+
+    this.codigo.setValue(guion.replace(`${otro}("datos.csv")`, `${lector}("datos.csv")`));
   }
 
   /**
@@ -272,7 +344,21 @@ export class Analisis {
       const bytes = await this.r.leerArchivo(nombre);
       // Se copia a un ArrayBuffer propio: el de WebR pertenece a su memoria y
       // pasárselo al Blob directamente lo deja del tamaño equivocado.
-      const url = URL.createObjectURL(new Blob([bytes.slice()]));
+      const trozos: BlobPart[] = [bytes.slice()];
+
+      // Los tres bytes que le dicen a Excel que el archivo es UTF-8.
+      //
+      // Sin ellos, el Excel de Windows abre el CSV como si fuera de su idioma
+      // antiguo y «Sección» sale «SecciÃ³n». R no los escribe —y su propio
+      // `fileEncoding = "UTF-8-BOM"` deja el archivo VACÍO, comprobado—, así que
+      // se ponen aquí, al bajarlo, que es cuando el archivo pasa a ser de Excel
+      // y deja de ser de R.
+      const yaLosTiene = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+      if (nombre.toLowerCase().endsWith('.csv') && !yaLosTiene) {
+        trozos.unshift(new Uint8Array([0xef, 0xbb, 0xbf]));
+      }
+
+      const url = URL.createObjectURL(new Blob(trozos));
 
       // El enlace entra en la página antes del clic y la URL se suelta después,
       // no en el acto: hay navegadores que ignoran el clic de un enlace suelto y

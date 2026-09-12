@@ -269,8 +269,14 @@ export const CATALOGO: GrupoDeComandos[] = [
       {
         nombre: 'Guardar la tabla en CSV',
         cuando: 'Cuando has añadido puntajes y quieres la matriz completa en tu equipo.',
-        comoLee: 'Aparece en la pestaña «Archivos», con su botón de descargar al lado.',
-        codigo: 'write.csv(datos, "resultados.csv", row.names = FALSE, fileEncoding = "UTF-8")',
+        comoLee:
+          'Aparece en la pestaña «Archivos», con su botón de descargar al lado. Sale con punto y ' +
+          'coma y con la coma decimal, que es lo que espera el Excel en español: al abrirlo, cada ' +
+          'columna cae en su celda.',
+        // `write.csv2` y no `write.csv`: el 2 es la versión para los países donde el
+        // decimal es la coma. Con `write.csv`, el Excel de aquí mete las 14 columnas
+        // en la A y el tesista ve una página de texto donde esperaba su matriz.
+        codigo: 'write.csv2(datos, "resultados.csv", row.names = FALSE, fileEncoding = "UTF-8")',
       },
       {
         nombre: 'Guardar un gráfico en PNG',
