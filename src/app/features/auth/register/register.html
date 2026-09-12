@@ -1,6 +1,7 @@
 <app-auth-card
   titulo="Crea tu cuenta"
   subtitulo="Es el paso previo a tener tu método conectado a tu propio Claude."
+  pestana="crear"
 >
   @if (errorGeneral(); as mensaje) {
     <p class="aviso error" role="alert">{{ mensaje }}</p>
@@ -139,14 +140,23 @@
 
   <p pie>¿Ya tienes cuenta? <a routerLink="/auth/login">Iniciar sesión</a></p>
 
-  <!-- ── Columna de apoyo ──────────────────────────────────────────────────
-       Registrarse no es el objetivo de nadie: es el peaje antes de trabajar.
-       Esto cuenta qué hay al otro lado y qué va a pasar ahora, que es la duda
-       real de quien está rellenando el formulario. -->
-  <div lateral class="apoyo">
-    <h2>Qué pasa después</h2>
+  <!-- Lo que se acepta al pulsar el botón, dicho donde está el botón. Estaba
+       solo en el pie del sitio, a una página de distancia de la única pantalla
+       donde alguien entrega sus datos. -->
+  <p pie class="legal">
+    Al crear tu cuenta aceptas la <a routerLink="/privacidad">Política de Privacidad</a>, conforme a
+    la Ley N.° 29733 de Protección de Datos Personales del Perú.
+  </p>
 
-    <ol class="pasos">
+  <!-- ── El panel ──────────────────────────────────────────────
+       Registrarse no es el objetivo de nadie: es el peaje antes de trabajar.
+       Los tres pasos cuentan qué va a pasar ahora, que es la duda real de
+       quien está rellenando el formulario. -->
+  <div lateral class="panel-acceso">
+    <h2 class="panel-titulo">Tu método, dentro de tu propio Claude.</h2>
+    <p class="panel-entrada">Crear la cuenta es el paso previo. Toma menos de un minuto.</p>
+
+    <ol class="panel-pasos">
       <li>
         <span class="numero" aria-hidden="true">1</span>
         <div>
@@ -165,22 +175,24 @@
         <span class="numero" aria-hidden="true">3</span>
         <div>
           <strong>Conectas el método a tu Claude</strong>
-          <p>Copias tu URL desde el panel y la pegas. Los 9 capítulos, doce meses.</p>
+          <p>Copias tu URL desde el panel y la pegas. Doce meses de acceso.</p>
         </div>
       </li>
     </ol>
 
-    <p class="apoyo-nota">
-      <strong>Crear la cuenta no cuesta nada</strong>&nbsp;y no te compromete a comprar. Solo hace
-      falta para que tu acceso quede a tu nombre y puedas recuperarlo si cambias de equipo.
+    <!-- La nota y el contacto eran dos párrafos seguidos y decían lo mismo por
+         partida doble: que no cuesta nada y que se puede preguntar. Van juntos,
+         que es una sola idea. -->
+    <p class="panel-nota">
+      <span class="numero" aria-hidden="true">i</span>
+      <span>
+        <strong>Crear la cuenta no cuesta nada</strong>&nbsp;y no te compromete a comprar. Solo hace
+        falta para que tu acceso quede a tu nombre y puedas recuperarlo si cambias de equipo.
+        @if (whatsappUrl) {
+          ¿Alguna duda?
+          <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>.
+        }
+      </span>
     </p>
-
-    @if (whatsappUrl) {
-      <p class="apoyo-contacto">
-        ¿Alguna duda antes de empezar?
-        <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>. Te
-        responde una persona.
-      </p>
-    }
   </div>
 </app-auth-card>

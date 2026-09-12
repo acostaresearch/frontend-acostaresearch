@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
@@ -46,6 +46,8 @@ export class MiConector implements OnInit {
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
+
+  private readonly ruta = inject(ActivatedRoute);
 
   readonly misLicencias = signal<License[]>([]);
 
@@ -130,6 +132,26 @@ export class MiConector implements OnInit {
   readonly canjeando = signal(false);
 
   ngOnInit(): void {
+    /*
+     * El código que viene puesto en la URL.
+     *
+     * Lo manda la página de precios, que tiene el campo a la vista pero no
+     * puede canjear: canjear pide sesión y la respuesta trae la URL del
+     * conector, que solo se puede enseñar en el momento de crearla. Así que
+     * allí se escribe y aquí se canjea, con el código ya escrito.
+     *
+     * Se rellena y nada más: el botón lo pulsa quien mira. Canjear solo por
+     * llegar con un parámetro en la dirección significaría gastar el código
+     * por abrir un enlace, y un enlace se abre por error o se comparte.
+     *
+     * Al administrador no le llega: no tiene este formulario.
+     */
+    const traido = this.ruta.snapshot.queryParamMap.get('codigo')?.trim();
+    if (traido && this.modo() === 'comprador') {
+      this.codigo.setValue(traido);
+      this.codigo.markAsTouched();
+    }
+
     this.licencias.mine().subscribe({
       next: ({ licencias, progreso }) => {
         this.misLicencias.set(licencias);

@@ -296,13 +296,20 @@ export const OBJECIONES = [
   },
 ];
 
+/*
+ * Qué se lleva quien compra el método.
+ *
+ * El orden no es el de antes: delante van las tres que deciden la compra —las
+ * Skills, la asesoría y los doce meses—, porque son las tres que la tarjeta
+ * destaca. La guía y la compatibilidad siguen ahí, detrás, que es el peso que
+ * tienen: está bien saberlas, pero nadie compra por ellas.
+ */
 export const INCLUYE = [
   'Las 11 Skills instalables en tu cuenta de Claude.ai',
-  'Guía de instalación paso a paso',
-  // 'Plantillas .docx en formato APA 7 y matriz Excel de datos',
-  'Compatible con el plan gratuito de Claude',
   '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
   'Doce meses de acceso, renovables cuando los necesites',
+  'Guía de instalación paso a paso',
+  'Compatible con el plan gratuito de Claude',
 ];
 
 export const FAQ: Pregunta[] = [

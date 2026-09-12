@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   afterNextRender,
   inject,
@@ -95,17 +96,51 @@ export class BotonGoogle {
   readonly enviando = signal(false);
   readonly error = signal<string | null>(null);
 
+  /** El ancho con el que está dibujado ahora mismo, para no repetir trabajo. */
+  private anchoDibujado = 0;
+
   constructor() {
+    const destruccion = inject(DestroyRef);
+
     afterNextRender(() => {
       const elemento = this.contenedor()?.nativeElement;
       if (!elemento) return;
 
-      void this.google
-        .render(elemento, (credential) => this.entrar(credential), this.texto())
-        .catch(() =>
-          this.error.set('No se pudo cargar el acceso con Google. Entra con tu correo.'),
-        );
+      void this.dibujar(elemento);
+
+      /*
+       * Google dibuja su botón con un ancho fijo, el que mide el contenedor en
+       * ese instante. Si la ventana cambia después —girar el teléfono es el
+       * caso real—, el botón se queda con el ancho de antes: entrabas en
+       * vertical con un botón de 270 px y en horizontal seguía midiendo 270
+       * debajo de un «Entrar» de 400.
+       *
+       * El umbral de 8 px es para no redibujar por un píxel de barra de
+       * desplazamiento, y no se toca nada mientras se está entrando: rehacer
+       * el botón en medio del intercambio tiraría la respuesta de Google.
+       */
+      const observador = new ResizeObserver(() => {
+        if (this.enviando()) return;
+
+        const ancho = Math.round(elemento.offsetWidth);
+        if (!ancho || Math.abs(ancho - this.anchoDibujado) < 8) return;
+
+        void this.dibujar(elemento);
+      });
+
+      observador.observe(elemento);
+      destruccion.onDestroy(() => observador.disconnect());
     });
+  }
+
+  private async dibujar(elemento: HTMLElement): Promise<void> {
+    this.anchoDibujado = Math.round(elemento.offsetWidth);
+
+    try {
+      await this.google.render(elemento, (credential) => this.entrar(credential), this.texto());
+    } catch {
+      this.error.set('No se pudo cargar el acceso con Google. Entra con tu correo.');
+    }
   }
 
   private entrar(credential: string): void {

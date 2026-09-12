@@ -10,7 +10,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -88,10 +88,12 @@ export class Checkout implements OnInit {
   private readonly payments = inject(PaymentService);
   private readonly paypal = inject(PaypalSdkService);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
 
   readonly whatsappUrl = environment.whatsappUrl;
-  /** Lo que entra en el paquete. Es el mismo texto que la portada. */
+
+  /** Lo que entra en el paquete del método. */
   readonly incluye = INCLUYE;
 
   /**
@@ -195,6 +197,22 @@ export class Checkout implements OnInit {
   readonly pagoEnLinea = computed(
     () => Boolean(this.pasarelaPaypal()) && this.paypal.configurado && this.auth.isAuthenticated(),
   );
+
+  /**
+   * El código de activación de quien pagó por Yape o por transferencia.
+   *
+   * Se escribe aquí, pero se canjea en el perfil, y no por comodidad: canjear
+   * pide sesión —el acceso queda a nombre de alguien— y la respuesta trae la
+   * URL del conector, que solo puede verse en ese momento porque del token se
+   * guarda el hash. Canjeando en esta página y mandando luego al panel, la URL
+   * se perdería en el camino y habría que generar otra.
+   *
+   * Así que lo que hace este campo es llevar el código puesto hasta donde se
+   * puede canjear de verdad —pasando por el acceso si hace falta— en vez de
+   * dejar a quien viene del correo buscando un formulario en su perfil.
+   */
+  readonly codigoCanje = new FormControl('', { nonNullable: true });
+  readonly errorCanje = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -301,9 +319,7 @@ export class Checkout implements OnInit {
     this.seleccionado.set(plan);
     this.metodoPago.set(null);
     this.cerradaPorTiempo.set(false);
-    this.cierraEn.set(
-      new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString(),
-    );
+    this.cierraEn.set(new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString());
 
     // Un código puede valer solo para un plan, así que al cambiar se suelta.
     this.quitarDescuento();
@@ -470,11 +486,10 @@ export class Checkout implements OnInit {
   /**
    * Qué se lleva quien compra este paquete.
    *
-   * El método de tesis tiene su lista escrita —las nueve Skills, las plantillas,
-   * los treinta minutos de asesoría—, y es la misma que aparece en la portada.
-   * Un grupo creado desde el panel no puede tenerla: nadie la ha escrito. Para
-   * esos se arma con lo que el servidor sí sabe con certeza, que es poco pero
-   * cierto. Inventarles viñetas sería prometer en su nombre.
+   * El método de tesis tiene su lista escrita —las Skills, la asesoría, los
+   * doce meses—. Un grupo creado desde el panel no puede tenerla: nadie la ha
+   * escrito. Para esos se arma con lo que el servidor sí sabe con certeza, que
+   * es poco pero cierto. Inventarles viñetas sería prometer en su nombre.
    */
   loQueIncluye(plan: Plan): string[] {
     if (plan.code === 'METODO_9_SKILLS') return this.incluye;
@@ -491,6 +506,52 @@ export class Checkout implements OnInit {
     );
 
     return lista;
+  }
+
+  /**
+   * Cuántas viñetas van destacadas: las tres primeras de la lista escrita.
+   *
+   * Son las que deciden la compra —los nueve capítulos, el Humanizador, la
+   * asesoría— y en una lista de siete todas iguales se leían como requisitos
+   * técnicos. Un paquete sin lista escrita no destaca ninguna: sus tres
+   * viñetas son las genéricas, y ponerlas en negrita sería subrayar «se
+   * instala en tu cuenta» como si fuera el argumento de venta.
+   */
+  clavesDe(plan: Plan): number {
+    return plan.code === 'METODO_9_SKILLS' ? 3 : 0;
+  }
+
+  /**
+   * La tarjeta que lleva la cinta de «El más elegido».
+   *
+   * Es el método de tesis, que es por donde entra la mayoría. Solo se marca
+   * cuando hay más de una tarjeta: con una sola en pantalla, decirle que es la
+   * más elegida de una es una etiqueta sin comparación posible.
+   */
+  esElMasElegido(plan: Plan): boolean {
+    return plan.code === 'METODO_9_SKILLS' && this.metodo().length > 1;
+  }
+
+  /** Lleva el código escrito hasta el perfil, que es donde se canjea. */
+  irACanjear(): void {
+    const codigo = this.codigoCanje.value.trim();
+
+    // Los códigos son del tipo ACR-XXXX-XXXX-XXXX; con menos de seis
+    // caracteres no hay nada que comprobar y el viaje sería para nada.
+    if (codigo.length < 6) {
+      this.errorCanje.set('Escribe el código completo, tal como te llegó en el correo.');
+      return;
+    }
+
+    this.errorCanje.set(null);
+    const destino = `/perfil?ver=metodo&codigo=${encodeURIComponent(codigo)}`;
+
+    if (this.auth.isAuthenticated()) {
+      void this.router.navigateByUrl(destino);
+      return;
+    }
+
+    void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: destino } });
   }
 
   /**
@@ -538,7 +599,6 @@ export class Checkout implements OnInit {
     if (suyas.length > 0) return suyas[0];
     return this.promos().find((p) => p.planCode === null) ?? null;
   }
-
 
   /**
    * El precio de antes, para tacharlo. Null = este plan no está de oferta.

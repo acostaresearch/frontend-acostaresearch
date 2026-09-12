@@ -1,6 +1,7 @@
 <app-auth-card
   titulo="Entrar a tu cuenta"
   subtitulo="Desde aquí llegas a tu método, tu licencia y tus compras."
+  pestana="entrar"
 >
   @if (sesionExpirada) {
     <p class="aviso info">Tu sesión caducó. Vuelve a iniciar sesión para continuar.</p>
@@ -89,29 +90,32 @@
 
   <p pie>¿No tienes cuenta? <a routerLink="/auth/registro">Crear una cuenta</a></p>
 
-  <!-- ── Columna de apoyo ──────────────────────────────────────────────────
+  <!-- ── El panel ──────────────────────────────────────────────
        Quien llega aquí desde un anuncio no siempre sabe todavía qué hay al
-       otro lado. Esto lo cuenta sin sacarle de la pantalla. -->
-  <div lateral class="apoyo">
-    <h2>Al entrar tienes</h2>
+       otro lado. Esto lo cuenta sin sacarle de la pantalla. El título habla de
+       volver, no de lo que se compra: a esta mitad se llega con la cuenta ya
+       hecha. -->
+  <div lateral class="panel-acceso">
+    <h2 class="panel-titulo">Entra y sigue donde te quedaste.</h2>
+    <p class="panel-entrada">Aquí está todo lo que necesitas para trabajar con el método.</p>
 
-    <ul class="ventajas">
+    <ul class="panel-pasos">
       <li>
-        <span class="icono" aria-hidden="true">1</span>
+        <span class="numero" aria-hidden="true">1</span>
         <div>
           <strong>Tu URL del conector</strong>
           <p>La dirección que pegas en tu propio Claude para trabajar con el método.</p>
         </div>
       </li>
       <li>
-        <span class="icono" aria-hidden="true">2</span>
+        <span class="numero" aria-hidden="true">2</span>
         <div>
           <strong>Tu licencia y tu consumo</strong>
           <p>Cuántas consultas llevas, qué te queda y una URL nueva si perdiste la tuya.</p>
         </div>
       </li>
       <li>
-        <span class="icono" aria-hidden="true">3</span>
+        <span class="numero" aria-hidden="true">3</span>
         <div>
           <strong>Tus compras</strong>
           <p>El estado de cada pago, incluidos los que enviaste por Yape.</p>
@@ -119,15 +123,18 @@
       </li>
     </ul>
 
-    <p class="apoyo-nota">
-      <strong>¿Perdiste el acceso o algo no cuadra?</strong>&nbsp;
-      @if (whatsappUrl) {
-        <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
-        y lo miramos contigo.
-      } @else {
-        Escríbenos y lo miramos contigo.
-      }
-      Te responde una persona, no un bot.
+    <p class="panel-nota">
+      <span class="numero" aria-hidden="true">?</span>
+      <span>
+        <strong>¿Perdiste el acceso o algo no cuadra?</strong>&nbsp;
+        @if (whatsappUrl) {
+          <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+          y lo miramos contigo.
+        } @else {
+          Escríbenos y lo miramos contigo.
+        }
+        Te responde una persona, no un bot.
+      </span>
     </p>
   </div>
 </app-auth-card>

@@ -1,4 +1,5 @@
 import { Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { SiteFooter } from '../../../shared/layout/site-footer';
 import { SiteHeader } from '../../../shared/layout/site-header';
@@ -14,13 +15,23 @@ import { SiteHeader } from '../../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-auth-card',
-  imports: [SiteHeader, SiteFooter],
+  imports: [RouterLink, SiteHeader, SiteFooter],
   templateUrl: './auth-card.html',
   styleUrl: './auth-card.css',
 })
 export class AuthCard {
   readonly titulo = input.required<string>();
   readonly subtitulo = input<string>('');
-  /** Si la pantalla trae columna de apoyo, la tarjeta se aparta a la izquierda. */
-  readonly conLateral = input<boolean>(false);
+
+  /**
+   * Cuál de las dos pestañas de acceso está abierta, si es que hay pestañas.
+   *
+   * Manda dos cosas a la vez, y no por descuido: las pestañas y el panel
+   * oscuro son la misma decisión. «Entrar» y «Crear cuenta» son dos caras de
+   * lo mismo y se salta de una a otra; «confirmar el correo» no es una tercera
+   * cara —se llega desde un enlace del correo, con la cuenta ya creada—, así
+   * que no declara pestaña y se queda con la tarjeta sola y centrada: ni
+   * pestañas que le mandarían a empezar de nuevo, ni panel.
+   */
+  readonly pestana = input<'entrar' | 'crear' | ''>('');
 }

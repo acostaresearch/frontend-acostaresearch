@@ -1,25 +1,66 @@
 <app-site-header />
 
-<div class="envoltorio" [class.con-lateral]="conLateral()">
+<div class="envoltorio">
+  <!--
+    Una sola tarjeta partida en dos: el panel azul noche a la izquierda y el
+    formulario a la derecha. Eran dos bloques sueltos sobre el fondo —la
+    tarjeta blanca y una columna de apoyo al lado— y la pantalla se leía como
+    dos cosas que coincidían en la página.
+
+    El panel va primero en la rejilla y último en el código a propósito: en el
+    teléfono, donde las dos mitades se apilan, lo primero tiene que ser el
+    formulario. Quien viene a entrar viene a escribir su correo, no a leerse
+    tres pasos antes de poder hacerlo.
+  -->
   <main class="contenido">
     <section class="tarjeta">
-      <header>
-        <h1>{{ titulo() }}</h1>
-        @if (subtitulo()) {
-          <p class="subtitulo">{{ subtitulo() }}</p>
+      <!-- Una columna dentro de la mitad blanca, no la mitad entera. El botón
+           de Google lo dibuja Google y no pasa de 400 px de ancho: con los
+           campos a 530, su botón salía 130 px más corto que el nuestro y la
+           pila de botones quedaba escalonada. A 400 todo mide lo mismo. -->
+      <div class="columna">
+        @if (pestana(); as activa) {
+          <nav class="pestanas" aria-label="Entrar o crear cuenta">
+            <a
+              routerLink="/auth/registro"
+              [class.activa]="activa === 'crear'"
+              [attr.aria-current]="activa === 'crear' ? 'page' : null"
+              >Crear cuenta</a
+            >
+            <a
+              routerLink="/auth/login"
+              [class.activa]="activa === 'entrar'"
+              [attr.aria-current]="activa === 'entrar' ? 'page' : null"
+              >Entrar</a
+            >
+          </nav>
         }
-      </header>
 
-      <ng-content />
+        <header>
+          <h1>{{ titulo() }}</h1>
+          @if (subtitulo()) {
+            <p class="subtitulo">{{ subtitulo() }}</p>
+          }
+        </header>
 
-      <div class="pie">
-        <ng-content select="[pie]" />
+        <ng-content />
+
+        <div class="pie">
+          <ng-content select="[pie]" />
+        </div>
       </div>
     </section>
 
-    <!-- Columna de apoyo. Solo aparece si la pantalla proyecta algo en ella:
-         en «verificar correo» estorbaría, porque ahí solo hay que teclear. -->
+    <!-- El panel. Solo aparece si la pantalla proyecta algo en él: en
+         «confirmar el correo» estorbaría, porque ahí solo hay que teclear. -->
     <aside class="lateral">
+      @if (pestana()) {
+        <p class="marca-panel">
+          <span class="marca-nombre">Acosta</span>
+          <span class="marca-cola">IA &amp; Research</span>
+        </p>
+      }
+
       <ng-content select="[lateral]" />
     </aside>
   </main>

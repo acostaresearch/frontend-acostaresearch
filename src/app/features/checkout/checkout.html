@@ -86,21 +86,41 @@
           <span class="etiqueta">palabras disponibles</span>
         </div>
       } -->
-    </header>
 
-    <!-- Quien pagó por Yape o transferencia no vuelve aquí a comprar: viene
-         con un código en el correo y no sabe dónde meterlo. El formulario está
-         en su perfil, que es el último sitio donde se le ocurre mirar, así que
-         el camino se pone donde sí llega: en la página de precios. -->
-    <aside class="canje-atajo">
-      <div>
+      <!-- Quien pagó por Yape o transferencia no vuelve aquí a comprar: viene
+           con un código en el correo y no sabe dónde meterlo. Va al lado del
+           titular, que es lo primero que se lee: así no tiene que recorrer los
+           paquetes —que no le interesan, ya compró— para encontrar dónde
+           meterlo. El canje ocurre en el perfil; ver la nota de `codigoCanje`
+           en el componente. -->
+      <aside class="canje-atajo">
         <h2>¿Compraste por Yape o transferencia?</h2>
-        <p>Canjea aquí el código de activación que te enviamos por correo.</p>
-      </div>
-      <a class="boton secundario" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
-        Canjear
-      </a>
-    </aside>
+        <p>Canjea aquí el código que te enviamos por correo.</p>
+
+        <!-- El campo y su botón, en una sola pieza: dos cajas sueltas al lado
+             del titular se leían como dos cosas distintas. El recuadro entero
+             se ilumina al escribir —`:focus-within`—, no solo el campo. -->
+        <div class="canje-grupo">
+          <!-- Sin etiqueta a la vista —la lleva el texto de arriba—, pero con
+               nombre para quien navega con lector de pantalla. -->
+          <input
+            type="text"
+            aria-label="Código de activación"
+            [formControl]="codigoCanje"
+            placeholder="ACR-XXXX-XXXX-XXXX"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            (keyup.enter)="irACanjear()"
+          />
+          <button type="button" (click)="irACanjear()">Canjear</button>
+        </div>
+
+        @if (errorCanje(); as mensaje) {
+          <p class="canje-error" role="alert">{{ mensaje }}</p>
+        }
+      </aside>
+    </header>
 
     @if (error(); as mensaje) {
       <div class="aviso error" role="alert">{{ mensaje }}</div>
@@ -124,7 +144,15 @@
               class="tarjeta-plan"
               [class]="acento(i)"
               [class.elegido]="seleccionado()?.code === plan.code"
+              [class.destacada]="esElMasElegido(plan)"
             >
+              <!-- La cinta va fuera del flujo, montada sobre el borde de
+                   arriba: dentro empujaba hacia abajo el resto de la tarjeta y
+                   las dos de la fila dejaban de empezar a la misma altura. -->
+              @if (esElMasElegido(plan)) {
+                <p class="cinta-elegido">El más elegido</p>
+              }
+
               <p class="cinta">
                 {{
                   plan.durationDays > 0
@@ -159,9 +187,7 @@
               @if (promoDe(plan); as promo) {
                 <p class="tarjeta-cupon">
                   <span class="cupon-codigo">{{ promo.code }}</span>
-                  <span class="cupon-texto">
-                    aplicado · te ahorras {{ ahorro(plan) }}
-                  </span>
+                  <span class="cupon-texto"> aplicado · te ahorras {{ ahorro(plan) }} </span>
                 </p>
               } @else if (ahorro(plan); as rebaja) {
                 <p class="tarjeta-oferta">Precio por tiempo limitado · te ahorras {{ rebaja }}</p>
@@ -181,9 +207,12 @@
               </button>
 
               <p class="tarjeta-rotulo">Qué incluye</p>
+              <!-- Las tres primeras en negrita: son las que deciden la compra.
+                   Con las siete iguales, «se instala en tu cuenta» pesaba lo
+                   mismo que los nueve capítulos. -->
               <ul class="tarjeta-lista">
-                @for (item of loQueIncluye(plan); track item) {
-                  <li>{{ item }}</li>
+                @for (item of loQueIncluye(plan); track item; let j = $index) {
+                  <li [class.clave]="j < clavesDe(plan)">{{ item }}</li>
                 }
               </ul>
             </article>
@@ -229,8 +258,8 @@
          que algo falló. -->
     @if (cerradaPorTiempo()) {
       <div class="aviso" role="status">
-        Cerramos la ventana de pago porque pasaron unos minutos. No se cobró nada: elige tu
-        paquete otra vez y sigues donde estabas.
+        Cerramos la ventana de pago porque pasaron unos minutos. No se cobró nada: elige tu paquete
+        otra vez y sigues donde estabas.
       </div>
     }
 

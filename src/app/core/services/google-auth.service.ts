@@ -31,6 +31,9 @@ interface GoogleIdentity {
 
 const SCRIPT = 'https://accounts.google.com/gsi/client';
 
+/** Lo más ancho que Google dibuja su botón, por mucho que se le pida. */
+const ANCHO_MAXIMO = 400;
+
 /**
  * Acceso con Google.
  *
@@ -58,7 +61,14 @@ export class GoogleAuthService {
    *
    * Tiene que ser el suyo: el diseño y el texto los fija Google en sus
    * condiciones de marca, y un botón propio que abriera el flujo por debajo
-   * incumpliría esas condiciones además de romperse en cada cambio suyo.
+   * incumpliría esas condiciones además de romperse en cada cambio suyo. Por
+   * lo mismo, la tarjeta personalizada —«Inicia sesión como» con el nombre y
+   * la foto— no se puede maquetar aquí: la pinta Google cuando reconoce a
+   * quien mira, y hasta que alguien entra no sabemos quién es.
+   *
+   * Se puede llamar más de una vez sobre el mismo contenedor —al cambiar el
+   * ancho—, así que lo vacía antes: `renderButton` añade su botón en vez de
+   * sustituir el que hubiera, y a la segunda llamada saldrían dos.
    */
   async render(
     contenedor: HTMLElement,
@@ -77,6 +87,8 @@ export class GoogleAuthService {
       cancel_on_tap_outside: true,
     });
 
+    contenedor.replaceChildren();
+
     google.accounts.id.renderButton(contenedor, {
       type: 'standard',
       theme: 'outline',
@@ -84,7 +96,10 @@ export class GoogleAuthService {
       text: texto,
       shape: 'rectangular',
       logo_alignment: 'left',
-      width: contenedor.offsetWidth || 320,
+      // Google recorta a 400: pedir más no ensancha el botón, solo hace que
+      // deje de coincidir con el nuestro. La columna del formulario mide eso
+      // justo por este motivo.
+      width: Math.min(contenedor.offsetWidth || 320, ANCHO_MAXIMO),
       locale: 'es',
     });
   }

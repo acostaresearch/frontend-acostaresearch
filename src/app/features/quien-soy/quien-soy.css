@@ -8,8 +8,36 @@
  */
 .autor {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 48px;
+  /*
+   * La segunda columna mide la foto y no un tercio de la banda, y el bloque
+   * entero se corta a lo que suman los dos.
+   *
+   * Con `1.5fr 1fr` el texto se quedaba con 860 px de columna para un titular
+   * de 740 y unos párrafos de 640, y la foto —topada a 420— se iba al borde
+   * derecho de su tercio: todo el sobrante de las dos columnas se juntaba en
+   * medio y abría un pasillo de 300 px entre la cara y el texto. En una
+   * pantalla ancha parecían dos cosas sin relación.
+   *
+   * El tope va en el bloque y no en las columnas porque la de texto tiene que
+   * poder encogerse: con un ancho fijo, entre 900 y 1330 px la foto se salía
+   * de la banda.
+   *
+   * Y el bloque, centrado en la banda. Pegado a la izquierda —donde lo deja un
+   * bloque por su cuenta— el recorte se notaba como un descuadre: en una
+   * pantalla ancha, 250 px de blanco a la derecha y ninguno a la izquierda
+   * parecían la página mal puesta en vez de una columna de lectura.
+   */
+  grid-template-columns: minmax(0, 1fr) auto;
+  /*
+   * 110 px de hueco, no los 44 de una columna normal. Dos motivos: el filo
+   * dorado sale 22 px por la izquierda de la foto y se come una parte, y el
+   * titular termina en «Enríquez» —una palabra larga a 48 px— que llega casi
+   * al final de su columna. Lo que se ve entre esa palabra y la línea dorada
+   * son los 88 que quedan.
+   */
+  gap: 110px;
+  max-width: 1290px;
+  margin-inline: auto;
   align-items: center;
 }
 
@@ -99,12 +127,11 @@
    * por 715 de alto— y se comía la página: la cara salía más grande que el
    * nombre del titular. A 420 va del alto de lo que tiene al lado.
    *
-   * Pegada al borde derecho de la banda, no al izquierdo de su columna: así
-   * cierra la página por el mismo sitio que la cabecera en vez de dejar un
-   * hueco suelto a su derecha.
+   * Ya no hace falta mandarla al borde derecho de la banda: su columna mide
+   * justo estos 420 px, así que la foto la llena y queda pegada al texto, que
+   * es de donde habla.
    */
   max-width: 420px;
-  justify-self: end;
   margin: 0;
 }
 

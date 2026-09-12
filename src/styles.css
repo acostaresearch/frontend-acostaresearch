@@ -648,6 +648,163 @@ body.sin-scroll {
   overflow: hidden;
 }
 
+/* ── El panel de las pantallas de acceso ─────────────────────────
+ *
+ * La mitad oscura de la tarjeta de acceso: título, tres pasos numerados y una
+ * nota al pie. La montan «Entrar» y «Crear cuenta», cada una con su texto.
+ *
+ * Vive aquí y no en `auth-card` por una razón técnica y una de costumbre. La
+ * técnica: el contenido lo proyecta cada pantalla, así que el CSS de la
+ * tarjeta no lo alcanza —el encapsulado lo deja en manos de quien lo declara—
+ * y solo una hoja global llega a los dos. La de costumbre: es mobiliario
+ * compartido, como `.cifras` o `.titulo-seccion`, y escribirlo dos veces sería
+ * garantizar que un día las dos pantallas no se parezcan.
+ *
+ * Todo va medido para fondo azul noche: el texto corriente en `--gris-noche`,
+ * que sobre ese azul pasa de sobra el contraste, y los títulos en blanco.
+ */
+/* El bloque que proyecta cada pantalla dentro del panel. Se estira a todo el
+   alto —es el único hijo de la mitad azul— para que la nota del final pueda
+   irse al pie con su `margin-top: auto`. */
+.panel-acceso {
+  display: flex;
+  flex: 1;
+  /* El panel es la mitad de la tarjeta —unos 600 px en una pantalla grande— y
+     el texto no debe ocuparlo entero: a todo lo ancho, «A tu correo, en menos
+     de un minuto…» salía en un renglón de cien caracteres, que se lee peor
+     que en dos. El sobrante queda como aire a la derecha, que es lo que hace
+     que el panel respire. */
+  max-width: 520px;
+  flex-direction: column;
+}
+
+.panel-titulo {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.panel-entrada {
+  max-width: 40ch;
+  margin: 0 0 26px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--gris-noche);
+}
+
+/* Los pasos: una línea por encima de cada uno y otra cerrando el último. Con
+   cajas o con fondo propio, el panel se convertía en tres tarjetas dentro de
+   una tarjeta; con líneas se lee como una lista. */
+.panel-pasos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.panel-pasos li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 15px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+/*
+ * El número, en círculo dorado y hueco.
+ *
+ * Hueco porque relleno sólido sobre el azul del panel pesaba más que el paso
+ * que numera. Y dorado como la cola de la marca: en blanco, los números y los
+ * títulos eran lo mismo y no se distinguía el orden de los pasos de lo que
+ * dice cada paso. El borde es el mismo dorado al 45 %, que a plena intensidad
+ * dibujaba tres anillos más fuertes que su propio número.
+ */
+.panel-pasos .numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dorado);
+  border: 1px solid rgba(224, 185, 115, 0.45);
+  border-radius: 999px;
+}
+
+.panel-pasos strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 14px;
+  font-weight: 650;
+  color: #fff;
+}
+
+.panel-pasos p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--gris-noche);
+}
+
+/*
+ * La nota del final, pegada abajo.
+ *
+ * `margin-top: auto` la manda al pie del panel en vez de dejarla colgando del
+ * último paso: la mitad del formulario es más alta que la de los pasos, y la
+ * nota es lo que llena ese hueco. Lleva su distintivo —una interrogación o una
+ * i— porque no es un cuarto paso y conviene que se vea de un golpe.
+ */
+.panel-nota {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: auto 0 0;
+  padding-top: 28px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--gris-noche);
+}
+
+.panel-nota .numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dorado);
+  border: 1px solid rgba(224, 185, 115, 0.4);
+  border-radius: 999px;
+}
+
+.panel-nota strong {
+  font-weight: 650;
+  color: #fff;
+}
+
+/* Los enlaces del panel van en dorado y subrayados. En azul —el color de un
+   enlace en el resto del sitio— sobre azul noche no se veían; en blanco se
+   perdían entre las negritas de la propia nota. El dorado sobre este azul da
+   10:1 de contraste, así que se lee de sobra a 12,5 px. */
+.panel-nota a {
+  color: var(--dorado);
+  text-decoration: underline;
+  text-decoration-color: rgba(224, 185, 115, 0.5);
+  text-underline-offset: 2px;
+}
+
+.panel-nota a:hover {
+  text-decoration-color: var(--dorado);
+}
+
 /* ── Lista de fases de un producto ─────────────────────────────────────────
  *
  * La usan «El método» y «Artículos científicos», que enseñan lo mismo con

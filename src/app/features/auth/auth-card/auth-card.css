@@ -12,12 +12,14 @@
   flex: 1 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
+  padding: 40px 20px;
   background:
     radial-gradient(900px 380px at 12% -10%, rgba(26, 86, 219, 0.07), transparent 65%),
     var(--color-fondo);
 }
 
+/* Sin panel —«confirmar el correo»— queda la tarjeta sola, centrada y
+   estrecha, que es lo que pedía esa pantalla desde el principio. */
 .contenido {
   display: grid;
   gap: 40px;
@@ -26,12 +28,64 @@
   align-items: center;
 }
 
-/* Con columna de apoyo el bloque se ensancha y el formulario deja de estar
-   centrado: pasa a leerse de izquierda a derecha, como el resto del sitio. */
+/*
+ * Con panel, las dos mitades son una sola tarjeta.
+ *
+ * La caja —fondo, borde, sombra y esquinas— sube aquí, a la rejilla, y el
+ * `overflow` es lo que recorta el azul del panel contra las esquinas
+ * redondeadas. Antes cada mitad era una caja por su cuenta: dos bloques
+ * separados por 40 px de fondo, y entre los dos se colaba la página.
+ *
+ * `stretch` en vez de `start` para que el panel llegue de arriba abajo aunque
+ * el formulario sea más alto: media tarjeta azul y media blanca cortada a
+ * media altura se vería como un error de maquetación.
+ */
 .contenido:has(.lateral > *) {
-  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-  max-width: 900px;
-  align-items: start;
+  /* Las dos mitades, mitades de verdad: el mismo ancho cada una. Con la del
+     formulario topada a 490 px, todo lo que se ensanchaba la tarjeta se lo
+     quedaba el panel, y acabó midiendo 710 contra 490 —una mitad y media—. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  max-width: 1200px;
+  align-items: stretch;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(10, 17, 40, 0.13);
+}
+
+/* El panel a la izquierda y el formulario a la derecha, al contrario de como
+   van en el código. Ver la nota de la plantilla: en el teléfono manda el
+   orden del código y ahí el formulario tiene que ir primero. */
+.contenido:has(.lateral > *) .lateral {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Con panel, el pie deja de ir centrado: en una columna de 470 px con todo lo
+   demás alineado a la izquierda, una última línea centrada se leía como un
+   remate de página y no como el enlace a la otra pestaña. */
+.contenido:has(.lateral > *) .pie {
+  text-align: left;
+}
+
+.contenido:has(.lateral > *) .tarjeta {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 34px 36px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Ver la nota de la plantilla: 400 px es el ancho máximo que dibuja Google, y
+   de ahí sale la medida de toda la columna. Sin panel —la tarjeta de 400 px de
+   «confirmar el correo»— no recorta nada y la regla no estorba. */
+.columna {
+  max-width: 400px;
+  margin-inline: auto;
 }
 
 .tarjeta {
@@ -40,6 +94,101 @@
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
   box-shadow: var(--sombra);
+}
+
+/* ── El panel ─────────────────────────────────────────────────────────────
+   El degradado no es plano: una mancha azul arriba a la derecha —donde el
+   panel toca el formulario— y el azul noche cerrando abajo a la izquierda. En
+   un azul liso, medio panel quedaba muerto. Lo que va dentro lo viste
+   `styles.css` (.panel-titulo, .panel-pasos, .panel-nota), porque el contenido
+   lo proyecta cada pantalla y este CSS no lo alcanza. */
+.lateral {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 34px;
+  background:
+    radial-gradient(520px 280px at 88% -8%, rgba(29, 78, 216, 0.42), transparent 68%),
+    linear-gradient(155deg, var(--noche-2), var(--noche) 72%);
+}
+
+.lateral:not(:has(*)) {
+  display: none;
+}
+
+/* La marca, arriba del panel. Es la misma de la cabecera, en blanco y con la
+   cola en versalitas: el panel es una superficie de marca, no una barra de
+   navegación, y aquí la cola aguanta el tamaño pequeño. */
+.marca-panel {
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  margin: 0 0 34px;
+}
+
+.marca-nombre {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+/* La cola, en dorado. En la cabecera va en azul, que es el color de un enlace
+   sobre blanco; sobre el azul noche del panel ese mismo azul se apagaba y la
+   marca quedaba en dos grises. El dorado es el segundo color de la casa —el de
+   las bandas de cierre— y es lo que hace que la marca se vea primero. */
+.marca-cola {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dorado);
+}
+
+/* ── Las pestañas ─────────────────────────────────────────────────────────
+ *
+ * Entrar y crear cuenta, una al lado de la otra y arriba del formulario.
+ *
+ * El salto entre las dos estaba solo en el enlace del final —«¿No tienes
+ * cuenta? Crear una cuenta»—, debajo del botón de Google y de todo lo demás:
+ * quien entraba en la pantalla equivocada tenía que recorrerla entera para
+ * descubrir que se había equivocado. El enlace del final se queda, que es el
+ * sitio donde lo busca quien ya leyó el formulario.
+ */
+.pestanas {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 26px;
+  padding: 3px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.pestanas a {
+  padding: 7px 15px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  border-radius: 7px;
+  transition:
+    color var(--transicion),
+    background-color var(--transicion);
+}
+
+.pestanas a:hover {
+  color: var(--color-texto);
+}
+
+.pestanas a.activa {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+}
+
+.pestanas a:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 1px;
 }
 
 header {
@@ -71,14 +220,36 @@ h1 {
   display: none;
 }
 
-.lateral:not(:has(*)) {
-  display: none;
-}
-
+/*
+ * En una columna, las dos mitades se apilan y manda el orden del código: el
+ * formulario arriba y el panel debajo, contando lo que hay al otro lado para
+ * quien baje a leerlo.
+ *
+ * `grid-row: auto` hace falta porque las dos mitades pedían la fila 1 para
+ * ponerse una al lado de la otra: sin quitarlo seguirían peleándose por la
+ * misma celda y una taparía a la otra.
+ */
 @media (max-width: 860px) {
   .contenido:has(.lateral > *) {
     grid-template-columns: 1fr;
-    max-width: 420px;
-    gap: 28px;
+    max-width: 460px;
+  }
+
+  .contenido:has(.lateral > *) .tarjeta,
+  .contenido:has(.lateral > *) .lateral {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .contenido:has(.lateral > *) .tarjeta {
+    padding: 28px 24px;
+  }
+
+  .lateral {
+    padding: 28px 24px;
+  }
+
+  .marca-panel {
+    margin-bottom: 22px;
   }
 }

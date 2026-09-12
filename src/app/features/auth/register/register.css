@@ -110,95 +110,6 @@
   color: var(--color-exito);
 }
 
-/* ── Columna de apoyo ─────────────────────────────────────────────────────── */
-.apoyo {
-  padding: 4px 0 0 8px;
-}
-
-.apoyo h2 {
-  margin: 0 0 18px;
-  font-size: 16px;
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-.pasos {
-  display: grid;
-  gap: 18px;
-  margin: 0 0 22px;
-  padding: 0;
-  list-style: none;
-  counter-reset: none;
-}
-
-.pasos li {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.numero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 999px;
-}
-
-.pasos strong {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 14.5px;
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-.pasos p {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
-}
-
-.apoyo-nota {
-  margin: 0 0 14px;
-  padding: 14px 16px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-sm);
-}
-
-.apoyo-nota strong {
-  color: var(--color-texto);
-}
-
-.apoyo-contacto {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-}
-
-.apoyo-contacto a,
-.apoyo-nota a {
-  color: var(--color-primario);
-}
-
-@media (max-width: 860px) {
-  .apoyo {
-    padding: 0;
-  }
-}
-
 @media (max-width: 420px) {
   .fila {
     grid-template-columns: 1fr;
@@ -208,4 +119,23 @@
   .requisitos {
     grid-template-columns: 1fr;
   }
+}
+
+/* El aviso legal: presente, pero por debajo del enlace que lo acompaña. A 13,5
+   px como el resto del pie competía con «¿Ya tienes cuenta?», que es lo que de
+   verdad hay que ver ahí. */
+.legal {
+  margin-top: 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+.legal a {
+  color: var(--color-texto-suave);
+  text-decoration: underline;
+}
+
+.legal a:hover {
+  color: var(--color-primario);
 }

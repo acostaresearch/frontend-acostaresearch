@@ -14,6 +14,7 @@
 
 .cabecera {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
@@ -788,6 +789,42 @@ h1 {
   border-width: 2px;
 }
 
+/* ── La cinta de «El más elegido» ───────────────────────────────
+ *
+ * Montada sobre el borde de arriba, a la izquierda. Fuera del flujo para que
+ * las dos tarjetas de la fila sigan empezando a la misma altura: dentro, la
+ * que la llevaba bajaba 30 px respecto a la otra.
+ *
+ * En azul noche y no en el azul de la casa: al lado de la cinta clara de «12
+ * meses de acceso» y del botón de comprar, un tercer azul igual no se
+ * distinguía de los otros dos.
+ */
+.cinta-elegido {
+  position: absolute;
+  top: -14px;
+  left: 28px;
+  margin: 0;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--noche);
+  border-radius: 999px;
+}
+
+/* La tarjeta que la lleva: el borde marcado con su acento, para que la cinta
+   no vaya suelta sobre una tarjeta igual a las demás. */
+.rejilla-planes.varios .tarjeta-plan.destacada {
+  border-color: var(--acento);
+  box-shadow: var(--sombra);
+}
+
+/* El sitio por donde la cinta se sale de la tarjeta. Sin esto se montaba sobre
+   el rótulo de arriba, que está a 14 px. */
+.rejilla-planes.varios {
+  margin-top: 14px;
+}
+
 .cinta {
   align-self: flex-start;
   margin: 0 0 18px;
@@ -928,12 +965,23 @@ h1 {
   color: var(--color-texto-suave);
 }
 
+/* Las tres primeras van en negro y con el visto en verde; las demás, en gris
+   y con el visto en azul. Lo que se lleva primero y lo que viene de serie. */
+.tarjeta-lista li.clave {
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
 .tarjeta-lista li::before {
   content: '✓';
   position: absolute;
   top: 8px;
   left: 2px;
   font-weight: 700;
+  color: var(--color-primario);
+}
+
+.tarjeta-lista li.clave::before {
   color: var(--color-exito);
 }
 
@@ -1260,29 +1308,131 @@ h1 {
    Quien pagó fuera de la web llega aquí con un código y sin saber dónde va.
    Se distingue de las tarjetas de plan a propósito: no es algo que comprar,
    es un camino para quien ya compró. */
+/* ── El atajo del canje ──────────────────────────────────────────
+ *
+ * Blanco con el contorno en azul noche, a la derecha del titular.
+ *
+ * El azul noche pasa del fondo al borde: es lo que distingue este recuadro de
+ * las tarjetas de plan —que llevan el borde gris de siempre— sin convertirlo
+ * en una mancha oscura en medio de una página clara. Y es otra cosa: el resto
+ * de la página vende, esto resuelve el caso de quien ya pagó fuera y llega con
+ * un código en el correo.
+ *
+ * El contorno va grueso a propósito: a un píxel, el azul noche se confundía de
+ * lejos con el gris de las tarjetas y el recuadro dejaba de distinguirse. A
+ * 2,5 se ve que es de otro color, que es lo que hace el trabajo aquí.
+ */
 .canje-atajo {
-  margin: 0 0 28px;
-  padding: 18px 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 20px;
-  align-items: center;
-  justify-content: space-between;
+  max-width: 420px;
+  padding: 20px 22px;
   background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  border: 2.5px solid var(--noche);
+  border-radius: 14px;
 }
 
 .canje-atajo h2 {
-  margin: 0 0 4px;
-  font-size: 16px;
+  margin: 0 0 5px;
+  font-size: 15.5px;
+  font-weight: 650;
+  color: var(--color-texto);
 }
 
 .canje-atajo p {
-  margin: 0;
-  font-size: 13.5px;
+  margin: 0 0 14px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--color-texto-suave);
+}
+
+/*
+ * El campo y el botón, una sola pieza, con el mismo contorno azul noche.
+ *
+ * Sin estilo propio, el campo salía con el borde negro de serie del navegador
+ * —los del sitio cuelgan de `.campo`, que este no usa—, así que el borde y las
+ * esquinas los lleva el grupo y el campo va sin borde por dentro.
+ */
+.canje-grupo {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 2px solid var(--noche);
+  border-radius: 10px;
+  transition: box-shadow var(--transicion);
+}
+
+/* El aro de foco lo lleva el grupo entero: con el campo dentro quedaba por
+   debajo del borde y se veía cortado. */
+.canje-grupo:focus-within {
+  box-shadow: 0 0 0 3px rgba(10, 17, 40, 0.14);
+}
+
+.canje-grupo input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 14.5px;
+  /* Un código se lee carácter a carácter: separados se comprueba de un vistazo
+     que está bien copiado. Y en mayúsculas, que es como se dictan y se
+     generan; da igual cómo se teclee, el servidor lo normaliza. */
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto);
+  background: none;
+  border: 0;
+}
+
+.canje-grupo input::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-texto-tenue);
+}
+
+.canje-grupo input:focus {
+  outline: none;
+}
+
+/* El botón, en dorado con el texto en azul noche: el mismo par de la casa que
+   `.boton oro`, sin la clase porque aquí va pegado al campo y no puede traerse
+   su relleno ni sus esquinas. Contra el contorno azul noche, el dorado es lo
+   único que llama del recuadro, que es justo lo que hay que pulsar. */
+.canje-grupo button {
+  flex: none;
+  padding: 0 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--noche);
+  background: var(--dorado);
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--transicion);
+}
+
+.canje-grupo button:hover {
+  background: var(--dorado-claro);
+}
+
+.canje-grupo button:focus-visible {
+  outline: 2px solid var(--noche);
+  outline-offset: -4px;
+}
+
+.canje-error {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--color-error);
+}
+
+@media (max-width: 700px) {
+  /* Debajo del titular y a todo lo ancho: a 340 px en una esquina, el texto se
+     partía en tres renglones. */
+  .canje-atajo {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 /* En móvil el botón ocupa la fila entera: partido a la derecha de un texto
@@ -1343,8 +1493,12 @@ h1 {
 }
 
 @keyframes vaciar-plazo {
-  from { width: 100%; }
-  to   { width: 0%; }
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
 }
 
 /* Quien pidió que no se le muevan las cosas en pantalla no ve la barra
