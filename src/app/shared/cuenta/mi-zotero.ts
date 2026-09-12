@@ -5,8 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toApiError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
 import {
-  ColeccionDeZotero,
   EstadoDeZotero,
+  QuePuedeTraer,
   ZoteroService,
 } from '../../core/services/zotero.service';
 
@@ -15,10 +15,12 @@ import {
  *
  * TRES DECISIONES QUE SE VEN EN LA PANTALLA
  * -----------------------------------------
- * 1. Se elige UNA COLECCIÓN, no la biblioteca. La de un tesista lleva años de
- *    asignaturas encima, y traerla entera le llenaría sus propias búsquedas de
- *    ruido que él no puso. Por eso, conectar y elegir son dos pasos: al volver
- *    de Zotero no hay nada importado todavía.
+ * 1. Se elige QUÉ traer, y conectar no lo trae: al volver de Zotero todavía no
+ *    hay nada importado. Lo recomendable es una colección —la biblioteca de un
+ *    tesista lleva años de asignaturas encima, y entera le llenaría sus propias
+ *    búsquedas de ruido que él no puso— pero traerlo todo es una opción de
+ *    primera fila, porque hay quien no usa carpetas y a ese no se le puede
+ *    mandar a crearlas para poder empezar.
  *
  * 2. Nunca se le pide una clave de API. Autoriza en zotero.org y la clave la
  *    emite Zotero a su nombre. Aquí no se enseña, ni entera ni con asteriscos:
@@ -41,7 +43,7 @@ export class MiZoteroPanel implements OnInit {
   private readonly router = inject(Router);
 
   readonly estado = signal<EstadoDeZotero | null>(null);
-  readonly colecciones = signal<ColeccionDeZotero[] | null>(null);
+  readonly colecciones = signal<QuePuedeTraer | null>(null);
 
   readonly cargando = signal(true);
   readonly conectando = signal(false);
@@ -112,7 +114,7 @@ export class MiZoteroPanel implements OnInit {
   pedirColecciones(): void {
     this.error.set(null);
     this.zotero.colecciones().subscribe({
-      next: (lista) => this.colecciones.set(lista),
+      next: (lo) => this.colecciones.set(lo),
       error: (fallo) => {
         this.colecciones.set(null);
         this.error.set(toApiError(fallo).message);

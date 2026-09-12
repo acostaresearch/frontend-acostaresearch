@@ -136,3 +136,9 @@
   line-height: 1.55;
   color: var(--color-texto-tenue);
 }
+
+/* «Toda tu biblioteca» no es una colección suya: se separa de las que sí lo
+   son con una línea, para que no parezca una carpeta más que él creó. */
+.zotero-opcion-todo {
+  border-style: dashed;
+}

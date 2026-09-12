@@ -19,14 +19,14 @@
       <p class="nota">Conectar Zotero todavía no está disponible.</p>
     } @else if (!datos.conectado) {
       <p class="zotero-invitacion">
-        Si llevas tus fuentes en Zotero, conéctalo y elige <strong>una colección</strong>: las
-        que estén ahí quedan disponibles para citar en tus capítulos, y se actualizan solas cada
-        noche.
+        Si llevas tus fuentes en Zotero, conéctalo y elige <strong>qué traer</strong>: una
+        colección, o toda tu biblioteca. Lo que entre queda disponible para citar en tus
+        capítulos, y se actualiza solo cada noche.
       </p>
       <ul class="zotero-garantias">
         <li><strong>Solo lectura.</strong> No modificamos ni borramos nada de tu Zotero.</li>
         <li>Autorizas en zotero.org. <strong>No tienes que copiar ninguna clave.</strong></li>
-        <li>Solo la colección que elijas, no tu biblioteca entera.</li>
+        <li>Solo lo que elijas, y puedes cambiarlo cuando quieras.</li>
       </ul>
       <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
         {{ conectando() ? 'Abriendo Zotero…' : 'Conectar mi Zotero' }}
@@ -41,7 +41,7 @@
 
       @if (datos.coleccion; as coleccion) {
         <p class="zotero-coleccion">
-          Colección: <strong>{{ coleccion.nombre }}</strong>
+          Se trae: <strong>{{ coleccion.nombre }}</strong>
           @if (datos.fuentes) {
             · {{ datos.fuentes }} fuentes traídas
           }
@@ -51,8 +51,8 @@
         </p>
       } @else {
         <p class="zotero-aviso">
-          Falta lo segundo: <strong>elige qué colección quieres traer</strong>. Hasta entonces no
-          se importa nada.
+          Falta lo segundo: <strong>elige qué quieres traer</strong>. Hasta entonces no se
+          importa nada.
         </p>
       }
 
@@ -64,29 +64,52 @@
         <p class="zotero-parte">{{ texto }}</p>
       }
 
-      <!-- La lista de colecciones: al conectar, y cuando pide cambiarla. -->
-      @if (colecciones(); as lista) {
-        @if (lista.length === 0) {
+      <!-- Qué puede traer: al conectar, y cuando pide cambiarlo.
+
+           «Toda tu biblioteca» va primera y siempre, tenga colecciones o no.
+           Hay tesistas que lo tienen todo suelto en la raíz, y a esos la
+           pantalla les decía «crea una colección y vuelve»: deberes antes de
+           poder usar lo que pagaron. -->
+      @if (colecciones(); as puede) {
+        <ul class="zotero-lista">
+          <li>
+            <button
+              type="button"
+              class="zotero-opcion zotero-opcion-todo"
+              [disabled]="trayendo()"
+              (click)="elegir(puede.biblioteca.clave)"
+            >
+              <span class="zotero-opcion-nombre">Toda tu biblioteca</span>
+              <span class="zotero-opcion-cuantas">{{ puede.biblioteca.cuantas ?? '—' }}</span>
+            </button>
+          </li>
+
+          @for (coleccion of puede.colecciones; track coleccion.clave) {
+            <li>
+              <button
+                type="button"
+                class="zotero-opcion"
+                [disabled]="trayendo()"
+                (click)="elegir(coleccion.clave)"
+              >
+                <span class="zotero-opcion-nombre">{{ coleccion.nombre }}</span>
+                <span class="zotero-opcion-cuantas">{{ coleccion.cuantas }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (puede.colecciones.length === 0) {
           <p class="nota">
-            Tu Zotero no tiene colecciones. Crea una en Zotero con las fuentes de tu tesis y
-            vuelve aquí.
+            No tienes colecciones en Zotero. Puedes traerlo todo, o crear una allí con las
+            fuentes de tu tesis y volver: así entra solo lo tuyo y no los trabajos de otros
+            cursos.
           </p>
         } @else {
-          <ul class="zotero-lista">
-            @for (coleccion of lista; track coleccion.clave) {
-              <li>
-                <button
-                  type="button"
-                  class="zotero-opcion"
-                  [disabled]="trayendo()"
-                  (click)="elegir(coleccion.clave)"
-                >
-                  <span class="zotero-opcion-nombre">{{ coleccion.nombre }}</span>
-                  <span class="zotero-opcion-cuantas">{{ coleccion.cuantas }}</span>
-                </button>
-              </li>
-            }
-          </ul>
+          <p class="nota">
+            Una colección es mejor que toda la biblioteca si llevas años usando Zotero: entra
+            solo lo de tu tesis, y no los trabajos de otros cursos.
+          </p>
         }
       }
 
@@ -101,7 +124,7 @@
             {{ trayendo() ? 'Trayendo…' : 'Actualizar ahora' }}
           </button>
           <button type="button" class="boton enlace" [disabled]="trayendo()" (click)="cambiar()">
-            Cambiar de colección
+            Cambiar qué se trae
           </button>
         }
         <button type="button" class="boton enlace peligro" (click)="desconectar()">
@@ -110,8 +133,8 @@
       </div>
 
       <p class="nota-pie">
-        Se actualiza sola cada noche. Lo que saques de la colección en Zotero desaparece de aquí;
-        lo que añadas, aparece.
+        Se actualiza solo cada noche. Lo que saques de ahí en Zotero desaparece de aquí; lo que
+        añadas, aparece.
       </p>
     }
   }

@@ -34,6 +34,18 @@ export interface EstadoDeZotero {
   error?: string | null;
 }
 
+/**
+ * Lo que se puede elegir: sus colecciones y la biblioteca entera.
+ *
+ * La entera va aparte y no como una colección más de la lista porque no lo es:
+ * no tiene clave propia —se pide con un asterisco— y no aparece en el Zotero de
+ * nadie. Mezclarla en el array obligaría a distinguirla por su nombre.
+ */
+export interface QuePuedeTraer {
+  biblioteca: { clave: string; cuantas: number | null };
+  colecciones: ColeccionDeZotero[];
+}
+
 export interface ResultadoDeSincronizar {
   guardadas: number;
   retiradas: number;
@@ -74,10 +86,10 @@ export class ZoteroService {
       .pipe(map((res) => res.data));
   }
 
-  colecciones(): Observable<ColeccionDeZotero[]> {
+  colecciones(): Observable<QuePuedeTraer> {
     return this.http
-      .get<ApiResponse<{ colecciones: ColeccionDeZotero[] }>>(`${this.base}/colecciones`)
-      .pipe(map((res) => res.data.colecciones));
+      .get<ApiResponse<QuePuedeTraer>>(`${this.base}/colecciones`)
+      .pipe(map((res) => res.data));
   }
 
   elegir(clave: string): Observable<{ coleccion: ColeccionDeZotero }> {
