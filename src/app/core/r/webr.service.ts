@@ -87,7 +87,16 @@ puntaje <- function(datos, columnas) {
   rowMeans(datos[, columnas, drop = FALSE], na.rm = TRUE)
 }
 
-normalidad <- function(x, etiqueta = "la variable") {
+# La etiqueta sale del nombre con el que se llamo: `normalidad(datos$CD)`
+# escribe "datos$CD". Corriendo las dos dimensiones seguidas salian dos
+# bloques identicos que decian "la variable", y no habia forma de saber
+# cual era cual salvo contando de arriba abajo.
+#
+# `force()` es obligatorio y va el primero: la etiqueta se calcula sola la
+# primera vez que se usa, y para entonces `x` ya no seria la llamada del
+# tesista sino el vector de 60 numeros. Se imprimirian los 60.
+normalidad <- function(x, etiqueta = deparse(substitute(x))) {
+  force(etiqueta)
   x <- x[!is.na(x)]
   n <- length(x)
 
