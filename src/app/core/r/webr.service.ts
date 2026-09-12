@@ -130,6 +130,16 @@ descriptivos <- function(datos) {
   print(resumen)
   invisible(resumen)
 }
+
+escribir_csv <- function(datos, archivo = "resultados.csv",
+                         dec = getOption("acosta.dec", ".")) {
+  con <- file(archivo, open = "w", encoding = "UTF-8")
+  on.exit(close(con))
+  writeLines("sep=;", con)
+  utils::write.table(datos, con, sep = ";", dec = dec, row.names = FALSE)
+  cat("Guardado", archivo, "- descargalo desde la pestana Archivos.", "\n")
+  invisible(archivo)
+}
 `;
 
 /**
@@ -146,6 +156,7 @@ descriptivos <- function(datos) {
 export const FUNCIONES_DE_LA_CASA = [
   'alfa_de_cronbach',
   'descriptivos',
+  'escribir_csv',
   'frecuencias',
   'normalidad',
   'puntaje',
@@ -198,6 +209,24 @@ const SEPARADOR_CAMPO = '\u001f';
 
 /** La carpeta donde vive todo lo del tesista. Es el `getwd()` de la sesión. */
 const CASA = '/home/web_user';
+
+/**
+ * Con qué escribe los decimales el ordenador del tesista: «3.25» o «3,25».
+ *
+ * POR QUÉ HAY QUE PREGUNTÁRSELO AL NAVEGADOR
+ * ------------------------------------------
+ * Porque R dentro de WebAssembly no tiene idioma del sistema —arranca siempre
+ * en C—, así que no puede saberlo, y el Excel que va a abrir el archivo sí lo
+ * tiene. Si no coinciden, el número entra como TEXTO: la columna se ve bien
+ * pero no se puede promediar, ordenar ni graficar, y eso se descubre tarde.
+ *
+ * El navegador lo sabe porque es la misma configuración regional de Windows
+ * de la que Excel saca la suya.
+ */
+export const decimalDelSistema = (idioma?: string): '.' | ',' => {
+  const partes = new Intl.NumberFormat(idioma).formatToParts(1.5);
+  return partes.find((parte) => parte.type === 'decimal')?.value === ',' ? ',' : '.';
+};
 
 /** Dónde caen los gráficos antes de recogerlos. Aparte, para no listarlos. */
 const GRAFICOS = '/tmp/graficos';
@@ -341,6 +370,11 @@ export class WebrService {
     });
 
     await webR.init();
+
+    // Con qué escribe los decimales el Excel de este ordenador. Lo sabe el
+    // navegador y no lo sabe R: dentro de WebAssembly no hay idioma del
+    // sistema, así que `escribir_csv()` lo lee de aquí.
+    await webR.evalRVoid(`options(acosta.dec = "${decimalDelSistema()}")`);
 
     // Las funciones de la casa. No se instala ningún paquete: ver `PREAMBULO`.
     this.paso.set('Preparando las funciones de análisis…');

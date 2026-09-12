@@ -67,9 +67,65 @@ export const separadorDe = (cabecera: string): ',' | ';' => {
   return puntoYComas > comas ? ';' : ',';
 };
 
-/** La orden de R que lee su archivo, según con qué esté separado. */
-export const lectorPara = (separador: ',' | ';'): 'read.csv' | 'read.csv2' =>
-  separador === ';' ? 'read.csv2' : 'read.csv';
+/**
+ * Con qué escribe los decimales el archivo: «3.25» o «3,25».
+ *
+ * Solo puede haber coma decimal si las columnas NO se separan por comas: con
+ * las dos cosas a la vez el archivo sería imposible de leer, y nadie lo
+ * escribe así. Por eso basta mirar si algún campo tiene una coma entre dos
+ * cifras.
+ *
+ * Importa más de lo que parece: si se lee con el decimal equivocado, la
+ * columna entra como TEXTO. No da error —se ve bien en pantalla— pero
+ * `mean()` se niega, y el tesista se topa con eso tres pasos más tarde, en
+ * mitad de una prueba, donde ya no se parece a su causa.
+ */
+export const decimalDe = (filas: readonly string[], separador: ',' | ';'): '.' | ',' => {
+  if (separador === ',') return '.';
+  return filas.some((fila) => /\d,\d/.test(fila)) ? ',' : '.';
+};
+
+/** La orden de R que lee su archivo tal como está escrito. */
+export const ordenDeLectura = (separador: ',' | ';', decimal: '.' | ','): string =>
+  separador === ',' && decimal === '.'
+    ? 'read.csv("datos.csv")'
+    : `read.csv("datos.csv", sep = "${separador}", dec = "${decimal}")`;
+
+/**
+ * Lo que hay que saber del archivo antes de pasárselo a R.
+ *
+ * `saltar` son los bytes de cabecera que NO son datos: el `sep=;` que Excel
+ * escribe —y obedece— al principio de un CSV. R no lo entiende: se lo
+ * tragaría como si fuera la primera fila y dejaría la matriz de una columna.
+ * Se quita aquí, antes de que llegue.
+ */
+export interface FormatoDelArchivo {
+  separador: ',' | ';';
+  decimal: '.' | ',';
+  saltar: number;
+}
+
+export const formatoDe = (bytes: Uint8Array): FormatoDelArchivo => {
+  const muestra = new TextDecoder('utf-8').decode(bytes.subarray(0, 8192));
+  const lineas = muestra.split('\n').map((linea) => linea.replace(/\r$/, ''));
+
+  const pista = /^sep=(.)\s*$/.exec(lineas[0] ?? '');
+  const cuerpo = pista ? lineas.slice(1) : lineas;
+
+  const separador = pista
+    ? pista[1] === ';'
+      ? ';'
+      : ','
+    : separadorDe(cuerpo[0] ?? '');
+
+  return {
+    separador,
+    decimal: decimalDe(cuerpo.slice(1), separador),
+    // El salto se mide en BYTES y no en caracteres: `subarray` corta bytes, y
+    // una ñ en la cabecera desplazaría el corte si se contaran letras.
+    saltar: pista ? bytes.indexOf(0x0a) + 1 : 0,
+  };
+};
 
 /**
  * Lo más que se manda de guion y de salida al conector.
@@ -286,28 +342,27 @@ export class Analisis {
     this.error.set(null);
 
     try {
-      const contenido = await archivo.arrayBuffer();
-      await this.r.subirArchivo('datos.csv', contenido);
+      const bytes = new Uint8Array(await archivo.arrayBuffer());
+      const formato = formatoDe(bytes);
+
+      await this.r.subirArchivo('datos.csv', bytes.subarray(formato.saltar).slice().buffer);
       this.subioArchivo.set(true);
       this.anotar(`Cargado «${archivo.name}» como datos.csv`);
 
-      // Solo la cabecera: con la primera línea basta para saber con qué separa,
-      // y decodificar un archivo de 30.000 filas para eso sería tirarlo entero
-      // a la memoria por segunda vez.
-      const cabecera = new TextDecoder('utf-8')
-        .decode(new Uint8Array(contenido.slice(0, 4096)))
-        .split('\n')[0];
-      const lector = lectorPara(separadorDe(cabecera));
+      const orden = ordenDeLectura(formato.separador, formato.decimal);
 
-      if (lector === 'read.csv2') {
+      if (formato.separador === ';') {
         this.anotar(
-          'Tu archivo separa las columnas con punto y coma —así las guarda el Excel en ' +
-            'español—, así que se lee con read.csv2 en vez de read.csv.',
+          'Tu archivo separa las columnas con punto y coma —así las guarda Excel—, ' +
+            (formato.decimal === ','
+              ? 'y escribe los decimales con coma. '
+              : 'y los decimales con punto. ') +
+            'Se lee diciéndoselo a R, no con read.csv a secas.',
         );
       }
-      this.ajustarElLector(lector);
+      this.ajustarElLector(orden);
 
-      await this.correr(`datos <- ${lector}("datos.csv")\ndim(datos)\nhead(datos)`, null);
+      await this.correr(`datos <- ${orden}\ndim(datos)\nhead(datos)`, null);
     } catch {
       this.error.set('No se pudo leer ese archivo. Guárdalo como CSV y vuelve a subirlo.');
     }
@@ -324,12 +379,13 @@ export class Analisis {
    * Solo se toca si la línea sigue como vino. Si el tesista ya la ha editado,
    * su guion es suyo.
    */
-  private ajustarElLector(lector: 'read.csv' | 'read.csv2'): void {
-    const otro = lector === 'read.csv2' ? 'read.csv' : 'read.csv2';
+  private ajustarElLector(orden: string): void {
     const guion = this.codigo.value;
-    if (!guion.includes(`${otro}("datos.csv")`)) return;
+    const laQueHay = /read\.csv2?\("datos\.csv"[^)]*\)/;
+    const encontrada = laQueHay.exec(guion);
+    if (!encontrada || encontrada[0] === orden) return;
 
-    this.codigo.setValue(guion.replace(`${otro}("datos.csv")`, `${lector}("datos.csv")`));
+    this.codigo.setValue(guion.replace(laQueHay, orden));
   }
 
   /**

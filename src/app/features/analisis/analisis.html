@@ -610,8 +610,16 @@ Escribe una orden aquí abajo, o ejecuta el guion de arriba.</pre>
 
                   <dt>Todo cae en una sola columna</dt>
                   <dd>
-                    Tu CSV usa punto y coma. Guárdalo con comas desde Excel, o cambia
-                    <code>read.csv</code> por <code>read.csv2</code>.
+                    No debería pasarte: al subir el archivo se mira cómo está escrito y se lee
+                    como toque —la consola te dice si lleva punto y coma—. Si aún así te pasa,
+                    es que la línea del <code>read.csv</code> de tu guion se quedó con la de
+                    antes: vuelve a subir el archivo.
+                  </dd>
+
+                  <dt>Los decimales salen como texto en Excel</dt>
+                  <dd>
+                    Guarda con <code>escribir_csv(datos, "resultados.csv")</code> y no con
+                    <code>write.csv</code>: pone el separador y el decimal que usa tu Windows.
                   </dd>
 
                   <dt>«undefined columns selected»</dt>

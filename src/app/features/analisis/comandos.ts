@@ -89,8 +89,9 @@ export const CATALOGO: GrupoDeComandos[] = [
         nombre: 'Ver las primeras filas',
         cuando: 'Nada más subir tu matriz, para confirmar que las columnas se leyeron bien.',
         comoLee:
-          'Si ves una sola columna con todo dentro, tu CSV usa punto y coma: vuelve a subirlo ' +
-          'guardado con comas, o usa read.csv2 en vez de read.csv.',
+          'Comprueba que cada columna tiene su nombre y que los números son números —int o ' +
+          'num, no chr—. Si ves una sola columna con todo dentro, vuelve a subir el archivo: ' +
+          'al subirlo se mira cómo está escrito y se lee como toque.',
         codigo: 'head(datos)\ndim(datos)      # filas y columnas\nnames(datos)    # cómo se llama cada columna',
       },
       {
@@ -270,13 +271,15 @@ export const CATALOGO: GrupoDeComandos[] = [
         nombre: 'Guardar la tabla en CSV',
         cuando: 'Cuando has añadido puntajes y quieres la matriz completa en tu equipo.',
         comoLee:
-          'Aparece en la pestaña «Archivos», con su botón de descargar al lado. Sale con punto y ' +
-          'coma y con la coma decimal, que es lo que espera el Excel en español: al abrirlo, cada ' +
-          'columna cae en su celda.',
-        // `write.csv2` y no `write.csv`: el 2 es la versión para los países donde el
-        // decimal es la coma. Con `write.csv`, el Excel de aquí mete las 14 columnas
-        // en la A y el tesista ve una página de texto donde esperaba su matriz.
-        codigo: 'write.csv2(datos, "resultados.csv", row.names = FALSE, fileEncoding = "UTF-8")',
+          'Aparece en la pestaña «Archivos», con su botón de descargar al lado. Sale preparado ' +
+          'para el Excel de tu ordenador: cada columna en su celda y los números como números, ' +
+          'no como texto.',
+        // `escribir_csv` y no `write.csv`: ver `PREAMBULO` en `webr.service.ts`.
+        // Pone el separador que Excel obedece y el decimal de ESTE ordenador. Con
+        // `write.csv` las catorce columnas caen dentro de la A; con `write.csv2` se
+        // separan bien pero los 3,25 entran como texto en un Windows de decimal
+        // punto, que es el de Perú. Las dos cosas hay que acertarlas a la vez.
+        codigo: 'escribir_csv(datos, "resultados.csv")',
       },
       {
         nombre: 'Guardar un gráfico en PNG',
