@@ -1,26 +1,25 @@
 <app-site-header />
 
 <main class="pagina">
-  <header class="encabezado-pagina">
-    <p class="seccion-marca">Quién te acompaña</p>
-    <h1 class="titulo-seccion ancho">Benicio Gonzalo Acosta Enríquez</h1>
-  </header>
-
+  <!-- El nombre no va en una banda aparte: es la primera línea de la columna de
+       texto, y baja al centro con ella. Arriba y a lo ancho de la página
+       quedaba a 200 px de la frase que lo explica. -->
   <section class="seccion">
     <div class="autor">
       <div class="autor-texto">
+        <p class="seccion-marca">Quién te acompaña</p>
+        <h1 class="titulo-seccion ancho">Benicio Gonzalo Acosta Enríquez</h1>
+
         <p>
           Investigador Renacyt Nivel II y docente universitario, con más de 5 años de experiencia en
           investigación y asesoría de tesis. Revisor científico y autor en numerosas publicaciones
           científicas, y jurado de tesis.
         </p>
         <p>
-          Estas nueve Skills son, literalmente, el método que uso cuando asesoro: las mismas
-          preguntas, el mismo orden y los mismos criterios. Las escribí para que te acompañen a las
-          once de la noche, cuando yo no puedo estar en la reunión y tú sí tienes que avanzar.
+          Estas Skills son, literalmente, el método que uso cuando asesoro: las mismas preguntas, el
+          mismo orden y los mismos criterios. Las escribí para que te acompañen a las once de la
+          noche, cuando yo no puedo estar en la reunión y tú sí tienes que avanzar.
         </p>
-        <p class="autor-remate">Más de 500 tesistas ya trabajan con ellas.</p>
-
         <div class="autor-enlaces">
           <a [href]="redes.scholar" target="_blank" rel="noopener">Google Académico</a>
           <a [href]="redes.ctivitae" target="_blank" rel="noopener">CTI Vitae</a>
@@ -29,6 +28,13 @@
         </div>
       </div>
 
+      <!-- El retrato, montado en capas: la mancha azul del foco de la propia
+           foto sale del marco por detrás y una línea dorada lo cruza por el
+           lado contrario. Las dos las pinta el CSS con `::before` y `::after`,
+           sin un `<div>` de adorno en la plantilla.
+
+           El pie ya no repite el nombre: es el titular de la página, tres
+           párrafos más arriba. Dice dónde está, que es lo que no se sabe. -->
       <figure class="autor-retrato">
         <img
           src="home-img/IMG-109.jpg"
@@ -36,9 +42,24 @@
           width="2400"
           height="3600"
         />
-        <figcaption>Benicio Gonzalo Acosta Enríquez · Trujillo, Perú</figcaption>
+        <figcaption>Trujillo, Perú</figcaption>
       </figure>
     </div>
+  </section>
+
+  <!-- Las credenciales, debajo del texto y en su propia banda. Iban dentro de
+       los párrafos —«Renacyt Nivel II», «más de 5 años», «más de 500
+       tesistas»—, donde hay que leerse tres frases para encontrarlas. En
+       rejilla se ven de una pasada, que es como se lee una credencial. -->
+  <section class="seccion gris corta">
+    <ul class="cifras autor-cifras">
+      @for (c of cifras; track c.pie) {
+        <li>
+          <span class="cifra-valor">{{ c.valor }}</span>
+          <span class="cifra-pie">{{ c.pie }}</span>
+        </li>
+      }
+    </ul>
   </section>
 
   <app-paso-siguiente

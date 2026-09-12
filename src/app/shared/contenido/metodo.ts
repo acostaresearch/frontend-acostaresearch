@@ -35,6 +35,26 @@ export const CIFRAS = [
   { valor: '0', pie: 'autores inventados' },
 ];
 
+/*
+ * Las credenciales de quien firma, en la misma rejilla que las cifras del
+ * inicio.
+ *
+ * No son números de producto sino hechos verificables sobre una persona, y por
+ * eso van en «Quién te acompaña» y no en la portada: ahí el «+500» habla de
+ * las Skills, aquí de quien las escribió. El registro Renacyt y la condición
+ * de jurado se comprueban en los enlaces que están justo encima, que es lo que
+ * las hace valer.
+ *
+ * Son tres y no cuatro a propósito: la rejilla las reparte por las que haya
+ * (ver `.autor-cifras`), así que añadir o quitar una es tocar esta lista y
+ * nada más. Una cuarta solo entra si se puede comprobar como las otras tres.
+ */
+export const CIFRAS_AUTOR = [
+  { valor: 'Renacyt II', pie: 'investigador calificado' },
+  { valor: 'Jurado y revisor', pie: 'de tesis y artículos' },
+  { valor: '+500', pie: 'tesistas con las Skills' },
+];
+
 export const DEMOS: Demo[] = [
   {
     titulo: 'Tesis completa desde cero con Claude + Skills',
@@ -221,6 +241,14 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'patrones detectados y la medición estilométrica; después la reescritura. No te pide ' +
       'fuentes ni te llena el texto de citas pendientes: humanizar es restar.',
     entregable: 'Informe de diagnóstico y texto reescrito',
+  },
+  'bajar-similitud': {
+    descripcion:
+      'Parte del PDF de Turnitin y del .docx entregado. Separa el porcentaje en lo que es copia ' +
+      'real, saturación temática y estructura obligatoria, porque solo la segunda se arregla ' +
+      'reescribiendo. Localiza dónde se concentra, reescribe solo lo reescribible sin caer en ' +
+      'tics de IA, y verifica que no se haya perdido ninguna cita ni cifra en el proceso.',
+    entregable: 'Documento reescrito y reporte de diagnóstico',
   },
 };
 

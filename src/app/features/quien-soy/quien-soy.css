@@ -1,21 +1,44 @@
+/*
+ * Texto y retrato, a la misma altura por el centro.
+ *
+ * Con los dos alineados por arriba el bloque salía descuadrado: la foto mide
+ * medio metro de página y el texto son tres párrafos, así que el texto se
+ * acababa a un tercio de la foto y debajo quedaba una columna de blanco tan
+ * alta como el titular. Centrado, las dos mitades se acaban a la vez.
+ */
 .autor {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 48px;
-  align-items: start;
+  align-items: center;
 }
 
-.autor-texto p {
+/*
+ * El nombre, dentro de la columna y algo más chico.
+ *
+ * En su banda tenía los 1480 px de la página para estirarse; en la columna
+ * tiene 860, y a 56 px el apellido se iba solo a una segunda línea. A 48 cabe
+ * de una, y sigue siendo lo más grande de la página.
+ *
+ * Sin tope de caracteres: el ancho de la columna ya es el tope, y los 30ch que
+ * traía de `.ancho` lo partían antes de que hiciera falta.
+ */
+.autor-texto h1 {
+  max-width: none;
+  margin-bottom: 22px;
+  font-size: clamp(30px, 3.2vw, 48px);
+}
+
+/* El `:not` es por el rótulo, que también es un `<p>`: el estilo de un
+   componente pesa más que el de `styles.css`, así que esta regla le ganaba a
+   `.seccion-marca` y «Quién te acompaña» salía gris y a 15,5 px, como una
+   frase más, en vez de azul y pequeño. */
+.autor-texto p:not(.seccion-marca) {
   max-width: 58ch;
   margin: 0 0 14px;
   font-size: 15.5px;
   line-height: 1.68;
   color: var(--color-texto-suave);
-}
-
-.autor-remate {
-  font-weight: 650;
-  color: var(--color-texto) !important;
 }
 
 .autor-enlaces {
@@ -43,12 +66,74 @@
   border-color: var(--color-primario);
 }
 
-/* ── El retrato ─────────────────────────────────────────────────────────── */
+/* ── El retrato ────────────────────────────────────────────── */
+/*
+ * La foto, montada sobre dos capas.
+ *
+ * En un marco y nada más era un rectángulo quieto al lado de tres párrafos:
+ * media página de foto sin que nada la sujetara. Detrás van ahora dos planos
+ * desplazados en sentidos contrarios —la mancha azul arriba a la derecha, el
+ * filo dorado abajo a la izquierda—, y entre los dos la foto queda montada en
+ * diagonal en vez de plana.
+ *
+ * La mancha azul no es un adorno traído de fuera: la propia foto tiene un foco
+ * azul detrás de la cabeza, y esta capa lo saca del encuadre y lo continúa en
+ * la página. El dorado es el segundo color de la casa, el de las bandas de
+ * cierre, y aquí entra en su versión más fina: una línea de 1 px, porque
+ * relleno de dorado sobre blanco se convierte en una mancha beige.
+ *
+ * Las capas son `::before` y `::after` colocadas en la misma celda de rejilla
+ * que la foto —no `position: absolute`—, así que miden lo que mide la foto sin
+ * que nadie les diga cuánto, y el pie se queda fuera de su alcance: con
+ * `inset` habría que descontarle su alto a mano y cambiaría con el idioma.
+ */
 .autor-retrato {
+  display: grid;
+  grid-template-areas:
+    'foto'
+    'pie';
+  /*
+   * El tope de la foto.
+   *
+   * Sin él ocupaba su columna entera —en una pantalla ancha, 570 px de foto
+   * por 715 de alto— y se comía la página: la cara salía más grande que el
+   * nombre del titular. A 420 va del alto de lo que tiene al lado.
+   *
+   * Pegada al borde derecho de la banda, no al izquierdo de su columna: así
+   * cierra la página por el mismo sitio que la cabecera en vez de dejar un
+   * hueco suelto a su derecha.
+   */
+  max-width: 420px;
+  justify-self: end;
   margin: 0;
 }
 
+/*
+ * Las dos capas se salen del marco por los márgenes negativos. Como van en la
+ * celda de la foto, el desplazamiento es exactamente el que se pide aquí: 22 px
+ * arriba y a la derecha una, 22 px abajo y a la izquierda la otra.
+ */
+.autor-retrato::before,
+.autor-retrato::after {
+  content: '';
+  grid-area: foto;
+  border-radius: calc(var(--radio) + 4px);
+}
+
+.autor-retrato::before {
+  margin: -22px -22px 22px 22px;
+  background: linear-gradient(150deg, var(--color-primario), var(--noche) 78%);
+}
+
+.autor-retrato::after {
+  margin: 22px 22px -22px -22px;
+  border: 1px solid var(--dorado);
+}
+
 .autor-retrato img {
+  grid-area: foto;
+  /* Por encima de las dos capas, que si no la tapan. */
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
@@ -58,15 +143,88 @@
   object-fit: cover;
   object-position: center 22%;
   background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
   border-radius: var(--radio);
+  /* La sombra sustituye al borde: con la mancha azul detrás, una línea gris
+     alrededor solo servía para partir en dos el degradado. */
+  box-shadow: 0 18px 40px rgba(10, 17, 40, 0.22);
+  transition:
+    transform var(--transicion),
+    box-shadow var(--transicion);
+}
+
+/*
+ * Al pasar por encima, la foto se levanta de sus capas.
+ *
+ * Es el único movimiento de la página y se queda en 5 px a propósito: lo justo
+ * para que el montaje se lea como tres planos y no como un dibujo pegado. No
+ * lleva a ninguna parte —no es un enlace—, así que no debe prometer que se
+ * puede pulsar.
+ */
+.autor-retrato:hover img {
+  transform: translateY(-5px);
+  box-shadow: 0 26px 52px rgba(10, 17, 40, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autor-retrato:hover img {
+    transform: none;
+  }
 }
 
 .autor-retrato figcaption {
-  margin-top: 10px;
+  grid-area: pie;
+  /* 22 px de la capa dorada más el aire del pie: pegado a 10 px, el pie
+     quedaba dentro del filo dorado. */
+  margin-top: 34px;
   font-size: 14px;
   line-height: 1.5;
   color: var(--color-texto-tenue);
+}
+
+/* ── Las credenciales ───────────────────────────────────────── */
+/*
+ * La misma rejilla de cifras del inicio, con dos cambios.
+ *
+ * La línea de arriba sobra: ahi cambia el fondo a gris y eso ya separa la
+ * banda de lo que viene antes; con las dos cosas se veía un filo doble.
+ *
+ * Y los valores van en negro y todos del mismo tamaño, no en azul y a 40 px
+ * como los números de la portada. Aquí no hay ningún número grande que
+ * enseñar: «Renacyt II» y «Jurado y revisor» son frases, y a 40 px en azul
+ * cada una ocupaba tres renglones y gritaba más que el nombre del titular.
+ */
+.autor-cifras {
+  /* Tres columnas, no las cuatro de la portada: con tres credenciales en una
+     rejilla de cuatro, la última cuarta parte de la banda quedaba vacía y
+     parecía que faltaba un dato. Si algún día entra una cuarta credencial,
+     esta línea vuelve a 4 y las de abajo se quedan como están. */
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 0;
+}
+
+/*
+ * Cada credencial, centrada en su tercio de la banda.
+ *
+ * En la portada las cifras van pegadas a la izquierda de su columna porque son
+ * cuatro y llenan el ancho. Aquí son tres: con el texto a la izquierda, los
+ * datos se amontonaban en las dos primeras terceras partes y el último tercio
+ * de la banda quedaba en blanco, como si faltara una cuarta credencial.
+ * Centradas, el blanco se reparte y la fila se lee como una sola pieza.
+ *
+ * El relleno pasa a ser igual por los dos lados: con 28 px solo a la derecha,
+ * el texto centrado quedaba 14 px corrido hacia la izquierda de su celda.
+ */
+.autor-cifras li {
+  align-items: center;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.autor-cifras .cifra-valor {
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-texto);
 }
 
 @media (max-width: 900px) {
@@ -75,8 +233,67 @@
     gap: 32px;
   }
 
-  /* En una sola columna la foto a ancho completo es demasiada foto. */
+  /* En una sola columna la foto a ancho completo es demasiada foto, y va al
+     centro: pegada a un lado quedaba descolgada del texto de arriba, con todo
+     el hueco al otro. El pie se centra con ella, que si no se lee como el
+     comienzo de otro párrafo. */
   .autor-retrato {
     max-width: 320px;
+    justify-self: center;
+  }
+
+  .autor-retrato figcaption {
+    text-align: center;
+  }
+
+  /*
+   * Las tres credenciales, en pirámide: dos arriba y la tercera centrada
+   * debajo.
+   *
+   * Tres en fila no caben en una tableta, y en una rejilla de dos la tercera
+   * caía en la primera columna, justo debajo de «Renacyt II»: parecía un pie
+   * de esa credencial y no una credencial propia. Ocupando las dos columnas se
+   * centra sola y el grupo queda en triángulo.
+   */
+  .autor-cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .autor-cifras li:nth-child(3) {
+    grid-column: 1 / -1;
+    /* El aire hace de separación entre las dos filas. Una línea encima —la que
+       traen las cifras de la portada a este ancho— iría de lado a lado y
+       partiría el triángulo en dos. */
+    margin-top: 0;
+    padding-top: 26px;
+    border-top: 0;
+  }
+}
+
+/*
+ * En un teléfono el montaje se recoge.
+ *
+ * A 22 px, la capa azul de la derecha se comía el margen de la pantalla y el
+ * borde de la página quedaba pintado de azul; a 12 px asoma igual y no llega.
+ */
+@media (max-width: 620px) {
+  .autor-retrato {
+    max-width: 300px;
+  }
+
+  .autor-retrato::before {
+    margin: -12px -12px 12px 12px;
+  }
+
+  .autor-retrato::after {
+    margin: 12px 12px -12px -12px;
+  }
+
+  .autor-retrato figcaption {
+    margin-top: 22px;
+  }
+
+  .autor-cifras .cifra-valor {
+    font-size: 20px;
   }
 }
