@@ -10,6 +10,7 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { MiTesis } from './mi-tesis';
 import { MisFuentesPanel } from './mis-fuentes';
+import { MiZoteroPanel } from './mi-zotero';
 import { PasosDeArranque } from './pasos-de-arranque';
 
 /**
@@ -27,7 +28,15 @@ import { PasosDeArranque } from './pasos-de-arranque';
  */
 @Component({
   selector: 'app-mi-conector',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, MiTesis, MisFuentesPanel, PasosDeArranque],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    DatePipe,
+    MiTesis,
+    MisFuentesPanel,
+    MiZoteroPanel,
+    PasosDeArranque,
+  ],
   templateUrl: './mi-conector.html',
   styleUrl: './mi-conector.css',
 })

@@ -1,0 +1,138 @@
+/* ── Lo que se dice antes de pedir permiso ─────────────────────────────────
+   Las tres garantías van en lista y no en un párrafo. Quien está a punto de
+   dar acceso a su biblioteca lee esto y no otra cosa, y en prosa la frase que
+   importa —«no modificamos nada»— se pierde entre las demás. */
+.zotero-invitacion {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.zotero-garantias {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+/* ── Conectado ─────────────────────────────────────────────────────────────── */
+.zotero-cifra {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.zotero-cifra strong {
+  font-size: 16px;
+  color: var(--color-primario);
+}
+
+.zotero-cifra span {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.zotero-coleccion {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+/* ── Avisos ────────────────────────────────────────────────────────────────
+   Uno solo para las tres cosas que se le pueden decir aquí —volvió sin
+   autorizar, falta elegir colección, algo falló— con el color como única
+   diferencia. Tres cajas distintas para tres frases del mismo tamaño solo
+   hacen que la tarjeta parezca un panel de alarmas. */
+.zotero-aviso {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-primario);
+  border-radius: 0 6px 6px 0;
+  background: var(--color-fondo-suave, #f6f8fc);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.zotero-mal {
+  border-left-color: var(--color-peligro, #b42318);
+}
+
+.zotero-parte {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* ── Elegir la colección ───────────────────────────────────────────────────
+   Botones y no un desplegable. Un <select> esconde la lista detrás de un
+   clic y no deja ver cuántas fuentes tiene cada una, que es justo el dato con
+   el que se decide cuál es «la de la tesis». */
+.zotero-lista {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.zotero-opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.zotero-opcion:hover:not(:disabled) {
+  border-color: var(--color-primario);
+  background: var(--color-fondo-suave, #f6f8fc);
+}
+
+.zotero-opcion:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.zotero-opcion-nombre {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* La cuenta de fuentes no se encoge: es la mitad de la decisión. */
+.zotero-opcion-cuantas {
+  flex: none;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto-tenue);
+}
+
+.zotero-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nota-pie {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}

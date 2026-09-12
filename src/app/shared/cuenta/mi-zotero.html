@@ -1,0 +1,118 @@
+<!-- La vuelta desde zotero.org. Se anuncia una vez y se limpia de la barra. -->
+@if (vuelta() === 'cancelado') {
+  <p class="zotero-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
+} @else if (vuelta() === 'error') {
+  <p class="zotero-aviso zotero-mal">
+    Zotero no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
+  </p>
+}
+
+@if (error(); as texto) {
+  <p class="zotero-aviso zotero-mal">{{ texto }}</p>
+}
+
+@if (!cargando()) {
+  @if (estado(); as datos) {
+    @if (!datos.disponible) {
+      <!-- Configuración ausente en el servidor: no se ofrece un botón que
+           llevaría a un error. -->
+      <p class="nota">Conectar Zotero todavía no está disponible.</p>
+    } @else if (!datos.conectado) {
+      <p class="zotero-invitacion">
+        Si llevas tus fuentes en Zotero, conéctalo y elige <strong>una colección</strong>: las
+        que estén ahí quedan disponibles para citar en tus capítulos, y se actualizan solas cada
+        noche.
+      </p>
+      <ul class="zotero-garantias">
+        <li><strong>Solo lectura.</strong> No modificamos ni borramos nada de tu Zotero.</li>
+        <li>Autorizas en zotero.org. <strong>No tienes que copiar ninguna clave.</strong></li>
+        <li>Solo la colección que elijas, no tu biblioteca entera.</li>
+      </ul>
+      <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
+        {{ conectando() ? 'Abriendo Zotero…' : 'Conectar mi Zotero' }}
+      </button>
+    } @else {
+      <p class="zotero-cifra">
+        <strong>Zotero conectado</strong>
+        @if (datos.usuario) {
+          <span>como {{ datos.usuario }}</span>
+        }
+      </p>
+
+      @if (datos.coleccion; as coleccion) {
+        <p class="zotero-coleccion">
+          Colección: <strong>{{ coleccion.nombre }}</strong>
+          @if (datos.fuentes) {
+            · {{ datos.fuentes }} fuentes traídas
+          }
+          @if (datos.ultima) {
+            · al día del {{ datos.ultima | date: 'd MMM y' }}
+          }
+        </p>
+      } @else {
+        <p class="zotero-aviso">
+          Falta lo segundo: <strong>elige qué colección quieres traer</strong>. Hasta entonces no
+          se importa nada.
+        </p>
+      }
+
+      @if (datos.error; as fallo) {
+        <p class="zotero-aviso zotero-mal">{{ fallo }}</p>
+      }
+
+      @if (parte(); as texto) {
+        <p class="zotero-parte">{{ texto }}</p>
+      }
+
+      <!-- La lista de colecciones: al conectar, y cuando pide cambiarla. -->
+      @if (colecciones(); as lista) {
+        @if (lista.length === 0) {
+          <p class="nota">
+            Tu Zotero no tiene colecciones. Crea una en Zotero con las fuentes de tu tesis y
+            vuelve aquí.
+          </p>
+        } @else {
+          <ul class="zotero-lista">
+            @for (coleccion of lista; track coleccion.clave) {
+              <li>
+                <button
+                  type="button"
+                  class="zotero-opcion"
+                  [disabled]="trayendo()"
+                  (click)="elegir(coleccion.clave)"
+                >
+                  <span class="zotero-opcion-nombre">{{ coleccion.nombre }}</span>
+                  <span class="zotero-opcion-cuantas">{{ coleccion.cuantas }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      <div class="zotero-acciones">
+        @if (datos.coleccion && !colecciones()) {
+          <button
+            type="button"
+            class="boton secundario"
+            [disabled]="trayendo()"
+            (click)="sincronizar()"
+          >
+            {{ trayendo() ? 'Trayendo…' : 'Actualizar ahora' }}
+          </button>
+          <button type="button" class="boton enlace" [disabled]="trayendo()" (click)="cambiar()">
+            Cambiar de colección
+          </button>
+        }
+        <button type="button" class="boton enlace peligro" (click)="desconectar()">
+          Desconectar
+        </button>
+      </div>
+
+      <p class="nota-pie">
+        Se actualiza sola cada noche. Lo que saques de la colección en Zotero desaparece de aquí;
+        lo que añadas, aparece.
+      </p>
+    }
+  }
+}

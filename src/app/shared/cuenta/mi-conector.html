@@ -163,6 +163,21 @@
     </section>
   }
 
+  <!-- El Zotero del propio tesista. Va justo detrás de sus fuentes de Scopus
+       porque es la misma pregunta -de dónde salen las fuentes que Claude va a
+       citar- por la otra puerta: el que ya lleva su biblioteca en Zotero no
+       tiene por qué exportar un archivo cada vez que la amplía.
+
+       Con acceso vigente, como lo de arriba: sin conector que las lea, traer
+       una coleccion no serviria de nada. -->
+  @if (tieneAccesoVigente()) {
+    <section class="tarjeta tramo-3">
+      <h2>Tu Zotero</h2>
+      <p class="nota">Elige una colección y sus fuentes quedan listas para citar, al día cada noche.</p>
+      <app-mi-zotero />
+    </section>
+  }
+
   <!-- Todo lo que se le puede dar a quien se ha atascado, junto y en el mismo
        sitio. Los videos van PRIMERO, antes que nada que haya que descargar:
        tres de cada dieciséis compradores no llegaron a abrir el conector nunca,
