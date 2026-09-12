@@ -422,10 +422,15 @@ export class WebrService {
 
       // Solo el de captura, y por su número: el que haya abierto el tesista
       // sigue abierto para la línea siguiente. Ver el comentario de arriba.
+      //
+      // Va dentro de `local()` porque si no, `captura` se queda como variable
+      // del tesista: aparecía en el panel de Entorno, entre sus datos, como
+      // «captura  integer [1:1]». Basura nuestra en su pantalla —y si él tuviera
+      // una variable con ese nombre, se la pisaríamos en cada ejecución.
       await webR.evalRVoid(
-        'try({ captura <- get0(".acosta_captura", envir = globalenv()); ' +
+        'try(local({ captura <- get0(".acosta_captura", envir = globalenv()); ' +
           'if (!is.null(captura) && captura %in% grDevices::dev.list()) ' +
-          'grDevices::dev.off(captura) }, silent = TRUE)',
+          'grDevices::dev.off(captura) }), silent = TRUE)',
       );
 
       return {
