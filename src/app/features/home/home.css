@@ -30,50 +30,55 @@
 }
 
 /* ── El hero ────────────────────────────────────────────────────────────── */
-
-/* Texto y captura, lado a lado. El texto manda —es lo que hay que leer—, así
-   que se lleva la columna ancha; la imagen acompaña. */
+/*
+ * Texto y foto, juntos y centrados en la banda.
+ *
+ * La columna de texto no necesita los 1480 px de la banda —el titular se corta
+ * a 28ch y el párrafo a 545—, así que reservarle la mitad del ancho solo servía
+ * para abrir un vacío hasta la foto. Con `auto` en la segunda, la foto ocupa lo
+ * que mide y no un tercio de la banda; el bloque se recorta a la medida del
+ * titular más la foto y se centra.
+ */
 .hero-columnas {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 56px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 40px;
   align-items: center;
+  max-width: 980px;
+  margin-inline: auto;
 }
 
 .hero-imagen {
-  position: relative;
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  width: 100%;
+  justify-content: flex-start;
+  align-items: center;
 }
 
-/* Un halo detrás del personaje: la imagen viene recortada y sin nada debajo
-   flota sobre el blanco como si se hubiera pegado mal. */
-.hero-imagen::before {
-  content: '';
-  position: absolute;
-  bottom: 5%;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(29, 78, 216, 0.22) 0%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 50%;
-  filter: blur(25px);
-}
-
+/*
+ * La foto, suelta sobre el fondo y sin caja.
+ *
+ * Dos cosas la sostienen. La sombra, que al ser `drop-shadow` sigue el
+ * contorno de la persona y no un rectángulo; va corta y poco marcada, porque
+ * con más desenfoque se convertía en una mancha gris alrededor.
+ *
+ * Y el degradado de abajo: el recorte viene cortado a media pierna por el
+ * borde del PNG —la última fila tiene 173 px opacos— y esa línea recta se veía
+ * como un error. Desvaneciéndola, la figura se acaba en vez de cortarse. Si
+ * algún día llega una foto entera, esta línea sobra.
+ */
 .hero-imagen img {
-  position: relative;
   display: block;
   width: auto;
   max-width: 100%;
   height: auto;
-  max-height: 480px;
+  max-height: 500px;
   object-fit: contain;
-  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15));
+  filter: drop-shadow(0 10px 20px rgba(16, 24, 40, 0.16));
+  mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
 }
 
 /* Debajo de 1100 px no caben dos columnas sin que el titular se rompa en
-   pedazos: la captura pasa a ir después del texto. */
+   pedazos: la foto pasa a ir después del texto. */
 @media (max-width: 1100px) {
   .hero-columnas {
     grid-template-columns: 1fr;
@@ -81,15 +86,33 @@
   }
 }
 
+/*
+ * El titular, en dos voces.
+ *
+ * La primera frase dice a qué se dedica esto y la segunda es la promesa —lo
+ * que de verdad diferencia al método—, así que va aparte: más grande, en azul
+ * y en su propia línea. A 72 px el titular entero gritaba por igual y no se
+ * distinguía una cosa de la otra; bajándolo, la frase en azul destaca sola.
+ */
 .hero h1 {
-  max-width: 16ch;
+  max-width: 28ch;
   margin: 0 0 18px;
+  font-size: clamp(30px, 2.8vw, 42px);
+  line-height: 1.08;
+}
+
+.hero-firma {
+  display: block;
+  margin-top: 6px;
+  font-size: clamp(38px, 4.1vw, 58px);
+  line-height: 1.02;
+  color: var(--color-primario);
 }
 
 .hero .entrada {
-  max-width: 640px;
+  max-width: 545px;
   margin: 0 0 30px;
-  font-size: 18.5px;
+  font-size: 17px;
   line-height: 1.55;
   color: var(--color-texto-suave);
 }
@@ -107,7 +130,9 @@
   color: var(--color-texto-tenue);
 }
 
-/* Las cifras cierran el hero, separadas del titular por su propia línea. */
+/* Las cifras cierran el hero, separadas del titular por su propia línea. A todo
+   el ancho de la banda, aunque el bloque de arriba vaya recogido y centrado:
+   encajonadas a 980 px, «APA 7 o IEEE Vancouver» se partía en dos líneas. */
 .hero .cifras {
   margin-top: 64px;
 }
