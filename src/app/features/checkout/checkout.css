@@ -1195,7 +1195,12 @@ h1 {
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background: rgba(16, 24, 40, 0.55);
+  /* Un velo suave, no una pantalla negra. La ventana ya se despega sola por su
+     sombra; apagar la página entera hacía parecer que el sitio se había caido
+     mientras cargaba el modal. El desenfoque separa sin oscurecer. */
+  background: rgba(16, 24, 40, 0.28);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
 .pago-ventana {
