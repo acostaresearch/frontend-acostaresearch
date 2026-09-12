@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { toApiError } from '../../core/http/api-error';
 import {
+  CatalogoDeNormas,
   EtapaDelProyecto,
   Proyecto,
   ProyectoService,
@@ -126,6 +127,13 @@ export class MiTesis implements OnInit {
   readonly errorDescarga = signal<string | null>(null);
 
   ngOnInit(): void {
+    // Las normas se piden aparte: si fallan, el panel sigue y solo falta el
+    // selector, que es lo único que las necesita.
+    this.proyectos.normas().subscribe({
+      next: (catalogo) => this.catalogoNormas.set(catalogo),
+      error: () => this.catalogoNormas.set(null),
+    });
+
     this.proyectos.mios().subscribe({
       next: (datos) => {
         this.lista.set(datos);
@@ -209,6 +217,49 @@ export class MiTesis implements OnInit {
       toApiError(error).message ||
       'No se pudo armar el documento. Inténtalo otra vez en un momento.'
     );
+  }
+
+  // ── La norma de citas ────────────────────────────────────────────────────
+  readonly catalogoNormas = signal<CatalogoDeNormas | null>(null);
+  /** El proyecto cuya norma se está guardando. */
+  readonly guardandoNorma = signal<string | null>(null);
+  readonly normaGuardada = signal<string | null>(null);
+  readonly errorNorma = signal<string | null>(null);
+
+  /**
+   * Cambia la norma o el idioma de las citas.
+   *
+   * Se guarda al elegir, sin botón: es una sola decisión y se ve al momento qué
+   * quedó puesto. No hay que rehacer nada del texto, porque las citas se
+   * escriben al descargar.
+   */
+  cambiarNorma(p: Proyecto, cambio: { estilo?: string; idioma?: string }): void {
+    const estilo = cambio.estilo ?? p.norma.estilo;
+    const idioma = cambio.idioma ?? p.norma.idioma;
+    if (estilo === p.norma.estilo && idioma === p.norma.idioma) return;
+
+    this.guardandoNorma.set(p.productCode);
+    this.normaGuardada.set(null);
+    this.errorNorma.set(null);
+
+    this.proyectos.cambiarNorma(p.productCode, estilo, idioma).subscribe({
+      next: (norma) => {
+        this.lista.update((lista) =>
+          lista.map((x) => (x.productCode === p.productCode ? { ...x, norma } : x)),
+        );
+        this.guardandoNorma.set(null);
+        this.normaGuardada.set(`Hecho. Tu próxima descarga saldrá en ${norma.nombre}.`);
+      },
+      error: (e) => {
+        this.guardandoNorma.set(null);
+        this.errorNorma.set(toApiError(e).message);
+      },
+    });
+  }
+
+  /** El valor de un <select>, sin tener que tipar el evento en la plantilla. */
+  valorDe(evento: Event): string {
+    return (evento.target as HTMLSelectElement).value;
   }
 
   // ── La plantilla de su facultad ──────────────────────────────────────────

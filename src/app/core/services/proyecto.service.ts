@@ -31,6 +31,26 @@ export interface EtapaDelProyecto {
  * del método, no solo los que el tesista ha tocado. Saber lo que falta es la
  * mitad de saber por dónde va.
  */
+/** Cómo entra la cita: en el texto con autor y año, con número, o en nota al pie. */
+export type FamiliaDeNorma = 'autor-fecha' | 'numerica' | 'notas';
+
+/** La norma de citas de un proyecto. */
+export interface NormaDelProyecto {
+  estilo: string;
+  nombre: string;
+  familia: FamiliaDeNorma;
+  idioma: string;
+  idiomaNombre: string;
+  /** Falso = nadie la ha elegido y sale la de por defecto. */
+  elegida: boolean;
+}
+
+/** Las normas y los idiomas que se pueden elegir. Los manda el servidor. */
+export interface CatalogoDeNormas {
+  normas: { id: string; nombre: string; familia: FamiliaDeNorma }[];
+  idiomas: { id: string; nombre: string }[];
+}
+
 /** La plantilla de su facultad, si la subió. */
 export interface PlantillaPuesta {
   /** Cómo se llamaba el archivo. Sirve para que compruebe que subió el bueno. */
@@ -47,6 +67,8 @@ export interface Proyecto {
   carrera: string | null;
   universidad: string | null;
   plantilla: PlantillaPuesta | null;
+  /** La norma de citas con la que sale el Word. Si no la eligió nadie, APA 7. */
+  norma: NormaDelProyecto;
   updatedAt: string;
   etapas: EtapaDelProyecto[];
   /** Solo de las fases: las herramientas de apoyo no cuentan. */
@@ -141,6 +163,29 @@ export class ProyectoService {
         analisis,
       )
       .pipe(map((r) => ({ capitulo: r.data?.capitulo ?? '' })));
+  }
+
+  /**
+   * Las normas de citas que se pueden elegir.
+   *
+   * Las manda el servidor y no se escriben aquí: cada una tiene detrás un
+   * archivo de estilo, y una lista duplicada acabaría ofreciendo una norma que
+   * el servidor ya no sabe aplicar.
+   */
+  normas(): Observable<CatalogoDeNormas> {
+    return this.http
+      .get<ApiResponse<CatalogoDeNormas>>(`${this.base}/normas`)
+      .pipe(map((r) => r.data ?? { normas: [], idiomas: [] }));
+  }
+
+  /** Cambia la norma de citas del proyecto. Devuelve cómo queda. */
+  cambiarNorma(productCode: string, estilo: string, idioma: string): Observable<NormaDelProyecto> {
+    return this.http
+      .patch<ApiResponse<NormaDelProyecto>>(
+        `${this.base}/${encodeURIComponent(productCode)}/norma`,
+        { estiloCitas: estilo, idiomaCitas: idioma },
+      )
+      .pipe(map((r) => r.data as NormaDelProyecto));
   }
 
   quitarPlantilla(productCode: string): Observable<void> {

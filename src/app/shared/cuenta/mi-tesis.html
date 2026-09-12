@@ -182,8 +182,9 @@
           <div>
             <p class="caja-titulo">Tu tesis en Word</p>
             <p class="caja-texto">
-              {{ palabrasTotales(p) }} palabras escritas. Sale con portada, índice y los capítulos
-              en orden. Al abrirlo, Word te ofrecerá actualizar el índice: acéptalo.
+              {{ palabrasTotales(p) }} palabras escritas. Sale con portada, índice, los capítulos
+              en orden y las citas y referencias ya escritas en {{ p.norma.nombre }}. Al abrirlo,
+              Word te ofrecerá actualizar el índice: acéptalo.
             </p>
           </div>
           <button
@@ -218,6 +219,62 @@
     @if (errorDescarga(); as mensaje) {
       <p class="aviso-descarga">{{ mensaje }}</p>
     }
+
+    <!-- La norma de citas. Va entre la descarga y la plantilla porque es de lo
+         que depende cómo salen las citas y las referencias del Word. -->
+    <div class="caja norma">
+      <div class="caja-fila">
+        <div>
+          <p class="caja-titulo">Norma de citas: {{ p.norma.nombre }}</p>
+          <p class="caja-texto">
+            Las citas y la lista de referencias de tu Word salen ya escritas en esta norma, sin
+            tocar nada. Si tu universidad o tu asesor te piden otra, cámbiala aquí: no hay que
+            reescribir ningún capítulo.
+          </p>
+        </div>
+      </div>
+
+      @if (catalogoNormas(); as catalogo) {
+        <div class="norma-campos">
+          <label class="norma-campo">
+            <span>Norma</span>
+            <select
+              [disabled]="guardandoNorma() !== null"
+              (change)="cambiarNorma(p, { estilo: valorDe($event) })"
+            >
+              @for (n of catalogo.normas; track n.id) {
+                <option [value]="n.id" [selected]="n.id === p.norma.estilo">{{ n.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="norma-campo">
+            <span>Idioma de las citas</span>
+            <select
+              [disabled]="guardandoNorma() !== null"
+              (change)="cambiarNorma(p, { idioma: valorDe($event) })"
+            >
+              @for (i of catalogo.idiomas; track i.id) {
+                <option [value]="i.id" [selected]="i.id === p.norma.idioma">{{ i.nombre }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      }
+
+      @if (p.norma.familia === 'notas') {
+        <p class="plantilla-nota">En esta norma las citas van en notas al pie de página.</p>
+      }
+      @if (guardandoNorma() === p.productCode) {
+        <p class="plantilla-nota">Guardando…</p>
+      }
+      @if (normaGuardada(); as mensaje) {
+        <p class="plantilla-nota ok">{{ mensaje }}</p>
+      }
+      @if (errorNorma(); as mensaje) {
+        <p class="aviso-descarga">{{ mensaje }}</p>
+      }
+    </div>
 
     <!-- La plantilla de su facultad. Va debajo de la descarga porque es lo
          que la cambia: primero se ve qué se baja, luego con qué formato. -->
