@@ -122,6 +122,13 @@
     grid-template-columns: 1fr;
     gap: 32px;
   }
+
+  /* En una sola columna la foto ya no acompaña al texto por el lado, va
+     debajo: pegada a la izquierda quedaba descolgada del bloque, con todo el
+     hueco a su derecha. Centrada cierra el hero en vez de sobrar. */
+  .hero-imagen {
+    justify-content: center;
+  }
 }
 
 /*
@@ -377,6 +384,48 @@
 
   .arranque li {
     padding-right: 0;
+  }
+}
+
+/*
+ * El hero en un teléfono.
+ *
+ * En vertical medía tres pantallas: la foto a 500 px de alto se llevaba una
+ * entera —quedaba sola, con aire arriba y abajo— y había que desplazarse dos
+ * veces para llegar a las cifras. Con el titular a su tamaño de móvil y la
+ * foto a 300 px, el hero entero cabe casi de una vez.
+ *
+ * El titular no se escala con `clamp` porque su mínimo, 30 px, era mayor de lo
+ * que aguanta una columna de 320 px: «para la investigación» se partía en
+ * cuatro renglones de dos palabras.
+ */
+@media (max-width: 620px) {
+  .hero-columnas {
+    gap: 20px;
+  }
+
+  .hero h1 {
+    margin-bottom: 14px;
+    font-size: 27px;
+  }
+
+  .hero-firma {
+    font-size: 33px;
+  }
+
+  .hero .entrada {
+    margin-bottom: 24px;
+    font-size: 16px;
+  }
+
+  .hero-imagen img {
+    max-height: 300px;
+  }
+
+  /* 64 px de separación se pensaron para una línea de cuatro cifras a lo
+     ancho; encima de dos filas apretadas abrían un vacío. */
+  .hero .cifras {
+    margin-top: 36px;
   }
 }
 

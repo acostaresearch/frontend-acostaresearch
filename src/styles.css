@@ -807,13 +807,44 @@ body.sin-scroll {
   }
 }
 
+/*
+ * Las cifras en un teléfono: siguen siendo dos por fila.
+ *
+ * Antes caían a una sola columna y las cuatro medían media pantalla cada una:
+ * un número de 40 px con su pie y 26 px de aire, cuatro veces, era más alto
+ * que el titular que vienen a apuntalar. Son un apunte al pie, no la sección.
+ *
+ * En 320 px de columna cada celda mide unos 140, así que el número baja a 30 y
+ * la cifra que es una frase —«APA 7 o IEEE Vancouver»— a 17: a 24 px se
+ * partía en tres renglones y estiraba la fila entera.
+ */
 @media (max-width: 620px) {
-  .cifras {
-    grid-template-columns: 1fr;
+  .cifras li {
+    padding: 18px 14px 0 0;
   }
 
   .cifras li + li {
-    padding-left: 0;
-    border-left: 0;
+    padding-left: 14px;
+  }
+
+  /* La línea de arriba solo la trae el contenedor, y con dos filas la segunda
+     se quedaba suelta a 18 px del pie de la primera. */
+  .cifras li:nth-child(n + 3) {
+    margin-top: 4px;
+    border-top: 1px solid var(--color-borde);
+  }
+
+  .cifra-valor {
+    font-size: 30px;
+  }
+
+  .cifra-valor:not(:has(+ .cifra-pie)),
+  .cifra-valor.texto {
+    padding-top: 4px;
+    font-size: 17px;
+  }
+
+  .cifra-pie {
+    font-size: 13.5px;
   }
 }
