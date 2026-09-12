@@ -203,6 +203,33 @@ const CASA = '/home/web_user';
 const GRAFICOS = '/tmp/graficos';
 
 /**
+ * Los nombres de lo que hay dentro de una carpeta de WebR.
+ *
+ * POR QUÉ NO ES `Object.keys(carpeta.contents)`
+ * ---------------------------------------------
+ * Porque `contents` es una LISTA de nodos, y el nombre de cada archivo va
+ * dentro, en su `name`. Con `Object.keys()` salían los índices —«0», «1»— y
+ * luego `readFile('/tmp/graficos/0')` fallaba con un error de sistema de
+ * archivos que estaba capturado y en silencio. Efecto: la pestaña de gráficos
+ * y la de archivos salían siempre VACÍAS, con el PNG ya escrito al lado. Un
+ * `hist()` funcionaba en R y no aparecía en pantalla.
+ *
+ * Se admiten las dos formas porque la declaración de tipos es nuestra y podría
+ * volver a mentir: si un día `contents` llega como objeto por nombre, esto
+ * sigue devolviendo nombres y no índices.
+ */
+export const hijosDe = (carpeta: import('@r-wasm/webr').WebRNodoFS | undefined): string[] => {
+  const dentro = carpeta?.contents;
+  if (!dentro) return [];
+
+  const nodos = Array.isArray(dentro) ? dentro : Object.values(dentro);
+
+  return nodos
+    .map((nodo) => nodo?.name)
+    .filter((nombre): nombre is string => typeof nombre === 'string' && nombre.length > 0);
+};
+
+/**
  * R corriendo dentro del navegador del tesista.
  *
  * POR QUÉ AQUÍ Y NO EN UN SERVIDOR
@@ -428,7 +455,7 @@ export class WebrService {
 
     try {
       const carpeta = await webR.FS.lookupPath(GRAFICOS);
-      nombres = Object.keys(carpeta.contents ?? {}).sort();
+      nombres = hijosDe(carpeta).sort();
     } catch {
       // No se llegó a crear: no hubo gráficos, o no hay dispositivo PNG.
       return [];
@@ -552,7 +579,7 @@ export class WebrService {
 
     try {
       const carpeta = await webR.FS.lookupPath(CASA);
-      for (const nombre of Object.keys(carpeta.contents ?? {})) {
+      for (const nombre of hijosDe(carpeta)) {
         if (nombre.startsWith('.')) continue;
         try {
           await webR.FS.unlink(`${CASA}/${nombre}`);
@@ -583,7 +610,7 @@ export class WebrService {
 
     try {
       const carpeta = await webR.FS.lookupPath(CASA);
-      const nombres = Object.keys(carpeta.contents ?? {}).filter((n) => !n.startsWith('.'));
+      const nombres = hijosDe(carpeta).filter((n) => !n.startsWith('.'));
 
       const archivos: ArchivoDeLaSesion[] = [];
 

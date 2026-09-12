@@ -20,14 +20,19 @@ declare module '@r-wasm/webr' {
   /**
    * Un nodo del sistema de archivos virtual.
    *
-   * `contents` es un objeto —no una lista— con un hijo por nombre. En los
-   * archivos viene vacío o con los bytes, así que para listar una carpeta se
-   * miran sus claves.
+   * `contents` de una carpeta viene como LISTA de nodos hijos, y el nombre de
+   * cada uno está en su `name`. Aquí estuvo declarado como un objeto por
+   * nombre, que es lo que parece de lejos y lo que usa Emscripten por dentro,
+   * y con eso `Object.keys()` devolvía «0», «1», «2» —los índices— en vez de
+   * los nombres de los archivos. Como esto es una declaración escrita a mano y
+   * no la del paquete, TypeScript daba por bueno el error. Se admiten las dos
+   * formas porque no todas las versiones de WebR devuelven la misma, y
+   * `hijosDe()` en `webr.service.ts` es quien lo resuelve.
    */
   export interface WebRNodoFS {
     name: string;
     isFolder?: boolean;
-    contents?: { [nombre: string]: WebRNodoFS };
+    contents?: WebRNodoFS[] | { [nombre: string]: WebRNodoFS };
   }
 
   /** Una línea de la consola de R, tal como la devuelve `captureR`. */
