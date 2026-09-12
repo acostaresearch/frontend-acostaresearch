@@ -2932,7 +2932,7 @@ export class Admin implements OnInit {
 
   // ── Mover una licencia de producto ───────────────────────────────────────
   //
-  // Existe porque el catálogo crece: quien compró «las 9 skills» antes de que
+  // Existe porque el catálogo crece: quien compró «las 11 skills» antes de que
   // existiera la ruta del artículo tiene derecho a que se le amplíe sin volver a
   // pagar. Hasta ahora la única salida era emitirle una licencia nueva y
   // revocarle la vieja, lo que le rompe el conector ya instalado por una

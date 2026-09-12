@@ -69,7 +69,7 @@ export class Home implements OnInit {
         antes: this.precioAntes(tesis),
         desde: true,
         enlace: '/metodo',
-        verbo: 'Ver las 9 Skills',
+        verbo: 'Ver las 11 Skills',
       },
       articulo && {
         titulo: 'Artículo científico',

@@ -226,7 +226,7 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
 
 export const PASOS = [
   {
-    titulo: 'Recibes las 9 Skills',
+    titulo: 'Recibes las 11 Skills',
     texto:
       'Te llegan con una guía de instalación en Claude.ai. Toma menos de diez minutos, ' +
       'funciona con el plan gratuito y no necesitas saber nada de tecnología.',
@@ -269,7 +269,7 @@ export const OBJECIONES = [
 ];
 
 export const INCLUYE = [
-  'Las 9 Skills instalables en tu cuenta de Claude.ai',
+  'Las 11 Skills instalables en tu cuenta de Claude.ai',
   'Guía de instalación paso a paso',
   // 'Plantillas .docx en formato APA 7 y matriz Excel de datos',
   'Compatible con el plan gratuito de Claude',

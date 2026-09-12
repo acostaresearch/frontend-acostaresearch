@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
  *
  * En móvil, los enlaces y las acciones se pliegan tras un botón de menú. Antes
  * la navegación se escondía y punto: desde un teléfono no había forma de llegar
- * a «Las 9 Skills» ni a «Artículos» si no era escribiendo la URL.
+ * a «Las 11 Skills» ni a «Artículos» si no era escribiendo la URL.
  */
 @Component({
   selector: 'app-site-header',

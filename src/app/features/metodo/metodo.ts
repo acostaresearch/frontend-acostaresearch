@@ -11,7 +11,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  *
  * Sin filtro, el catálogo devuelve TODOS los capítulos de la casa, y esta
  * página acababa listando el humanizador y las diez fases del artículo
- * científico debajo de las nueve del método: la página se llama «Las 9 Skills»
+ * científico debajo de las nueve del método: la página se llama «Las 11 Skills»
  * y enseñaba veinte.
  *
  * Va aquí y no en el servidor porque es una decisión de esta página, no del
