@@ -19,7 +19,8 @@ export interface EnlacePrueba {
   url: string;
   seats: number;
   claimed: number;
-  accessDays: number;
+  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  accessMinutes: number;
   /** 0 = sin tope. */
   callsPerDay: number;
   active: boolean;
@@ -35,7 +36,8 @@ export interface CrearPrueba {
   name: string;
   productCode: string;
   seats: number;
-  accessDays: number;
+  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  accessMinutes: number;
   callsPerDay: number;
 }
 
@@ -56,7 +58,8 @@ export interface PruebaPublica {
   estado: EstadoPrueba;
   quedan: number;
   seats: number;
-  accessDays: number;
+  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  accessMinutes: number;
   callsPerDay: number;
 }
 
@@ -64,7 +67,8 @@ export interface PruebaPublica {
 export interface ConectorDePrueba {
   connectorUrl: string;
   numero: number;
-  expiresAt: string;
+  /** Nulo = sin límite. */
+  expiresAt: string | null;
   productName: string;
 }
 
@@ -126,4 +130,27 @@ export class PruebaService {
       .get<ApiResponse<{ invitados: InvitadoPrueba[] }>>(`${this.base}/${id}/invitados`)
       .pipe(map((res) => res.data.invitados));
   }
+}
+
+/**
+ * El tiempo de acceso dicho como lo diría una persona: «90 minutos», «2 horas»,
+ * «1 hora y 30 minutos», «7 días». 0 = «sin límite».
+ *
+ * Los días solo cuando son días justos: así los enlaces que se crearon en días
+ * se siguen leyendo igual, y «25 horas» no se convierte en «1,04 días».
+ */
+export function duracionDeAcceso(minutos: number): string {
+  const total = Math.max(0, Math.floor(minutos || 0));
+  if (total === 0) return 'sin límite';
+
+  const contar = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
+
+  if (total % 1440 === 0) return contar(total / 1440, 'día', 'días');
+  if (total < 60) return contar(total, 'minuto', 'minutos');
+
+  const horas = Math.floor(total / 60);
+  const resto = total % 60;
+  return resto === 0
+    ? contar(horas, 'hora', 'horas')
+    : `${contar(horas, 'hora', 'horas')} y ${contar(resto, 'minuto', 'minutos')}`;
 }

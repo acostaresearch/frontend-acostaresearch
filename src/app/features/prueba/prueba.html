@@ -15,8 +15,12 @@
         </div>
       } @else {
         <p>
-          Es solo tuyo: lo que trabajes con él no lo ve nadie más del grupo. Funciona hasta el
-          <strong>{{ c.expiresAt | date: 'd MMM y' }}</strong>.
+          Es solo tuyo: lo que trabajes con él no lo ve nadie más del grupo.
+          @if (c.expiresAt) {
+            Funciona hasta el <strong>{{ c.expiresAt | date: 'd MMM y, HH:mm' }}</strong>.
+          } @else {
+            No tiene fecha de caducidad.
+          }
         </p>
       }
 
@@ -61,8 +65,12 @@
       @switch (p.estado) {
         @case ('ABIERTO') {
           <p>
-            Recibe tu propio conector para Claude, sin registrarte y sin pagar. Te dura
-            <strong>{{ p.accessDays }} {{ p.accessDays === 1 ? 'día' : 'días' }}</strong>
+            Recibe tu propio conector para Claude, sin registrarte y sin pagar.
+            @if (p.accessMinutes > 0) {
+              Te dura <strong>{{ duracion(p.accessMinutes) }}</strong>
+            } @else {
+              <strong>No caduca</strong>
+            }
             @if (cupo(p); as limite) {
               , con {{ limite }}
             }

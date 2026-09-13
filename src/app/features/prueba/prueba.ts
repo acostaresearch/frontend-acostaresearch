@@ -3,7 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
-import {
+import { duracionDeAcceso,
   ConectorDePrueba,
   PruebaPublica,
   PruebaService,
@@ -89,6 +89,11 @@ export class Prueba implements OnInit {
     } catch {
       this.error.set('No pudimos copiarla. Selecciónala y cópiala a mano.');
     }
+  }
+
+  /** Cuánto dura el conector, dicho para una persona. */
+  duracion(minutos: number): string {
+    return duracionDeAcceso(minutos);
   }
 
   /** Los topes, dichos con el periodo pegado al número. */

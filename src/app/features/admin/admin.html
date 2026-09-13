@@ -1608,7 +1608,7 @@
                     <div class="tenue">{{ enlace.consultas }} consultas</div>
                   </td>
                   <td class="tenue">
-                    {{ enlace.accessDays }} {{ enlace.accessDays === 1 ? 'día' : 'días' }}
+                    {{ duracionPrueba(enlace.accessMinutes) }}
                     <div>{{ topesPrueba(enlace) }}</div>
                   </td>
                   <td>
@@ -1709,15 +1709,20 @@
                   <span class="ayuda">Personas que pueden recogerlo</span>
                 </div>
                 <div class="campo estrecho">
-                  <label for="dias-prueba">Días de acceso</label>
-                  <input
-                    id="dias-prueba"
-                    type="number"
-                    min="1"
-                    max="365"
-                    formControlName="accessDays"
-                  />
-                  <span class="ayuda">Desde que cada uno lo recoge</span>
+                  <label for="acceso-prueba">Tiempo de acceso</label>
+                  <div class="acceso-fila">
+                    <input
+                      id="acceso-prueba"
+                      type="number"
+                      min="0"
+                      formControlName="accesoCantidad"
+                    />
+                    <select formControlName="accesoUnidad" aria-label="Unidad del tiempo de acceso">
+                      <option value="minutos">minutos</option>
+                      <option value="horas">horas</option>
+                    </select>
+                  </div>
+                  <span class="ayuda">Desde que cada uno lo recoge · 0 = sin límite</span>
                 </div>
               </div>
 
@@ -1794,7 +1799,13 @@
                               : 'Aún no lo usó'
                           }}
                         </td>
-                        <td class="tenue">{{ invitado.expiresAt | date: 'd MMM yy' }}</td>
+                        <td class="tenue">
+                          {{
+                            invitado.expiresAt
+                              ? (invitado.expiresAt | date: 'd MMM yy, HH:mm')
+                              : 'Sin límite'
+                          }}
+                        </td>
                       </tr>
                     }
                   </tbody>

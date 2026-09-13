@@ -26,7 +26,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
-import {
+import { duracionDeAcceso,
   EnlacePrueba,
   InvitadoPrueba,
   PruebaService,
@@ -2132,7 +2132,9 @@ export class Admin implements OnInit {
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     productCode: ['', Validators.required],
     seats: [30, [Validators.required, Validators.min(1), Validators.max(500)]],
-    accessDays: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
+    /** Cuánto dura cada conector desde que se recoge. 0 = sin límite. */
+    accesoCantidad: [24, [Validators.required, Validators.min(0), Validators.max(525600)]],
+    accesoUnidad: ['horas' as 'minutos' | 'horas'],
     callsPerDay: [20, [Validators.required, Validators.min(0), Validators.max(1000)]],
   });
 
@@ -2150,7 +2152,8 @@ export class Admin implements OnInit {
       name: '',
       productCode: this.productosPrueba()[0]?.code ?? '',
       seats: 30,
-      accessDays: 7,
+      accesoCantidad: 24,
+      accesoUnidad: 'horas',
       callsPerDay: 20,
     });
     this.formularioPruebaAbierto.set(true);
@@ -2167,10 +2170,19 @@ export class Admin implements OnInit {
       return;
     }
 
+    // El servidor lo guarda en minutos: se convierte aquí, que es donde se sabe
+    // qué unidad eligió.
+    const { accesoCantidad, accesoUnidad, ...resto } = this.formPrueba.getRawValue();
+    const accessMinutes = accesoUnidad === 'horas' ? accesoCantidad * 60 : accesoCantidad;
+    if (accessMinutes > 525600) {
+      this.error.set('Como mucho un año de acceso.');
+      return;
+    }
+
     this.trabajando.set(true);
     this.error.set(null);
 
-    this.pruebasApi.crear(this.formPrueba.getRawValue()).subscribe({
+    this.pruebasApi.crear({ ...resto, accessMinutes }).subscribe({
       next: (enlace) => {
         this.pruebas.update((lista) => [enlace, ...(lista ?? [])]);
         this.pruebaNueva.set(enlace);
@@ -2259,6 +2271,11 @@ export class Admin implements OnInit {
         this.error.set(mensajeDeError(e));
       },
     });
+  }
+
+  /** Cuánto dura cada conector de un enlace, dicho para una persona. */
+  duracionPrueba(minutos: number): string {
+    return duracionDeAcceso(minutos);
   }
 
   /** Los topes de un enlace, con el periodo pegado al número. */

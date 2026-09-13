@@ -2249,3 +2249,18 @@ td.acciones {
 .campo.estrecho {
   flex: 0 1 120px;
 }
+
+/* ── Tiempo de acceso del enlace de prueba: cantidad y unidad en una fila ── */
+.acceso-fila {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.acceso-fila input {
+  flex: 1 1 4rem;
+  min-width: 0;
+}
+
+.acceso-fila select {
+  flex: 0 0 auto;
+}
