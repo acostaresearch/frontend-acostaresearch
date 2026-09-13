@@ -68,6 +68,14 @@
 }
 
 /* ── El hero ────────────────────────────────────────────────────────────── */
+/* 50 px menos de aire arriba que el resto de bandas: con el saludo encima, el
+   titular y la foto empezaban demasiado abajo y las cifras quedaban fuera de
+   la primera pantalla. Nunca menos de 24 px, que en el móvil la banda ya es
+   de 56 y se pegaría al saludo. */
+.hero {
+  padding-top: max(24px, calc(var(--banda) - 50px));
+}
+
 /*
  * Texto y foto, juntos y centrados en la banda.
  *
