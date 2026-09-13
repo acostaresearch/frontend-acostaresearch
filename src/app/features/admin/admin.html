@@ -625,9 +625,18 @@
                   </span>
                 </dd>
               </div>
-              <div>
+              <!-- Un código guarda el código del producto, no su nombre: ahí se
+                   traduce. Un cobro ya trae el nombre del plan que se vendió, y
+                   ese se deja tal cual. -->
+              <div class="ficha-ancha">
                 <dt>Producto</dt>
-                <dd>{{ acceso.producto }}</dd>
+                <dd>
+                  {{
+                    acceso.producto === acceso.productCode
+                      ? nombreDeProducto(acceso.productCode)
+                      : acceso.producto
+                  }}
+                </dd>
               </div>
               <!-- Solo cuando se movió. Se dice «Tiene ahora» y no se sustituye
                    lo de arriba: lo de arriba es la venta —qué se cobró y por
@@ -674,6 +683,57 @@
                 }
               </div>
             }
+            <!-- ── Varias tesis ──────────────────────────────────────────────
+                 Por defecto, una tesis por licencia. Encenderlo le pone el botón
+                 «Nueva tesis» en su perfil para este método; apagarlo no le
+                 borra las que ya abrió. Va antes de mover el producto porque es
+                 un interruptor, no un formulario, y así se ve sin desplazarse. -->
+            @if (acceso.licenseId) {
+              <div class="varias-tesis">
+                <div class="varias-tesis-fila">
+                  <div>
+                    <h4 id="rotulo-varias-tesis">Varias tesis</h4>
+                    <p>
+                      Que pueda abrir más de una tesis de este método desde su perfil y elegir con
+                      cuál trabaja Claude. Su URL no cambia.
+                    </p>
+                  </div>
+
+                  @if (variasTesis() !== null) {
+                    <button
+                      type="button"
+                      role="switch"
+                      class="interruptor"
+                      aria-labelledby="rotulo-varias-tesis"
+                      [attr.aria-checked]="variasTesis()"
+                      [disabled]="guardandoVariasTesis()"
+                      (click)="cambiarVariasTesis()"
+                    >
+                      <span class="interruptor-bola" aria-hidden="true"></span>
+                    </button>
+                  }
+                </div>
+
+                <p class="varias-tesis-estado" [class.encendido]="variasTesis()" role="status">
+                  @if (guardandoVariasTesis()) {
+                    Guardando…
+                  } @else if (avisoVariasTesis(); as mensaje) {
+                    {{ mensaje }}
+                  } @else if (variasTesis() === true) {
+                    Activado: puede abrir varias tesis.
+                  } @else if (variasTesis() === false) {
+                    Desactivado: una sola tesis, como se vende.
+                  } @else if (!errorVariasTesis()) {
+                    Consultando…
+                  }
+                </p>
+
+                @if (errorVariasTesis(); as mensaje) {
+                  <div class="aviso error" role="alert">{{ mensaje }}</div>
+                }
+              </div>
+            }
+
             <!-- ── Mover de producto ────────────────────────────────────────
                  Solo si esta fila llegó a entregar una licencia: no se puede
                  ampliar lo que todavía no existe. Un código sin canjear o un
@@ -711,54 +771,6 @@
                     {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
                   </button>
                 </div>
-              </div>
-            }
-
-            <!-- ── Varias tesis ──────────────────────────────────────────────
-                 Por defecto, una tesis por licencia. Encenderlo le pone el botón
-                 «Nueva tesis» en su perfil para este método; apagarlo no le
-                 borra las que ya abrió. -->
-            @if (acceso.licenseId) {
-              <div class="mover-producto">
-                <h4>Varias tesis</h4>
-                <p class="tenue">
-                  Permite que abra más de una tesis de este método desde su perfil y elija con cuál
-                  trabaja Claude. Su URL y lo que ya tiene no cambian.
-                </p>
-
-                <div class="mover-fila">
-                  @if (variasTesis() === null && !errorVariasTesis()) {
-                    <span class="tenue">Consultando…</span>
-                  } @else if (variasTesis() !== null) {
-                    <span
-                      class="pastilla"
-                      [class.buena]="variasTesis()"
-                      [class.espera]="!variasTesis()"
-                    >
-                      {{ variasTesis() ? 'Puede abrir varias' : 'Una sola tesis' }}
-                    </span>
-                    <button
-                      type="button"
-                      class="boton"
-                      [class.secundario]="variasTesis()"
-                      [disabled]="guardandoVariasTesis()"
-                      (click)="cambiarVariasTesis()"
-                    >
-                      @if (guardandoVariasTesis()) {
-                        Guardando…
-                      } @else {
-                        {{ variasTesis() ? 'Quitar el permiso' : 'Activar varias tesis' }}
-                      }
-                    </button>
-                  }
-                </div>
-
-                @if (avisoVariasTesis(); as mensaje) {
-                  <p class="tenue" role="status">{{ mensaje }}</p>
-                }
-                @if (errorVariasTesis(); as mensaje) {
-                  <div class="aviso error" role="alert">{{ mensaje }}</div>
-                }
               </div>
             }
           </div>

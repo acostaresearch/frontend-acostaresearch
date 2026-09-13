@@ -2211,6 +2211,98 @@ td.acciones {
 
    Separado por una línea porque es lo único de esa ventana que CAMBIA algo;
    todo lo de arriba se consulta. */
+/* El producto ocupa las dos columnas: su nombre de venta es largo y partido
+   en media ficha empujaba el importe a una línea suelta. */
+.ficha .ficha-ancha {
+  grid-column: 1 / -1;
+}
+
+/* Varias tesis: texto a la izquierda, interruptor a la derecha. */
+.varias-tesis {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.varias-tesis-fila {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.varias-tesis h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.varias-tesis p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+.varias-tesis .varias-tesis-estado {
+  margin-top: 10px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.varias-tesis .varias-tesis-estado.encendido {
+  color: var(--color-exito);
+}
+
+.varias-tesis .aviso {
+  margin: 10px 0 0;
+}
+
+.interruptor {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  background: var(--color-borde-fuerte, #c7cbd4);
+  border: 0;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.interruptor[aria-checked='true'] {
+  background: var(--color-exito);
+}
+
+.interruptor:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.interruptor:focus-visible {
+  outline: 2px solid var(--color-marca, #1a56db);
+  outline-offset: 2px;
+}
+
+.interruptor-bola {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.2s;
+}
+
+.interruptor[aria-checked='true'] .interruptor-bola {
+  transform: translateX(20px);
+}
+
 .mover-producto {
   margin-top: 20px;
   padding-top: 18px;
