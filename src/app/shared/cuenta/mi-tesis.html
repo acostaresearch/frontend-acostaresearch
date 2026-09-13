@@ -393,6 +393,13 @@
               }
               desde el {{ puesta.desde | date: 'd MMM y' }}. Tus descargas salen con ese formato.
             </p>
+            @if (!puesta.completa) {
+              <p class="plantilla-nota">
+                Lo subiste antes de que tomáramos también sus márgenes, la numeración de sus
+                títulos, su encabezado, su pie y su portada. Pulsa «Cambiarlo» y sube el mismo
+                archivo otra vez para aplicarlos.
+              </p>
+            }
           </div>
           <div class="plantilla-acciones">
             <label class="boton secundario" [class.inactivo]="subiendoPlantilla()">
@@ -420,9 +427,11 @@
           <div>
             <p class="caja-titulo">¿Tu facultad te dio un documento con el formato exigido?</p>
             <p class="caja-texto">
-              Súbelo y tu tesis saldrá con sus títulos, sus fuentes y sus márgenes. Solo se guarda el
-              formato: <strong>el contenido de ese archivo no se conserva</strong>. Si no subes
-              ninguno, sale en Times New Roman 12 a doble espacio.
+              Súbelo y tu tesis saldrá con sus títulos (también los numerados), sus fuentes, sus
+              márgenes, su encabezado y su pie de página. Si trae portada, escribe en ella
+              <code>{{ marcasDePortada }}</code> donde van tus datos y la usaremos con los tuyos.
+              Solo se guarda el formato: <strong>el resto del contenido no se conserva</strong>.
+              Si no subes ninguno, sale en Times New Roman 12 a doble espacio.
             </p>
           </div>
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:

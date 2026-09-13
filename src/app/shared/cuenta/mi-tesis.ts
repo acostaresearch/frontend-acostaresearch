@@ -268,6 +268,13 @@ export class MiTesis implements OnInit {
   }
 
   // ── La plantilla de su facultad ──────────────────────────────────────────
+  /**
+   * Las marcas que se escriben en la portada de la plantilla.
+   *
+   * En el componente y no en la plantilla HTML: las llaves dobles ahí serían
+   * una interpolación de Angular.
+   */
+  readonly marcasDePortada = '{{TITULO}}, {{AUTOR}}, {{CARRERA}}, {{UNIVERSIDAD}} y {{AÑO}}';
   readonly subiendoPlantilla = signal(false);
   readonly errorPlantilla = signal<string | null>(null);
   readonly plantillaPuesta = signal<string | null>(null);

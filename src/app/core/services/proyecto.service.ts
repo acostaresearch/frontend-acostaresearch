@@ -56,6 +56,11 @@ export interface PlantillaPuesta {
   /** Cómo se llamaba el archivo. Sirve para que compruebe que subió el bueno. */
   nombre: string | null;
   desde: string;
+  /**
+   * Falso = se subió antes de que se copiaran márgenes, numeración, encabezado,
+   * pie y portada: hay que volver a subirla para que se apliquen.
+   */
+  completa: boolean;
 }
 
 /** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
