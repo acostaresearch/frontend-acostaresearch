@@ -929,7 +929,10 @@ body.sin-scroll {
   justify-content: space-between;
 }
 
-.cierre-pagina .acciones {
+/* Los botones de la cabecera del panel usan la misma fila: el CSS del panel
+   está en su tope de presupuesto y la regla es idéntica. */
+.cierre-pagina .acciones,
+.cabecera-acciones {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;

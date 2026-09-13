@@ -1705,6 +1705,7 @@ export class Admin implements OnInit {
       if (datos.historial) this.historial.set(datos.historial);
 
       this.recargando.set(false);
+      this.recargarSeccion();
 
       if (fallos.length > 0) {
         this.error.set(`No se pudo actualizar: ${fallos.join('; ')}.`);
@@ -1718,6 +1719,36 @@ export class Admin implements OnInit {
         if (this.aviso() === 'Datos actualizados.') this.aviso.set(null);
       }, 2500);
     });
+  }
+
+  /**
+   * Lo que la recarga general no trae, solo de la sección que se está mirando.
+   *
+   * Usuarios, bibliografía, tutoriales y pruebas se piden al abrir su sección
+   * (ver `ir`), no con el resto del panel. Sin esto, «Actualizar» en esas
+   * pantallas volvía a pedir ventas y licencias y dejaba la lista de delante
+   * igual. Pedirlas todas en cada recarga sería gastar conexiones de la base
+   * —son cinco— por pantallas que nadie está mirando.
+   */
+  private recargarSeccion(): void {
+    switch (this.seccion()) {
+      case 'pruebas':
+        this.cargarPruebas();
+        break;
+      case 'corpus':
+        this.cargarCorpus(this.paginaReferencias());
+        break;
+      case 'tutoriales':
+        this.cargarTutoriales();
+        break;
+      case 'admins':
+      case 'usuarios':
+        this.cargarUsuarios();
+        break;
+      case 'perfil':
+        this.usuariosApi.me().subscribe({ next: (usuario) => this.auth.setUser(usuario) });
+        break;
+    }
   }
 
   // ── Comprobantes de Yape ─────────────────────────────────────────────────

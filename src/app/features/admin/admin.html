@@ -100,35 +100,40 @@
         <p class="nota cabecera-nota">{{ pagina().nota }}</p>
       </div>
 
-      @switch (seccion()) {
-        @case ('descuentos') {
-          <button type="button" class="boton" (click)="abrirFormularioDescuento()">
-            Crear código
-          </button>
+      <!-- «Actualizar» en todas: las que además crean algo lo llevan al lado,
+           en secundario, para que el botón que se viene a pulsar siga siendo
+           el azul. -->
+      <div class="cabecera-acciones">
+        <button
+          type="button"
+          class="boton secundario"
+          [disabled]="recargando()"
+          (click)="recargar()"
+        >
+          {{ recargando() ? 'Actualizando…' : 'Actualizar' }}
+        </button>
+
+        @switch (seccion()) {
+          @case ('descuentos') {
+            <button type="button" class="boton" (click)="abrirFormularioDescuento()">
+              Crear código
+            </button>
+          }
+          @case ('grupos') {
+            <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
+          }
+          @case ('pruebas') {
+            <button type="button" class="boton" (click)="abrirFormularioPrueba()">
+              Crear enlace
+            </button>
+          }
+          @case ('admins') {
+            <button type="button" class="boton" (click)="abrirFormularioAdmin()">
+              Crear administrador
+            </button>
+          }
         }
-        @case ('grupos') {
-          <button type="button" class="boton" (click)="nuevoGrupo()">Crear grupo</button>
-        }
-        @case ('pruebas') {
-          <button type="button" class="boton" (click)="abrirFormularioPrueba()">Crear enlace</button>
-        }
-        @case ('admins') {
-          <button type="button" class="boton" (click)="abrirFormularioAdmin()">
-            Crear administrador
-          </button>
-        }
-        @case ('perfil') {}
-        @default {
-          <button
-            type="button"
-            class="boton secundario"
-            [disabled]="recargando()"
-            (click)="recargar()"
-          >
-            {{ recargando() ? 'Actualizando…' : 'Actualizar' }}
-          </button>
-        }
-      }
+      </div>
     </header>
 
     @if (error(); as mensaje) {

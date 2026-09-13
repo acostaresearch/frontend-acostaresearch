@@ -225,7 +225,10 @@
   width: auto;
 }
 
-.cabecera .boton {
+/* «Actualizar» y la acción de la sección, juntos a la derecha y sin encogerse.
+   La fila en sí la da la regla global de `.acciones`: aquí no cabe ni un byte
+   más de presupuesto. */
+.cabecera-acciones {
   flex: 0 0 auto;
 }
 
