@@ -57,6 +57,34 @@
   aspect-ratio: 4 / 3;
 }
 
+/* ── Lo que tienes en tu panel ────────────────────────────────────────────
+   Cuatro, sin caja y con la línea azul arriba, como los pasos del inicio: son
+   partes del mismo producto, no productos que comparar. */
+.panel-lista {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-lista li {
+  padding-top: 20px;
+  border-top: 3px solid var(--color-primario);
+}
+
+.panel-lista h3 {
+  margin: 0;
+}
+
+.panel-lista p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
 /* ── Los libros ───────────────────────────────────────────────────────────── */
 .libros-lista {
   display: grid;
@@ -97,6 +125,13 @@
   color: var(--color-texto-tenue);
 }
 
+@media (max-width: 1100px) {
+  .panel-lista {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 36px;
+  }
+}
+
 @media (max-width: 900px) {
   .asesoria {
     grid-template-columns: 1fr;
@@ -123,5 +158,12 @@
 
   .libros-lista img {
     margin-bottom: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .panel-lista {
+    grid-template-columns: 1fr;
+    row-gap: 28px;
   }
 }

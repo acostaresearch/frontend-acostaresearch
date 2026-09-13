@@ -29,3 +29,45 @@
     height: auto;
   }
 }
+
+/* ── Escribe contigo, no por ti ────────────────────────────────────────────
+   Seis en dos filas de tres, sin caja y con la línea azul arriba, como los
+   pasos del inicio: son garantías del mismo producto, no productos que
+   comparar. */
+.garantias {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.garantias li {
+  padding-top: 20px;
+  border-top: 3px solid var(--color-primario);
+}
+
+.garantias h3 {
+  margin: 0;
+}
+
+.garantias p {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 1000px) {
+  .garantias {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .garantias {
+    grid-template-columns: 1fr;
+    row-gap: 28px;
+  }
+}

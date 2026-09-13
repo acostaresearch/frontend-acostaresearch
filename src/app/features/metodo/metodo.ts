@@ -16,8 +16,12 @@ import { SiteHeader } from '../../shared/layout/site-header';
  *
  * Va aquí y no en el servidor porque es una decisión de esta página, no del
  * catálogo. El día que el artículo científico tenga la suya, pedirá su grupo.
+ *
+ * Es el grupo que está a la venta, con Bajar similitud incluida: el antiguo
+ * `METODO_9_SKILLS` se retiró y se quedó en diez, así que la página decía
+ * «11 Skills» y listaba diez.
  */
-const GRUPO_DEL_METODO = 'METODO_9_SKILLS';
+const GRUPO_DEL_METODO = 'METODO_DE_TESIS_HUMANIZADOR';
 
 /**
  * El método: los capítulos publicados, uno por uno.

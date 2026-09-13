@@ -36,7 +36,7 @@ export interface Pregunta {
  */
 export const CIFRAS = [
   { valor: '+500', pie: 'tesistas ya lo usan' },
-  { valor: 'Zotero', pie: 'integrado: citas y referencias al día, sin citas huérfanas' },
+  { valor: 'Zotero integrado', pie: 'citas y referencias al día, sin citas huérfanas' },
   { valor: '15', pie: 'normas de citas, de APA 7 a Chicago, en español o inglés' },
   { valor: 'Tu formato', pie: 'el de tu universidad, y con tus propias fuentes' },
   { valor: '0', pie: 'autores inventados' },
@@ -140,19 +140,21 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'Capítulo I completo: planteamiento con las cuatro realidades (internacional, nacional, ' +
       'local e institucional), pregunta general y específicas, objetivos, justificación e ' +
       'hipótesis.',
-    entregable: 'Capítulo I en .docx, APA 7',
+    entregable: 'Capítulo I, guardado en tu tesis en Word',
   },
   'marco-teorico': {
     descripcion:
       'Capítulo II con antecedentes internacionales y nacionales en fichas de lectura, bases ' +
-      'teóricas por variable y marco conceptual. Solo con las fuentes reales que tú subes.',
-    entregable: 'Capítulo II + lista de referencias',
+      'teóricas por variable y marco conceptual. Con tus fuentes y las que Claude encuentra en ' +
+      'la literatura publicada, siempre con DOI real; y si ya no sabes qué más leer, te sugiere ' +
+      'los trabajos que más citan tus propias fuentes.',
+    entregable: 'Capítulo II, con la lista de referencias armada sola en tu norma',
   },
   metodologia: {
     descripcion:
       'Capítulo III: enfoque, tipo, nivel, diseño, población, muestra y muestreo, técnicas e ' +
       'instrumentos, operacionalización hasta indicadores y aspectos éticos.',
-    entregable: 'Capítulo III en .docx, APA 7',
+    entregable: 'Capítulo III, guardado en tu tesis en Word',
   },
   'instrumento-investigacion': {
     descripcion:
@@ -170,17 +172,20 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   },
   'analisis-datos-rstudio': {
     descripcion:
-      'Dos vías, tú eliges: RStudio con código R comentado línea por línea, o Excel integrado ' +
-      'con Claude si no quieres programar. En ambas: descriptivos, alfa de Cronbach, normalidad ' +
-      'y la prueba inferencial que corresponda según el árbol de decisión.',
-    entregable: 'Capítulo IV con tablas APA listas',
+      'Tú eliges la vía: R en tu navegador sin instalar nada, RStudio o SPSS con cada paso ' +
+      'explicado, o Claude for Excel si no quieres programar (este requiere plan Pro de ' +
+      'Claude). En todas: descriptivos, alfa de Cronbach, normalidad y la prueba inferencial ' +
+      'que corresponda según el árbol de decisión. Cada cifra del capítulo sale de tu análisis ' +
+      'guardado, nunca de memoria.',
+    entregable: 'Capítulo IV con sus tablas y cifras comprobadas',
   },
   discusion: {
     descripcion:
       'Se redacta en prosa continua, objetivo por objetivo, con el mismo ejercicio en cada uno: ' +
       'recordar el objetivo, presentar el hallazgo, contrastarlo con los antecedentes y con la ' +
-      'teoría de tu Capítulo II, y cerrar con la implicancia. Las hipótesis rechazadas se ' +
-      'tratan con honestidad académica.',
+      'teoría de tu Capítulo II, y cerrar con la implicancia. Antes de empezar, Claude revisa ' +
+      'qué afirmaciones de tu tesis tienen fuente. Las hipótesis rechazadas se tratan con ' +
+      'honestidad académica.',
     entregable: 'Capítulo V en prosa continua',
   },
   'conclusiones-abstract': {
@@ -188,7 +193,8 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'Capítulo VI: una conclusión por objetivo, recomendaciones a tres destinatarios (el lugar ' +
       'de estudio con plazos, otros profesionales y futuros investigadores), resumen de 150 a ' +
       '250 palabras y abstract en inglés académico con estructura IMRyD. Las palabras clave se ' +
-      'seleccionan del Tesauro de la Unesco.',
+      'seleccionan del Tesauro de la Unesco. Y al cerrar, un repaso de la tesis completa antes ' +
+      'de entregarla.',
     entregable: 'Cierre de tesis, resumen y abstract con palabras clave del Tesauro Unesco',
   },
 
@@ -221,8 +227,19 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
     descripcion:
       'Responde las tres preguntas que hará el revisor: qué teorías dan base a tus constructos, ' +
       'qué se sabe de cada uno y por qué es razonable esperar lo que planteas. Comprueba que la ' +
-      'dirección de cada estudio citado coincida con la de tu hipótesis.',
+      'dirección de cada estudio citado coincida con la de tu hipótesis. Con tus fuentes y las ' +
+      'que Claude encuentra en la literatura publicada, y si ya no sabes qué más leer, te ' +
+      'sugiere los trabajos que más citan las tuyas.',
     entregable: 'Revisión de la literatura y sustento de hipótesis',
+  },
+  'articulo-fase3b-mapeo-bibliometrico': {
+    descripcion:
+      'Para artículos de revisión. Mapea tu campo con bibliometría: reúne cientos de registros ' +
+      'de Scopus, Web of Science u OpenAlex, aplica los criterios de inclusión con su diagrama ' +
+      'PRISMA y entrega las figuras —producción anual, revistas, coautoría y mapa temático— con ' +
+      'su interpretación escrita. El código de R va listo para pegar: tú lo ejecutas y la Skill ' +
+      'lee las salidas.',
+    entregable: 'Cuerpo de la revisión, con diagrama PRISMA y figuras',
   },
   'articulo-fase4-metodos': {
     descripcion:
@@ -235,7 +252,8 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
     descripcion:
       'Convierte las salidas de tu análisis en la sección que las reporta. Reporta, no ' +
       'interpreta: un resultado que ya viene explicado deja a la Discusión sin nada que decir. ' +
-      'Cada cifra se traslada desde tu documento de análisis.',
+      'Cada cifra se traslada desde tu análisis guardado; si lo corres en R desde la web, lo ' +
+      'envías a tu conector con un botón.',
     entregable: 'Resultados con sus tablas y figuras',
   },
   'articulo-fase6-discusion': {
@@ -255,7 +273,8 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   'articulo-fase8-adaptacion-y-envio': {
     descripcion:
       'El manuscrito está escrito; ahora hay que dejarlo como esa revista exige. De su guía de ' +
-      'autores salen estructura, límite de palabras, estilo de cita y anonimización. Es la fase ' +
+      'autores salen estructura, límite de palabras, estilo de cita y anonimización; la norma ' +
+      'de citas se cambia en tu panel y todas las referencias se reescriben solas. Es la fase ' +
       'que más rechazos de escritorio evita.',
     entregable: 'Manuscrito adaptado y carta de presentación',
   },
@@ -283,25 +302,38 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   },
 };
 
+/*
+ * Los pasos de «Míralo en acción». Eran tres y hablaban de «instalar» Skills y
+ * de un .docx por fase en Times New Roman: hoy se conecta una URL, lo propio se
+ * sube al panel y la tesis se descarga entera, con el formato de la facultad.
+ */
 export const PASOS = [
   {
-    titulo: 'Recibes las 11 Skills',
+    titulo: 'Recibes todo el paquete',
     texto:
-      'Te llegan con una guía de instalación en Claude.ai. Toma menos de diez minutos, ' +
-      'funciona con el plan gratuito y no necesitas saber nada de tecnología.',
+      'Tu conector con las 11 Skills, tu panel, 30 minutos de asesoría conmigo y los videos ' +
+      'guía. Conectarlo a Claude.ai toma dos minutos, funciona con el plan gratuito y no ' +
+      'necesitas saber nada de tecnología.',
+  },
+  {
+    titulo: 'Traes lo tuyo',
+    texto:
+      'Tus fuentes de Scopus o tus PDF, o conectas tu Zotero. Y si tu facultad tiene un ' +
+      'formato exigido, lo subes también. Se hace una vez, y Claude lo usa en todos tus ' +
+      'capítulos.',
   },
   {
     titulo: 'Entras por tu fase',
     texto:
       'Si aún no tienes tema, empiezas por la Skill 1. Si ya tienes el Capítulo III aprobado, ' +
       'saltas a la 5. La Skill te pregunta y tú respondes con tu realidad: tu carrera, tu ' +
-      'población, tu universidad.',
+      'población, tu universidad. Lo que decides queda anotado para la próxima vez.',
   },
   {
-    titulo: 'Sales con el documento',
+    titulo: 'Sales con tu tesis en Word',
     texto:
-      'Cada fase cierra con un .docx en A4, Times New Roman 12, interlineado 1.5. Lo lees, lo ' +
-      'ajustas con tus palabras y lo llevas a asesoría sabiendo qué dice cada párrafo.',
+      'Tus capítulos se descargan juntos, con portada, índice y referencias en tu norma. Lo ' +
+      'lees, lo ajustas con tus palabras y lo llevas a asesoría sabiendo qué dice cada párrafo.',
   },
 ];
 
@@ -310,20 +342,25 @@ export const OBJECIONES = [
     pregunta: '«¿Y esto no es plagio? ¿Lo detecta Turnitin?»',
     respuesta:
       'Es la pregunta que más me hacen, y es sana. Plagio es tomar a otro autor sin citarlo. ' +
-      'Aquí cada afirmación se apoya en las fuentes que tú mismo subes, se cita en APA 7 y se ' +
-      'parafrasea con estructura propia; el texto se construye con tus datos, tu población y ' +
-      'tus resultados, así que no existe en ninguna otra parte. Aun así te pido lo mismo que a ' +
-      'mis asesorados: léelo, corrígelo, reescríbelo con tu voz y pásalo por el antiplagio de ' +
-      'tu universidad antes de entregar.',
+      'Aquí cada afirmación se apoya en fuentes reales que tú traes, cada cita lleva su ' +
+      'referencia en la norma que elijas y se parafrasea con estructura propia; el texto se ' +
+      'construye con tus datos, tu población y tus resultados, así que no existe en ninguna ' +
+      'otra parte. Si aun así Turnitin marca coincidencias, la Skill Bajar similitud separa lo ' +
+      'que es copia real de lo que es estructura obligatoria, y si te dicen que suena a IA, el ' +
+      'Humanizador académico te dice por qué. Y te pido lo mismo que a mis asesorados: léelo, ' +
+      'corrígelo, reescríbelo con tu voz y pásalo por el antiplagio de tu universidad antes ' +
+      'de entregar.',
   },
   {
     pregunta: '«Mi asesor no me lo va a aceptar»',
     respuesta:
       'He sido jurado de tesis y sé qué se rechaza: un texto vago, sin sustento o con citas ' +
       'que no existen. Lo que tú vas a llevar a asesoría es un capítulo con la estructura que ' +
-      'tu universidad pide (APA 7, matriz de consistencia, operacionalización, validación por ' +
-      'jueces). Y como cada decisión metodológica la tomaste tú, cuando tu asesor pregunte por ' +
-      'qué ese diseño y esa muestra, vas a tener la respuesta.',
+      'tu universidad pide (matriz de consistencia, operacionalización, validación por jueces), ' +
+      'en su formato y en la norma de citas que te exijan. Antes de llevarlo, el repaso de la ' +
+      'tesis te marca las variables sin objetivo, los objetivos sin conclusión y las ' +
+      'afirmaciones sin fuente. Y como cada decisión metodológica la tomaste tú, cuando tu ' +
+      'asesor pregunte por qué ese diseño y esa muestra, vas a tener la respuesta.',
   },
 ];
 
@@ -335,13 +372,33 @@ export const OBJECIONES = [
  * destaca. La guía y la compatibilidad siguen ahí, detrás, que es el peso que
  * tienen: está bien saberlas, pero nadie compra por ellas.
  */
-export const INCLUYE = [
-  'Las 11 Skills instalables en tu cuenta de Claude.ai',
-  '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
-  'Doce meses de acceso, renovables cuando los necesites',
-  'Guía de instalación paso a paso',
-  'Compatible con el plan gratuito de Claude',
-];
+/*
+ * Por código de plan, porque se venden dos y cada uno tiene su lista. Antes era
+ * una sola lista atada a `METODO_9_SKILLS`, que se retiró: las tarjetas que se
+ * venden hoy caían a tres viñetas genéricas.
+ *
+ * La duración NO va aquí: la pone Precios a partir del plan, en tercer lugar,
+ * para que un cambio de vigencia desde el panel no deje «doce meses» escrito.
+ * Las dos primeras de cada lista y la duración son las que van en negrita.
+ */
+export const INCLUYE: Record<string, string[]> = {
+  METODO_DE_TESIS_HUMANIZADOR: [
+    'Las 11 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
+    '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
+    'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
+    'Tu tesis en un solo Word, con el formato de tu universidad y en 15 normas de citas',
+    'Videos guía para conectarlo y usarlo',
+    'Funciona con el plan gratuito de Claude',
+  ],
+  ARTICULO_SCIENTIFICOS: [
+    'Las 10 fases de la ruta, de la idea a la respuesta a revisores, y la variante bibliométrica',
+    'El Humanizador académico',
+    'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
+    'Tu artículo en Word, con la plantilla que te pidan y en 15 normas de citas',
+    'Videos guía para conectarlo y usarlo',
+    'Funciona con el plan gratuito de Claude',
+  ],
+};
 
 export const FAQ: Pregunta[] = [
   {

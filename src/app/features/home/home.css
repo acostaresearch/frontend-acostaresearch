@@ -175,30 +175,58 @@
   color: var(--color-texto-tenue);
 }
 
-/* Las cifras cierran el hero, separadas del titular por su propia línea. A todo
-   el ancho de la banda, aunque el bloque de arriba vaya recogido y centrado:
-   encajonadas a 980 px, «APA 7 o IEEE Vancouver» se partía en dos líneas. */
+/* Las cifras cierran el hero en su propia banda azul noche, redondeada: con la
+   línea fina de antes se leían como un pie del titular, y son lo que lo
+   respalda. A todo el ancho, aunque el bloque de arriba vaya recogido y
+   centrado. Solo aquí: la rejilla de «Quién te acompaña» sigue clara. */
 .hero .cifras {
   grid-template-columns: repeat(5, 1fr);
   margin-top: 64px;
+  padding: 32px 36px;
+  background: var(--noche);
+  border-top: 0;
+  border-radius: 18px;
 }
 
-/* Cinco y no las cuatro de la rejilla común (la de «Quién te acompaña» sigue
-   con la suya). Con cinco, cada celda pierde aire por dentro para que el pie
-   no se parta en cuatro renglones. */
+/* Con cinco, cada celda pierde aire por dentro para que el pie no se parta en
+   cuatro renglones. Los separadores, en el gris de la banda y muy bajos: sobre
+   el noche, el borde claro de siempre cortaba la banda en cinco cajas. */
 .hero .cifras li {
-  padding-right: 20px;
+  padding: 0 20px 0 0;
 }
 
-.hero .cifras li + li {
-  padding-left: 20px;
+/* `:not(:first-child)` y no `li + li`: con los atributos que añade Angular,
+   `li + li` pesaba más que los `:nth-child` de abajo y la cuarta seguía con su
+   sangría al abrir fila. */
+.hero .cifras li:not(:first-child) {
+  padding-left: 24px;
+  border-left-color: rgba(168, 180, 212, 0.18);
+}
+
+.hero .cifra-valor {
+  font-size: 32px;
+  color: var(--dorado-claro);
+}
+
+/* «Zotero integrado» y «Tu formato» son palabras, no números: más pequeñas
+   para que no pesen más que las cifras de verdad. */
+.hero .cifra-valor.texto {
+  padding-top: 4px;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.hero .cifra-pie {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--gris-noche);
 }
 
 /* Tres arriba y dos abajo: a cinco columnas, «Tu formato» y su pie no caben. */
 @media (max-width: 1100px) {
   .hero .cifras {
     grid-template-columns: repeat(3, 1fr);
-    row-gap: 24px;
+    row-gap: 26px;
   }
 
   .hero .cifras li:nth-child(4) {
@@ -212,11 +240,12 @@
 @media (max-width: 900px) {
   .hero .cifras {
     grid-template-columns: 1fr 1fr;
+    padding: 28px;
   }
 
   .hero .cifras li:nth-child(4) {
-    padding-left: 28px;
-    border-left: 1px solid var(--color-borde);
+    padding-left: 24px;
+    border-left: 1px solid rgba(168, 180, 212, 0.18);
   }
 
   /* La tercera y la quinta abren fila: sin línea ni sangría a la izquierda. */
@@ -231,11 +260,15 @@
   }
 }
 
-/* En el teléfono vuelven los 14 px de la rejilla común: los 20 de arriba son
-   más específicos y se los ganaban. Solo a las de la derecha de cada fila. */
+/* En el teléfono vuelven los 14 px de la rejilla común, solo a las de la
+   derecha de cada fila. Las filas se separan con su línea, como en la rejilla
+   común, pero en el gris de la banda y con aire propio: el `padding` de arriba
+   es más específico que el de la rejilla común y dejaba el texto pegado. */
 @media (max-width: 620px) {
   .hero .cifras {
     row-gap: 0;
+    padding: 22px 20px;
+    border-radius: 14px;
   }
 
   .hero .cifras li {
@@ -245,6 +278,24 @@
   .hero .cifras li:nth-child(2),
   .hero .cifras li:nth-child(4) {
     padding-left: 14px;
+  }
+
+  .hero .cifras li:nth-child(n + 3) {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top-color: rgba(168, 180, 212, 0.18);
+  }
+
+  .hero .cifra-valor {
+    font-size: 26px;
+  }
+
+  .hero .cifra-valor.texto {
+    font-size: 16px;
+  }
+
+  .hero .cifra-pie {
+    font-size: 13px;
   }
 }
 

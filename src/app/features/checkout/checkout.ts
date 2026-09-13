@@ -492,20 +492,22 @@ export class Checkout implements OnInit {
    * es poco pero cierto. Inventarles viñetas sería prometer en su nombre.
    */
   loQueIncluye(plan: Plan): string[] {
-    if (plan.code === 'METODO_9_SKILLS') return this.incluye;
-
-    const lista = [
-      'Se instala en tu cuenta de Claude.ai',
-      'Funciona también con el plan gratuito de Claude',
-    ];
-
-    lista.push(
+    const duracion =
       plan.durationDays > 0
         ? `${this.vigencia(plan)} de acceso, renovables`
-        : 'Acceso permanente, sin suscripción',
-    );
+        : 'Acceso permanente, sin suscripción';
 
-    return lista;
+    // La duración va tercera en las listas escritas: con las dos primeras son
+    // las tres que se destacan. Sale del plan y no del texto, así que si la
+    // vigencia cambia desde el panel, la tarjeta cambia con ella.
+    const escrita = this.incluye[plan.code];
+    if (escrita) return [...escrita.slice(0, 2), duracion, ...escrita.slice(2)];
+
+    return [
+      'Se conecta a tu cuenta de Claude.ai',
+      'Funciona también con el plan gratuito de Claude',
+      duracion,
+    ];
   }
 
   /**
@@ -518,7 +520,7 @@ export class Checkout implements OnInit {
    * instala en tu cuenta» como si fuera el argumento de venta.
    */
   clavesDe(plan: Plan): number {
-    return plan.code === 'METODO_9_SKILLS' ? 3 : 0;
+    return this.incluye[plan.code] ? 3 : 0;
   }
 
   /**
@@ -529,7 +531,9 @@ export class Checkout implements OnInit {
    * más elegida de una es una etiqueta sin comparación posible.
    */
   esElMasElegido(plan: Plan): boolean {
-    return plan.code === 'METODO_9_SKILLS' && this.metodo().length > 1;
+    // `METODO_9_SKILLS` se retiró de la venta: el método de tesis que se vende
+    // hoy es el que trae el Humanizador y Bajar similitud.
+    return plan.code === 'METODO_DE_TESIS_HUMANIZADOR' && this.metodo().length > 1;
   }
 
   /** Lleva el código escrito hasta el perfil, que es donde se canjea. */

@@ -5,8 +5,8 @@
     <p class="seccion-marca">El método completo</p>
     <h1 class="titulo-seccion ancho">Las 11 Skills, en el orden en que se hace una tesis</h1>
     <p class="seccion-entrada">
-      Se instalan en tu cuenta de Claude.ai y se activan escribiendo lo que necesitas. No tienes que
-      empezar por la primera: entra por donde estés hoy.
+      Trabajan dentro de tu Claude.ai a través de tu conector: pides la fase y la Skill la hace
+      contigo, con tus fuentes. No tienes que empezar por la primera: entra por donde estés hoy.
     </p>
   </header>
 
@@ -40,7 +40,10 @@
   </section>
 
   <!-- Lo que las Skills no resuelven. Va justo después del listado porque es
-       la objeción que aparece al terminar de leerlo: «¿y si me trabo?». -->
+       la objeción que aparece al terminar de leerlo: «¿y si me trabo?».
+
+       Los videos guía NO van aquí: son material para quien ya compró, y esta
+       página es el escaparate. -->
   <section class="seccion noche">
     <div class="asesoria">
       <div class="asesoria-texto">
@@ -62,9 +65,50 @@
     </div>
   </section>
 
-  <!-- El respaldo bibliográfico. Después de la asesoría y antes del precio:
-       es el último argumento antes de pedir la decisión. -->
-  <section class="seccion libros">
+  <!-- Lo que acompaña a las Skills fuera de la conversación. Cada tarjeta es
+       algo que ya está en el perfil del comprador: si una función se retira del
+       panel, se retira de aquí. -->
+  <section class="seccion">
+    <div class="cab">
+      <p class="seccion-marca">Además de las Skills</p>
+      <h2 class="titulo-seccion">Lo que tienes en tu panel</h2>
+    </div>
+
+    <ul class="panel-lista">
+      <li>
+        <h3>Por dónde vas</h3>
+        <p>
+          Claude anota lo que vas decidiendo y tu panel te muestra qué fases están terminadas. En
+          una conversación nueva no tienes que volver a explicarle tu tema.
+        </p>
+      </li>
+      <li>
+        <h3>Tus fuentes y tu Zotero</h3>
+        <p>
+          Sube tu export de Scopus, Web of Science, SciELO o PubMed, o tus PDF. Si usas Zotero,
+          conéctalo y tus referencias se mantienen al día solas.
+        </p>
+      </li>
+      <li>
+        <h3>Analiza tus datos en R</h3>
+        <p>
+          R en tu navegador, con los paneles de RStudio y sin instalar nada. Envías el resultado a
+          tu conector y las cifras del Capítulo IV salen de ahí.
+        </p>
+      </li>
+      <li>
+        <h3>Tu tesis en un solo Word</h3>
+        <p>
+          Portada, índice y todos tus capítulos, con el formato de tu universidad y en la norma de
+          citas que elijas entre quince. Y en BibTeX, si escribes en LaTeX.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <!-- El respaldo bibliográfico. Después del panel y antes del precio: es el
+       último argumento antes de pedir la decisión. -->
+  <section class="seccion gris libros">
     <div class="cab">
       <p class="seccion-marca">Respaldo académico</p>
       <h2 class="titulo-seccion">No es un método improvisado</h2>
@@ -90,15 +134,19 @@
     </ul>
   </section>
 
-  <section class="seccion gris corta">
+  <section class="seccion noche corta">
     <div class="cierre-pagina">
       <div>
         <h2 class="titulo-seccion">Quiero el paquete completo</h2>
         <p class="seccion-entrada">
-          Doce meses de acceso, renovables, y 30 minutos de asesoría conmigo.
+          Doce meses de acceso, renovables, 30 minutos de asesoría conmigo y los videos guía.
         </p>
       </div>
-      <a class="boton grande" routerLink="/planes" [queryParams]="{ plan: 'METODO_9_SKILLS' }">
+      <a
+        class="boton oro grande"
+        routerLink="/planes"
+        [queryParams]="{ plan: 'METODO_DE_TESIS_HUMANIZADOR' }"
+      >
         Ver el precio
       </a>
     </div>

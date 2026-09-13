@@ -95,7 +95,7 @@ export class Home implements OnInit {
         texto:
           'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes y el ' +
           'formato de tu universidad. Tu tesis sale en un solo Word, en la norma que elijas. ' +
-          'Incluye videos que te guían fase por fase.',
+          'Incluye videos guía.',
         detalle: `9 fases · ${tesis.durationDays} días de acceso`,
         precio: this.precio(tesis),
         antes: this.precioAntes(tesis),

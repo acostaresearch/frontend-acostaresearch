@@ -113,7 +113,7 @@
 /* ── Cómo se empieza ────────────────────────────────────────────────────── */
 .pasos {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 40px;
   margin: 0;
   padding: 0;
@@ -121,7 +121,7 @@
 }
 
 .pasos li {
-  padding: 22px 40px 0 0;
+  padding: 22px 24px 0 0;
   border-top: 3px solid var(--color-primario);
 }
 
@@ -180,6 +180,15 @@
   font-size: 16px;
   line-height: 1.55;
   color: #5e5448;
+}
+
+/* Cuatro pasos en una fila dejan columnas de 200 px: se parten en dos filas
+   de dos antes de caer a una sola en el móvil. */
+@media (max-width: 1100px) {
+  .pasos {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 36px;
+  }
 }
 
 @media (max-width: 900px) {
