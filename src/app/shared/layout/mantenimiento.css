@@ -1,0 +1,144 @@
+/* ── La pantalla de mantenimiento ──────────────────────────────────────────
+ *
+ * Opaca y por encima de todo, incluida la ventana de confirmar (z-index 80):
+ * con la base caída nada de lo que hay detrás funciona, y dejarlo a la vista
+ * invita a seguir pulsando. En azul noche y dorado, que es el tono del sitio
+ * para lo que corta la página.
+ */
+.mantenimiento {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  color: #fff;
+  background: radial-gradient(circle at 50% 0%, var(--noche-2), var(--noche) 70%);
+  animation: aparecer 200ms ease;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.marca {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 36px;
+}
+
+.marca-nombre {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.marca-cola {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dorado);
+}
+
+.icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  color: var(--dorado);
+  background: rgba(224, 185, 115, 0.12);
+  border: 1px solid rgba(224, 185, 115, 0.3);
+}
+
+.icono svg {
+  width: 30px;
+  height: 30px;
+}
+
+h1 {
+  margin: 0 0 14px;
+  font-size: clamp(26px, 5vw, 34px);
+  line-height: 1.2;
+  color: #fff;
+}
+
+.mensaje {
+  margin: 0 0 10px;
+  font-size: 16.5px;
+  color: var(--crema);
+}
+
+.mensaje strong {
+  color: var(--dorado-claro);
+}
+
+.nota {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--gris-noche);
+}
+
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 26px;
+  font-size: 13px;
+  color: var(--gris-noche);
+}
+
+.punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gris-noche);
+  opacity: 0.6;
+}
+
+.punto.activo {
+  background: var(--dorado);
+  opacity: 1;
+  animation: latir 900ms ease-in-out infinite;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.acciones .boton {
+  width: auto;
+  text-decoration: none;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes latir {
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mantenimiento,
+  .punto.activo {
+    animation: none;
+  }
+}

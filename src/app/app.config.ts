@@ -10,7 +10,9 @@ import { catchError, of, switchMap } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { mantenimientoInterceptor } from './core/interceptors/mantenimiento.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { MantenimientoService, esCaidaDelServicio } from './core/services/mantenimiento.service';
 import { UserService } from './core/services/user.service';
 
 /**
@@ -22,6 +24,7 @@ import { UserService } from './core/services/user.service';
 function restaurarSesion() {
   const auth = inject(AuthService);
   const usuarios = inject(UserService);
+  const mantenimiento = inject(MantenimientoService);
 
   return auth.refreshAccessToken().pipe(
     switchMap(() => usuarios.me()),
@@ -29,7 +32,11 @@ function restaurarSesion() {
       auth.setUser(usuario);
       return of(usuario);
     }),
-    catchError(() => {
+    catchError((error: unknown) => {
+      // Con la base caída no se sabe si había sesión: la página se monta
+      // igualmente, tapada por el mantenimiento, y al volver se recarga para
+      // restaurarla de verdad.
+      if (esCaidaDelServicio(error)) mantenimiento.recargarCuandoVuelva();
       auth.clearSession();
       return of(null);
     }),
@@ -39,7 +46,9 @@ function restaurarSesion() {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    // El de mantenimiento, primero: así ve el error que queda después del
+    // intento de refresh del de sesión.
+    provideHttpClient(withFetch(), withInterceptors([mantenimientoInterceptor, authInterceptor])),
     // El panel es una sección de la portada: sin `anchorScrolling` los enlaces
     // «Mi panel» llegarían al inicio de la página en vez de a la sección.
     provideRouter(

@@ -2,3 +2,8 @@
   display: block;
   min-height: 100dvh;
 }
+
+/* Solo existe para llevar `inert`: que no cambie nada del maquetado. */
+.pagina-raiz {
+  display: contents;
+}

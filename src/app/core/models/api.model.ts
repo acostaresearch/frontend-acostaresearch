@@ -54,6 +54,8 @@ export const ERROR_CODE = {
   PAYMENT_FAILED: 'PAYMENT_FAILED',
   DISCOUNT_INVALID: 'DISCOUNT_INVALID',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
+  /** La base de datos no responde: lo recoge la pantalla de mantenimiento. */
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   /** Solo del cliente: el servidor no respondió. */
   NETWORK_ERROR: 'NETWORK_ERROR',
 } as const;

@@ -1,4 +1,10 @@
-<router-outlet />
+<!-- `inert` mientras dura el mantenimiento: la pantalla tapa la página, pero sin
+     esto el tabulador seguiría llegando a los botones de detrás. -->
+<div class="pagina-raiz" [inert]="mantenimiento.activo()">
+  <router-outlet />
 
-<!-- Fuera del router: la ventana de confirmar se abre desde cualquier página. -->
-<app-dialogo />
+  <!-- Fuera del router: la ventana de confirmar se abre desde cualquier página. -->
+  <app-dialogo />
+</div>
+
+<app-mantenimiento />

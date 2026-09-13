@@ -6,6 +6,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError, ERROR_CODE } from '../models/api.model';
 import { AuthService } from '../services/auth.service';
+import { esCaidaDelServicio } from '../services/mantenimiento.service';
 
 /** Rutas que no deben reintentarse tras un refresh: son las que lo gestionan. */
 const RUTAS_SIN_REINTENTO = ['/auth/login', '/auth/register', '/auth/refresh'];
@@ -60,6 +61,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return auth.refreshAccessToken().pipe(
         switchMap((token) => next(autorizar(req, token))),
         catchError((errorDeRefresh: unknown) => {
+          // Con la base caída el refresh falla aunque la sesión esté bien. Echar
+          // a la persona al login sería perderle la sesión por un corte de
+          // cinco minutos: se deja como está y la pantalla de mantenimiento
+          // cubre el rato.
+          if (esCaidaDelServicio(errorDeRefresh)) {
+            return throwError(() => errorDeRefresh);
+          }
+
           // El refresh también falló: la sesión murió de verdad.
           auth.clearSession();
           void router.navigate(['/auth/login'], {

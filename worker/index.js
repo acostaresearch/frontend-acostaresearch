@@ -69,7 +69,24 @@ async function proxiarALaApi(request, url) {
   const ip = request.headers.get('CF-Connecting-IP');
   if (ip) peticion.headers.set('X-Forwarded-For', ip);
 
-  const respuesta = await fetch(peticion);
+  let respuesta;
+  try {
+    respuesta = await fetch(peticion);
+  } catch {
+    // El servidor no contesta en absoluto. Sin esto el Worker revienta y
+    // Cloudflare enseña su propia página de error; así la web recibe el mismo
+    // 503 que da la API con la base caída y saca la pantalla de mantenimiento.
+    return Response.json(
+      {
+        success: false,
+        error: {
+          code: 'SERVICE_UNAVAILABLE',
+          message: 'El servicio no está disponible en este momento. Inténtalo de nuevo en unos minutos.',
+        },
+      },
+      { status: 503, headers: { 'Retry-After': '30' } },
+    );
+  }
 
   // Se devuelve una copia mutable: la respuesta de `fetch` trae las cabeceras
   // inmutables y `Set-Cookie` tiene que llegar al navegador intacta.
