@@ -56,6 +56,8 @@ export const ERROR_CODE = {
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** La base de datos no responde: lo recoge la pantalla de mantenimiento. */
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  /** El asistente no contesta. Propio para NO encender la pantalla de mantenimiento. */
+  ASSISTANT_UNAVAILABLE: 'ASSISTANT_UNAVAILABLE',
   /** Solo del cliente: el servidor no respondió. */
   NETWORK_ERROR: 'NETWORK_ERROR',
 } as const;

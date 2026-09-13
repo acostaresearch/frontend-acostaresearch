@@ -1,0 +1,130 @@
+<!-- Las piezas de una línea: texto, negrita o enlace. Los enlaces ya vienen
+     filtrados por `asistente-texto.ts`; aquí no se pinta HTML de nadie.
+
+     Todo pegado y sin saltos A PROPÓSITO: cada salto de línea entre dos piezas
+     se convierte en un espacio, y salía «**Asistente Acosta** .» con el punto
+     separado. El texto ya trae sus propios espacios. -->
+<ng-template #segmentos let-linea>@for (s of linea; track $index) {@switch (s.tipo) {@case ('negrita') {<strong>{{ s.texto }}</strong>}@case ('enlace') {<a [routerLink]="s.ruta" [fragment]="s.fragmento" (click)="alNavegar()">{{ s.texto }}</a>}@case ('whatsapp') {<a [href]="whatsappUrl" target="_blank" rel="noopener">{{ s.texto }}</a>}@default {<ng-container>{{ s.texto }}</ng-container>}}}</ng-template>
+
+<ng-template #respuesta let-bloques>
+  @for (bloque of bloques; track $index) {
+    @if (bloque.tipo === 'lista') {
+      <ul>
+        @for (linea of bloque.lineas; track $index) {
+          <li><ng-container [ngTemplateOutlet]="segmentos" [ngTemplateOutletContext]="{ $implicit: linea }" /></li>
+        }
+      </ul>
+    } @else {
+      <p>
+        @for (linea of bloque.lineas; track $index) {
+          @if (!$first) {
+            <br />
+          }
+          <ng-container [ngTemplateOutlet]="segmentos" [ngTemplateOutletContext]="{ $implicit: linea }" />
+        }
+      </p>
+    }
+  }
+</ng-template>
+
+@if (disponible()) {
+  <aside class="asis" [class.asis-abierto]="abierto()" aria-label="Asistente Acosta">
+    <!-- La barra es el propio desplegable: pulsarla abre y cierra. -->
+    <button
+      #cabecera
+      type="button"
+      class="asis-cabecera"
+      [attr.aria-expanded]="abierto()"
+      aria-controls="asis-cuerpo"
+      (click)="alternar()"
+    >
+      <span class="asis-avatar" aria-hidden="true">A</span>
+      <span class="asis-titulos">
+        <span class="asis-nombre">Asistente Acosta</span>
+        <span class="asis-estado">
+          <span class="asis-punto" aria-hidden="true"></span>
+          {{ abierto() ? 'En línea · responde al momento' : '¿Dudas? Pregúntame' }}
+        </span>
+      </span>
+      <svg class="asis-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="m6 15 6-6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+
+    @if (abierto()) {
+      <div id="asis-cuerpo" class="asis-cuerpo">
+        <div #lista class="asis-lista" aria-live="polite">
+          <div class="asis-burbuja asis-de-asistente">
+            <ng-container [ngTemplateOutlet]="respuesta" [ngTemplateOutletContext]="{ $implicit: bienvenida }" />
+          </div>
+
+          @for (b of burbujas(); track $index) {
+            @if (b.rol === 'usuario') {
+              <div class="asis-burbuja asis-de-usuario">{{ b.texto }}</div>
+            } @else {
+              <div class="asis-burbuja asis-de-asistente">
+                <ng-container [ngTemplateOutlet]="respuesta" [ngTemplateOutletContext]="{ $implicit: b.bloques }" />
+              </div>
+            }
+          }
+
+          @if (pensando()) {
+            <div class="asis-burbuja asis-de-asistente asis-pensando" role="status" aria-label="El asistente está escribiendo">
+              <span></span><span></span><span></span>
+            </div>
+          }
+
+          @if (burbujas().length === 0 && !pensando()) {
+            <div class="asis-sugerencias">
+              @for (s of sugerencias; track s) {
+                <button type="button" class="asis-sugerencia" (click)="enviar(s)">{{ s }}</button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (error(); as mensaje) {
+          <p class="asis-error" role="alert">{{ mensaje }}</p>
+        }
+
+        <form class="asis-formulario" (submit)="$event.preventDefault(); enviar()">
+          <textarea
+            #campo
+            rows="1"
+            aria-label="Tu pregunta"
+            placeholder="Escribe tu pregunta…"
+            [attr.maxlength]="maxCaracteres"
+            [value]="borrador()"
+            (input)="escribir($event)"
+            (keydown)="teclear($event)"
+          ></textarea>
+          <button
+            type="submit"
+            class="asis-enviar"
+            aria-label="Enviar"
+            [disabled]="pensando() || !borrador().trim()"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M5 12h13m-5-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="asis-pie">
+          <span class="asis-pie-nota">
+            Responde una IA y puede equivocarse. No guardamos esta conversación ·
+            <a routerLink="/privacidad" (click)="alNavegar()">Privacidad</a>
+          </span>
+          <span class="asis-pie-acciones">
+            @if (burbujas().length > 0) {
+              <button type="button" class="asis-pie-boton" [disabled]="pensando()" (click)="nuevaConversacion()">
+                Nueva
+              </button>
+            }
+            <a class="asis-whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+          </span>
+        </div>
+      </div>
+    }
+  </aside>
+}

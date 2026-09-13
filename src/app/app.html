@@ -3,6 +3,10 @@
 <div class="pagina-raiz" [inert]="mantenimiento.activo()">
   <router-outlet />
 
+  <!-- También fuera del router, para que la conversación siga al cambiar de
+       página. Dentro de `pagina-raiz`, para que el mantenimiento lo congele. -->
+  <app-asistente />
+
   <!-- Fuera del router: la ventana de confirmar se abre desde cualquier página. -->
   <app-dialogo />
 </div>

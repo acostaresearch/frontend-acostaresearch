@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { MantenimientoService } from './core/services/mantenimiento.service';
+import { Asistente } from './shared/layout/asistente';
 import { Dialogo } from './shared/layout/dialogo';
 import { Mantenimiento } from './shared/layout/mantenimiento';
 
 @Component({
-  imports: [Dialogo, Mantenimiento, RouterOutlet],
+  imports: [Asistente, Dialogo, Mantenimiento, RouterOutlet],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
