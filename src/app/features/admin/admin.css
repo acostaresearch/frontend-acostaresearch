@@ -2250,6 +2250,32 @@ td.acciones {
   flex: 0 1 120px;
 }
 
+/* ── Ventana de crear enlace de prueba ──────────────────────────────────────
+   Nombre y producto a todo el ancho —el nombre del producto es largo y en
+   media columna se cortaba—; los tres topes numéricos juntos debajo, en su
+   propio bloque, para que se lean como un solo grupo. */
+.ventana.prueba {
+  max-width: 620px;
+}
+
+/* Sin esto el .campo, que es grid, estira el input a lo alto de la columna
+   cuando la ayuda de al lado ocupa más líneas. */
+.ventana.prueba .campo {
+  align-content: start;
+  min-width: 0;
+}
+
+/* auto-fit en vez de un @media: en un móvil las columnas bajan solas. El
+   presupuesto de admin.css va justo y cada regla cuenta. */
+.prueba-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  column-gap: 14px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+}
+
 /* ── Tiempo de acceso del enlace de prueba: cantidad y unidad en una fila ── */
 .acceso-fila {
   display: flex;

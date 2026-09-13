@@ -1662,7 +1662,7 @@
     <!-- ── Ventana de crear ──────────────────────────────────────────────── -->
     @if (formularioPruebaAbierto()) {
       <div class="ventana-fondo">
-        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-prueba">
+        <div class="ventana prueba" role="dialog" aria-modal="true" aria-labelledby="titulo-prueba">
           <div class="ventana-cabecera">
             <h3 id="titulo-prueba">Crear enlace de prueba</h3>
             <button
@@ -1681,34 +1681,33 @@
               registrarse ni pagar, y trabaja por separado: nadie ve lo del de al lado.
             </p>
             <form [formGroup]="formPrueba" (ngSubmit)="crearPrueba()" novalidate>
-              <div class="fila">
-                <div class="campo">
-                  <label for="nombre-prueba">Para quién es</label>
-                  <input
-                    id="nombre-prueba"
-                    type="text"
-                    formControlName="name"
-                    placeholder="Taller UNMSM, septiembre"
-                  />
-                  <span class="ayuda">Lo verán los invitados al abrir el enlace.</span>
-                </div>
-                <div class="campo">
-                  <label for="producto-prueba">Producto</label>
-                  <select id="producto-prueba" formControlName="productCode">
-                    @for (producto of productosPrueba(); track producto.code) {
-                      <option [value]="producto.code">{{ producto.name }}</option>
-                    }
-                  </select>
-                </div>
+              <div class="campo">
+                <label for="nombre-prueba">Para quién es</label>
+                <input
+                  id="nombre-prueba"
+                  type="text"
+                  formControlName="name"
+                  placeholder="Taller UNMSM, septiembre"
+                />
+                <span class="ayuda">Lo verán los invitados al abrir el enlace.</span>
               </div>
 
-              <div class="fila">
-                <div class="campo estrecho">
+              <div class="campo">
+                <label for="producto-prueba">Producto</label>
+                <select id="producto-prueba" formControlName="productCode">
+                  @for (producto of productosPrueba(); track producto.code) {
+                    <option [value]="producto.code">{{ producto.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="prueba-rejilla" role="group" aria-label="Límites">
+                <div class="campo">
                   <label for="cupos-prueba">Cupos</label>
                   <input id="cupos-prueba" type="number" min="1" max="500" formControlName="seats" />
-                  <span class="ayuda">Personas que pueden recogerlo</span>
+                  <span class="ayuda">Personas que pueden recogerlo.</span>
                 </div>
-                <div class="campo estrecho">
+                <div class="campo">
                   <label for="acceso-prueba">Tiempo de acceso</label>
                   <div class="acceso-fila">
                     <input
@@ -1722,12 +1721,9 @@
                       <option value="horas">horas</option>
                     </select>
                   </div>
-                  <span class="ayuda">Desde que cada uno lo recoge · 0 = sin límite</span>
+                  <span class="ayuda">Cuenta desde que cada uno lo recoge. 0 = sin límite.</span>
                 </div>
-              </div>
-
-              <div class="fila">
-                <div class="campo estrecho">
+                <div class="campo">
                   <label for="dia-prueba">Consultas al día</label>
                   <input
                     id="dia-prueba"
@@ -1736,7 +1732,7 @@
                     max="1000"
                     formControlName="callsPerDay"
                   />
-                  <span class="ayuda">Por persona · 0 = sin tope</span>
+                  <span class="ayuda">Por persona. 0 = sin tope.</span>
                 </div>
               </div>
             </form>
