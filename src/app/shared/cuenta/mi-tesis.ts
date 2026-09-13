@@ -27,8 +27,8 @@ interface Columna {
  * lo que se decide se decide trabajando, y una pantalla donde marcar casillas a
  * mano acabaría diciendo una cosa distinta de la que sabe el asistente.
  *
- * Mientras no haya nada guardado no se enseña nada. Un panel con diez capítulos
- * en gris no informa de nada y da la impresión de que algo va mal.
+ * Cada método comprado sale aquí aunque no tenga nada guardado —o se acabe de
+ * borrar—, con sus fases en blanco. Sin licencia ni proyecto no se enseña nada.
  */
 @Component({
   selector: 'app-mi-tesis',

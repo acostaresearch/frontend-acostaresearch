@@ -39,7 +39,11 @@ export class Demos {
     const id = /(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/.exec(video)?.[1] ?? video.trim();
     // Angular bloquea cualquier `src` de iframe que no venga marcado. Aquí la
     // URL se construye con un identificador nuestro, no con nada que escriba
-    // el visitante, así que marcarla no abre ninguna puerta.
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}`);
+    // el visitante, así que marcarla no abre ninguna puerta. Va por
+    // youtube-nocookie porque estos iframes cargan al abrir la página, y la
+    // política de privacidad promete que YouTube no pone cookies antes del play.
+    return this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${id}`,
+    );
   }
 }

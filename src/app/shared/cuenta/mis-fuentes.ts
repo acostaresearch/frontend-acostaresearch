@@ -49,6 +49,8 @@ export class MisFuentesPanel implements OnInit {
   readonly subiendo = signal(false);
   readonly vaciando = signal(false);
   readonly error = signal<string | null>(null);
+  /** Tras «Borrar todas»: cuántas se quedaron por estar citadas, si alguna. */
+  readonly conservadas = signal<string | null>(null);
   /** El parte de la última subida. Se enseña hasta que suba otra cosa. */
   readonly resultado = signal<ResultadoDeImportacion | null>(null);
   /** Para el resaltado al arrastrar un archivo encima. */
@@ -249,7 +251,10 @@ export class MisFuentesPanel implements OnInit {
     const seguro = await this.dialogos.confirmar({
       titulo: 'Borrar tus fuentes',
       mensaje: `Se borrarán las ${total} fuentes que subiste.`,
-      nota: 'La biblioteca de Acosta no se toca. Para recuperar las tuyas tendrías que volver a exportarlas.',
+      nota:
+        'Las que ya citas en tus capítulos se quedan, para que esas citas no se rompan en tu ' +
+        'Word. La biblioteca de Acosta no se toca. Para recuperar las demás tendrías que volver ' +
+        'a exportarlas.',
       confirmar: 'Borrar mis fuentes',
       tono: 'peligro',
     });
@@ -258,10 +263,18 @@ export class MisFuentesPanel implements OnInit {
     this.vaciando.set(true);
     this.error.set(null);
     this.resultado.set(null);
+    this.conservadas.set(null);
 
     this.fuentes.vaciar().subscribe({
-      next: () => {
+      next: ({ conservadas }) => {
         this.vaciando.set(false);
+        if (conservadas > 0) {
+          this.conservadas.set(
+            conservadas === 1
+              ? 'Se conservó 1 fuente porque la citas en tus capítulos. Si la quitas del texto, podrás borrarla.'
+              : `Se conservaron ${conservadas} fuentes porque las citas en tus capítulos. Si las quitas del texto, podrás borrarlas.`,
+          );
+        }
         this.cargar();
       },
       error: (error: unknown) => {

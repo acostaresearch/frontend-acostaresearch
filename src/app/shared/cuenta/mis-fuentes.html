@@ -87,6 +87,10 @@
   </p>
 }
 
+@if (conservadas(); as texto) {
+  <p class="aviso">{{ texto }}</p>
+}
+
 @if (error(); as mensaje) {
   <p class="aviso error">{{ mensaje }}</p>
 }

@@ -11,7 +11,7 @@
     <!-- Una pestaña por proyecto, solo si hay más de uno. -->
     @if (lista().length > 1) {
       <div class="pestanas">
-        @for (otro of lista(); track otro.id) {
+        @for (otro of lista(); track otro.productCode) {
           <button
             type="button"
             class="pestana"
@@ -223,17 +223,21 @@
     <!-- Empezar de cero. En pequeño y fuera de los recuadros: es para quien le
          cambiaron el tema, no algo que se pulse de paso. La confirmación va en
          la ventana del sitio. -->
-    <p class="borrar-entrada">
-      ¿Te cambiaron el tema?
-      <button
-        type="button"
-        class="boton enlace"
-        [disabled]="borrando()"
-        (click)="borrarProgreso(p)"
-      >
-        {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
-      </button>
-    </p>
+    <!-- Solo si hay algo guardado: un método que sale en blanco por tener
+         licencia no tiene nada que borrar. -->
+    @if (p.guardado) {
+      <p class="borrar-entrada">
+        ¿Te cambiaron el tema?
+        <button
+          type="button"
+          class="boton enlace"
+          [disabled]="borrando()"
+          (click)="borrarProgreso(p)"
+        >
+          {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
+        </button>
+      </p>
+    }
     @if (avisoBorrado(); as mensaje) {
       <p class="aviso-borrado" role="status">{{ mensaje }}</p>
     }

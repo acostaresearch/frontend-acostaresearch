@@ -59,7 +59,10 @@ export interface PlantillaPuesta {
 }
 
 export interface Proyecto {
-  id: string;
+  /** Nulo en un método comprado que todavía no tiene nada guardado. */
+  id: string | null;
+  /** Falso = sale en blanco porque tiene licencia, pero no hay nada que borrar. */
+  guardado: boolean;
   productCode: string;
   /** El nombre de venta del producto: «Método de Tesis · 9 Capítulos + …». */
   productName: string;
@@ -69,7 +72,7 @@ export interface Proyecto {
   plantilla: PlantillaPuesta | null;
   /** La norma de citas con la que sale el Word. Si no la eligió nadie, APA 7. */
   norma: NormaDelProyecto;
-  updatedAt: string;
+  updatedAt: string | null;
   etapas: EtapaDelProyecto[];
   /** Solo de las fases: las herramientas de apoyo no cuentan. */
   avance: { listos: number; total: number };

@@ -102,9 +102,10 @@ export class Tutoriales implements OnInit {
     // Angular bloquea cualquier `src` de iframe sin marcar. Aquí la URL se
     // construye con un identificador ya validado, no con lo que venga. Con
     // autoplay porque solo se pinta después de pulsar play: pedir dos clics
-    // para ver un video es uno de más.
+    // para ver un video es uno de más. Por youtube-nocookie, como promete la
+    // política de privacidad.
     return this.sanitizer.bypassSecurityTrustResourceUrl(
-      `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`,
+      `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
     );
   });
 

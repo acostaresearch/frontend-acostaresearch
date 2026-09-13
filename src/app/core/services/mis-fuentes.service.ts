@@ -90,9 +90,10 @@ export class MisFuentesService {
       .pipe(map((res) => res.data));
   }
 
-  vaciar(): Observable<{ borradas: number }> {
+  /** `conservadas`: las que se quedan porque están citadas en sus capítulos. */
+  vaciar(): Observable<{ borradas: number; conservadas: number }> {
     return this.http
-      .delete<ApiResponse<{ borradas: number }>>(this.base)
+      .delete<ApiResponse<{ borradas: number; conservadas: number }>>(this.base)
       .pipe(map((res) => res.data));
   }
 }
