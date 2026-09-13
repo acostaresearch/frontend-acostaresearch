@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { toApiError } from '../../core/http/api-error';
+import { DialogoService } from '../../core/services/dialogo.service';
 import {
   CatalogoDeNormas,
   EtapaDelProyecto,
@@ -37,6 +38,7 @@ interface Columna {
 })
 export class MiTesis implements OnInit {
   private readonly proyectos = inject(ProyectoService);
+  private readonly dialogos = inject(DialogoService);
 
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
@@ -83,7 +85,7 @@ export class MiTesis implements OnInit {
     this.elegido.set(productCode);
     this.retomarAbierto.set(false);
     this.copiado.set(false);
-    this.cancelarBorrado();
+    this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
   }
 
@@ -318,50 +320,57 @@ export class MiTesis implements OnInit {
   }
 
   // ── Empezar de cero ──────────────────────────────────────────────────────
-  /** El proyecto cuyo borrado se está confirmando. */
-  readonly pidiendoBorrar = signal<string | null>(null);
-  readonly confirmacionBorrado = signal('');
-  /**
-   * Se pide escribir la palabra y no un «¿seguro?», como al borrar la cuenta:
-   * a un «¿seguro?» se le da que sí sin leerlo, y esto no tiene vuelta atrás.
-   */
-  readonly puedeBorrar = computed(
-    () => this.confirmacionBorrado().trim().toLowerCase() === 'eliminar',
-  );
   readonly borrando = signal(false);
   readonly errorBorrado = signal<string | null>(null);
-  /** Se enseña donde estaba el botón, que es donde está mirando al pulsarlo. */
+  /** Se enseña junto al botón, que es donde está mirando al pulsarlo. */
   readonly avisoBorrado = signal<string | null>(null);
 
-  pedirBorrar(p: Proyecto): void {
-    this.confirmacionBorrado.set('');
+  /**
+   * Pide confirmación en la ventana del sitio y devuelve el proyecto al comienzo.
+   *
+   * Se pide escribir la palabra y no un «¿seguro?», como al borrar la cuenta: a
+   * un «¿seguro?» se le da que sí sin leerlo, y esto no tiene vuelta atrás. La
+   * ventana solo exige que el campo no esté vacío; la palabra se comprueba aquí
+   * para no mandar la petición en balde, y el servidor la vuelve a comprobar.
+   */
+  async borrarProgreso(p: Proyecto): Promise<void> {
+    if (this.borrando()) return;
+
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
-    this.pidiendoBorrar.set(p.productCode);
-  }
 
-  cancelarBorrado(): void {
-    if (this.borrando()) return;
-    this.pidiendoBorrar.set(null);
-    this.confirmacionBorrado.set('');
-    this.errorBorrado.set(null);
-  }
+    const palabras = this.palabrasTotales(p);
+    const escrito = await this.dialogos.pedirTexto({
+      titulo: `Borrar tu progreso de ${this.nombreCorto(p)}`,
+      mensaje:
+        'Se borra para siempre: el tema, lo anotado en cada fase, ' +
+        (palabras > 0 ? `los capítulos escritos (${palabras} palabras), ` : '') +
+        'el análisis, la norma de citas y el formato de tu facultad. Tus fases volverán a quedar sin empezar.\n' +
+        'Si quieres conservar el texto, descarga antes tu Word.',
+      nota:
+        'Tu licencia y tu Zotero siguen igual. Tus conversaciones en Claude no se borran, pero el ' +
+        'conector ya no le recordará nada.',
+      tono: 'peligro',
+      confirmar: 'Borrar mi progreso',
+      campo: {
+        etiqueta: 'Escribe «eliminar» para confirmar',
+        placeholder: 'eliminar',
+        obligatorio: true,
+        maxlength: 20,
+      },
+    });
 
-  escribirConfirmacion(evento: Event): void {
-    this.confirmacionBorrado.set((evento.target as HTMLInputElement).value);
-  }
-
-  confirmarBorrado(p: Proyecto): void {
-    if (!this.puedeBorrar() || this.borrando()) return;
+    if (escrito === null) return;
+    if (escrito.trim().toLowerCase() !== 'eliminar') {
+      this.errorBorrado.set('No se borró nada: para confirmar hay que escribir «eliminar».');
+      return;
+    }
 
     this.borrando.set(true);
-    this.errorBorrado.set(null);
 
-    this.proyectos.borrar(p.productCode, this.confirmacionBorrado()).subscribe({
+    this.proyectos.borrar(p.productCode, escrito).subscribe({
       next: () => {
         this.borrando.set(false);
-        this.pidiendoBorrar.set(null);
-        this.confirmacionBorrado.set('');
         this.abiertos.set(new Set());
         this.retomarAbierto.set(false);
         this.normaGuardada.set(null);
