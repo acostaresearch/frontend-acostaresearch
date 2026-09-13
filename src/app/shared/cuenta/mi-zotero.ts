@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -61,6 +70,31 @@ export class MiZoteroPanel implements OnInit {
    */
   readonly vuelta = signal<string | null>(null);
 
+  /**
+   * Buscar entre sus colecciones.
+   *
+   * Quien lleva años en Zotero tiene decenas, y la de la tesis queda enterrada
+   * bajo las de cada asignatura. Se busca por el camino entero —«Tesis ›
+   * Antecedentes»—, sin distinguir mayúsculas ni tildes: nadie escribe
+   * «Metodología» con la tilde cuando busca deprisa.
+   */
+  readonly buscando = signal(false);
+  readonly busqueda = signal('');
+  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
+
+  readonly encontradas = computed(() => {
+    const colecciones = this.colecciones()?.colecciones ?? [];
+    const texto = normalizar(this.busqueda().trim());
+    if (!texto) return colecciones;
+    return colecciones.filter((coleccion) => normalizar(coleccion.nombre).includes(texto));
+  });
+
+  constructor() {
+    // El campo aparece al pulsar «Buscar»: se le da el foco para que escriba
+    // sin otro clic.
+    effect(() => this.campo()?.nativeElement.focus());
+  }
+
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('zotero');
     if (resultado) {
@@ -111,7 +145,17 @@ export class MiZoteroPanel implements OnInit {
     });
   }
 
+  abrirBusqueda(): void {
+    this.buscando.set(true);
+  }
+
+  cerrarBusqueda(): void {
+    this.buscando.set(false);
+    this.busqueda.set('');
+  }
+
   pedirColecciones(): void {
+    this.cerrarBusqueda();
     this.error.set(null);
     this.zotero.colecciones().subscribe({
       next: (lo) => this.colecciones.set(lo),
@@ -131,6 +175,7 @@ export class MiZoteroPanel implements OnInit {
     this.zotero.elegir(clave).subscribe({
       next: () => {
         this.colecciones.set(null);
+        this.cerrarBusqueda();
         // La primera pasada la lanza el servidor por detrás, así que aquí no
         // hay cifras todavía: se vuelve a preguntar el estado en unos segundos.
         this.parte.set('Trayendo tu colección. Tarda unos segundos.');
@@ -189,6 +234,7 @@ export class MiZoteroPanel implements OnInit {
     this.zotero.desconectar().subscribe({
       next: () => {
         this.colecciones.set(null);
+        this.cerrarBusqueda();
         this.parte.set(null);
         this.vuelta.set(null);
         this.cargar();
@@ -196,4 +242,12 @@ export class MiZoteroPanel implements OnInit {
       error: (fallo) => this.error.set(toApiError(fallo).message),
     });
   }
+}
+
+/** Minúsculas y sin tildes: «Metodología» y «metodologia» son la misma búsqueda. */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
 }

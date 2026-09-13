@@ -71,6 +71,30 @@
            pantalla les decía «crea una colección y vuelve»: deberes antes de
            poder usar lo que pagaron. -->
       @if (colecciones(); as puede) {
+        @if (puede.colecciones.length > 0) {
+          <div class="zotero-buscar">
+            @if (buscando()) {
+              <input
+                #campo
+                type="search"
+                class="zotero-buscar-campo"
+                placeholder="Busca una colección por su nombre"
+                aria-label="Buscar una colección"
+                [value]="busqueda()"
+                (input)="busqueda.set($any($event.target).value)"
+                (keydown.escape)="cerrarBusqueda()"
+              />
+              <button type="button" class="boton enlace" (click)="cerrarBusqueda()">
+                Cerrar
+              </button>
+            } @else {
+              <button type="button" class="boton enlace" (click)="abrirBusqueda()">
+                Buscar colección
+              </button>
+            }
+          </div>
+        }
+
         <ul class="zotero-lista">
           <li>
             <button
@@ -84,7 +108,7 @@
             </button>
           </li>
 
-          @for (coleccion of puede.colecciones; track coleccion.clave) {
+          @for (coleccion of encontradas(); track coleccion.clave) {
             <li>
               <button
                 type="button"
@@ -98,6 +122,10 @@
             </li>
           }
         </ul>
+
+        @if (puede.colecciones.length > 0 && encontradas().length === 0) {
+          <p class="nota">Ninguna colección se llama «{{ busqueda().trim() }}».</p>
+        }
 
         @if (puede.colecciones.length === 0) {
           <p class="nota">

@@ -71,6 +71,28 @@
    Botones y no un desplegable. Un <select> esconde la lista detrás de un
    clic y no deja ver cuántas fuentes tiene cada una, que es justo el dato con
    el que se decide cuál es «la de la tesis». */
+.zotero-buscar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.zotero-buscar-campo {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.zotero-buscar-campo:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
 .zotero-lista {
   margin: 0 0 14px;
   padding: 0;
