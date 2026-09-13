@@ -203,6 +203,13 @@ function dePasarela(pago: PagoAdmin): Acceso {
  * por su comprobante, y contarlos dos veces era exactamente el problema que
  * tenía el panel —la misma venta aparecía en dos pantallas y borrarla en una la
  * dejaba viva en la otra—.
+ *
+ * Por lo mismo se descartan los pagos que nacen al canjear un código: el canje
+ * apunta un cobro con el medio del código —casi siempre Yape—, así que esa
+ * venta salía una vez como «Código · Canjeado» y otra como «Yape · Aprobado».
+ * La fila que se queda es la del código, que tiene la fecha en que entró el
+ * dinero. Se reconocen igual que en los gráficos de ingresos: el pago del
+ * canje lleva el id del código como número de orden.
  */
 export function unirAccesos(
   codigos: readonly ActivationCode[],
@@ -210,11 +217,15 @@ export function unirAccesos(
   comprobantes: readonly PagoRevisado[],
   pagos: readonly PagoAdmin[],
 ): Acceso[] {
+  const deCodigos = new Set(codigos.map((codigo) => codigo.id));
+  const noEsCanje = (pago: { providerOrderId: string | null }) =>
+    !pago.providerOrderId || !deCodigos.has(pago.providerOrderId);
+
   return [
     ...codigos.map(deCodigo),
     ...porRevisar.map(dePendiente),
-    ...comprobantes.map(deComprobante),
-    ...pagos.filter((pago) => pago.provider !== 'YAPE').map(dePasarela),
+    ...comprobantes.filter(noEsCanje).map(deComprobante),
+    ...pagos.filter((pago) => pago.provider !== 'YAPE' && noEsCanje(pago)).map(dePasarela),
     // Fechas ISO en UTC: se comparan como cadenas y salen en orden. La más
     // reciente primero, que es por donde se empieza a mirar.
   ].sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
