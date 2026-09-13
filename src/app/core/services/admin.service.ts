@@ -158,6 +158,24 @@ export class AdminService {
       .pipe(map((res) => ({ license: res.data.license, mensaje: res.message ?? '' })));
   }
 
+  /** Si esa licencia puede abrir varias tesis. Sale de su ficha. */
+  variasTesisDe(id: string): Observable<boolean> {
+    return this.http
+      .get<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}`)
+      .pipe(map((res) => res.data.license.variasTesis === true));
+  }
+
+  /** Enciende o apaga que esa licencia pueda abrir varias tesis. */
+  cambiarVariasTesis(id: string, activar: boolean): Observable<{ activa: boolean; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}/varias-tesis`, {
+        activar,
+      })
+      .pipe(
+        map((res) => ({ activa: res.data.license.variasTesis === true, mensaje: res.message ?? '' })),
+      );
+  }
+
   alertas(): Observable<Alerta[]> {
     return this.http
       .get<ApiResponse<{ alerts: Alerta[] }>>(`${this.licencias}/alerts`)

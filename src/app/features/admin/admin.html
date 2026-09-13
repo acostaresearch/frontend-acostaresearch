@@ -713,6 +713,54 @@
                 </div>
               </div>
             }
+
+            <!-- ── Varias tesis ──────────────────────────────────────────────
+                 Por defecto, una tesis por licencia. Encenderlo le pone el botón
+                 «Nueva tesis» en su perfil para este método; apagarlo no le
+                 borra las que ya abrió. -->
+            @if (acceso.licenseId) {
+              <div class="mover-producto">
+                <h4>Varias tesis</h4>
+                <p class="tenue">
+                  Permite que abra más de una tesis de este método desde su perfil y elija con cuál
+                  trabaja Claude. Su URL y lo que ya tiene no cambian.
+                </p>
+
+                <div class="mover-fila">
+                  @if (variasTesis() === null && !errorVariasTesis()) {
+                    <span class="tenue">Consultando…</span>
+                  } @else if (variasTesis() !== null) {
+                    <span
+                      class="pastilla"
+                      [class.buena]="variasTesis()"
+                      [class.espera]="!variasTesis()"
+                    >
+                      {{ variasTesis() ? 'Puede abrir varias' : 'Una sola tesis' }}
+                    </span>
+                    <button
+                      type="button"
+                      class="boton"
+                      [class.secundario]="variasTesis()"
+                      [disabled]="guardandoVariasTesis()"
+                      (click)="cambiarVariasTesis()"
+                    >
+                      @if (guardandoVariasTesis()) {
+                        Guardando…
+                      } @else {
+                        {{ variasTesis() ? 'Quitar el permiso' : 'Activar varias tesis' }}
+                      }
+                    </button>
+                  }
+                </div>
+
+                @if (avisoVariasTesis(); as mensaje) {
+                  <p class="tenue" role="status">{{ mensaje }}</p>
+                }
+                @if (errorVariasTesis(); as mensaje) {
+                  <div class="aviso error" role="alert">{{ mensaje }}</div>
+                }
+              </div>
+            }
           </div>
 
           <div class="ventana-pie">

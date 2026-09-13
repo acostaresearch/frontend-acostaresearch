@@ -26,8 +26,10 @@
       </div>
     }
 
-    <!-- Varias tesis del mismo método. Solo un administrador puede abrir más;
-         el bloque sale también a quien ya tiene varias, para poder elegir. -->
+    <!-- Varias tesis del mismo método. Abren más el administrador y quien
+         tenga el permiso en su licencia (lo da el administrador desde la
+         ficha del acceso); el bloque sale también a quien ya tiene varias,
+         para poder elegir aunque le hayan quitado el permiso. -->
     @if (p.puedeCrearTesis || p.tesis.length > 1) {
       <div class="caja varias">
         <div class="caja-fila">

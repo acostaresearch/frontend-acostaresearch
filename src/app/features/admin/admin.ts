@@ -3295,13 +3295,71 @@ export class Admin implements OnInit {
   abrirAcceso(acceso: Acceso): void {
     this.accesoAbierto.set(acceso);
     this.soltarCaptura();
+    this.limpiarVariasTesis();
     if (acceso.tieneComprobante) this.descargarCaptura(acceso);
+    if (acceso.licenseId) this.consultarVariasTesis(acceso.licenseId);
   }
 
   cerrarAcceso(): void {
     this.accesoAbierto.set(null);
     this.productoElegido.set('');
     this.soltarCaptura();
+    this.limpiarVariasTesis();
+  }
+
+  // ── Varias tesis por licencia ────────────────────────────────────────────
+  //
+  // Por defecto una licencia es para una tesis. Esto le deja abrir más desde
+  // su perfil a quien lo necesite, sin tocarle la URL ni lo que ya tiene.
+
+  /** Si la licencia de la ficha lo permite. Nulo mientras se consulta o si falló. */
+  readonly variasTesis = signal<boolean | null>(null);
+  readonly guardandoVariasTesis = signal(false);
+  /** Mensajes dentro de la ficha: el aviso general queda tapado por la ventana. */
+  readonly avisoVariasTesis = signal<string | null>(null);
+  readonly errorVariasTesis = signal<string | null>(null);
+
+  private limpiarVariasTesis(): void {
+    this.variasTesis.set(null);
+    this.guardandoVariasTesis.set(false);
+    this.avisoVariasTesis.set(null);
+    this.errorVariasTesis.set(null);
+  }
+
+  private consultarVariasTesis(licenseId: string): void {
+    this.admin.variasTesisDe(licenseId).subscribe({
+      next: (valor) => {
+        // Si ya se abrió otra ficha, esta respuesta no es de ella.
+        if (this.accesoAbierto()?.licenseId === licenseId) this.variasTesis.set(valor);
+      },
+      error: (fallo) => {
+        if (this.accesoAbierto()?.licenseId === licenseId) {
+          this.errorVariasTesis.set(mensajeDeError(fallo));
+        }
+      },
+    });
+  }
+
+  cambiarVariasTesis(): void {
+    const acceso = this.accesoAbierto();
+    const actual = this.variasTesis();
+    if (!acceso?.licenseId || actual === null || this.guardandoVariasTesis()) return;
+
+    this.guardandoVariasTesis.set(true);
+    this.avisoVariasTesis.set(null);
+    this.errorVariasTesis.set(null);
+
+    this.admin.cambiarVariasTesis(acceso.licenseId, !actual).subscribe({
+      next: ({ activa, mensaje }) => {
+        this.guardandoVariasTesis.set(false);
+        this.variasTesis.set(activa);
+        this.avisoVariasTesis.set(mensaje);
+      },
+      error: (fallo) => {
+        this.guardandoVariasTesis.set(false);
+        this.errorVariasTesis.set(mensajeDeError(fallo));
+      },
+    });
   }
 
   private soltarCaptura(): void {

@@ -2034,10 +2034,17 @@ td.acciones {
   color: var(--color-texto-tenue);
 }
 
+.ficha > div {
+  min-width: 0;
+}
+
+/* Un nombre sin espacios (METODO_DE_TESIS_HUMANIZADOR) no tenía por dónde
+   partirse y se montaba sobre la columna de al lado. */
 .ficha dd {
   margin: 0;
   font-size: 14px;
   color: var(--color-texto);
+  overflow-wrap: anywhere;
 }
 
 .ficha-captura {

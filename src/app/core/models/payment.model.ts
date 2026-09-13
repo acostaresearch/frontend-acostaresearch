@@ -80,6 +80,8 @@ export interface License {
   lastUsedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
+  /** Si puede abrir varias tesis de este método. Lo enciende un administrador. */
+  variasTesis?: boolean;
   /** Solo cuando está revocada o suspendida. */
   revokedAt?: string | null;
   revokedReason?: string | null;
