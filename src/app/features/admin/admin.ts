@@ -2132,7 +2132,7 @@ export class Admin implements OnInit {
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     productCode: ['', Validators.required],
     seats: [30, [Validators.required, Validators.min(1), Validators.max(500)]],
-    /** Cuánto dura cada conector desde que se recoge. 0 = sin límite. */
+    /** Cuánto dura la prueba desde que se crea el enlace. 0 = sin límite. */
     accesoCantidad: [24, [Validators.required, Validators.min(0), Validators.max(525600)]],
     accesoUnidad: ['horas' as 'minutos' | 'horas'],
     callsPerDay: [20, [Validators.required, Validators.min(0), Validators.max(1000)]],

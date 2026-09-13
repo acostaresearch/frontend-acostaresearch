@@ -9,7 +9,7 @@
       <p class="antetitulo">Prueba gratuita{{ prueba() ? ' · ' + prueba()!.name : '' }}</p>
       <h1>Tu conector está listo</h1>
 
-      @if (prueba()?.estado === 'APAGADO') {
+      @if (prueba()?.estado === 'APAGADO' || prueba()?.estado === 'TERMINADO') {
         <div class="aviso error" role="alert">
           Esta prueba ya terminó: el conector dejó de funcionar.
         </div>
@@ -66,8 +66,8 @@
         @case ('ABIERTO') {
           <p>
             Recibe tu propio conector para Claude, sin registrarte y sin pagar.
-            @if (p.accessMinutes > 0) {
-              Te dura <strong>{{ duracion(p.accessMinutes) }}</strong>
+            @if (p.terminaAt) {
+              Funciona hasta el <strong>{{ p.terminaAt | date: 'd MMM y, HH:mm' }}</strong>
             } @else {
               <strong>No caduca</strong>
             }
@@ -97,6 +97,10 @@
             Si te quedaste sin el tuyo, pídele otro enlace a quien te lo pasó, o mira los
             <a routerLink="/planes">planes</a>.
           </p>
+        }
+        @case ('TERMINADO') {
+          <div class="aviso info" role="status">Esta prueba del conector ya terminó.</div>
+          <p>Si quieres seguir, tienes los <a routerLink="/planes">planes</a>.</p>
         }
         @case ('APAGADO') {
           <div class="aviso info" role="status">Esta prueba del conector ya terminó.</div>

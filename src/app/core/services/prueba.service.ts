@@ -5,8 +5,11 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 
-/** En qué punto está un enlace. APAGADO corta además todos sus conectores. */
-export type EstadoPrueba = 'ABIERTO' | 'LLENO' | 'APAGADO';
+/**
+ * En qué punto está un enlace. APAGADO y TERMINADO —pasada su hora de fin—
+ * cortan además todos sus conectores.
+ */
+export type EstadoPrueba = 'ABIERTO' | 'LLENO' | 'TERMINADO' | 'APAGADO';
 
 /** Un enlace de prueba, tal como lo ve el administrador. */
 export interface EnlacePrueba {
@@ -19,12 +22,14 @@ export interface EnlacePrueba {
   url: string;
   seats: number;
   claimed: number;
-  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  /** Minutos de acceso desde que se crea el enlace. 0 = sin límite. */
   accessMinutes: number;
   /** 0 = sin tope. */
   callsPerDay: number;
   active: boolean;
   estado: EstadoPrueba;
+  /** Cuándo dejan de funcionar todos sus conectores. Nulo = sin límite. */
+  terminaAt: string | null;
   /** Cuántos de los entregados llegaron a usar el conector. */
   conectados: number;
   /** Consultas de todos sus conectores juntos. */
@@ -36,7 +41,7 @@ export interface CrearPrueba {
   name: string;
   productCode: string;
   seats: number;
-  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  /** Minutos de acceso desde que se crea el enlace. 0 = sin límite. */
   accessMinutes: number;
   callsPerDay: number;
 }
@@ -56,9 +61,11 @@ export interface PruebaPublica {
   name: string;
   productName: string;
   estado: EstadoPrueba;
+  /** Cuándo termina la prueba para todo el grupo. Nulo = sin límite. */
+  terminaAt: string | null;
   quedan: number;
   seats: number;
-  /** Minutos de acceso desde que se recoge. 0 = sin límite. */
+  /** Minutos de acceso desde que se crea el enlace. 0 = sin límite. */
   accessMinutes: number;
   callsPerDay: number;
 }

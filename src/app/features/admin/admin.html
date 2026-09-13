@@ -1589,7 +1589,7 @@
                 <th>Producto</th>
                 <th>Entregados</th>
                 <th>Lo usaron</th>
-                <th>Cada conector</th>
+                <th>Acceso</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
@@ -1609,6 +1609,9 @@
                   </td>
                   <td class="tenue">
                     {{ duracionPrueba(enlace.accessMinutes) }}
+                    @if (enlace.terminaAt) {
+                      <div>hasta el {{ enlace.terminaAt | date: 'd MMM, HH:mm' }}</div>
+                    }
                     <div>{{ topesPrueba(enlace) }}</div>
                   </td>
                   <td>
@@ -1616,14 +1619,16 @@
                       class="pastilla"
                       [class.buena]="enlace.estado === 'ABIERTO'"
                       [class.espera]="enlace.estado === 'LLENO'"
-                      [class.mala]="enlace.estado === 'APAGADO'"
+                      [class.mala]="enlace.estado === 'APAGADO' || enlace.estado === 'TERMINADO'"
                     >
                       {{
                         enlace.estado === 'ABIERTO'
                           ? 'Abierto'
                           : enlace.estado === 'LLENO'
                             ? 'Lleno'
-                            : 'Apagado'
+                            : enlace.estado === 'TERMINADO'
+                              ? 'Terminado'
+                              : 'Apagado'
                       }}
                     </span>
                   </td>
@@ -1721,7 +1726,10 @@
                       <option value="horas">horas</option>
                     </select>
                   </div>
-                  <span class="ayuda">Cuenta desde que cada uno lo recoge. 0 = sin límite.</span>
+                  <span class="ayuda">
+                    Cuenta desde que creas el enlace. Al acabar, dejan de funcionar todos sus
+                    conectores. 0 = sin límite.
+                  </span>
                 </div>
                 <div class="campo">
                   <label for="dia-prueba">Consultas al día</label>
