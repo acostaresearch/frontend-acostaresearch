@@ -37,8 +37,8 @@ export interface Pregunta {
 export const CIFRAS = [
   { valor: '+500', pie: 'tesistas ya lo usan' },
   { valor: '15', pie: 'normas de citas, de APA 7 a Chicago, en español o inglés' },
-  { valor: 'ZOTERO', pie: 'integrado: citas y referencias al día, sin citas huérfanas' },
-  { valor: 'TU FORMATO', pie: 'el de tu universidad, y con tus propias fuentes' },
+  { valor: 'Zotero', pie: 'integrado: citas y referencias al día, sin citas huérfanas' },
+  { valor: 'Tu formato', pie: 'el de tu universidad, y con tus propias fuentes' },
   { valor: '0', pie: 'autores inventados' },
 ];
 
