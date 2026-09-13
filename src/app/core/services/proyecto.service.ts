@@ -61,6 +61,10 @@ export interface PlantillaPuesta {
    * pie y portada: hay que volver a subirla para que se apliquen.
    */
   completa: boolean;
+  /** Si su Word sale con la portada de la plantilla. */
+  portada: boolean;
+  /** Qué datos se detectaron en esa portada: titulo, autor, asesor, carrera, anio. */
+  camposDePortada: string[];
 }
 
 /** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
@@ -92,6 +96,8 @@ export interface Proyecto {
   tema: string | null;
   carrera: string | null;
   universidad: string | null;
+  /** Nulo = no se ha dicho; vacío = todavía no tiene. */
+  asesor: string | null;
   plantilla: PlantillaPuesta | null;
   /** La norma de citas con la que sale el Word. Si no la eligió nadie, APA 7. */
   norma: NormaDelProyecto;
@@ -253,6 +259,22 @@ export class ProyectoService {
         `${this.base}/${encodeURIComponent(productCode)}/tesis/${encodeURIComponent(id)}`,
         { body: { confirmacion } },
       )
+      .pipe(map(() => undefined));
+  }
+
+  /** Cambia el asesor que sale en la portada. Vacío lo quita. Devuelve el que queda. */
+  cambiarAsesor(productCode: string, asesor: string): Observable<string> {
+    return this.http
+      .patch<ApiResponse<{ asesor: string }>>(`${this.base}/${encodeURIComponent(productCode)}/asesor`, {
+        asesor,
+      })
+      .pipe(map((r) => r.data?.asesor ?? ''));
+  }
+
+  /** Deja de usar la portada de su plantilla; lo demás del formato se queda. */
+  quitarPortada(productCode: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/plantilla/portada`)
       .pipe(map(() => undefined));
   }
 

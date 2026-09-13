@@ -268,14 +268,90 @@ export class MiTesis implements OnInit {
   }
 
   // ── La plantilla de su facultad ──────────────────────────────────────────
-  /**
-   * Las marcas que se escriben en la portada de la plantilla.
-   *
-   * En el componente y no en la plantilla HTML: las llaves dobles ahí serían
-   * una interpolación de Angular.
-   */
-  readonly marcasDePortada = '{{TITULO}}, {{AUTOR}}, {{CARRERA}}, {{UNIVERSIDAD}} y {{AÑO}}';
   readonly subiendoPlantilla = signal(false);
+
+  /** «título, nombre y año», para decir qué se detectó en su portada. */
+  camposLegibles(campos: string[]): string {
+    const nombres: Record<string, string> = {
+      titulo: 'título',
+      autor: 'tu nombre',
+      asesor: 'asesor',
+      carrera: 'carrera',
+      anio: 'año',
+    };
+    const lista = campos.map((c) => nombres[c] ?? c);
+    return lista.length > 1 ? `${lista.slice(0, -1).join(', ')} y ${lista.at(-1)}` : (lista[0] ?? '');
+  }
+
+  /** Vuelve a nuestra portada si la detección se equivocó. Lo demás del formato se queda. */
+  async noUsarPortada(p: Proyecto): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Usar nuestra portada',
+      mensaje:
+        'Tu Word saldrá con nuestra portada en lugar de la de tu plantilla. Los estilos, márgenes, ' +
+        'encabezado y pie de tu facultad se quedan. Si quieres recuperarla, vuelve a subir la plantilla.',
+      confirmar: 'Usar la nuestra',
+    });
+    if (!seguro) return;
+
+    this.subiendoPlantilla.set(true);
+    this.errorPlantilla.set(null);
+    this.plantillaPuesta.set(null);
+    this.proyectos.quitarPortada(p.productCode).subscribe({
+      next: () => {
+        this.subiendoPlantilla.set(false);
+        this.recargar();
+      },
+      error: (e) => {
+        this.subiendoPlantilla.set(false);
+        this.errorPlantilla.set(toApiError(e).message);
+      },
+    });
+  }
+
+  // ── El asesor ────────────────────────────────────────────────────────────
+  readonly guardandoAsesor = signal(false);
+  readonly errorAsesor = signal<string | null>(null);
+
+  /**
+   * Cambia el asesor que sale en la portada.
+   *
+   * Normalmente lo guarda Claude al preguntárselo; esto es para quien lo tiene
+   * que cambiar o corregir sin abrir una conversación.
+   */
+  async editarAsesor(p: Proyecto): Promise<void> {
+    if (this.guardandoAsesor()) return;
+
+    const escrito = await this.dialogos.pedirTexto({
+      titulo: 'Tu asesor',
+      mensaje:
+        'Sale en la portada de tu Word. Escríbelo como debe aparecer, con su grado. Déjalo vacío si ' +
+        'todavía no tienes.',
+      confirmar: 'Guardar',
+      campo: {
+        etiqueta: 'Nombre del asesor',
+        placeholder: 'Dr. Juan Pérez Gómez',
+        obligatorio: false,
+        maxlength: 160,
+      },
+    });
+    if (escrito === null) return;
+
+    this.guardandoAsesor.set(true);
+    this.errorAsesor.set(null);
+    this.proyectos.cambiarAsesor(p.productCode, escrito.trim()).subscribe({
+      next: (asesor) => {
+        this.guardandoAsesor.set(false);
+        this.lista.update((lista) =>
+          lista.map((x) => (x.productCode === p.productCode ? { ...x, asesor } : x)),
+        );
+      },
+      error: (e) => {
+        this.guardandoAsesor.set(false);
+        this.errorAsesor.set(toApiError(e).message);
+      },
+    });
+  }
   readonly errorPlantilla = signal<string | null>(null);
   readonly plantillaPuesta = signal<string | null>(null);
 

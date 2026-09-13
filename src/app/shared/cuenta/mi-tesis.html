@@ -116,6 +116,22 @@
             {{ p.carrera }}@if (p.carrera && p.universidad) { · }{{ p.universidad }}
           </p>
         }
+        <!-- El asesor sale en la portada del Word. Lo guarda Claude al
+             preguntárselo; aquí se corrige sin abrir una conversación. -->
+        <p class="donde">
+          Asesor: {{ p.asesor || 'sin indicar' }}
+          <button
+            type="button"
+            class="boton enlace"
+            [disabled]="guardandoAsesor()"
+            (click)="editarAsesor(p)"
+          >
+            {{ guardandoAsesor() ? 'Guardando…' : p.asesor ? 'Cambiar' : 'Añadir' }}
+          </button>
+        </p>
+        @if (errorAsesor(); as mensaje) {
+          <p class="aviso-descarga">{{ mensaje }}</p>
+        }
       </div>
 
       <div class="cuenta">
@@ -399,6 +415,21 @@
                 títulos, su encabezado, su pie y su portada. Pulsa «Cambiarlo» y sube el mismo
                 archivo otra vez para aplicarlos.
               </p>
+            } @else if (puesta.portada) {
+              <p class="plantilla-nota">
+                Usamos su portada
+                @if (puesta.camposDePortada.length > 0) {
+                  con tu {{ camposLegibles(puesta.camposDePortada) }}
+                }.
+                <button
+                  type="button"
+                  class="boton enlace"
+                  [disabled]="subiendoPlantilla()"
+                  (click)="noUsarPortada(p)"
+                >
+                  No usar su portada
+                </button>
+              </p>
             }
           </div>
           <div class="plantilla-acciones">
@@ -427,11 +458,11 @@
           <div>
             <p class="caja-titulo">¿Tu facultad te dio un documento con el formato exigido?</p>
             <p class="caja-texto">
-              Súbelo y tu tesis saldrá con sus títulos (también los numerados), sus fuentes, sus
-              márgenes, su encabezado y su pie de página. Si trae portada, escribe en ella
-              <code>{{ marcasDePortada }}</code> donde van tus datos y la usaremos con los tuyos.
-              Solo se guarda el formato: <strong>el resto del contenido no se conserva</strong>.
-              Si no subes ninguno, sale en Times New Roman 12 a doble espacio.
+              Súbelo tal cual y tu tesis saldrá con sus títulos (también los numerados), sus
+              fuentes, sus márgenes, su encabezado, su pie de página y su portada, que llenamos
+              con tus datos. Solo se guarda el formato:
+              <strong>el resto del contenido no se conserva</strong>. Si no subes ninguno, sale
+              en Times New Roman 12 a doble espacio.
             </p>
           </div>
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:
