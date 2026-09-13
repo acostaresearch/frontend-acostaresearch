@@ -1,7 +1,3 @@
-@if (avisoBorrado(); as mensaje) {
-  <p class="aviso-borrado" role="status">{{ mensaje }}</p>
-}
-
 @if (proyecto(); as p) {
   <section class="tesis">
     <header class="intro">
@@ -403,6 +399,9 @@
         }
       </div>
     } @else {
+      @if (avisoBorrado(); as mensaje) {
+        <p class="aviso-borrado" role="status">{{ mensaje }}</p>
+      }
       <p class="borrar-entrada">
         ¿Te cambiaron el tema?
         <button type="button" class="boton enlace" (click)="pedirBorrar(p)">

@@ -189,7 +189,8 @@ export class ProyectoService {
   }
 
   /**
-   * Borra el proyecto entero: avance, capítulos, análisis y plantilla.
+   * Devuelve el proyecto al comienzo: borra avance, capítulos, análisis y
+   * plantilla, y el método queda con sus fases en blanco.
    *
    * La palabra viaja al servidor, que la vuelve a comprobar: la de la pantalla
    * solo enciende el botón.

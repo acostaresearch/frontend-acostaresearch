@@ -522,6 +522,10 @@
 /* ── Empezar de cero ──────────────────────────────────────────────────────── */
 .borrar-entrada {
   margin: 22px 0 0;
+}
+
+.aviso-borrado + .borrar-entrada {
+  margin-top: 10px;
   font-size: 12.5px;
   color: var(--color-texto-tenue);
 }
@@ -581,7 +585,7 @@
 }
 
 .aviso-borrado {
-  margin: 0 0 18px;
+  margin: 22px 0 0;
   padding: 11px 13px;
   font-size: 13.5px;
   color: var(--color-exito);

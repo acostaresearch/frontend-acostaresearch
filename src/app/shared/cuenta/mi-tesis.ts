@@ -84,6 +84,7 @@ export class MiTesis implements OnInit {
     this.retomarAbierto.set(false);
     this.copiado.set(false);
     this.cancelarBorrado();
+    this.avisoBorrado.set(null);
   }
 
   /** «Método de Tesis · 9 Capítulos + …» → «Método de Tesis», para la pestaña. */
@@ -329,7 +330,7 @@ export class MiTesis implements OnInit {
   );
   readonly borrando = signal(false);
   readonly errorBorrado = signal<string | null>(null);
-  /** Va fuera del panel: si era su único proyecto, el panel se va con él. */
+  /** Se enseña donde estaba el botón, que es donde está mirando al pulsarlo. */
   readonly avisoBorrado = signal<string | null>(null);
 
   pedirBorrar(p: Proyecto): void {
@@ -362,12 +363,17 @@ export class MiTesis implements OnInit {
         this.pidiendoBorrar.set(null);
         this.confirmacionBorrado.set('');
         this.abiertos.set(new Set());
-        this.elegido.set(null);
-        this.lista.update((lista) => lista.filter((x) => x.productCode !== p.productCode));
+        this.retomarAbierto.set(false);
+        this.normaGuardada.set(null);
+        this.plantillaPuesta.set(null);
+        // Se queda en su pestaña: al vaciarse pasa a ser el último proyecto
+        // tocado, y sin esto la pantalla saltaría al otro si tiene dos.
+        this.elegido.set(p.productCode);
         this.avisoBorrado.set(
-          `Borrado el progreso de ${this.nombreCorto(p)}. La próxima vez que trabajes con Claude, ` +
-            'empezará de cero.',
+          `Tu progreso de ${this.nombreCorto(p)} volvió al comienzo. La próxima vez que trabajes ` +
+            'con Claude, empezará de cero.',
         );
+        this.recargar();
       },
       error: (e) => {
         this.borrando.set(false);
