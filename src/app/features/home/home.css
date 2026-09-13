@@ -179,7 +179,73 @@
    el ancho de la banda, aunque el bloque de arriba vaya recogido y centrado:
    encajonadas a 980 px, «APA 7 o IEEE Vancouver» se partía en dos líneas. */
 .hero .cifras {
+  grid-template-columns: repeat(5, 1fr);
   margin-top: 64px;
+}
+
+/* Cinco y no las cuatro de la rejilla común (la de «Quién te acompaña» sigue
+   con la suya). Con cinco, cada celda pierde aire por dentro para que el pie
+   no se parta en cuatro renglones. */
+.hero .cifras li {
+  padding-right: 20px;
+}
+
+.hero .cifras li + li {
+  padding-left: 20px;
+}
+
+/* Tres arriba y dos abajo: a cinco columnas, «Tu formato» y su pie no caben. */
+@media (max-width: 1100px) {
+  .hero .cifras {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 24px;
+  }
+
+  .hero .cifras li:nth-child(4) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* Dos por fila, como en la rejilla común, y la quinta a lo ancho para que no
+   quede media fila vacía al final. */
+@media (max-width: 900px) {
+  .hero .cifras {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero .cifras li:nth-child(4) {
+    padding-left: 28px;
+    border-left: 1px solid var(--color-borde);
+  }
+
+  /* La tercera y la quinta abren fila: sin línea ni sangría a la izquierda. */
+  .hero .cifras li:nth-child(3),
+  .hero .cifras li:nth-child(5) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .hero .cifras li:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* En el teléfono vuelven los 14 px de la rejilla común: los 20 de arriba son
+   más específicos y se los ganaban. Solo a las de la derecha de cada fila. */
+@media (max-width: 620px) {
+  .hero .cifras {
+    row-gap: 0;
+  }
+
+  .hero .cifras li {
+    padding-right: 14px;
+  }
+
+  .hero .cifras li:nth-child(2),
+  .hero .cifras li:nth-child(4) {
+    padding-left: 14px;
+  }
 }
 
 /* ── Las dos rutas ─────────────────────────────────────────────────────────
@@ -251,8 +317,8 @@
   color: var(--color-texto-suave);
 }
 
-/* ── Tres razones ───────────────────────────────────────────────────────────
-   Sin caja: son tres párrafos de argumento, no tres productos que comparar, y
+/* ── Las razones ────────────────────────────────────────────────────────────
+   Sin caja: son párrafos de argumento, no productos que comparar, y
    encajonados pedían la misma atención que las tarjetas de precio de arriba. */
 .razones {
   display: grid;
@@ -271,21 +337,30 @@
   color: var(--color-texto-suave);
 }
 
-/* ── Los tres pasos ─────────────────────────────────────────────────────────
-   Con la línea azul arriba, como una barra de progreso partida en tres: se lee
+/* ── Los cinco pasos ─────────────────────────────────────────────────────────
+   Con la línea azul arriba, como una barra de progreso partida en cinco: se lee
    que hay un orden sin necesidad de flechas. */
 .arranque {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 28px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .arranque li {
-  padding: 22px 40px 0 0;
+  padding: 22px 12px 0 0;
   border-top: 3px solid var(--color-primario);
+}
+
+/* Cinco columnas de 180 px ya no dejan leer el texto: se reparten en tres columnas
+   (tres arriba y dos abajo) antes de caer a una sola en el móvil. */
+@media (max-width: 1200px) {
+  .arranque {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 36px;
+  }
 }
 
 .arranque-numero {

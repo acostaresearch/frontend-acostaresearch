@@ -28,10 +28,17 @@ export interface Pregunta {
   respuesta: string;
 }
 
+/*
+ * «19 fases» y «APA 7, IEEE o Vancouver» se retiraron el 13 de septiembre de
+ * 2026: el recuento de fases no le decía nada a nadie y las normas ya eran
+ * quince. Las normas y los idiomas salen de `project.normas.js` en el backend;
+ * si allí cambian, esta cifra también.
+ */
 export const CIFRAS = [
   { valor: '+500', pie: 'tesistas ya lo usan' },
-  { valor: '19', pie: 'fases entre las dos rutas' },
-  { valor: 'APA 7, IEEE o Vancouver', pie: 'formato listo para tu asesor o tu revista' },
+  { valor: '15', pie: 'normas de citas, de APA 7 a Chicago, en español o inglés' },
+  { valor: 'ZOTERO', pie: 'integrado: citas y referencias al día, sin citas huérfanas' },
+  { valor: 'TU FORMATO', pie: 'el de tu universidad, y con tus propias fuentes' },
   { valor: '0', pie: 'autores inventados' },
 ];
 
@@ -73,20 +80,44 @@ export const DEMOS: Demo[] = [
   },
 ];
 
+/*
+ * Seis y no tres: cada una responde a algo que el panel del cliente ya hace
+ * (sus fuentes y su Zotero, la plantilla de la facultad, la norma de citas, el
+ * repaso antes de entregar). Si una función se retira, se retira su tarjeta.
+ */
 export const RAZONES = [
   {
-    titulo: 'Trabaja con tus fuentes',
+    titulo: 'Solo con fuentes que existen',
     texto:
-      'El marco teórico se redacta únicamente con los artículos que tú subes de Scopus, ' +
-      'SciELO o Google Académico. Aquí no aparecen autores que no existen, y eso te ahorra ' +
-      'la peor de las vergüenzas frente al jurado.',
+      'Se escribe con lo que tú traes —tu export de Scopus, Web of Science, SciELO o PubMed, ' +
+      'tus PDF o tu Zotero— y con lo que Claude encuentra en la literatura publicada, incluidas ' +
+      'SciELO y Redalyc, siempre con su DOI real. Aquí no aparecen autores que no existen.',
   },
   {
-    titulo: 'Un entregable Word por fase',
+    titulo: 'Tu Zotero, conectado',
     texto:
-      'Cada Skill cierra con un documento concreto: el Capítulo I, el cuestionario validado, ' +
-      'las tablas del análisis. Nada se queda perdido en una conversación de chat que después ' +
-      'no encuentras.',
+      'Eliges una colección y sus referencias quedan listas para citar, al día cada noche. La ' +
+      'lista de referencias se arma sola con lo que citaste: horas de trabajo menos y ninguna ' +
+      'cita huérfana.',
+  },
+  {
+    titulo: 'El formato de tu universidad',
+    texto:
+      'Sube el documento con el formato que exige tu facultad y tu tesis sale con sus títulos, ' +
+      'sus fuentes y sus márgenes. Un solo Word, con portada, índice y los capítulos en orden.',
+  },
+  {
+    titulo: '15 normas de citas',
+    texto:
+      'APA 7, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
+      'o Chile, o en inglés. Si tu asesor te pide otra, la cambias en tu panel sin reescribir ' +
+      'nada.',
+  },
+  {
+    titulo: 'Un repaso antes de entregar',
+    texto:
+      'Antes de llevarla a tu asesor, Claude revisa tu tesis completa: variables que no están ' +
+      'en ningún objetivo, objetivos sin conclusión, citas rotas y afirmaciones sin fuente.',
   },
   {
     titulo: 'Tú tomas las decisiones',

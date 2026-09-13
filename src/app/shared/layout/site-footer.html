@@ -3,6 +3,10 @@
     <div class="columna marca">
       <p class="nombre">Acosta <span>IA &amp; Research</span></p>
       <p class="descripcion">
+        Skills para Claude.ai que acompañan tu tesis o tu artículo científico, con tus fuentes, tu
+        Zotero y el formato de tu universidad.
+      </p>
+      <p class="descripcion">
         Benicio Gonzalo Acosta Enríquez · Trujillo, Perú. Investigador Renacyt Nivel II, docente
         universitario y jurado de tesis.
       </p>
@@ -38,21 +42,34 @@
     </div>
 
     <div class="columna">
-      <h3>Legal</h3>
-      <a routerLink="/privacidad">Política de Privacidad</a>
-      <span class="tenue">
-        Conforme a la Ley N.° 29733 de Protección de Datos Personales del Perú.
-      </span>
+      <h3>El método</h3>
+      <a routerLink="/metodo">Ruta de la tesis</a>
+      <a routerLink="/articulo">Ruta del artículo</a>
+      <a routerLink="/en-accion">Míralo en acción</a>
+      <a routerLink="/preguntas">Preguntas frecuentes</a>
+      <a routerLink="/planes">Precios</a>
     </div>
 
     <div class="columna">
       <h3>Tu cuenta</h3>
       <a routerLink="/auth/registro">Crear cuenta</a>
       <a routerLink="/auth/login">Iniciar sesión</a>
+      <a routerLink="/perfil">Mi panel</a>
+      <!-- `href` y no `routerLink`: R necesita las cabeceras que solo llegan con
+           un documento nuevo. Ver la nota del mismo enlace en el perfil. -->
+      <a href="/analisis">Analiza tus datos en R</a>
       <!-- En el pie y no en la barra de arriba: la barra ya lleva cinco
            enlaces y este no es para elegir qué comprar, es para cuando ya
            compraste y no sabes seguir. Aquí es donde se busca eso. -->
-      <a routerLink="/tutoriales">Cómo usar tu conector</a>
+      <a routerLink="/tutoriales">Videos guía</a>
+    </div>
+
+    <div class="columna">
+      <h3>Legal</h3>
+      <a routerLink="/privacidad">Política de Privacidad</a>
+      <span class="tenue">
+        Conforme a la Ley N.° 29733 de Protección de Datos Personales del Perú.
+      </span>
     </div>
 
     <div class="columna">

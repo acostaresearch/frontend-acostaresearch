@@ -93,8 +93,9 @@ export class Home implements OnInit {
       tesis && {
         titulo: 'Tesis',
         texto:
-          'De «no sé qué investigar» al abstract, capítulo por capítulo. Cada fase cierra con ' +
-          'un Word en APA 7 que puedes llevar a asesoría. Incluye 30 minutos conmigo.',
+          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes y el ' +
+          'formato de tu universidad. Tu tesis sale en un solo Word, en la norma que elijas. ' +
+          'Incluye videos que te guían fase por fase.',
         detalle: `9 fases · ${tesis.durationDays} días de acceso`,
         precio: this.precio(tesis),
         antes: this.precioAntes(tesis),
@@ -106,7 +107,8 @@ export class Home implements OnInit {
         titulo: 'Artículo científico',
         texto:
           'De una idea a un manuscrito enviado a una revista real: se elige el destino, se ' +
-          'escribe en estructura IMRyD y se responde a los revisores. Incluye el Humanizador.',
+          'escribe en estructura IMRyD con la norma que pida la revista y se responde a los ' +
+          'revisores. Incluye el Humanizador.',
         detalle: `10 fases · ${articulo.durationDays} días de acceso`,
         precio: this.precio(articulo),
         antes: this.precioAntes(articulo),

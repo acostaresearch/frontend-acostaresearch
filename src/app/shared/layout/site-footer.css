@@ -15,10 +15,22 @@
 
 .contenido {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
-  gap: 40px;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1.2fr;
+  gap: 36px;
   max-width: var(--centro);
   margin: 0 auto;
+}
+
+/* Con cinco columnas la marca se queda sola arriba en cuanto se estrecha: así
+   las cuatro de enlaces siguen alineadas debajo. */
+@media (max-width: 1100px) {
+  .contenido {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .columna.marca {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 860px) {
