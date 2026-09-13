@@ -35,6 +35,12 @@
   color: var(--color-texto-suave);
 }
 
+/* A la derecha de la misma línea: a mano sin competir con el título. */
+.zotero-buscar-abrir {
+  margin-left: auto;
+  align-self: center;
+}
+
 .zotero-coleccion {
   margin: 0 0 14px;
   font-size: 13px;

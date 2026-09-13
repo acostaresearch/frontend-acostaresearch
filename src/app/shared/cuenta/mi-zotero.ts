@@ -145,8 +145,13 @@ export class MiZoteroPanel implements OnInit {
     });
   }
 
+  /**
+   * El botón vive junto a «Zotero conectado», así que se puede pulsar con la
+   * lista cerrada: en ese caso se pide la lista y el campo aparece encima.
+   */
   abrirBusqueda(): void {
     this.buscando.set(true);
+    if (!this.colecciones()) this.pedirColecciones();
   }
 
   cerrarBusqueda(): void {
@@ -155,10 +160,13 @@ export class MiZoteroPanel implements OnInit {
   }
 
   pedirColecciones(): void {
-    this.cerrarBusqueda();
     this.error.set(null);
     this.zotero.colecciones().subscribe({
-      next: (lo) => this.colecciones.set(lo),
+      next: (lo) => {
+        this.colecciones.set(lo);
+        // Sin colecciones no hay nada que buscar.
+        if (lo.colecciones.length === 0) this.cerrarBusqueda();
+      },
       error: (fallo) => {
         this.colecciones.set(null);
         this.error.set(toApiError(fallo).message);
@@ -193,6 +201,7 @@ export class MiZoteroPanel implements OnInit {
 
   /** Cambiar de colección: se vuelve a enseñar la lista. */
   cambiar(): void {
+    this.cerrarBusqueda();
     this.pedirColecciones();
   }
 

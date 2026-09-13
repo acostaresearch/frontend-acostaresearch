@@ -37,6 +37,16 @@
         @if (datos.usuario) {
           <span>como {{ datos.usuario }}</span>
         }
+        @if (!buscando() && (colecciones()?.colecciones?.length ?? 1) > 0) {
+          <button
+            type="button"
+            class="boton enlace zotero-buscar-abrir"
+            [disabled]="trayendo()"
+            (click)="abrirBusqueda()"
+          >
+            Buscar colección
+          </button>
+        }
       </p>
 
       @if (datos.coleccion; as coleccion) {
@@ -71,27 +81,21 @@
            pantalla les decía «crea una colección y vuelve»: deberes antes de
            poder usar lo que pagaron. -->
       @if (colecciones(); as puede) {
-        @if (puede.colecciones.length > 0) {
+        @if (buscando() && puede.colecciones.length > 0) {
           <div class="zotero-buscar">
-            @if (buscando()) {
-              <input
-                #campo
-                type="search"
-                class="zotero-buscar-campo"
-                placeholder="Busca una colección por su nombre"
-                aria-label="Buscar una colección"
-                [value]="busqueda()"
-                (input)="busqueda.set($any($event.target).value)"
-                (keydown.escape)="cerrarBusqueda()"
-              />
-              <button type="button" class="boton enlace" (click)="cerrarBusqueda()">
-                Cerrar
-              </button>
-            } @else {
-              <button type="button" class="boton enlace" (click)="abrirBusqueda()">
-                Buscar colección
-              </button>
-            }
+            <input
+              #campo
+              type="search"
+              class="zotero-buscar-campo"
+              placeholder="Busca una colección por su nombre"
+              aria-label="Buscar una colección"
+              [value]="busqueda()"
+              (input)="busqueda.set($any($event.target).value)"
+              (keydown.escape)="cerrarBusqueda()"
+            />
+            <button type="button" class="boton enlace" (click)="cerrarBusqueda()">
+              Cerrar
+            </button>
           </div>
         }
 
