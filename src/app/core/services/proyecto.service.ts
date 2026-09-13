@@ -58,6 +58,18 @@ export interface PlantillaPuesta {
   desde: string;
 }
 
+/** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
+export interface TesisDelMetodo {
+  id: string;
+  /** Solo las que se abrieron aparte llevan nombre. */
+  nombre: string | null;
+  tema: string | null;
+  /** La activa es con la que trabaja Claude y la que enseña el panel. */
+  activa: boolean;
+  palabras: number;
+  updatedAt: string | null;
+}
+
 export interface Proyecto {
   /** Nulo en un método comprado que todavía no tiene nada guardado. */
   id: string | null;
@@ -66,6 +78,12 @@ export interface Proyecto {
   productCode: string;
   /** El nombre de venta del producto: «Método de Tesis · 9 Capítulos + …». */
   productName: string;
+  /** Nombre de la tesis activa, si se abrió aparte. */
+  nombre: string | null;
+  /** Todas sus tesis de este método. Vacía si no hay nada guardado. */
+  tesis: TesisDelMetodo[];
+  /** Si puede abrir otra tesis: solo los administradores. */
+  puedeCrearTesis: boolean;
   tema: string | null;
   carrera: string | null;
   universidad: string | null;
@@ -203,6 +221,33 @@ export class ProyectoService {
       .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}`, {
         body: { confirmacion },
       })
+      .pipe(map(() => undefined));
+  }
+
+  /** Abre otra tesis del método y la deja activa. El servidor solo se lo permite a un administrador. */
+  crearTesis(productCode: string, nombre: string): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/tesis`, { nombre })
+      .pipe(map(() => undefined));
+  }
+
+  /** Deja activa esa tesis: pasa a ser con la que trabaja Claude. */
+  activarTesis(productCode: string, id: string): Observable<void> {
+    return this.http
+      .patch<ApiResponse<unknown>>(
+        `${this.base}/${encodeURIComponent(productCode)}/tesis/${encodeURIComponent(id)}/activar`,
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** Borra una tesis entera. No vale para la última: esa se vacía con `borrar`. */
+  borrarTesis(productCode: string, id: string, confirmacion: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(
+        `${this.base}/${encodeURIComponent(productCode)}/tesis/${encodeURIComponent(id)}`,
+        { body: { confirmacion } },
+      )
       .pipe(map(() => undefined));
   }
 

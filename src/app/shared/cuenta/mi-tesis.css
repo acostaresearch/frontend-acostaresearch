@@ -519,6 +519,85 @@
   margin: 10px 0 0;
 }
 
+/* ── Qué tesis usar (varias del mismo método) ─────────────────────────────── */
+.varias {
+  margin-bottom: 22px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+}
+
+.varias .aviso-descarga {
+  margin: 10px 0 0;
+}
+
+.lista-tesis {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.una-tesis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.una-tesis.activa {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 1px var(--color-primario);
+}
+
+.una-tesis-datos {
+  min-width: 0;
+}
+
+.una-tesis-nombre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.una-tesis-tema {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.en-uso {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.una-tesis-acciones {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nombre-tesis {
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
 /* ── Empezar de cero ──────────────────────────────────────────────────────── */
 .borrar-entrada {
   margin: 0 0 14px;

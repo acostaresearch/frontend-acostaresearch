@@ -8,6 +8,7 @@ import {
   EtapaDelProyecto,
   Proyecto,
   ProyectoService,
+  TesisDelMetodo,
 } from '../../core/services/proyecto.service';
 
 /** Qué se está bajando: el documento o solo la bibliografía. */
@@ -387,6 +388,125 @@ export class MiTesis implements OnInit {
       error: (e) => {
         this.borrando.set(false);
         this.errorBorrado.set(toApiError(e).message);
+      },
+    });
+  }
+
+  // ── Varias tesis del mismo método (administradores) ──────────────────────
+  readonly cambiandoTesis = signal(false);
+  readonly errorTesis = signal<string | null>(null);
+  readonly avisoTesis = signal<string | null>(null);
+
+  /** Cómo se llama una tesis en la lista: su nombre, o si no tiene, «Tesis principal». */
+  nombreDeTesis(t: TesisDelMetodo): string {
+    return t.nombre ?? 'Tesis principal';
+  }
+
+  /** Lo que se pinta de la tesis activa en la pantalla, al empezar a trabajar con otra. */
+  private limpiarAvisos(): void {
+    this.abiertos.set(new Set());
+    this.retomarAbierto.set(false);
+    this.copiado.set(false);
+    this.normaGuardada.set(null);
+    this.plantillaPuesta.set(null);
+    this.errorBorrado.set(null);
+    this.avisoBorrado.set(null);
+    this.errorTesis.set(null);
+    this.avisoTesis.set(null);
+  }
+
+  async nuevaTesis(p: Proyecto): Promise<void> {
+    if (this.cambiandoTesis()) return;
+
+    const nombre = await this.dialogos.pedirTexto({
+      titulo: `Otra tesis de ${this.nombreCorto(p)}`,
+      mensaje:
+        'Se abre en blanco y pasa a ser la activa: Claude trabajará con ella hasta que elijas otra. ' +
+        'Las que ya tienes no se tocan.',
+      confirmar: 'Crear y usar',
+      campo: {
+        etiqueta: 'Nombre, para distinguirla',
+        placeholder: 'Prueba con tema de salud',
+        obligatorio: true,
+        maxlength: 80,
+      },
+    });
+    if (nombre === null || nombre.trim() === '') return;
+
+    this.limpiarAvisos();
+    this.cambiandoTesis.set(true);
+    this.proyectos.crearTesis(p.productCode, nombre.trim()).subscribe({
+      next: () => this.trasCambiarTesis(p, `«${nombre.trim()}» es ahora tu tesis activa.`),
+      error: (e) => {
+        this.cambiandoTesis.set(false);
+        this.errorTesis.set(toApiError(e).message);
+      },
+    });
+  }
+
+  usarTesis(p: Proyecto, t: TesisDelMetodo): void {
+    if (this.cambiandoTesis() || t.activa) return;
+
+    this.limpiarAvisos();
+    this.cambiandoTesis.set(true);
+    this.proyectos.activarTesis(p.productCode, t.id).subscribe({
+      next: () =>
+        this.trasCambiarTesis(p, `Ahora usas «${this.nombreDeTesis(t)}». Claude trabajará con ella.`),
+      error: (e) => {
+        this.cambiandoTesis.set(false);
+        this.errorTesis.set(toApiError(e).message);
+      },
+    });
+  }
+
+  async borrarTesis(p: Proyecto, t: TesisDelMetodo): Promise<void> {
+    if (this.cambiandoTesis()) return;
+
+    const escrito = await this.dialogos.pedirTexto({
+      titulo: `Borrar «${this.nombreDeTesis(t)}»`,
+      mensaje:
+        'Se borra para siempre: el tema, lo anotado en cada fase, ' +
+        (t.palabras > 0 ? `los capítulos escritos (${t.palabras} palabras), ` : '') +
+        'el análisis y el formato de facultad de esta tesis. Tus otras tesis no se tocan.',
+      tono: 'peligro',
+      confirmar: 'Borrar esta tesis',
+      campo: {
+        etiqueta: 'Escribe «eliminar» para confirmar',
+        placeholder: 'eliminar',
+        obligatorio: true,
+        maxlength: 20,
+      },
+    });
+    if (escrito === null) return;
+
+    this.limpiarAvisos();
+    if (escrito.trim().toLowerCase() !== 'eliminar') {
+      this.errorTesis.set('No se borró nada: para confirmar hay que escribir «eliminar».');
+      return;
+    }
+
+    this.cambiandoTesis.set(true);
+    this.proyectos.borrarTesis(p.productCode, t.id, escrito).subscribe({
+      next: () => this.trasCambiarTesis(p, `«${this.nombreDeTesis(t)}» se borró.`),
+      error: (e) => {
+        this.cambiandoTesis.set(false);
+        this.errorTesis.set(toApiError(e).message);
+      },
+    });
+  }
+
+  /** Se queda en la pestaña del método y vuelve a pedir lo que hay, ya con la nueva activa. */
+  private trasCambiarTesis(p: Proyecto, aviso: string): void {
+    this.elegido.set(p.productCode);
+    this.proyectos.mios().subscribe({
+      next: (datos) => {
+        this.lista.set(datos);
+        this.cambiandoTesis.set(false);
+        this.avisoTesis.set(aviso);
+      },
+      error: (e) => {
+        this.cambiandoTesis.set(false);
+        this.errorTesis.set(toApiError(e).message);
       },
     });
   }

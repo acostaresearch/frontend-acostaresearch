@@ -26,9 +26,86 @@
       </div>
     }
 
+    <!-- Varias tesis del mismo método. Solo un administrador puede abrir más;
+         el bloque sale también a quien ya tiene varias, para poder elegir. -->
+    @if (p.puedeCrearTesis || p.tesis.length > 1) {
+      <div class="caja varias">
+        <div class="caja-fila">
+          <div>
+            <p class="caja-titulo">Qué tesis usar</p>
+            <p class="caja-texto">
+              Claude trabaja con la activa, y lo que ves debajo es de ella. Elige otra para cambiar.
+            </p>
+          </div>
+          @if (p.puedeCrearTesis) {
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="cambiandoTesis()"
+              (click)="nuevaTesis(p)"
+            >
+              Nueva tesis
+            </button>
+          }
+        </div>
+
+        @if (p.tesis.length > 0) {
+          <ul class="lista-tesis">
+            @for (t of p.tesis; track t.id) {
+              <li class="una-tesis" [class.activa]="t.activa">
+                <div class="una-tesis-datos">
+                  <p class="una-tesis-nombre">
+                    {{ nombreDeTesis(t) }}
+                    @if (t.activa) {
+                      <span class="en-uso">En uso</span>
+                    }
+                  </p>
+                  <p class="una-tesis-tema">
+                    {{ t.tema ?? 'Sin tema todavía' }}@if (t.palabras > 0) { · {{ t.palabras }} palabras }
+                  </p>
+                </div>
+                <div class="una-tesis-acciones">
+                  @if (!t.activa) {
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      [disabled]="cambiandoTesis()"
+                      (click)="usarTesis(p, t)"
+                    >
+                      Usar esta
+                    </button>
+                  }
+                  @if (p.tesis.length > 1) {
+                    <button
+                      type="button"
+                      class="boton enlace"
+                      [disabled]="cambiandoTesis()"
+                      (click)="borrarTesis(p, t)"
+                    >
+                      Borrar
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (cambiandoTesis()) {
+          <p class="plantilla-nota">Un momento…</p>
+        }
+        @if (avisoTesis(); as mensaje) {
+          <p class="plantilla-nota ok" role="status">{{ mensaje }}</p>
+        }
+        @if (errorTesis(); as mensaje) {
+          <p class="aviso-descarga">{{ mensaje }}</p>
+        }
+      </div>
+    }
+
     <div class="cabecera">
       <div class="titulo">
-        <h4>{{ p.productName }}</h4>
+        <h4>{{ p.productName }}@if (p.nombre) { <span class="nombre-tesis">· {{ p.nombre }}</span> }</h4>
         @if (p.tema) {
           <p class="tema">{{ p.tema }}</p>
         }
