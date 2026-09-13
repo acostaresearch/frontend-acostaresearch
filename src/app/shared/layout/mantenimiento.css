@@ -2,10 +2,13 @@
  *
  * Opaca y por encima de todo, incluida la ventana de confirmar (z-index 80):
  * con la base caída nada de lo que hay detrás funciona, y dejarlo a la vista
- * invita a seguir pulsando. En azul noche y dorado, que es el tono del sitio
- * para lo que corta la página.
+ * invita a seguir pulsando.
+ *
+ * Todas las clases llevan `mant-` a propósito. La primera versión usaba
+ * `.tarjeta` y `.nota`, que ya existen en `styles.css`, y los estilos globales
+ * se colaban: tarjeta blanca con el título en blanco encima.
  */
-.mantenimiento {
+.mant-fondo {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -14,131 +17,171 @@
   justify-content: center;
   padding: 24px 16px;
   overflow-y: auto;
-  color: #fff;
-  background: radial-gradient(circle at 50% 0%, var(--noche-2), var(--noche) 70%);
-  animation: aparecer 200ms ease;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 0%, rgba(224, 185, 115, 0.14), transparent 70%),
+    radial-gradient(circle at 50% 100%, var(--noche-2), var(--noche) 75%);
+  animation: mant-aparecer 220ms ease;
 }
 
-.tarjeta {
+.mant-tarjeta {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
+  margin: auto;
+  padding: 36px 36px 28px;
   text-align: center;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border-top: 4px solid var(--dorado);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: mant-subir 260ms ease;
 }
 
-.marca {
+.mant-marca {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin: 0 0 36px;
+  gap: 7px;
+  margin: 0 0 28px;
 }
 
-.marca-nombre {
-  font-size: 20px;
+.mant-marca-nombre {
+  font-size: 17px;
   font-weight: 800;
+  color: var(--noche);
   letter-spacing: -0.01em;
 }
 
-.marca-cola {
-  font-size: 13px;
+.mant-marca-cola {
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--dorado);
+  color: var(--color-texto-suave);
 }
 
-.icono {
+.mant-icono {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 22px;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 20px;
   border-radius: 50%;
   color: var(--dorado);
-  background: rgba(224, 185, 115, 0.12);
-  border: 1px solid rgba(224, 185, 115, 0.3);
+  background: var(--noche);
+  box-shadow: 0 0 0 8px rgba(224, 185, 115, 0.16);
 }
 
-.icono svg {
+.mant-icono svg {
   width: 30px;
   height: 30px;
 }
 
-h1 {
-  margin: 0 0 14px;
-  font-size: clamp(26px, 5vw, 34px);
-  line-height: 1.2;
-  color: #fff;
-}
-
-.mensaje {
+.mant-titulo {
   margin: 0 0 10px;
-  font-size: 16.5px;
-  color: var(--crema);
+  font-size: clamp(24px, 5vw, 28px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--noche);
 }
 
-.mensaje strong {
-  color: var(--dorado-claro);
+.mant-mensaje {
+  max-width: 34ch;
+  margin: 0 0 22px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
 }
 
-.nota {
-  margin: 0 0 24px;
-  font-size: 14px;
-  color: var(--gris-noche);
+.mant-mensaje strong {
+  color: var(--color-texto);
+  white-space: nowrap;
 }
 
-.estado {
+.mant-estado {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 26px;
+  gap: 9px;
+  margin: 0 0 24px;
+  padding: 7px 14px;
   font-size: 13px;
-  color: var(--gris-noche);
+  font-weight: 500;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
 }
 
-.punto {
+.mant-punto {
+  flex: none;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--gris-noche);
-  opacity: 0.6;
-}
-
-.punto.activo {
   background: var(--dorado);
-  opacity: 1;
-  animation: latir 900ms ease-in-out infinite;
 }
 
-.acciones {
+.mant-estado.comprobando {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-color: transparent;
+}
+
+.mant-estado.comprobando .mant-punto {
+  background: var(--color-aviso);
+  animation: mant-latir 900ms ease-in-out infinite;
+}
+
+.mant-acciones {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
 }
 
-.acciones .boton {
-  width: auto;
+.mant-acciones .boton {
+  width: 100%;
+  padding-block: 12px;
   text-decoration: none;
 }
 
-@keyframes aparecer {
+.mant-nota {
+  margin: 20px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+@media (max-width: 480px) {
+  .mant-tarjeta {
+    padding: 30px 22px 24px;
+  }
+}
+
+@keyframes mant-aparecer {
   from {
     opacity: 0;
   }
 }
 
-@keyframes latir {
+@keyframes mant-subir {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes mant-latir {
   50% {
-    transform: scale(1.5);
-    opacity: 0.5;
+    transform: scale(1.6);
+    opacity: 0.45;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mantenimiento,
-  .punto.activo {
+  .mant-fondo,
+  .mant-tarjeta,
+  .mant-estado.comprobando .mant-punto {
     animation: none;
   }
 }
