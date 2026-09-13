@@ -58,10 +58,15 @@ import { UserService } from '../../../core/services/user.service';
       background: var(--color-borde);
     }
 
+    /* \`color-scheme: light\` es por el modo oscuro. El botón de Google es un
+       iframe en claro, y cuando la página y el iframe no coinciden en esto el
+       navegador le pinta detrás un fondo blanco opaco: salía un marco blanco
+       más grande que el propio botón. */
     .contenedor {
       display: flex;
       justify-content: center;
       min-height: 44px;
+      color-scheme: light;
     }
 
     /* Mientras se cambia el token por la sesión, el botón deja de responder:

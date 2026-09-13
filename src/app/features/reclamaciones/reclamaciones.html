@@ -1,0 +1,342 @@
+<app-site-header />
+
+<main class="pagina">
+  <article class="libro">
+    <header class="cabeza no-imprimir">
+      <p class="antetitulo">Conforme al Código de Protección y Defensa del Consumidor</p>
+      <h1>Libro de Reclamaciones</h1>
+      <p class="entradilla">
+        Si algo de lo que compraste o de cómo te atendimos no estuvo bien, déjalo escrito aquí. Te
+        llega una copia de tu hoja al correo y te respondemos en un plazo máximo de 15 días hábiles.
+      </p>
+    </header>
+
+    @if (hoja(); as h) {
+      <!-- ── La hoja registrada ────────────────────────────────────────────
+           Sustituye al formulario. Es la constancia del consumidor: se imprime
+           tal cual, sin la cabecera ni el pie de la web. -->
+      @if (correoEnviado()) {
+        <div class="aviso exito no-imprimir" role="status">
+          Tu hoja quedó registrada. Te enviamos una copia a <strong>{{ h.email }}</strong>.
+        </div>
+      } @else {
+        <div class="aviso info no-imprimir" role="status">
+          Tu hoja quedó registrada, pero no pudimos enviarte la copia por correo. Imprímela o
+          guárdala en PDF ahora: es tu constancia.
+        </div>
+      }
+
+      <section class="hoja" aria-labelledby="titulo-hoja">
+        <div class="hoja-cabecera">
+          <h2 id="titulo-hoja">Hoja de reclamación Nº {{ h.codigo }}</h2>
+          <p>{{ fecha(h.createdAt, true) }}</p>
+        </div>
+
+        @if (proveedor(); as p) {
+          <h3>Proveedor</h3>
+          <dl>
+            <dt>Razón social</dt>
+            <dd>{{ p.razonSocial }}</dd>
+            @if (p.ruc) {
+              <dt>RUC</dt>
+              <dd>{{ p.ruc }}</dd>
+            }
+            <dt>Domicilio</dt>
+            <dd>{{ p.domicilio }}</dd>
+          </dl>
+        }
+
+        <h3>1. Identificación del consumidor reclamante</h3>
+        <dl>
+          <dt>Nombre</dt>
+          <dd>{{ h.nombre }}</dd>
+          <dt>{{ documento[h.tipoDocumento] }}</dt>
+          <dd>{{ h.numeroDocumento }}</dd>
+          <dt>Domicilio</dt>
+          <dd>{{ h.domicilio }}</dd>
+          @if (h.telefono) {
+            <dt>Teléfono</dt>
+            <dd>{{ h.telefono }}</dd>
+          }
+          <dt>Correo</dt>
+          <dd>{{ h.email }}</dd>
+          @if (h.apoderado) {
+            <dt>Padre, madre o apoderado</dt>
+            <dd>{{ h.apoderado }}</dd>
+          }
+        </dl>
+
+        <h3>2. Identificación del bien contratado</h3>
+        <dl>
+          <dt>Tipo</dt>
+          <dd>{{ bien[h.tipoBien] }}</dd>
+          @if (h.montoReclamado !== null) {
+            <dt>Monto reclamado</dt>
+            <dd>{{ soles(h.montoReclamado) }}</dd>
+          }
+          <dt>Descripción</dt>
+          <dd>{{ h.descripcionBien }}</dd>
+        </dl>
+
+        <h3>3. Detalle de la reclamación y pedido del consumidor</h3>
+        <dl>
+          <dt>Tipo</dt>
+          <dd>{{ tipo[h.tipo] }}</dd>
+          <dt>Detalle</dt>
+          <dd>{{ h.detalle }}</dd>
+          <dt>Pedido</dt>
+          <dd>{{ h.pedido }}</dd>
+        </dl>
+
+        <h3>4. Observaciones y acciones adoptadas por el proveedor</h3>
+        <dl>
+          <dt>Respuesta</dt>
+          <dd>Pendiente. Te responderemos a {{ h.email }} a más tardar el {{ fecha(h.fechaLimite) }}.</dd>
+        </dl>
+
+        <ul class="leyendas">
+          <li>
+            <strong>Reclamo:</strong> disconformidad relacionada con los productos o servicios.
+            <strong>Queja:</strong> disconformidad no relacionada con los productos o servicios, o
+            malestar o descontento respecto a la atención al público.
+          </li>
+          <li>
+            La formulación del reclamo no impide acudir a otras vías de solución de controversias
+            ni es requisito previo para interponer una denuncia ante el INDECOPI.
+          </li>
+          <li>
+            El proveedor debe dar respuesta al reclamo o queja en un plazo no mayor a quince (15)
+            días hábiles improrrogables.
+          </li>
+        </ul>
+      </section>
+
+      <div class="acciones no-imprimir">
+        <button type="button" class="boton" (click)="imprimir()">Imprimir o guardar en PDF</button>
+        <button type="button" class="boton secundario" (click)="otraHoja()">Presentar otra hoja</button>
+      </div>
+    } @else {
+      <!-- ── El formulario ─────────────────────────────────────────────────── -->
+      <div class="proveedor">
+        <p>
+          <span>Fecha: <strong>{{ hoy }}</strong></span>
+          @if (proveedor(); as p) {
+            <span>
+              Proveedor: <strong>{{ p.razonSocial }}</strong>
+              @if (p.ruc) {
+                · RUC <strong>{{ p.ruc }}</strong>
+              }
+              · {{ p.domicilio }}
+            </span>
+          }
+        </p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+        <fieldset>
+          <legend>1. Identificación del consumidor reclamante</legend>
+
+          <div class="campo" [class.invalido]="errorDe('nombre')">
+            <label for="r-nombre">Nombre completo</label>
+            <input id="r-nombre" type="text" formControlName="nombre" autocomplete="name" maxlength="160" />
+            @if (errorDe('nombre'); as e) {
+              <span class="error">{{ e }}</span>
+            }
+          </div>
+
+          <div class="fila documento">
+            <div class="campo">
+              <label for="r-tipo-documento">Documento</label>
+              <select id="r-tipo-documento" formControlName="tipoDocumento">
+                <option value="DNI">DNI</option>
+                <option value="CE">Carné de extranjería</option>
+                <option value="PASAPORTE">Pasaporte</option>
+              </select>
+            </div>
+            <div class="campo" [class.invalido]="errorDe('numeroDocumento')">
+              <label for="r-numero-documento">Número</label>
+              <input
+                id="r-numero-documento"
+                type="text"
+                formControlName="numeroDocumento"
+                maxlength="15"
+                autocomplete="off"
+              />
+              @if (errorDe('numeroDocumento'); as e) {
+                <span class="error">{{ e }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="campo" [class.invalido]="errorDe('domicilio')">
+            <label for="r-domicilio">Domicilio</label>
+            <input
+              id="r-domicilio"
+              type="text"
+              formControlName="domicilio"
+              autocomplete="street-address"
+              maxlength="250"
+            />
+            @if (errorDe('domicilio'); as e) {
+              <span class="error">{{ e }}</span>
+            }
+          </div>
+
+          <div class="fila">
+            <div class="campo" [class.invalido]="errorDe('email')">
+              <label for="r-email">Correo electrónico</label>
+              <input id="r-email" type="email" formControlName="email" autocomplete="email" maxlength="255" />
+              @if (errorDe('email'); as e) {
+                <span class="error">{{ e }}</span>
+              } @else {
+                <span class="ayuda">Aquí te llegan la copia y la respuesta.</span>
+              }
+            </div>
+            <div class="campo" [class.invalido]="errorDe('telefono')">
+              <label for="r-telefono">Teléfono <span class="opcional">(opcional)</span></label>
+              <input id="r-telefono" type="tel" formControlName="telefono" autocomplete="tel" maxlength="20" />
+              @if (errorDe('telefono'); as e) {
+                <span class="error">{{ e }}</span>
+              }
+            </div>
+          </div>
+
+          <label class="casilla">
+            <input type="checkbox" formControlName="menorDeEdad" />
+            <span>Soy menor de edad</span>
+          </label>
+
+          @if (form.controls.menorDeEdad.value) {
+            <div class="campo" [class.invalido]="errorDe('apoderado')">
+              <label for="r-apoderado">Nombre de tu padre, madre o apoderado</label>
+              <input id="r-apoderado" type="text" formControlName="apoderado" maxlength="160" />
+              @if (errorDe('apoderado'); as e) {
+                <span class="error">{{ e }}</span>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Identificación del bien contratado</legend>
+
+          <div class="opciones" role="radiogroup" aria-label="Qué contrataste">
+            <label class="opcion">
+              <input type="radio" formControlName="tipoBien" value="SERVICIO" />
+              <span>
+                <strong>Servicio</strong>
+                <small>Las Skills, el conector, la asesoría.</small>
+              </span>
+            </label>
+            <label class="opcion">
+              <input type="radio" formControlName="tipoBien" value="PRODUCTO" />
+              <span>
+                <strong>Producto</strong>
+                <small>Algo que se entrega, como una guía o un archivo.</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="fila">
+            <div class="campo" [class.invalido]="errorDe('descripcionBien')">
+              <label for="r-descripcion">Qué compraste o contrataste</label>
+              <input
+                id="r-descripcion"
+                type="text"
+                formControlName="descripcionBien"
+                maxlength="500"
+                placeholder="Método de tesis, licencia de un año"
+              />
+              @if (errorDe('descripcionBien'); as e) {
+                <span class="error">{{ e }}</span>
+              }
+            </div>
+            <div class="campo" [class.invalido]="errorDe('montoReclamado')">
+              <label for="r-monto">Monto reclamado en soles <span class="opcional">(opcional)</span></label>
+              <input
+                id="r-monto"
+                type="text"
+                inputmode="decimal"
+                formControlName="montoReclamado"
+                placeholder="120.00"
+                maxlength="9"
+              />
+              @if (errorDe('montoReclamado'); as e) {
+                <span class="error">{{ e }}</span>
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. Detalle de la reclamación y pedido del consumidor</legend>
+
+          <div class="opciones" role="radiogroup" aria-label="Tipo de hoja">
+            <label class="opcion">
+              <input type="radio" formControlName="tipo" value="RECLAMO" />
+              <span>
+                <strong>Reclamo</strong>
+                <small>Disconformidad relacionada con los productos o servicios.</small>
+              </span>
+            </label>
+            <label class="opcion">
+              <input type="radio" formControlName="tipo" value="QUEJA" />
+              <span>
+                <strong>Queja</strong>
+                <small>
+                  Disconformidad no relacionada con los productos o servicios, o malestar con la
+                  atención.
+                </small>
+              </span>
+            </label>
+          </div>
+
+          <div class="campo" [class.invalido]="errorDe('detalle')">
+            <label for="r-detalle">Detalle</label>
+            <textarea id="r-detalle" formControlName="detalle" rows="6" maxlength="3000"></textarea>
+            @if (errorDe('detalle'); as e) {
+              <span class="error">{{ e }}</span>
+            } @else {
+              <span class="ayuda">Qué pasó y cuándo. Si tienes un número de operación, ponlo.</span>
+            }
+          </div>
+
+          <div class="campo" [class.invalido]="errorDe('pedido')">
+            <label for="r-pedido">Pedido</label>
+            <textarea id="r-pedido" formControlName="pedido" rows="3" maxlength="2000"></textarea>
+            @if (errorDe('pedido'); as e) {
+              <span class="error">{{ e }}</span>
+            } @else {
+              <span class="ayuda">Qué solución esperas.</span>
+            }
+          </div>
+        </fieldset>
+
+        <ul class="leyendas">
+          <li>
+            La formulación del reclamo no impide acudir a otras vías de solución de controversias
+            ni es requisito previo para interponer una denuncia ante el INDECOPI.
+          </li>
+          <li>
+            El proveedor debe dar respuesta al reclamo o queja en un plazo no mayor a quince (15)
+            días hábiles improrrogables.
+          </li>
+          <li>
+            Tus datos se usan solo para atender esta hoja y responderte. Más en la
+            <a routerLink="/privacidad">Política de Privacidad</a>.
+          </li>
+        </ul>
+
+        @if (error(); as mensaje) {
+          <div class="aviso error" role="alert">{{ mensaje }}</div>
+        }
+
+        <button type="submit" class="boton enviar" [disabled]="enviando()">
+          {{ enviando() ? 'Enviando…' : 'Enviar hoja de reclamación' }}
+        </button>
+      </form>
+    }
+  </article>
+</main>
+
+<app-site-footer />

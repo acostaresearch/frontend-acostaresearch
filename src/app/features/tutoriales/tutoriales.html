@@ -14,7 +14,9 @@
 
       <!-- Quien llega con un problema no quiere ver videos: quiere la línea que
            lo arregla. Este atajo se lo pone delante sin bajar a buscarla. -->
-      <a class="atajo" href="#fallas" (click)="irAFallas($event)">
+      <!-- El href completo es para abrirlo en otra pestaña o copiarlo: «#fallas»
+           solo se resolvía contra la portada. Pulsado, baja con `irAFallas`. -->
+      <a class="atajo" href="/tutoriales#fallas" (click)="irAFallas($event)">
         <span>
           <b>¿Algo no funciona?</b>
           <span>Las soluciones a lo que le pasa a todo el mundo</span>

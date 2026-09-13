@@ -1243,9 +1243,21 @@ h1 {
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  /* Un velo suave, no una pantalla negra. La ventana ya se despega sola por su
-     sombra; apagar la página entera hacía parecer que el sitio se había caido
-     mientras cargaba el modal. El desenfoque separa sin oscurecer. */
+}
+
+/* Un velo suave, no una pantalla negra. La ventana ya se despega sola por su
+   sombra; apagar la página entera hacía parecer que el sitio se había caido
+   mientras cargaba el modal. El desenfoque separa sin oscurecer.
+
+   Va en un pseudo-elemento que se sale 40px por cada lado: el desenfoque se
+   aclara en los bordes de la caja que lo lleva, y con la caja justa a la
+   pantalla quedaban franjas sin velo arriba y a los lados. El z-index de
+   `.pago-fondo` lo mantiene detrás de la ventana y delante de la página. */
+.pago-fondo::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  z-index: -1;
   background: rgba(16, 24, 40, 0.28);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);

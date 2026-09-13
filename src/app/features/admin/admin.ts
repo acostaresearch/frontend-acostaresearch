@@ -33,6 +33,7 @@ import { duracionDeAcceso,
   PruebaService,
 } from '../../core/services/prueba.service';
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
+import { Reclamo, ReclamoService } from '../../core/services/reclamo.service';
 import {
   EstadoCorpus,
   Referencia,
@@ -54,6 +55,7 @@ import { columnas, lunes, porCategoria, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
+import { ReclamosAdmin } from './reclamos';
 
 type Seccion =
   | 'accesos'
@@ -62,6 +64,7 @@ type Seccion =
   | 'pruebas'
   | 'licencias'
   | 'alertas'
+  | 'reclamos'
   | 'corpus'
   | 'tutoriales'
   | 'admins'
@@ -106,6 +109,12 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota:
       'Sospechas de uso compartido. A la primera alta se avisa al comprador por correo; solo si ' +
       'vuelve a saltar pasadas 12 horas se revoca sola. Aquí puedes adelantarte o descartarla.',
+  },
+  reclamos: {
+    titulo: 'Libro de Reclamaciones',
+    nota:
+      'Las hojas que llegan desde la web. Hay que responder cada una en 15 días hábiles: el plazo ' +
+      'es improrrogable y no responder es sancionable.',
   },
   corpus: {
     titulo: 'Bibliografía',
@@ -269,6 +278,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     PieLista,
     AjustesDeCuenta,
     MiConector,
+    ReclamosAdmin,
   ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
@@ -972,6 +982,11 @@ export class Admin implements OnInit {
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
+
+    // Las hojas del libro sí se piden al entrar, a diferencia de usuarios o
+    // tutoriales: tienen un plazo legal, y el contador de la barra lateral es lo
+    // que avisa de que hay una esperando sin tener que abrir la sección.
+    this.cargarReclamos(false);
 
     // La ficha de «Datos de la cuenta» sale de la sesión, y la sesión se llenó al
     // entrar: el último acceso o la verificación pueden haber cambiado desde
@@ -1842,6 +1857,9 @@ export class Admin implements OnInit {
       case 'tutoriales':
         this.cargarTutoriales();
         break;
+      case 'reclamos':
+        this.cargarReclamos();
+        break;
       case 'admins':
       case 'usuarios':
         this.cargarUsuarios();
@@ -2220,6 +2238,9 @@ export class Admin implements OnInit {
 
     if (seccion === 'tutoriales' && this.tutoriales().length === 0) this.cargarTutoriales();
 
+    // Cada vez: una hoja nueva puede haber llegado mientras se miraba otra cosa.
+    if (seccion === 'reclamos') this.cargarReclamos();
+
     // Las pruebas se miran de vez en cuando —antes y después de un taller—, no
     // a diario: tampoco se piden al entrar. Se vuelven a pedir cada vez que se
     // abre la sección, porque los cupos se van llenando mientras tanto.
@@ -2546,6 +2567,33 @@ export class Admin implements OnInit {
   productosDe(referencia: Referencia): string {
     if (referencia.groups.length === 0) return 'Todas';
     return referencia.groups.map((g) => g.productCode).join(', ');
+  }
+
+  // ── Libro de Reclamaciones ───────────────────────────────────────────────
+  //
+  // La lista y el contador viven aquí; pintarla y responder, en `ReclamosAdmin`.
+
+  private readonly reclamosApi = inject(ReclamoService);
+
+  readonly reclamos = signal<Reclamo[]>([]);
+  readonly reclamosPendientes = computed(() => this.reclamos().filter((r) => !r.respondido).length);
+
+  /**
+   * `avisarSiFalla` en false al entrar al panel: ahí es solo el contador, y un
+   * fallo suyo no puede tapar con un error rojo lo que se venía a mirar.
+   */
+  cargarReclamos(avisarSiFalla = true): void {
+    this.reclamosApi.listar().subscribe({
+      next: (lista) => this.reclamos.set(lista),
+      error: (e: unknown) => {
+        if (avisarSiFalla) this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  reclamoRespondido(mensaje: string): void {
+    this.aviso.set(mensaje);
+    this.cargarReclamos();
   }
 
   // ── Tutoriales ───────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import { environment } from '../../../../environments/environment';
 import { fieldErrors, toApiError } from '../../../core/http/api-error';
 import { ERROR_CODE } from '../../../core/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { revisarCorreo } from '../../../shared/validators/correo';
 import { matchFields } from '../../../shared/validators/match.validator';
 import { AuthCard } from '../auth-card/auth-card';
 import { BotonGoogle } from '../boton-google/boton-google';
@@ -93,9 +94,31 @@ export class Register {
   readonly mostrarRequisitos = computed(() => this.valorPass().length > 0);
   readonly contrasenaLista = computed(() => this.requisitos().every((r) => r.cumple));
 
+  /**
+   * El correo, revisado contra las erratas de siempre: `gamail.com`, `hotmial.com`.
+   *
+   * `Validators.email` solo mira la forma, y a ese correo va el código de
+   * activación: con la errata, la persona se queda esperando un correo que no
+   * llega nunca. Solo se revisa lo que ya tiene forma de correo; lo demás lo
+   * dice el validador de siempre.
+   */
+  readonly revisionEmail = computed(() => {
+    const valor = this.valorEmail().trim();
+    if (!valor || this.formulario.controls.email.hasError('email')) return null;
+    const revision = revisarCorreo(valor);
+    return revision.problema ? revision : null;
+  });
+
   readonly emailListo = computed(
-    () => this.valorEmail().length > 0 && this.formulario.controls.email.valid,
+    () =>
+      this.valorEmail().length > 0 && this.formulario.controls.email.valid && !this.revisionEmail(),
   );
+
+  /** Aplica la corrección propuesta con un clic. */
+  usarSugerencia(sugerencia: string): void {
+    this.formulario.controls.email.setValue(sugerencia);
+    this.erroresServidor.update(({ email: _email, ...resto }) => resto);
+  }
 
   /** Ni «coinciden» ni «no coinciden» hasta que haya algo con lo que comparar. */
   readonly repetidaEstado = computed(() => {
@@ -109,6 +132,9 @@ export class Register {
     const control = this.formulario.controls[campo];
     const delServidor = this.erroresServidor()[campo];
     if (delServidor) return delServidor;
+    if (campo === 'email' && control.touched && this.revisionEmail()) {
+      return this.revisionEmail()?.problema ?? null;
+    }
     if (!control.touched || control.valid) return null;
 
     if (control.hasError('required')) return 'Este campo es obligatorio.';
@@ -145,7 +171,8 @@ export class Register {
     this.errorGeneral.set(null);
     this.erroresServidor.set({});
 
-    if (this.formulario.invalid || this.enviando()) return;
+    // Con la errata no se envía: el código de activación iría a un buzón que no existe.
+    if (this.formulario.invalid || this.enviando() || this.revisionEmail()) return;
 
     const { firstName, lastName, email, password } = this.formulario.getRawValue();
     this.enviando.set(true);

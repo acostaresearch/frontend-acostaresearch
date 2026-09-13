@@ -476,6 +476,19 @@ a:hover {
   border-color: color-mix(in srgb, var(--color-aviso) 25%, transparent);
 }
 
+/* ── Impresión ──────────────────────────────────────────────────────────────
+   La hoja del Libro de Reclamaciones se imprime o se guarda en PDF desde el
+   navegador. Lo que rodea a cada página no es parte del documento, y estos
+   elementos viven fuera del componente que imprime, así que se ocultan aquí. */
+@media print {
+  app-site-header,
+  app-site-footer,
+  app-asistente,
+  app-dialogo {
+    display: none !important;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    Páginas públicas
    ─────────────────────────────────────────────────────────────────────────
@@ -1148,4 +1161,16 @@ body.sin-scroll {
   .cifra-pie {
     font-size: 13.5px;
   }
+}
+
+/*
+ * Sitio para la barra del Asistente Acosta.
+ *
+ * Va fija abajo a la derecha y, sin esto, al final de la página tapaba el cierre
+ * del pie en móvil. El margen va en el pie y no en el cuerpo: en el cuerpo
+ * quedaría una franja clara debajo del pie oscuro. Gana a la regla del propio
+ * componente por especificidad.
+ */
+body.con-asistente .pie {
+  padding-bottom: 112px;
 }

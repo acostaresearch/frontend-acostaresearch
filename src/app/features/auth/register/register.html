@@ -45,6 +45,11 @@
       } @else {
         <span class="ayuda">Aquí te llega el código de 6 dígitos para activar la cuenta.</span>
       }
+      @if (revisionEmail()?.sugerencia; as sugerencia) {
+        <button type="button" class="sugerencia-correo" (click)="usarSugerencia(sugerencia)">
+          ¿Quisiste decir <strong>{{ sugerencia }}</strong>? Usar este
+        </button>
+      }
     </div>
 
     <div class="campo" [class.invalido]="errorDe('password')">

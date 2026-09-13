@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Las páginas públicas de la web, para los buscadores.
+
+  Solo lo que se puede enlazar y compartir. Si se añade o se retira una página
+  pública en `app.routes.ts`, se cambia aquí también.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://acostaresearch.com/</loc></url>
+  <url><loc>https://acostaresearch.com/metodo</loc></url>
+  <url><loc>https://acostaresearch.com/articulo</loc></url>
+  <url><loc>https://acostaresearch.com/en-accion</loc></url>
+  <url><loc>https://acostaresearch.com/planes</loc></url>
+  <url><loc>https://acostaresearch.com/preguntas</loc></url>
+  <url><loc>https://acostaresearch.com/quien-soy</loc></url>
+  <url><loc>https://acostaresearch.com/tutoriales</loc></url>
+  <url><loc>https://acostaresearch.com/privacidad</loc></url>
+</urlset>

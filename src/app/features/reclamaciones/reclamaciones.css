@@ -1,0 +1,347 @@
+/* Un formulario legal: columna de lectura, apartados numerados como el anexo
+   del reglamento, y una hoja que se imprime tal cual. */
+.pagina {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--banda) var(--lado);
+}
+
+.libro {
+  width: min(100% - 32px, 780px);
+  margin: 0 auto;
+  padding: 56px 0 80px;
+}
+
+/* ---------- Encabezado ---------- */
+
+.cabeza {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.antetitulo {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.cabeza h1 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--color-texto);
+}
+
+.entradilla {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+.proveedor {
+  margin: 0 0 22px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  background: color-mix(in srgb, var(--color-primario) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primario) 14%, var(--color-borde));
+  border-radius: 12px;
+}
+
+.proveedor p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0;
+}
+
+.proveedor strong {
+  color: var(--color-texto);
+}
+
+/* ---------- Formulario ---------- */
+
+fieldset {
+  min-width: 0;
+  margin: 0 0 20px;
+  padding: 20px 22px 4px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+legend {
+  padding: 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.fila.documento {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+.opcional {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
+/* Los estilos globales de `.campo` cubren los `input`; select y textarea
+   solo se usan aquí. */
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.campo textarea {
+  min-height: 90px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.campo.invalido select,
+.campo.invalido textarea {
+  border-color: var(--color-error);
+}
+
+.opciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.opcion:has(input:checked) {
+  border-color: var(--color-primario);
+  background: color-mix(in srgb, var(--color-primario) 6%, transparent);
+}
+
+.opcion input,
+.casilla input {
+  margin-top: 3px;
+  accent-color: var(--color-primario);
+}
+
+.opcion span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--color-texto);
+}
+
+.opcion small {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-texto-tenue);
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+
+.leyendas {
+  margin: 0 0 22px;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-texto-tenue);
+  list-style: none;
+}
+
+.leyendas li + li {
+  margin-top: 6px;
+}
+
+.enviar {
+  max-width: 320px;
+}
+
+/* ---------- La hoja registrada ---------- */
+
+.hoja {
+  padding: 28px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.hoja-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--color-texto);
+}
+
+.hoja-cabecera h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+  color: var(--color-texto);
+}
+
+.hoja-cabecera p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+}
+
+.hoja h3 {
+  margin: 20px 0 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.hoja dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 190px) minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.hoja dt {
+  color: var(--color-texto-tenue);
+}
+
+.hoja dd {
+  margin: 0;
+  color: var(--color-texto);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hoja .leyendas {
+  margin: 24px 0 0;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.acciones .boton {
+  width: auto;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .libro {
+    width: min(100% - 24px, 780px);
+    padding: 40px 0 56px;
+  }
+
+  fieldset {
+    padding: 18px 16px 2px;
+  }
+
+  .fila,
+  .fila.documento,
+  .opciones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hoja {
+    padding: 20px 16px;
+  }
+
+  .hoja dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .hoja dd {
+    margin-bottom: 8px;
+  }
+
+  .acciones .boton,
+  .enviar {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* ---------- Impresión ----------
+   La cabecera y el pie de la web se ocultan en `styles.css`; aquí, lo que es de
+   la pantalla y no del documento. */
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .pagina,
+  .libro {
+    width: auto;
+    max-width: none;
+    padding: 0;
+  }
+
+  .hoja {
+    padding: 0;
+    border: none;
+  }
+
+  .hoja-cabecera {
+    border-bottom-color: #000;
+  }
+
+  .hoja dt,
+  .hoja dd,
+  .hoja h3,
+  .leyendas {
+    color: #000;
+  }
+}

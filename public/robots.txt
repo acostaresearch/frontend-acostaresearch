@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /perfil
+Disallow: /analisis
+Disallow: /auth/
+Disallow: /prueba/
+Disallow: /api/
+
+Sitemap: https://acostaresearch.com/sitemap.xml

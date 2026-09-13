@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, effect, inject, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -77,6 +77,11 @@ export class Asistente {
   private readonly cabecera = viewChild<ElementRef<HTMLButtonElement>>('cabecera');
 
   constructor() {
+    // Mientras la barra está, la página deja sitio abajo para que no tape el final
+    // del contenido: en la prueba del 13 de septiembre tapaba el cierre del pie en
+    // móvil. Ver `.con-asistente` en `styles.css`.
+    effect(() => document.body.classList.toggle('con-asistente', this.disponible()));
+
     this.servicio.activo().subscribe({
       next: (activo) => {
         this.disponible.set(activo);

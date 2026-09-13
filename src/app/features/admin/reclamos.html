@@ -1,0 +1,127 @@
+<section class="tarjeta">
+  <h2>Hojas de reclamación</h2>
+  <p class="nota">
+    Llegan desde <strong>acostaresearch.com/libro-de-reclamaciones</strong>. Cada una se responde en
+    15 días hábiles como máximo. La respuesta sale al correo del consumidor y queda escrita en su
+    hoja: no se puede editar después, así que léela antes de enviarla.
+  </p>
+
+  @if (reclamos().length === 0) {
+    <p class="vacio">Todavía no ha llegado ninguna.</p>
+  } @else {
+    <ul class="lista">
+      @for (r of reclamos(); track r.numero) {
+        <li>
+          <div class="datos">
+            <p class="titulo">
+              <span class="codigo">Nº {{ r.codigo }}</span>
+              {{ tipo[r.tipo] }} · {{ r.nombre }}
+            </p>
+            <p class="tenue">{{ fecha(r.createdAt) }} · {{ r.descripcionBien }}</p>
+          </div>
+          <span class="estado" [class.hecho]="r.respondido" [class.vencida]="vencida(r)">
+            {{ estado(r) }}
+          </span>
+          <button type="button" class="boton secundario" (click)="abrir(r)">
+            {{ r.respondido ? 'Ver' : 'Responder' }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (abierto(); as r) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-reclamo">
+      <div class="ventana-cabecera">
+        <div>
+          <h3 id="titulo-reclamo">{{ tipo[r.tipo] }} Nº {{ r.codigo }}</h3>
+          <p class="tenue">
+            Presentada el {{ fecha(r.createdAt, true) }} · responder a más tardar el
+            {{ fecha(r.fechaLimite) }}
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrar()">✕</button>
+      </div>
+
+      <h4>Consumidor</h4>
+      <dl>
+        <dt>Nombre</dt>
+        <dd>{{ r.nombre }}</dd>
+        <dt>{{ documento[r.tipoDocumento] }}</dt>
+        <dd>{{ r.numeroDocumento }}</dd>
+        <dt>Domicilio</dt>
+        <dd>{{ r.domicilio }}</dd>
+        @if (r.telefono) {
+          <dt>Teléfono</dt>
+          <dd>{{ r.telefono }}</dd>
+        }
+        <dt>Correo</dt>
+        <dd>{{ r.email }}</dd>
+        @if (r.apoderado) {
+          <dt>Apoderado</dt>
+          <dd>{{ r.apoderado }}</dd>
+        }
+      </dl>
+
+      <h4>Bien contratado</h4>
+      <dl>
+        <dt>Tipo</dt>
+        <dd>{{ bien[r.tipoBien] }}</dd>
+        @if (r.montoReclamado !== null) {
+          <dt>Monto reclamado</dt>
+          <dd>{{ soles(r.montoReclamado) }}</dd>
+        }
+        <dt>Descripción</dt>
+        <dd>{{ r.descripcionBien }}</dd>
+      </dl>
+
+      <h4>Detalle y pedido</h4>
+      <dl>
+        <dt>Detalle</dt>
+        <dd>{{ r.detalle }}</dd>
+        <dt>Pedido</dt>
+        <dd>{{ r.pedido }}</dd>
+      </dl>
+
+      <h4>Respuesta del proveedor</h4>
+      @if (r.respondido) {
+        <p class="tenue">Enviada el {{ fecha(r.respondidoAt!, true) }}</p>
+        <p class="respuesta">{{ r.respuesta }}</p>
+        <div class="pie">
+          <button type="button" class="boton secundario" (click)="cerrar()">Cerrar</button>
+        </div>
+      } @else {
+        @if (error(); as mensaje) {
+          <div class="aviso error" role="alert">{{ mensaje }}</div>
+        }
+        <div class="campo">
+          <label for="respuesta-reclamo">Lo que se le contesta</label>
+          <textarea
+            id="respuesta-reclamo"
+            rows="7"
+            maxlength="5000"
+            [value]="respuesta()"
+            (input)="escribir($event)"
+          ></textarea>
+          <span class="ayuda">
+            Llega tal cual a {{ r.email }}. Di qué se hizo o qué se ofrece; si no se le da la razón,
+            explica por qué.
+          </span>
+        </div>
+        <div class="pie">
+          <button type="button" class="boton secundario" (click)="cerrar()">Cancelar</button>
+          <button
+            type="button"
+            class="boton"
+            [disabled]="respuesta().trim().length < 10 || enviando()"
+            (click)="responder()"
+          >
+            {{ enviando() ? 'Enviando…' : 'Enviar respuesta' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

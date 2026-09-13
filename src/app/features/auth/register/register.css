@@ -139,3 +139,22 @@
 .legal a:hover {
   color: var(--color-primario);
 }
+
+/* La corrección de un correo mal escrito: un clic y queda puesto el bueno. */
+.sugerencia-correo {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-primario-oscuro);
+  text-align: left;
+  cursor: pointer;
+  background: var(--color-primario-suave);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-sm);
+}
+
+.sugerencia-correo:hover {
+  text-decoration: underline;
+}

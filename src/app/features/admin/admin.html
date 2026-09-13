@@ -62,6 +62,12 @@
           <span class="lateral-contador">{{ alertas().length }}</span>
         }
       </button>
+      <button type="button" [class.activa]="seccion() === 'reclamos'" (click)="ir('reclamos')">
+        <span>Libro de Reclamaciones</span>
+        @if (reclamosPendientes() > 0) {
+          <span class="lateral-contador">{{ reclamosPendientes() }}</span>
+        }
+      </button>
 
       <p class="lateral-grupo">Equipo</p>
       <button type="button" [class.activa]="seccion() === 'admins'" (click)="ir('admins')">
@@ -2126,6 +2132,12 @@
         <p class="tenue">Cargando el corpus…</p>
       }
     </section>
+  }
+
+  <!-- ══ LIBRO DE RECLAMACIONES ═════════════════════════════════════════════
+       En su propio componente: ver la nota de `ReclamosAdmin`. -->
+  @if (seccion() === 'reclamos') {
+    <app-reclamos-admin [reclamos]="reclamos()" (respondido)="reclamoRespondido($event)" />
   }
 
   <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════

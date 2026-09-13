@@ -114,10 +114,18 @@ async function servirLaWeb(request, env) {
 
   if (respuesta.status !== 404) return respuesta;
 
-  const quierePagina = (request.headers.get('Accept') || '').includes('text/html');
-  if (!quierePagina) return respuesta;
-
   const url = new URL(request.url);
+
+  // Una ruta sin extensión es una página, lo pida quien lo pida.
+  //
+  // Antes solo contaba el `Accept: text/html`, y los robots que arman la vista
+  // previa de un enlace —WhatsApp, Facebook— no siempre lo mandan: compartir
+  // `acostaresearch.com/planes` les devolvía un 404 vacío y el enlace salía sin
+  // título ni imagen. Lo que sí tiene extensión —un .js, una imagen que falta—
+  // sigue recibiendo su 404 de verdad, también si lo pide un navegador: así un
+  // PDF que falta no vuelve a servirse como la portada con extensión .pdf.
+  const pareceArchivo = /\.[a-z0-9]{2,5}$/i.test(url.pathname);
+  if (pareceArchivo) return respuesta;
 
   // Se pide la RAÍZ, no `/index.html`.
   //
