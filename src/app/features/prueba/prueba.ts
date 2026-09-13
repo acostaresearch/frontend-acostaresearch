@@ -95,7 +95,6 @@ export class Prueba implements OnInit {
   cupo(p: PruebaPublica): string | null {
     const partes: string[] = [];
     if (p.callsPerDay > 0) partes.push(`${p.callsPerDay} consultas cada día`);
-    if (p.callsLimitTotal > 0) partes.push(`${p.callsLimitTotal} consultas en total`);
     return partes.length > 0 ? partes.join(' y ') : null;
   }
 

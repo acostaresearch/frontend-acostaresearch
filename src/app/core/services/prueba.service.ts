@@ -22,7 +22,6 @@ export interface EnlacePrueba {
   accessDays: number;
   /** 0 = sin tope. */
   callsPerDay: number;
-  callsLimitTotal: number;
   active: boolean;
   estado: EstadoPrueba;
   /** Cuántos de los entregados llegaron a usar el conector. */
@@ -38,7 +37,6 @@ export interface CrearPrueba {
   seats: number;
   accessDays: number;
   callsPerDay: number;
-  callsLimitTotal: number;
 }
 
 /** Un conector entregado por un enlace. */
@@ -60,7 +58,6 @@ export interface PruebaPublica {
   seats: number;
   accessDays: number;
   callsPerDay: number;
-  callsLimitTotal: number;
 }
 
 /** El conector recién entregado. La URL solo existe en esta respuesta. */

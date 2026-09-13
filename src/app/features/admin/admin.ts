@@ -2134,7 +2134,6 @@ export class Admin implements OnInit {
     seats: [30, [Validators.required, Validators.min(1), Validators.max(500)]],
     accessDays: [7, [Validators.required, Validators.min(1), Validators.max(365)]],
     callsPerDay: [20, [Validators.required, Validators.min(0), Validators.max(1000)]],
-    callsLimitTotal: [60, [Validators.required, Validators.min(0), Validators.max(10000)]],
   });
 
   private cargarPruebas(): void {
@@ -2153,7 +2152,6 @@ export class Admin implements OnInit {
       seats: 30,
       accessDays: 7,
       callsPerDay: 20,
-      callsLimitTotal: 60,
     });
     this.formularioPruebaAbierto.set(true);
   }
@@ -2267,7 +2265,6 @@ export class Admin implements OnInit {
   topesPrueba(enlace: EnlacePrueba): string {
     const partes: string[] = [];
     if (enlace.callsPerDay > 0) partes.push(`${enlace.callsPerDay}/día`);
-    if (enlace.callsLimitTotal > 0) partes.push(`${enlace.callsLimitTotal} en total`);
     return partes.length > 0 ? partes.join(' · ') : 'Sin tope';
   }
 
