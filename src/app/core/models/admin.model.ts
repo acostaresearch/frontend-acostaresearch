@@ -125,6 +125,8 @@ export interface GenerarCodigos {
   cantidad: number;
   productCode?: string;
   buyerEmail?: string;
+  /** Varios compradores al mismo precio: cada uno recibe sus `cantidad` códigos. */
+  buyerEmails?: string[];
   note?: string;
   expiraEnDias?: number;
   /** Cómo entró el dinero. CORTESIA no registra cobro: es un regalo. */

@@ -24,8 +24,10 @@ export interface CodigosGenerados {
   codes: string[];
   /** Identificadores de los códigos creados, para adjuntarles el comprobante. */
   ids: string[];
-  /** Correo al que se enviaron, o null si no se indicó ninguno. */
+  /** Correo al que se enviaron, o null si no se indicó ninguno o fue una lista. */
   enviadoA: string | null;
+  /** Qué códigos le tocaron a cada comprador. */
+  envios: { email: string | null; codes: string[] }[];
   /** Cobro apuntado, o null si fue una cortesía. */
   cobro: { paymentMethod: MetodoDeCobro; amountCents: number } | null;
 }

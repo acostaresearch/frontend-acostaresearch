@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
@@ -43,6 +44,11 @@ import { User } from '../../core/models/user.model';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
+import {
+  RevisionDeCorreo,
+  leerListaDeCorreos,
+  revisarCorreo,
+} from '../../shared/validators/correo';
 import { Acceso, unirAccesos } from './accesos';
 import { columnas, lunes, porCategoria, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
@@ -461,6 +467,8 @@ export class Admin implements OnInit {
   readonly codigosNuevos = signal<string[]>([]);
   /** Correo al que el servidor acaba de mandarlos, si se indicó uno. */
   readonly codigoEnviadoA = signal<string | null>(null);
+  /** Qué códigos le tocaron a cada comprador, cuando se vendió a una lista. */
+  readonly enviosNuevos = signal<{ email: string | null; codes: string[] }[]>([]);
   /** Cobro apuntado en los códigos recién generados. Null si fue cortesía. */
   readonly cobroApuntado = signal<{ paymentMethod: MetodoDeCobro; amountCents: number } | null>(
     null,
@@ -663,6 +671,8 @@ export class Admin implements OnInit {
     cantidad: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
     productCode: ['METODO_9_SKILLS'],
     buyerEmail: [''],
+    // La lista pegada tal cual, para vender a varios compradores de una vez.
+    buyerEmails: [''],
     note: [''],
     // El medio arranca en Western Union porque este formulario existe para las
     // ventas cobradas fuera de la web; una cortesía es lo excepcional y se elige
@@ -696,6 +706,59 @@ export class Admin implements OnInit {
    */
   readonly capturaCodigo = signal<File | null>(null);
   readonly capturaCodigoPrevia = signal<string | null>(null);
+
+  /**
+   * Vender a uno o a una lista.
+   *
+   * Con una lista es la misma venta repetida: mismo producto, mismo medio y
+   * mismo importe por código, y a cada comprador le llega solo el suyo.
+   */
+  readonly variosCompradores = signal(false);
+
+  private readonly valoresCodigos = toSignal(
+    this.formCodigos.valueChanges.pipe(map(() => this.formCodigos.getRawValue())),
+    { initialValue: this.formCodigos.getRawValue() },
+  );
+
+  /**
+   * El correo del comprador, revisado. Null si está vacío, que es válido: el
+   * código se genera y solo se ve en pantalla.
+   *
+   * `type="email"` no basta: `kelin@gamail.com` tiene la forma perfecta y se
+   * vendió un código a un dominio que no es de nadie.
+   */
+  readonly revisionCorreo = computed(() => {
+    const texto = this.valoresCodigos().buyerEmail.trim();
+    return texto ? revisarCorreo(texto) : null;
+  });
+
+  readonly listaCorreos = computed(() => leerListaDeCorreos(this.valoresCodigos().buyerEmails));
+  readonly correosConProblema = computed(() =>
+    this.listaCorreos().correos.filter((r) => r.problema),
+  );
+
+  /** Cuántos códigos salen y cuánto se apunta, para verlo antes de generar. */
+  readonly resumenLista = computed(() => {
+    const { cantidad, productCode, paymentMethod, importe } = this.valoresCodigos();
+    const correos = this.listaCorreos().correos.length;
+    const codigos = correos * (Number(cantidad) || 0);
+    const plan = this.planesLicencia().find((p) => (p.productCode ?? p.code) === productCode);
+    const porCodigoCents =
+      paymentMethod === 'CORTESIA'
+        ? 0
+        : importe !== null && importe !== undefined
+          ? Math.round(importe * 100)
+          : (plan?.priceCents ?? 0);
+
+    return {
+      correos,
+      codigos,
+      porCodigoCents,
+      totalCents: porCodigoCents * codigos,
+      // El mismo tope que aplica el servidor, contando a todos los compradores.
+      excede: codigos > 100,
+    };
+  });
 
   readonly formDescuento = this.fb.nonNullable.group({
     // En soles, que es como piensa el precio; se convierte a céntimos al enviar.
@@ -2733,10 +2796,44 @@ export class Admin implements OnInit {
     // no habría forma de saber cuáles son cuáles.
     this.codigosNuevos.set([]);
     this.codigoEnviadoA.set(null);
+    this.enviosNuevos.set([]);
     this.cobroApuntado.set(null);
     this.limpiarDescuento();
     this.quitarCapturaCodigo();
     this.formularioCodigosAbierto.set(true);
+  }
+
+  cambiarModoCompradores(varios: boolean): void {
+    this.variosCompradores.set(varios);
+  }
+
+  usarSugerenciaDeCorreo(sugerencia: string): void {
+    this.formCodigos.controls.buyerEmail.setValue(sugerencia);
+  }
+
+  /**
+   * Reescribe la lista pegada, un correo por línea.
+   *
+   * Arreglar desde los botones y no a mano en el cuadro: con treinta correos,
+   * buscar el que falla es justo donde se escapa otro.
+   */
+  private reescribirLista(cambio: (r: RevisionDeCorreo) => string | null): void {
+    const correos = this.listaCorreos()
+      .correos.map(cambio)
+      .filter((c): c is string => !!c);
+    this.formCodigos.controls.buyerEmails.setValue(correos.join('\n'));
+  }
+
+  corregirEnLista(correo: string, sugerencia: string): void {
+    this.reescribirLista((r) => (r.correo === correo ? sugerencia : r.correo));
+  }
+
+  corregirTodosEnLista(): void {
+    this.reescribirLista((r) => (r.problema && r.sugerencia ? r.sugerencia : r.correo));
+  }
+
+  quitarDeLista(correo: string): void {
+    this.reescribirLista((r) => (r.correo === correo ? null : r.correo));
   }
 
   /**
@@ -2860,13 +2957,29 @@ export class Admin implements OnInit {
   generarCodigos(): void {
     if (this.formCodigos.invalid || this.trabajando()) return;
 
+    // Ningún código sale hacia un correo mal escrito. El servidor lo rechaza
+    // igual; esto es para que el aviso salga aquí, junto al campo, y no como un
+    // error genérico detrás de la ventana.
+    const varios = this.variosCompradores();
+    if (varios) {
+      const sinCorreos = this.listaCorreos().correos.length === 0;
+      if (sinCorreos || this.correosConProblema().length > 0 || this.resumenLista().excede) {
+        this.formCodigos.controls.buyerEmails.markAsTouched();
+        return;
+      }
+    } else if (this.revisionCorreo()?.problema) {
+      this.formCodigos.controls.buyerEmail.markAsTouched();
+      return;
+    }
+
     this.trabajando.set(true);
     this.error.set(null);
     this.codigosNuevos.set([]);
     this.codigoEnviadoA.set(null);
+    this.enviosNuevos.set([]);
     this.cobroApuntado.set(null);
 
-    const { cantidad, productCode, buyerEmail, note, paymentMethod, paymentRef, importe } =
+    const { cantidad, productCode, note, paymentMethod, paymentRef, importe } =
       this.formCodigos.getRawValue();
 
     // El cupón se anota en la nota. El importe final ya recoge la rebaja, pero
@@ -2880,7 +2993,8 @@ export class Admin implements OnInit {
       .generarCodigos({
         cantidad,
         productCode: productCode || undefined,
-        buyerEmail: buyerEmail || undefined,
+        buyerEmail: varios ? undefined : this.revisionCorreo()?.correo || undefined,
+        buyerEmails: varios ? this.listaCorreos().correos.map((r) => r.correo) : undefined,
         note: notaFinal || undefined,
         paymentMethod,
         paymentRef: paymentRef || undefined,
@@ -2889,9 +3003,10 @@ export class Admin implements OnInit {
         importe: importe === null || importe === undefined ? undefined : importe,
       })
       .subscribe({
-        next: ({ codes, ids, enviadoA, cobro }) => {
+        next: ({ codes, ids, enviadoA, envios, cobro }) => {
           this.codigosNuevos.set(codes);
           this.codigoEnviadoA.set(enviadoA);
+          this.enviosNuevos.set(envios ?? []);
           this.cobroApuntado.set(cobro);
 
           // La captura se sube DESPUÉS, cuando ya existe el código al que
@@ -2899,7 +3014,15 @@ export class Admin implements OnInit {
           // lo que el administrador necesita en pantalla. Si la imagen falla se
           // avisa, pero no se deshace una venta por una foto.
           this.adjuntarCaptura(ids);
-          this.formCodigos.patchValue({ buyerEmail: '', note: '', paymentRef: '', importe: null });
+          this.formCodigos.patchValue({
+            buyerEmail: '',
+            buyerEmails: '',
+            note: '',
+            paymentRef: '',
+            importe: null,
+          });
+          this.formCodigos.controls.buyerEmail.markAsUntouched();
+          this.formCodigos.controls.buyerEmails.markAsUntouched();
           this.trabajando.set(false);
           // La ventana se cierra sola: los códigos en claro se enseñan en la
           // tarjeta de detrás, que es donde además aparece la fila nueva. Con la
@@ -2919,8 +3042,16 @@ export class Admin implements OnInit {
     const codigos = this.codigosNuevos();
     if (codigos.length === 0) return;
 
+    // Con una lista se copia cada código con su correo, separados por un
+    // tabulador: pegado en una hoja de cálculo cae en dos columnas.
+    const envios = this.enviosNuevos();
+    const texto =
+      envios.length > 1
+        ? envios.flatMap((e) => e.codes.map((c) => `${e.email ?? ''}\t${c}`)).join('\n')
+        : codigos.join('\n');
+
     try {
-      await navigator.clipboard.writeText(codigos.join('\n'));
+      await navigator.clipboard.writeText(texto);
       this.copiados.set(true);
       setTimeout(() => this.copiados.set(false), 2500);
     } catch {

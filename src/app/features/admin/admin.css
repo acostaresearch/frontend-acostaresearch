@@ -360,6 +360,7 @@
 
 .campo input,
 .campo select,
+.campo textarea,
 .buscador,
 .filtro-estado {
   padding: 9px 11px;
@@ -373,6 +374,7 @@
 
 .campo input:focus,
 .campo select:focus,
+.campo textarea:focus,
 .buscador:focus,
 .filtro-estado:focus {
   outline: 2px solid var(--color-primario);
@@ -417,6 +419,25 @@
   letter-spacing: 0.04em;
   background: var(--color-superficie);
   border-radius: var(--radio-sm);
+}
+
+/* Vendidos a una lista: el correo delante, para saber de quién es cada uno. */
+.codigos-nuevos li.codigo-con-correo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+
+.codigo-correo {
+  min-width: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
 }
 
 /* ── Tablas ─────────────────────────────────────────────────────────────── */
@@ -1789,6 +1810,94 @@ td.acciones {
 
 .ayuda.descuento-mal {
   color: var(--color-error);
+}
+
+/* ── A quién se vende: uno o una lista ──────────────────────────────────── */
+.modo-compradores {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 3px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.modo-compradores button {
+  flex: 1;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+}
+
+.modo-compradores button.activo {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.campo textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ayuda.correo-mal {
+  color: var(--color-error);
+}
+
+.enlace-sugerencia {
+  padding: 0;
+  margin-left: 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.correos-mal {
+  padding: 10px 12px;
+  font-size: 13px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio-sm);
+  background: color-mix(in srgb, var(--color-error) 6%, transparent);
+}
+
+.correos-mal-titulo {
+  margin: 0 0 8px;
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.correos-mal ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.correos-mal li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.correo-mal-texto {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
 }
 
 /* ── Historial de accesos ──────────────────────────────────────────────────

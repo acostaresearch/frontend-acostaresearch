@@ -353,20 +353,41 @@
             <p class="codigos-titulo">
               Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
             </p>
-            @if (codigoEnviadoA(); as correo) {
+            @if (enviosNuevos().length > 1) {
+              <p class="codigos-enviado">
+                A cada uno de los {{ enviosNuevos().length }} compradores le mandamos los suyos
+                por correo. Al copiarlos, cada código va con su correo al lado.
+              </p>
+            } @else if (codigoEnviadoA(); as correo) {
               <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
             }
             @if (cobroApuntado(); as cobro) {
               <p class="codigos-enviado">
-                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }} por
-                {{ cobro.paymentMethod }}. Entrará en tus ventas cuando lo canjee.
+                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }}
+                @if (codigosNuevos().length > 1) {
+                  cada código (S/
+                  {{ (cobro.amountCents * codigosNuevos().length) / 100 | number: '1.2-2' }} en
+                  total)
+                }
+                por {{ cobro.paymentMethod }}. Entrará en tus ventas a medida que los canjeen.
               </p>
             } @else {
               <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
             }
             <ul>
-              @for (codigo of codigosNuevos(); track codigo) {
-                <li>{{ codigo }}</li>
+              @if (enviosNuevos().length > 1) {
+                @for (envio of enviosNuevos(); track envio.email) {
+                  @for (codigo of envio.codes; track codigo) {
+                    <li class="codigo-con-correo">
+                      <span class="codigo-correo">{{ envio.email }}</span>
+                      {{ codigo }}
+                    </li>
+                  }
+                }
+              } @else {
+                @for (codigo of codigosNuevos(); track codigo) {
+                  <li>{{ codigo }}</li>
+                }
               }
             </ul>
             <button type="button" class="boton" (click)="copiarCodigos()">
@@ -2618,9 +2639,30 @@
 
         <div class="ventana-cuerpo">
           <form [formGroup]="formCodigos" class="formulario" (ngSubmit)="generarCodigos()">
+            <div class="modo-compradores" role="group" aria-label="A quién se vende">
+              <button
+                type="button"
+                [class.activo]="!variosCompradores()"
+                [attr.aria-pressed]="!variosCompradores()"
+                (click)="cambiarModoCompradores(false)"
+              >
+                Un comprador
+              </button>
+              <button
+                type="button"
+                [class.activo]="variosCompradores()"
+                [attr.aria-pressed]="variosCompradores()"
+                (click)="cambiarModoCompradores(true)"
+              >
+                Varios compradores
+              </button>
+            </div>
+
             <div class="fila">
               <div class="campo estrecho">
-                <label for="cantidad">Cantidad</label>
+                <label for="cantidad">
+                  {{ variosCompradores() ? 'Códigos por correo' : 'Cantidad' }}
+                </label>
                 <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
               </div>
               <div class="campo">
@@ -2633,17 +2675,124 @@
               </div>
             </div>
 
-            <div class="campo">
-              <label for="comprador">
-                Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
-              </label>
-              <input
-                id="comprador"
-                type="email"
-                formControlName="buyerEmail"
-                placeholder="Déjalo vacío y solo lo verás aquí"
-              />
-            </div>
+            @if (!variosCompradores()) {
+              <div class="campo">
+                <label for="comprador">
+                  Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
+                </label>
+                <input
+                  id="comprador"
+                  type="email"
+                  formControlName="buyerEmail"
+                  placeholder="Déjalo vacío y solo lo verás aquí"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                @if (revisionCorreo(); as r) {
+                  @if (r.problema && formCodigos.controls.buyerEmail.touched) {
+                    <span class="ayuda correo-mal">
+                      {{ r.problema }}
+                      @if (r.sugerencia) {
+                        <button
+                          type="button"
+                          class="enlace-sugerencia"
+                          (click)="usarSugerenciaDeCorreo(r.sugerencia)"
+                        >
+                          Usar {{ r.sugerencia }}
+                        </button>
+                      }
+                    </span>
+                  }
+                }
+              </div>
+            } @else {
+              <!-- La misma venta para toda la lista: cada correo recibe sus
+                   propios códigos, al importe de abajo cada uno. -->
+              <div class="campo">
+                <label for="compradores">
+                  Correos de los compradores
+                  <span class="opcional">(uno por línea, o separados por comas)</span>
+                </label>
+                <textarea
+                  id="compradores"
+                  rows="6"
+                  formControlName="buyerEmails"
+                  placeholder="ana@gmail.com&#10;luis@hotmail.com&#10;maria@outlook.com"
+                  autocomplete="off"
+                  spellcheck="false"
+                ></textarea>
+
+                @if (resumenLista(); as resumen) {
+                  @if (resumen.correos > 0) {
+                    <span class="ayuda">
+                      {{ resumen.correos }} {{ resumen.correos === 1 ? 'correo' : 'correos' }} ·
+                      {{ resumen.codigos }} {{ resumen.codigos === 1 ? 'código' : 'códigos' }}
+                      @if (resumen.porCodigoCents > 0) {
+                        · S/ {{ resumen.porCodigoCents / 100 | number: '1.2-2' }} cada uno, S/
+                        {{ resumen.totalCents / 100 | number: '1.2-2' }} en total
+                      } @else {
+                        · sin cobro
+                      }
+                      @if (listaCorreos().repetidos > 0) {
+                        · {{ listaCorreos().repetidos }}
+                        {{ listaCorreos().repetidos === 1 ? 'repetido' : 'repetidos' }}, cuenta
+                        una vez
+                      }
+                    </span>
+                  } @else if (formCodigos.controls.buyerEmails.touched) {
+                    <span class="ayuda correo-mal">Pega al menos un correo.</span>
+                  }
+                  @if (resumen.excede) {
+                    <span class="ayuda correo-mal">
+                      Son {{ resumen.codigos }} códigos; el máximo por venta es 100.
+                    </span>
+                  }
+                }
+
+                @if (correosConProblema().length > 0) {
+                  <div class="correos-mal">
+                    <p class="correos-mal-titulo">
+                      {{
+                        correosConProblema().length === 1
+                          ? '1 correo mal escrito'
+                          : correosConProblema().length + ' correos mal escritos'
+                      }}. Corrígelos para poder generar.
+                      <button
+                        type="button"
+                        class="enlace-sugerencia"
+                        (click)="corregirTodosEnLista()"
+                      >
+                        Corregir los que tienen arreglo
+                      </button>
+                    </p>
+                    <ul>
+                      @for (r of correosConProblema(); track r.correo) {
+                        <li>
+                          <span class="correo-mal-texto">{{ r.correo }}</span>
+                          <span class="tenue">{{ r.problema }}</span>
+                          @if (r.sugerencia) {
+                            <button
+                              type="button"
+                              class="enlace-sugerencia"
+                              (click)="corregirEnLista(r.correo, r.sugerencia)"
+                            >
+                              Cambiar a {{ r.sugerencia }}
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            class="enlace-peligro"
+                            (click)="quitarDeLista(r.correo)"
+                          >
+                            Quitar
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
 
             <!-- El cobro. Se apunta aquí, al vender, porque es el único momento
                  en que alguien sabe cuánto entró y por dónde; el pago se crea
@@ -2784,7 +2933,14 @@
             Cancelar
           </button>
           <button type="button" class="boton" [disabled]="trabajando()" (click)="generarCodigos()">
-            {{ trabajando() ? 'Generando…' : 'Generar código' }}
+            @if (trabajando()) {
+              Generando…
+            } @else if (variosCompradores() && resumenLista().codigos > 0) {
+              Generar {{ resumenLista().codigos }}
+              {{ resumenLista().codigos === 1 ? 'código' : 'códigos' }}
+            } @else {
+              Generar código
+            }
           </button>
         </div>
       </div>
