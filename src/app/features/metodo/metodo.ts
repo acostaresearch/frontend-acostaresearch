@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SkillPublica, SkillService } from '../../core/services/skill.service';
-import { ASESORIA, DESCRIPCIONES, LIBROS } from '../../shared/contenido/metodo';
+import { DESCRIPCIONES, LIBROS } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -42,7 +42,6 @@ export class Metodo implements OnInit {
   readonly publicadas = signal<SkillPublica[]>([]);
   readonly cargando = signal(true);
 
-  readonly asesoria = ASESORIA;
   readonly libros = LIBROS;
 
   /**

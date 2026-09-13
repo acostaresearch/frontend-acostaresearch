@@ -436,6 +436,14 @@
                   </button>
                 }
               </div>
+
+              <!-- Antes de elegir el medio y no debajo del botón de pago: el de
+                   PayPal lo pinta PayPal, y lo que se pone cerca se pierde. -->
+              <p class="nota">
+                Al pagar aceptas los <a routerLink="/terminos">Términos y Condiciones</a>. Una vez
+                activado el acceso no hay devolución: lee la
+                <a routerLink="/terminos" fragment="reembolsos">política de reembolsos</a>.
+              </p>
             }
 
             @if (auth.isAuthenticated() && metodoPago() === 'paypal') {

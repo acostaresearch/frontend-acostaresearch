@@ -57,6 +57,11 @@ export const routes: Routes = [
     title: 'Política de Privacidad · Acosta Research',
     loadComponent: () => import('./features/privacidad/privacidad').then((m) => m.Privacidad),
   },
+  {
+    path: 'terminos',
+    title: 'Términos y Condiciones · Acosta Research',
+    loadComponent: () => import('./features/terminos/terminos').then((m) => m.Terminos),
+  },
   // Obligatorio para quien vende a consumidores en el Perú. Público y sin
   // cuenta: reclama cualquiera, haya comprado o no.
   {

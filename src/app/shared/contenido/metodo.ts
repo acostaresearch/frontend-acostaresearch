@@ -311,9 +311,8 @@ export const PASOS = [
   {
     titulo: 'Recibes todo el paquete',
     texto:
-      'Tu conector con las 11 Skills, tu panel, 30 minutos de asesoría conmigo y los videos ' +
-      'guía. Conectarlo a Claude.ai toma dos minutos, funciona con el plan gratuito y no ' +
-      'necesitas saber nada de tecnología.',
+      'Tu conector con las 11 Skills, tu panel y los videos guía. Conectarlo a Claude.ai toma ' +
+      'dos minutos, funciona con el plan gratuito y no necesitas saber nada de tecnología.',
   },
   {
     titulo: 'Traes lo tuyo',
@@ -368,9 +367,12 @@ export const OBJECIONES = [
  * Qué se lleva quien compra el método.
  *
  * El orden no es el de antes: delante van las tres que deciden la compra —las
- * Skills, la asesoría y los doce meses—, porque son las tres que la tarjeta
- * destaca. La guía y la compatibilidad siguen ahí, detrás, que es el peso que
- * tienen: está bien saberlas, pero nadie compra por ellas.
+ * Skills, el panel y la duración—, porque son las tres que la tarjeta destaca.
+ * La guía y la compatibilidad siguen ahí, detrás, que es el peso que tienen:
+ * está bien saberlas, pero nadie compra por ellas.
+ *
+ * La asesoría personalizada iba segunda y se dejó de ofrecer el 13 de septiembre
+ * de 2026. Si vuelve, vuelve también a los Términos y Condiciones.
  */
 /*
  * Por código de plan, porque se venden dos y cada uno tiene su lista. Antes era
@@ -384,7 +386,6 @@ export const OBJECIONES = [
 export const INCLUYE: Record<string, string[]> = {
   METODO_DE_TESIS_HUMANIZADOR: [
     'Las 11 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
-    '30 minutos de asesoría personalizada conmigo, para resolver la duda que te tenga trabado',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
     'Tu tesis en un solo Word, con el formato de tu universidad y en 15 normas de citas',
     'Videos guía para conectarlo y usarlo',
@@ -441,24 +442,21 @@ export const FAQ: Pregunta[] = [
   },
 ];
 
-/* ── Las dos secciones con imagen de «El método» ───────────────────────────
+/* ── La sección con imagen de «El método» ──────────────────────────────────
  *
  * Los archivos viven en `public/`, que Angular sirve desde la raíz: una ruta
- * `asesoria/01.jpg` aquí es `https://…/asesoria/01.jpg` en el navegador. No
- * llevan `/` delante a propósito, igual que el retrato de «Quién te acompaña».
+ * relativa aquí es la misma ruta desde la raíz en el navegador. No llevan `/`
+ * delante a propósito, igual que el retrato de «Quién te acompaña».
+ *
+ * Había otra, la de la asesoría personalizada, con tres fotos. Se retiró con la
+ * asesoría el 13 de septiembre de 2026.
  */
 
-/** Foto de una sesión de asesoría. */
+/** Una imagen con su texto alternativo. */
 export interface Foto {
   src: string;
   alt: string;
 }
-
-export const ASESORIA: Foto[] = [
-  { src: 'asesoria/01.jpg', alt: 'Benicio Acosta en una sesión de asesoría de tesis' },
-  { src: 'asesoria/02.jpg', alt: 'Revisión del capítulo de metodología con una tesista' },
-  { src: 'asesoria/03.jpg', alt: 'Sesión de asesoría por videollamada' },
-];
 
 /** Libro de metodología en el que se apoya la estructura de las Skills. */
 export interface Libro {

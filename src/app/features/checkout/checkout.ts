@@ -486,8 +486,8 @@ export class Checkout implements OnInit {
   /**
    * Qué se lleva quien compra este paquete.
    *
-   * El método de tesis tiene su lista escrita —las Skills, la asesoría, los
-   * doce meses—. Un grupo creado desde el panel no puede tenerla: nadie la ha
+   * El método de tesis tiene su lista escrita —las Skills, el panel, la
+   * duración—. Un grupo creado desde el panel no puede tenerla: nadie la ha
    * escrito. Para esos se arma con lo que el servidor sí sabe con certeza, que
    * es poco pero cierto. Inventarles viñetas sería prometer en su nombre.
    */
@@ -513,8 +513,8 @@ export class Checkout implements OnInit {
   /**
    * Cuántas viñetas van destacadas: las tres primeras de la lista escrita.
    *
-   * Son las que deciden la compra —los nueve capítulos, el Humanizador, la
-   * asesoría— y en una lista de siete todas iguales se leían como requisitos
+   * Son las que deciden la compra —las Skills, el panel y la duración— y en
+   * una lista de seis todas iguales se leían como requisitos
    * técnicos. Un paquete sin lista escrita no destaca ninguna: sus tres
    * viñetas son las genéricas, y ponerlas en negrita sería subrayar «se
    * instala en tu cuenta» como si fuera el argumento de venta.

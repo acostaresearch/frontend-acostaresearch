@@ -39,31 +39,9 @@
     }
   </section>
 
-  <!-- Lo que las Skills no resuelven. Va justo después del listado porque es
-       la objeción que aparece al terminar de leerlo: «¿y si me trabo?».
-
-       Los videos guía NO van aquí: son material para quien ya compró, y esta
-       página es el escaparate. -->
-  <section class="seccion noche">
-    <div class="asesoria">
-      <div class="asesoria-texto">
-        <p class="seccion-marca">Cuando lo necesites</p>
-        <h2 class="titulo-seccion">Asesoría personalizada conmigo</h2>
-        <p class="seccion-entrada">
-          El método resuelve casi todo. Para lo que no, tienes 30 minutos conmigo, uno a uno, para
-          destrabar tu caso puntual.
-        </p>
-      </div>
-
-      <ul class="asesoria-fotos">
-        @for (foto of asesoria; track foto.src) {
-          <li>
-            <img [src]="foto.src" [alt]="foto.alt" loading="lazy" decoding="async" />
-          </li>
-        }
-      </ul>
-    </div>
-  </section>
+  <!-- Aquí iba la asesoría personalizada, con sus fotos. Se dejó de ofrecer el
+       13 de septiembre de 2026 y la sección se fue con ella: prometerla en el
+       escaparate contradecía los Términos y Condiciones. -->
 
   <!-- Lo que acompaña a las Skills fuera de la conversación. Cada tarjeta es
        algo que ya está en el perfil del comprador: si una función se retira del
@@ -139,7 +117,7 @@
       <div>
         <h2 class="titulo-seccion">Quiero el paquete completo</h2>
         <p class="seccion-entrada">
-          Doce meses de acceso, renovables, 30 minutos de asesoría conmigo y los videos guía.
+          Doce meses de acceso, renovables, tu panel y los videos guía.
         </p>
       </div>
       <a
