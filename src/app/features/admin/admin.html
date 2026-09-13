@@ -2689,7 +2689,10 @@
                   spellcheck="false"
                 />
                 @if (revisionCorreo(); as r) {
-                  @if (r.problema && formCodigos.controls.buyerEmail.touched) {
+                  @if (
+                    r.problema &&
+                    (formCodigos.controls.buyerEmail.touched || revisionesServidor().has(r.correo))
+                  ) {
                     <span class="ayuda correo-mal">
                       {{ r.problema }}
                       @if (r.sugerencia) {
@@ -2703,6 +2706,9 @@
                       }
                     </span>
                   }
+                }
+                @if (comprobandoCorreos()) {
+                  <span class="ayuda">Comprobando que ese dominio recibe correos…</span>
                 }
               </div>
             } @else {
@@ -2737,6 +2743,9 @@
                         · {{ listaCorreos().repetidos }}
                         {{ listaCorreos().repetidos === 1 ? 'repetido' : 'repetidos' }}, cuenta
                         una vez
+                      }
+                      @if (comprobandoCorreos()) {
+                        · comprobando que los dominios reciben correos…
                       }
                     </span>
                   } @else if (formCodigos.controls.buyerEmails.touched) {
@@ -2932,9 +2941,16 @@
           <button type="button" class="boton secundario" (click)="cerrarFormularioCodigos()">
             Cancelar
           </button>
-          <button type="button" class="boton" [disabled]="trabajando()" (click)="generarCodigos()">
+          <button
+            type="button"
+            class="boton"
+            [disabled]="trabajando() || comprobandoCorreos()"
+            (click)="generarCodigos()"
+          >
             @if (trabajando()) {
               Generando…
+            } @else if (comprobandoCorreos()) {
+              Comprobando correos…
             } @else if (variosCompradores() && resumenLista().codigos > 0) {
               Generar {{ resumenLista().codigos }}
               {{ resumenLista().codigos === 1 ? 'código' : 'códigos' }}

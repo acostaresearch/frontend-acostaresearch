@@ -715,6 +715,16 @@ export class Admin implements OnInit {
    */
   readonly variosCompradores = signal(false);
 
+  /**
+   * Lo que dijo el servidor de cada correo ya comprobado.
+   *
+   * Aquí se sabe si el dominio recibe correo, cosa que el navegador no puede
+   * mirar: `zz@hou.com` tiene la forma perfecta, no se parece a ningún
+   * proveedor, y no tiene buzones.
+   */
+  readonly revisionesServidor = signal<ReadonlyMap<string, RevisionDeCorreo>>(new Map());
+  readonly comprobandoCorreos = signal(false);
+
   private readonly valoresCodigos = toSignal(
     this.formCodigos.valueChanges.pipe(map(() => this.formCodigos.getRawValue())),
     { initialValue: this.formCodigos.getRawValue() },
@@ -729,10 +739,38 @@ export class Admin implements OnInit {
    */
   readonly revisionCorreo = computed(() => {
     const texto = this.valoresCodigos().buyerEmail.trim();
-    return texto ? revisarCorreo(texto) : null;
+    if (!texto) return null;
+    const local = revisarCorreo(texto);
+    return local.problema ? local : (this.revisionesServidor().get(local.correo) ?? local);
   });
 
-  readonly listaCorreos = computed(() => leerListaDeCorreos(this.valoresCodigos().buyerEmails));
+  readonly listaCorreos = computed(() => {
+    const lista = leerListaDeCorreos(this.valoresCodigos().buyerEmails);
+    const servidor = this.revisionesServidor();
+    return {
+      ...lista,
+      correos: lista.correos.map((r) => (r.problema ? r : (servidor.get(r.correo) ?? r))),
+    };
+  });
+
+  /** Correos con buena forma que el servidor aún no ha visto. */
+  readonly correosPorComprobar = computed(() => {
+    const servidor = this.revisionesServidor();
+    const candidatos = this.variosCompradores()
+      ? this.listaCorreos().correos
+      : [this.revisionCorreo()];
+    return candidatos
+      .filter((r): r is RevisionDeCorreo => !!r && !r.problema && !servidor.has(r.correo))
+      .map((r) => r.correo);
+  });
+
+  /** Se comprueban al dejar de escribir, no con cada tecla. */
+  private readonly comprobarCorreosAlEscribir = effect((onCleanup) => {
+    const pendientes = this.correosPorComprobar();
+    if (!this.formularioCodigosAbierto() || pendientes.length === 0) return;
+    const espera = setTimeout(() => this.pedirRevisionDeCorreos(pendientes).subscribe(), 700);
+    onCleanup(() => clearTimeout(espera));
+  });
   readonly correosConProblema = computed(() =>
     this.listaCorreos().correos.filter((r) => r.problema),
   );
@@ -2811,6 +2849,21 @@ export class Admin implements OnInit {
     this.formCodigos.controls.buyerEmail.setValue(sugerencia);
   }
 
+  private pedirRevisionDeCorreos(correos: string[]): Observable<void> {
+    this.comprobandoCorreos.set(true);
+    return this.admin.revisarCorreos(correos).pipe(
+      // Si la comprobación falla no se bloquea la venta: al generar, el servidor
+      // lo vuelve a mirar y ahí sí la rechaza.
+      catchError(() => of(correos.map((correo) => ({ correo, problema: null, sugerencia: null })))),
+      map((revisiones) => {
+        const juntas = new Map(this.revisionesServidor());
+        for (const r of revisiones) juntas.set(r.correo, r);
+        this.revisionesServidor.set(juntas);
+        this.comprobandoCorreos.set(false);
+      }),
+    );
+  }
+
   /**
    * Reescribe la lista pegada, un correo por línea.
    *
@@ -2955,7 +3008,16 @@ export class Admin implements OnInit {
   }
 
   generarCodigos(): void {
-    if (this.formCodigos.invalid || this.trabajando()) return;
+    if (this.formCodigos.invalid || this.trabajando() || this.comprobandoCorreos()) return;
+
+    // Sin comprobar no sale: se pregunta ahora y se vuelve a intentar.
+    const pendientes = this.correosPorComprobar();
+    if (pendientes.length > 0) {
+      this.pedirRevisionDeCorreos(pendientes).subscribe(() => {
+        if (this.correosPorComprobar().length === 0) this.generarCodigos();
+      });
+      return;
+    }
 
     // Ningún código sale hacia un correo mal escrito. El servidor lo rechaza
     // igual; esto es para que el aviso salga aquí, junto al campo, y no como un

@@ -16,6 +16,7 @@ import {
   PagoAdmin,
 } from '../models/admin.model';
 import { ApiResponse } from '../models/api.model';
+import { RevisionDeCorreo } from '../../shared/validators/correo';
 
 /** Lo que devuelve el servidor tras generar códigos. */
 export interface CodigosGenerados {
@@ -57,6 +58,18 @@ export class AdminService {
     return this.http
       .post<ApiResponse<CodigosGenerados>>(`${this.licencias}/codes`, datos)
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Revisa correos en el servidor: además de la forma y las erratas, si el
+   * dominio recibe correo, que desde el navegador no se puede saber.
+   */
+  revisarCorreos(emails: string[]): Observable<RevisionDeCorreo[]> {
+    return this.http
+      .post<
+        ApiResponse<{ revisiones: RevisionDeCorreo[] }>
+      >(`${this.licencias}/codes/check-emails`, { emails })
+      .pipe(map((res) => res.data.revisiones));
   }
 
   /**
