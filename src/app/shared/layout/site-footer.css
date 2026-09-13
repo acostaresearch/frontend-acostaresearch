@@ -8,24 +8,24 @@
 .pie {
   padding: 64px var(--lado) 40px;
   font-size: 15px;
-  color: var(--gris-noche);
-  background: #060b1c;
+  color: var(--noche-texto);
+  background: var(--noche-pie);
   border-top: 1px solid rgba(224, 185, 115, 0.25);
 }
 
 .contenido {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
   gap: 36px;
   max-width: var(--centro);
   margin: 0 auto;
 }
 
-/* Con cinco columnas la marca se queda sola arriba en cuanto se estrecha: así
-   las cuatro de enlaces siguen alineadas debajo. */
+/* Con cuatro columnas la marca se queda sola arriba en cuanto se estrecha: así
+   las tres de enlaces siguen alineadas debajo. */
 @media (max-width: 1100px) {
   .contenido {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .columna.marca {
@@ -57,30 +57,30 @@
   margin: 0 0 2px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--dorado);
+  color: var(--noche-acento);
 }
 
 .columna a {
   font-size: 15px;
-  color: var(--gris-noche);
+  color: var(--noche-texto);
   text-decoration: none;
 }
 
 .columna a:hover {
-  color: #fff;
+  color: var(--noche-titulo);
 }
 
 .marca .nombre {
   margin: 0;
   font-size: 19px;
   font-weight: 800;
-  color: #fff;
+  color: var(--noche-titulo);
 }
 
 .marca .nombre span {
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--dorado-claro);
+  color: var(--noche-acento-claro);
 }
 
 .marca .descripcion {
@@ -92,7 +92,7 @@
 
 .tenue {
   font-size: 13px;
-  color: rgba(168, 180, 212, 0.75);
+  color: color-mix(in srgb, var(--noche-texto) 75%, transparent);
 }
 
 /* ── Redes y perfiles ───────────────────────────────────────────────────── */
@@ -110,8 +110,8 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  color: var(--gris-noche);
-  border: 1px solid rgba(168, 180, 212, 0.3);
+  color: var(--noche-texto);
+  border: 1px solid color-mix(in srgb, var(--noche-texto) 30%, transparent);
   border-radius: var(--radio-sm);
   transition:
     color var(--transicion),
@@ -140,13 +140,13 @@
   max-width: var(--centro);
   margin: 44px auto 0;
   padding-top: 24px;
-  border-top: 1px solid rgba(168, 180, 212, 0.18);
+  border-top: 1px solid var(--noche-linea);
 }
 
 .legal p {
   margin: 0;
   font-size: 13.5px;
-  color: var(--gris-noche);
+  color: var(--noche-texto);
 }
 
 /* El aviso no es relleno legal: es la promesa que sí se puede sostener. */
