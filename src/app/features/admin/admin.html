@@ -1795,7 +1795,12 @@
                           <span class="tenue mono">{{ invitado.tokenHint }}…</span>
                         </td>
                         <td class="tenue">{{ invitado.recibidoAt | date: 'd MMM, HH:mm' }}</td>
-                        <td class="numero">{{ invitado.consultas }}</td>
+                        <td class="numero">
+                          {{ invitado.consultas }}
+                          @if (enlace.callsPerDay > 0) {
+                            <div class="tenue">hoy {{ invitado.hoy }} de {{ enlace.callsPerDay }}</div>
+                          }
+                        </td>
                         <td class="tenue">
                           {{
                             invitado.ultimoUso

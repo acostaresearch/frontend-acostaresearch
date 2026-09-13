@@ -51,7 +51,10 @@ export interface InvitadoPrueba {
   numero: number | null;
   recibidoAt: string;
   tokenHint: string | null;
+  /** Las que gastan del tope, desde que lo recogió. */
   consultas: number;
+  /** Las que lleva hoy, hora de Lima: el número que frena «Consultas al día». */
+  hoy: number;
   ultimoUso: string | null;
   expiresAt: string | null;
 }
