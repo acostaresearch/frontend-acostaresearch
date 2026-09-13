@@ -1,3 +1,7 @@
+@if (avisoBorrado(); as mensaje) {
+  <p class="aviso-borrado" role="status">{{ mensaje }}</p>
+}
+
 @if (proyecto(); as p) {
   <section class="tesis">
     <header class="intro">
@@ -347,5 +351,64 @@
         <p class="aviso-descarga">{{ mensaje }}</p>
       }
     </div>
+
+    <!-- Empezar de cero. Al final y en pequeño: es para quien le cambiaron el
+         tema, no algo que se pulse de paso. -->
+    @if (pidiendoBorrar() === p.productCode) {
+      <div class="caja borrar">
+        <p class="caja-titulo">Borrar todo tu progreso de {{ nombreCorto(p) }}</p>
+        <p class="caja-texto">
+          Se borra para siempre: el tema, lo anotado en cada fase,
+          @if (palabrasTotales(p) > 0) {
+            <strong>los capítulos escritos ({{ palabrasTotales(p) }} palabras)</strong>,
+          }
+          el análisis, la norma de citas y el formato de tu facultad. Si quieres conservar el
+          texto, descarga antes tu Word. Tu licencia y tu Zotero siguen igual. Tus conversaciones
+          en Claude no se borran, pero el conector ya no le recordará nada.
+        </p>
+
+        <label class="borrar-campo">
+          <span>Escribe <strong>eliminar</strong> para confirmar</span>
+          <input
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            [value]="confirmacionBorrado()"
+            [disabled]="borrando()"
+            (input)="escribirConfirmacion($event)"
+          />
+        </label>
+
+        <div class="borrar-acciones">
+          <button
+            type="button"
+            class="boton peligro"
+            [disabled]="!puedeBorrar() || borrando()"
+            (click)="confirmarBorrado(p)"
+          >
+            {{ borrando() ? 'Borrando…' : 'Borrar mi progreso' }}
+          </button>
+          <button
+            type="button"
+            class="boton enlace"
+            [disabled]="borrando()"
+            (click)="cancelarBorrado()"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        @if (errorBorrado(); as mensaje) {
+          <p class="aviso-descarga">{{ mensaje }}</p>
+        }
+      </div>
+    } @else {
+      <p class="borrar-entrada">
+        ¿Te cambiaron el tema?
+        <button type="button" class="boton enlace" (click)="pedirBorrar(p)">
+          Borrar mi progreso y empezar de cero
+        </button>
+      </p>
+    }
   </section>
 }

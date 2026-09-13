@@ -83,6 +83,7 @@ export class MiTesis implements OnInit {
     this.elegido.set(productCode);
     this.retomarAbierto.set(false);
     this.copiado.set(false);
+    this.cancelarBorrado();
   }
 
   /** «Método de Tesis · 9 Capítulos + …» → «Método de Tesis», para la pestaña. */
@@ -311,6 +312,66 @@ export class MiTesis implements OnInit {
       error: (e) => {
         this.subiendoPlantilla.set(false);
         this.errorPlantilla.set(toApiError(e).message);
+      },
+    });
+  }
+
+  // ── Empezar de cero ──────────────────────────────────────────────────────
+  /** El proyecto cuyo borrado se está confirmando. */
+  readonly pidiendoBorrar = signal<string | null>(null);
+  readonly confirmacionBorrado = signal('');
+  /**
+   * Se pide escribir la palabra y no un «¿seguro?», como al borrar la cuenta:
+   * a un «¿seguro?» se le da que sí sin leerlo, y esto no tiene vuelta atrás.
+   */
+  readonly puedeBorrar = computed(
+    () => this.confirmacionBorrado().trim().toLowerCase() === 'eliminar',
+  );
+  readonly borrando = signal(false);
+  readonly errorBorrado = signal<string | null>(null);
+  /** Va fuera del panel: si era su único proyecto, el panel se va con él. */
+  readonly avisoBorrado = signal<string | null>(null);
+
+  pedirBorrar(p: Proyecto): void {
+    this.confirmacionBorrado.set('');
+    this.errorBorrado.set(null);
+    this.avisoBorrado.set(null);
+    this.pidiendoBorrar.set(p.productCode);
+  }
+
+  cancelarBorrado(): void {
+    if (this.borrando()) return;
+    this.pidiendoBorrar.set(null);
+    this.confirmacionBorrado.set('');
+    this.errorBorrado.set(null);
+  }
+
+  escribirConfirmacion(evento: Event): void {
+    this.confirmacionBorrado.set((evento.target as HTMLInputElement).value);
+  }
+
+  confirmarBorrado(p: Proyecto): void {
+    if (!this.puedeBorrar() || this.borrando()) return;
+
+    this.borrando.set(true);
+    this.errorBorrado.set(null);
+
+    this.proyectos.borrar(p.productCode, this.confirmacionBorrado()).subscribe({
+      next: () => {
+        this.borrando.set(false);
+        this.pidiendoBorrar.set(null);
+        this.confirmacionBorrado.set('');
+        this.abiertos.set(new Set());
+        this.elegido.set(null);
+        this.lista.update((lista) => lista.filter((x) => x.productCode !== p.productCode));
+        this.avisoBorrado.set(
+          `Borrado el progreso de ${this.nombreCorto(p)}. La próxima vez que trabajes con Claude, ` +
+            'empezará de cero.',
+        );
+      },
+      error: (e) => {
+        this.borrando.set(false);
+        this.errorBorrado.set(toApiError(e).message);
       },
     });
   }

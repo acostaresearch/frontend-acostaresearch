@@ -188,6 +188,20 @@ export class ProyectoService {
       .pipe(map((r) => r.data as NormaDelProyecto));
   }
 
+  /**
+   * Borra el proyecto entero: avance, capítulos, análisis y plantilla.
+   *
+   * La palabra viaja al servidor, que la vuelve a comprobar: la de la pantalla
+   * solo enciende el botón.
+   */
+  borrar(productCode: string, confirmacion: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}`, {
+        body: { confirmacion },
+      })
+      .pipe(map(() => undefined));
+  }
+
   quitarPlantilla(productCode: string): Observable<void> {
     return this.http
       .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/plantilla`)
