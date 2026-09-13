@@ -35,12 +35,6 @@
   color: var(--color-texto-suave);
 }
 
-/* A la derecha de la misma línea: a mano sin competir con el título. */
-.zotero-buscar-abrir {
-  margin-left: auto;
-  align-self: center;
-}
-
 .zotero-coleccion {
   margin: 0 0 14px;
   font-size: 13px;
@@ -77,26 +71,43 @@
    Botones y no un desplegable. Un <select> esconde la lista detrás de un
    clic y no deja ver cuántas fuentes tiene cada una, que es justo el dato con
    el que se decide cuál es «la de la tesis». */
+/* A la derecha de la línea de «Zotero conectado», con la lupa dentro. */
 .zotero-buscar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 8px;
+  position: relative;
+  display: block;
+  margin-left: auto;
+  align-self: center;
+  width: 200px;
+  max-width: 100%;
 }
 
-.zotero-buscar-campo {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 12px;
+.zotero-buscar-lupa {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: var(--color-texto-tenue);
+  pointer-events: none;
+}
+
+.zotero-cifra .zotero-buscar-campo {
+  width: 100%;
+  padding: 7px 10px 7px 32px;
   border: 1px solid var(--color-borde, #dfe3eb);
-  border-radius: 8px;
+  border-radius: 6px;
+  background: var(--color-superficie);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 13px;
+  color: inherit;
 }
 
 .zotero-buscar-campo:focus {
   outline: none;
   border-color: var(--color-primario);
+}
+
+.zotero-buscar-campo:disabled {
+  opacity: 0.6;
 }
 
 .zotero-lista {
@@ -119,7 +130,7 @@
   padding: 9px 12px;
   border: 1px solid var(--color-borde, #dfe3eb);
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-superficie);
   font: inherit;
   font-size: 13.5px;
   text-align: left;

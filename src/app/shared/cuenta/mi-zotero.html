@@ -37,15 +37,35 @@
         @if (datos.usuario) {
           <span>como {{ datos.usuario }}</span>
         }
-        @if (!buscando() && (colecciones()?.colecciones?.length ?? 1) > 0) {
-          <button
-            type="button"
-            class="boton enlace zotero-buscar-abrir"
-            [disabled]="trayendo()"
-            (click)="abrirBusqueda()"
-          >
-            Buscar colección
-          </button>
+        <!-- Sin colecciones no hay nada que buscar. -->
+        @if ((colecciones()?.colecciones?.length ?? 1) > 0) {
+          <label class="zotero-buscar">
+            <svg
+              class="zotero-buscar-lupa"
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              class="zotero-buscar-campo"
+              placeholder="Buscar colección"
+              aria-label="Buscar una colección"
+              [value]="busqueda()"
+              [disabled]="trayendo()"
+              (focus)="abrirBusqueda()"
+              (input)="buscar($any($event.target).value)"
+              (keydown.escape)="limpiarBusqueda()"
+            />
+          </label>
         }
       </p>
 
@@ -81,24 +101,6 @@
            pantalla les decía «crea una colección y vuelve»: deberes antes de
            poder usar lo que pagaron. -->
       @if (colecciones(); as puede) {
-        @if (buscando() && puede.colecciones.length > 0) {
-          <div class="zotero-buscar">
-            <input
-              #campo
-              type="search"
-              class="zotero-buscar-campo"
-              placeholder="Busca una colección por su nombre"
-              aria-label="Buscar una colección"
-              [value]="busqueda()"
-              (input)="busqueda.set($any($event.target).value)"
-              (keydown.escape)="cerrarBusqueda()"
-            />
-            <button type="button" class="boton enlace" (click)="cerrarBusqueda()">
-              Cerrar
-            </button>
-          </div>
-        }
-
         <ul class="zotero-lista">
           <li>
             <button
@@ -167,6 +169,11 @@
       <p class="nota-pie">
         Se actualiza solo cada noche. Lo que saques de ahí en Zotero desaparece de aquí; lo que
         añadas, aparece.
+      </p>
+
+      <p class="nota-pie">
+        Para usarlas, pídeselo a Claude en tu conector: «muéstrame mis fuentes de Zotero» o
+        «busca en mis fuentes sobre…».
       </p>
 
       <p class="nota-pie">

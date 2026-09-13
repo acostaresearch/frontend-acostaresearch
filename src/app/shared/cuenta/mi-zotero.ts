@@ -1,14 +1,5 @@
 import { DatePipe } from '@angular/common';
-import {
-  Component,
-  ElementRef,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -78,9 +69,7 @@ export class MiZoteroPanel implements OnInit {
    * Antecedentes»—, sin distinguir mayúsculas ni tildes: nadie escribe
    * «Metodología» con la tilde cuando busca deprisa.
    */
-  readonly buscando = signal(false);
   readonly busqueda = signal('');
-  private readonly campo = viewChild<ElementRef<HTMLInputElement>>('campo');
 
   readonly encontradas = computed(() => {
     const colecciones = this.colecciones()?.colecciones ?? [];
@@ -88,12 +77,6 @@ export class MiZoteroPanel implements OnInit {
     if (!texto) return colecciones;
     return colecciones.filter((coleccion) => normalizar(coleccion.nombre).includes(texto));
   });
-
-  constructor() {
-    // El campo aparece al pulsar «Buscar»: se le da el foco para que escriba
-    // sin otro clic.
-    effect(() => this.campo()?.nativeElement.focus());
-  }
 
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('zotero');
@@ -146,27 +129,26 @@ export class MiZoteroPanel implements OnInit {
   }
 
   /**
-   * El botón vive junto a «Zotero conectado», así que se puede pulsar con la
-   * lista cerrada: en ese caso se pide la lista y el campo aparece encima.
+   * El campo está siempre a la vista junto a «Zotero conectado», también con
+   * la lista cerrada: al entrar en él se pide la lista para filtrarla.
    */
   abrirBusqueda(): void {
-    this.buscando.set(true);
-    if (!this.colecciones()) this.pedirColecciones();
+    if (!this.colecciones() && !this.trayendo()) this.pedirColecciones();
   }
 
-  cerrarBusqueda(): void {
-    this.buscando.set(false);
+  buscar(texto: string): void {
+    this.busqueda.set(texto);
+    this.abrirBusqueda();
+  }
+
+  limpiarBusqueda(): void {
     this.busqueda.set('');
   }
 
   pedirColecciones(): void {
     this.error.set(null);
     this.zotero.colecciones().subscribe({
-      next: (lo) => {
-        this.colecciones.set(lo);
-        // Sin colecciones no hay nada que buscar.
-        if (lo.colecciones.length === 0) this.cerrarBusqueda();
-      },
+      next: (lo) => this.colecciones.set(lo),
       error: (fallo) => {
         this.colecciones.set(null);
         this.error.set(toApiError(fallo).message);
@@ -183,7 +165,7 @@ export class MiZoteroPanel implements OnInit {
     this.zotero.elegir(clave).subscribe({
       next: () => {
         this.colecciones.set(null);
-        this.cerrarBusqueda();
+        this.limpiarBusqueda();
         // La primera pasada la lanza el servidor por detrás, así que aquí no
         // hay cifras todavía: se vuelve a preguntar el estado en unos segundos.
         this.parte.set('Trayendo tu colección. Tarda unos segundos.');
@@ -201,7 +183,7 @@ export class MiZoteroPanel implements OnInit {
 
   /** Cambiar de colección: se vuelve a enseñar la lista. */
   cambiar(): void {
-    this.cerrarBusqueda();
+    this.limpiarBusqueda();
     this.pedirColecciones();
   }
 
@@ -243,7 +225,7 @@ export class MiZoteroPanel implements OnInit {
     this.zotero.desconectar().subscribe({
       next: () => {
         this.colecciones.set(null);
-        this.cerrarBusqueda();
+        this.limpiarBusqueda();
         this.parte.set(null);
         this.vuelta.set(null);
         this.cargar();
