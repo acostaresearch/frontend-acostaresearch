@@ -11,6 +11,27 @@
     />
     <meta name="theme-color" content="#1d4ed8" />
 
+    <!-- El modo claro u oscuro, antes de pintar nada.
+         Va en línea y no en Angular porque Angular arranca después del primer
+         pintado: quien prefiere el oscuro vería la página en blanco un instante
+         en cada carga. Primero la elección guardada; si no hay, la del sistema.
+         Después lo mantiene TemaService, que usa la misma clave. -->
+    <script>
+      (function () {
+        var tema;
+        try {
+          tema = localStorage.getItem('tema');
+        } catch (e) {}
+        if (tema !== 'claro' && tema !== 'oscuro') {
+          tema =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'oscuro'
+              : 'claro';
+        }
+        document.documentElement.setAttribute('data-tema', tema);
+      })();
+    </script>
+
     <!-- La tipografia del sitio.
          Se precarga la conexion a los dos dominios de Google Fonts antes de
          pedir la hoja: sin `preconnect`, el navegador descubre el segundo

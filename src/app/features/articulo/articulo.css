@@ -22,6 +22,36 @@
   object-fit: contain;
 }
 
+/* «Incluido en el paquete» se ve siempre como en modo oscuro.
+ *
+ * No se usa `.seccion.noche`: esa pinta en blanco y gris todo h3 y p de la
+ * sección, y aquí esos textos viven dentro de la tarjeta. En su lugar la
+ * sección redefine las variables con los valores de `:root[data-tema='oscuro']`
+ * (styles.css), y la tarjeta, sus bordes, sus textos y la celda de la imagen
+ * salen oscuros sin tocar una sola regla compartida. Si cambia la paleta
+ * oscura, hay que cambiarla también aquí. */
+.seccion.complementos {
+  --color-fondo: #0d1220;
+  --color-superficie: #151b2c;
+  --color-borde: #262e44;
+  --color-texto: #e7eaf2;
+  --color-texto-suave: #a9b1c4;
+  --color-texto-tenue: #7f889d;
+  --color-primario: #7ea5ff;
+  --color-exito: #62d49a;
+
+  color-scheme: dark;
+  background: var(--noche-fondo);
+}
+
+.complementos .seccion-marca {
+  color: var(--noche-acento);
+}
+
+.complementos .titulo-seccion {
+  color: var(--noche-titulo);
+}
+
 /* Apilada en móvil, la celda ya no tiene una hermana a la que igualar la
    altura: se deja crecer a lo que mida la imagen. */
 @media (max-width: 900px) {

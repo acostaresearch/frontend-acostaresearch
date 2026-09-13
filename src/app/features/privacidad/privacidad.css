@@ -217,7 +217,7 @@
 /* Botón principal */
 
 .pie-legal .secundario {
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
 
   box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primario) 20%, transparent);

@@ -213,7 +213,7 @@ h1 {
   height: 20px;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border-radius: 50%;
 }

@@ -1,22 +1,22 @@
 /* Los videos van sobre el azul noche: es una sala a oscuras, y un reproductor
    sobre blanco pide menos que se le mire. */
 .seccion.noche .demo h3 {
-  color: #fff;
+  color: var(--noche-titulo);
 }
 
 .seccion.noche .demo p,
 .seccion.noche .pie-demos span {
-  color: var(--gris-noche);
+  color: var(--noche-texto);
 }
 
 .seccion.noche .demo-video.vacio {
-  color: var(--gris-noche);
-  background: var(--noche-2);
-  border-color: rgba(168, 180, 212, 0.25);
+  color: var(--noche-texto);
+  background: var(--noche-fondo-2);
+  border-color: color-mix(in srgb, var(--noche-texto) 25%, transparent);
 }
 
 .seccion.noche .pie-demos a:not(.boton) {
-  color: var(--dorado);
+  color: var(--noche-acento);
 }
 
 .demos {
@@ -163,7 +163,7 @@
    página, son la conversación incómoda que hay que tener antes de cobrar. */
 .objecion {
   padding: 34px;
-  background: var(--crema);
+  background: var(--objecion-fondo);
   border-radius: 16px;
 }
 
@@ -172,14 +172,14 @@
   font-size: 19px;
   font-weight: 700;
   line-height: 1.32;
-  color: var(--color-texto);
+  color: var(--objecion-titulo);
 }
 
 .objecion p {
   margin: 12px 0 0;
   font-size: 16px;
   line-height: 1.55;
-  color: #5e5448;
+  color: var(--objecion-texto);
 }
 
 /* Cuatro pasos en una fila dejan columnas de 200 px: se parten en dos filas

@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.92);
+  background: color-mix(in srgb, var(--color-superficie) 92%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-borde);
 }
@@ -111,13 +111,40 @@
   padding: 8px 16px;
   font-size: 14px;
   background-color: var(--color-primario);
-  color: #ffffff; /* Mantiene la legibilidad del texto */
+  color: var(--color-sobre-relleno);
   border: none;
   border-radius: 6px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── Claro u oscuro ─────────────────────────────────────────────────────────
+ *
+ * Al final de la fila en escritorio, y junto a la hamburguesa en móvil: fuera
+ * del desplegable, porque cambiar el modo no debería exigir abrir un menú. */
+.tema {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin-left: -22px;
+  padding: 0;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
+}
+
+.tema:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
 }
 
 /* ── Menú de móvil ──────────────────────────────────────────────────────────
@@ -178,6 +205,11 @@
 
   .hamburguesa {
     display: flex;
+    order: 1;
+  }
+
+  .tema {
+    margin-left: auto;
   }
 
   /* Cuelga de la cabecera, que ya está posicionada por ser sticky. Va por

@@ -113,8 +113,8 @@
 }
 
 .boton.destructivo:hover:not(:disabled) {
-  background: #a82323;
-  border-color: #a82323;
+  background: var(--color-error-oscuro);
+  border-color: var(--color-error-oscuro);
 }
 
 @keyframes aparecer {

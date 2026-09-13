@@ -19,6 +19,12 @@
   --color-aviso: #96590d;
   --color-aviso-suave: #fdf3e3;
 
+  /* El texto que va encima de un relleno de color: el azul de un botón, el rojo
+     de borrar. En claro es blanco; en oscuro esos rellenos se aclaran para
+     despegarse del fondo, y encima de un azul claro el blanco no se lee. */
+  --color-sobre-relleno: #fff;
+  --color-error-oscuro: #a82323;
+
   /*
    * El segundo tema: azul noche y dorado.
    *
@@ -32,7 +38,39 @@
   --dorado: #e0b973;
   --dorado-claro: #ffe9b8;
   --gris-noche: #a8b4d4;
+
   --crema: #fff6e8;
+  --crema-texto: #5e5448;
+
+  /* Lo que va encima de una banda noche. Las reglas de las bandas usan estas y
+     no --noche directamente porque en modo oscuro el fondo cambia (ver el
+     bloque del modo oscuro). */
+  --noche-fondo: var(--noche);
+  --noche-fondo-2: var(--noche-2);
+  --noche-pie: #060b1c;
+  --noche-titulo: #fff;
+  --noche-texto: var(--gris-noche);
+  --noche-acento: var(--dorado);
+  --noche-acento-claro: var(--dorado-claro);
+  --noche-linea: rgba(168, 180, 212, 0.18);
+
+  /* La franja de cifras del inicio. Tiene sus propios colores porque en modo
+     oscuro va en blanco y no como las demás bandas. */
+  --cifras-fondo: var(--noche);
+  --cifras-valor: var(--dorado-claro);
+  --cifras-pie: var(--gris-noche);
+  --cifras-linea: rgba(168, 180, 212, 0.18);
+
+  /* Los recuadros de «Las dos dudas que siempre aparecen». Colores propios
+     porque en modo oscuro siguen en crema claro, y la crema del resto del sitio
+     no. */
+  --objecion-fondo: var(--crema);
+  --objecion-titulo: var(--color-texto);
+  --objecion-texto: var(--crema-texto);
+
+  /* El contorno que marca un recuadro como «de la casa» (el canje de código).
+     En claro es el azul noche; sobre un fondo oscuro, ese azul no se ve. */
+  --contorno-marca: var(--noche);
 
   /* El aire de las bandas y el margen que dejan a los lados. */
   --banda: 88px;
@@ -47,6 +85,109 @@
   --fuente:
     'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+/*
+ * El modo oscuro.
+ *
+ * Solo redefine variables: ninguna regla del sitio sabe en qué modo está. Lo
+ * activa `data-tema="oscuro"` en <html>, que pone el script de index.html
+ * antes de pintar y mantiene TemaService después.
+ *
+ * Las bandas noche, el pie y el panel de acceso ya eran oscuros y se quedan
+ * como están. Lo que cambia es todo lo blanco y gris. El azul de marca se
+ * aclara porque #1d4ed8 sobre un fondo casi negro no pasa el contraste como
+ * texto; por eso el texto de los botones pasa a azul noche.
+ *
+ * `color-scheme: dark` es lo que oscurece lo que dibuja el propio navegador:
+ * barras de desplazamiento, desplegables, el calendario de un campo de fecha.
+ */
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+
+  --color-fondo: #0d1220;
+  --color-superficie: #151b2c;
+  --color-borde: #262e44;
+  --color-borde-fuerte: #353e58;
+  --color-texto: #e7eaf2;
+  --color-texto-suave: #a9b1c4;
+  --color-texto-tenue: #7f889d;
+
+  --color-primario: #7ea5ff;
+  --color-primario-oscuro: #a3bfff;
+  --color-primario-suave: #1c2a4f;
+
+  --color-error: #ff8f85;
+  --color-error-suave: #3a1d22;
+  --color-error-oscuro: #ffb3ab;
+  --color-exito: #62d49a;
+  --color-exito-suave: #12301f;
+  --color-aviso: #f0b560;
+  --color-aviso-suave: #33260f;
+
+  --color-sobre-relleno: #0a1128;
+
+  --crema: #262116;
+  --crema-texto: #cdbf9f;
+  --contorno-marca: var(--dorado);
+
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* Las bandas noche y el pie, un tono más claros. Con su azul de siempre se
+     fundían con el fondo y dejaban de cortar la página; en blanco rompían el
+     modo oscuro. Un azul noche más claro las despega sin encender la pantalla.
+     Texto, dorado y botones siguen como en claro. */
+  --noche-fondo: #283457;
+  --noche-fondo-2: #323f66;
+  --noche-pie: #1e2745;
+
+  /* La franja de cifras del inicio, en blanco: sobre el fondo oscuro es lo que
+     respalda al titular y tiene que verse de un golpe. El dorado se oscurece
+     porque el de siempre, sobre blanco, no se lee. */
+  --cifras-fondo: #ffffff;
+  --cifras-valor: #9a6510;
+  --cifras-pie: #5b6272;
+  --cifras-linea: rgba(16, 24, 40, 0.12);
+
+  /* Las dos objeciones, en el crema del modo claro: son la conversación
+     incómoda antes de cobrar y tienen que destacar sobre el fondo oscuro. */
+  --objecion-fondo: #fff6e8;
+  --objecion-titulo: #161a23;
+  --objecion-texto: #5e5448;
+}
+
+/*
+ * Lo del modo oscuro que no cabe en el panel de administración.
+ *
+ * admin.css está en su tope de presupuesto —cualquier byte de más da aviso al
+ * compilar—, así que sus ajustes viven aquí. El `:root[data-tema] app-admin`
+ * delante les da más peso que las reglas del propio componente.
+ */
+:root[data-tema='oscuro'] app-admin .lateral-contador,
+:root[data-tema='oscuro'] app-admin .comprobante-acciones .boton.peligro:hover:not(:disabled) {
+  color: var(--color-sobre-relleno);
+}
+
+:root[data-tema='oscuro'] app-admin .boton.destructivo:hover:not(:disabled) {
+  background: var(--color-error-oscuro);
+  border-color: var(--color-error-oscuro);
+}
+
+:root[data-tema='oscuro'] app-admin .enlace:hover:not(:disabled),
+:root[data-tema='oscuro'] app-admin .enlace-peligro:hover:not(:disabled) {
+  border-color: var(--color-borde-fuerte);
+}
+
+:root[data-tema='oscuro'] app-admin .canal.yape {
+  color: #f0abfc;
+  background: #3a1640;
+}
+
+:root[data-tema='oscuro'] app-admin .canal.paypal {
+  color: #5eead4;
+  background: #0f2f2c;
 }
 
 @media (max-width: 760px) {
@@ -164,7 +305,7 @@ a:hover {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border: 1px solid transparent;
   border-radius: var(--radio-sm);
@@ -209,8 +350,8 @@ a:hover {
 .girando {
   width: 15px;
   height: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.45);
-  border-top-color: #fff;
+  border: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: giro 0.7s linear infinite;
 }
@@ -320,19 +461,19 @@ a:hover {
 .aviso.error {
   color: var(--color-error);
   background: var(--color-error-suave);
-  border-color: #f3c9c9;
+  border-color: color-mix(in srgb, var(--color-error) 25%, transparent);
 }
 
 .aviso.exito {
   color: var(--color-exito);
   background: var(--color-exito-suave);
-  border-color: #bfe3d2;
+  border-color: color-mix(in srgb, var(--color-exito) 25%, transparent);
 }
 
 .aviso.info {
   color: var(--color-aviso);
   background: var(--color-aviso-suave);
-  border-color: #f0dcb8;
+  border-color: color-mix(in srgb, var(--color-aviso) 25%, transparent);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -393,8 +534,8 @@ a:hover {
 }
 
 .seccion.noche {
-  color: #fff;
-  background: var(--noche);
+  color: var(--noche-titulo);
+  background: var(--noche-fondo);
 }
 
 /* Las preguntas: una columna de lectura, no una tabla a 1480 px. */
@@ -436,19 +577,19 @@ a:hover {
 }
 
 .seccion.noche .seccion-marca {
-  color: var(--dorado);
+  color: var(--noche-acento);
 }
 
 .seccion.noche .titulo-seccion,
 .seccion.noche h1,
 .seccion.noche h2,
 .seccion.noche h3 {
-  color: #fff;
+  color: var(--noche-titulo);
 }
 
 .seccion.noche .seccion-entrada,
 .seccion.noche p {
-  color: var(--gris-noche);
+  color: var(--noche-texto);
 }
 
 /*
@@ -502,13 +643,13 @@ a:hover {
 
 /* El secundario de las bandas oscuras: solo contorno. */
 .boton.claro {
-  color: #fff;
+  color: var(--noche-titulo);
   background: none;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: color-mix(in srgb, var(--noche-titulo) 35%, transparent);
 }
 
 .boton.claro:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--noche-titulo) 8%, transparent);
 }
 
 /* El rótulo de la sección. Sin versalitas: a 14,5 px y en azul ya se separa

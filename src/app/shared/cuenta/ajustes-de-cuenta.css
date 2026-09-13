@@ -121,13 +121,13 @@ p.tenue {
 .alerta.mala {
   color: var(--color-error);
   background: var(--color-error-suave);
-  border-color: #f4cccc;
+  border-color: color-mix(in srgb, var(--color-error) 25%, transparent);
 }
 
 .alerta.buena {
   color: var(--color-exito);
   background: var(--color-exito-suave);
-  border-color: #c5e8d8;
+  border-color: color-mix(in srgb, var(--color-exito) 25%, transparent);
 }
 
 .acciones {
@@ -142,7 +142,7 @@ p.tenue {
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border: 1px solid var(--color-primario);
   border-radius: var(--radio-sm);

@@ -1,8 +1,8 @@
 /* La asesoría es la única sección oscura de esta página: las fotos pierden el
    marco claro, que sobre el noche se veía como un recorte mal pegado. */
 .asesoria-fotos img {
-  background: var(--noche-2);
-  border-color: rgba(168, 180, 212, 0.25);
+  background: var(--noche-fondo-2);
+  border-color: color-mix(in srgb, var(--noche-texto) 25%, transparent);
 }
 
 /* ── Asesoría personalizada ───────────────────────────────────────────────

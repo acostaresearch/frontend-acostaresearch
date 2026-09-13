@@ -80,13 +80,13 @@
 }
 
 .arranque-pasos li.hecho .arranque-marca {
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-exito, #12734b);
   border-color: transparent;
 }
 
 .arranque-pasos li.en-curso .arranque-marca {
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border-color: transparent;
 }

@@ -60,7 +60,7 @@
    pintaba el texto de azul sobre el azul del propio botón. */
 .saludo-acciones .boton {
   padding: 9px 18px;
-  color: #fff;
+  color: var(--color-sobre-relleno);
 }
 
 .saludo-acciones .boton:hover {
@@ -191,7 +191,7 @@
   grid-template-columns: repeat(5, 1fr);
   margin-top: 64px;
   padding: 32px 36px;
-  background: var(--noche);
+  background: var(--cifras-fondo);
   border-top: 0;
   border-radius: 18px;
 }
@@ -208,12 +208,12 @@
    sangría al abrir fila. */
 .hero .cifras li:not(:first-child) {
   padding-left: 24px;
-  border-left-color: rgba(168, 180, 212, 0.18);
+  border-left-color: var(--cifras-linea);
 }
 
 .hero .cifra-valor {
   font-size: 32px;
-  color: var(--dorado-claro);
+  color: var(--cifras-valor);
 }
 
 /* «Zotero integrado» y «Tu formato» son palabras, no números: más pequeñas
@@ -227,7 +227,7 @@
 .hero .cifra-pie {
   margin-top: 4px;
   font-size: 14px;
-  color: var(--gris-noche);
+  color: var(--cifras-pie);
 }
 
 /* Tres arriba y dos abajo: a cinco columnas, «Tu formato» y su pie no caben. */
@@ -253,7 +253,7 @@
 
   .hero .cifras li:nth-child(4) {
     padding-left: 24px;
-    border-left: 1px solid rgba(168, 180, 212, 0.18);
+    border-left: 1px solid var(--cifras-linea);
   }
 
   /* La tercera y la quinta abren fila: sin línea ni sangría a la izquierda. */
@@ -291,7 +291,7 @@
   .hero .cifras li:nth-child(n + 3) {
     margin-top: 16px;
     padding-top: 16px;
-    border-top-color: rgba(168, 180, 212, 0.18);
+    border-top-color: var(--cifras-linea);
   }
 
   .hero .cifra-valor {
@@ -430,7 +430,7 @@
   margin-bottom: 16px;
   font-size: 15px;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border-radius: 50%;
 }

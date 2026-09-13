@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
+import { TemaService } from '../../core/services/tema.service';
 
 /**
  * Cabecera del sitio. Cambia según haya sesión o no: al visitante le ofrece
@@ -22,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class SiteHeader {
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
+  protected readonly tema = inject(TemaService);
 
   /** Solo cuenta en móvil: en pantalla ancha el menú está siempre desplegado. */
   readonly menuAbierto = signal(false);

@@ -35,7 +35,7 @@
 
 .atajo b + span {
   font-size: 14.5px;
-  color: #6b5e4a;
+  color: var(--crema-texto);
 }
 
 .atajo .ir {
@@ -275,7 +275,7 @@
 }
 
 .item.activo .numero {
-  color: #fff;
+  color: var(--color-sobre-relleno);
   background: var(--color-primario);
   border-color: var(--color-primario);
 }

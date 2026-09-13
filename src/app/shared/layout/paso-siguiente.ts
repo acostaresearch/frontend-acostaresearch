@@ -42,20 +42,22 @@ import { RouterLink } from '@angular/router';
       justify-content: space-between;
     }
 
-    .salto-marca {
+    /* Con «.seccion» delante: sin él, «.seccion.noche p» de los estilos
+       globales pesa más y el rótulo y el título salían en gris. */
+    .seccion .salto-marca {
       margin: 0 0 6px;
       font-size: 14.5px;
       font-weight: 700;
-      color: var(--dorado);
+      color: var(--noche-acento);
     }
 
-    .salto-titulo {
+    .seccion .salto-titulo {
       margin: 0 0 6px;
       font-size: clamp(26px, 2.4vw, 34px);
       font-weight: 800;
       line-height: 1.15;
       letter-spacing: -0.015em;
-      color: #fff;
+      color: var(--noche-titulo);
     }
 
     .salto-texto {
@@ -63,7 +65,7 @@ import { RouterLink } from '@angular/router';
       margin: 0;
       font-size: 17px;
       line-height: 1.55;
-      color: var(--gris-noche);
+      color: var(--noche-texto);
     }
 
     .boton {
