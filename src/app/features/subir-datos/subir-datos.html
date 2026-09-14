@@ -1,0 +1,101 @@
+<app-site-header />
+
+<main class="pagina subir">
+  <section class="tarjeta">
+    <p class="antetitulo">Tu análisis de datos · con Claude</p>
+
+    @switch (paso()) {
+      @case ('comprobando') {
+        <p class="nota">Comprobando el enlace…</p>
+      }
+
+      @case ('enlace-no-vale') {
+        <h1>Este enlace ya no vale</h1>
+        <div class="aviso error" role="alert">{{ error() }}</div>
+        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tus datos.</p>
+      }
+
+      @case ('subido') {
+        @if (resultado(); as r) {
+          <h1>Tus datos ya están listos</h1>
+          <p>
+            Se leyeron <strong>{{ r.filas }} filas</strong> y
+            <strong>{{ r.columnas.length }} columnas</strong>
+            @if (nombre()) {
+              de «{{ nombre() }}»
+            }
+            .
+          </p>
+
+          <div class="siguiente">
+            <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mis datos».
+            Él sigue desde ahí.
+          </div>
+
+          @if (r.aviso) {
+            <p class="nota">{{ r.aviso }}</p>
+          }
+
+          <details class="columnas">
+            <summary>Ver los nombres de las columnas</summary>
+            <ul>
+              @for (columna of r.columnas; track $index) {
+                <li>{{ columna }}</li>
+              }
+            </ul>
+          </details>
+
+          <p class="nota">
+            ¿Te equivocaste de archivo? Súbelo otra vez aquí: el nuevo reemplaza al anterior.
+          </p>
+          <label class="boton secundario otro">
+            Subir otro archivo
+            <input type="file" accept=".csv,.xlsx,.xls,.txt" (change)="elegir($event)" />
+          </label>
+        }
+      }
+
+      @default {
+        <h1>Sube tu matriz de datos</h1>
+        <p>
+          Claude va a hacer el análisis contigo. Solo le falta tu archivo: el Excel o el CSV con
+          las respuestas de tu instrumento, una fila por persona.
+        </p>
+
+        <label
+          class="zona"
+          [class.encima]="encima()"
+          [class.ocupada]="paso() === 'subiendo'"
+          (dragover)="arrastrar($event, true)"
+          (dragleave)="arrastrar($event, false)"
+          (drop)="soltar($event)"
+        >
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls,.txt"
+            [disabled]="paso() === 'subiendo'"
+            (change)="elegir($event)"
+          />
+          @if (paso() === 'subiendo') {
+            <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
+          } @else {
+            <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
+            <span class="nota">Excel (.xlsx) o CSV · hasta 5 MB</span>
+          }
+        </label>
+
+        @if (error()) {
+          <div class="aviso error" role="alert">{{ error() }}</div>
+        }
+        @if (resultado()?.detalle; as detalle) {
+          <pre class="detalle">{{ detalle }}</pre>
+        }
+
+        <p class="nota">
+          Tu archivo solo se usa para tu análisis: no lo ve nadie más, y se borra si borras tu
+          proyecto.
+        </p>
+      }
+    }
+  </section>
+</main>

@@ -82,8 +82,8 @@ export const DEMOS: Demo[] = [
 
 /*
  * Seis y no tres: cada una responde a algo que el panel del cliente ya hace
- * (sus fuentes y su Zotero, la plantilla de la facultad, la norma de citas, el
- * repaso antes de entregar). Si una función se retira, se retira su tarjeta.
+ * (sus fuentes y su Zotero, citar el documento que ya escribió, la norma de
+ * citas, el repaso antes de entregar). Si una función se retira, se retira su tarjeta.
  */
 export const RAZONES = [
   {
@@ -101,17 +101,18 @@ export const RAZONES = [
       'cita huérfana.',
   },
   {
-    titulo: 'El formato de tu universidad',
+    titulo: '¿Ya la escribiste? Te la citamos',
     texto:
-      'Sube el documento con el formato que exige tu facultad y tu tesis sale con sus títulos, ' +
-      'sus fuentes y sus márgenes. Un solo Word, con portada, índice y los capítulos en orden.',
+      'Sube tu Word tal cual, aunque no tenga una sola referencia. Claude lo lee, busca las ' +
+      'fuentes en tu Zotero, en Scopus y en OpenAlex, y pone cada cita y la lista de referencias ' +
+      'dentro de tu mismo documento. Tu formato, tus tablas y tus figuras no se tocan.',
   },
   {
     titulo: '15 normas de citas',
     texto:
       'APA 7, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
-      'o Chile, o en inglés. Si tu asesor te pide otra, la cambias en tu panel sin reescribir ' +
-      'nada.',
+      'o Chile, o en inglés. Claude te pregunta cuál te piden, y si tu asesor luego pide otra, ' +
+      'se lo dices y sale en la nueva sin reescribir nada.',
   },
   {
     titulo: 'Un repaso antes de entregar',
@@ -273,8 +274,8 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   'articulo-fase8-adaptacion-y-envio': {
     descripcion:
       'El manuscrito está escrito; ahora hay que dejarlo como esa revista exige. De su guía de ' +
-      'autores salen estructura, límite de palabras, estilo de cita y anonimización; la norma ' +
-      'de citas se cambia en tu panel y todas las referencias se reescriben solas. Es la fase ' +
+      'autores salen estructura, límite de palabras, estilo de cita y anonimización; le dices a ' +
+      'Claude la norma que pide y todas las referencias se reescriben solas. Es la fase ' +
       'que más rechazos de escritorio evita.',
     entregable: 'Manuscrito adaptado y carta de presentación',
   },
@@ -317,9 +318,8 @@ export const PASOS = [
   {
     titulo: 'Traes lo tuyo',
     texto:
-      'Tus fuentes de Scopus o tus PDF, o conectas tu Zotero. Y si tu facultad tiene un ' +
-      'formato exigido, lo subes también. Se hace una vez, y Claude lo usa en todos tus ' +
-      'capítulos.',
+      'Tus fuentes de Scopus o tus PDF, o conectas tu Zotero. Se hace una vez, y Claude las usa ' +
+      'en todos tus capítulos.',
   },
   {
     titulo: 'Entras por tu fase',
@@ -356,7 +356,7 @@ export const OBJECIONES = [
       'He sido jurado de tesis y sé qué se rechaza: un texto vago, sin sustento o con citas ' +
       'que no existen. Lo que tú vas a llevar a asesoría es un capítulo con la estructura que ' +
       'tu universidad pide (matriz de consistencia, operacionalización, validación por jueces), ' +
-      'en su formato y en la norma de citas que te exijan. Antes de llevarlo, el repaso de la ' +
+      'en la norma de citas que te exijan. Antes de llevarlo, el repaso de la ' +
       'tesis te marca las variables sin objetivo, los objetivos sin conclusión y las ' +
       'afirmaciones sin fuente. Y como cada decisión metodológica la tomaste tú, cuando tu ' +
       'asesor pregunte por qué ese diseño y esa muestra, vas a tener la respuesta.',
@@ -387,7 +387,7 @@ export const INCLUYE: Record<string, string[]> = {
   METODO_DE_TESIS_HUMANIZADOR: [
     'Las 11 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
-    'Tu tesis en un solo Word, con el formato de tu universidad y en 15 normas de citas',
+    'Tu tesis en un solo Word en 15 normas de citas, o tu propio Word ya escrito con sus citas puestas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],
@@ -395,7 +395,7 @@ export const INCLUYE: Record<string, string[]> = {
     'Las 10 fases de la ruta, de la idea a la respuesta a revisores, y la variante bibliométrica',
     'El Humanizador académico',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
-    'Tu artículo en Word, con la plantilla que te pidan y en 15 normas de citas',
+    'Tu artículo en Word en 15 normas de citas, o tu manuscrito ya escrito con sus citas puestas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],
@@ -429,8 +429,9 @@ export const FAQ: Pregunta[] = [
     respuesta:
       'La estructura es la que piden las universidades peruanas (UCV, UNT, UPAO y similares) y ' +
       'se adapta a otros países ajustando los organismos oficiales que se citan. La carrera no ' +
-      'la fija el método: tú aportas el tema, la población y las fuentes. Si tu universidad usa ' +
-      'una plantilla propia, el .docx se ajusta sin rehacer el contenido.',
+      'la fija el método: tú aportas el tema, la población y las fuentes. Y si ya ' +
+      'escribiste tu tesis en la plantilla de tu universidad, la subes y Claude le pone las ' +
+      'citas sin tocar su formato.',
   },
   {
     pregunta: '¿Escriben la tesis por mí?',

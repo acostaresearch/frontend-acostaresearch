@@ -3,6 +3,7 @@ Allow: /
 Disallow: /admin
 Disallow: /perfil
 Disallow: /analisis
+Disallow: /subir-datos/
 Disallow: /auth/
 Disallow: /prueba/
 Disallow: /api/

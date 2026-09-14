@@ -93,8 +93,8 @@ export class Home implements OnInit {
       tesis && {
         titulo: 'Tesis',
         texto:
-          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes y el ' +
-          'formato de tu universidad. Tu tesis sale en un solo Word, en la norma que elijas. ' +
+          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes. Tu tesis ' +
+          'sale en un solo Word, en la norma de citas que te pidan. ' +
           'Incluye videos guía.',
         detalle: `9 fases · ${tesis.durationDays} días de acceso`,
         precio: this.precio(tesis),

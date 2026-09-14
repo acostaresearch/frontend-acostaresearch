@@ -4,15 +4,14 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toApiError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
 import {
-  CatalogoDeNormas,
   EtapaDelProyecto,
   Proyecto,
   ProyectoService,
   TesisDelMetodo,
 } from '../../core/services/proyecto.service';
 
-/** Qué se está bajando: el documento o solo la bibliografía. */
-type Formato = 'word' | 'bib';
+/** Qué se está bajando: la tesis armada, la bibliografía o el documento que subió, ya citado. */
+type Formato = 'word' | 'bib' | 'documento';
 
 /** Media lista de fases, con su rótulo: «Fases 1 a 6». */
 interface Columna {
@@ -132,13 +131,6 @@ export class MiTesis implements OnInit {
   readonly errorDescarga = signal<string | null>(null);
 
   ngOnInit(): void {
-    // Las normas se piden aparte: si fallan, el panel sigue y solo falta el
-    // selector, que es lo único que las necesita.
-    this.proyectos.normas().subscribe({
-      next: (catalogo) => this.catalogoNormas.set(catalogo),
-      error: () => this.catalogoNormas.set(null),
-    });
-
     this.proyectos.mios().subscribe({
       next: (datos) => {
         this.lista.set(datos);
@@ -176,10 +168,16 @@ export class MiTesis implements OnInit {
     if (this.bajando()) return;
 
     this.bajando.set({ productCode: p.productCode, formato });
-    this.errorDescarga.set(null);
+    // El error del documento sale en su recuadro, que es donde se pulsó.
+    const aviso = formato === 'documento' ? this.errorDocumento : this.errorDescarga;
+    aviso.set(null);
 
     const peticion =
-      formato === 'bib' ? this.proyectos.bib(p.productCode) : this.proyectos.word(p.productCode);
+      formato === 'bib'
+        ? this.proyectos.bib(p.productCode)
+        : formato === 'documento'
+          ? this.proyectos.documento(p.productCode)
+          : this.proyectos.word(p.productCode);
 
     peticion.subscribe({
       next: ({ archivo, nombre }) => {
@@ -193,7 +191,7 @@ export class MiTesis implements OnInit {
       },
       error: (e) => {
         this.bajando.set(null);
-        void this.explicar(e).then((mensaje) => this.errorDescarga.set(mensaje));
+        void this.explicar(e).then((mensaje) => aviso.set(mensaje));
       },
     });
   }
@@ -224,87 +222,65 @@ export class MiTesis implements OnInit {
     );
   }
 
-  // ── La norma de citas ────────────────────────────────────────────────────
-  readonly catalogoNormas = signal<CatalogoDeNormas | null>(null);
-  /** El proyecto cuya norma se está guardando. */
-  readonly guardandoNorma = signal<string | null>(null);
-  readonly normaGuardada = signal<string | null>(null);
-  readonly errorNorma = signal<string | null>(null);
+  // ── El documento que escribió por su cuenta ──────────────────────────────
+  //
+  // Lo sube aquí y Claude lo cita en la conversación. La norma ya no se elige
+  // en esta pantalla: se la pregunta Claude cuando va a citar, que es cuando
+  // hace falta, y el formato es el de su propio Word.
+  readonly subiendoDocumento = signal(false);
+  readonly documentoSubido = signal<string | null>(null);
+  readonly errorDocumento = signal<string | null>(null);
 
-  /**
-   * Cambia la norma o el idioma de las citas.
-   *
-   * Se guarda al elegir, sin botón: es una sola decisión y se ve al momento qué
-   * quedó puesto. No hay que rehacer nada del texto, porque las citas se
-   * escriben al descargar.
-   */
-  cambiarNorma(p: Proyecto, cambio: { estilo?: string; idioma?: string }): void {
-    const estilo = cambio.estilo ?? p.norma.estilo;
-    const idioma = cambio.idioma ?? p.norma.idioma;
-    if (estilo === p.norma.estilo && idioma === p.norma.idioma) return;
-
-    this.guardandoNorma.set(p.productCode);
-    this.normaGuardada.set(null);
-    this.errorNorma.set(null);
-
-    this.proyectos.cambiarNorma(p.productCode, estilo, idioma).subscribe({
-      next: (norma) => {
-        this.lista.update((lista) =>
-          lista.map((x) => (x.productCode === p.productCode ? { ...x, norma } : x)),
-        );
-        this.guardandoNorma.set(null);
-        this.normaGuardada.set(`Hecho. Tu próxima descarga saldrá en ${norma.nombre}.`);
-      },
-      error: (e) => {
-        this.guardandoNorma.set(null);
-        this.errorNorma.set(toApiError(e).message);
-      },
-    });
+  elegirDocumento(evento: Event, p: Proyecto): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // Se limpia el input para que elegir el MISMO archivo otra vez —tras
+    // corregirlo en Word— vuelva a disparar el evento.
+    entrada.value = '';
+    if (archivo) this.subirDocumento(archivo, p);
   }
 
-  /** El valor de un <select>, sin tener que tipar el evento en la plantilla. */
-  valorDe(evento: Event): string {
-    return (evento.target as HTMLSelectElement).value;
-  }
+  private subirDocumento(archivo: File, p: Proyecto): void {
+    this.subiendoDocumento.set(true);
+    this.documentoSubido.set(null);
+    this.errorDocumento.set(null);
 
-  // ── La plantilla de su facultad ──────────────────────────────────────────
-  readonly subiendoPlantilla = signal(false);
-
-  /** «título, nombre y año», para decir qué se detectó en su portada. */
-  camposLegibles(campos: string[]): string {
-    const nombres: Record<string, string> = {
-      titulo: 'título',
-      autor: 'tu nombre',
-      asesor: 'asesor',
-      carrera: 'carrera',
-      anio: 'año',
-    };
-    const lista = campos.map((c) => nombres[c] ?? c);
-    return lista.length > 1 ? `${lista.slice(0, -1).join(', ')} y ${lista.at(-1)}` : (lista[0] ?? '');
-  }
-
-  /** Vuelve a nuestra portada si la detección se equivocó. Lo demás del formato se queda. */
-  async noUsarPortada(p: Proyecto): Promise<void> {
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Usar nuestra portada',
-      mensaje:
-        'Tu Word saldrá con nuestra portada en lugar de la de tu plantilla. Los estilos, márgenes, ' +
-        'encabezado y pie de tu facultad se quedan. Si quieres recuperarla, vuelve a subir la plantilla.',
-      confirmar: 'Usar la nuestra',
-    });
-    if (!seguro) return;
-
-    this.subiendoPlantilla.set(true);
-    this.errorPlantilla.set(null);
-    this.plantillaPuesta.set(null);
-    this.proyectos.quitarPortada(p.productCode).subscribe({
-      next: () => {
-        this.subiendoPlantilla.set(false);
+    this.proyectos.subirDocumento(p.productCode, archivo).subscribe({
+      next: (mensaje) => {
+        this.subiendoDocumento.set(false);
+        // El servidor dice cuántos párrafos leyó y qué decirle a Claude.
+        this.documentoSubido.set(mensaje || 'Listo. Ahora abre Claude y dile: «cita mi documento».');
         this.recargar();
       },
       error: (e) => {
-        this.subiendoPlantilla.set(false);
-        this.errorPlantilla.set(toApiError(e).message);
+        this.subiendoDocumento.set(false);
+        // Mensajes escritos para el tesista —«eso es un .doc antiguo»—: tal cual.
+        this.errorDocumento.set(toApiError(e).message);
+      },
+    });
+  }
+
+  async quitarDocumento(p: Proyecto): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Quitar tu documento',
+      mensaje:
+        'Se borra el documento que subiste y las citas que Claude le puso. Tu Word original, el que ' +
+        'tienes en tu computadora, no se toca.',
+      confirmar: 'Quitarlo',
+    });
+    if (!seguro) return;
+
+    this.subiendoDocumento.set(true);
+    this.documentoSubido.set(null);
+    this.errorDocumento.set(null);
+    this.proyectos.quitarDocumento(p.productCode).subscribe({
+      next: () => {
+        this.subiendoDocumento.set(false);
+        this.recargar();
+      },
+      error: (e) => {
+        this.subiendoDocumento.set(false);
+        this.errorDocumento.set(toApiError(e).message);
       },
     });
   }
@@ -352,57 +328,6 @@ export class MiTesis implements OnInit {
       },
     });
   }
-  readonly errorPlantilla = signal<string | null>(null);
-  readonly plantillaPuesta = signal<string | null>(null);
-
-  elegirPlantilla(evento: Event, p: Proyecto): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    // Se limpia el input para que elegir el MISMO archivo otra vez —tras
-    // corregirlo en Word— vuelva a disparar el evento.
-    entrada.value = '';
-    if (archivo) this.subirPlantilla(archivo, p);
-  }
-
-  private subirPlantilla(archivo: File, p: Proyecto): void {
-    this.subiendoPlantilla.set(true);
-    this.errorPlantilla.set(null);
-    this.plantillaPuesta.set(null);
-
-    this.proyectos.subirPlantilla(p.productCode, archivo).subscribe({
-      next: ({ cuantos }) => {
-        this.subiendoPlantilla.set(false);
-        this.plantillaPuesta.set(
-          `Listo: ${cuantos} estilos de «${archivo.name}». Tu próxima descarga sale con ese formato.`,
-        );
-        this.recargar();
-      },
-      error: (e) => {
-        this.subiendoPlantilla.set(false);
-        // El servidor manda aquí mensajes escritos para el tesista —«eso es un
-        // .doc antiguo, guárdalo como .docx»—, así que se enseñan tal cual.
-        this.errorPlantilla.set(toApiError(e).message);
-      },
-    });
-  }
-
-  quitarPlantilla(p: Proyecto): void {
-    this.subiendoPlantilla.set(true);
-    this.errorPlantilla.set(null);
-    this.plantillaPuesta.set(null);
-
-    this.proyectos.quitarPlantilla(p.productCode).subscribe({
-      next: () => {
-        this.subiendoPlantilla.set(false);
-        this.recargar();
-      },
-      error: (e) => {
-        this.subiendoPlantilla.set(false);
-        this.errorPlantilla.set(toApiError(e).message);
-      },
-    });
-  }
-
   // ── Empezar de cero ──────────────────────────────────────────────────────
   readonly borrando = signal(false);
   readonly errorBorrado = signal<string | null>(null);
@@ -429,7 +354,7 @@ export class MiTesis implements OnInit {
       mensaje:
         'Se borra para siempre: el tema, lo anotado en cada fase, ' +
         (palabras > 0 ? `los capítulos escritos (${palabras} palabras), ` : '') +
-        'el análisis, la norma de citas y el formato de tu facultad. Tus fases volverán a quedar sin empezar.\n' +
+        'el análisis, la norma de citas y el documento que subiste. Tus fases volverán a quedar sin empezar.\n' +
         'Si quieres conservar el texto, descarga antes tu Word.',
       nota:
         'Tu licencia y tu Zotero siguen igual. Tus conversaciones en Claude no se borran, pero el ' +
@@ -457,8 +382,7 @@ export class MiTesis implements OnInit {
         this.borrando.set(false);
         this.abiertos.set(new Set());
         this.retomarAbierto.set(false);
-        this.normaGuardada.set(null);
-        this.plantillaPuesta.set(null);
+        this.documentoSubido.set(null);
         // Se queda en su pestaña: al vaciarse pasa a ser el último proyecto
         // tocado, y sin esto la pantalla saltaría al otro si tiene dos.
         this.elegido.set(p.productCode);
@@ -490,8 +414,8 @@ export class MiTesis implements OnInit {
     this.abiertos.set(new Set());
     this.retomarAbierto.set(false);
     this.copiado.set(false);
-    this.normaGuardada.set(null);
-    this.plantillaPuesta.set(null);
+    this.documentoSubido.set(null);
+    this.errorDocumento.set(null);
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
     this.errorTesis.set(null);
@@ -550,7 +474,7 @@ export class MiTesis implements OnInit {
       mensaje:
         'Se borra para siempre: el tema, lo anotado en cada fase, ' +
         (t.palabras > 0 ? `los capítulos escritos (${t.palabras} palabras), ` : '') +
-        'el análisis y el formato de facultad de esta tesis. Tus otras tesis no se tocan.',
+        'el análisis y el documento subido de esta tesis. Tus otras tesis no se tocan.',
       tono: 'peligro',
       confirmar: 'Borrar esta tesis',
       campo: {

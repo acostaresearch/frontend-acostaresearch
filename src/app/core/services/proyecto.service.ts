@@ -45,26 +45,15 @@ export interface NormaDelProyecto {
   elegida: boolean;
 }
 
-/** Las normas y los idiomas que se pueden elegir. Los manda el servidor. */
-export interface CatalogoDeNormas {
-  normas: { id: string; nombre: string; familia: FamiliaDeNorma }[];
-  idiomas: { id: string; nombre: string }[];
-}
-
-/** La plantilla de su facultad, si la subió. */
-export interface PlantillaPuesta {
+/** El Word que el tesista escribió por su cuenta y subió para que Claude lo cite. */
+export interface DocumentoSubido {
   /** Cómo se llamaba el archivo. Sirve para que compruebe que subió el bueno. */
-  nombre: string | null;
-  desde: string;
-  /**
-   * Falso = se subió antes de que se copiaran márgenes, numeración, encabezado,
-   * pie y portada: hay que volver a subirla para que se apliquen.
-   */
-  completa: boolean;
-  /** Si su Word sale con la portada de la plantilla. */
-  portada: boolean;
-  /** Qué datos se detectaron en esa portada: titulo, autor, asesor, carrera, anio. */
-  camposDePortada: string[];
+  nombre: string;
+  subidoAt: string;
+  parrafos: number;
+  palabras: number;
+  /** Párrafos a los que Claude ya les puso citas. Cero = todavía nada que descargar. */
+  citados: number;
 }
 
 /** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
@@ -98,7 +87,8 @@ export interface Proyecto {
   universidad: string | null;
   /** Nulo = no se ha dicho; vacío = todavía no tiene. */
   asesor: string | null;
-  plantilla: PlantillaPuesta | null;
+  /** El documento que subió para citar, si subió uno. */
+  documento: DocumentoSubido | null;
   /** La norma de citas con la que sale el Word. Si no la eligió nadie, APA 7. */
   norma: NormaDelProyecto;
   updatedAt: string | null;
@@ -151,31 +141,35 @@ export class ProyectoService {
     return this.descargar(productCode, 'bib', 'bibliografia.bib');
   }
 
+  /** Su documento con las citas y la lista de referencias puestas, en la norma del proyecto. */
+  documento(productCode: string): Observable<{ archivo: Blob; nombre: string }> {
+    return this.descargar(productCode, 'documento', 'documento-con-referencias.docx');
+  }
+
   /**
-   * Sube el .docx de formato que le dio su facultad.
+   * Sube la tesis o el artículo que escribió por su cuenta, para que Claude lo cite.
    *
    * Va en crudo, sin `FormData`: es un solo archivo y no lo acompaña ningún
-   * otro campo, así que envolverlo en un formulario multiparte solo añadiría
-   * una capa que el servidor tendría que desenvolver. El nombre viaja por
-   * cabecera porque el servidor no lo usa para escribir nada — solo para
-   * poder enseñárselo después.
-   *
-   * Del archivo el servidor se queda ÚNICAMENTE con la hoja de estilos. El
-   * contenido no se guarda en ninguna parte.
+   * otro campo. El nombre viaja por cabecera solo para poder enseñárselo
+   * después. Devuelve el mensaje del servidor, que dice cuántos párrafos leyó y
+   * qué decirle a Claude.
    */
-  subirPlantilla(productCode: string, archivo: File): Observable<{ cuantos: number }> {
+  subirDocumento(productCode: string, archivo: File): Observable<string> {
     return this.http
-      .post<ApiResponse<{ cuantos: number }>>(
-        `${this.base}/${encodeURIComponent(productCode)}/plantilla`,
-        archivo,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'X-Nombre-Archivo': encodeURIComponent(archivo.name).slice(0, 200),
-          },
+      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/documento`, archivo, {
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'X-Nombre-Archivo': encodeURIComponent(archivo.name).slice(0, 200),
         },
-      )
-      .pipe(map((r) => r.data ?? { cuantos: 0 }));
+      })
+      .pipe(map((r) => r.message ?? ''));
+  }
+
+  /** Quita el documento subido y las citas que tenía. */
+  quitarDocumento(productCode: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/documento`)
+      .pipe(map(() => undefined));
   }
 
   /**
@@ -198,31 +192,8 @@ export class ProyectoService {
   }
 
   /**
-   * Las normas de citas que se pueden elegir.
-   *
-   * Las manda el servidor y no se escriben aquí: cada una tiene detrás un
-   * archivo de estilo, y una lista duplicada acabaría ofreciendo una norma que
-   * el servidor ya no sabe aplicar.
-   */
-  normas(): Observable<CatalogoDeNormas> {
-    return this.http
-      .get<ApiResponse<CatalogoDeNormas>>(`${this.base}/normas`)
-      .pipe(map((r) => r.data ?? { normas: [], idiomas: [] }));
-  }
-
-  /** Cambia la norma de citas del proyecto. Devuelve cómo queda. */
-  cambiarNorma(productCode: string, estilo: string, idioma: string): Observable<NormaDelProyecto> {
-    return this.http
-      .patch<ApiResponse<NormaDelProyecto>>(
-        `${this.base}/${encodeURIComponent(productCode)}/norma`,
-        { estiloCitas: estilo, idiomaCitas: idioma },
-      )
-      .pipe(map((r) => r.data as NormaDelProyecto));
-  }
-
-  /**
    * Devuelve el proyecto al comienzo: borra avance, capítulos, análisis y
-   * plantilla, y el método queda con sus fases en blanco.
+   * documento subido, y el método queda con sus fases en blanco.
    *
    * La palabra viaja al servidor, que la vuelve a comprobar: la de la pantalla
    * solo enciende el botón.
@@ -271,21 +242,8 @@ export class ProyectoService {
       .pipe(map((r) => r.data?.asesor ?? ''));
   }
 
-  /** Deja de usar la portada de su plantilla; lo demás del formato se queda. */
-  quitarPortada(productCode: string): Observable<void> {
-    return this.http
-      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/plantilla/portada`)
-      .pipe(map(() => undefined));
-  }
-
-  quitarPlantilla(productCode: string): Observable<void> {
-    return this.http
-      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/plantilla`)
-      .pipe(map(() => undefined));
-  }
-
   /**
-   * Las dos descargas piden lo mismo de distinta forma.
+   * Las descargas piden lo mismo de distinta forma.
    *
    * En crudo porque no es JSON: llega el archivo. El nombre lo manda el servidor
    * en la cabecera —lleva la fecha, que es lo que distingue una descarga de la
@@ -293,7 +251,7 @@ export class ProyectoService {
    */
   private descargar(
     productCode: string,
-    ruta: 'word' | 'bib',
+    ruta: 'word' | 'bib' | 'documento',
     respaldo: string,
   ): Observable<{ archivo: Blob; nombre: string }> {
     return this.http

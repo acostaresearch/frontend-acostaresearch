@@ -88,17 +88,27 @@ export const routes: Routes = [
     loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
   },
   /**
-   * Analizar los datos sin instalar nada: R corre en la pestaña del tesista.
+   * R en la pestaña del tesista. OCULTA desde el 14 de septiembre de 2026.
    *
-   * Detrás de `authGuard` porque es material del producto, no un escaparate.
-   * Y ya no depende de ninguna variable: no hay servidor que configurar, así
-   * que o funciona en el navegador de quien entra o no funciona en ninguno.
+   * El análisis lo hace ahora Claude en la conversación (herramienta
+   * `trabajar_en_r` del conector), y el tesista solo sube su archivo en
+   * `/subir-datos`. Esta página ya no se enlaza desde el perfil ni desde el
+   * pie; se conserva, entrando por su dirección, hasta comprobar lo nuevo con
+   * una tesis real.
    */
   {
     path: 'analisis',
     canActivate: [authGuard],
     title: 'Analiza tus datos · Acosta Research',
     loadComponent: () => import('./features/analisis/analisis').then((m) => m.Analisis),
+  },
+  // El enlace que da Claude para subir la matriz del análisis. Sin sesión: el
+  // enlace firmado es la llave, y quien viene de la conversación no tiene por
+  // qué haber entrado en la web.
+  {
+    path: 'subir-datos/:token',
+    title: 'Sube tus datos · Acosta Research',
+    loadComponent: () => import('./features/subir-datos/subir-datos').then((m) => m.SubirDatos),
   },
   /*
    * `/humanizador` se retiró el 9 de septiembre de 2026.
