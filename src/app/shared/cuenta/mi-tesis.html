@@ -291,7 +291,7 @@
 
     <!-- La descarga solo aparece cuando hay algo que descargar. Un botón que
          siempre lleva a «todavía no hay nada» enseña a no pulsarlo. -->
-    @if (palabrasTotales(p) > 0) {
+    <!-- @if (palabrasTotales(p) > 0) {
       <div class="caja descarga">
         <div class="caja-fila">
           <div>
@@ -311,7 +311,7 @@
           >
             {{ seEstaBajando(p, 'word') ? 'Armando el documento…' : 'Descargar en Word' }}
           </button>
-        </div>
+        </div> -->
 
         <!-- El .bib va como enlace y no como botón: lo necesita quien escribe
              en LaTeX, que es una minoría, y ponerlo con el mismo peso que el
@@ -329,12 +329,12 @@
           — las claves son las mismas que ya llevas entre corchetes en el texto, así que
           <code>[AR97D22F86]</code> es <code>\cite&#123;AR97D22F86&#125;</code>.
         </p> -->
-      </div>
+      <!-- </div>
     }
 
     @if (errorDescarga(); as mensaje) {
       <p class="aviso-descarga">{{ mensaje }}</p>
-    }
+    } -->
 
     <!-- Empezar de cero. En pequeño y fuera de los recuadros: es para quien le
          cambiaron el tema, no algo que se pulse de paso. La confirmación va en
