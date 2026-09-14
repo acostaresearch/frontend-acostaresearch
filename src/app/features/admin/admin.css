@@ -1535,6 +1535,46 @@ td.acciones {
   cursor: default;
 }
 
+/* ── Actualizar todos los archivos ─────────────────────────────────────────
+ *
+ * El título de la lista y el botón en la misma fila. El botón es un <label>
+ * con el input de archivo escondido dentro, así que se le quita el aspecto de
+ * etiqueta que `.campo label` pone a todas.
+ */
+.capitulos-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.campo label.actualizar-todos {
+  position: relative;
+  width: auto;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.campo label.actualizar-todos.ocupado {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Una línea por capítulo: el resumen trae saltos de línea. */
+.resumen-todos {
+  margin: 4px 0 6px;
+  white-space: pre-line;
+}
+
+.nota.hecho {
+  padding: 10px 14px;
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border-radius: var(--radio-sm);
+}
+
 .capitulo-acciones label.enlace + .enlace,
 .capitulo-acciones label.enlace + .enlace-peligro {
   margin-left: 4px;

@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, firstValueFrom, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import {
@@ -1632,6 +1632,143 @@ export class Admin implements OnInit {
           this.reemplazando.set(null);
         },
       });
+  }
+
+  // ── Actualizar todos los archivos de una vez ─────────────────────────────
+
+  /** La tanda en curso: comprobando los archivos o subiéndolos, y por cuál va. */
+  readonly actualizandoTodos = signal<{
+    fase: 'comprobando' | 'subiendo';
+    hechos: number;
+    total: number;
+  } | null>(null);
+  /** Cómo acabó la última tanda, para decirlo junto al botón y no detrás de la ventana. */
+  readonly resumenTodos = signal<{ tono: 'ok' | 'error'; texto: string } | null>(null);
+
+  /**
+   * «Cambiar» para muchos capítulos a la vez.
+   *
+   * Cuando sale una versión nueva del método llegan nueve o diez .skill juntos,
+   * y cambiarlos uno por uno era abrir diez veces el diálogo del sistema. Aquí
+   * se eligen todos de una vez y cada archivo va a SU capítulo, por el código
+   * que declara su SKILL.md —el nombre del archivo no importa—.
+   *
+   * Solo actualiza capítulos que ya existen. Un archivo que no corresponde a
+   * ninguno se deja fuera y se dice por qué: crear capítulos nuevos es otra
+   * decisión, y se toma en «Subir capítulos nuevos». Cada capítulo conserva su
+   * nombre, su resumen, su posición, su visibilidad y sus grupos, igual que con
+   * «Cambiar».
+   *
+   * Antes de subir nada enseña la lista de lo que va a pasar, y sube de uno en
+   * uno, como la cola: cada subida reescribe el índice que sirve el conector.
+   */
+  async actualizarTodos(evento: Event): Promise<void> {
+    const entrada = evento.target as HTMLInputElement;
+    const archivos = Array.from(entrada.files ?? []);
+    // Se vacía siempre, para que volver a elegir los mismos archivos dispare el evento.
+    entrada.value = '';
+    if (archivos.length === 0 || this.actualizandoTodos() || this.reemplazando()) return;
+
+    this.error.set(null);
+    this.aviso.set(null);
+    this.resumenTodos.set(null);
+    this.actualizandoTodos.set({ fase: 'comprobando', hechos: 0, total: archivos.length });
+
+    const comprobados = await Promise.all(
+      archivos.map((archivo) =>
+        firstValueFrom(this.skillsApi.inspeccionar(archivo)).then(
+          (analisis) => ({ archivo, analisis, fallo: null as string | null }),
+          (e: unknown) => ({ archivo, analisis: null, fallo: mensajeDeError(e) }),
+        ),
+      ),
+    );
+
+    const elegidos = new Set<string>();
+    const aActualizar: { archivo: File; skill: Skill }[] = [];
+    const fuera: string[] = [];
+
+    for (const { archivo, analisis, fallo } of comprobados) {
+      if (!analisis) {
+        fuera.push(`${archivo.name}: ${fallo}`);
+        continue;
+      }
+      const skill = this.skills().find((s) => s.code === analisis.code);
+      if (!skill) {
+        fuera.push(
+          `${archivo.name}: «${analisis.code}» no es ningún capítulo publicado. Si es nuevo, súbelo en «Subir capítulos nuevos».`,
+        );
+        continue;
+      }
+      if (elegidos.has(skill.id)) {
+        fuera.push(`${archivo.name}: ya hay otro archivo para «${skill.displayName}».`);
+        continue;
+      }
+      elegidos.add(skill.id);
+      aActualizar.push({ archivo, skill });
+    }
+
+    if (aActualizar.length === 0) {
+      this.actualizandoTodos.set(null);
+      this.resumenTodos.set({
+        tono: 'error',
+        texto: `No se actualizó nada: ningún archivo corresponde a un capítulo publicado.\n${fuera.join('\n')}`,
+      });
+      return;
+    }
+
+    aActualizar.sort((a, b) => a.skill.orden - b.skill.orden);
+    const compartidos = aActualizar.filter(({ skill }) => this.otrosGrupos(skill)).length;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Actualizar ${aActualizar.length} ${aActualizar.length === 1 ? 'capítulo' : 'capítulos'}`,
+      mensaje: [
+        'Se cambia el archivo de:',
+        ...aActualizar.map(({ skill }) => `· ${skill.displayName}`),
+        ...(fuera.length > 0 ? ['No se sube:', ...fuera.map((motivo) => `· ${motivo}`)] : []),
+      ].join('\n'),
+      nota:
+        'Cada capítulo conserva su nombre, su resumen, su posición y sus grupos. El cambio llega al ' +
+        'conector al momento' +
+        (compartidos > 0
+          ? `, también en los otros grupos donde están ${compartidos === 1 ? 'uno de ellos' : `${compartidos} de ellos`}.`
+          : '.'),
+      confirmar: 'Actualizar',
+    });
+    if (!seguro) {
+      this.actualizandoTodos.set(null);
+      return;
+    }
+
+    const fallidos: string[] = [];
+    let hechos = 0;
+    for (const [i, { archivo, skill }] of aActualizar.entries()) {
+      this.actualizandoTodos.set({ fase: 'subiendo', hechos: i, total: aActualizar.length });
+      try {
+        await firstValueFrom(
+          this.skillsApi.subir(archivo, {
+            displayName: skill.displayName,
+            summary: skill.summary,
+            orden: skill.orden,
+            active: skill.active,
+          }),
+        );
+        hechos += 1;
+      } catch (e: unknown) {
+        // Que uno falle no detiene a los demás: se anota y se sigue.
+        fallidos.push(`«${skill.displayName}»: ${mensajeDeError(e)}`);
+      }
+    }
+
+    this.actualizandoTodos.set(null);
+    const lineas = [
+      hechos === 1
+        ? '1 capítulo actualizado. Ya está en el conector, sin reinstalar nada.'
+        : `${hechos} capítulos actualizados. Ya están en el conector, sin reinstalar nada.`,
+      ...(fallidos.length > 0 ? ['No se pudieron actualizar:', ...fallidos] : []),
+      ...(fuera.length > 0 ? ['Se dejaron fuera:', ...fuera] : []),
+    ];
+    this.resumenTodos.set({ tono: fallidos.length > 0 ? 'error' : 'ok', texto: lineas.join('\n') });
+    this.cargarSkills();
   }
 
   alternarSkill(skill: Skill): void {
@@ -3482,9 +3619,9 @@ export class Admin implements OnInit {
     const motivo = await this.dialogos.pedirTexto({
       titulo: 'Revocar la licencia',
       mensaje: `El conector dejará de responder a ${licencia.user.email}.`,
-      nota: 'Se puede reactivar después desde esta misma tabla.',
+      nota: 'Le avisamos por correo con este motivo. Se puede reactivar después desde esta misma tabla.',
       campo: {
-        etiqueta: 'Motivo (queda guardado)',
+        etiqueta: 'Motivo (el cliente lo lee en el correo)',
         valor: 'Uso compartido',
         placeholder: 'Por qué se revoca',
         maxlength: 120,

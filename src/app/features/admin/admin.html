@@ -995,7 +995,56 @@
                    existe. Se eligen después, con el grupo ya creado. -->
               @if (editandoGrupo()) {
                 <div class="campo">
-                  <label>Capítulos que incluye</label>
+                  <!-- «Actualizar todos los archivos» va junto al título de la
+                       lista porque es lo que se busca cuando sale una versión
+                       nueva del método: los nueve .skill de golpe, cada uno a
+                       su capítulo. No crea capítulos: eso es «Subir capítulos
+                       nuevos», más abajo. -->
+                  <div class="capitulos-cabecera">
+                    <label>Capítulos que incluye</label>
+                    @if (capitulosDisponibles().length > 0) {
+                      <label
+                        class="boton secundario actualizar-todos"
+                        [class.ocupado]="actualizandoTodos() !== null"
+                        [attr.aria-busy]="actualizandoTodos() !== null"
+                      >
+                        @if (actualizandoTodos(); as tanda) {
+                          @if (tanda.fase === 'comprobando') {
+                            Comprobando {{ tanda.total }} archivos…
+                          } @else {
+                            Subiendo {{ tanda.hechos + 1 }} de {{ tanda.total }}…
+                          }
+                        } @else {
+                          Actualizar todos los archivos
+                        }
+                        <input
+                          class="entrada-archivo"
+                          type="file"
+                          multiple
+                          accept=".skill,.zip,application/zip"
+                          [disabled]="actualizandoTodos() !== null || reemplazando() !== null"
+                          (change)="actualizarTodos($event)"
+                        />
+                      </label>
+                    }
+                  </div>
+                  @if (capitulosDisponibles().length > 0) {
+                    <span class="ayuda">
+                      Elige de una vez los .skill nuevos: cada uno se cambia en su capítulo y conserva
+                      su nombre, su resumen, su posición y sus grupos. Antes de subir te enseña la
+                      lista.
+                    </span>
+                  }
+                  @if (resumenTodos(); as resumen) {
+                    <p
+                      class="nota resumen-todos"
+                      [class.atencion]="resumen.tono === 'error'"
+                      [class.hecho]="resumen.tono === 'ok'"
+                      role="status"
+                    >
+                      {{ resumen.texto }}
+                    </p>
+                  }
 
                   @if (capitulosDisponibles().length === 0) {
                     <span class="ayuda">

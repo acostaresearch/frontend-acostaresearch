@@ -50,7 +50,7 @@
           </p>
           <label class="boton secundario otro">
             Subir otro archivo
-            <input type="file" accept=".csv,.xlsx,.xls,.txt" (change)="elegir($event)" />
+            <input type="file" accept=".csv,.xlsx,.xls,.txt,.sav" (change)="elegir($event)" />
           </label>
         }
       }
@@ -58,8 +58,8 @@
       @default {
         <h1>Sube tu matriz de datos</h1>
         <p>
-          Claude va a hacer el análisis contigo. Solo le falta tu archivo: el Excel o el CSV con
-          las respuestas de tu instrumento, una fila por persona.
+          Claude va a hacer el análisis contigo. Solo le falta tu archivo: el Excel, el CSV o el
+          SPSS con las respuestas de tu instrumento, una fila por persona.
         </p>
 
         <label
@@ -72,7 +72,7 @@
         >
           <input
             type="file"
-            accept=".csv,.xlsx,.xls,.txt"
+            accept=".csv,.xlsx,.xls,.txt,.sav"
             [disabled]="paso() === 'subiendo'"
             (change)="elegir($event)"
           />
@@ -80,7 +80,7 @@
             <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
           } @else {
             <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
-            <span class="nota">Excel (.xlsx) o CSV · hasta 5 MB</span>
+            <span class="nota">Excel (.xlsx), CSV o SPSS (.sav) · hasta 5 MB</span>
           }
         </label>
 
