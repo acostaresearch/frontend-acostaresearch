@@ -269,6 +269,26 @@
       }
     </div>
 
+        @if (p.guardado) {
+      <p class="borrar-entrada">
+        ¿Te cambiaron el tema?
+        <button
+          type="button"
+          class="boton enlace"
+          [disabled]="borrando()"
+          (click)="borrarProgreso(p)"
+        >
+          {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
+        </button>
+      </p>
+    }
+    @if (avisoBorrado(); as mensaje) {
+      <p class="aviso-borrado" role="status">{{ mensaje }}</p>
+    }
+    @if (errorBorrado(); as mensaje) {
+      <p class="aviso-descarga">{{ mensaje }}</p>
+    }
+
     <!-- La descarga solo aparece cuando hay algo que descargar. Un botón que
          siempre lleva a «todavía no hay nada» enseña a no pulsarlo. -->
     @if (palabrasTotales(p) > 0) {
@@ -296,7 +316,7 @@
         <!-- El .bib va como enlace y no como botón: lo necesita quien escribe
              en LaTeX, que es una minoría, y ponerlo con el mismo peso que el
              Word haría dudar al resto sobre cuál de los dos le toca. -->
-        <p class="descarga-latex">
+        <!-- <p class="descarga-latex">
           ¿Escribes en LaTeX?
           <button
             type="button"
@@ -308,7 +328,7 @@
           </button>
           — las claves son las mismas que ya llevas entre corchetes en el texto, así que
           <code>[AR97D22F86]</code> es <code>\cite&#123;AR97D22F86&#125;</code>.
-        </p>
+        </p> -->
       </div>
     }
 
@@ -321,25 +341,7 @@
          la ventana del sitio. -->
     <!-- Solo si hay algo guardado: un método que sale en blanco por tener
          licencia no tiene nada que borrar. -->
-    @if (p.guardado) {
-      <p class="borrar-entrada">
-        ¿Te cambiaron el tema?
-        <button
-          type="button"
-          class="boton enlace"
-          [disabled]="borrando()"
-          (click)="borrarProgreso(p)"
-        >
-          {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
-        </button>
-      </p>
-    }
-    @if (avisoBorrado(); as mensaje) {
-      <p class="aviso-borrado" role="status">{{ mensaje }}</p>
-    }
-    @if (errorBorrado(); as mensaje) {
-      <p class="aviso-descarga">{{ mensaje }}</p>
-    }
+
 
     <!-- Su tesis o su artículo escrito por fuera, para que Claude le ponga las
          citas. Sustituye a la norma y a la plantilla: la norma se la pregunta
