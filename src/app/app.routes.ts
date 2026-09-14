@@ -110,6 +110,13 @@ export const routes: Routes = [
     title: 'Sube tus datos · Acosta Research',
     loadComponent: () => import('./features/subir-datos/subir-datos').then((m) => m.SubirDatos),
   },
+  // El enlace que da Claude para subir el formato de la universidad. Sustituye al
+  // recuadro «Subir formato» del perfil. Sin sesión, por lo mismo que el de arriba.
+  {
+    path: 'subir-formato/:token',
+    title: 'Sube el formato de tu universidad · Acosta Research',
+    loadComponent: () => import('./features/subir-formato/subir-formato').then((m) => m.SubirFormato),
+  },
   /*
    * `/humanizador` se retiró el 9 de septiembre de 2026.
    *

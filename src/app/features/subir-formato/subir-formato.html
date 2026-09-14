@@ -1,0 +1,93 @@
+<app-site-header />
+
+<main class="pagina subir">
+  <section class="tarjeta">
+    <p class="antetitulo">El formato de tu universidad · con Claude</p>
+
+    @switch (paso()) {
+      @case ('comprobando') {
+        <p class="nota">Comprobando el enlace…</p>
+      }
+
+      @case ('enlace-no-vale') {
+        <h1>Este enlace ya no vale</h1>
+        <div class="aviso error" role="alert">{{ error() }}</div>
+        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tu formato.</p>
+      }
+
+      @case ('subido') {
+        <h1>Tu formato ya está puesto</h1>
+        @if (mensaje()) {
+          <p>{{ mensaje() }}</p>
+        }
+
+        <div class="siguiente">
+          <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mi formato».
+          Tu próximo Word saldrá con él.
+        </div>
+
+        <p class="nota">
+          ¿Te equivocaste de archivo? Súbelo otra vez aquí: el nuevo reemplaza al anterior.
+        </p>
+        <label class="boton secundario otro">
+          Subir otro archivo
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            (change)="elegir($event)"
+          />
+        </label>
+      }
+
+      @default {
+        <h1>Sube el formato de tu universidad</h1>
+        <p>
+          Sube tal cual el documento de Word que te dio tu facultad con el formato de tesis. Tu tesis
+          saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado, su pie de página y su
+          portada, que llenamos con tus datos.
+        </p>
+
+        @if (anterior(); as puesto) {
+          <p class="nota">
+            Ya tienes uno puesto
+            @if (puesto.nombre) {
+              («{{ puesto.nombre }}»)
+            }
+            desde el {{ puesto.desde | date: 'd MMM y' }}. Si subes otro, lo reemplaza.
+          </p>
+        }
+
+        <label
+          class="zona"
+          [class.encima]="encima()"
+          [class.ocupada]="paso() === 'subiendo'"
+          (dragover)="arrastrar($event, true)"
+          (dragleave)="arrastrar($event, false)"
+          (drop)="soltar($event)"
+        >
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            [disabled]="paso() === 'subiendo'"
+            (change)="elegir($event)"
+          />
+          @if (paso() === 'subiendo') {
+            <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
+          } @else {
+            <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
+            <span class="nota">Word (.docx) · hasta 5 MB</span>
+          }
+        </label>
+
+        @if (error()) {
+          <div class="aviso error" role="alert">{{ error() }}</div>
+        }
+
+        <p class="nota">
+          Solo se guarda el formato: el texto que traiga el documento no se conserva. Si es un .doc
+          antiguo o un PDF, ábrelo en Word y guárdalo como «Documento de Word (.docx)».
+        </p>
+      }
+    }
+  </section>
+</main>
