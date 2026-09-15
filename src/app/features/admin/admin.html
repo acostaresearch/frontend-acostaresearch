@@ -825,7 +825,9 @@
                   </td>
                   <td>{{ duracion(grupo.durationDays) }}</td>
                   <td>
-                    @if (grupo.active) {
+                    @if (grupo.active && grupo.soloPara) {
+                      <span class="pastilla" [title]="grupo.soloPara">En prueba</span>
+                    } @else if (grupo.active) {
                       <span class="pastilla buena">A la venta</span>
                     } @else {
                       <span class="pastilla">Retirado</span>
@@ -972,6 +974,27 @@
                 <input type="checkbox" formControlName="active" />
                 <span>A la venta en la web</span>
               </label>
+
+              <!-- En prueba: activo, pero solo para estos correos. Sirve para
+                   probar un producto nuevo con una persona sin que salga en la
+                   web, en el asistente ni en el conector de otros
+                   administradores. -->
+              <div class="campo">
+                <label for="g-solo">
+                  Solo para (en prueba) <span class="opcional">· opcional</span>
+                </label>
+                <input
+                  id="g-solo"
+                  type="text"
+                  formControlName="soloPara"
+                  maxlength="1000"
+                  placeholder="correo@dominio.com, otro@dominio.com"
+                />
+                <span class="ayuda">
+                  Con correos, el grupo no sale en la web ni se puede comprar, y solo se les da a
+                  los administradores de esta lista. Vacío = a la venta como siempre.
+                </span>
+              </div>
 
               <!-- ── Qué capítulos lleva ────────────────────────────────────
                    Se eligen aquí porque la pregunta natural es «qué lleva este

@@ -30,6 +30,11 @@ export interface Grupo {
   sortOrder: number;
   mcpCallsPerDay: number;
   mcpDelivery: string;
+  /**
+   * En prueba: los correos que son los únicos que lo ven. Nulo = a la venta como
+   * cualquier otro. Con correos no sale en la web ni se puede comprar.
+   */
+  soloPara: string | null;
   /** Cuántos capítulos cuelgan de él. Lo calcula el servidor. */
   skills: number;
 }
@@ -45,6 +50,8 @@ export interface DatosGrupo {
   durationDays?: number;
   mcpCallsPerDay?: number;
   active?: boolean;
+  /** Nulo = a la venta como siempre; con correos, en prueba. */
+  soloPara?: string | null;
 }
 
 /**

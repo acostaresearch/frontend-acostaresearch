@@ -925,6 +925,8 @@ export class Admin implements OnInit {
     durationDays: [90, [Validators.required, Validators.min(0)]],
     mcpCallsPerDay: [200, [Validators.required, Validators.min(0)]],
     active: [true],
+    // Correos separados por coma. Vacío = a la venta como siempre.
+    soloPara: ['', [Validators.maxLength(1000)]],
   });
 
   /** Archivos soltados, en el orden en que se publicarán. */
@@ -1054,6 +1056,7 @@ export class Admin implements OnInit {
       durationDays: 90,
       mcpCallsPerDay: 200,
       active: true,
+      soloPara: '',
     });
     this.solesEscritos.set(199);
     // Un grupo nuevo nace vacío: los capítulos se marcan a mano.
@@ -1081,6 +1084,7 @@ export class Admin implements OnInit {
       durationDays: grupo.durationDays,
       mcpCallsPerDay: grupo.mcpCallsPerDay,
       active: grupo.active,
+      soloPara: grupo.soloPara ?? '',
     });
     this.solesEscritos.set(grupo.priceCents / 100);
     this.capitulosElegidos.set(
@@ -1217,6 +1221,9 @@ export class Admin implements OnInit {
       durationDays: v.durationDays,
       mcpCallsPerDay: v.mcpCallsPerDay,
       active: v.active,
+      // Vacío va como null, no como undefined: vaciar la casilla es sacarlo de la
+      // prueba y ponerlo a la venta, no dejarlo como estaba.
+      soloPara: v.soloPara.trim() || null,
     };
 
     const enEdicion = this.editandoGrupo();
