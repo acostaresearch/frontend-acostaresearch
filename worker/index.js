@@ -121,7 +121,10 @@ async function proxiarALaApi(request, url, env) {
 async function servirLaWeb(request, env) {
   const respuesta = await env.ASSETS.fetch(request);
 
-  if (respuesta.status !== 404) return respuesta;
+  // Las cabeceras de seguridad van también aquí, y no solo en el respaldo de
+  // abajo: la PORTADA y cualquier archivo que sí existe se sirven por este
+  // camino, así que sin esto la única página sin proteger era la primera.
+  if (respuesta.status !== 404) return conCabecerasDeSeguridad(respuesta);
 
   const url = new URL(request.url);
 
