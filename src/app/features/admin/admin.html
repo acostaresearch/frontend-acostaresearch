@@ -1062,7 +1062,8 @@
 
                   @if (capitulosDisponibles().length === 0) {
                     <span class="ayuda">
-                      Todavía no hay ningún capítulo. Arrastra sus archivos .skill aquí abajo.
+                      Este grupo todavía no tiene capítulos. Arrastra sus archivos .skill aquí
+                      abajo.
                     </span>
                   } @else {
                     <ul class="lista-capitulos">
@@ -1085,18 +1086,6 @@
                                        editarlo cambia lo que reciben todos. -->
                                   @if (otrosGrupos(skill); as otros) {
                                     <span class="pastilla aviso-mover">también en {{ otros }}</span>
-                                  }
-                                  <!-- Un capítulo sin grupo se entrega a TODAS las
-                                       licencias, también a las de prueba y a las del
-                                       humanizador: es la red de seguridad para que una
-                                       skill mal subida no desaparezca en silencio. Por
-                                       eso se avisa aquí, que es donde se ve la lista. -->
-                                  @if (skill.productCodes.length === 0) {
-                                    <span
-                                      class="pastilla aviso-mover"
-                                      title="Sin grupo: lo reciben todas las licencias, también las de prueba. Márcalo en un grupo para limitarlo."
-                                      >sin grupo · lo ven todos</span
-                                    >
                                   }
                                   @if (!skill.active) {
                                     <span class="pastilla">oculto</span>
@@ -1184,9 +1173,56 @@
                       }
                     </ul>
                     <span class="ayuda">
-                      {{ capitulosElegidos().size }} de {{ capitulosDisponibles().length }}
-                      marcados. Se aplican al guardar.
+                      {{ capitulosElegidos().size }}
+                      {{ capitulosElegidos().size === 1 ? 'capítulo quedará' : 'capítulos quedarán' }}
+                      en el grupo. Se aplican al guardar.
                     </span>
+                  }
+
+                  <!-- ── Capítulos sin grupo ──────────────────────────────
+                       No debería haber ninguno: un capítulo sin grupo lo recibe
+                       CUALQUIER licencia, también las de prueba. La lista de
+                       arriba ya solo enseña los de este grupo, así que estos se
+                       sacan aparte; si no, se repartirían sin que nadie los
+                       viera. Marcarlos aquí los mete en este grupo al guardar. -->
+                  @if (capitulosSinGrupo().length > 0) {
+                    <div class="campo">
+                      <label>Capítulos sin grupo</label>
+                      <span class="ayuda">
+                        No están en ningún grupo, así que ahora mismo los reciben TODAS las
+                        licencias, también las de prueba. Márcalos para meterlos en este grupo, o
+                        retíralos desde el grupo al que deban ir.
+                      </span>
+                      <ul class="lista-capitulos">
+                        @for (skill of capitulosSinGrupo(); track skill.id) {
+                          <li>
+                            <div class="capitulo-fila">
+                              <label class="capitulo">
+                                <input
+                                  type="checkbox"
+                                  [checked]="capitulosElegidos().has(skill.id)"
+                                  (change)="alternarCapitulo(skill.id)"
+                                />
+                                <span class="capitulo-texto">
+                                  <span class="capitulo-nombre">{{ skill.displayName }}</span>
+                                  <span class="capitulo-meta">
+                                    <span class="mono tenue">{{ skill.code }}</span>
+                                    <span
+                                      class="pastilla aviso-mover"
+                                      title="Sin grupo: lo reciben todas las licencias, también las de prueba. Márcalo en un grupo para limitarlo."
+                                      >sin grupo · lo ven todos</span
+                                    >
+                                    @if (!skill.active) {
+                                      <span class="pastilla">oculto</span>
+                                    }
+                                  </span>
+                                </span>
+                              </label>
+                            </div>
+                          </li>
+                        }
+                      </ul>
+                    </div>
                   }
                 </div>
               }

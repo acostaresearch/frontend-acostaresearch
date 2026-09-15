@@ -890,15 +890,34 @@ export class Admin implements OnInit {
   );
 
   /**
-   * Todos los capítulos, incluidos los que ya son de otro grupo.
+   * Los capítulos de ESTE grupo, y solo ellos.
    *
-   * Se listan todos a propósito: montar un producto con capítulos que ya
-   * existen es un caso real —un paquete reducido, una edición distinta—. Y
-   * marcar aquí uno ajeno ya no se lo quita a nadie: un capítulo puede estar en
-   * varios grupos a la vez. La etiqueta de su fila dice en cuáles más está,
-   * porque editarlo cambia lo que reciben todos.
+   * Antes se listaba el catálogo entero, para poder montar un producto con
+   * capítulos que ya existían. El efecto real era otro: la lista crecía con los
+   * de los demás productos, había que buscar los propios entre ellos y era fácil
+   * desmarcar uno ajeno sin querer. Un capítulo puede seguir estando en varios
+   * grupos; para meterlo en este se sube su archivo aquí, o se marca desde el
+   * grupo donde ya está.
    */
-  readonly capitulosDisponibles = this.capitulosOrdenados;
+  readonly capitulosDisponibles = computed(() => {
+    const grupo = this.editandoGrupo();
+    if (!grupo) return [];
+    const mio = grupo.productCode ?? grupo.code;
+    return this.capitulosOrdenados().filter((s) => s.productCodes.includes(mio));
+  });
+
+  /**
+   * Los capítulos que no están en ningún grupo.
+   *
+   * No debería haber ninguno: sin grupo, un capítulo lo recibe CUALQUIER
+   * licencia, también las de prueba (`perteneceAlGrupo` en el backend lo da por
+   * bueno cuando la lista viene vacía). Como la lista de arriba ya no los
+   * enseña, se sacan aparte: aquí se ven y se meten en su grupo, en vez de
+   * quedarse repartiéndose sin que nadie los vea.
+   */
+  readonly capitulosSinGrupo = computed(() =>
+    this.capitulosOrdenados().filter((s) => s.productCodes.length === 0),
+  );
 
   /** Grupo cuyos capítulos se están mirando desde la tabla. */
   readonly viendoCapitulos = signal<Grupo | null>(null);
@@ -1699,10 +1718,18 @@ export class Admin implements OnInit {
         fuera.push(`${archivo.name}: ${fallo}`);
         continue;
       }
-      const skill = this.skills().find((s) => s.code === analisis.code);
+      // Solo los capítulos de este grupo. Actualizar desde aquí el de otro
+      // producto cambiaría en silencio lo que reciben compradores que no se
+      // están mirando, y la lista de esta ventana ya no los enseña.
+      const skill = this.capitulosDisponibles().find((s) => s.code === analisis.code);
       if (!skill) {
+        const ajeno = this.skills().find((s) => s.code === analisis.code);
         fuera.push(
-          `${archivo.name}: «${analisis.code}» no es ningún capítulo publicado. Si es nuevo, súbelo en «Subir capítulos nuevos».`,
+          ajeno
+            ? ajeno.productCodes.length === 0
+              ? `${archivo.name}: «${analisis.code}» no está en ningún grupo. Márcalo abajo, en «Capítulos sin grupo», y vuelve a subirlo.`
+              : `${archivo.name}: «${analisis.code}» es de ${this.otrosGrupos(ajeno)}. Actualízalo desde ese grupo.`
+            : `${archivo.name}: «${analisis.code}» no es ningún capítulo publicado. Si es nuevo, súbelo en «Subir capítulos nuevos».`,
         );
         continue;
       }
