@@ -1,0 +1,90 @@
+<app-site-header />
+
+<main class="pagina subir">
+  <section class="tarjeta">
+    <p class="antetitulo">El material de tu curso · con Claude</p>
+
+    @switch (paso()) {
+      @case ('comprobando') {
+        <p class="nota">Comprobando el enlace…</p>
+      }
+
+      @case ('enlace-no-vale') {
+        <h1>Este enlace ya no vale</h1>
+        <div class="aviso error" role="alert">{{ error() }}</div>
+        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tu material.</p>
+      }
+
+      @case ('subido') {
+        <h1>Tu material ya está guardado</h1>
+        @if (mensaje()) {
+          <p>{{ mensaje() }}</p>
+        }
+
+        <div class="siguiente">
+          <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mi material».
+          Lo va a leer para armar tu informe con lo que pidió tu docente.
+        </div>
+
+        <p class="nota">¿Tienes otro archivo, como la rúbrica? Súbelo también aquí.</p>
+        <label class="boton secundario otro">
+          Subir otro archivo
+          <input
+            type="file"
+            accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            (change)="elegir($event)"
+          />
+        </label>
+      }
+
+      @default {
+        <h1>Sube el material de tu curso</h1>
+        <p>
+          Sube la consigna, la rúbrica o el índice que te dio tu docente. Claude lo lee para armar
+          tu informe con la estructura y los criterios que te piden.
+        </p>
+
+        @if (material().length > 0) {
+          <p class="nota">Ya subiste:</p>
+          <ul class="nota">
+            @for (archivo of material(); track archivo.numero) {
+              <li>{{ archivo.nombre }} · {{ archivo.subidoAt | date: 'd MMM y' }}</li>
+            }
+          </ul>
+        }
+
+        <label
+          class="zona"
+          [class.encima]="encima()"
+          [class.ocupada]="paso() === 'subiendo'"
+          (dragover)="arrastrar($event, true)"
+          (dragleave)="arrastrar($event, false)"
+          (drop)="soltar($event)"
+        >
+          <input
+            type="file"
+            accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            [disabled]="paso() === 'subiendo'"
+            (change)="elegir($event)"
+          />
+          @if (paso() === 'subiendo') {
+            <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
+          } @else {
+            <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
+            <span class="nota">Word (.docx) o texto (.txt) · hasta 5 MB · hasta 5 archivos</span>
+          }
+        </label>
+
+        @if (error()) {
+          <div class="aviso error" role="alert">{{ error() }}</div>
+        }
+
+        <p class="nota">
+          ¿Lo tienes en PDF o en foto? Adjúntalo directamente en el chat de Claude, con el clip:
+          ahí lo lee sin subirlo aquí. Si prefieres guardarlo, ábrelo en Word y guárdalo como
+          «Documento de Word (.docx)».
+        </p>
+      }
+    }
+  </section>
+</main>
