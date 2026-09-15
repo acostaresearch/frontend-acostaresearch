@@ -19,6 +19,62 @@ interface Columna {
   fases: EtapaDelProyecto[];
 }
 
+/** Lo que dice el recuadro de «varias tesis», que cambia con el género de la palabra. */
+interface TextosDeVarias {
+  titulo: string;
+  explicacion: string;
+  nueva: string;
+  usar: string;
+  principal: string;
+  otra: string;
+  activa: string;
+  trabajara: string;
+  deEsta: string;
+  borrar: string;
+}
+
+const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
+  tesis: {
+    titulo: 'Qué tesis usar',
+    explicacion:
+      'Claude trabaja con la activa, y lo que ves debajo es de ella. Elige otra para cambiar.',
+    nueva: 'Nueva tesis',
+    usar: 'Usar esta',
+    principal: 'Tesis principal',
+    otra: 'Otra tesis',
+    activa: 'tu tesis activa',
+    trabajara: 'Claude trabajará con ella',
+    deEsta: 'de esta tesis. Tus otras tesis no se tocan.',
+    borrar: 'Borrar esta tesis',
+  },
+  articulo: {
+    titulo: 'Qué artículo usar',
+    explicacion:
+      'Claude trabaja con el activo, y lo que ves debajo es de él. Elige otro para cambiar.',
+    nueva: 'Nuevo artículo',
+    usar: 'Usar este',
+    principal: 'Artículo principal',
+    otra: 'Otro artículo',
+    activa: 'tu artículo activo',
+    trabajara: 'Claude trabajará con él',
+    deEsta: 'de este artículo. Tus otros artículos no se tocan.',
+    borrar: 'Borrar este artículo',
+  },
+  informe: {
+    titulo: 'Qué informe usar',
+    explicacion:
+      'Claude trabaja con el activo, y lo que ves debajo es de él. Elige otro para cambiar.',
+    nueva: 'Nuevo informe',
+    usar: 'Usar este',
+    principal: 'Informe principal',
+    otra: 'Otro informe',
+    activa: 'tu informe activo',
+    trabajara: 'Claude trabajará con él',
+    deEsta: 'de este informe. Tus otros informes no se tocan.',
+    borrar: 'Borrar este informe',
+  },
+};
+
 /**
  * Por dónde va su tesis.
  *
@@ -404,9 +460,19 @@ export class MiTesis implements OnInit {
   readonly errorTesis = signal<string | null>(null);
   readonly avisoTesis = signal<string | null>(null);
 
+  /**
+   * Las palabras del recuadro según lo que se escribe.
+   *
+   * El recuadro sale igual en el artículo y en el informe, y decirle «tesis» a
+   * quien escribe un artículo parecía que la pestaña no había cambiado.
+   */
+  textos(p: Proyecto): TextosDeVarias {
+    return TEXTOS[p.tipo ?? 'tesis'];
+  }
+
   /** Cómo se llama una tesis en la lista: su nombre, o si no tiene, «Tesis principal». */
-  nombreDeTesis(t: TesisDelMetodo): string {
-    return t.nombre ?? 'Tesis principal';
+  nombreDeTesis(p: Proyecto, t: TesisDelMetodo): string {
+    return t.nombre ?? this.textos(p).principal;
   }
 
   /** Lo que se pinta de la tesis activa en la pantalla, al empezar a trabajar con otra. */
@@ -426,13 +492,13 @@ export class MiTesis implements OnInit {
     if (this.cambiandoTesis()) return;
 
     const nombre = await this.dialogos.pedirTexto({
-      titulo: `Otra tesis de ${this.nombreCorto(p)}`,
+      titulo: `${this.textos(p).otra} de ${this.nombreCorto(p)}`,
       mensaje:
-        'Se abre en blanco y pasa a ser la activa: Claude trabajará con ella hasta que elijas otra. ' +
-        'Las que ya tienes no se tocan.',
+        `Se abre en blanco y ${this.textos(p).trabajara} hasta que cambies. ` +
+        'Lo que ya tienes no se toca.',
       confirmar: 'Crear y usar',
       campo: {
-        etiqueta: 'Nombre, para distinguirla',
+        etiqueta: 'Nombre, para reconocer cuál es',
         placeholder: 'Prueba con tema de salud',
         obligatorio: true,
         maxlength: 80,
@@ -443,7 +509,7 @@ export class MiTesis implements OnInit {
     this.limpiarAvisos();
     this.cambiandoTesis.set(true);
     this.proyectos.crearTesis(p.productCode, nombre.trim()).subscribe({
-      next: () => this.trasCambiarTesis(p, `«${nombre.trim()}» es ahora tu tesis activa.`),
+      next: () => this.trasCambiarTesis(p, `«${nombre.trim()}» es ahora ${this.textos(p).activa}.`),
       error: (e) => {
         this.cambiandoTesis.set(false);
         this.errorTesis.set(toApiError(e).message);
@@ -458,7 +524,7 @@ export class MiTesis implements OnInit {
     this.cambiandoTesis.set(true);
     this.proyectos.activarTesis(p.productCode, t.id).subscribe({
       next: () =>
-        this.trasCambiarTesis(p, `Ahora usas «${this.nombreDeTesis(t)}». Claude trabajará con ella.`),
+        this.trasCambiarTesis(p, `Ahora usas «${this.nombreDeTesis(p, t)}». ${this.textos(p).trabajara}.`),
       error: (e) => {
         this.cambiandoTesis.set(false);
         this.errorTesis.set(toApiError(e).message);
@@ -470,13 +536,13 @@ export class MiTesis implements OnInit {
     if (this.cambiandoTesis()) return;
 
     const escrito = await this.dialogos.pedirTexto({
-      titulo: `Borrar «${this.nombreDeTesis(t)}»`,
+      titulo: `Borrar «${this.nombreDeTesis(p, t)}»`,
       mensaje:
         'Se borra para siempre: el tema, lo anotado en cada fase, ' +
         (t.palabras > 0 ? `los capítulos escritos (${t.palabras} palabras), ` : '') +
-        'el análisis y el documento subido de esta tesis. Tus otras tesis no se tocan.',
+        `el análisis y el documento subido ${this.textos(p).deEsta}`,
       tono: 'peligro',
-      confirmar: 'Borrar esta tesis',
+      confirmar: this.textos(p).borrar,
       campo: {
         etiqueta: 'Escribe «eliminar» para confirmar',
         placeholder: 'eliminar',
@@ -494,7 +560,7 @@ export class MiTesis implements OnInit {
 
     this.cambiandoTesis.set(true);
     this.proyectos.borrarTesis(p.productCode, t.id, escrito).subscribe({
-      next: () => this.trasCambiarTesis(p, `«${this.nombreDeTesis(t)}» se borró.`),
+      next: () => this.trasCambiarTesis(p, `«${this.nombreDeTesis(p, t)}» se borró.`),
       error: (e) => {
         this.cambiandoTesis.set(false);
         this.errorTesis.set(toApiError(e).message);

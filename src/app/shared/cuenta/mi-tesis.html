@@ -29,15 +29,15 @@
     <!-- Varias tesis del mismo método. Abren más el administrador y quien
          tenga el permiso en su licencia (lo da el administrador desde la
          ficha del acceso); el bloque sale también a quien ya tiene varias,
-         para poder elegir aunque le hayan quitado el permiso. -->
-    @if (p.puedeCrearTesis || p.tesis.length > 1) {
+         para poder elegir aunque le hayan quitado el permiso. Un método sin
+         nada guardado no lo enseña: no hay ninguna que elegir, y la primera
+         nace sola al trabajar con Claude. -->
+    @if (p.tesis.length > 0 && (p.puedeCrearTesis || p.tesis.length > 1)) {
       <div class="caja varias">
         <div class="caja-fila">
           <div>
-            <p class="caja-titulo">Qué tesis usar</p>
-            <p class="caja-texto">
-              Claude trabaja con la activa, y lo que ves debajo es de ella. Elige otra para cambiar.
-            </p>
+            <p class="caja-titulo">{{ textos(p).titulo }}</p>
+            <p class="caja-texto">{{ textos(p).explicacion }}</p>
           </div>
           @if (p.puedeCrearTesis) {
             <button
@@ -46,7 +46,7 @@
               [disabled]="cambiandoTesis()"
               (click)="nuevaTesis(p)"
             >
-              Nueva tesis
+              {{ textos(p).nueva }}
             </button>
           }
         </div>
@@ -57,7 +57,7 @@
               <li class="una-tesis" [class.activa]="t.activa">
                 <div class="una-tesis-datos">
                   <p class="una-tesis-nombre">
-                    {{ nombreDeTesis(t) }}
+                    {{ nombreDeTesis(p, t) }}
                     @if (t.activa) {
                       <span class="en-uso">En uso</span>
                     }
@@ -74,7 +74,7 @@
                       [disabled]="cambiandoTesis()"
                       (click)="usarTesis(p, t)"
                     >
-                      Usar esta
+                      {{ textos(p).usar }}
                     </button>
                   }
                   @if (p.tesis.length > 1) {
