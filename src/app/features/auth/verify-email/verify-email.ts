@@ -26,7 +26,14 @@ export class VerifyEmail implements OnInit {
   readonly formulario = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+    // Solo se pide si no se viene directo del registro (ver `pedirContrasena`).
+    password: [''],
   });
+
+  /** No hay contraseña del registro en memoria: recargó, o confirma desde otro equipo. */
+  readonly pedirContrasena = signal(false);
+  /** El código era bueno pero la contraseña no es la del alta. */
+  readonly contrasenaNoCoincide = signal(false);
 
   readonly enviando = signal(false);
   readonly verificado = signal(false);
@@ -47,6 +54,7 @@ export class VerifyEmail implements OnInit {
     if (email) {
       this.formulario.controls.email.setValue(email);
     }
+    this.pedirContrasena.set(!this.auth.contrasenaDeAlta(email ?? ''));
 
     // Al venir del registro ya se envió un código: la cuenta atrás evita que
     // el usuario pida otro de inmediato y se quede con dos códigos en el correo.
@@ -64,6 +72,12 @@ export class VerifyEmail implements OnInit {
     return 'El código son 6 dígitos.';
   }
 
+  get errorContrasena(): string | null {
+    const control = this.formulario.controls.password;
+    if (!this.pedirContrasena() || !control.touched || control.value) return null;
+    return 'Escribe la contraseña con la que te registraste.';
+  }
+
   /** Solo dígitos, y envía solo cuando ya hay 6. */
   alEscribirCodigo(evento: Event): void {
     const input = evento.target as HTMLInputElement;
@@ -74,7 +88,8 @@ export class VerifyEmail implements OnInit {
       this.formulario.controls.code.setValue(limpio);
     }
 
-    if (limpio.length === 6 && this.formulario.valid && !this.enviando()) {
+    const faltaContrasena = this.pedirContrasena() && !this.formulario.controls.password.value;
+    if (limpio.length === 6 && this.formulario.valid && !faltaContrasena && !this.enviando()) {
       this.enviar();
     }
   }
@@ -83,14 +98,22 @@ export class VerifyEmail implements OnInit {
     this.formulario.markAllAsTouched();
     this.errorGeneral.set(null);
     this.mensajeReenvio.set(null);
+    this.contrasenaNoCoincide.set(false);
 
     if (this.formulario.invalid || this.enviando()) return;
 
-    const { email, code } = this.formulario.getRawValue();
+    const { email, code, password } = this.formulario.getRawValue();
+    // La que escriba aquí o, si viene directo del registro, la de ese registro.
+    const contrasena = password || this.auth.contrasenaDeAlta(email);
+    if (!contrasena) {
+      this.pedirContrasena.set(true);
+      return;
+    }
     this.enviando.set(true);
 
-    this.auth.verifyEmail(email, code).subscribe({
+    this.auth.verifyEmail(email, code, contrasena).subscribe({
       next: () => {
+        this.auth.olvidarAlta();
         this.enviando.set(false);
         this.verificado.set(true);
       },
@@ -98,6 +121,16 @@ export class VerifyEmail implements OnInit {
         const apiError = toApiError(error);
         this.enviando.set(false);
         this.errorGeneral.set(apiError.message);
+
+        // El código era bueno y se conserva; lo que no vale es la contraseña. Si
+        // venía de memoria, alguien registró este correo detrás: se olvida y se pide.
+        if (apiError.code === ERROR_CODE.REGISTRATION_PASSWORD_MISMATCH) {
+          this.auth.olvidarAlta();
+          this.contrasenaNoCoincide.set(true);
+          this.pedirContrasena.set(true);
+          this.formulario.controls.password.setValue('');
+          return;
+        }
 
         // Código agotado o caducado: ya no sirve insistir, hay que pedir otro.
         const quemado =

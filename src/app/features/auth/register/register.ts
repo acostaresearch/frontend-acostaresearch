@@ -180,6 +180,9 @@ export class Register {
     this.auth.register({ firstName, lastName, email, password }).subscribe({
       next: ({ email, emailSent }) => {
         this.enviando.set(false);
+        // La pantalla del código la manda con el código; así no hay que volver a
+        // escribirla. Queda en memoria, nunca en la URL.
+        this.auth.recordarAlta(email, password);
         // Todavía no hay cuenta: los datos esperan y el usuario nace al acertar
         // el código, así que se le lleva directo a introducirlo.
         void this.router.navigate(['/auth/verificar-email'], {

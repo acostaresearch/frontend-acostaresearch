@@ -150,11 +150,36 @@ export class AuthService {
 
   // ── Verificación de correo ────────────────────────────────────────────────
 
-  /** Canjea el código de 6 dígitos que llegó por correo. */
-  verifyEmail(email: string, code: string): Observable<User> {
+  /**
+   * La contraseña del registro que se acaba de enviar, para no volver a pedirla
+   * al teclear el código.
+   *
+   * Solo en memoria: ni en la URL, ni en el historial, ni en `localStorage`. Si
+   * se recarga la página o se confirma desde otro equipo, se pierde y la
+   * pantalla del código la pide.
+   */
+  private altaReciente: { email: string; password: string } | null = null;
+
+  recordarAlta(email: string, password: string): void {
+    this.altaReciente = { email, password };
+  }
+
+  contrasenaDeAlta(email: string): string | null {
+    return this.altaReciente?.email === email.trim().toLowerCase() ? this.altaReciente.password : null;
+  }
+
+  olvidarAlta(): void {
+    this.altaReciente = null;
+  }
+
+  /**
+   * Canjea el código de 6 dígitos que llegó por correo. Va con la contraseña del
+   * registro: sin ella, quien registrara el mismo correo detrás se quedaba la cuenta.
+   */
+  verifyEmail(email: string, code: string, password: string): Observable<void> {
     return this.http
-      .post<ApiResponse<{ user: User }>>(`${this.base}/verify-email`, { email, code })
-      .pipe(map((res) => res.data.user));
+      .post<ApiResponse<unknown>>(`${this.base}/verify-email`, { email, code, password })
+      .pipe(map(() => undefined));
   }
 
   resendVerification(email: string): Observable<string> {

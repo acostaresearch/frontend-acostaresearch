@@ -20,6 +20,9 @@
         @if (codigoQuemado()) {
           <span>Pide uno nuevo para continuar.</span>
         }
+        @if (contrasenaNoCoincide()) {
+          <a routerLink="/auth/registro">Volver a registrarme</a>
+        }
       </div>
     }
 
@@ -38,6 +41,25 @@
           placeholder="tu@correo.com"
         />
       </div>
+
+      <!-- Solo cuando no se viene directo del registro: recargando, o desde otro equipo. -->
+      @if (pedirContrasena()) {
+        <div class="campo" [class.invalido]="errorContrasena">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            aria-describedby="ayuda-contrasena"
+          />
+          @if (errorContrasena; as error) {
+            <span class="error">{{ error }}</span>
+          } @else {
+            <span class="ayuda" id="ayuda-contrasena">La que pusiste al registrarte.</span>
+          }
+        </div>
+      }
 
       <div class="campo" [class.invalido]="errorCodigo">
         <label for="code">Código de verificación</label>
