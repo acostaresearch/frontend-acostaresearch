@@ -194,7 +194,9 @@ const CSP = [
   // Angular inyecta los estilos de cada componente como <style> en la página.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://i.ytimg.com https://*.paypal.com https://*.paypalobjects.com",
+  // gstatic: los iconos que mete el botón de Google. Los videos van SOLO por
+  // youtube-nocookie (ver `tutoriales` y `demos`); youtube.com es solo enlace.
+  "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com",
   "connect-src 'self' https://accounts.google.com https://*.paypal.com",
   "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com",
 ].join('; ');
