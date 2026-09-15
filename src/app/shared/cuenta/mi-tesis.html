@@ -116,21 +116,36 @@
             {{ p.carrera }}@if (p.carrera && p.universidad) { · }{{ p.universidad }}
           </p>
         }
-        <!-- El asesor sale en la portada del Word. Lo guarda Claude al
-             preguntárselo; aquí se corrige sin abrir una conversación. -->
-        <p class="donde">
-          Asesor: {{ p.asesor || 'sin indicar' }}
-          <button
-            type="button"
-            class="boton enlace"
-            [disabled]="guardandoAsesor()"
-            (click)="editarAsesor(p)"
-          >
-            {{ guardandoAsesor() ? 'Guardando…' : p.asesor ? 'Cambiar' : 'Añadir' }}
-          </button>
-        </p>
-        @if (errorAsesor(); as mensaje) {
-          <p class="aviso-descarga">{{ mensaje }}</p>
+        @if (p.tipo === 'informe') {
+          <!-- Un informe no tiene asesor: tiene curso, docente y fecha de entrega.
+               Lo guarda Claude en la ficha; aquí solo se enseña. -->
+          @if (p.fichaInforme?.curso || p.fichaInforme?.docente) {
+            <p class="donde">
+              @if (p.fichaInforme?.curso) { Curso: {{ p.fichaInforme?.curso }} }
+              @if (p.fichaInforme?.curso && p.fichaInforme?.docente) { · }
+              @if (p.fichaInforme?.docente) { Docente: {{ p.fichaInforme?.docente }} }
+            </p>
+          }
+          @if (p.fichaInforme?.fechaEntrega) {
+            <p class="donde">Entrega: {{ p.fichaInforme?.fechaEntrega }}</p>
+          }
+        } @else {
+          <!-- El asesor sale en la portada del Word. Lo guarda Claude al
+               preguntárselo; aquí se corrige sin abrir una conversación. -->
+          <p class="donde">
+            Asesor: {{ p.asesor || 'sin indicar' }}
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="guardandoAsesor()"
+              (click)="editarAsesor(p)"
+            >
+              {{ guardandoAsesor() ? 'Guardando…' : p.asesor ? 'Cambiar' : 'Añadir' }}
+            </button>
+          </p>
+          @if (errorAsesor(); as mensaje) {
+            <p class="aviso-descarga">{{ mensaje }}</p>
+          }
         }
       </div>
 

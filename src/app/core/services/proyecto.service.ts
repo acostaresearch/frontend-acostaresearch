@@ -68,9 +68,30 @@ export interface TesisDelMetodo {
   updatedAt: string | null;
 }
 
+/** La ficha de un informe estudiantil. La guarda Claude; aquí solo se enseña. */
+export interface FichaInforme {
+  tipo?: 'curso' | 'proyecto' | 'caso';
+  curso?: string;
+  /** Vacío = no hay docente que poner. */
+  docente?: string;
+  integrantes?: { nombre: string; codigo?: string }[];
+  cicloSeccion?: string;
+  ciudad?: string;
+  /** AAAA-MM-DD. */
+  fechaEntrega?: string;
+  rubrica?: string;
+}
+
 export interface Proyecto {
   /** Nulo en un método comprado que todavía no tiene nada guardado. */
   id: string | null;
+  /**
+   * Qué se escribe: decide los textos del panel. Opcional porque un backend
+   * anterior no lo manda, y entonces todo se ve como hasta ahora.
+   */
+  tipo?: 'tesis' | 'articulo' | 'informe';
+  /** Solo en el informe. */
+  fichaInforme?: FichaInforme | null;
   /** Falso = sale en blanco porque tiene licencia, pero no hay nada que borrar. */
   guardado: boolean;
   productCode: string;
