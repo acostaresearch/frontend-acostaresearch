@@ -1,0 +1,26 @@
+# Cabeceras de seguridad de los archivos que sirve Cloudflare.
+#
+# POR QUÉ EXISTE ESTE ARCHIVO
+# ---------------------------
+# El Worker solo se ejecuta cuando la petición NO coincide con un archivo del
+# build: las rutas del router (/planes, /perfil) y el proxy de /api. Todo lo
+# demás —la PORTADA, que es index.html, el JavaScript, el PDF de la guía— lo
+# sirve Cloudflare directamente desde su borde. Las cabeceras puestas en el
+# Worker no llegaban ahí, así que la única página sin proteger era la primera
+# que ve cualquiera. Comprobado el 15-sep-2026: /planes las traía y / no.
+#
+# La lista tiene que ser LA MISMA que la de `worker/index.js`. Si se cambia una,
+# se cambia la otra: son los dos caminos por los que sale la web.
+#
+# La CSP va en Report-Only a propósito hasta comprobar a mano que entrar con
+# Google, pagar con PayPal y ver un video siguen funcionando. El hash es el del
+# script del tema que va dentro de index.html: si se toca ese script, hay que
+# recalcularlo o la página se queda en el tema claro.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com https://*.paypal.com https://*.paypalobjects.com; connect-src 'self' https://accounts.google.com https://*.paypal.com; frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com

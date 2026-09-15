@@ -162,6 +162,12 @@ async function servirLaWeb(request, env) {
 /**
  * De dónde puede cargar la web, y qué no puede hacer nadie con ella.
  *
+ * ESTA LISTA ESTÁ TAMBIÉN EN `public/_headers`, Y TIENEN QUE IR IGUALES.
+ * No es una duplicación por descuido: la web sale por dos caminos. Lo que no
+ * coincide con un archivo del build pasa por este Worker (las rutas del router),
+ * y el resto —la portada, el JavaScript, el PDF— lo sirve Cloudflare desde su
+ * borde sin ejecutar nada de aquí. Cada camino pone sus cabeceras por su lado.
+ *
  * `frame-ancestors 'none'` es lo que importa hoy: sin él, cualquier web podía
  * meter el panel en un iframe invisible y hacer que el tesista pulsara cosas
  * sin verlas. Lo demás es el cinturón para el día que aparezca un XSS.
