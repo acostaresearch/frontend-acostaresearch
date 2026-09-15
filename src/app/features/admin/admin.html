@@ -1086,8 +1086,17 @@
                                   @if (otrosGrupos(skill); as otros) {
                                     <span class="pastilla aviso-mover">también en {{ otros }}</span>
                                   }
+                                  <!-- Un capítulo sin grupo se entrega a TODAS las
+                                       licencias, también a las de prueba y a las del
+                                       humanizador: es la red de seguridad para que una
+                                       skill mal subida no desaparezca en silencio. Por
+                                       eso se avisa aquí, que es donde se ve la lista. -->
                                   @if (skill.productCodes.length === 0) {
-                                    <span class="pastilla">sin grupo</span>
+                                    <span
+                                      class="pastilla aviso-mover"
+                                      title="Sin grupo: lo reciben todas las licencias, también las de prueba. Márcalo en un grupo para limitarlo."
+                                      >sin grupo · lo ven todos</span
+                                    >
                                   }
                                   @if (!skill.active) {
                                     <span class="pastilla">oculto</span>

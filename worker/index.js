@@ -153,5 +153,64 @@ async function servirLaWeb(request, env) {
   // en el navegador en `/analisis`. Esa página se retiró el 15 de septiembre de
   // 2026: el análisis lo hace Claude en el servidor, y ninguna página necesita
   // ya aislarse.
-  return new Response(pagina.body, { status: 200, headers: pagina.headers });
+  return conCabecerasDeSeguridad(new Response(pagina.body, { status: 200, headers: pagina.headers }));
+}
+
+/**
+ * De dónde puede cargar la web, y qué no puede hacer nadie con ella.
+ *
+ * `frame-ancestors 'none'` es lo que importa hoy: sin él, cualquier web podía
+ * meter el panel en un iframe invisible y hacer que el tesista pulsara cosas
+ * sin verlas. Lo demás es el cinturón para el día que aparezca un XSS.
+ *
+ * La lista sale de lo que la web usa de verdad: la tipografía de Google, el
+ * botón de Google para entrar, el SDK de PayPal en el checkout, los videos de
+ * YouTube sin cookies y sus miniaturas. El script en línea del tema (index.html)
+ * va por su hash: si se toca ese script, hay que recalcularlo o la página se
+ * queda en el tema claro.
+ *
+ * VA EN «Report-Only» A PROPÓSITO, DE MOMENTO. Una CSP estricta que se cuele
+ * rompe el botón de entrar o el pago sin un solo error visible para el usuario.
+ * En Report-Only el navegador solo se queja por consola. Cuando se compruebe a
+ * mano que entrar con Google, pagar con PayPal y ver un video siguen yendo,
+ * esta cabecera pasa a llamarse `Content-Security-Policy` a secas.
+ */
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com",
+  // Angular inyecta los estilos de cada componente como <style> en la página.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://i.ytimg.com https://*.paypal.com https://*.paypalobjects.com",
+  "connect-src 'self' https://accounts.google.com https://*.paypal.com",
+  "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com",
+].join('; ');
+
+const CABECERAS_DE_SEGURIDAD = {
+  'Content-Security-Policy-Report-Only': CSP,
+  // Por si la CSP no llega: ningún navegador la mete en un marco.
+  'X-Frame-Options': 'DENY',
+  // Nada de adivinar el tipo de un archivo por su contenido.
+  'X-Content-Type-Options': 'nosniff',
+  // A otros dominios solo les llega el dominio, nunca la ruta: las URL de
+  // subida y de descarga llevan el token dentro.
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  // Un año, subdominios incluidos. Cloudflare ya fuerza HTTPS; esto lo fija
+  // también en el navegador.
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+};
+
+function conCabecerasDeSeguridad(respuesta) {
+  const cabeceras = new Headers(respuesta.headers);
+  for (const [nombre, valor] of Object.entries(CABECERAS_DE_SEGURIDAD)) cabeceras.set(nombre, valor);
+  return new Response(respuesta.body, {
+    status: respuesta.status,
+    statusText: respuesta.statusText,
+    headers: cabeceras,
+  });
 }
