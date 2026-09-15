@@ -34,7 +34,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
-      return proxiarALaApi(request, url);
+      return proxiarALaApi(request, url, env);
     }
 
     return servirLaWeb(request, env);
@@ -49,7 +49,7 @@ export default {
  * viajan la cookie de sesión y el `Authorization`, y cualquier «limpieza» aquí
  * sería una sesión que deja de funcionar.
  */
-async function proxiarALaApi(request, url) {
+async function proxiarALaApi(request, url, env) {
   const destino = new URL(url.pathname + url.search, API);
 
   const peticion = new Request(destino, {
@@ -62,12 +62,21 @@ async function proxiarALaApi(request, url) {
     duplex: 'half',
   });
 
-  // `X-Forwarded-For` importa: el backend confía en dos saltos para contar el
-  // límite de peticiones por IP. Sin la IP real, todos los visitantes
-  // compartirían un mismo cubo y el undécimo que intentara registrarse recibiría
-  // un 429 siendo el primero en probarlo.
+  // La IP del visitante, para los límites por IP del backend. Sin ella, todos
+  // los visitantes que salen por el mismo borde de Cloudflare comparten cubo, y
+  // el trigésimo que intenta entrar recibe un 429 siendo el primero en probarlo.
+  //
+  // No va en X-Forwarded-For: Caddy no se fía de esa cabecera y pone la IP que
+  // ve, que es la de Cloudflare. Va aparte, con un secreto que solo tienen este
+  // Worker y el backend (`wrangler secret put PROXY_SECRET`). Las que traiga el
+  // visitante se borran antes: no puede ponerlas él.
+  peticion.headers.delete('X-Cliente-IP');
+  peticion.headers.delete('X-Acosta-Proxy');
   const ip = request.headers.get('CF-Connecting-IP');
-  if (ip) peticion.headers.set('X-Forwarded-For', ip);
+  if (ip && env.PROXY_SECRET) {
+    peticion.headers.set('X-Cliente-IP', ip);
+    peticion.headers.set('X-Acosta-Proxy', env.PROXY_SECRET);
+  }
 
   let respuesta;
   try {
