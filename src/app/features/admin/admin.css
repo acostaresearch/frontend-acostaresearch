@@ -53,8 +53,8 @@
   margin-top: 0;
 }
 
-/* El enlace a /analisis va con los botones: sale del panel, pero se busca en
-   el mismo sitio y tiene que parecer lo mismo. */
+/* Un enlace del lateral va con los botones: si sale del panel, se busca en el
+   mismo sitio y tiene que parecer lo mismo. */
 .lateral-nav button,
 .lateral-nav a {
   display: flex;

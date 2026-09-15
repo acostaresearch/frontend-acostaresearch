@@ -173,9 +173,9 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   },
   'analisis-datos-rstudio': {
     descripcion:
-      'Tú eliges la vía: R en tu navegador sin instalar nada, RStudio o SPSS con cada paso ' +
-      'explicado, o Claude for Excel si no quieres programar (este requiere plan Pro de ' +
-      'Claude). En todas: descriptivos, alfa de Cronbach, normalidad y la prueba inferencial ' +
+      'Tú eliges la vía: Claude corre el análisis en R en la conversación, sin instalar nada y ' +
+      'con el informe en Word; o RStudio o SPSS con cada paso explicado, o Claude for Excel si ' +
+      'no quieres programar (este requiere plan Pro de Claude). En todas: descriptivos, alfa de Cronbach, normalidad y la prueba inferencial ' +
       'que corresponda según el árbol de decisión. Cada cifra del capítulo sale de tu análisis ' +
       'guardado, nunca de memoria.',
     entregable: 'Capítulo IV con sus tablas y cifras comprobadas',

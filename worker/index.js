@@ -139,50 +139,10 @@ async function servirLaWeb(request, env) {
 
   // El 200 es a propósito: para el navegador y para Google, /metodo es una
   // página que existe, no un error al que le hemos puesto contenido.
-  const cabeceras = new Headers(pagina.headers);
-  for (const [nombre, valor] of Object.entries(aislamiento(url.pathname))) {
-    cabeceras.set(nombre, valor);
-  }
-
-  return new Response(pagina.body, { status: 200, headers: cabeceras });
-}
-
-/**
- * El aislamiento entre orígenes, SOLO para la página de análisis.
- *
- * POR QUÉ HACE FALTA
- * ------------------
- * R en el navegador habla con su hilo de trabajo por memoria compartida
- * (`SharedArrayBuffer`), y los navegadores solo la ofrecen a documentos
- * aislados. Sin estas dos cabeceras, WebR cae a un canal de reserva que simula
- * esa memoria con un Service Worker — y ese canal falla de formas difíciles de
- * relacionar con su causa: peticiones que no vuelven, lecturas fuera de rango.
- *
- * POR QUÉ SOLO EN ESA RUTA
- * ------------------------
- * Porque el aislamiento tiene precio: restringe cómo se cargan los recursos de
- * otros dominios. En el resto del sitio viven el SDK de PayPal y el botón de
- * Google, y no hay ninguna razón para arriesgarlos por una página que no los
- * usa.
- *
- * `credentialless` y no `require-corp`: el primero carga lo ajeno sin
- * credenciales, y el segundo exige que cada recurso traiga su propia cabecera
- * de permiso. Con `require-corp` habría que ir pidiéndole cabeceras a terceros;
- * así no hace falta.
- *
- * Y ESTO SOLO LLEGA EN UNA NAVEGACIÓN DE VERDAD
- * ---------------------------------------------
- * Una cabecera viaja con el DOCUMENTO. En una aplicación de una sola página,
- * entrar por `/` y luego navegar a `/analisis` por dentro no vuelve a pedir el
- * documento, así que el aislamiento no llegaría. Por eso el enlace a esa
- * página tiene que ser una navegación completa, no del router — está anotado
- * donde se pone el enlace.
- */
-function aislamiento(pathname) {
-  if (pathname !== '/analisis' && !pathname.startsWith('/analisis/')) return {};
-
-  return {
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'credentialless',
-  };
+  //
+  // Aquí se añadían las cabeceras de aislamiento (COOP/COEP) que necesitaba R
+  // en el navegador en `/analisis`. Esa página se retiró el 15 de septiembre de
+  // 2026: el análisis lo hace Claude en el servidor, y ninguna página necesita
+  // ya aislarse.
+  return new Response(pagina.body, { status: 200, headers: pagina.headers });
 }

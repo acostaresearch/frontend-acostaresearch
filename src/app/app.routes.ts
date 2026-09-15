@@ -87,21 +87,13 @@ export const routes: Routes = [
     title: 'Mi perfil · Acosta Research',
     loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
   },
-  /**
-   * R en la pestaña del tesista. OCULTA desde el 14 de septiembre de 2026.
-   *
-   * El análisis lo hace ahora Claude en la conversación (herramienta
-   * `trabajar_en_r` del conector), y el tesista solo sube su archivo en
-   * `/subir-datos`. Esta página ya no se enlaza desde el perfil ni desde el
-   * pie; se conserva, entrando por su dirección, hasta comprobar lo nuevo con
-   * una tesis real.
+  /*
+   * `/analisis` —R en la pestaña del tesista, con WebR— se retiró el 15 de
+   * septiembre de 2026. El análisis lo hace Claude en la conversación
+   * (herramienta `trabajar_en_r` del conector) y el tesista solo sube su
+   * archivo en `/subir-datos`. Quien tenga el enlace guardado cae en el comodín
+   * del final y llega a la portada.
    */
-  {
-    path: 'analisis',
-    canActivate: [authGuard],
-    title: 'Analiza tus datos · Acosta Research',
-    loadComponent: () => import('./features/analisis/analisis').then((m) => m.Analisis),
-  },
   // El enlace que da Claude para subir la matriz del análisis. Sin sesión: el
   // enlace firmado es la llave, y quien viene de la conversación no tiene por
   // qué haber entrado en la web.

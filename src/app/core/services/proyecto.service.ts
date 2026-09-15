@@ -173,25 +173,6 @@ export class ProyectoService {
   }
 
   /**
-   * El análisis de la página de R, a su proyecto.
-   *
-   * Se guarda donde lo guarda «guardar_analisis», y «mi_proyecto» le avisa a
-   * Claude de que hay uno sin leer. Es lo que ahorra copiar la consola y
-   * pegársela a mano, que es donde se pierde media salida.
-   */
-  enviarAnalisis(
-    productCode: string,
-    analisis: { script: string; salida: string },
-  ): Observable<{ capitulo: string }> {
-    return this.http
-      .post<ApiResponse<{ capitulo: string }>>(
-        `${this.base}/${encodeURIComponent(productCode)}/analisis`,
-        analisis,
-      )
-      .pipe(map((r) => ({ capitulo: r.data?.capitulo ?? '' })));
-  }
-
-  /**
    * Devuelve el proyecto al comienzo: borra avance, capítulos, análisis y
    * documento subido, y el método queda con sus fases en blanco.
    *
