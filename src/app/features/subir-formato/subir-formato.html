@@ -2,7 +2,7 @@
 
 <main class="pagina subir">
   <section class="tarjeta">
-    <p class="antetitulo">El formato de tu universidad · con Claude</p>
+    <p class="antetitulo">{{ textos().antetitulo }}</p>
 
     @switch (paso()) {
       @case ('comprobando') {
@@ -16,14 +16,13 @@
       }
 
       @case ('subido') {
-        <h1>Tu formato ya está puesto</h1>
+        <h1>{{ textos().hecho }}</h1>
         @if (mensaje()) {
           <p>{{ mensaje() }}</p>
         }
 
         <div class="siguiente">
-          <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mi formato».
-          Tu próximo Word saldrá con él.
+          <strong>Ahora vuelve a la conversación con Claude</strong> {{ textos().siguiente }}
         </div>
 
         <p class="nota">
@@ -40,12 +39,8 @@
       }
 
       @default {
-        <h1>Sube el formato de tu universidad</h1>
-        <p>
-          Sube tal cual el documento de Word que te dio tu facultad con el formato de tesis. Tu tesis
-          saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado, su pie de página y su
-          portada, que llenamos con tus datos.
-        </p>
+        <h1>{{ textos().titulo }}</h1>
+        <p>{{ textos().explicacion }}</p>
 
         @if (anterior(); as puesto) {
           <p class="nota">

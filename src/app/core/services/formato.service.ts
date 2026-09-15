@@ -20,6 +20,11 @@ export interface FormatoPuesto {
 export interface EnlaceDeFormato {
   caduca: string;
   formato: FormatoPuesto | null;
+  /**
+   * Qué escribe quien sube el formato: decide los textos de la página. Opcional
+   * porque un backend anterior no lo manda, y entonces se ven los de tesis.
+   */
+  tipo?: 'tesis' | 'articulo' | 'informe';
 }
 
 export interface FormatoSubido {

@@ -33,11 +33,38 @@ export class SubirFormato implements OnInit {
   readonly mensaje = signal<string | null>(null);
   readonly nombre = signal<string | null>(null);
   readonly encima = signal(false);
+  /** Informe = lo dio el docente; en tesis y artículo, la facultad. */
+  readonly esInforme = signal(false);
+
+  /** Los textos que cambian entre un informe de curso y una tesis. */
+  readonly textos = () =>
+    this.esInforme()
+      ? {
+          antetitulo: 'El formato de tu curso · con Claude',
+          titulo: 'Sube el formato de tu curso',
+          explicacion:
+            'Sube tal cual el documento de Word que te dio tu docente con el formato del informe. Tu ' +
+            'informe saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado, su pie de página ' +
+            'y su portada, que llenamos con tus datos.',
+          hecho: 'Tu formato ya está puesto',
+          siguiente: 'y dile «ya subí el formato». Tu próximo informe en Word saldrá con él.',
+        }
+      : {
+          antetitulo: 'El formato de tu universidad · con Claude',
+          titulo: 'Sube el formato de tu universidad',
+          explicacion:
+            'Sube tal cual el documento de Word que te dio tu facultad con el formato de tesis. Tu tesis ' +
+            'saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado, su pie de página y su ' +
+            'portada, que llenamos con tus datos.',
+          hecho: 'Tu formato ya está puesto',
+          siguiente: 'y dile «ya subí mi formato». Tu próximo Word saldrá con él.',
+        };
 
   ngOnInit(): void {
     this.api.comprobar(this.token).subscribe({
       next: (enlace) => {
         this.anterior.set(enlace.formato);
+        this.esInforme.set(enlace.tipo === 'informe');
         this.paso.set('elegir');
       },
       error: (e: unknown) => {
