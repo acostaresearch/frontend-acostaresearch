@@ -3,7 +3,7 @@
 <main class="pagina subir">
   <section class="tarjeta">
     <p class="antetitulo">
-      {{ deEmpresa() ? 'El material del encargo' : 'El material de tu curso' }} · con Claude
+      {{ deEmpresa() ? 'El material del encargo' : 'El material de tu curso' }} · desde tu conversación
     </p>
 
     @switch (paso()) {
@@ -14,7 +14,7 @@
       @case ('enlace-no-vale') {
         <h1>Este enlace ya no vale</h1>
         <div class="aviso error" role="alert">{{ error() }}</div>
-        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tu material.</p>
+        <p>Vuelve a tu conversación y pide un enlace nuevo para subir tu material.</p>
       }
 
       @case ('subido') {
@@ -24,7 +24,7 @@
         }
 
         <div class="siguiente">
-          <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mi material».
+          <strong>Ahora vuelve a tu conversación</strong> y dile «ya subí mi material».
           @if (deEmpresa()) {
             Lo va a leer para armar tu informe con lo que pidió la empresa.
           } @else {
@@ -54,13 +54,13 @@
           <h1>Sube el material del encargo</h1>
           <p>
             Sube los términos de referencia, el correo del pedido o la plantilla de informes de la
-            empresa. Claude lo lee para armar tu informe con el alcance y las secciones que te piden.
+            empresa. Tu asistente lo lee para armar tu informe con el alcance y las secciones que te piden.
             Sube solo lo necesario: sin datos personales que el informe no use.
           </p>
         } @else {
           <h1>Sube el material de tu curso</h1>
           <p>
-            Sube la consigna, la rúbrica o el índice que te dio tu docente. Claude lo lee para armar
+            Sube la consigna, la rúbrica o el índice que te dio tu docente. Tu asistente lo lee para armar
             tu informe con la estructura y los criterios que te piden.
           </p>
         }
@@ -101,7 +101,7 @@
         }
 
         <p class="nota">
-          ¿Lo tienes en PDF o en foto? Adjúntalo directamente en el chat de Claude, con el clip:
+          ¿Lo tienes en PDF o en foto? Adjúntalo directamente en el chat de tu asistente, con el clip:
           ahí lo lee sin subirlo aquí. Si prefieres guardarlo, ábrelo en Word y guárdalo como
           «Documento de Word (.docx)».
         </p>

@@ -12,7 +12,7 @@
       @case ('enlace-no-vale') {
         <h1>Este enlace ya no vale</h1>
         <div class="aviso error" role="alert">{{ error() }}</div>
-        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tu formato.</p>
+        <p>Vuelve a tu conversación y pide un enlace nuevo para subir tu formato.</p>
       }
 
       @case ('subido') {
@@ -22,7 +22,7 @@
         }
 
         <div class="siguiente">
-          <strong>Ahora vuelve a la conversación con Claude</strong> {{ textos().siguiente }}
+          <strong>Ahora vuelve a tu conversación</strong> {{ textos().siguiente }}
         </div>
 
         <p class="nota">

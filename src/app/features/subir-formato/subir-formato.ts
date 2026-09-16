@@ -42,7 +42,7 @@ export class SubirFormato implements OnInit {
   readonly textos = () =>
     this.deEmpresa()
       ? {
-          antetitulo: 'La plantilla de la empresa · con Claude',
+          antetitulo: 'La plantilla de la empresa · desde tu conversación',
           titulo: 'Sube la plantilla de informes de la empresa',
           explicacion:
             'Sube tal cual el documento de Word con el formato de informes de la empresa. Tu informe ' +
@@ -53,7 +53,7 @@ export class SubirFormato implements OnInit {
         }
       : this.esInforme()
       ? {
-          antetitulo: 'El formato de tu curso · con Claude',
+          antetitulo: 'El formato de tu curso · desde tu conversación',
           titulo: 'Sube el formato de tu curso',
           explicacion:
             'Sube tal cual el documento de Word que te dio tu docente con el formato del informe. Tu ' +
@@ -63,7 +63,7 @@ export class SubirFormato implements OnInit {
           siguiente: 'y dile «ya subí el formato». Tu próximo informe en Word saldrá con él.',
         }
       : {
-          antetitulo: 'El formato de tu universidad · con Claude',
+          antetitulo: 'El formato de tu universidad · desde tu conversación',
           titulo: 'Sube el formato de tu universidad',
           explicacion:
             'Sube tal cual el documento de Word que te dio tu facultad con el formato de tesis. Tu tesis ' +

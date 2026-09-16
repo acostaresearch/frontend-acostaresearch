@@ -84,7 +84,7 @@ export class SubirMaterial implements OnInit {
       },
       error: (e: unknown) => {
         // Los mensajes del servidor están escritos para el estudiante: «es un PDF,
-        // adjúntalo en el chat de Claude».
+        // adjúntalo en el chat de tu asistente».
         this.error.set(mensajeDeError(e));
         this.paso.set('elegir');
       },

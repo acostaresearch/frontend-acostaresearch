@@ -2,7 +2,7 @@
 
 <main class="pagina subir">
   <section class="tarjeta">
-    <p class="antetitulo">Tu análisis de datos · con Claude</p>
+    <p class="antetitulo">Tu análisis de datos · desde tu conversación</p>
 
     @switch (paso()) {
       @case ('comprobando') {
@@ -12,7 +12,7 @@
       @case ('enlace-no-vale') {
         <h1>Este enlace ya no vale</h1>
         <div class="aviso error" role="alert">{{ error() }}</div>
-        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tus datos.</p>
+        <p>Vuelve a tu conversación y pide un enlace nuevo para subir tus datos.</p>
       }
 
       @case ('subido') {
@@ -28,7 +28,7 @@
           </p>
 
           <div class="siguiente">
-            <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mis datos».
+            <strong>Ahora vuelve a tu conversación</strong> y dile «ya subí mis datos».
             Él sigue desde ahí.
           </div>
 
@@ -58,7 +58,7 @@
       @default {
         <h1>Sube tu matriz de datos</h1>
         <p>
-          Claude va a hacer el análisis contigo. Solo le falta tu archivo: el Excel, el CSV o el
+          Tu asistente va a hacer el análisis contigo. Solo le falta tu archivo: el Excel, el CSV o el
           SPSS con las respuestas de tu instrumento, una fila por persona.
         </p>
 
