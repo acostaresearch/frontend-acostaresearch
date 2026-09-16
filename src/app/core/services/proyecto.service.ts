@@ -117,10 +117,12 @@ export interface Proyecto {
   /** Solo de las fases: las herramientas de apoyo no cuentan. */
   avance: { listos: number; total: number };
   /**
-   * Donde lo dejó: la fase en curso, o si no hay, la primera sin dar por buena.
-   * Nulo cuando ya no queda ninguna.
+   * Por dónde retomar: la que eligió él si no está terminada; si no, la fase en
+   * curso, o la primera sin dar por buena. Nulo cuando ya no queda ninguna.
    */
   siguiente: EtapaDelProyecto | null;
+  /** Si `siguiente` la eligió él en el panel y no el orden del método. */
+  retomarElegido: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -232,6 +234,16 @@ export class ProyectoService {
         `${this.base}/${encodeURIComponent(productCode)}/tesis/${encodeURIComponent(id)}`,
         { body: { confirmacion } },
       )
+      .pipe(map(() => undefined));
+  }
+
+  /**
+   * Elige por qué fase retomar. `null` vuelve a la del orden del método.
+   * Claude la usa también al decir «sigamos».
+   */
+  elegirRetomar(productCode: string, capitulo: string | null): Observable<void> {
+    return this.http
+      .patch<ApiResponse<null>>(`${this.base}/${encodeURIComponent(productCode)}/retomar`, { capitulo })
       .pipe(map(() => undefined));
   }
 

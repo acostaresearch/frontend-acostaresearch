@@ -179,7 +179,9 @@
         <div class="retomar-fila">
           <div>
             <p class="retomar-marca">
-              @if (siguiente.estado === 'EN_CURSO') {
+              @if (p.retomarElegido) {
+                Retomas por aquí, como elegiste
+              } @else if (siguiente.estado === 'EN_CURSO') {
                 Continúa donde te quedaste
               } @else if (p.avance.listos === 0) {
                 Empieza por aquí
@@ -187,7 +189,21 @@
                 Lo siguiente
               }
             </p>
-            <p class="retomar-fase">{{ siguiente.displayName }}</p>
+            <p class="retomar-fase">
+              {{ siguiente.displayName }}
+              <!-- Con una sola fase abierta no hay nada que elegir. -->
+              @if (abiertasParaRetomar().length > 1) {
+                <button
+                  type="button"
+                  class="boton enlace"
+                  [attr.aria-expanded]="eligiendoRetomar()"
+                  [disabled]="guardandoRetomar()"
+                  (click)="eligiendoRetomar.set(!eligiendoRetomar())"
+                >
+                  {{ eligiendoRetomar() ? 'Cerrar' : 'Cambiar' }}
+                </button>
+              }
+            </p>
           </div>
           <button
             type="button"
@@ -198,6 +214,51 @@
             Cómo retomarlo en Claude
           </button>
         </div>
+
+        <!-- Elegir por dónde retomar. Solo fases sin terminar: una cerrada no
+             se retoma, y las herramientas de apoyo no son un sitio donde
+             quedarse. Lo guarda el servidor, así que Claude dice la misma. -->
+        @if (eligiendoRetomar()) {
+          <div class="retomar-elegir">
+            <p>¿Por cuál quieres seguir?</p>
+            <ul>
+              @for (f of abiertasParaRetomar(); track f.code) {
+                <li>
+                  <button
+                    type="button"
+                    [class]="'opcion ' + marca(f.estado)"
+                    [class.actual]="f.code === siguiente.code"
+                    [attr.aria-pressed]="f.code === siguiente.code"
+                    [disabled]="guardandoRetomar()"
+                    (click)="elegirRetomar(p, f.code)"
+                  >
+                    <span class="icono" aria-hidden="true"></span>
+                    <span class="nombre">{{ f.displayName }}</span>
+                    @if (f.estado === 'EN_CURSO') {
+                      <span class="estado">En curso</span>
+                    }
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (p.retomarElegido) {
+              <button
+                type="button"
+                class="boton enlace"
+                [disabled]="guardandoRetomar()"
+                (click)="elegirRetomar(p, null)"
+              >
+                Volver a la que toca por orden
+              </button>
+            }
+            @if (guardandoRetomar()) {
+              <p class="plantilla-nota">Guardando…</p>
+            }
+          </div>
+        }
+        @if (errorRetomar(); as mensaje) {
+          <p class="aviso-descarga">{{ mensaje }}</p>
+        }
 
         @if (retomarAbierto()) {
           <div class="retomar-como">

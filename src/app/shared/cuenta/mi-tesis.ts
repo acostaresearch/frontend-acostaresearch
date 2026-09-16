@@ -137,9 +137,60 @@ export class MiTesis implements OnInit {
   readonly retomarAbierto = signal(false);
   readonly copiado = signal(false);
 
+  /**
+   * Elegir por qué fase retomar.
+   *
+   * Con varias a medias, la regla —la primera en curso— no sabe cuál quiere
+   * seguir hoy: a quien tenía Tema, Capítulo I y Resultados empezados se le
+   * mandaba siempre al Tema. Se guarda en el servidor y no aquí, porque el
+   * conector la usa cuando le dice a Claude «sigamos».
+   */
+  readonly eligiendoRetomar = signal(false);
+  readonly guardandoRetomar = signal(false);
+  readonly errorRetomar = signal<string | null>(null);
+  /** Las fases que se pueden elegir: las que no están terminadas, en su orden. */
+  readonly abiertasParaRetomar = computed(() => this.fases().filter((f) => f.estado !== 'LISTO'));
+
+  elegirRetomar(p: Proyecto, capitulo: string | null): void {
+    if (this.guardandoRetomar()) return;
+    // Pulsar la que ya está elegida no cambia nada: solo se cierra la lista.
+    if (capitulo !== null && capitulo === p.siguiente?.code && p.retomarElegido) {
+      this.eligiendoRetomar.set(false);
+      return;
+    }
+
+    this.guardandoRetomar.set(true);
+    this.errorRetomar.set(null);
+    const fallo = (e: unknown) => {
+      this.guardandoRetomar.set(false);
+      this.errorRetomar.set(toApiError(e).message);
+    };
+
+    this.proyectos.elegirRetomar(p.productCode, capitulo).subscribe({
+      next: () => {
+        this.elegido.set(p.productCode);
+        // La frase de «cómo retomarlo» nombra la fase: se cierra para que no
+        // quede a la vista la de antes mientras llega la nueva.
+        this.retomarAbierto.set(false);
+        this.copiado.set(false);
+        this.proyectos.mios().subscribe({
+          next: (datos) => {
+            this.lista.set(datos);
+            this.guardandoRetomar.set(false);
+            this.eligiendoRetomar.set(false);
+          },
+          error: fallo,
+        });
+      },
+      error: fallo,
+    });
+  }
+
   elegir(productCode: string): void {
     this.elegido.set(productCode);
     this.retomarAbierto.set(false);
+    this.eligiendoRetomar.set(false);
+    this.errorRetomar.set(null);
     this.copiado.set(false);
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
@@ -479,6 +530,8 @@ export class MiTesis implements OnInit {
   private limpiarAvisos(): void {
     this.abiertos.set(new Set());
     this.retomarAbierto.set(false);
+    this.eligiendoRetomar.set(false);
+    this.errorRetomar.set(null);
     this.copiado.set(false);
     this.documentoSubido.set(null);
     this.errorDocumento.set(null);

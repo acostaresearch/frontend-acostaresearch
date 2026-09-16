@@ -230,6 +230,74 @@
   color: var(--color-texto);
 }
 
+.retomar-fase .boton.enlace {
+  margin-left: 10px;
+  font-size: 12.5px;
+}
+
+/* Elegir por dónde retomar: las fases abiertas, con su mismo círculo. */
+.retomar-elegir {
+  margin-top: 16px;
+  padding-top: 16px;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+  border-top: 1px solid color-mix(in srgb, var(--color-primario) 18%, transparent);
+}
+
+.retomar-elegir > p {
+  margin: 0 0 10px;
+}
+
+.retomar-elegir ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.opcion {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  text-align: left;
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.opcion:hover:not(:disabled) {
+  border-color: var(--color-primario);
+}
+
+.opcion:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.opcion.actual {
+  font-weight: 700;
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+
+.opcion .nombre {
+  flex: 1;
+}
+
+.opcion .estado {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
 .retomar-como {
   margin-top: 16px;
   padding-top: 16px;
