@@ -449,42 +449,36 @@
       @if (p.documento; as doc) {
         <div class="caja-fila">
           <div>
-            <p class="caja-titulo">Tu documento</p>
+            <p class="caja-titulo">Tu documento, guardado en tu proyecto</p>
             <p class="caja-texto">
               <span class="plantilla-archivo">{{ doc.nombre }}</span>
               {{ doc.parrafos }} párrafos, subido el {{ doc.subidoAt | date: 'd MMM y' }}.
               @if (doc.citados > 0) {
                 Claude ya puso citas en {{ doc.citados }} párrafos.
-              } @else {
-                Todavía sin citas.
               }
               @if (doc.humanizados > 0) {
                 Humanizó {{ doc.humanizados }} párrafos.
               }
+              @if (doc.citados === 0 && doc.humanizados === 0) {
+                Todavía sin cambios.
+              }
             </p>
             <p class="plantilla-nota">
               Abre Claude y dile <strong>«cita mi documento»</strong> o
-              <strong>«humaniza mi documento»</strong>. Te enseñará lo que va a cambiar antes de
-              guardarlo, y tu Word sale con su mismo formato.
+              <strong>«humaniza mi documento»</strong>: trabaja sobre este Word, no hace falta
+              adjuntarlo. Todo lo que apruebes se guarda aquí, y al descargarlo sale completo y con su
+              mismo formato.
             </p>
           </div>
           <div class="plantilla-acciones">
-            @if (doc.citados > 0 || doc.humanizados > 0) {
-              <button
-                type="button"
-                class="boton"
-                [disabled]="bajando() !== null"
-                (click)="descargar(p, 'documento')"
-              >
-                {{
-                  seEstaBajando(p, 'documento')
-                    ? 'Armando…'
-                    : doc.citados > 0
-                      ? 'Descargar con referencias'
-                      : 'Descargar revisado'
-                }}
-              </button>
-            }
+            <button
+              type="button"
+              class="boton"
+              [disabled]="bajando() !== null"
+              (click)="descargar(p, 'documento')"
+            >
+              {{ seEstaBajando(p, 'documento') ? 'Armando…' : 'Descargar mi documento' }}
+            </button>
             <label class="boton secundario" [class.inactivo]="subiendoDocumento()">
               Cambiarlo
               <input
@@ -513,8 +507,8 @@
               Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca de
               Scopus y en OpenAlex, y pone cada cita y la lista de referencias
               <strong>dentro de tu mismo Word</strong>, en la norma que te pidan. También puede
-              humanizar su redacción párrafo a párrafo. Tus tablas, tus figuras, tu portada y tu
-              formato no se tocan.
+              humanizar su redacción párrafo a párrafo. Queda guardado en tu proyecto para seguir
+              otro día, y tus tablas, tus figuras, tu portada y tu formato no se tocan.
             </p>
           </div>
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:
