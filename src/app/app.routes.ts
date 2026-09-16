@@ -116,6 +116,13 @@ export const routes: Routes = [
     title: 'Sube el material de tu curso · Acosta Research',
     loadComponent: () => import('./features/subir-material/subir-material').then((m) => m.SubirMaterial),
   },
+  // La tesis o el artículo escrito por su cuenta, desde el enlace que da Claude al
+  // citarlo o humanizarlo. Sin sesión, como el del formato.
+  {
+    path: 'subir-documento/:token',
+    title: 'Sube tu documento · Acosta Research',
+    loadComponent: () => import('./features/subir-documento/subir-documento').then((m) => m.SubirDocumento),
+  },
   /*
    * `/humanizador` se retiró el 9 de septiembre de 2026.
    *

@@ -45,15 +45,17 @@ export interface NormaDelProyecto {
   elegida: boolean;
 }
 
-/** El Word que el tesista escribió por su cuenta y subió para que Claude lo cite. */
+/** El Word que el tesista escribió por su cuenta y subió para que Claude lo cite o lo humanice. */
 export interface DocumentoSubido {
   /** Cómo se llamaba el archivo. Sirve para que compruebe que subió el bueno. */
   nombre: string;
   subidoAt: string;
   parrafos: number;
   palabras: number;
-  /** Párrafos a los que Claude ya les puso citas. Cero = todavía nada que descargar. */
+  /** Párrafos a los que Claude ya les puso citas. */
   citados: number;
+  /** Párrafos que Claude humanizó. Con citados, cero y cero = todavía nada que descargar. */
+  humanizados: number;
 }
 
 /** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
@@ -68,9 +70,21 @@ export interface TesisDelMetodo {
   updatedAt: string | null;
 }
 
-/** La ficha de un informe estudiantil. La guarda Claude; aquí solo se enseña. */
+/**
+ * La ficha de un informe, de curso o de empresa. La guarda Claude; aquí solo se enseña.
+ * Sin `ambito` es de curso, como todas las de antes.
+ */
 export interface FichaInforme {
-  tipo?: 'curso' | 'proyecto' | 'caso';
+  ambito?: 'curso' | 'empresa';
+  /** De curso: curso, proyecto o caso. De empresa: diagnostico, gestion, factibilidad… */
+  tipo?: string;
+  /** Solo de empresa. */
+  empresa?: string;
+  destinatario?: string;
+  preparadoPor?: string;
+  cargo?: string;
+  periodo?: string;
+  confidencial?: boolean;
   curso?: string;
   /** Vacío = no hay docente que poner. */
   docente?: string;

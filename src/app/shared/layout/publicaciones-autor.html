@@ -1,0 +1,51 @@
+@if (resumen()) {
+  <section class="seccion gris corta">
+    <div class="publicaciones-resumen">
+      <div>
+        <p class="seccion-marca">Quién la escribió</p>
+        <h2 class="titulo-seccion">Una ruta escrita por alguien que publica</h2>
+        <p class="seccion-entrada">
+          Benicio Acosta investiga el uso de la inteligencia artificial en la universidad y publica
+          en revistas indexadas de Elsevier, Springer Nature y Wiley. Las fases siguen el mismo
+          camino que recorren sus propios artículos.
+        </p>
+      </div>
+      <div class="publicaciones-revistas">
+        <ul>
+          @for (r of revistas; track r) {
+            <li>{{ r }}</li>
+          }
+        </ul>
+        <a class="publicaciones-ir" routerLink="/quien-soy" fragment="publicaciones">
+          Ver los artículos →
+        </a>
+      </div>
+    </div>
+  </section>
+} @else {
+  <section class="seccion" id="publicaciones">
+    <div class="publicaciones-cab">
+      <p class="seccion-marca">Publicaciones</p>
+      <h2 class="titulo-seccion">Lo que investigo, publicado</h2>
+      <p class="seccion-entrada">
+        Artículos sobre inteligencia artificial en la universidad —cómo la usan los estudiantes, qué
+        piensan de su ética y cómo la adoptan los docentes—, en revistas de Elsevier, Springer
+        Nature y Wiley.
+      </p>
+    </div>
+
+    <ol class="publicaciones-lista">
+      @for (p of publicaciones; track p.doi) {
+        <li>
+          <p class="publicacion-revista">
+            {{ p.revista }} <span>· {{ p.editorial }} · {{ p.anio }}</span>
+          </p>
+          <h3 lang="en">{{ p.titulo }}</h3>
+          <a [href]="'https://doi.org/' + p.doi" target="_blank" rel="noopener">
+            Leer el artículo <span aria-hidden="true">↗</span>
+          </a>
+        </li>
+      }
+    </ol>
+  </section>
+}

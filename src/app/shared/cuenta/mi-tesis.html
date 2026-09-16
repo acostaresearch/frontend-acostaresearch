@@ -117,9 +117,31 @@
           </p>
         }
         @if (p.tipo === 'informe') {
-          <!-- Un informe no tiene asesor: tiene curso, docente y fecha de entrega.
+          <!-- Un informe no tiene asesor: tiene curso, docente y fecha de entrega,
+               o, si es de empresa, la empresa, a quién va y quién lo prepara.
                Lo guarda Claude en la ficha; aquí solo se enseña. -->
-          @if (p.fichaInforme?.curso || p.fichaInforme?.docente) {
+          @if (p.fichaInforme?.ambito === 'empresa') {
+            @if (p.fichaInforme?.empresa || p.fichaInforme?.destinatario) {
+              <p class="donde">
+                @if (p.fichaInforme?.empresa) { Empresa: {{ p.fichaInforme?.empresa }} }
+                @if (p.fichaInforme?.empresa && p.fichaInforme?.destinatario) { · }
+                @if (p.fichaInforme?.destinatario) { Para: {{ p.fichaInforme?.destinatario }} }
+              </p>
+            }
+            @if (p.fichaInforme?.preparadoPor || p.fichaInforme?.periodo) {
+              <p class="donde">
+                @if (p.fichaInforme?.preparadoPor) {
+                  Preparado por: {{ p.fichaInforme?.preparadoPor
+                  }}@if (p.fichaInforme?.cargo) {, {{ p.fichaInforme?.cargo }}}
+                }
+                @if (p.fichaInforme?.preparadoPor && p.fichaInforme?.periodo) { · }
+                @if (p.fichaInforme?.periodo) { Periodo: {{ p.fichaInforme?.periodo }} }
+              </p>
+            }
+            @if (p.fichaInforme?.confidencial) {
+              <p class="donde">Confidencial: uso interno</p>
+            }
+          } @else if (p.fichaInforme?.curso || p.fichaInforme?.docente) {
             <p class="donde">
               @if (p.fichaInforme?.curso) { Curso: {{ p.fichaInforme?.curso }} }
               @if (p.fichaInforme?.curso && p.fichaInforme?.docente) { · }
@@ -427,7 +449,7 @@
       @if (p.documento; as doc) {
         <div class="caja-fila">
           <div>
-            <p class="caja-titulo">Tu documento para citar</p>
+            <p class="caja-titulo">Tu documento</p>
             <p class="caja-texto">
               <span class="plantilla-archivo">{{ doc.nombre }}</span>
               {{ doc.parrafos }} párrafos, subido el {{ doc.subidoAt | date: 'd MMM y' }}.
@@ -436,21 +458,31 @@
               } @else {
                 Todavía sin citas.
               }
+              @if (doc.humanizados > 0) {
+                Humanizó {{ doc.humanizados }} párrafos.
+              }
             </p>
             <p class="plantilla-nota">
-              Abre Claude y dile <strong>«cita mi documento»</strong>. Te preguntará la norma que te
-              piden y te enseñará qué va a citar antes de ponerlo.
+              Abre Claude y dile <strong>«cita mi documento»</strong> o
+              <strong>«humaniza mi documento»</strong>. Te enseñará lo que va a cambiar antes de
+              guardarlo, y tu Word sale con su mismo formato.
             </p>
           </div>
           <div class="plantilla-acciones">
-            @if (doc.citados > 0) {
+            @if (doc.citados > 0 || doc.humanizados > 0) {
               <button
                 type="button"
                 class="boton"
                 [disabled]="bajando() !== null"
                 (click)="descargar(p, 'documento')"
               >
-                {{ seEstaBajando(p, 'documento') ? 'Armando…' : 'Descargar con referencias' }}
+                {{
+                  seEstaBajando(p, 'documento')
+                    ? 'Armando…'
+                    : doc.citados > 0
+                      ? 'Descargar con referencias'
+                      : 'Descargar revisado'
+                }}
               </button>
             }
             <label class="boton secundario" [class.inactivo]="subiendoDocumento()">
@@ -476,12 +508,13 @@
       } @else {
         <div class="caja-fila">
           <div>
-            <p class="caja-titulo">¿Ya tienes tu tesis o tu artículo escrito, pero sin referencias?</p>
+            <p class="caja-titulo">¿Ya tienes tu tesis o tu artículo escrito?</p>
             <p class="caja-texto">
               Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca de
               Scopus y en OpenAlex, y pone cada cita y la lista de referencias
-              <strong>dentro de tu mismo Word</strong>, en la norma que te pidan. Tus tablas, tus
-              figuras, tu portada y tu formato no se tocan.
+              <strong>dentro de tu mismo Word</strong>, en la norma que te pidan. También puede
+              humanizar su redacción párrafo a párrafo. Tus tablas, tus figuras, tu portada y tu
+              formato no se tocan.
             </p>
           </div>
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:

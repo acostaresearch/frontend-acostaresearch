@@ -3,42 +3,41 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
-import { ArchivoDeMaterial, MaterialService } from '../../core/services/material.service';
+import { DocumentoEnlaceService } from '../../core/services/documento-enlace.service';
+import { DocumentoSubido } from '../../core/services/proyecto.service';
 import { SiteHeader } from '../../shared/layout/site-header';
 
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
 /**
- * Subir el material del curso —consigna, rúbrica o índice— desde el enlace que
- * da Claude en el informe estudiantil.
+ * Subir la tesis o el artículo escrito por su cuenta desde el enlace que da
+ * Claude, para citarlo o humanizarlo.
  *
- * Misma forma que `subir-formato`: el estudiante sube el archivo y vuelve a la
- * conversación, donde Claude lo lee. No toca el formato del Word.
+ * Misma forma que `subir-material`: sube el archivo y vuelve a la conversación.
+ * Si ya había uno, se reemplaza, y el servidor conserva las citas y lo
+ * humanizado de los párrafos que siguen igual.
  */
 @Component({
-  selector: 'app-subir-material',
+  selector: 'app-subir-documento',
   imports: [SiteHeader, DatePipe],
-  templateUrl: './subir-material.html',
+  templateUrl: './subir-documento.html',
   styleUrl: '../subir-datos/subir-datos.css',
 })
-export class SubirMaterial implements OnInit {
-  private readonly api = inject(MaterialService);
+export class SubirDocumento implements OnInit {
+  private readonly api = inject(DocumentoEnlaceService);
   private readonly token = inject(ActivatedRoute).snapshot.paramMap.get('token') ?? '';
 
   readonly paso = signal<Paso>('comprobando');
   readonly error = signal<string | null>(null);
-  readonly material = signal<ArchivoDeMaterial[]>([]);
+  readonly actual = signal<DocumentoSubido | null>(null);
   readonly mensaje = signal<string | null>(null);
   readonly nombre = signal<string | null>(null);
   readonly encima = signal(false);
-  /** Un informe de empresa: se suben los términos de referencia o los documentos del encargo. */
-  readonly deEmpresa = signal(false);
 
   ngOnInit(): void {
     this.api.comprobar(this.token).subscribe({
       next: (enlace) => {
-        this.material.set(enlace.material);
-        this.deEmpresa.set(enlace.ambito === 'empresa');
+        this.actual.set(enlace.documento);
         this.paso.set('elegir');
       },
       error: (e: unknown) => {
@@ -79,12 +78,10 @@ export class SubirMaterial implements OnInit {
     this.api.subir(this.token, archivo).subscribe({
       next: (subido) => {
         this.mensaje.set(subido.mensaje);
-        this.material.set(subido.material);
         this.paso.set('subido');
       },
       error: (e: unknown) => {
-        // Los mensajes del servidor están escritos para el estudiante: «es un PDF,
-        // adjúntalo en el chat de Claude».
+        // Los mensajes del servidor están escritos para el tesista: «eso no es un .docx».
         this.error.set(mensajeDeError(e));
         this.paso.set('elegir');
       },

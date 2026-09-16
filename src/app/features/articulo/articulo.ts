@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { SkillPublica, SkillService } from '../../core/services/skill.service';
 import { DESCRIPCIONES } from '../../shared/contenido/metodo';
+import { PublicacionesAutor } from '../../shared/layout/publicaciones-autor';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -24,7 +25,7 @@ const GRUPO = 'ARTICULO_SCIENTIFICOS';
  */
 @Component({
   selector: 'app-articulo',
-  imports: [RouterLink, SiteHeader, SiteFooter],
+  imports: [RouterLink, SiteHeader, SiteFooter, PublicacionesAutor],
   templateUrl: './articulo.html',
   styleUrl: './articulo.css',
 })

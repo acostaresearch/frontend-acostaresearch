@@ -2,7 +2,9 @@
 
 <main class="pagina subir">
   <section class="tarjeta">
-    <p class="antetitulo">El material de tu curso · con Claude</p>
+    <p class="antetitulo">
+      {{ deEmpresa() ? 'El material del encargo' : 'El material de tu curso' }} · con Claude
+    </p>
 
     @switch (paso()) {
       @case ('comprobando') {
@@ -23,10 +25,20 @@
 
         <div class="siguiente">
           <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya subí mi material».
-          Lo va a leer para armar tu informe con lo que pidió tu docente.
+          @if (deEmpresa()) {
+            Lo va a leer para armar tu informe con lo que pidió la empresa.
+          } @else {
+            Lo va a leer para armar tu informe con lo que pidió tu docente.
+          }
         </div>
 
-        <p class="nota">¿Tienes otro archivo, como la rúbrica? Súbelo también aquí.</p>
+        <p class="nota">
+          {{
+            deEmpresa()
+              ? '¿Tienes otro documento del encargo? Súbelo también aquí.'
+              : '¿Tienes otro archivo, como la rúbrica? Súbelo también aquí.'
+          }}
+        </p>
         <label class="boton secundario otro">
           Subir otro archivo
           <input
@@ -38,11 +50,20 @@
       }
 
       @default {
-        <h1>Sube el material de tu curso</h1>
-        <p>
-          Sube la consigna, la rúbrica o el índice que te dio tu docente. Claude lo lee para armar
-          tu informe con la estructura y los criterios que te piden.
-        </p>
+        @if (deEmpresa()) {
+          <h1>Sube el material del encargo</h1>
+          <p>
+            Sube los términos de referencia, el correo del pedido o la plantilla de informes de la
+            empresa. Claude lo lee para armar tu informe con el alcance y las secciones que te piden.
+            Sube solo lo necesario: sin datos personales que el informe no use.
+          </p>
+        } @else {
+          <h1>Sube el material de tu curso</h1>
+          <p>
+            Sube la consigna, la rúbrica o el índice que te dio tu docente. Claude lo lee para armar
+            tu informe con la estructura y los criterios que te piden.
+          </p>
+        }
 
         @if (material().length > 0) {
           <p class="nota">Ya subiste:</p>

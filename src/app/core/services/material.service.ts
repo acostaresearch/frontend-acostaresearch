@@ -17,6 +17,8 @@ export interface ArchivoDeMaterial {
 export interface EnlaceDeMaterial {
   caduca: string;
   material: ArchivoDeMaterial[];
+  /** «empresa» en un informe de empresa: se suben los términos de referencia. */
+  ambito?: 'empresa' | null;
 }
 
 export interface MaterialSubido {

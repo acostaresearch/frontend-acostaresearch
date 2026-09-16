@@ -1,0 +1,89 @@
+<app-site-header />
+
+<main class="pagina subir">
+  <section class="tarjeta">
+    <p class="antetitulo">Tu documento · con Claude</p>
+
+    @switch (paso()) {
+      @case ('comprobando') {
+        <p class="nota">Comprobando el enlace…</p>
+      }
+
+      @case ('enlace-no-vale') {
+        <h1>Este enlace ya no vale</h1>
+        <div class="aviso error" role="alert">{{ error() }}</div>
+        <p>Vuelve a la conversación y pídele a Claude un enlace nuevo para subir tu documento.</p>
+      }
+
+      @case ('subido') {
+        <h1>Tu documento ya está guardado</h1>
+        @if (mensaje()) {
+          <p>{{ mensaje() }}</p>
+        }
+
+        <div class="siguiente">
+          <strong>Ahora vuelve a la conversación con Claude</strong> y dile «ya lo subí». Lo va a
+          leer para seguir con tu documento.
+        </div>
+
+        <p class="nota">¿Te equivocaste de archivo? Sube el correcto aquí mismo.</p>
+        <label class="boton secundario otro">
+          Subir otro archivo
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            (change)="elegir($event)"
+          />
+        </label>
+      }
+
+      @default {
+        <h1>Sube tu documento</h1>
+        <p>
+          Sube tu tesis o tu artículo en Word. Claude lo lee para citarlo o humanizarlo, y lo que
+          cambie se escribe dentro de tu mismo Word: tus tablas, tus figuras y tu formato no se
+          tocan.
+        </p>
+
+        @if (actual(); as doc) {
+          <p class="nota">
+            Ahora tienes subido «{{ doc.nombre }}», del {{ doc.subidoAt | date: 'd MMM y' }}. Si
+            subes otro, lo reemplaza; se conservan las citas y lo humanizado de los párrafos que
+            sigan igual.
+          </p>
+        }
+
+        <label
+          class="zona"
+          [class.encima]="encima()"
+          [class.ocupada]="paso() === 'subiendo'"
+          (dragover)="arrastrar($event, true)"
+          (dragleave)="arrastrar($event, false)"
+          (drop)="soltar($event)"
+        >
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            [disabled]="paso() === 'subiendo'"
+            (change)="elegir($event)"
+          />
+          @if (paso() === 'subiendo') {
+            <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
+          } @else {
+            <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
+            <span class="nota">Word (.docx) · hasta 40 MB</span>
+          }
+        </label>
+
+        @if (error()) {
+          <div class="aviso error" role="alert">{{ error() }}</div>
+        }
+
+        <p class="nota">
+          ¿Lo tienes en PDF o en .doc antiguo? Ábrelo en Word y guárdalo como «Documento de Word
+          (.docx)».
+        </p>
+      }
+    }
+  </section>
+</main>

@@ -25,6 +25,8 @@ export interface EnlaceDeFormato {
    * porque un backend anterior no lo manda, y entonces se ven los de tesis.
    */
   tipo?: 'tesis' | 'articulo' | 'informe';
+  /** «empresa» en un informe de empresa; nulo o ausente en los demás. */
+  ambito?: 'empresa' | null;
 }
 
 export interface FormatoSubido {

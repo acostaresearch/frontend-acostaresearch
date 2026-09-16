@@ -1,0 +1,151 @@
+:host {
+  display: block;
+}
+
+/* ── Entero: «Quién soy» ────────────────────────────────────── */
+
+.publicaciones-cab {
+  max-width: 760px;
+  margin-bottom: 36px;
+}
+
+/*
+ * Tarjetas en rejilla y no una lista de bibliografía: los títulos son largos
+ * —hasta treinta palabras— y en renglones seguidos se leían como un bloque de
+ * texto en inglés que nadie termina. En tarjeta, la revista va arriba y es lo
+ * primero que se ve, que es lo que da el peso.
+ */
+/*
+ * Cinco tarjetas: dos arriba y tres abajo. En una rejilla de cuatro la quinta
+ * caía sola en la segunda fila y parecía olvidada. Sobre seis columnas, las dos
+ * primeras —las más citadas— ocupan tres cada una y las otras, dos.
+ */
+.publicaciones-lista {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.publicaciones-lista li {
+  grid-column: span 2;
+}
+
+.publicaciones-lista li:nth-child(-n + 2) {
+  grid-column: span 3;
+}
+
+.publicaciones-lista li {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px 22px 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-top: 3px solid var(--color-primario);
+  border-radius: var(--radio);
+}
+
+.publicacion-revista {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: var(--color-primario);
+}
+
+.publicacion-revista span {
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.publicaciones-lista h3 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-texto);
+}
+
+/* El enlace se queda abajo en todas: si no, con títulos de largo distinto
+   cada «Leer el artículo» caía a una altura diferente. */
+.publicaciones-lista a {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.publicaciones-lista a:hover {
+  text-decoration: underline;
+}
+
+/* ── Resumido: página del artículo científico ───────────────── */
+
+.publicaciones-resumen {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.publicaciones-revistas ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.publicaciones-revistas li {
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 100px;
+}
+
+.publicaciones-ir {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.publicaciones-ir:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .publicaciones-resumen {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  /* Dos columnas; la última, que quedaría sola, ocupa la fila entera. */
+  .publicaciones-lista {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .publicaciones-lista li,
+  .publicaciones-lista li:nth-child(-n + 2) {
+    grid-column: span 1;
+  }
+
+  .publicaciones-lista li:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .publicaciones-lista {
+    grid-template-columns: 1fr;
+  }
+}

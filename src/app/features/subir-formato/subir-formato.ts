@@ -35,10 +35,23 @@ export class SubirFormato implements OnInit {
   readonly encima = signal(false);
   /** Informe = lo dio el docente; en tesis y artículo, la facultad. */
   readonly esInforme = signal(false);
+  /** Un informe de empresa: la plantilla es la de la empresa. */
+  readonly deEmpresa = signal(false);
 
-  /** Los textos que cambian entre un informe de curso y una tesis. */
+  /** Los textos que cambian entre un informe de empresa, uno de curso y una tesis. */
   readonly textos = () =>
-    this.esInforme()
+    this.deEmpresa()
+      ? {
+          antetitulo: 'La plantilla de la empresa · con Claude',
+          titulo: 'Sube la plantilla de informes de la empresa',
+          explicacion:
+            'Sube tal cual el documento de Word con el formato de informes de la empresa. Tu informe ' +
+            'saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado, su pie de página y su ' +
+            'portada, que llenamos con los datos del informe.',
+          hecho: 'La plantilla ya está puesta',
+          siguiente: 'y dile «ya subí la plantilla». Tu próximo informe en Word saldrá con ella.',
+        }
+      : this.esInforme()
       ? {
           antetitulo: 'El formato de tu curso · con Claude',
           titulo: 'Sube el formato de tu curso',
@@ -65,6 +78,7 @@ export class SubirFormato implements OnInit {
       next: (enlace) => {
         this.anterior.set(enlace.formato);
         this.esInforme.set(enlace.tipo === 'informe');
+        this.deEmpresa.set(enlace.ambito === 'empresa');
         this.paso.set('elegir');
       },
       error: (e: unknown) => {
