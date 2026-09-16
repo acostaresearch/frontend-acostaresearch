@@ -136,20 +136,40 @@ export class MiZoteroPanel implements OnInit {
     if (!this.colecciones() && !this.trayendo()) this.pedirColecciones();
   }
 
+  /** Escribir no reintenta una lista que falló: eso lo hace volver a entrar al campo. */
   buscar(texto: string): void {
     this.busqueda.set(texto);
-    this.abrirBusqueda();
+    if (!this.fallaronColecciones()) this.abrirBusqueda();
   }
 
   limpiarBusqueda(): void {
     this.busqueda.set('');
   }
 
+  /**
+   * Una sola petición a la vez, y tras un fallo no se repite sola.
+   *
+   * El buscador la pide al escribir mientras no haya lista. Si fallaba, la lista
+   * seguía vacía y cada tecla lanzaba otra: en segundos se gastaba el límite del
+   * servidor y «Conectar Zotero» respondía 429. Después de un fallo se reintenta
+   * solo con el botón.
+   */
+  private pidiendoColecciones = false;
+  private readonly fallaronColecciones = signal(false);
+
   pedirColecciones(): void {
+    if (this.pidiendoColecciones) return;
+    this.pidiendoColecciones = true;
+    this.fallaronColecciones.set(false);
     this.error.set(null);
     this.zotero.colecciones().subscribe({
-      next: (lo) => this.colecciones.set(lo),
+      next: (lo) => {
+        this.pidiendoColecciones = false;
+        this.colecciones.set(lo);
+      },
       error: (fallo) => {
+        this.pidiendoColecciones = false;
+        this.fallaronColecciones.set(true);
         this.colecciones.set(null);
         this.error.set(toApiError(fallo).message);
       },
