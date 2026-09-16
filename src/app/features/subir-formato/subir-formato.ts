@@ -37,6 +37,8 @@ export class SubirFormato implements OnInit {
   readonly esInforme = signal(false);
   /** Un informe de empresa: la plantilla es la de la empresa. */
   readonly deEmpresa = signal(false);
+  /** Un artículo: la plantilla suele ser la de la revista. */
+  readonly esArticulo = signal(false);
 
   /** Los textos que cambian entre un informe de empresa, uno de curso y una tesis. */
   readonly textos = () =>
@@ -50,6 +52,17 @@ export class SubirFormato implements OnInit {
             'portada, que llenamos con los datos del informe.',
           hecho: 'La plantilla ya está puesta',
           siguiente: 'y dile «ya subí la plantilla». Tu próximo informe en Word saldrá con ella.',
+        }
+      : this.esArticulo()
+      ? {
+          antetitulo: 'La plantilla de tu artículo · desde tu conversación',
+          titulo: 'Sube la plantilla de tu artículo',
+          explicacion:
+            'Sube tal cual la plantilla de Word de la revista, o el formato que te pidieron para el ' +
+            'artículo. Tu artículo saldrá con sus títulos, sus fuentes, sus márgenes, su encabezado y ' +
+            'su pie de página.',
+          hecho: 'Tu plantilla ya está puesta',
+          siguiente: 'y di «ya subí la plantilla». Tu próximo Word del artículo saldrá con ella.',
         }
       : this.esInforme()
       ? {
@@ -78,6 +91,7 @@ export class SubirFormato implements OnInit {
       next: (enlace) => {
         this.anterior.set(enlace.formato);
         this.esInforme.set(enlace.tipo === 'informe');
+        this.esArticulo.set(enlace.tipo === 'articulo');
         this.deEmpresa.set(enlace.ambito === 'empresa');
         this.paso.set('elegir');
       },
