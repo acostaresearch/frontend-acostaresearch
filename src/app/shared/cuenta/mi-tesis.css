@@ -746,3 +746,34 @@
     padding-left: 34px;
   }
 }
+
+/* La estructura de capítulos de su facultad, plegada: solo la mira quien tiene
+   una distinta a la del método, y a los demás no les ocupa sitio. */
+.esquema {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.esquema summary {
+  cursor: pointer;
+}
+
+.esquema ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.esquema li {
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+.esquema li span {
+  color: var(--color-texto-tenue);
+  font-style: italic;
+}
+
+.esquema p {
+  margin: 6px 0 0;
+}

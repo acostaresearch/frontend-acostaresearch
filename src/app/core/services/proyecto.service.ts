@@ -45,6 +45,20 @@ export interface NormaDelProyecto {
   elegida: boolean;
 }
 
+/**
+ * Un capítulo del documento, cuando la facultad los numera de otra forma que el
+ * método: «CAPÍTULO V: RESULTADOS Y DISCUSIÓN».
+ *
+ * `de` son las fases del método de las que sale su texto; puede juntar varias.
+ * `clave` es de un capítulo que el método no tiene —Hipótesis, en la UNSAAC—,
+ * que se escribe y se guarda con esa clave.
+ */
+export interface CapituloDelDocumento {
+  titulo: string;
+  de?: string[];
+  clave?: string;
+}
+
 /** El Word que el tesista escribió por su cuenta y subió para que Claude lo cite o lo humanice. */
 export interface DocumentoSubido {
   /** Cómo se llamaba el archivo. Sirve para que compruebe que subió el bueno. */
@@ -120,6 +134,13 @@ export interface Proyecto {
   tema: string | null;
   carrera: string | null;
   universidad: string | null;
+  /** Quién firma la portada. Nulo = sale el nombre de la cuenta. */
+  autor: string | null;
+  /**
+   * Los capítulos del Word cuando su facultad los numera de otra forma que el
+   * método. Los fija Claude en la conversación. Nulo = los del método.
+   */
+  esquema: CapituloDelDocumento[] | null;
   /** Nulo = no se ha dicho; vacío = todavía no tiene. */
   asesor: string | null;
   /** El documento que subió para citar, si subió uno. */
@@ -259,6 +280,15 @@ export class ProyectoService {
     return this.http
       .patch<ApiResponse<null>>(`${this.base}/${encodeURIComponent(productCode)}/retomar`, { capitulo })
       .pipe(map(() => undefined));
+  }
+
+  /** Cambia quién firma la portada. Vacío devuelve al nombre de la cuenta. */
+  cambiarAutor(productCode: string, autor: string): Observable<string> {
+    return this.http
+      .patch<ApiResponse<{ autor: string }>>(`${this.base}/${encodeURIComponent(productCode)}/autor`, {
+        autor,
+      })
+      .pipe(map((r) => r.data?.autor ?? ''));
   }
 
   /** Cambia el asesor que sale en la portada. Vacío lo quita. Devuelve el que queda. */

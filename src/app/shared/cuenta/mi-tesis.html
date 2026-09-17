@@ -152,6 +152,22 @@
             <p class="donde">Entrega: {{ p.fichaInforme?.fechaEntrega }}</p>
           }
         } @else {
+          <!-- Quién firma la portada. Sin dato sale el nombre de la cuenta, que
+               no siempre es el del tesista: se dice cuál va a salir. -->
+          <p class="donde">
+            Autor: {{ p.autor || 'el nombre de tu cuenta' }}
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="guardandoAutor()"
+              (click)="editarAutor(p)"
+            >
+              {{ guardandoAutor() ? 'Guardando…' : p.autor ? 'Cambiar' : 'Corregir' }}
+            </button>
+          </p>
+          @if (errorAutor(); as mensaje) {
+            <p class="aviso-descarga">{{ mensaje }}</p>
+          }
           <!-- El asesor sale en la portada del Word. Lo guarda Claude al
                preguntárselo; aquí se corrige sin abrir una conversación. -->
           <p class="donde">
@@ -167,6 +183,24 @@
           </p>
           @if (errorAsesor(); as mensaje) {
             <p class="aviso-descarga">{{ mensaje }}</p>
+          }
+
+          <!-- La estructura de su facultad, cuando no coincide con la del
+               método. La fija Claude en la conversación; aquí se ve cómo quedó,
+               que es lo que permite darse cuenta de que está mal. -->
+          @if (p.esquema; as esquema) {
+            <details class="esquema">
+              <summary>Capítulos de tu facultad ({{ esquema.length }}) · tu Word sale así</summary>
+              <ol>
+                @for (capitulo of esquema; track capitulo.titulo) {
+                  <li>
+                    {{ capitulo.titulo }}
+                    @if (capitulo.clave) { <span>capítulo propio de tu facultad</span> }
+                  </li>
+                }
+              </ol>
+              <p>Para cambiarla, díselo a Claude en la conversación.</p>
+            </details>
           }
         }
       </div>

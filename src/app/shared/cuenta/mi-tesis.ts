@@ -392,6 +392,51 @@ export class MiTesis implements OnInit {
     });
   }
 
+  // ── El autor ─────────────────────────────────────────────────────────────
+  readonly guardandoAutor = signal(false);
+  readonly errorAutor = signal<string | null>(null);
+
+  /**
+   * Cambia quién firma la portada.
+   *
+   * Sin esto la portada sale con el nombre de la cuenta, que no siempre es el
+   * del tesista: un asesor que acompaña a varios, o una cuenta abierta a nombre
+   * de otro, y el Word se descarga firmado por quien no es.
+   */
+  async editarAutor(p: Proyecto): Promise<void> {
+    if (this.guardandoAutor()) return;
+
+    const escrito = await this.dialogos.pedirTexto({
+      titulo: 'Quién firma la portada',
+      mensaje:
+        'Sale en la portada de tu Word. Escríbelo como debe aparecer, con tus dos apellidos. ' +
+        'Si lo dejas vacío, sale el nombre de tu cuenta.',
+      confirmar: 'Guardar',
+      campo: {
+        etiqueta: 'Nombre del autor',
+        placeholder: 'Ana María Quispe Flores',
+        obligatorio: false,
+        maxlength: 160,
+      },
+    });
+    if (escrito === null) return;
+
+    this.guardandoAutor.set(true);
+    this.errorAutor.set(null);
+    this.proyectos.cambiarAutor(p.productCode, escrito.trim()).subscribe({
+      next: (autor) => {
+        this.guardandoAutor.set(false);
+        this.lista.update((lista) =>
+          lista.map((x) => (x.productCode === p.productCode ? { ...x, autor: autor || null } : x)),
+        );
+      },
+      error: (e) => {
+        this.guardandoAutor.set(false);
+        this.errorAutor.set(toApiError(e).message);
+      },
+    });
+  }
+
   // ── El asesor ────────────────────────────────────────────────────────────
   readonly guardandoAsesor = signal(false);
   readonly errorAsesor = signal<string | null>(null);
