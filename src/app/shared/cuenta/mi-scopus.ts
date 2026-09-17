@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
 
 import { toApiError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
+import { MisFuentesService } from '../../core/services/mis-fuentes.service';
 import {
   BusquedaDeScopus,
   EstadoDeScopus,
@@ -33,20 +33,25 @@ import {
  *    quiere ver los mismos artículos que ve en Scopus; quitarle los repetidos
  *    de la lista le haría contarlos mal y desconfiar del buscador.
  *
- * 3. Si las fichas van a llegar sin resumen, se dice ANTES de buscar. Es el
- *    único fallo de este flujo que no se nota en el momento: la importación
- *    funciona, dice que fue bien, y lo que falla es la búsqueda de Claude
- *    semanas después.
+ * 3. No hay paso de «conectar» mientras se busque con la credencial del
+ *    servidor: no habría nada que conectar, y era un clic de trámite entre el
+ *    tesista y el buscador. Con el OAuth de Elsevier habilitado vuelve a
+ *    aparecer, porque ahí sí se autoriza algo.
+ *
+ * 4. Con el campo vacío se explica CÓMO ESCRIBIR LA ECUACIÓN DE SU TEMA, no
+ *    cómo funciona esto por dentro. Quien mira un campo en blanco no necesita
+ *    saber de dónde sale el resumen: necesita saber qué teclear.
  */
 @Component({
   selector: 'app-mi-scopus',
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './mi-scopus.html',
   styleUrl: './mi-scopus.css',
 })
 export class MiScopusPanel implements OnInit {
   private readonly scopus = inject(ScopusService);
   private readonly dialogos = inject(DialogoService);
+  private readonly misFuentes = inject(MisFuentesService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -207,6 +212,11 @@ export class MiScopusPanel implements OnInit {
         // marcas de la lista cuadren con lo que hay detrás.
         this.marcarComoTuyas(eids);
         this.cargar();
+        // Y la cifra de «fuentes tuyas» de la tarjeta de abajo, que es OTRO
+        // componente y no se entera de esto por su cuenta. Sin el aviso se
+        // queda con el número viejo hasta recargar la página, y lo que parece
+        // entonces es que la importación no funcionó.
+        this.misFuentes.avisarDeCambio();
       },
       error: (fallo: unknown) => {
         this.importando.set(false);

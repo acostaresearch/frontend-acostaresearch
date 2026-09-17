@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -62,6 +62,35 @@ export interface ImportacionPorDoi {
 export class MisFuentesService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/mis-fuentes`;
+
+  /**
+   * Un contador que sube cada vez que entran fuentes por OTRA puerta.
+   *
+   * La biblioteca del tesista tiene ya tres entradas —el archivo, los PDF por
+   * DOI y la búsqueda en Scopus— y cada una vive en un componente distinto. Sin
+   * esto, importar tres artículos desde Scopus dejaba la cifra de «fuentes
+   * tuyas» de la tarjeta de abajo con el número viejo hasta recargar la página,
+   * y lo que parece entonces es que la importación no funcionó.
+   *
+   * Es un contador y no un booleano porque lo que hace falta es que CAMBIE: dos
+   * importaciones seguidas tienen que disparar dos recargas, y un `true` puesto
+   * dos veces no cambia nada.
+   */
+  private readonly cambioSignal = signal(0);
+
+  /** Para vigilarlo con un `effect` y volver a pedir el recuento. */
+  readonly cambio = this.cambioSignal.asReadonly();
+
+  /**
+   * «Entraron fuentes». Lo llama quien las mete sin pasar por este servicio.
+   *
+   * No lo llaman los métodos de aquí abajo a propósito: el panel que sube un
+   * archivo ya recarga su propio recuento al terminar, y avisarse a sí mismo
+   * sería pedir el mismo dato dos veces por cada subida.
+   */
+  avisarDeCambio(): void {
+    this.cambioSignal.update((n) => n + 1);
+  }
 
   resumen(): Observable<MisFuentes> {
     return this.http.get<ApiResponse<MisFuentes>>(this.base).pipe(map((res) => res.data));

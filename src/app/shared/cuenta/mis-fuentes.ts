@@ -1,5 +1,5 @@
 import { DatePipe, UpperCasePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
@@ -44,7 +44,7 @@ const MAXIMO_BYTES = 8 * 1024 * 1024;
   templateUrl: './mis-fuentes.html',
   styleUrl: './mis-fuentes.css',
 })
-export class MisFuentesPanel implements OnInit {
+export class MisFuentesPanel {
   private readonly fuentes = inject(MisFuentesService);
   private readonly dialogos = inject(DialogoService);
 
@@ -75,8 +75,23 @@ export class MisFuentesPanel implements OnInit {
   /** Sin ninguna fuente todavía no hay nada que plegar: la caja ES la tarjeta. */
   readonly cajaVisible = computed(() => this.subiendoMas() || (this.resumen()?.total ?? 0) === 0);
 
-  ngOnInit(): void {
-    this.cargar();
+  constructor() {
+    /**
+     * El recuento se pide al entrar Y cada vez que entran fuentes por otra
+     * puerta.
+     *
+     * La búsqueda de Scopus es OTRO componente y escribe en la misma
+     * biblioteca. Sin esto, importar tres artículos dejaba aquí el número
+     * viejo hasta recargar la página, y lo que parece entonces es que la
+     * importación no funcionó.
+     *
+     * El `effect` corre solo la primera vez, así que esto hace también el
+     * trabajo que antes hacía `ngOnInit`.
+     */
+    effect(() => {
+      this.fuentes.cambio();
+      this.cargar();
+    });
   }
 
   private cargar(): void {

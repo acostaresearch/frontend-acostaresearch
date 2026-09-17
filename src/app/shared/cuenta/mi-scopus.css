@@ -125,6 +125,62 @@
   width: auto;
 }
 
+/* ── La ayuda para escribir la ecuación ─────────────────────────
+   Ocupa el sitio de los resultados mientras no los hay, y desaparece en cuanto
+   busca algo: pasado el primer momento estorba, y quien ya sabe escribir una
+   ecuación no tiene por qué leerla nunca más. */
+.scopus-ayuda {
+  margin: 12px 0 0;
+  padding: 13px 15px;
+  background: var(--color-primario-suave);
+  border-radius: var(--radio-sm);
+}
+
+.scopus-ayuda p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.scopus-ayuda p strong {
+  color: var(--color-texto);
+}
+
+.scopus-pistas {
+  margin: 9px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+.scopus-pistas li + li {
+  margin-top: 3px;
+}
+
+/* El monoespaciado no es adorno: separa lo que se teclea TAL CUAL de lo que
+   es explicación. Sin él, `AND` y «junta» se leen igual. */
+.scopus-ayuda code,
+.scopus-aviso code {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 4px;
+}
+
+.scopus-ayuda .boton.enlace {
+  padding: 0;
+  font-size: 12.5px;
+}
+
+.scopus-ayuda .tenue {
+  margin-top: 9px;
+}
+
 /* ── Los resultados ────────────────────────────────────────────────────────── */
 .scopus-recuento {
   display: flex;

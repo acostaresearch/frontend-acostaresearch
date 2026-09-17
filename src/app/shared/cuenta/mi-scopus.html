@@ -1,4 +1,4 @@
-<!-- La vuelta desde Elsevier. Se anuncia una vez y se limpia de la barra. -->
+<!-- La vuelta desde Elsevier. Solo ocurre con OAuth, y se anuncia una vez. -->
 @if (vuelta() === 'cancelado') {
   <p class="scopus-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
 } @else if (vuelta() === 'rechazado') {
@@ -27,6 +27,10 @@
         tu universidad y sube el archivo que exportes: aparece igual cuando Claude busque.
       </p>
     } @else if (!datos.conectado) {
+      <!-- Solo se llega aquí con el OAuth de Elsevier habilitado: ahí la
+           conexión son SUS tokens y hay algo real que autorizar. Sin OAuth se
+           busca con la credencial del servidor y no hay nada que conectar, así
+           que el buscador sale directo. -->
       <p class="scopus-invitacion">
         Conecta tu cuenta de Scopus para <strong>buscar e importar referencias directamente</strong>
         desde aquí, sin pasar por el export.
@@ -38,37 +42,13 @@
         </li>
         <li>Eliges tú qué artículos entran, uno a uno.</li>
       </ul>
-
-      @if (!datos.conResumenes) {
-        <p class="scopus-aviso">
-          <strong>Cómo se arma cada ficha.</strong> Scopus pone la búsqueda y el recuento de
-          citas; el <strong>resumen</strong> y el <strong>reparto completo de autores</strong> los
-          completamos del catálogo abierto al importar, con el DOI. Así la referencia sale bien
-          en tu bibliografía y Claude puede encontrarla por el tema.
-        </p>
-      }
-
       <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
         {{ conectando() ? 'Conectando…' : 'Conectar Scopus' }}
       </button>
     } @else {
-      <p class="scopus-cifra">
-        <strong>Scopus conectado</strong>
-        @if (datos.cuenta) {
-          <span>como {{ datos.cuenta }}</span>
-        }
-        @if (datos.importadas) {
-          <span>· {{ datos.importadas }} fuentes traídas de aquí</span>
-        }
-        @if (datos.ultimaBusqueda) {
-          <span>· última búsqueda el {{ datos.ultimaBusqueda | date: 'd MMM y' }}</span>
-        }
-      </p>
-
       @if (datos.estado === 'CADUCADA') {
         <p class="scopus-aviso">
-          Tu autorización venció. Pulsa <strong>«Conectar Scopus»</strong> otra vez para
-          renovarla.
+          Tu autorización venció. Pulsa para renovarla.
           <button type="button" class="boton enlace" (click)="conectar()">Renovar ahora</button>
         </p>
       }
@@ -77,15 +57,9 @@
         <p class="scopus-aviso scopus-mal">{{ fallo }}</p>
       }
 
-      @if (!datos.conResumenes) {
-        <p class="scopus-aviso">
-          Scopus nos manda la ficha reducida, así que al importar <strong>completamos el resumen
-          y los autores</strong> desde el catálogo abierto, por el DOI. Tarda unos segundos más y
-          la ficha queda entera. Lo que no tiene DOI entra tal cual.
-        </p>
-      }
-
-      <!-- ── Buscar ──────────────────────────────────────────────────────── -->
+      <!-- ── Buscar ────────────────────────────────────────────────────────
+           Sin preámbulos y sin anunciar que se está conectado: se está, y
+           quien abre esta tarjeta viene a buscar. -->
       <label class="scopus-etiqueta" for="scopus-ecuacion">Buscar en Scopus</label>
       <div class="scopus-fila">
         <input
@@ -103,17 +77,52 @@
           {{ buscando() ? 'Buscando…' : 'Buscar' }}
         </button>
       </div>
-      <p class="tenue">
-        Es la ecuación de búsqueda de Scopus, la misma que te arma el método.
-        <button type="button" class="boton enlace" (click)="usarEjemplo()">Ver un ejemplo</button>
-      </p>
+
+      <!-- Lo que hace falta para escribir una ecuación DE SU TEMA.
+           Antes aquí había una explicación de cómo se completan las fichas por
+           dentro, que es cierta y no le sirve a nadie para buscar: quien mira
+           un campo vacío no necesita saber cómo funciona el catálogo abierto,
+           necesita saber qué escribir. -->
+      @if (!busqueda()) {
+        <div class="scopus-ayuda">
+          <p>
+            <strong>¿No sabes qué poner?</strong> Pídesela a Claude en tu conector:
+            <em>«dame la ecuación de búsqueda de Scopus para mi tema»</em>. Te la arma con los
+            términos en inglés —que es el idioma en el que está indexada casi toda la literatura—
+            y la pegas aquí tal cual.
+          </p>
+          <ul class="scopus-pistas">
+            <li>
+              <code>TITLE-ABS-KEY(…)</code> busca en el título, el resumen y las palabras clave.
+              Es con la que se empieza.
+            </li>
+            <li>
+              Las comillas son para una frase exacta:
+              <code>"aprendizaje móvil"</code> no es lo mismo que <code>aprendizaje móvil</code>.
+            </li>
+            <li>
+              <code>AND</code> estrecha y <code>OR</code> amplía. Tu tema suele tener dos o tres
+              nombres: <code>("mobile learning" OR "m-learning")</code>.
+            </li>
+            <li>
+              <code>PUBYEAR &gt; 2019</code> deja fuera lo viejo, que es lo primero que mira un
+              jurado.
+            </li>
+          </ul>
+          <p class="tenue">
+            <button type="button" class="boton enlace" (click)="usarEjemplo()">
+              Poner un ejemplo en el campo
+            </button>
+          </p>
+        </div>
+      }
 
       <!-- ── Resultados ──────────────────────────────────────────────────── -->
       @if (busqueda(); as lista) {
         @if (lista.total === 0) {
           <p class="scopus-aviso">
-            Scopus no encontró nada con esa ecuación. Prueba con menos términos, quita las
-            comillas o amplía los años.
+            Scopus no encontró nada con esa ecuación. Suele ser por afinar de más: quita un
+            <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
           </p>
         } @else {
           <p class="scopus-recuento">
@@ -227,11 +236,14 @@
             }
           </div>
 
-          <!-- Se importa una página de golpe, y se dice donde se decide. Sin
-               esto, quien marca en la página 1, pasa a la 2 y vuelve, cree que
-               ha perdido su selección por un fallo. -->
+          <!-- Las dos cosas que hay que saber JUSTO AQUÍ, donde se decide:
+               por qué la importación tarda, y que las marcas no cruzan página. -->
           <p class="tenue">
             Se importa la página que tienes delante: al cambiar de página, las marcas se sueltan.
+            @if (!lista.conResumenes) {
+              Tarda unos segundos porque completamos el resumen y los autores de cada artículo
+              desde el catálogo abierto, para que la referencia salga entera en tu bibliografía.
+            }
           </p>
         }
       }
@@ -256,22 +268,27 @@
             @if (resumen.noEncontradas > 0) {
               {{ resumen.noEncontradas }} ya no las devuelve Scopus.
             }
-            Ya puedes pedírselas a Claude.
+            Ya puedes pedírselas a Claude: «busca en mis fuentes sobre…».
           </p>
           @if (resumen.sinResumen > 0) {
             <p class="parte-aviso">
-              {{ resumen.sinResumen }} llegaron <strong>sin resumen</strong>. Se pueden citar,
-              pero Claude solo podrá encontrarlas por el título.
+              {{ resumen.sinResumen }} se quedaron <strong>sin resumen</strong> porque el catálogo
+              abierto no las conoce. Se pueden citar, pero Claude solo podrá encontrarlas por el
+              título.
             </p>
           }
         </div>
       }
 
-      <div class="scopus-acciones">
-        <button type="button" class="boton enlace peligro" (click)="desconectar()">
-          Desconectar Scopus
-        </button>
-      </div>
+      <!-- Desconectar solo tiene sentido si hay algo conectado: con la
+           credencial del servidor no hay vínculo que deshacer. -->
+      @if (datos.conOauth) {
+        <div class="scopus-acciones">
+          <button type="button" class="boton enlace peligro" (click)="desconectar()">
+            Desconectar Scopus
+          </button>
+        </div>
+      }
     }
   }
 }
