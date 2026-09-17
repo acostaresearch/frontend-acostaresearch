@@ -21,13 +21,18 @@ const MAXIMO_BYTES = 8 * 1024 * 1024;
 /**
  * Las fuentes que el tesista sube de su propio export.
  *
- * POR QUÉ ESTO Y NO CONECTAR SCOPUS
- * ---------------------------------
- * La API de Elsevier exige que la institución esté suscrita y su acceso
- * gratuito es solo para uso no comercial, así que este producto no puede
- * consultarla. Pero el tesista SÍ tiene Scopus, por su universidad: el método
- * ya le arma la ecuación de búsqueda para que la pegue allí, y lo único que
- * faltaba era por dónde subir lo que exporta.
+ * POR QUÉ ESTO SIGUE ESTANDO, HABIENDO UN «CONECTAR SCOPUS» ENCIMA
+ * ----------------------------------------------------------------
+ * Porque esta vía no depende de nadie. La API de Elsevier exige que la
+ * institución esté suscrita y su acuerdo de servicio prohíbe almacenar su
+ * contenido y dárselo a terceros, así que `app-mi-scopus` está apagado salvo
+ * que el servidor lo encienda. El tesista, en cambio, SÍ tiene Scopus por su
+ * universidad: el método ya le arma la ecuación de búsqueda para que la pegue
+ * allí, y esto es por dónde sube lo que exporta.
+ *
+ * Además el export trae el resumen —si marca «Abstract & keywords»— y la API
+ * sin token institucional no. Aunque esté encendida, esta caja sigue siendo la
+ * que da fichas completas.
  *
  * Un archivo no necesita credenciales de terceros ni claves que caducan. Y es
  * lo que ya prometía la web: «el marco teórico se redacta únicamente con los

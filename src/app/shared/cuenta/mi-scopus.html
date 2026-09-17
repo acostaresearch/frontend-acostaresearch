@@ -1,0 +1,277 @@
+<!-- La vuelta desde Elsevier. Se anuncia una vez y se limpia de la barra. -->
+@if (vuelta() === 'cancelado') {
+  <p class="scopus-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
+} @else if (vuelta() === 'rechazado') {
+  <p class="scopus-aviso scopus-mal">
+    Elsevier no concedió el acceso. Puede ser que tu institución no tenga habilitada esta
+    conexión; mientras tanto, sube tu export de Scopus aquí abajo.
+  </p>
+} @else if (vuelta() === 'error') {
+  <p class="scopus-aviso scopus-mal">
+    Elsevier no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
+  </p>
+}
+
+@if (error(); as texto) {
+  <p class="scopus-aviso scopus-mal">{{ texto }}</p>
+}
+
+@if (!cargando()) {
+  @if (estado(); as datos) {
+    @if (!datos.disponible) {
+      <!-- Configuración ausente en el servidor: no se ofrece un botón que
+           llevaría a un error. Y se dice qué hacer mientras tanto, porque la
+           otra vía sigue estando y es la de siempre. -->
+      <p class="nota">
+        Buscar en Scopus desde aquí todavía no está disponible. Busca en Scopus con el acceso de
+        tu universidad y sube el archivo que exportes: aparece igual cuando Claude busque.
+      </p>
+    } @else if (!datos.conectado) {
+      <p class="scopus-invitacion">
+        Conecta tu cuenta de Scopus para <strong>buscar e importar referencias directamente</strong>
+        desde aquí, sin pasar por el export.
+      </p>
+      <ul class="scopus-garantias">
+        <li><strong>Solo lectura.</strong> Buscamos y traemos fichas; no tocamos nada tuyo.</li>
+        <li>
+          <strong>No te pedimos tu contraseña de Scopus</strong>, ni tu usuario, ni ninguna clave.
+        </li>
+        <li>Eliges tú qué artículos entran, uno a uno.</li>
+      </ul>
+
+      @if (!datos.conResumenes) {
+        <p class="scopus-aviso">
+          <strong>Cómo se arma cada ficha.</strong> Scopus pone la búsqueda y el recuento de
+          citas; el <strong>resumen</strong> y el <strong>reparto completo de autores</strong> los
+          completamos del catálogo abierto al importar, con el DOI. Así la referencia sale bien
+          en tu bibliografía y Claude puede encontrarla por el tema.
+        </p>
+      }
+
+      <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
+        {{ conectando() ? 'Conectando…' : 'Conectar Scopus' }}
+      </button>
+    } @else {
+      <p class="scopus-cifra">
+        <strong>Scopus conectado</strong>
+        @if (datos.cuenta) {
+          <span>como {{ datos.cuenta }}</span>
+        }
+        @if (datos.importadas) {
+          <span>· {{ datos.importadas }} fuentes traídas de aquí</span>
+        }
+        @if (datos.ultimaBusqueda) {
+          <span>· última búsqueda el {{ datos.ultimaBusqueda | date: 'd MMM y' }}</span>
+        }
+      </p>
+
+      @if (datos.estado === 'CADUCADA') {
+        <p class="scopus-aviso">
+          Tu autorización venció. Pulsa <strong>«Conectar Scopus»</strong> otra vez para
+          renovarla.
+          <button type="button" class="boton enlace" (click)="conectar()">Renovar ahora</button>
+        </p>
+      }
+
+      @if (datos.error; as fallo) {
+        <p class="scopus-aviso scopus-mal">{{ fallo }}</p>
+      }
+
+      @if (!datos.conResumenes) {
+        <p class="scopus-aviso">
+          Scopus nos manda la ficha reducida, así que al importar <strong>completamos el resumen
+          y los autores</strong> desde el catálogo abierto, por el DOI. Tarda unos segundos más y
+          la ficha queda entera. Lo que no tiene DOI entra tal cual.
+        </p>
+      }
+
+      <!-- ── Buscar ──────────────────────────────────────────────────────── -->
+      <label class="scopus-etiqueta" for="scopus-ecuacion">Buscar en Scopus</label>
+      <div class="scopus-fila">
+        <input
+          id="scopus-ecuacion"
+          type="search"
+          class="scopus-campo"
+          [formControl]="ecuacion"
+          [placeholder]="ejemplo"
+          [disabled]="buscando()"
+          autocomplete="off"
+          spellcheck="false"
+          (keydown.enter)="buscar()"
+        />
+        <button type="button" class="boton" [disabled]="buscando()" (click)="buscar()">
+          {{ buscando() ? 'Buscando…' : 'Buscar' }}
+        </button>
+      </div>
+      <p class="tenue">
+        Es la ecuación de búsqueda de Scopus, la misma que te arma el método.
+        <button type="button" class="boton enlace" (click)="usarEjemplo()">Ver un ejemplo</button>
+      </p>
+
+      <!-- ── Resultados ──────────────────────────────────────────────────── -->
+      @if (busqueda(); as lista) {
+        @if (lista.total === 0) {
+          <p class="scopus-aviso">
+            Scopus no encontró nada con esa ecuación. Prueba con menos términos, quita las
+            comillas o amplía los años.
+          </p>
+        } @else {
+          <p class="scopus-recuento">
+            <strong>{{ lista.total }}</strong> resultados · página {{ lista.pagina }} de
+            {{ lista.paginas }}
+            <button type="button" class="boton enlace" (click)="marcarTodo()">
+              Marcar toda la página
+            </button>
+          </p>
+
+          <ul class="scopus-lista">
+            @for (resultado of lista.resultados; track resultado.eid; let i = $index) {
+              <li class="scopus-item" [class.scopus-item-tuya]="resultado.yaLaTienes">
+                <label class="scopus-marca">
+                  <input
+                    type="checkbox"
+                    [checked]="marcados().has(resultado.eid)"
+                    [disabled]="importando()"
+                    (change)="marcar(resultado.eid)"
+                  />
+                  <span class="scopus-ficha">
+                    <span class="scopus-titulo">{{ lista.desde + i }}. {{ resultado.titulo }}</span>
+                    <span class="scopus-autores">
+                      {{ resultado.autores || '(Autor no consignado)' }}
+                      ({{ resultado.anio ?? 's. f.' }})
+                    </span>
+                    @if (resultado.revista) {
+                      <span class="scopus-revista">{{ resultado.revista }}</span>
+                    }
+                    <span class="scopus-datos">
+                      @if (resultado.tipo) {
+                        <span class="scopus-etiqueta-dato">{{ resultado.tipo }}</span>
+                      }
+                      @if (resultado.citas > 0) {
+                        <span class="scopus-etiqueta-dato">{{ resultado.citas }} citas</span>
+                      }
+                      @if (resultado.accesoAbierto) {
+                        <span class="scopus-etiqueta-dato scopus-abierto">Acceso abierto</span>
+                      }
+                      <!-- Solo cuando no hay forma de completarlo: sin DOI no
+                           se le puede preguntar al catálogo abierto, y esa sí
+                           se va a guardar sin resumen de verdad. -->
+                      @if (!resultado.conResumen && !resultado.doi) {
+                        <span class="scopus-etiqueta-dato scopus-flojo">Sin resumen</span>
+                      }
+                      @if (resultado.doi) {
+                        <a
+                          class="scopus-enlace"
+                          [href]="'https://doi.org/' + resultado.doi"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          >{{ resultado.doi }}</a
+                        >
+                      }
+                      @if (resultado.enlace) {
+                        <a
+                          class="scopus-enlace"
+                          [href]="resultado.enlace"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          >Ver en Scopus</a
+                        >
+                      }
+                      @if (resultado.yaLaTienes) {
+                        <span class="scopus-etiqueta-dato scopus-ya">Ya la tienes</span>
+                      }
+                    </span>
+                  </span>
+                </label>
+              </li>
+            }
+          </ul>
+
+          <div class="scopus-acciones">
+            <button
+              type="button"
+              class="boton"
+              [disabled]="cuantosMarcados() === 0 || importando()"
+              (click)="importar()"
+            >
+              @if (importando()) {
+                Importando…
+              } @else if (cuantosMarcados() === 0) {
+                Importar seleccionados
+              } @else if (cuantosMarcados() === 1) {
+                Importar 1 seleccionado
+              } @else {
+                Importar {{ cuantosMarcados() }} seleccionados
+              }
+            </button>
+
+            @if (lista.paginas > 1) {
+              <span class="scopus-paginas">
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="lista.pagina <= 1 || buscando()"
+                  (click)="pagina(lista.pagina - 1)"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="lista.pagina >= lista.paginas || buscando()"
+                  (click)="pagina(lista.pagina + 1)"
+                >
+                  Siguiente
+                </button>
+              </span>
+            }
+          </div>
+
+          <!-- Se importa una página de golpe, y se dice donde se decide. Sin
+               esto, quien marca en la página 1, pasa a la 2 y vuelve, cree que
+               ha perdido su selección por un fallo. -->
+          <p class="tenue">
+            Se importa la página que tienes delante: al cambiar de página, las marcas se sueltan.
+          </p>
+        }
+      }
+
+      <!-- El parte de la importación. Un import que no dice nada deja al
+           comprador sin saber si funcionó, y es cuando repite la operación. -->
+      @if (parte(); as resumen) {
+        <div class="parte" [class.parte-incompleta]="resumen.guardadas === 0">
+          <p class="parte-titulo">
+            @if (resumen.guardadas === 1) {
+              1 fuente importada correctamente.
+            } @else if (resumen.guardadas > 1) {
+              {{ resumen.guardadas }} fuentes importadas correctamente.
+            } @else {
+              No se añadió ninguna nueva.
+            }
+          </p>
+          <p class="tenue">
+            @if (resumen.repetidas > 0) {
+              {{ resumen.repetidas }} ya las tenías y se actualizaron.
+            }
+            @if (resumen.noEncontradas > 0) {
+              {{ resumen.noEncontradas }} ya no las devuelve Scopus.
+            }
+            Ya puedes pedírselas a Claude.
+          </p>
+          @if (resumen.sinResumen > 0) {
+            <p class="parte-aviso">
+              {{ resumen.sinResumen }} llegaron <strong>sin resumen</strong>. Se pueden citar,
+              pero Claude solo podrá encontrarlas por el título.
+            </p>
+          }
+        </div>
+      }
+
+      <div class="scopus-acciones">
+        <button type="button" class="boton enlace peligro" (click)="desconectar()">
+          Desconectar Scopus
+        </button>
+      </div>
+    }
+  }
+}

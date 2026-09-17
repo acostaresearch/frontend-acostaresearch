@@ -9,6 +9,7 @@ import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { MiTesis } from './mi-tesis';
+import { MiScopusPanel } from './mi-scopus';
 import { MisFuentesPanel } from './mis-fuentes';
 import { MiZoteroPanel } from './mi-zotero';
 import { PasosDeArranque } from './pasos-de-arranque';
@@ -34,6 +35,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
     DatePipe,
     MiTesis,
     MisFuentesPanel,
+    MiScopusPanel,
     MiZoteroPanel,
     PasosDeArranque,
   ],

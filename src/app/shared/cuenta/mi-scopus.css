@@ -1,0 +1,327 @@
+/* Los mismos nombres y las mismas medidas que `mi-zotero.css`: son dos puertas
+   a lo mismo dentro de la misma tarjeta, y que se vieran distintas haría pensar
+   que una de las dos es de otro sitio. */
+
+/* La línea que separa este camino del de subir el archivo.
+   Van en la MISMA tarjeta porque son la misma cosa —de dónde salen las fuentes
+   del tesista— y separarlos en dos tarjetas los convertiría en dos funciones
+   que hay que entender por separado. Pero sin la línea se leen como un solo
+   bloque y el botón de buscar parece parte de la caja de arrastrar. */
+:host {
+  display: block;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--color-borde, #dfe3eb);
+}
+
+.tenue {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Lo que se dice antes de pedir permiso ─────────────────────────────────
+   Las tres garantías van en lista y no en un párrafo. Quien está a punto de
+   conectar una cuenta lee esto y no otra cosa, y en prosa la frase que importa
+   —«no te pedimos tu contraseña»— se pierde entre las demás. */
+.scopus-invitacion {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.scopus-garantias {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+/* ── Conectado ─────────────────────────────────────────────────────────────── */
+.scopus-cifra {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.scopus-cifra strong {
+  font-size: 16px;
+  color: var(--color-primario);
+}
+
+.scopus-cifra span {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* ── Avisos ────────────────────────────────────────────────────────────────
+   Uno solo para todo lo que se le puede decir aquí —volvió sin autorizar, las
+   fichas van a llegar sin resumen, algo falló— con el color como única
+   diferencia. Varias cajas distintas para frases del mismo tamaño solo hacen
+   que la tarjeta parezca un panel de alarmas. */
+.scopus-aviso {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-primario);
+  border-radius: 0 6px 6px 0;
+  background: var(--color-fondo-suave, #f6f8fc);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scopus-mal {
+  border-left-color: var(--color-peligro, #b42318);
+}
+
+.scopus-aviso .boton.enlace {
+  padding: 0;
+  font-size: 13px;
+}
+
+/* ── El buscador ───────────────────────────────────────────────────────────
+   El campo es ancho y monoespaciado: lo que se escribe aquí es una ecuación
+   con paréntesis y comillas, y en tipografía proporcional los paréntesis sin
+   cerrar —el error más común— no se ven. */
+.scopus-etiqueta {
+  display: block;
+  margin: 4px 0 6px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.scopus-fila {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.scopus-campo {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: inherit;
+}
+
+.scopus-campo:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.scopus-campo:disabled {
+  opacity: 0.6;
+}
+
+.scopus-fila .boton {
+  flex: none;
+  width: auto;
+}
+
+/* ── Los resultados ────────────────────────────────────────────────────────── */
+.scopus-recuento {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.scopus-recuento strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
+}
+
+.scopus-recuento .boton.enlace {
+  padding: 0;
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+.scopus-lista {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Veinticinco fichas no caben en pantalla, y sin tope la tarjeta empuja el
+     resto del perfil kilómetros abajo. */
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.scopus-item {
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.scopus-item:hover {
+  border-color: var(--color-primario);
+}
+
+/* Lo que ya tiene se apaga un poco, pero SIGUE EN LA LISTA y se puede marcar:
+   quien busca en Scopus quiere ver los mismos resultados que ve en Scopus. */
+.scopus-item-tuya {
+  background: var(--color-fondo, #f6f8fc);
+}
+
+/* La etiqueta entera es el área de clic, no solo el cuadradito. */
+.scopus-marca {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.scopus-marca input {
+  flex: none;
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primario);
+  cursor: pointer;
+}
+
+.scopus-ficha {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scopus-titulo {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-texto);
+}
+
+.scopus-autores,
+.scopus-revista {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.scopus-revista {
+  font-style: italic;
+}
+
+.scopus-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.scopus-etiqueta-dato {
+  padding: 1px 7px;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo, #f6f8fc);
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 999px;
+}
+
+.scopus-abierto {
+  color: var(--color-exito, #12734b);
+  border-color: rgba(18, 115, 75, 0.3);
+}
+
+/* «Sin resumen» no es un adorno: es lo que decide si esa fuente le va a servir
+   para que Claude la encuentre. Se ve como aviso, no como dato más. */
+.scopus-flojo {
+  color: var(--color-aviso, #96590d);
+  background: var(--color-aviso-suave, #fdf3e3);
+  border-color: rgba(150, 89, 13, 0.28);
+}
+
+.scopus-ya {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.scopus-enlace {
+  font-size: 11.5px;
+  color: var(--color-primario);
+  text-decoration: none;
+  /* Un DOI largo no puede desbordar la tarjeta. */
+  overflow-wrap: anywhere;
+}
+
+.scopus-enlace:hover {
+  text-decoration: underline;
+}
+
+/* ── Acciones ──────────────────────────────────────────────────────────────── */
+.scopus-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.scopus-acciones .boton {
+  width: auto;
+}
+
+.scopus-paginas {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ── El parte de la importación ──────────────────────────────────────────────
+   Las mismas clases que el parte de subir un archivo (`mis-fuentes.css`): es
+   el mismo suceso —entraron fuentes nuevas— por otra puerta, y verlo distinto
+   haría dudar de si pasó lo mismo. */
+.parte {
+  margin-top: 12px;
+  padding: 13px 15px;
+  background: var(--color-exito-suave);
+  border: 1px solid rgba(18, 115, 75, 0.22);
+  border-radius: var(--radio-sm);
+}
+
+.parte-titulo {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-exito);
+}
+
+.parte .tenue {
+  display: block;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.parte-incompleta {
+  background: var(--color-aviso-suave, #fdf3e3);
+  border-color: rgba(150, 89, 13, 0.28);
+}
+
+.parte-incompleta .parte-titulo {
+  color: var(--color-texto);
+}
+
+.parte-aviso {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-aviso);
+}

@@ -158,7 +158,16 @@
   @if (tieneAccesoVigente()) {
     <section class="tarjeta tramo-3">
       <h2>Tus fuentes de Scopus</h2>
-      <p class="nota">Desde que las subes, aparecen cuando Claude busca para tus capítulos.</p>
+      <p class="nota">
+        Desde que entran, aparecen cuando Claude busca para tus capítulos. Por dos caminos: buscando
+        en Scopus desde aquí, o subiendo el archivo que exportas.
+      </p>
+
+      <!-- Buscar en Scopus, cuando el servidor lo tiene encendido. Va DELANTE
+           de la subida porque es el camino corto; el panel se calla solo si no
+           está disponible, y entonces la tarjeta queda como estaba. -->
+      <app-mi-scopus />
+
       <app-mis-fuentes />
     </section>
   }
