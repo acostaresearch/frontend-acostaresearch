@@ -173,6 +173,28 @@ export class MiScopusPanel implements OnInit {
     this.ecuacion.setValue(this.ejemplo);
   }
 
+  /**
+   * Borra la búsqueda y vuelve al punto de partida.
+   *
+   * Se puede afinar una ecuación sin esto —el campo sigue ahí y se edita—, así
+   * que esto no es para corregir: es para EMPEZAR OTRA. Quien termina con un
+   * tema y pasa al siguiente se encontraba la lista del anterior debajo del
+   * campo, las marcas a medio poner y el parte de la importación de hace un
+   * rato, y tenía que recargar la página para quitarlo.
+   *
+   * Se lleva TODO lo de la búsqueda anterior, incluido el parte: dejar «3
+   * fuentes importadas» en pantalla mientras se busca otra cosa hace dudar de
+   * si eso es de ahora o de antes. Lo que no toca son las fuentes, que ya
+   * están guardadas y no dependen de esta pantalla.
+   */
+  limpiar(): void {
+    this.ecuacion.reset();
+    this.busqueda.set(null);
+    this.marcados.set(new Set());
+    this.parte.set(null);
+    this.error.set(null);
+  }
+
   pagina(numero: number): void {
     const busqueda = this.busqueda();
     if (!busqueda || numero < 1 || numero > busqueda.paginas) return;

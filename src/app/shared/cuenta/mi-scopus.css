@@ -200,8 +200,13 @@
 
 .scopus-recuento .boton.enlace {
   padding: 0;
-  margin-left: auto;
   font-size: 12.5px;
+}
+
+/* Empuja solo el PRIMERO: así los dos enlaces viajan juntos al borde derecho
+   con su hueco entre medias, en vez de separarse a los dos extremos. */
+.scopus-recuento .boton.enlace:first-of-type {
+  margin-left: auto;
 }
 
 .scopus-lista {

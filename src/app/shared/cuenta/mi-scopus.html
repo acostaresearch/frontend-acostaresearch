@@ -124,10 +124,16 @@
             Scopus no encontró nada con esa ecuación. Suele ser por afinar de más: quita un
             <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
           </p>
+          <div class="scopus-acciones">
+            <button type="button" class="boton secundario" (click)="limpiar()">
+              Borrar búsqueda
+            </button>
+          </div>
         } @else {
           <p class="scopus-recuento">
             <strong>{{ lista.total }}</strong> resultados · página {{ lista.pagina }} de
             {{ lista.paginas }}
+            <button type="button" class="boton enlace" (click)="limpiar()">Borrar búsqueda</button>
             <button type="button" class="boton enlace" (click)="marcarTodo()">
               Marcar toda la página
             </button>
