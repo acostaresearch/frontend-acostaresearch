@@ -19,12 +19,67 @@
   color: var(--color-texto-suave);
 }
 
-/* ── Pestañas, una por proyecto ───────────────────────────────────────────── */
+/* ── La fila de arriba: las pestañas y el acceso ───────────────────────────
+ *
+ * Las pestañas a la izquierda y el acceso a la derecha, en la misma línea:
+ * son la misma pregunta —«¿de qué producto estamos hablando?»— y separarlos
+ * obligaba a emparejarlos con la vista. En pantalla estrecha el acceso baja
+ * y se queda alineado a la izquierda, debajo de sus pestañas.
+ */
+.fila-superior {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+/* `margin-left: auto` y no solo el `space-between` de la fila: con un único
+   producto no hay pestañas, y el acceso se quedaba pegado a la izquierda. */
+.acceso {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.acceso-uso {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.acceso-uso b {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-texto);
+}
+
+/* El aviso de que se acaba: en la línea de abajo y en el tono de aviso, que es
+   lo que era en la ficha de licencia que había antes debajo de todo. */
+.acceso-aviso {
+  margin: -16px 0 22px;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
+}
+
 .pestanas {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-bottom: 26px;
   padding: 5px;
   background: var(--color-fondo);
   border: 1px solid var(--color-borde);
@@ -202,10 +257,22 @@
 }
 
 .retomar.completo {
+  background: var(--color-exito-suave);
+}
+
+.retomar-listo {
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: var(--color-exito);
-  background: var(--color-exito-suave);
+}
+
+/* Empezar de cero, dentro del mismo recuadro y a la derecha: debajo del botón
+   de retomar, que es la otra salida de la misma duda. */
+.retomar .borrar-entrada {
+  margin: 14px 0 0;
+  font-weight: 400;
+  text-align: right;
 }
 
 .retomar-fila {
@@ -776,4 +843,101 @@
 
 .esquema p {
   margin: 6px 0 0;
+}
+
+/* Los avisos de borrado, dentro del recuadro de retomar: pegados a lo que se
+   acaba de pulsar y sin el hueco de cuando vivían sueltos al final. */
+.retomar .aviso-borrado,
+.retomar .aviso-descarga {
+  margin: 14px 0 0;
+}
+
+/* ── La ventana de la URL nueva ────────────────────────────────────────────
+ *
+ * Misma familia que la ventana de confirmar del sitio: fondo oscurecido y
+ * tarjeta centrada. Va delante de todo porque la URL solo se puede enseñar una
+ * vez —del token solo se guarda su hash—, y en un recuadro de la página se
+ * podía quedar fuera de la pantalla sin que nadie la copiara.
+ */
+.url-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: rgba(16, 24, 40, 0.55);
+}
+
+.url-ventana {
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
+}
+
+.url-ventana h4 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-texto);
+}
+
+.url-nota {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-aviso);
+}
+
+.url-fila {
+  display: flex;
+  gap: 8px;
+}
+
+/* Que se vea entera la parte que importa. El principio de la URL es siempre el
+   mismo dominio; lo que distingue un acceso de otro está al final. */
+.url-fila input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto);
+  text-overflow: ellipsis;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.url-pie {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.url-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-radius: var(--radio-sm);
+}
+
+.url-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+/* El `.boton` global ocupa todo el ancho, que es lo que toca en un formulario;
+   dentro de la fila se comía la URL entera. */
+.url-ventana .boton {
+  width: auto;
+  white-space: nowrap;
 }

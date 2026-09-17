@@ -10,7 +10,7 @@
      mirar su URL: viene a ver dónde lo dejó. El componente no pinta nada
      mientras no haya avance guardado, así que no estorba a quien acaba de
      llegar. -->
-<app-mi-tesis class="tramo-6" />
+<app-mi-tesis class="tramo-6" [licencias]="misLicencias()" />
 
 @if (errorLicencia(); as mensaje) {
   <p class="aviso error tramo-6">{{ mensaje }}</p>
@@ -68,87 +68,11 @@
 }
 
 @if (misLicencias().length > 0) {
-  <!-- Una ficha por licencia y no una fila de lista: lo que hay que saber de
-       cada acceso son cuatro cosas —qué producto, cuánto se ha usado hoy,
-       hasta cuándo vale y si sigue vivo—, y en una fila solo cabían dos. -->
-  <section class="tarjeta tramo-6">
-    <h2>Conector de Claude</h2>
-    <p class="nota">Tus accesos activos y el enlace para conectarlos.</p>
-
-    <ul class="licencias">
-      @for (licencia of misLicencias(); track licencia.id) {
-        <li>
-          <strong>{{ licencia.productName || licencia.productCode }}</strong>
-
-          <!-- El gasto del día, con barra. El número solo —«12 consultas»— no
-               dice si eso es mucho: contra el tope, sí. Sin tope contratado no
-               hay barra que pintar, así que se enseña el total y ya está. -->
-          @if (licencia.callsPerDay && licencia.usage) {
-            <p class="licencia-uso">
-              <span>Consultas de hoy</span>
-              <span class="licencia-cifra">
-                {{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }}
-              </span>
-            </p>
-            <span
-              class="licencia-barra"
-              role="progressbar"
-              [attr.aria-valuenow]="gastoDelDia(licencia)"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            >
-              <span [style.width.%]="gastoDelDia(licencia)"></span>
-            </span>
-          } @else {
-            <p class="licencia-uso">
-              <span>Consultas</span>
-              <span class="licencia-cifra">{{ licencia.callsTotal }}</span>
-            </p>
-          }
-
-          <p class="licencia-vence">
-            @if (licencia.expiresAt) {
-              Vence el {{ licencia.expiresAt | date: 'd MMM y' }}
-              <!-- Los días que quedan, destacados: la fecha sola obliga a
-                   restar mentalmente, y de eso depende si toca renovar hoy. -->
-              @if (diasQueFaltan(licencia); as dias) {
-                · <b [class.poco]="dias <= 15">faltan {{ dias }} días</b>
-              } @else {
-                · <b class="poco">caducada</b>
-              }
-            } @else {
-              Sin caducidad
-            }
-          </p>
-
-          <div class="licencia-pie">
-            <!-- «Retirado» gana a «REVOKED»: dice POR QUÉ está apagada, que es
-                 lo que hace falta saber. El estado a secas invita a pensar que
-                 algo se rompió. -->
-            @if (licencia.retirado) {
-              <span class="punto retirada">Retirado</span>
-            } @else if (licencia.status === 'ACTIVE') {
-              <span class="punto activa">Activo</span>
-            } @else {
-              <span class="punto revocada">{{ licencia.status }}</span>
-            }
-
-            @if (licencia.status === 'ACTIVE' && !licencia.retirado) {
-              <button
-                type="button"
-                class="boton secundario"
-                [disabled]="rotando() === licencia.id"
-                (click)="regenerarUrl(licencia)"
-              >
-                {{ rotando() === licencia.id ? 'Generando…' : 'Nueva URL' }}
-              </button>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  </section>
-
+  <!-- Aquí había una ficha por licencia, con su gasto y su botón de URL nueva.
+       Ya no: cada acceso vive en la pestaña de su producto, dentro de «Por
+       dónde vas». Eran los mismos datos dos veces, y con varios métodos
+       comprados esta lista obligaba a emparejar a mano cada ficha con la
+       pestaña de arriba. -->
   <!-- Sus propias fuentes. Solo con acceso vigente, como la guía: sin conector
        que las lea, subir un export no serviría de nada.
 

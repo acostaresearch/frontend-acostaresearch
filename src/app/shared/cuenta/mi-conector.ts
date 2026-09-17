@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -6,7 +5,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
-import { DialogoService } from '../../core/services/dialogo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { MiTesis } from './mi-tesis';
 import { MiScopusPanel } from './mi-scopus';
@@ -32,7 +30,6 @@ import { PasosDeArranque } from './pasos-de-arranque';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
     MiTesis,
     MisFuentesPanel,
     MiScopusPanel,
@@ -44,7 +41,6 @@ import { PasosDeArranque } from './pasos-de-arranque';
 })
 export class MiConector implements OnInit {
   private readonly licencias = inject(LicenseService);
-  private readonly dialogos = inject(DialogoService);
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
@@ -87,25 +83,6 @@ export class MiConector implements OnInit {
   }
 
   /**
-   * Cuántos días le quedan a una licencia, o `null` si ya pasó su fecha.
-   *
-   * Se cuenta por días enteros hacia arriba: a quien le caduca esta noche le
-   * queda «1 día», no «0». Cero se lee como caducada y no lo está todavía.
-   */
-  diasQueFaltan(licencia: License): number | null {
-    if (!licencia.expiresAt) return null;
-    const faltan = new Date(licencia.expiresAt).getTime() - Date.now();
-    return faltan > 0 ? Math.ceil(faltan / 86_400_000) : null;
-  }
-
-  /** Porcentaje del tope diario ya gastado, para la barra. */
-  gastoDelDia(licencia: License): number {
-    const tope = licencia.callsPerDay ?? 0;
-    if (tope <= 0) return 0;
-    return Math.min(100, Math.round(((licencia.usage?.callsToday ?? 0) / tope) * 100));
-  }
-
-  /**
    * ¿Tiene acceso vigente?
    *
    * No basta con que exista una fila de licencia: una revocada o una caducada
@@ -121,9 +98,14 @@ export class MiConector implements OnInit {
     ),
   );
 
-  /** URL recién generada. Solo se puede mostrar en el momento de crearla. */
+  /**
+   * URL recién generada al canjear un código. Solo se puede mostrar en el
+   * momento de crearla.
+   *
+   * La de «URL nueva» ya no sale aquí: cada acceso la pide desde la pestaña de
+   * su producto, en «Por dónde vas», y la enseña en su propia ventana.
+   */
   readonly urlNueva = signal<string | null>(null);
-  readonly rotando = signal<string | null>(null);
   readonly errorLicencia = signal<string | null>(null);
   readonly urlCopiada = signal(false);
 
@@ -163,37 +145,6 @@ export class MiConector implements OnInit {
       error: () => {
         this.misLicencias.set([]);
         this.cargando.set(false);
-      },
-    });
-  }
-
-  async regenerarUrl(licencia: License): Promise<void> {
-    if (this.rotando()) return;
-
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Generar una URL nueva',
-      mensaje: 'La anterior dejará de funcionar en el acto.',
-      nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
-      confirmar: 'Generar URL nueva',
-      tono: 'aviso',
-    });
-    if (!seguro || this.rotando()) return;
-
-    this.rotando.set(licencia.id);
-    this.errorLicencia.set(null);
-    this.urlNueva.set(null);
-
-    this.licencias.rotate(licencia.id).subscribe({
-      next: ({ license, connectorUrl }) => {
-        this.urlNueva.set(connectorUrl);
-        this.misLicencias.update((lista) =>
-          lista.map((item) => (item.id === license.id ? license : item)),
-        );
-        this.rotando.set(null);
-      },
-      error: (error: unknown) => {
-        this.errorLicencia.set(toApiError(error).message);
-        this.rotando.set(null);
       },
     });
   }

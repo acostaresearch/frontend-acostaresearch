@@ -8,22 +8,58 @@
       </p>
     </header>
 
-    <!-- Una pestaña por proyecto, solo si hay más de uno. -->
-    @if (lista().length > 1) {
-      <div class="pestanas">
-        @for (otro of lista(); track otro.productCode) {
-          <button
-            type="button"
-            class="pestana"
-            [class.activa]="otro.productCode === p.productCode"
-            [attr.aria-pressed]="otro.productCode === p.productCode"
-            (click)="elegir(otro.productCode)"
-          >
-            {{ nombreCorto(otro) }}
-            <small>{{ otro.avance.listos }} de {{ otro.avance.total }}</small>
-          </button>
-        }
-      </div>
+    <!-- La fila de arriba: a la izquierda en qué proyecto se está, a la derecha
+         el acceso de ESE proyecto. La URL vive aquí y no en una lista de
+         accesos aparte porque es de lo que se está mirando: con tres métodos
+         comprados, aquella lista obligaba a emparejar a mano cuál era cuál. -->
+    <div class="fila-superior">
+      <!-- Una pestaña por proyecto, solo si hay más de uno. -->
+      @if (lista().length > 1) {
+        <div class="pestanas">
+          @for (otro of lista(); track otro.productCode) {
+            <button
+              type="button"
+              class="pestana"
+              [class.activa]="otro.productCode === p.productCode"
+              [attr.aria-pressed]="otro.productCode === p.productCode"
+              (click)="elegir(otro.productCode)"
+            >
+              {{ nombreCorto(otro) }}
+              <small>{{ otro.avance.listos }} de {{ otro.avance.total }}</small>
+            </button>
+          }
+        </div>
+      }
+
+      @if (licenciaActual(); as licencia) {
+        <div class="acceso">
+          <!-- El gasto, del producto elegido. El número solo —«12 consultas»—
+               no dice si eso es mucho: contra el tope contratado, sí. -->
+          @if (licencia.callsPerDay && licencia.usage) {
+            <span class="acceso-uso" title="Consultas de hoy, de tu tope diario">
+              Consultas de hoy
+              <b>{{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }}</b>
+            </span>
+          } @else {
+            <span class="acceso-uso">Consultas <b>{{ licencia.callsTotal }}</b></span>
+          }
+
+          @if (puedeRotar(licencia)) {
+            <button type="button" class="boton" [disabled]="rotando()" (click)="generarUrl(p, licencia)">
+              {{ rotando() ? 'Generando…' : 'Generar nueva URL' }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Lo único que quedaba de la lista de accesos y hace falta saber: que a
+         este se le acaba el tiempo. Callado mientras no urge. -->
+    @if (avisoDeAcceso(); as aviso) {
+      <p class="acceso-aviso">{{ aviso }}</p>
+    }
+    @if (errorLicencia(); as mensaje) {
+      <p class="aviso-descarga">{{ mensaje }}</p>
     }
 
     <!-- Varias tesis del mismo método. Abren más el administrador y quien
@@ -152,38 +188,9 @@
             <p class="donde">Entrega: {{ p.fichaInforme?.fechaEntrega }}</p>
           }
         } @else {
-          <!-- Quién firma la portada. Sin dato sale el nombre de la cuenta, que
-               no siempre es el del tesista: se dice cuál va a salir. -->
-          <p class="donde">
-            Autor: {{ p.autor || 'el nombre de tu cuenta' }}
-            <button
-              type="button"
-              class="boton enlace"
-              [disabled]="guardandoAutor()"
-              (click)="editarAutor(p)"
-            >
-              {{ guardandoAutor() ? 'Guardando…' : p.autor ? 'Cambiar' : 'Corregir' }}
-            </button>
-          </p>
-          @if (errorAutor(); as mensaje) {
-            <p class="aviso-descarga">{{ mensaje }}</p>
-          }
-          <!-- El asesor sale en la portada del Word. Lo guarda Claude al
-               preguntárselo; aquí se corrige sin abrir una conversación. -->
-          <p class="donde">
-            Asesor: {{ p.asesor || 'sin indicar' }}
-            <button
-              type="button"
-              class="boton enlace"
-              [disabled]="guardandoAsesor()"
-              (click)="editarAsesor(p)"
-            >
-              {{ guardandoAsesor() ? 'Guardando…' : p.asesor ? 'Cambiar' : 'Añadir' }}
-            </button>
-          </p>
-          @if (errorAsesor(); as mensaje) {
-            <p class="aviso-descarga">{{ mensaje }}</p>
-          }
+          <!-- El autor y el asesor de la portada no salen aquí: se los dice a
+               Claude en la conversación, que es donde se los pregunta, y dos
+               sitios donde cambiar lo mismo acaban diciendo cosas distintas. -->
 
           <!-- La estructura de su facultad, cuando no coincide con la del
                método. La fija Claude en la conversación; aquí se ve cómo quedó,
@@ -230,8 +237,10 @@
       <li><span class="icono pendiente"></span>Sin empezar</li>
     </ul>
 
-    @if (p.siguiente; as siguiente) {
-      <div class="retomar">
+    <!-- El recuadro se pinta siempre, terminado o no: dentro va también lo de
+         empezar de cero, y con dos recuadros distintos habría que repetirlo. -->
+    <div class="retomar" [class.completo]="!p.siguiente">
+      @if (p.siguiente; as siguiente) {
         <div class="retomar-fila">
           <div>
             <p class="retomar-marca">
@@ -334,10 +343,39 @@
             </p>
           </div>
         }
-      </div>
-    } @else {
-      <p class="retomar completo">Tienes todas las fases terminadas.</p>
-    }
+      } @else {
+        <p class="retomar-listo">Tienes todas las fases terminadas.</p>
+      }
+
+      <!-- Empezar de cero. Va aquí, debajo de «Cómo retomarlo en Claude»,
+           porque es la otra respuesta a la misma pregunta —«¿sigo o vuelvo a
+           empezar?»— y al final de la pantalla no lo encontraba quien acababa
+           de enterarse de que le cambiaron el tema. En pequeño y a un lado: no
+           es algo que se pulse de paso. La confirmación, con su palabra escrita,
+           va en la ventana del sitio.
+
+           Solo si hay algo guardado: un método que sale en blanco por tener
+           licencia no tiene nada que borrar. -->
+      @if (p.guardado) {
+        <p class="borrar-entrada">
+          ¿Te cambiaron el tema?
+          <button
+            type="button"
+            class="boton enlace"
+            [disabled]="borrando()"
+            (click)="borrarProgreso(p)"
+          >
+            {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
+          </button>
+        </p>
+      }
+      @if (avisoBorrado(); as mensaje) {
+        <p class="aviso-borrado" role="status">{{ mensaje }}</p>
+      }
+      @if (errorBorrado(); as mensaje) {
+        <p class="aviso-descarga">{{ mensaje }}</p>
+      }
+    </div>
 
     <div class="columnas">
       @for (columna of columnas(); track columna.rotulo) {
@@ -401,26 +439,6 @@
       }
     </div>
 
-        @if (p.guardado) {
-      <p class="borrar-entrada">
-        ¿Te cambiaron el tema?
-        <button
-          type="button"
-          class="boton enlace"
-          [disabled]="borrando()"
-          (click)="borrarProgreso(p)"
-        >
-          {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
-        </button>
-      </p>
-    }
-    @if (avisoBorrado(); as mensaje) {
-      <p class="aviso-borrado" role="status">{{ mensaje }}</p>
-    }
-    @if (errorBorrado(); as mensaje) {
-      <p class="aviso-descarga">{{ mensaje }}</p>
-    }
-
     <!-- La descarga solo aparece cuando hay algo que descargar. Un botón que
          siempre lleva a «todavía no hay nada» enseña a no pulsarlo. -->
     <!-- @if (palabrasTotales(p) > 0) {
@@ -467,13 +485,6 @@
     @if (errorDescarga(); as mensaje) {
       <p class="aviso-descarga">{{ mensaje }}</p>
     } -->
-
-    <!-- Empezar de cero. En pequeño y fuera de los recuadros: es para quien le
-         cambiaron el tema, no algo que se pulse de paso. La confirmación va en
-         la ventana del sitio. -->
-    <!-- Solo si hay algo guardado: un método que sale en blanco por tener
-         licencia no tiene nada que borrar. -->
-
 
     <!-- Su tesis o su artículo escrito por fuera, para que Claude le ponga las
          citas. Sustituye a la norma y a la plantilla: la norma se la pregunta
@@ -573,4 +584,37 @@
     </div>
 
   </section>
+}
+
+<!-- La URL recién hecha, en una ventana delante de todo.
+     Delante y no en un recuadro de la página porque no se puede volver a
+     enseñar: del token solo se guarda su hash, así que si se pierde de vista
+     antes de copiarla hay que generar otra. Y lleva escrito de qué producto es:
+     con varios accesos, una URL suelta no dice cuál acaba de cambiar. -->
+@if (urlNueva(); as nueva) {
+  <div class="url-fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-url-nueva">
+    <div class="url-ventana">
+      <h4 id="titulo-url-nueva">Tu URL nueva de {{ nueva.producto }}</h4>
+      <p class="url-nota">Cópiala ahora: no volveremos a mostrarla.</p>
+
+      <div class="url-fila">
+        <input type="text" [value]="nueva.url" readonly aria-label="Tu URL del conector" />
+        <button type="button" class="boton" (click)="copiarUrl()">
+          {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+        </button>
+      </div>
+
+      <p class="url-pie">Pégala en Claude: Configuración → Conectores → Añadir personalizado.</p>
+
+      @if (errorLicencia(); as mensaje) {
+        <p class="url-error">{{ mensaje }}</p>
+      }
+
+      <!-- Se cierra solo con el botón: ni con Escape ni pulsando fuera. Un roce
+           en el sitio equivocado obligaría a generar otra URL. -->
+      <div class="url-acciones">
+        <button type="button" class="boton secundario" (click)="cerrarUrl()">Ya la copié</button>
+      </div>
+    </div>
+  </div>
 }

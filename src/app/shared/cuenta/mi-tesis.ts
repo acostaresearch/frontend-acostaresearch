@@ -1,8 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 
 import { toApiError } from '../../core/http/api-error';
+import { License } from '../../core/models/payment.model';
 import { DialogoService } from '../../core/services/dialogo.service';
+import { FondoService } from '../../core/services/fondo.service';
+import { LicenseService } from '../../core/services/license.service';
 import {
   EtapaDelProyecto,
   Proyecto,
@@ -95,6 +98,17 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
 export class MiTesis implements OnInit {
   private readonly proyectos = inject(ProyectoService);
   private readonly dialogos = inject(DialogoService);
+  private readonly licenciasApi = inject(LicenseService);
+  private readonly fondo = inject(FondoService);
+
+  /**
+   * Los accesos de quien mira, que los pide el panel de arriba.
+   *
+   * Llegan de fuera y no se piden aquí otra vez: `MiConector` ya los trae para
+   * saber si enseñar el resto de la pantalla, y pedirlos dos veces serían dos
+   * viajes para lo mismo.
+   */
+  readonly licencias = input<License[]>([]);
 
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
@@ -194,6 +208,130 @@ export class MiTesis implements OnInit {
     this.copiado.set(false);
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
+    // El fallo al generar la URL era del acceso de la OTRA pestaña.
+    this.errorLicencia.set(null);
+  }
+
+  // ── El acceso del conector ───────────────────────────────────────────────
+  //
+  // Su URL y lo que lleva gastado, del producto que está a la vista. Antes era
+  // una lista de accesos aparte, debajo de todo: con tres métodos comprados
+  // había que emparejar a mano cada acceso con su pestaña, y la única pregunta
+  // que se le hace a esa lista —«dame la URL de esto que estoy mirando»— se
+  // contesta aquí sin buscar.
+
+  /**
+   * El acceso del proyecto elegido.
+   *
+   * De haber varios del mismo método —una renovación sobre la anterior— manda
+   * el que sirve: enseñar el gasto de una licencia muerta teniendo otra viva al
+   * lado diría que el conector no está contando.
+   */
+  readonly licenciaActual = computed(() => {
+    const producto = this.proyecto()?.productCode;
+    if (!producto) return null;
+
+    const suyas = this.licencias().filter((l) => l.productCode === producto);
+    return suyas.find((l) => this.puedeRotar(l)) ?? suyas[0] ?? null;
+  });
+
+  /**
+   * ¿Se le puede pedir una URL nueva?
+   *
+   * Solo a un acceso vivo. A uno caducado o revocado se le daría una URL que
+   * el conector rechazaría en la primera consulta, y el tesista creería que lo
+   * pegó mal en Claude.
+   */
+  puedeRotar(licencia: License): boolean {
+    return (
+      licencia.status === 'ACTIVE' &&
+      !licencia.retirado &&
+      (!licencia.expiresAt || new Date(licencia.expiresAt) > new Date())
+    );
+  }
+
+  /**
+   * Lo único que quedaba de las fichas de acceso y hace falta saber: que a este
+   * se le acaba el tiempo. Callado mientras no urge —quince días es cuando aún
+   * da tiempo a renovar sin quedarse a medias de un capítulo—, porque un aviso
+   * permanente deja de leerse.
+   */
+  readonly avisoDeAcceso = computed(() => {
+    const licencia = this.licenciaActual();
+    if (!licencia || !licencia.expiresAt) return null;
+
+    const faltan = new Date(licencia.expiresAt).getTime() - Date.now();
+    if (faltan <= 0) return 'Tu acceso a este método caducó. Renuévalo para seguir usándolo en Claude.';
+
+    const dias = Math.ceil(faltan / 86_400_000);
+    return dias <= 15 ? `A tu acceso a este método le quedan ${dias} días.` : null;
+  });
+
+  /** La URL recién hecha, con el producto del que es. Solo se puede enseñar al crearla. */
+  readonly urlNueva = signal<{ url: string; producto: string } | null>(null);
+  readonly urlCopiada = signal(false);
+  readonly rotando = signal(false);
+  readonly errorLicencia = signal<string | null>(null);
+
+  constructor() {
+    // Congela la página mientras la ventana de la URL está delante.
+    effect(() => this.fondo.fijar('url-del-conector', this.urlNueva() !== null));
+  }
+
+  /**
+   * Genera una URL nueva para este método y anula la anterior.
+   *
+   * Es la única forma de recuperar el acceso cuando se pierde la URL: del token
+   * solo se guarda su hash. Por eso se pregunta antes —la de Claude deja de
+   * funcionar en el acto— y por eso la nueva sale en una ventana y no en un
+   * rincón de la pantalla.
+   */
+  async generarUrl(p: Proyecto, licencia: License): Promise<void> {
+    if (this.rotando()) return;
+
+    const nombre = this.nombreCorto(p);
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Generar una URL nueva de ${nombre}`,
+      mensaje: 'La anterior dejará de funcionar en el acto.',
+      nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
+      confirmar: 'Generar URL nueva',
+      tono: 'aviso',
+    });
+    if (!seguro || this.rotando()) return;
+
+    this.rotando.set(true);
+    this.errorLicencia.set(null);
+    this.urlCopiada.set(false);
+
+    this.licenciasApi.rotate(licencia.id).subscribe({
+      next: ({ connectorUrl }) => {
+        this.urlNueva.set({ url: connectorUrl, producto: nombre });
+        this.rotando.set(false);
+      },
+      error: (e) => {
+        this.errorLicencia.set(toApiError(e).message);
+        this.rotando.set(false);
+      },
+    });
+  }
+
+  async copiarUrl(): Promise<void> {
+    const nueva = this.urlNueva();
+    if (!nueva) return;
+
+    try {
+      await navigator.clipboard.writeText(nueva.url);
+      this.urlCopiada.set(true);
+    } catch {
+      // La URL sigue a la vista para copiarla a mano, que es lo que se haría
+      // de todos modos. La ventana no se cierra sola por esto.
+      this.errorLicencia.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
+    }
+  }
+
+  cerrarUrl(): void {
+    this.urlNueva.set(null);
+    this.urlCopiada.set(false);
   }
 
   /** «Método de Tesis · 9 Capítulos + …» → «Método de Tesis», para la pestaña. */
@@ -392,94 +530,6 @@ export class MiTesis implements OnInit {
     });
   }
 
-  // ── El autor ─────────────────────────────────────────────────────────────
-  readonly guardandoAutor = signal(false);
-  readonly errorAutor = signal<string | null>(null);
-
-  /**
-   * Cambia quién firma la portada.
-   *
-   * Sin esto la portada sale con el nombre de la cuenta, que no siempre es el
-   * del tesista: un asesor que acompaña a varios, o una cuenta abierta a nombre
-   * de otro, y el Word se descarga firmado por quien no es.
-   */
-  async editarAutor(p: Proyecto): Promise<void> {
-    if (this.guardandoAutor()) return;
-
-    const escrito = await this.dialogos.pedirTexto({
-      titulo: 'Quién firma la portada',
-      mensaje:
-        'Sale en la portada de tu Word. Escríbelo como debe aparecer, con tus dos apellidos. ' +
-        'Si lo dejas vacío, sale el nombre de tu cuenta.',
-      confirmar: 'Guardar',
-      campo: {
-        etiqueta: 'Nombre del autor',
-        placeholder: 'Ana María Quispe Flores',
-        obligatorio: false,
-        maxlength: 160,
-      },
-    });
-    if (escrito === null) return;
-
-    this.guardandoAutor.set(true);
-    this.errorAutor.set(null);
-    this.proyectos.cambiarAutor(p.productCode, escrito.trim()).subscribe({
-      next: (autor) => {
-        this.guardandoAutor.set(false);
-        this.lista.update((lista) =>
-          lista.map((x) => (x.productCode === p.productCode ? { ...x, autor: autor || null } : x)),
-        );
-      },
-      error: (e) => {
-        this.guardandoAutor.set(false);
-        this.errorAutor.set(toApiError(e).message);
-      },
-    });
-  }
-
-  // ── El asesor ────────────────────────────────────────────────────────────
-  readonly guardandoAsesor = signal(false);
-  readonly errorAsesor = signal<string | null>(null);
-
-  /**
-   * Cambia el asesor que sale en la portada.
-   *
-   * Normalmente lo guarda Claude al preguntárselo; esto es para quien lo tiene
-   * que cambiar o corregir sin abrir una conversación.
-   */
-  async editarAsesor(p: Proyecto): Promise<void> {
-    if (this.guardandoAsesor()) return;
-
-    const escrito = await this.dialogos.pedirTexto({
-      titulo: 'Tu asesor',
-      mensaje:
-        'Sale en la portada de tu Word. Escríbelo como debe aparecer, con su grado. Déjalo vacío si ' +
-        'todavía no tienes.',
-      confirmar: 'Guardar',
-      campo: {
-        etiqueta: 'Nombre del asesor',
-        placeholder: 'Dr. Juan Pérez Gómez',
-        obligatorio: false,
-        maxlength: 160,
-      },
-    });
-    if (escrito === null) return;
-
-    this.guardandoAsesor.set(true);
-    this.errorAsesor.set(null);
-    this.proyectos.cambiarAsesor(p.productCode, escrito.trim()).subscribe({
-      next: (asesor) => {
-        this.guardandoAsesor.set(false);
-        this.lista.update((lista) =>
-          lista.map((x) => (x.productCode === p.productCode ? { ...x, asesor } : x)),
-        );
-      },
-      error: (e) => {
-        this.guardandoAsesor.set(false);
-        this.errorAsesor.set(toApiError(e).message);
-      },
-    });
-  }
   // ── Empezar de cero ──────────────────────────────────────────────────────
   readonly borrando = signal(false);
   readonly errorBorrado = signal<string | null>(null);
