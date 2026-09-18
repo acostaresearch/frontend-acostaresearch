@@ -6,7 +6,7 @@
   background: var(--color-fondo);
 }
 
-.pagina > * {
+.pagina {
   max-width: 1180px;
   margin-left: auto;
   margin-right: auto;
@@ -14,10 +14,9 @@
 
 .cabecera {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: 200px;
   margin-bottom: 24px;
 }
 
@@ -224,12 +223,34 @@ h1 {
 }
 
 .alternativa {
-  display: grid;
-  gap: 8px;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--color-borde);
+}
+
+/* Los iconos del modal: contornos, nunca rellenos, y del color del texto que
+   acompañan. Así uno solo vale para el botón azul, para el cartel rojo del
+   plazo y para el gris de WhatsApp sin tener tres copias del mismo dibujo. */
+.icono {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.alternativa .boton.secundario {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* ── Confirmación ───────────────────────────────────────────────────────── */
@@ -475,21 +496,48 @@ h1 {
   cursor: not-allowed;
 }
 /* El código aplicado, con su plazo debajo cuando lo tiene. */
+/* El código aplicado, dentro de la ficha del plan y pegado al precio: es la
+   explicación de esa cifra, no un aviso aparte. En verde porque es lo único
+   del modal que son buenas noticias. */
 .promo-aplicada {
   display: flex;
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  margin: 16px 0;
-  padding: 12px 14px;
+  margin: 14px 0 0;
+  padding: 11px 13px;
   background-color: var(--color-exito-suave);
-  border: 1px solid rgba(18, 115, 75, 0.22);
+  border: 1px solid color-mix(in srgb, var(--color-exito) 26%, transparent);
   border-radius: var(--radio-sm);
 }
 
 .promo-linea {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  justify-content: space-between;
   margin: 0;
-  font-size: 13.5px;
+  font-size: 13px;
+  color: var(--color-exito);
+}
+
+.promo-texto {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+
+/* Cuánto se ahorra: el dato que convence, pero en el tono de al lado. En el
+   mismo verde fuerte del código competía con él y la línea se leía a gritos. */
+.promo-ahorro {
+  color: color-mix(in srgb, var(--color-exito) 78%, var(--color-texto));
+}
+
+.promo-aplicada .enlace-quitar {
+  margin-left: 0;
+  color: var(--color-exito);
 }
 
 /* El plazo va debajo y en pequeño: informa, no grita. Quien decide mirarlo lo
@@ -527,45 +575,138 @@ h1 {
   color: var(--color-exito);
 }
 
-/* ── Pago por Yape ─────────────────────────────────────────────────────────
-   El QR y el envío del comprobante van en un mismo bloque enmarcado: es un
-   camino de pago completo, no un adorno al lado del botón de PayPal. */
-.yape {
-  margin-top: 22px;
-  padding: 20px;
-  background-color: var(--color-fondo);
+/* ── El medio elegido, ya desplegado ───────────────────────────────────────
+   Un recuadro por medio de pago —el QR de Yape, el botón de PayPal— con el
+   mismo encabezado los dos: qué se va a hacer a la izquierda y la cifra a la
+   derecha. Es un camino de pago completo, no un adorno al lado del botón. */
+.pasarela {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  border-radius: 12px;
 }
 
-.yape-titulo {
-  margin: 0 0 6px;
-  font-size: 15px;
+.pasarela-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pasarela-titulo {
+  margin: 0 0 4px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--color-texto);
 }
 
-.yape-instruccion {
-  margin: 0 0 16px;
-  font-size: 13.5px;
-  line-height: 1.55;
+.pasarela-nota {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--color-texto-suave);
 }
 
-.qr-pago {
+/* El total en dólares arriba y a la derecha, no debajo del botón: quien paga
+   desde fuera decide por esa cifra, y enterarse de ella dentro de la ventana
+   de PayPal es enterarse tarde. */
+.pasarela-total {
+  margin: 0;
+  text-align: right;
+}
+
+.pasarela-total-rotulo {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+.pasarela-total strong {
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--color-texto);
+}
+
+/* Quién cobra. Va debajo del botón que pinta PayPal, en pequeño: no es un
+   argumento de venta, es la respuesta a «¿dónde estoy metiendo la tarjeta?». */
+.pasarela-pie {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── El QR y lo que hay que hacer con él ───────────────────────────────────
+   Uno al lado del otro. El código solo no dice qué pasa después de pagar, y
+   las capturas llegaban sin número de operación o no llegaban. */
+.yape-guia {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-top: 14px;
   padding: 14px;
-  background-color: var(--color-superficie);
-  border: 1px solid var(--color-borde);
+  background-color: var(--color-fondo);
   border-radius: var(--radio-sm);
 }
 
+.qr-pago {
+  flex: none;
+}
+
+/* La imagen ya trae el morado de Yape, el logo y el titular: solo hay que
+   dejarla entera y con esquinas redondas. Estirada a todo el ancho ocupaba
+   media ventana y empujaba el formulario fuera de la pantalla. */
 .qr-pago img {
-  width: 100%;
-  max-width: 230px;
-  height: auto;
   display: block;
+  width: 140px;
+  height: auto;
+  border-radius: var(--radio-sm);
+}
+
+.yape-pasos {
+  display: grid;
+  gap: 12px;
+  flex: 1 1 200px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: paso;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-texto-suave);
+}
+
+.yape-pasos li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  counter-increment: paso;
+}
+
+.yape-pasos li::before {
+  content: counter(paso);
+  flex: none;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.yape-pasos strong {
+  color: var(--color-texto);
 }
 
 .yape-titular {
@@ -599,6 +740,14 @@ h1 {
   color: var(--color-texto);
 }
 
+/* «(opcional)» dicho en el rótulo y no solo en la ayuda de abajo: quien no
+   tiene a mano la constancia dejaba el campo vacío con miedo a que el envío
+   fallara, o se iba a buscarla sin necesidad. */
+.opcional {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
 .yape-formulario input[type='text'] {
   width: 100%;
   height: 42px;
@@ -627,14 +776,14 @@ h1 {
    en cada navegador. La etiqueta hace de botón y mantiene el foco accesible. */
 .captura-elegir {
   display: block;
-  margin-bottom: 14px;
-  padding: 18px;
+  margin-bottom: 12px;
+  padding: 13px;
   text-align: center;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--color-primario);
-  background-color: var(--color-superficie);
-  border: 1px dashed var(--color-borde-fuerte);
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+  border: 1px solid var(--color-borde-fuerte);
   border-radius: var(--radio-sm);
   cursor: pointer;
   transition:
@@ -642,7 +791,16 @@ h1 {
     background-color var(--transicion);
 }
 
+/* Etiqueta y flecha en una línea, centradas: es el botón que falta para poder
+   enviar, y tiene que leerse como un botón, no como una zona de arrastre. */
+.captura-elegir-texto {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .captura-elegir:hover {
+  color: var(--color-primario);
   border-color: var(--color-primario);
   background-color: var(--color-primario-suave);
 }
@@ -699,6 +857,12 @@ h1 {
   align-self: flex-start;
 }
 
+/* Lo que pasa después de darle a enviar. Debajo del botón porque es la
+   respuesta a la duda que aparece justo al pulsarlo: «¿y ahora cuánto tardan?». */
+.pie-revision {
+  margin: 10px 0 0;
+}
+
 /* Estado de espera: el comprobante ya está enviado y ahora depende de nosotros. */
 .yape-enviado {
   padding: 16px;
@@ -752,17 +916,6 @@ h1 {
 }
 
 /* ══ Panel de pago ════════════════════════════════════════════════════════ */
-
-.pago-cabecera {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.pago-cabecera h2 {
-  margin: 0;
-}
 
 /* Estado de espera: hay algo escrito, pero nada que parezca un formulario. */
 
@@ -985,13 +1138,68 @@ h1 {
   color: var(--color-exito);
 }
 
-/* ══ Resumen compacto del panel ═══════════════════════════════════════════ */
+/* ══ Qué se está comprando ════════════════════════════════════════════════
+   Dos formas del mismo dato: la ficha entera mientras se decide y una sola
+   línea en cuanto hay medio elegido. Ver `pago-cuerpo` en la plantilla. */
+
+.resumen-plan,
+.resumen-compacto {
+  padding: 14px 15px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.resumen-cabecera {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
 
 .pago-producto {
-  margin: 0 0 2px;
-  font-size: 14px;
-  font-weight: 650;
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 700;
   color: var(--color-texto);
+}
+
+/* La vigencia, en pastilla: es una condición del producto, no una frase más.
+   Suelta en gris bajo el nombre se leía como un subtítulo y nadie la miraba. */
+.resumen-vigencia {
+  display: inline-block;
+  margin: 0;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+/* «Cambiar» hace lo mismo que la ✕: suelta el plan, el descuento y la captura.
+   Con cara de botón secundario pequeño, que es lo que es: una salida, no el
+   paso siguiente. */
+.boton-cambiar {
+  flex: none;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.boton-cambiar:hover {
+  border-color: var(--color-primario);
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
 }
 
 .pago-total {
@@ -1001,6 +1209,55 @@ h1 {
   align-items: baseline;
   margin: 0;
   font-size: 13px;
+}
+
+/* Mientras se decide, el importe manda en la ficha: es el dato por el que se
+   ha abierto la ventana. Plegado, vuelve al tamaño de una línea de resumen. */
+.pago-total.grande {
+  margin-top: 12px;
+}
+
+.pago-total.grande strong {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+/* ── La versión plegada ─────────────────────────────────────────────────── */
+.resumen-compacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumen-compacto-texto {
+  min-width: 0;
+}
+
+.resumen-compacto .pago-producto {
+  margin: 0 0 3px;
+  font-size: 13.5px;
+}
+
+.resumen-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.resumen-detalle strong {
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.resumen-tic {
+  color: var(--color-exito);
+  font-weight: 700;
 }
 
 /* El importe que ya no se paga: el de antes de la oferta, o el de catálogo
@@ -1022,29 +1279,32 @@ h1 {
 /* ══ Selector de medio de pago ════════════════════════════════════════════ */
 
 .pago-rotulo {
-  margin: 20px 0 10px;
+  margin: 18px 0 10px;
   font-size: 13px;
   font-weight: 650;
   color: var(--color-texto);
 }
 
+/* Los dos medios, uno al lado del otro. En columna, PayPal quedaba debajo del
+   pliegue y más de un comprador de fuera del Perú se peleaba con el QR sin
+   saber que había otra forma. `auto-fit` es para cuando solo hay uno: ocupa
+   la fila entera en vez de dejar medio recuadro vacío al lado. */
 .medios {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .medio {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 13px 15px;
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px 13px;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  background: var(--color-fondo);
+  background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: var(--radio-sm);
+  border-radius: 12px;
   transition:
     border-color var(--transicion),
     background var(--transicion);
@@ -1060,14 +1320,79 @@ h1 {
   box-shadow: inset 0 0 0 1px var(--color-primario);
 }
 
+/* El icono y la marca de elegido comparten renglón, uno en cada punta: el
+   redondel a la derecha es lo que convierte dos recuadros en una elección de
+   una sola cosa, y arriba se ve sin recorrer la tarjeta. */
+.medio-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.medio-icono {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+/* El morado es de Yape y el azul de PayPal: el comprador reconoce la app por
+   el color antes de leer el nombre. */
+.medio-icono.yape {
+  color: #7b2fa0;
+  background: color-mix(in srgb, #7b2fa0 12%, transparent);
+}
+
+.medio-icono.paypal {
+  color: #0070ba;
+  background: color-mix(in srgb, #0070ba 12%, transparent);
+}
+
+.medio-icono .icono {
+  width: 17px;
+  height: 17px;
+}
+
+/* Un radio, pintado a mano: el de verdad no se puede dibujar igual en todos
+   los navegadores y aquí quien recoge el clic es el botón entero. El estado
+   lo dice `aria-pressed`, que es lo que lee el lector de pantalla. */
+.medio-marca {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: transparent;
+  background: var(--color-superficie);
+  border: 1.5px solid var(--color-borde-fuerte);
+  border-radius: 50%;
+  transition:
+    background var(--transicion),
+    border-color var(--transicion);
+}
+
+.medio.activo .medio-marca {
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.medio-marca .icono {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.6;
+}
+
 .medio-nombre {
-  font-size: 14.5px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--color-texto);
 }
 
 .medio-detalle {
-  font-size: 12.5px;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--color-texto-suave);
 }
 
@@ -1273,7 +1598,7 @@ h1 {
      del título aparecía a media altura, encima de las tarjetas. */
   max-height: calc(100vh - 48px);
   background: var(--color-superficie);
-  border-radius: var(--radio);
+  border-radius: 18px;
   box-shadow: 0 24px 64px rgba(16, 24, 40, 0.24);
 }
 
@@ -1285,34 +1610,47 @@ h1 {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid var(--color-borde);
+  padding: 20px 20px 12px;
 }
 
 .pago-barra h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+  font-size: 17px;
+  font-weight: 700;
 }
 
+/* Redondel gris, no una equis suelta: es el único botón de la barra y la
+   única salida de la ventana, así que tiene que tener un sitio que pulsar y
+   no tres píxeles de aspa. */
 .pago-cerrar {
-  padding: 6px 10px;
-  font-size: 15px;
-  line-height: 1;
-  color: var(--color-texto-tenue);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--color-texto-suave);
   cursor: pointer;
-  background: none;
+  background: var(--color-fondo);
   border: none;
-  border-radius: var(--radio-sm);
+  border-radius: 50%;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
+}
+
+.pago-cerrar .icono {
+  width: 14px;
+  height: 14px;
 }
 
 .pago-cerrar:hover {
   color: var(--color-texto);
-  background: var(--color-fondo);
+  background: var(--color-borde);
 }
 
 .pago-cuerpo {
-  padding: 20px 22px 24px;
+  padding: 4px 20px 20px;
   overflow-y: auto;
 }
 
@@ -1461,19 +1799,21 @@ h1 {
    al abrir, no al hacer scroll. Y no promete ninguna reserva, porque no la
    hay: dice que la ventana se cierra, que es lo que de verdad ocurre. */
 .pago-plazo {
-  position: relative;
-  padding: 12px 20px 14px;
+  flex: none;
+  margin: 0 20px 14px;
+  padding: 11px 13px 12px;
   background: var(--color-error-suave, #fdeeee);
-  border-bottom: 1px solid var(--color-borde);
+  border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+  border-radius: var(--radio-sm);
 }
 
 .pago-plazo-linea {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-error);
 }
@@ -1481,12 +1821,20 @@ h1 {
 .pago-plazo-texto {
   display: inline-flex;
   gap: 7px;
-  align-items: baseline;
+  align-items: center;
+}
+
+/* El número, grande y en cifras de ancho fijo: es lo que se mira de reojo
+   mientras se paga, y no puede bailar de ancho a cada segundo. */
+.pago-plazo-linea app-cuenta-atras {
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
 }
 
 .pago-plazo-nota {
-  margin: 4px 0 0;
-  font-size: 12.5px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
   line-height: 1.45;
   color: var(--color-error);
   opacity: 0.85;
@@ -1494,13 +1842,24 @@ h1 {
 
 /* La barra se vacía sola con CSS y sin un segundo temporizador: arranca
    cuando se monta el cartel, igual que el contador. Dos relojes que cuentan
-   lo mismo por su cuenta acaban discrepando. */
-.pago-plazo-barra {
-  position: absolute;
-  left: 0;
-  bottom: -1px;
+   lo mismo por su cuenta acaban discrepando.
+
+   Va dentro de una pista propia, bajo la línea del contador: pegada al borde
+   del cartel se confundía con el borde mismo y no se veía menguar. */
+.pago-plazo-pista {
+  display: block;
   height: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-error) 18%, transparent);
+  border-radius: 999px;
+}
+
+.pago-plazo-barra {
+  display: block;
+  height: 100%;
   background: var(--color-error);
+  border-radius: 999px;
   animation: vaciar-plazo 300s linear forwards;
 }
 

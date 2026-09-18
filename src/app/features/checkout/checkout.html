@@ -32,8 +32,8 @@
           <li>Abre Claude y entra en <strong>Configuración → Conectores</strong>.</li>
           <li>Pulsa <strong>Añadir conector personalizado</strong> y pega la URL de arriba.</li>
           <li>
-            Abre una conversación nueva y escríbele a Claude «trabajemos con el método». Empieza
-            por la fase que te toque.
+            Abre una conversación nueva y escríbele a Claude «trabajemos con el método». Empieza por
+            la fase que te toque.
           </li>
         </ol>
 
@@ -41,8 +41,8 @@
              de comprar descubre su panel semanas después, con los capítulos ya
              escritos sin sus fuentes. -->
         <p class="nota">
-          Y en tu panel: sube tus fuentes de Scopus o tus PDF, conecta tu Zotero y, si ya
-          escribiste tu tesis, súbela para que Claude le ponga las citas.
+          Y en tu panel: sube tus fuentes de Scopus o tus PDF, conecta tu Zotero y, si ya escribiste
+          tu tesis, súbela para que Claude le ponga las citas.
         </p>
 
         <!-- La guía con capturas. Solo aparece si el PDF existe de verdad: lo
@@ -277,7 +277,9 @@
           <div class="pago-barra">
             <h2 id="titulo-pago">Cómo quieres pagar</h2>
             <button type="button" class="pago-cerrar" aria-label="Cerrar" (click)="cambiarPlan()">
-              ✕
+              <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6 18 18M18 6 6 18" />
+              </svg>
             </button>
           </div>
 
@@ -286,6 +288,10 @@
                ninguna reserva —no hay nada escaso que reservar— y por eso no
                dice que la haya.
 
+               Va fuera del cuerpo, que es lo que scrollea: un plazo que se
+               anuncia tiene que seguir a la vista cuando el comprador ha bajado
+               hasta el botón de pagar.
+
                La barra se vacía con una animación de CSS, no con otro
                temporizador: arranca cuando se abre la ventana, igual que el
                contador, y así no hay dos relojes que puedan discrepar. -->
@@ -293,24 +299,51 @@
             <div class="pago-plazo" role="status">
               <div class="pago-plazo-linea">
                 <span class="pago-plazo-texto">
-                  <span aria-hidden="true">🕐</span>
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5.2l3 1.8" />
+                  </svg>
                   Esta ventana se cierra en
                 </span>
                 <app-cuenta-atras [hasta]="limite" (vencido)="cerrarPorTiempo()" />
               </div>
+
+              <span class="pago-plazo-pista" aria-hidden="true">
+                <span class="pago-plazo-barra"></span>
+              </span>
+
               <p class="pago-plazo-nota">
                 Si no completas el pago, se cerrará y tendrás que elegir tu paquete de nuevo.
               </p>
-              <span class="pago-plazo-barra" aria-hidden="true"></span>
             </div>
           }
 
           <div class="pago-cuerpo">
-            <!-- El resumen en una línea. Ya eligió: no hace falta repetirle la
-               ficha del producto, solo qué va a pagar y por cuánto. -->
-            <div class="pago-cabecera">
-              <div>
-                <p class="pago-producto">{{ plan.name }}</p>
+            <!-- ── Qué se está comprando ───────────────────────────────────
+                 Dos formas del mismo dato. Mientras no hay medio elegido, la
+                 ficha entera: nombre, vigencia, el importe en grande y el
+                 código aplicado, que es lo que se revisa antes de decidir.
+
+                 En cuanto elige medio, se pliega a una línea. Lo que manda a
+                 partir de ahí es el QR o el botón de PayPal, y una ficha de
+                 cuatro renglones encima empuja el pago fuera de la pantalla
+                 justo cuando hay que hacerlo. -->
+            @if (metodoPago()) {
+              <div class="resumen-compacto">
+                <div class="resumen-compacto-texto">
+                  <p class="pago-producto">{{ plan.name }}</p>
+                  <p class="resumen-detalle">
+                    <span class="resumen-tic" aria-hidden="true">✓</span>
+                    <span>{{ vigencia(plan) }}</span>
+                    @if (descuento(); as promo) {
+                      <span aria-hidden="true">·</span>
+                      <span>
+                        Código <strong>{{ promo.code }}</strong> aplicado
+                      </span>
+                    }
+                  </p>
+                </div>
+
                 <!-- Un solo tachado, el que corresponda: con código promocional
                      se tacha el precio de catálogo —que ya es el de oferta si la
                      hay—, y sin código, el de antes de la oferta. Dos cifras
@@ -322,79 +355,114 @@
                     <span class="tachado">{{ antes }}</span>
                   }
                   <strong>{{ precioFinal(plan) }}</strong>
-                  <span class="tenue">· {{ vigencia(plan) }}</span>
                 </p>
               </div>
-              <button type="button" class="enlace-quitar" (click)="cambiarPlan()">Cambiar</button>
-            </div>
-
-            <!-- ── Código promocional ─────────────────────────────────────── -->
-            @if (auth.isAuthenticated()) {
-              @if (descuento(); as promo) {
-                <div class="promo-aplicada">
-                  <p class="promo-linea">
-                    Código <strong>{{ promo.code }}</strong> aplicado.
-                    <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
-                      Quitar
-                    </button>
-                  </p>
-
-                  <!-- El plazo, solo si el código lo tiene de verdad. Un código
-                       sin caducidad y sin tope de usos no enseña nada aquí:
-                       inventarle una cuenta atrás sería apurar al comprador con
-                       algo que no va a pasar, y eso se descubre recargando. -->
-                  @if (promo.expiresAt || promo.usesLeft !== null) {
-                    <p class="promo-plazo">
-                      @if (promo.expiresAt) {
-                        <span>
-                          Vence en
-                          <app-cuenta-atras
-                            [hasta]="promo.expiresAt"
-                            (vencido)="descuentoVencido()"
-                          />
-                        </span>
-                      }
-                      @if (promo.expiresAt && promo.usesLeft !== null) {
-                        <span aria-hidden="true">·</span>
-                      }
-                      @if (promo.usesLeft !== null) {
-                        <span>
-                          @if (promo.usesLeft === 1) {
-                            queda 1 uso
-                          } @else {
-                            quedan {{ promo.usesLeft }} usos
-                          }
-                        </span>
-                      }
+            } @else {
+              <div class="resumen-plan">
+                <div class="resumen-cabecera">
+                  <div>
+                    <p class="pago-producto">{{ plan.name }}</p>
+                    <p class="resumen-vigencia">
+                      {{ plan.durationDays > 0 ? vigencia(plan) + ' de acceso' : 'Pago único' }}
                     </p>
-                  }
-                </div>
-              } @else {
-                <div class="promo">
-                  <label for="promo">¿Tienes un código de descuento?</label>
-                  <div class="promo-fila">
-                    <input
-                      id="promo"
-                      type="text"
-                      [formControl]="codigoPromo"
-                      placeholder="Escríbelo aquí"
-                      autocomplete="off"
-                      (keyup.enter)="aplicarDescuento()"
-                    />
-                    <button
-                      type="button"
-                      class="boton secundario"
-                      [disabled]="comprobandoPromo()"
-                      (click)="aplicarDescuento()"
-                    >
-                      {{ comprobandoPromo() ? '…' : 'Aplicar' }}
-                    </button>
                   </div>
-                  @if (errorPromo(); as mensaje) {
-                    <p class="promo-error">{{ mensaje }}</p>
-                  }
+
+                  <!-- «Cambiar» hace lo mismo que la ✕: soltar el plan, el
+                       descuento y la captura. Por eso no se repite en la versión
+                       plegada; allí la ✕ sigue arriba, a la vista. -->
+                  <button type="button" class="boton-cambiar" (click)="cambiarPlan()">
+                    Cambiar
+                  </button>
                 </div>
-              }
+
+                <p class="pago-total grande">
+                  <strong>{{ precioFinal(plan) }}</strong>
+                  @if (descuento()) {
+                    <span class="tachado">{{ precio(plan) }}</span>
+                  } @else if (precioAntes(plan); as antes) {
+                    <span class="tachado">{{ antes }}</span>
+                  }
+                </p>
+
+                <!-- ── Código promocional aplicado ────────────────────────── -->
+                @if (descuento(); as promo) {
+                  <div class="promo-aplicada">
+                    <p class="promo-linea">
+                      <span class="promo-texto">
+                        <span class="resumen-tic" aria-hidden="true">✓</span>
+                        Código <strong>{{ promo.code }}</strong> aplicado
+                        @if (ahorroAplicado(plan); as rebaja) {
+                          <span class="promo-ahorro">· te ahorras {{ rebaja }}</span>
+                        }
+                      </span>
+                      <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
+                        Quitar
+                      </button>
+                    </p>
+
+                    <!-- El plazo, solo si el código lo tiene de verdad. Un código
+                         sin caducidad y sin tope de usos no enseña nada aquí:
+                         inventarle una cuenta atrás sería apurar al comprador con
+                         algo que no va a pasar, y eso se descubre recargando. -->
+                    @if (promo.expiresAt || promo.usesLeft !== null) {
+                      <p class="promo-plazo">
+                        @if (promo.expiresAt) {
+                          <span>
+                            Vence en
+                            <app-cuenta-atras
+                              [hasta]="promo.expiresAt"
+                              (vencido)="descuentoVencido()"
+                            />
+                          </span>
+                        }
+                        @if (promo.expiresAt && promo.usesLeft !== null) {
+                          <span aria-hidden="true">·</span>
+                        }
+                        @if (promo.usesLeft !== null) {
+                          <span>
+                            @if (promo.usesLeft === 1) {
+                              queda 1 uso
+                            } @else {
+                              quedan {{ promo.usesLeft }} usos
+                            }
+                          </span>
+                        }
+                      </p>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- El campo del código sigue a mano con el medio ya elegido: quien
+                 se acuerda del cupón al ver el QR no tiene que cerrar y empezar
+                 otra vez. Desaparece en cuanto hay uno aplicado, que entonces se
+                 lee en el resumen. -->
+            @if (auth.isAuthenticated() && !descuento()) {
+              <div class="promo">
+                <label for="promo">¿Tienes un código de descuento?</label>
+                <div class="promo-fila">
+                  <input
+                    id="promo"
+                    type="text"
+                    [formControl]="codigoPromo"
+                    placeholder="Escríbelo aquí"
+                    autocomplete="off"
+                    (keyup.enter)="aplicarDescuento()"
+                  />
+                  <button
+                    type="button"
+                    class="boton secundario"
+                    [disabled]="comprobandoPromo()"
+                    (click)="aplicarDescuento()"
+                  >
+                    {{ comprobandoPromo() ? '…' : 'Aplicar' }}
+                  </button>
+                </div>
+                @if (errorPromo(); as mensaje) {
+                  <p class="promo-error">{{ mensaje }}</p>
+                }
+              </div>
             }
 
             @if (!auth.isAuthenticated()) {
@@ -408,7 +476,11 @@
               <!-- ── Elegir cómo pagar ──────────────────────────────────────
                  Un medio por vez. Enseñar PayPal y el QR de Yape a la vez
                  convertía la página en una lista sin fin, y encima obligaba a
-                 decidir leyendo dos formularios abiertos. -->
+                 decidir leyendo dos formularios abiertos.
+
+                 Los dos van uno al lado del otro, con su icono y su marca de
+                 elegido: en columna, el segundo caía bajo el pliegue y se
+                 pagaba con el primero sin saber que había otro. -->
               <p class="pago-rotulo">¿Cómo prefieres pagar?</p>
 
               <div class="medios">
@@ -419,6 +491,19 @@
                   [attr.aria-pressed]="metodoPago() === 'yape'"
                   (click)="metodoPago.set('yape')"
                 >
+                  <span class="medio-fila">
+                    <span class="medio-icono yape">
+                      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+                        <path d="M10.5 18.5h3" />
+                      </svg>
+                    </span>
+                    <span class="medio-marca" aria-hidden="true">
+                      <svg class="icono" viewBox="0 0 24 24">
+                        <path d="m6 12.5 4 4 8-8.5" />
+                      </svg>
+                    </span>
+                  </span>
                   <span class="medio-nombre">Yape o Plin</span>
                   <span class="medio-detalle">Desde Perú, en soles</span>
                 </button>
@@ -431,107 +516,143 @@
                     [attr.aria-pressed]="metodoPago() === 'paypal'"
                     (click)="metodoPago.set('paypal')"
                   >
+                    <span class="medio-fila">
+                      <span class="medio-icono paypal">
+                        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M3 12h18" />
+                          <path
+                            d="M12 3c2.4 2.5 3.7 5.5 3.7 9s-1.3 6.5-3.7 9c-2.4-2.5-3.7-5.5-3.7-9S9.6 5.5 12 3Z"
+                          />
+                        </svg>
+                      </span>
+                      <span class="medio-marca" aria-hidden="true">
+                        <svg class="icono" viewBox="0 0 24 24">
+                          <path d="m6 12.5 4 4 8-8.5" />
+                        </svg>
+                      </span>
+                    </span>
                     <span class="medio-nombre">PayPal</span>
                     <span class="medio-detalle">Desde el extranjero, en dólares</span>
                   </button>
                 }
               </div>
 
-              <!-- Antes de elegir el medio y no debajo del botón de pago: el de
-                   PayPal lo pinta PayPal, y lo que se pone cerca se pierde. -->
-              <p class="nota">
-                Al pagar aceptas los <a routerLink="/terminos">Términos y Condiciones</a>. Una vez
-                activado el acceso no hay devolución: lee la
-                <a routerLink="/terminos" fragment="reembolsos">política de reembolsos</a>.
-              </p>
-            }
+              @if (metodoPago() === 'paypal') {
+                @if (precioFinalDolares(plan); as dolares) {
+                  <section class="pasarela">
+                    <div class="pasarela-cabecera">
+                      <div>
+                        <h3 class="pasarela-titulo">Pagar con PayPal</h3>
+                        <p class="pasarela-nota">
+                          PayPal no admite soles, así que el cobro sale en dólares. Tu banco te lo
+                          convertirá.
+                        </p>
+                      </div>
 
-            @if (auth.isAuthenticated() && metodoPago() === 'paypal') {
-              @if (precioFinalDolares(plan); as dolares) {
-                <p class="nota">
-                  PayPal no admite soles, así que el cobro sale en dólares:
-                  <strong>{{ dolares }}</strong
-                  >. Tu banco te lo convertirá a soles.
-                </p>
-
-                <div class="boton-paypal" #paypalHost></div>
-
-                @if (procesando()) {
-                  <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
-                }
-              } @else {
-                <p class="nota">
-                  Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a
-                  mano.
-                </p>
-              }
-            }
-
-            <!-- ── Pago por Yape ──────────────────────────────────────────────
-               Solo si es el medio elegido. La opción de PayPal ni siquiera
-               aparece en el selector cuando la pasarela no está activa, así que
-               aquí ya no hace falta explicarlo. -->
-            @if (auth.isAuthenticated() && metodoPago() === 'yape') {
-              <section class="yape">
-                <h3 class="yape-titulo">Pagar con Yape</h3>
-
-                @if (comprobanteEnviado(); as enviado) {
-                  <!-- Ya envió la captura: aquí solo se le dice qué pasa ahora. -->
-                  <div class="yape-enviado">
-                    <p class="yape-enviado-titulo">Comprobante recibido</p>
-                    <p>
-                      Estamos comprobando tu pago de
-                      <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong
-                      >. En cuanto quede confirmado te llega un correo y tu acceso aparece en tu
-                      panel.
-                    </p>
-                    <p class="tenue">
-                      Referencia <strong>{{ enviado.reference }}</strong> · guárdala por si tienes
-                      que escribirnos.
-                    </p>
-                    @if (whatsappUrl) {
-                      <a
-                        class="boton secundario"
-                        [href]="whatsappUrl"
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        Avisar por WhatsApp
-                      </a>
-                    }
-                  </div>
-                } @else {
-                  <p class="yape-instruccion">
-                    Escanea el código con tu app y paga
-                    <strong>{{ precioFinal(plan) }}</strong
-                    >. Luego súbenos la captura.
-                  </p>
-
-                  <div class="qr-pago">
-                    <img src="/qr-pago/qr-code.jpeg" alt="Código QR para pagar con Yape" />
-                  </div>
-
-                  @if (datosYape(); as yape) {
-                    @if (yape.titular || yape.numero) {
-                      <p class="yape-titular">
-                        @if (yape.titular) {
-                          <span>{{ yape.titular }}</span>
-                        }
-                        @if (yape.numero) {
-                          <span class="yape-numero">{{ yape.numero }}</span>
-                        }
+                      <!-- El total en dólares, al lado del titular del bloque: es
+                           la cifra que va a aparecer en el resumen de PayPal, y
+                           enterarse de ella dentro de la ventana de la pasarela
+                           es enterarse tarde. -->
+                      <p class="pasarela-total">
+                        <span class="pasarela-total-rotulo">Total en USD</span>
+                        <strong>{{ dolares }}</strong>
                       </p>
-                    }
-                  }
+                    </div>
 
-                  @if (!auth.isAuthenticated()) {
-                    <p class="nota">
-                      Puedes pagar ahora, pero para enviarnos la captura necesitas una cuenta: es
-                      donde queda registrado tu acceso.
-                    </p>
+                    <div class="boton-paypal" #paypalHost></div>
+
+                    @if (procesando()) {
+                      <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
+                    }
+
+                    <p class="pasarela-pie">Desarrollado por PayPal · Pago seguro</p>
+                  </section>
+                } @else {
+                  <p class="nota">
+                    Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a
+                    mano.
+                  </p>
+                }
+              }
+
+              <!-- ── Pago por Yape ──────────────────────────────────────────────
+                 Solo si es el medio elegido. La opción de PayPal ni siquiera
+                 aparece en el selector cuando la pasarela no está activa, así que
+                 aquí ya no hace falta explicarlo. -->
+              @if (metodoPago() === 'yape') {
+                <section class="pasarela yape">
+                  @if (comprobanteEnviado(); as enviado) {
+                    <!-- Ya envió la captura: aquí solo se le dice qué pasa ahora. -->
+                    <div class="yape-enviado">
+                      <p class="yape-enviado-titulo">Comprobante recibido</p>
+                      <p>
+                        Estamos comprobando tu pago de
+                        <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong
+                        >. En cuanto quede confirmado te llega un correo y tu acceso aparece en tu
+                        panel.
+                      </p>
+                      <p class="tenue">
+                        Referencia <strong>{{ enviado.reference }}</strong> · guárdala por si tienes
+                        que escribirnos.
+                      </p>
+                      @if (whatsappUrl) {
+                        <a
+                          class="boton secundario"
+                          [href]="whatsappUrl"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          Avisar por WhatsApp
+                        </a>
+                      }
+                    </div>
                   } @else {
+                    <div class="pasarela-cabecera">
+                      <div>
+                        <h3 class="pasarela-titulo">Pagar con Yape</h3>
+                        <p class="pasarela-nota">
+                          Escanea el código con tu app y paga
+                          <strong>{{ precioFinal(plan) }}</strong
+                          >. Luego súbenos la captura.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- El QR con los tres pasos al lado. El código solo no dice
+                         qué pasa después de pagar, y la captura llegaba sin
+                         número de operación o directamente no llegaba. -->
+                    <div class="yape-guia">
+                      <div class="qr-pago">
+                        <img src="/qr-pago/qr-code.jpeg" alt="Código QR para pagar con Yape" />
+                      </div>
+
+                      <ol class="yape-pasos">
+                        <li>Abre Yape o Plin y escanea el código.</li>
+                        <li>
+                          Paga <strong>{{ precioFinal(plan) }}</strong> exactos.
+                        </li>
+                        <li>Sube la captura de la constancia aquí abajo.</li>
+                      </ol>
+                    </div>
+
+                    @if (datosYape(); as yape) {
+                      @if (yape.titular || yape.numero) {
+                        <p class="yape-titular">
+                          @if (yape.titular) {
+                            <span>{{ yape.titular }}</span>
+                          }
+                          @if (yape.numero) {
+                            <span class="yape-numero">{{ yape.numero }}</span>
+                          }
+                        </p>
+                      }
+                    }
+
                     <div class="yape-formulario">
-                      <label for="operacion">Número de operación</label>
+                      <label for="operacion">
+                        Número de operación <span class="opcional">(opcional)</span>
+                      </label>
                       <input
                         id="operacion"
                         type="text"
@@ -561,7 +682,14 @@
                             accept="image/png,image/jpeg,image/webp"
                             (change)="elegirCaptura($event)"
                           />
-                          <span>Elegir la captura del pago</span>
+                          <span class="captura-elegir-texto">
+                            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M12 16V4" />
+                              <path d="m7.5 8.5 4.5-4.5 4.5 4.5" />
+                              <path d="M4 15.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3.5" />
+                            </svg>
+                            Elegir la captura del pago
+                          </span>
                         </label>
                       }
 
@@ -578,20 +706,35 @@
                         {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
                       </button>
 
-                      <p class="tenue campo-ayuda">
+                      <p class="tenue campo-ayuda pie-revision">
                         Lo revisa una persona, no un robot. Suele estar listo el mismo día; si corre
                         prisa, avísanos por WhatsApp después de enviarlo.
                       </p>
                     </div>
                   }
-                }
-              </section>
+                </section>
+              }
+
+              <!-- Debajo del pago y no antes de elegir el medio: es la letra
+                   pequeña de lo que se acaba de pulsar. Mientras no hay medio
+                   elegido cae justo bajo las dos tarjetas, que es el mismo
+                   sitio. -->
+              <p class="nota">
+                Al pagar aceptas los <a routerLink="/terminos">Términos y Condiciones</a>. Una vez
+                activado el acceso no hay devolución: lee la
+                <a routerLink="/terminos" fragment="reembolsos">política de reembolsos</a>.
+              </p>
             }
 
             <div class="alternativa">
               <span class="tenue">¿Prefieres transferencia o tienes alguna duda?</span>
               @if (whatsappUrl) {
                 <a class="boton secundario" [href]="whatsappUrl" target="_blank" rel="noopener">
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M20.5 11.5a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.5A8.5 8.5 0 1 1 20.5 11.5Z"
+                    />
+                  </svg>
                   Escribir por WhatsApp
                 </a>
               }

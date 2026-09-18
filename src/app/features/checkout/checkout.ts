@@ -179,8 +179,16 @@ export class Checkout implements OnInit {
   readonly copiada = signal(false);
 
   private readonly hostBoton = viewChild<ElementRef<HTMLDivElement>>('paypalHost');
-  /** El panel de pago. Existe siempre; lo que cambia es lo que hay dentro. */
-  private botonMontado = false;
+
+  /**
+   * El hueco donde ya está pintado el botón de PayPal.
+   *
+   * Se guarda el ELEMENTO y no un «ya está montado», porque el hueco va y
+   * viene: elegir Yape lo destruye y volver a PayPal crea otro. Con una
+   * bandera, ese segundo hueco se quedaba vacío para siempre y el comprador
+   * veía el bloque de PayPal sin botón con el que pagar.
+   */
+  private hostMontado: HTMLElement | null = null;
 
   readonly metodo = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
   readonly bolsas = computed(() => this.planes().filter((p) => p.kind === 'WORDS'));
@@ -216,10 +224,10 @@ export class Checkout implements OnInit {
 
   constructor() {
     effect(() => {
-      const host = this.hostBoton();
-      if (host && !this.botonMontado) {
-        this.botonMontado = true;
-        void this.montarBoton(host.nativeElement);
+      const elemento = this.hostBoton()?.nativeElement ?? null;
+      if (elemento && elemento !== this.hostMontado) {
+        this.hostMontado = elemento;
+        void this.montarBoton(elemento);
       }
     });
 
@@ -474,6 +482,22 @@ export class Checkout implements OnInit {
   precioFinal(plan: Plan): string {
     const rebajado = this.descuento()?.finalPriceCents;
     return soles(rebajado ?? plan.priceCents);
+  }
+
+  /**
+   * Lo que le quita al precio el código YA APLICADO. Null si no rebaja nada.
+   *
+   * Se resta del precio de catálogo el importe final que devolvió el servidor,
+   * no `amountCents`: la rebaja anunciada puede venir topada —nunca deja el
+   * precio en cero— y enseñar el tope sin aplicar sería prometer un ahorro
+   * mayor que el que se hace en el cobro.
+   */
+  ahorroAplicado(plan: Plan): string | null {
+    const promo = this.descuento();
+    if (!promo) return null;
+
+    const rebaja = plan.priceCents - promo.finalPriceCents;
+    return rebaja > 0 ? soles(rebaja) : null;
   }
 
   precioFinalDolares(plan: Plan): string | null {
@@ -742,7 +766,7 @@ export class Checkout implements OnInit {
         })
         .render(contenedor);
     } catch {
-      this.botonMontado = false;
+      this.hostMontado = null;
       this.error.set('No pudimos cargar el pago con PayPal. Escríbenos y lo activamos a mano.');
     }
   }
