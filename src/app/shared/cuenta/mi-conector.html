@@ -81,7 +81,21 @@
        de descubrir que su tema no está en la biblioteca de la casa. -->
   @if (tieneAccesoVigente()) {
     <section class="tarjeta tramo-3">
-      <h2>Tus fuentes de Scopus</h2>
+      <!-- El logo de quien pone los datos, no un adorno: estas tres tarjetas
+           hablan de herramientas de fuera —Scopus, Zotero, R— y la marca es lo
+           que se reconoce antes de leer el título. El `alt` va vacío a
+           propósito: el nombre está en el titular de al lado, y repetirlo
+           obliga a oírlo dos veces con lector de pantalla. -->
+      <div class="cabecera-marca">
+        <span class="marca">
+          <img src="/iconos/scopus_icon.png" alt="" />
+        </span>
+        <div>
+          <h2>Tus fuentes de Scopus</h2>
+          <p class="marca-pie">Elsevier · base bibliográfica</p>
+        </div>
+      </div>
+
       <p class="nota">
         Desde que entran, aparecen cuando Claude busca para tus capítulos. Por dos caminos: buscando
         en Scopus desde aquí, o subiendo el archivo que exportas.
@@ -105,9 +119,50 @@
        una coleccion no serviria de nada. -->
   @if (tieneAccesoVigente()) {
     <section class="tarjeta tramo-3">
-      <h2>Tu Zotero</h2>
-      <p class="nota">Elige una colección y sus fuentes quedan listas para citar, al día cada noche.</p>
+      <div class="cabecera-marca">
+        <span class="marca">
+          <img src="/iconos/Zotero_icon.png" alt="" />
+        </span>
+        <div>
+          <h2>Tu Zotero</h2>
+          <p class="marca-pie">Gestor de referencias</p>
+        </div>
+      </div>
+
+      <p class="nota">
+        Elige una colección y sus fuentes quedan listas para citar, al día cada noche.
+      </p>
       <app-mi-zotero />
+    </section>
+  }
+
+  <!-- R, en corto. Aquí no hay nada que configurar —el análisis se pide a
+       Claude y el archivo se sube por el enlace que él da—, así que la tarjeta
+       solo cuenta que existe, para qué sirve y cómo se arranca. Sin ella, el
+       tesista cuantitativo llega al Capítulo IV pensando que tiene que instalar
+       RStudio o pagar a alguien que le corra el SPSS. -->
+  @if (tieneAccesoVigente()) {
+    <section class="tarjeta tramo-3">
+      <div class="cabecera-marca">
+        <span class="marca">
+          <img src="/iconos/R_logo.svg.png" alt="" />
+        </span>
+        <div>
+          <h2>Tu análisis en R</h2>
+          <p class="marca-pie">Estadística · sin instalar nada</p>
+        </div>
+      </div>
+
+      <p class="nota">
+        Para los resultados de una tesis cuantitativa: descriptivos, alfa de Cronbach, normalidad y
+        la prueba de tus hipótesis. Lo corre Claude por ti; tú no escribes código.
+      </p>
+
+      <ol class="r-pasos">
+        <li>Dile a Claude en tu conector: <em>«analicemos mis datos en R»</em>.</li>
+        <li>Te da un enlace para subir tu Excel o tu SPSS.</li>
+        <li>Elige la prueba contigo, la corre y te entrega el informe en Word.</li>
+      </ol>
     </section>
   }
 

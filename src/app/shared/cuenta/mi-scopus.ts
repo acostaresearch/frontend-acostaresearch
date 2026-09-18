@@ -91,6 +91,76 @@ export class MiScopusPanel implements OnInit {
   /** El ejemplo que se ofrece. Es el mismo que arma la skill del método. */
   readonly ejemplo = 'TITLE-ABS-KEY("mobile applications" AND education) AND PUBYEAR > 2019';
 
+  /**
+   * Los filtros de debajo del campo.
+   *
+   * NO VIAJAN APARTE: se convierten en cláusulas de la propia ecuación
+   * (`PUBYEAR`, `DOCTYPE`, `LANGUAGE`, `OPENACCESS`) y se pegan con AND. Es el
+   * mismo lenguaje que usa Scopus en su web, así que el servidor no cambia y lo
+   * que se busca es exactamente la ecuación que se enseña debajo: quien la copie
+   * y la pegue en Scopus ve los mismos resultados.
+   */
+  readonly anioDesde = signal('');
+  readonly anioHasta = signal('');
+  readonly tipo = signal('');
+  readonly idioma = signal('');
+  readonly soloAbiertos = signal(false);
+
+  readonly tipos = [
+    { valor: 'ar', texto: 'Artículo' },
+    { valor: 're', texto: 'Revisión' },
+    { valor: 'cp', texto: 'Ponencia de congreso' },
+    { valor: 'ch', texto: 'Capítulo de libro' },
+    { valor: 'bk', texto: 'Libro' },
+  ];
+
+  readonly idiomas = [
+    { valor: 'english', texto: 'Inglés' },
+    { valor: 'spanish', texto: 'Español' },
+    { valor: 'portuguese', texto: 'Portugués' },
+  ];
+
+  /** Un año que se pueda creer, o nada. Lo demás se ignora sin avisar. */
+  private anio(texto: string): number | null {
+    const numero = Number(texto);
+    const tope = new Date().getFullYear() + 1;
+    return Number.isInteger(numero) && numero >= 1900 && numero <= tope ? numero : null;
+  }
+
+  /** Las cláusulas que añaden los filtros, ya en el lenguaje de Scopus. */
+  readonly clausulas = computed(() => {
+    let desde = this.anio(this.anioDesde());
+    let hasta = this.anio(this.anioHasta());
+    // Escribir los años al revés es un despiste, no una búsqueda vacía.
+    if (desde !== null && hasta !== null && desde > hasta) [desde, hasta] = [hasta, desde];
+
+    const partes: string[] = [];
+    if (desde !== null && desde === hasta) partes.push(`PUBYEAR = ${desde}`);
+    else {
+      // Scopus no tiene «mayor o igual»: se corre un año para que el que se
+      // escribió entre.
+      if (desde !== null) partes.push(`PUBYEAR > ${desde - 1}`);
+      if (hasta !== null) partes.push(`PUBYEAR < ${hasta + 1}`);
+    }
+    if (this.tipo()) partes.push(`DOCTYPE(${this.tipo()})`);
+    if (this.idioma()) partes.push(`LANGUAGE(${this.idioma()})`);
+    if (this.soloAbiertos()) partes.push('OPENACCESS(1)');
+    return partes;
+  });
+
+  readonly hayFiltros = computed(() => this.clausulas().length > 0);
+
+  /**
+   * La ecuación escrita con los filtros pegados.
+   *
+   * La del tesista va entre paréntesis: sin ellos, un `OR` suyo se comería el
+   * primer filtro y `a OR b AND PUBYEAR > 2019` filtraría solo la mitad.
+   */
+  private conFiltros(ecuacion: string): string {
+    const clausulas = this.clausulas();
+    return clausulas.length ? [`(${ecuacion})`, ...clausulas].join(' AND ') : ecuacion;
+  }
+
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('scopus');
     if (resultado) {
@@ -153,7 +223,7 @@ export class MiScopusPanel implements OnInit {
     this.parte.set(null);
     this.marcados.set(new Set());
 
-    this.scopus.buscar(ecuacion, pagina).subscribe({
+    this.scopus.buscar(this.conFiltros(ecuacion), pagina).subscribe({
       next: (resultado) => {
         this.busqueda.set(resultado);
         this.buscando.set(false);
@@ -167,6 +237,24 @@ export class MiScopusPanel implements OnInit {
         this.cargar();
       },
     });
+  }
+
+  /**
+   * Un filtro cambió. Si ya hay resultados en pantalla se vuelve a buscar desde
+   * la primera página: dejar la lista vieja debajo de un filtro nuevo haría
+   * creer que esa lista ya está filtrada.
+   */
+  filtrar(): void {
+    if (this.busqueda()) this.buscar(1);
+  }
+
+  quitarFiltros(): void {
+    this.anioDesde.set('');
+    this.anioHasta.set('');
+    this.tipo.set('');
+    this.idioma.set('');
+    this.soloAbiertos.set(false);
+    this.filtrar();
   }
 
   usarEjemplo(): void {

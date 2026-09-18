@@ -78,6 +78,87 @@
         </button>
       </div>
 
+      <!-- ── Filtros ───────────────────────────────────────────────────────
+           Se convierten en cláusulas de la ecuación (ver `clausulas` en el
+           .ts). Los años se aplican al salir del campo o con Enter, no a cada
+           tecla: «2» ya sería una búsqueda, y gastaría cuota por nada. -->
+      <div class="scopus-filtros" role="group" aria-label="Filtros de la búsqueda">
+        <label class="scopus-filtro">
+          <span>Desde</span>
+          <input
+            type="number"
+            inputmode="numeric"
+            min="1900"
+            placeholder="Año"
+            [value]="anioDesde()"
+            [disabled]="buscando()"
+            (input)="anioDesde.set($any($event.target).value)"
+            (change)="filtrar()"
+          />
+        </label>
+        <label class="scopus-filtro">
+          <span>Hasta</span>
+          <input
+            type="number"
+            inputmode="numeric"
+            min="1900"
+            placeholder="Año"
+            [value]="anioHasta()"
+            [disabled]="buscando()"
+            (input)="anioHasta.set($any($event.target).value)"
+            (change)="filtrar()"
+          />
+        </label>
+        <label class="scopus-filtro">
+          <span>Tipo</span>
+          <select
+            [disabled]="buscando()"
+            (change)="tipo.set($any($event.target).value); filtrar()"
+          >
+            <option value="" [selected]="!tipo()">Cualquiera</option>
+            @for (opcion of tipos; track opcion.valor) {
+              <option [value]="opcion.valor" [selected]="tipo() === opcion.valor">
+                {{ opcion.texto }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="scopus-filtro">
+          <span>Idioma</span>
+          <select
+            [disabled]="buscando()"
+            (change)="idioma.set($any($event.target).value); filtrar()"
+          >
+            <option value="" [selected]="!idioma()">Cualquiera</option>
+            @for (opcion of idiomas; track opcion.valor) {
+              <option [value]="opcion.valor" [selected]="idioma() === opcion.valor">
+                {{ opcion.texto }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="scopus-filtro scopus-filtro-caja">
+          <input
+            type="checkbox"
+            [checked]="soloAbiertos()"
+            [disabled]="buscando()"
+            (change)="soloAbiertos.set($any($event.target).checked); filtrar()"
+          />
+          <span>Solo acceso abierto</span>
+        </label>
+      </div>
+
+      <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
+           «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. -->
+      @if (hayFiltros()) {
+        <p class="scopus-se-añade">
+          Se añade a tu ecuación: <code>AND {{ clausulas().join(' AND ') }}</code>
+          <button type="button" class="boton enlace" [disabled]="buscando()" (click)="quitarFiltros()">
+            Quitar filtros
+          </button>
+        </p>
+      }
+
       <!-- Lo que hace falta para escribir una ecuación DE SU TEMA.
            Antes aquí había una explicación de cómo se completan las fichas por
            dentro, que es cierta y no le sirve a nadie para buscar: quien mira
