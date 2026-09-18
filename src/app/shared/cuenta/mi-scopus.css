@@ -203,26 +203,103 @@
   }
 }
 
-/* ── Los filtros ───────────────────────────────────────────────────────────
-   Una fila que se parte en dos en el móvil. Van pequeños y debajo del campo:
-   son un ajuste de la ecuación, no otra cosa que rellenar antes de buscar. */
-.scopus-filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px 12px;
+/* ── Refinar búsqueda ──────────────────────────────────────────────────────
+   Plegado por defecto: son trece secciones y abiertas empujarían los
+   resultados fuera de la pantalla. El número del resumen dice cuántos filtros
+   hay puestos aunque esté cerrado, para que nadie se pregunte por qué salen
+   tan pocos. */
+.scopus-refinar {
   margin-top: 10px;
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 8px;
+  background: var(--color-superficie);
 }
 
-.scopus-filtro {
+.scopus-refinar > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scopus-refinar > summary::-webkit-details-marker {
+  display: none;
+}
+
+.scopus-refinar > summary::before {
+  content: '▸';
+  font-size: 11px;
+  color: var(--color-texto-tenue);
+  transition: transform 0.15s;
+}
+
+.scopus-refinar[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.scopus-cuantos {
+  min-width: 20px;
+  padding: 0 6px;
+  font-size: 11.5px;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 999px;
+}
+
+.scopus-refinar > .tenue {
+  margin: 0;
+  padding: 0 12px 12px;
+}
+
+.scopus-secciones {
   display: grid;
-  gap: 3px;
-  font-size: 12px;
-  color: var(--color-texto-suave);
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px 18px;
+  padding: 4px 12px 14px;
+  border-top: 1px solid var(--color-borde, #dfe3eb);
 }
 
-.scopus-filtro input[type='number'],
-.scopus-filtro select {
+.scopus-seccion {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 0 0;
+  border: 0;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+
+.scopus-seccion-ancha {
+  grid-column: 1 / -1;
+}
+
+.scopus-seccion legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.scopus-seccion .boton.enlace {
+  justify-self: start;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+.scopus-texto,
+.scopus-anios input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 6px 8px;
   border: 1px solid var(--color-borde, #dfe3eb);
   border-radius: 6px;
@@ -232,35 +309,101 @@
   color: var(--color-texto);
 }
 
-.scopus-filtro input[type='number'] {
-  width: 84px;
-}
-
-/* Los nombres de área son largos: sin tope, uno solo empuja la fila entera. */
-.scopus-filtro-area select {
-  max-width: 220px;
-}
-
-.scopus-filtro input:focus,
-.scopus-filtro select:focus {
+.scopus-texto:focus,
+.scopus-anios input:focus {
   outline: none;
   border-color: var(--color-primario);
 }
 
-.scopus-filtro-caja {
+.scopus-anios {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 7px;
+  color: var(--color-texto-tenue);
+}
+
+.scopus-casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
   font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
   cursor: pointer;
 }
 
-.scopus-filtro-caja input {
+.scopus-casilla input {
+  flex: none;
   width: 15px;
   height: 15px;
-  margin: 0;
+  margin: 1px 0 0;
   accent-color: var(--color-primario);
+}
+
+/* Rango / Individual: el mismo aspecto que Normal / Avanzada, en pequeño. */
+.scopus-conmutador {
+  display: inline-flex;
+  justify-self: start;
+  padding: 2px;
+  background: var(--color-fondo-suave, #f6f8fc);
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 999px;
+}
+
+.scopus-conmutador button {
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+
+.scopus-conmutador button.activo {
+  background: var(--color-superficie);
+  color: var(--color-primario);
+  font-weight: 650;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* Lo escrito en una faceta de texto queda como ficha con su ×. */
+.scopus-fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.scopus-ficha-filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 4px 1px 9px;
+  font-size: 12px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+  overflow-wrap: anywhere;
+}
+
+.scopus-ficha-filtro button {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+}
+
+.scopus-ficha-filtro button:hover {
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .scopus-anadido {

@@ -41,6 +41,26 @@ import {
  *    cómo funciona esto por dentro. Quien mira un campo en blanco no necesita
  *    saber de dónde sale el resumen: necesita saber qué teclear.
  */
+interface OpcionDeFaceta {
+  /** El código tal como lo entiende Scopus dentro de `CAMPO(…)`. */
+  valor: string;
+  texto: string;
+}
+
+/** Una sección de «Refinar búsqueda». Ver `facetas` en el componente. */
+interface Faceta {
+  clave: string;
+  titulo: string;
+  tipo: 'casillas' | 'texto';
+  /** El campo de Scopus: `SUBJAREA`, `DOCTYPE`, `AFFILCOUNTRY`… */
+  campo: string;
+  opciones?: readonly OpcionDeFaceta[];
+  /** Cuántas casillas se ven antes de «Ver todas». Sin esto, todas. */
+  visibles?: number;
+  /** El texto de muestra del campo, en las de escribir. */
+  ejemplo?: string;
+}
+
 @Component({
   selector: 'app-mi-scopus',
   templateUrl: './mi-scopus.html',
@@ -144,102 +164,328 @@ export class MiScopusPanel implements OnInit {
   readonly ejemploNormal = '"mobile learning" university students';
 
   /**
-   * Los filtros de debajo del campo.
+   * «Refinar búsqueda»: los mismos filtros que el panel de Scopus.
    *
    * NO VIAJAN APARTE: se convierten en cláusulas de la propia ecuación
-   * (`PUBYEAR`, `DOCTYPE`, `LANGUAGE`, `OPENACCESS`) y se pegan con AND. Es el
-   * mismo lenguaje que usa Scopus en su web, así que el servidor no cambia y lo
-   * que se busca es exactamente la ecuación que se enseña debajo: quien la copie
-   * y la pegue en Scopus ve los mismos resultados.
+   * (`PUBYEAR`, `SUBJAREA`, `DOCTYPE`, `AFFILCOUNTRY`…) y se pegan con AND. Es
+   * el mismo lenguaje que usa Scopus en su web, así que el servidor no cambia y
+   * lo que se busca es exactamente la ecuación que se enseña debajo: quien la
+   * copie y la pegue en Scopus ve los mismos resultados. Todos los códigos se
+   * probaron contra la API el 17-sep.
+   *
+   * SIN CUENTAS JUNTO A CADA OPCIÓN, Y POR QUÉ
+   * -----------------------------------------
+   * Scopus las da con el parámetro `facets`, pero con nuestra clave contesta
+   * «not entitled to access facets»: hace falta token institucional. Sacarlas a
+   * mano sería una consulta por opción —unas cincuenta por búsqueda— contra la
+   * cuota de la casa. Así que se ofrecen las opciones sin número, que es mejor
+   * que un número inventado o calculado sobre veinticinco resultados.
+   *
+   * Dentro de una sección las opciones se suman (OR: «artículo o ponencia»); entre
+   * secciones se restan (AND), igual que en Scopus.
    */
+  readonly dentro = signal('');
+  readonly modoAnio = signal<'rango' | 'sueltos'>('rango');
   readonly anioDesde = signal('');
   readonly anioHasta = signal('');
-  readonly tipo = signal('');
-  readonly idioma = signal('');
-  readonly soloAbiertos = signal(false);
-  readonly area = signal('');
+  readonly aniosSueltos = signal('');
+
+  /** Lo marcado o escrito en cada faceta, por su clave. */
+  readonly seleccion = signal<Readonly<Record<string, readonly string[]>>>({});
+
+  /** Las facetas con la lista completa desplegada («Ver todas»). */
+  readonly desplegadas = signal<ReadonlySet<string>>(new Set());
 
   /**
-   * Las áreas temáticas de Scopus, con el código que entiende `SUBJAREA`.
+   * Las secciones del panel, en el orden de Scopus.
    *
-   * Son las 27 de Scopus y ninguna más: el área es de la REVISTA, no del
-   * artículo, así que inventar subáreas propias prometería una precisión que
-   * Scopus no tiene. Van por orden alfabético en español, que es como se buscan.
+   * `casillas`: una lista cerrada con el código de Scopus de cada opción.
+   * `texto`: lo escribe él (un país, una revista, un autor), porque sin facetas
+   * no hay de dónde sacar la lista de los que aparecen en su búsqueda.
    */
-  readonly areas = [
-    { valor: 'AGRI', texto: 'Agricultura y biología' },
-    { valor: 'ARTS', texto: 'Artes y humanidades' },
-    { valor: 'BIOC', texto: 'Bioquímica, genética y biología molecular' },
-    { valor: 'BUSI', texto: 'Administración, negocios y contabilidad' },
-    { valor: 'CENG', texto: 'Ingeniería química' },
-    { valor: 'CHEM', texto: 'Química' },
-    { valor: 'COMP', texto: 'Ciencias de la computación' },
-    { valor: 'DECI', texto: 'Ciencias de la decisión' },
-    { valor: 'DENT', texto: 'Odontología' },
-    { valor: 'EART', texto: 'Ciencias de la Tierra y planetarias' },
-    { valor: 'ECON', texto: 'Economía, econometría y finanzas' },
-    { valor: 'ENER', texto: 'Energía' },
-    { valor: 'ENGI', texto: 'Ingeniería' },
-    { valor: 'ENVI', texto: 'Ciencias ambientales' },
-    { valor: 'HEAL', texto: 'Profesiones de la salud' },
-    { valor: 'IMMU', texto: 'Inmunología y microbiología' },
-    { valor: 'MATE', texto: 'Ciencia de materiales' },
-    { valor: 'MATH', texto: 'Matemáticas' },
-    { valor: 'MEDI', texto: 'Medicina' },
-    { valor: 'MULT', texto: 'Multidisciplinar' },
-    { valor: 'NEUR', texto: 'Neurociencia' },
-    { valor: 'NURS', texto: 'Enfermería' },
-    { valor: 'PHAR', texto: 'Farmacología, toxicología y farmacia' },
-    { valor: 'PHYS', texto: 'Física y astronomía' },
-    { valor: 'PSYC', texto: 'Psicología' },
-    { valor: 'SOCI', texto: 'Ciencias sociales' },
-    { valor: 'VETE', texto: 'Veterinaria' },
-  ].sort((a, b) => a.texto.localeCompare(b.texto, 'es'));
-
-  readonly tipos = [
-    { valor: 'ar', texto: 'Artículo' },
-    { valor: 're', texto: 'Revisión' },
-    { valor: 'cp', texto: 'Ponencia de congreso' },
-    { valor: 'ch', texto: 'Capítulo de libro' },
-    { valor: 'bk', texto: 'Libro' },
-  ];
-
-  readonly idiomas = [
-    { valor: 'english', texto: 'Inglés' },
-    { valor: 'spanish', texto: 'Español' },
-    { valor: 'portuguese', texto: 'Portugués' },
+  readonly facetas: readonly Faceta[] = [
+    {
+      clave: 'area',
+      titulo: 'Área temática',
+      tipo: 'casillas',
+      campo: 'SUBJAREA',
+      visibles: 6,
+      opciones: [
+        { valor: 'SOCI', texto: 'Ciencias sociales' },
+        { valor: 'COMP', texto: 'Ciencias de la computación' },
+        { valor: 'BUSI', texto: 'Administración, negocios y contabilidad' },
+        { valor: 'PSYC', texto: 'Psicología' },
+        { valor: 'MEDI', texto: 'Medicina' },
+        { valor: 'ENGI', texto: 'Ingeniería' },
+        { valor: 'AGRI', texto: 'Agricultura y biología' },
+        { valor: 'ARTS', texto: 'Artes y humanidades' },
+        { valor: 'BIOC', texto: 'Bioquímica, genética y biología molecular' },
+        { valor: 'CENG', texto: 'Ingeniería química' },
+        { valor: 'CHEM', texto: 'Química' },
+        { valor: 'DECI', texto: 'Ciencias de la decisión' },
+        { valor: 'DENT', texto: 'Odontología' },
+        { valor: 'EART', texto: 'Ciencias de la Tierra y planetarias' },
+        { valor: 'ECON', texto: 'Economía, econometría y finanzas' },
+        { valor: 'ENER', texto: 'Energía' },
+        { valor: 'ENVI', texto: 'Ciencias ambientales' },
+        { valor: 'HEAL', texto: 'Profesiones de la salud' },
+        { valor: 'IMMU', texto: 'Inmunología y microbiología' },
+        { valor: 'MATE', texto: 'Ciencia de materiales' },
+        { valor: 'MATH', texto: 'Matemáticas' },
+        { valor: 'MULT', texto: 'Multidisciplinar' },
+        { valor: 'NEUR', texto: 'Neurociencia' },
+        { valor: 'NURS', texto: 'Enfermería' },
+        { valor: 'PHAR', texto: 'Farmacología, toxicología y farmacia' },
+        { valor: 'PHYS', texto: 'Física y astronomía' },
+        { valor: 'VETE', texto: 'Veterinaria' },
+      ],
+    },
+    {
+      clave: 'tipo',
+      titulo: 'Tipo de documento',
+      tipo: 'casillas',
+      campo: 'DOCTYPE',
+      visibles: 6,
+      opciones: [
+        { valor: 'ar', texto: 'Artículo' },
+        { valor: 're', texto: 'Revisión' },
+        { valor: 'cp', texto: 'Ponencia de congreso' },
+        { valor: 'ch', texto: 'Capítulo de libro' },
+        { valor: 'bk', texto: 'Libro' },
+        { valor: 'cr', texto: 'Reseña de congreso' },
+        { valor: 'ed', texto: 'Editorial' },
+        { valor: 'le', texto: 'Carta' },
+        { valor: 'no', texto: 'Nota' },
+        { valor: 'sh', texto: 'Encuesta breve' },
+        { valor: 'dp', texto: 'Artículo de datos' },
+        { valor: 'er', texto: 'Fe de erratas' },
+      ],
+    },
+    {
+      clave: 'idioma',
+      titulo: 'Idioma',
+      tipo: 'casillas',
+      campo: 'LANGUAGE',
+      visibles: 4,
+      opciones: [
+        { valor: 'english', texto: 'Inglés' },
+        { valor: 'spanish', texto: 'Español' },
+        { valor: 'portuguese', texto: 'Portugués' },
+        { valor: 'french', texto: 'Francés' },
+        { valor: 'german', texto: 'Alemán' },
+        { valor: 'italian', texto: 'Italiano' },
+        { valor: 'chinese', texto: 'Chino' },
+        { valor: 'russian', texto: 'Ruso' },
+      ],
+    },
+    {
+      clave: 'clave',
+      titulo: 'Palabra clave',
+      tipo: 'texto',
+      campo: 'KEY',
+      ejemplo: 'employability',
+    },
+    {
+      clave: 'pais',
+      titulo: 'País o territorio',
+      tipo: 'texto',
+      campo: 'AFFILCOUNTRY',
+      ejemplo: 'Peru',
+    },
+    {
+      clave: 'fuente',
+      titulo: 'Tipo de fuente',
+      tipo: 'casillas',
+      campo: 'SRCTYPE',
+      opciones: [
+        { valor: 'j', texto: 'Revista' },
+        { valor: 'p', texto: 'Actas de congreso' },
+        { valor: 'b', texto: 'Libro' },
+        { valor: 'k', texto: 'Serie de libros' },
+        { valor: 'd', texto: 'Revista profesional' },
+      ],
+    },
+    {
+      clave: 'revista',
+      titulo: 'Título de la fuente',
+      tipo: 'texto',
+      campo: 'SRCTITLE',
+      ejemplo: 'Computers & Education',
+    },
+    {
+      clave: 'autor',
+      titulo: 'Autor',
+      tipo: 'texto',
+      campo: 'AUTHOR-NAME',
+      ejemplo: 'Apellido, inicial',
+    },
+    {
+      clave: 'etapa',
+      titulo: 'Etapa de publicación',
+      tipo: 'casillas',
+      campo: 'PUBSTAGE',
+      opciones: [
+        { valor: 'final', texto: 'Final' },
+        { valor: 'aip', texto: 'En prensa' },
+      ],
+    },
+    {
+      clave: 'afiliacion',
+      titulo: 'Afiliación',
+      tipo: 'texto',
+      campo: 'AFFIL',
+      ejemplo: 'Universidad Nacional Mayor de San Marcos',
+    },
+    {
+      clave: 'patrocinador',
+      titulo: 'Patrocinador',
+      tipo: 'texto',
+      campo: 'FUND-SPONSOR',
+      ejemplo: 'CONCYTEC',
+    },
+    {
+      clave: 'abierto',
+      titulo: 'Acceso abierto',
+      tipo: 'casillas',
+      campo: 'OA',
+      opciones: [
+        { valor: 'all', texto: 'Todo el acceso abierto' },
+        { valor: 'publisherfullgold', texto: 'Gold' },
+        { valor: 'publisherhybridgold', texto: 'Híbrido gold' },
+        { valor: 'publisherfree2read', texto: 'Bronze' },
+        { valor: 'repository', texto: 'Green' },
+      ],
+    },
   ];
 
   /** Un año que se pueda creer, o nada. Lo demás se ignora sin avisar. */
   private anio(texto: string): number | null {
-    const numero = Number(texto);
+    const numero = Number(String(texto).trim());
     const tope = new Date().getFullYear() + 1;
     return Number.isInteger(numero) && numero >= 1900 && numero <= tope ? numero : null;
   }
 
-  /** Las cláusulas que añaden los filtros, ya en el lenguaje de Scopus. */
-  readonly clausulas = computed(() => {
+  /**
+   * Lo que escribe en una faceta de texto, apto para ir dentro de `CAMPO(…)`.
+   *
+   * Sin comillas y sin paréntesis: `AUTHOR-NAME("Kansal, P.")` da cero en
+   * Scopus y `AUTHOR-NAME(Kansal, P.)` da los suyos, y un paréntesis suelto
+   * rompería la ecuación entera.
+   */
+  private limpio(texto: string): string {
+    return texto.replace(/[()"{}]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  private clausulaDeAnios(): string | null {
+    if (this.modoAnio() === 'sueltos') {
+      const anios = [
+        ...new Set(
+          this.aniosSueltos()
+            .split(/[\s,;]+/)
+            .map((a) => this.anio(a))
+            .filter((a): a is number => a !== null),
+        ),
+      ].sort();
+      if (anios.length === 0) return null;
+      const partes = anios.map((a) => `PUBYEAR = ${a}`);
+      return partes.length === 1 ? partes[0] : `(${partes.join(' OR ')})`;
+    }
+
     let desde = this.anio(this.anioDesde());
     let hasta = this.anio(this.anioHasta());
     // Escribir los años al revés es un despiste, no una búsqueda vacía.
     if (desde !== null && hasta !== null && desde > hasta) [desde, hasta] = [hasta, desde];
-
+    if (desde !== null && desde === hasta) return `PUBYEAR = ${desde}`;
+    // Scopus no tiene «mayor o igual»: se corre un año para que el escrito entre.
     const partes: string[] = [];
-    if (desde !== null && desde === hasta) partes.push(`PUBYEAR = ${desde}`);
-    else {
-      // Scopus no tiene «mayor o igual»: se corre un año para que el que se
-      // escribió entre.
-      if (desde !== null) partes.push(`PUBYEAR > ${desde - 1}`);
-      if (hasta !== null) partes.push(`PUBYEAR < ${hasta + 1}`);
+    if (desde !== null) partes.push(`PUBYEAR > ${desde - 1}`);
+    if (hasta !== null) partes.push(`PUBYEAR < ${hasta + 1}`);
+    return partes.length ? partes.join(' AND ') : null;
+  }
+
+  /** Las cláusulas que añaden los filtros, ya en el lenguaje de Scopus. */
+  readonly clausulas = computed(() => {
+    const partes: string[] = [];
+
+    const dentro = this.limpio(this.dentro());
+    if (dentro) partes.push(`TITLE-ABS-KEY(${dentro})`);
+
+    const anios = this.clausulaDeAnios();
+    if (anios) partes.push(anios);
+
+    const seleccion = this.seleccion();
+    for (const faceta of this.facetas) {
+      const valores = seleccion[faceta.clave] ?? [];
+      if (valores.length === 0) continue;
+      const trozos = valores.map((valor) => `${faceta.campo}(${valor})`);
+      partes.push(trozos.length === 1 ? trozos[0] : `(${trozos.join(' OR ')})`);
     }
-    if (this.area()) partes.push(`SUBJAREA(${this.area()})`);
-    if (this.tipo()) partes.push(`DOCTYPE(${this.tipo()})`);
-    if (this.idioma()) partes.push(`LANGUAGE(${this.idioma()})`);
-    if (this.soloAbiertos()) partes.push('OPENACCESS(1)');
     return partes;
   });
 
   readonly hayFiltros = computed(() => this.clausulas().length > 0);
+  readonly cuantosFiltros = computed(() => this.clausulas().length);
+
+  marcado(faceta: Faceta, valor: string): boolean {
+    return (this.seleccion()[faceta.clave] ?? []).includes(valor);
+  }
+
+  valoresDe(faceta: Faceta): readonly string[] {
+    return this.seleccion()[faceta.clave] ?? [];
+  }
+
+  /** Lo que se ve de una faceta de casillas: las primeras, o todas. */
+  opcionesVisibles(faceta: Faceta): readonly OpcionDeFaceta[] {
+    const opciones = faceta.opciones ?? [];
+    if (!faceta.visibles || this.desplegadas().has(faceta.clave)) return opciones;
+    // Las marcadas se ven siempre, aunque estén más abajo del corte.
+    return opciones.filter(
+      (opcion, i) => i < faceta.visibles! || this.marcado(faceta, opcion.valor),
+    );
+  }
+
+  desplegar(faceta: Faceta): void {
+    const copia = new Set(this.desplegadas());
+    if (copia.has(faceta.clave)) copia.delete(faceta.clave);
+    else copia.add(faceta.clave);
+    this.desplegadas.set(copia);
+  }
+
+  alternar(faceta: Faceta, valor: string): void {
+    const actuales = this.valoresDe(faceta);
+    const nuevos = actuales.includes(valor)
+      ? actuales.filter((v) => v !== valor)
+      : [...actuales, valor];
+    this.seleccion.update((s) => ({ ...s, [faceta.clave]: nuevos }));
+    this.filtrar();
+  }
+
+  /** Añade lo escrito en una faceta de texto. Lo repetido no entra dos veces. */
+  agregar(faceta: Faceta, campo: HTMLInputElement): void {
+    const valor = this.limpio(campo.value);
+    campo.value = '';
+    if (!valor || this.valoresDe(faceta).some((v) => v.toLowerCase() === valor.toLowerCase())) {
+      return;
+    }
+    this.seleccion.update((s) => ({ ...s, [faceta.clave]: [...this.valoresDe(faceta), valor] }));
+    this.filtrar();
+  }
+
+  quitar(faceta: Faceta, valor: string): void {
+    this.seleccion.update((s) => ({
+      ...s,
+      [faceta.clave]: this.valoresDe(faceta).filter((v) => v !== valor),
+    }));
+    this.filtrar();
+  }
+
+  cambiarModoAnio(modo: 'rango' | 'sueltos'): void {
+    if (modo === this.modoAnio()) return;
+    const antes = this.clausulaDeAnios();
+    this.modoAnio.set(modo);
+    // Solo se vuelve a buscar si el cambio de modo cambia de verdad la ecuación.
+    if (antes !== this.clausulaDeAnios()) this.filtrar();
+  }
 
   /**
    * La ecuación escrita con los filtros pegados.
@@ -342,12 +588,11 @@ export class MiScopusPanel implements OnInit {
   }
 
   quitarFiltros(): void {
+    this.dentro.set('');
     this.anioDesde.set('');
     this.anioHasta.set('');
-    this.tipo.set('');
-    this.idioma.set('');
-    this.soloAbiertos.set(false);
-    this.area.set('');
+    this.aniosSueltos.set('');
+    this.seleccion.set({});
     this.filtrar();
   }
 

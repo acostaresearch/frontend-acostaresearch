@@ -131,89 +131,156 @@
         </button>
       </div>
 
-      <!-- ── Filtros ───────────────────────────────────────────────────────
+      <!-- ── Refinar búsqueda ──────────────────────────────────────────────
+           Los filtros del panel de Scopus, plegados para no tapar el buscador.
            Se convierten en cláusulas de la ecuación (ver `clausulas` en el
-           .ts). Los años se aplican al salir del campo o con Enter, no a cada
-           tecla: «2» ya sería una búsqueda, y gastaría cuota por nada. -->
-      <div class="scopus-filtros" role="group" aria-label="Filtros de la búsqueda">
-        <label class="scopus-filtro">
-          <span>Desde</span>
-          <input
-            type="number"
-            inputmode="numeric"
-            min="1900"
-            placeholder="Año"
-            [value]="anioDesde()"
-            [disabled]="buscando()"
-            (input)="anioDesde.set($any($event.target).value)"
-            (change)="filtrar()"
-          />
-        </label>
-        <label class="scopus-filtro">
-          <span>Hasta</span>
-          <input
-            type="number"
-            inputmode="numeric"
-            min="1900"
-            placeholder="Año"
-            [value]="anioHasta()"
-            [disabled]="buscando()"
-            (input)="anioHasta.set($any($event.target).value)"
-            (change)="filtrar()"
-          />
-        </label>
-        <label class="scopus-filtro scopus-filtro-area">
-          <span>Área</span>
-          <select
-            [disabled]="buscando()"
-            (change)="area.set($any($event.target).value); filtrar()"
-          >
-            <option value="" [selected]="!area()">Todas</option>
-            @for (opcion of areas; track opcion.valor) {
-              <option [value]="opcion.valor" [selected]="area() === opcion.valor">
-                {{ opcion.texto }}
-              </option>
+           .ts). Lo que se escribe se aplica con Enter o al salir del campo, no
+           a cada tecla: «2» ya sería una búsqueda y gastaría cuota por nada. -->
+      <details class="scopus-refinar">
+        <summary>
+          Refinar búsqueda
+          @if (cuantosFiltros() > 0) {
+            <span class="scopus-cuantos">{{ cuantosFiltros() }}</span>
+          }
+        </summary>
+
+        <div class="scopus-secciones">
+          <fieldset class="scopus-seccion scopus-seccion-ancha">
+            <legend>Buscar dentro de los resultados</legend>
+            <input
+              type="search"
+              class="scopus-texto"
+              placeholder="Palabras que también deben aparecer"
+              [value]="dentro()"
+              [disabled]="buscando()"
+              (input)="dentro.set($any($event.target).value)"
+              (change)="filtrar()"
+            />
+          </fieldset>
+
+          <fieldset class="scopus-seccion">
+            <legend>Año</legend>
+            <div class="scopus-conmutador" role="radiogroup" aria-label="Cómo elegir los años">
+              <button
+                type="button"
+                [class.activo]="modoAnio() === 'rango'"
+                [attr.aria-checked]="modoAnio() === 'rango'"
+                role="radio"
+                (click)="cambiarModoAnio('rango')"
+              >
+                Rango
+              </button>
+              <button
+                type="button"
+                [class.activo]="modoAnio() === 'sueltos'"
+                [attr.aria-checked]="modoAnio() === 'sueltos'"
+                role="radio"
+                (click)="cambiarModoAnio('sueltos')"
+              >
+                Individual
+              </button>
+            </div>
+            @if (modoAnio() === 'rango') {
+              <div class="scopus-anios">
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="1900"
+                  placeholder="Desde"
+                  aria-label="Desde el año"
+                  [value]="anioDesde()"
+                  [disabled]="buscando()"
+                  (input)="anioDesde.set($any($event.target).value)"
+                  (change)="filtrar()"
+                />
+                <span aria-hidden="true">–</span>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="1900"
+                  placeholder="Hasta"
+                  aria-label="Hasta el año"
+                  [value]="anioHasta()"
+                  [disabled]="buscando()"
+                  (input)="anioHasta.set($any($event.target).value)"
+                  (change)="filtrar()"
+                />
+              </div>
+            } @else {
+              <input
+                type="text"
+                class="scopus-texto"
+                inputmode="numeric"
+                placeholder="2020, 2022, 2024"
+                aria-label="Años sueltos, separados por comas"
+                [value]="aniosSueltos()"
+                [disabled]="buscando()"
+                (input)="aniosSueltos.set($any($event.target).value)"
+                (change)="filtrar()"
+              />
             }
-          </select>
-        </label>
-        <label class="scopus-filtro">
-          <span>Tipo</span>
-          <select
-            [disabled]="buscando()"
-            (change)="tipo.set($any($event.target).value); filtrar()"
-          >
-            <option value="" [selected]="!tipo()">Cualquiera</option>
-            @for (opcion of tipos; track opcion.valor) {
-              <option [value]="opcion.valor" [selected]="tipo() === opcion.valor">
-                {{ opcion.texto }}
-              </option>
-            }
-          </select>
-        </label>
-        <label class="scopus-filtro">
-          <span>Idioma</span>
-          <select
-            [disabled]="buscando()"
-            (change)="idioma.set($any($event.target).value); filtrar()"
-          >
-            <option value="" [selected]="!idioma()">Cualquiera</option>
-            @for (opcion of idiomas; track opcion.valor) {
-              <option [value]="opcion.valor" [selected]="idioma() === opcion.valor">
-                {{ opcion.texto }}
-              </option>
-            }
-          </select>
-        </label>
-        <label class="scopus-filtro scopus-filtro-caja">
-          <input
-            type="checkbox"
-            [checked]="soloAbiertos()"
-            [disabled]="buscando()"
-            (change)="soloAbiertos.set($any($event.target).checked); filtrar()"
-          />
-          <span>Solo acceso abierto</span>
-        </label>
-      </div>
+          </fieldset>
+
+          @for (faceta of facetas; track faceta.clave) {
+            <fieldset class="scopus-seccion">
+              <legend>{{ faceta.titulo }}</legend>
+
+              @if (faceta.tipo === 'casillas') {
+                @for (opcion of opcionesVisibles(faceta); track opcion.valor) {
+                  <label class="scopus-casilla">
+                    <input
+                      type="checkbox"
+                      [checked]="marcado(faceta, opcion.valor)"
+                      [disabled]="buscando()"
+                      (change)="alternar(faceta, opcion.valor)"
+                    />
+                    <span>{{ opcion.texto }}</span>
+                  </label>
+                }
+                @if (faceta.visibles && (faceta.opciones?.length ?? 0) > faceta.visibles) {
+                  <button type="button" class="boton enlace" (click)="desplegar(faceta)">
+                    {{ desplegadas().has(faceta.clave) ? 'Ver menos' : 'Ver todas' }}
+                  </button>
+                }
+              } @else {
+                @if (valoresDe(faceta).length > 0) {
+                  <div class="scopus-fichas">
+                    @for (valor of valoresDe(faceta); track valor) {
+                      <span class="scopus-ficha-filtro">
+                        {{ valor }}
+                        <button
+                          type="button"
+                          [attr.aria-label]="'Quitar ' + valor"
+                          [disabled]="buscando()"
+                          (click)="quitar(faceta, valor)"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
+                <input
+                  #campoFaceta
+                  type="text"
+                  class="scopus-texto"
+                  [placeholder]="faceta.ejemplo ?? ''"
+                  [attr.aria-label]="faceta.titulo"
+                  [disabled]="buscando()"
+                  (keydown.enter)="agregar(faceta, campoFaceta)"
+                  (change)="agregar(faceta, campoFaceta)"
+                />
+              }
+            </fieldset>
+          }
+        </div>
+
+        <p class="tenue">
+          Dentro de cada sección se suman las opciones (artículo <em>o</em> ponencia); entre
+          secciones se combinan (inglés <em>y</em> ciencias sociales). Scopus no nos da cuántos
+          resultados hay en cada opción con nuestro acceso, por eso no llevan número.
+        </p>
+      </details>
 
       <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
            «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
