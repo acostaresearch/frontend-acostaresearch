@@ -151,7 +151,7 @@
       <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
            «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. -->
       @if (hayFiltros()) {
-        <p class="scopus-se-añade">
+        <p class="scopus-anadido">
           Se añade a tu ecuación: <code>AND {{ clausulas().join(' AND ') }}</code>
           <button type="button" class="boton enlace" [disabled]="buscando()" (click)="quitarFiltros()">
             Quitar filtros
@@ -186,8 +186,8 @@
               nombres: <code>("mobile learning" OR "m-learning")</code>.
             </li>
             <li>
-              <code>PUBYEAR &gt; 2019</code> deja fuera lo viejo, que es lo primero que mira un
-              jurado.
+              Los años, el tipo de documento y el idioma no hace falta escribirlos: ponlos en los
+              filtros de arriba. Lo viejo es lo primero que mira un jurado.
             </li>
           </ul>
           <p class="tenue">
@@ -204,6 +204,9 @@
           <p class="scopus-aviso">
             Scopus no encontró nada con esa ecuación. Suele ser por afinar de más: quita un
             <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
+            @if (hayFiltros()) {
+              Prueba también a quitar algún filtro.
+            }
           </p>
           <div class="scopus-acciones">
             <button type="button" class="boton secundario" (click)="limpiar()">
