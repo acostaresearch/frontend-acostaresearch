@@ -93,6 +93,71 @@
   font-weight: 650;
 }
 
+/* ── Normal / Avanzada ─────────────────────────────────────────────────────
+   Un conmutador pequeño a la derecha del título: es cómo se busca, no otra
+   sección, y no debe competir con el campo. */
+.scopus-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.scopus-cabecera .scopus-etiqueta {
+  margin: 0;
+}
+
+.scopus-modos {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--color-fondo-suave, #f6f8fc);
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 999px;
+}
+
+.scopus-modo {
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+
+.scopus-modo.activo {
+  background: var(--color-superficie);
+  color: var(--color-primario);
+  font-weight: 650;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.scopus-donde {
+  flex: none;
+  max-width: 42%;
+  padding: 9px 10px;
+  border: 1px solid var(--color-borde, #dfe3eb);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-texto);
+}
+
+.scopus-donde:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+/* En la normal se escriben palabras, no una ecuación: letra normal. */
+.scopus-campo-normal {
+  font-family: inherit;
+  font-size: 14px;
+}
+
 .scopus-fila {
   display: flex;
   gap: 8px;
@@ -123,6 +188,19 @@
 .scopus-fila .boton {
   flex: none;
   width: auto;
+}
+
+/* En el móvil el desplegable, el campo y el botón no caben en una línea: el
+   desplegable sube a la suya y el campo conserva el ancho para escribir. */
+@media (max-width: 560px) {
+  .scopus-fila {
+    flex-wrap: wrap;
+  }
+
+  .scopus-donde {
+    flex: 1 1 100%;
+    max-width: none;
+  }
 }
 
 /* ── Los filtros ───────────────────────────────────────────────────────────
@@ -156,6 +234,11 @@
 
 .scopus-filtro input[type='number'] {
   width: 84px;
+}
+
+/* Los nombres de área son largos: sin tope, uno solo empuja la fila entera. */
+.scopus-filtro-area select {
+  max-width: 220px;
 }
 
 .scopus-filtro input:focus,

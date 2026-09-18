@@ -60,19 +60,72 @@
       <!-- ── Buscar ────────────────────────────────────────────────────────
            Sin preámbulos y sin anunciar que se está conectado: se está, y
            quien abre esta tarjeta viene a buscar. -->
-      <label class="scopus-etiqueta" for="scopus-ecuacion">Buscar en Scopus</label>
+      <div class="scopus-cabecera">
+        <span class="scopus-etiqueta">Buscar en Scopus</span>
+        <!-- Dos pestañas, como en la web de Scopus. Cada una guarda su texto. -->
+        <div class="scopus-modos" role="tablist" aria-label="Tipo de búsqueda">
+          <button
+            type="button"
+            role="tab"
+            class="scopus-modo"
+            [class.activo]="modo() === 'normal'"
+            [attr.aria-selected]="modo() === 'normal'"
+            (click)="cambiarModo('normal')"
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="scopus-modo"
+            [class.activo]="modo() === 'avanzada'"
+            [attr.aria-selected]="modo() === 'avanzada'"
+            (click)="cambiarModo('avanzada')"
+          >
+            Avanzada
+          </button>
+        </div>
+      </div>
+
       <div class="scopus-fila">
-        <input
-          id="scopus-ecuacion"
-          type="search"
-          class="scopus-campo"
-          [formControl]="ecuacion"
-          [placeholder]="ejemplo"
-          [disabled]="buscando()"
-          autocomplete="off"
-          spellcheck="false"
-          (keydown.enter)="buscar()"
-        />
+        @if (modo() === 'normal') {
+          <select
+            class="scopus-donde"
+            aria-label="Dónde buscar"
+            [disabled]="buscando()"
+            (change)="campo.set($any($event.target).value)"
+          >
+            @for (opcion of campos; track opcion.valor) {
+              <option [value]="opcion.valor" [selected]="campo() === opcion.valor">
+                {{ opcion.texto }}
+              </option>
+            }
+          </select>
+          <input
+            type="search"
+            class="scopus-campo scopus-campo-normal"
+            aria-label="Palabras a buscar"
+            [value]="texto()"
+            [placeholder]="ejemploNormal"
+            [disabled]="buscando()"
+            autocomplete="off"
+            (input)="texto.set($any($event.target).value)"
+            (keydown.enter)="buscar()"
+          />
+        } @else {
+          <input
+            type="search"
+            class="scopus-campo"
+            aria-label="Ecuación de búsqueda"
+            [value]="ecuacion()"
+            [placeholder]="ejemplo"
+            [disabled]="buscando()"
+            autocomplete="off"
+            spellcheck="false"
+            (input)="ecuacion.set($any($event.target).value)"
+            (keydown.enter)="buscar()"
+          />
+        }
         <button type="button" class="boton" [disabled]="buscando()" (click)="buscar()">
           {{ buscando() ? 'Buscando…' : 'Buscar' }}
         </button>
@@ -108,6 +161,20 @@
             (input)="anioHasta.set($any($event.target).value)"
             (change)="filtrar()"
           />
+        </label>
+        <label class="scopus-filtro scopus-filtro-area">
+          <span>Área</span>
+          <select
+            [disabled]="buscando()"
+            (change)="area.set($any($event.target).value); filtrar()"
+          >
+            <option value="" [selected]="!area()">Todas</option>
+            @for (opcion of areas; track opcion.valor) {
+              <option [value]="opcion.valor" [selected]="area() === opcion.valor">
+                {{ opcion.texto }}
+              </option>
+            }
+          </select>
         </label>
         <label class="scopus-filtro">
           <span>Tipo</span>
@@ -149,10 +216,25 @@
       </div>
 
       <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
-           «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. -->
-      @if (hayFiltros()) {
+           «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
+           avanzada sin filtros sería repetir el campo, así que no sale. -->
+      @if (ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
         <p class="scopus-anadido">
-          Se añade a tu ecuación: <code>AND {{ clausulas().join(' AND ') }}</code>
+          Se busca: <code>{{ ecuacionCompleta() }}</code>
+          @if (hayFiltros()) {
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="buscando()"
+              (click)="quitarFiltros()"
+            >
+              Quitar filtros
+            </button>
+          }
+        </p>
+      } @else if (hayFiltros()) {
+        <p class="scopus-anadido">
+          Se añadirá: <code>AND {{ clausulas().join(' AND ') }}</code>
           <button type="button" class="boton enlace" [disabled]="buscando()" (click)="quitarFiltros()">
             Quitar filtros
           </button>
@@ -164,7 +246,35 @@
            dentro, que es cierta y no le sirve a nadie para buscar: quien mira
            un campo vacío no necesita saber cómo funciona el catálogo abierto,
            necesita saber qué escribir. -->
-      @if (!busqueda()) {
+      @if (!busqueda() && modo() === 'normal') {
+        <div class="scopus-ayuda">
+          <p>
+            <strong>Escribe las palabras de tu tema, mejor en inglés</strong>: es el idioma en el
+            que está indexada casi toda la literatura, y en español saldrá muy poco.
+          </p>
+          <ul class="scopus-pistas">
+            <li>
+              Las palabras sueltas se buscan todas a la vez. Entre comillas,
+              <code>"mobile learning"</code>, se busca la frase exacta.
+            </li>
+            <li>
+              Con el desplegable de la izquierda eliges dónde: en el título, por autor, por revista
+              o por DOI.
+            </li>
+            <li>
+              ¿Necesitas sinónimos, <code>OR</code> o varios campos a la vez? Pasa a
+              <button type="button" class="boton enlace" (click)="cambiarModo('avanzada')">
+                búsqueda avanzada</button
+              >: se lleva lo que escribiste ya convertido en ecuación.
+            </li>
+          </ul>
+          <p class="tenue">
+            <button type="button" class="boton enlace" (click)="usarEjemplo()">
+              Poner un ejemplo en el campo
+            </button>
+          </p>
+        </div>
+      } @else if (!busqueda()) {
         <div class="scopus-ayuda">
           <p>
             <strong>¿No sabes qué poner?</strong> Pídesela a Claude en tu conector:

@@ -1,5 +1,4 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -44,7 +43,6 @@ import {
  */
 @Component({
   selector: 'app-mi-scopus',
-  imports: [ReactiveFormsModule],
   templateUrl: './mi-scopus.html',
   styleUrl: './mi-scopus.css',
 })
@@ -74,7 +72,58 @@ export class MiScopusPanel implements OnInit {
    */
   readonly vuelta = signal<string | null>(null);
 
-  readonly ecuacion = new FormControl('', { nonNullable: true });
+  /**
+   * Búsqueda normal o avanzada, como en la web de Scopus.
+   *
+   * La normal existe porque la mayoría de tesistas no ha escrito una ecuación
+   * en su vida y un campo que pide `TITLE-ABS-KEY(…)` los frena en la puerta:
+   * escriben palabras, eligen dónde buscarlas, y la ecuación se arma sola. La
+   * avanzada es el campo de siempre, para quien trae la ecuación de Claude.
+   *
+   * Cada modo guarda su propio texto: cambiar de pestaña no borra lo escrito
+   * en la otra.
+   */
+  readonly modo = signal<'normal' | 'avanzada'>('normal');
+  readonly texto = signal('');
+  readonly campo = signal('TITLE-ABS-KEY');
+  readonly ecuacion = signal('');
+
+  /** Dónde se buscan las palabras en la búsqueda normal. Son campos de Scopus. */
+  readonly campos = [
+    { valor: 'TITLE-ABS-KEY', texto: 'Título, resumen y palabras clave' },
+    { valor: 'TITLE', texto: 'Solo el título' },
+    { valor: 'AUTHOR-NAME', texto: 'Autor' },
+    { valor: 'SRCTITLE', texto: 'Revista' },
+    { valor: 'DOI', texto: 'DOI' },
+  ];
+
+  /**
+   * Lo escrito en la búsqueda normal, convertido en ecuación.
+   *
+   * Se quitan los paréntesis: aquí nadie los pone a propósito, y uno sin cerrar
+   * haría que Scopus rechazara la búsqueda con un error que el tesista no
+   * sabría leer. Las comillas se quedan —una frase exacta sigue sirviendo— y
+   * las palabras sueltas Scopus las junta con AND dentro del campo.
+   */
+  readonly ecuacionNormal = computed(() => {
+    const limpio = this.texto().replace(/[(){}]/g, ' ').replace(/\s+/g, ' ').trim();
+    return limpio ? `${this.campo()}(${limpio})` : '';
+  });
+
+  /** La ecuación del modo en el que está, sin filtros. */
+  private readonly ecuacionBase = computed(() =>
+    this.modo() === 'normal' ? this.ecuacionNormal() : this.ecuacion().trim(),
+  );
+
+  cambiarModo(modo: 'normal' | 'avanzada'): void {
+    if (modo === this.modo()) return;
+    // Pasar a avanzada con palabras escritas se lleva la ecuación ya armada:
+    // es la forma natural de aprender a escribirla, partiendo de la suya.
+    if (modo === 'avanzada' && !this.ecuacion().trim() && this.ecuacionNormal()) {
+      this.ecuacion.set(this.ecuacionNormal());
+    }
+    this.modo.set(modo);
+  }
 
   /**
    * Lo que tiene marcado, por EID.
@@ -91,6 +140,9 @@ export class MiScopusPanel implements OnInit {
   /** El ejemplo que se ofrece. Es el mismo que arma la skill del método. */
   readonly ejemplo = 'TITLE-ABS-KEY("mobile applications" AND education) AND PUBYEAR > 2019';
 
+  /** El de la búsqueda normal: palabras, en inglés, sin sintaxis. */
+  readonly ejemploNormal = '"mobile learning" university students';
+
   /**
    * Los filtros de debajo del campo.
    *
@@ -105,6 +157,44 @@ export class MiScopusPanel implements OnInit {
   readonly tipo = signal('');
   readonly idioma = signal('');
   readonly soloAbiertos = signal(false);
+  readonly area = signal('');
+
+  /**
+   * Las áreas temáticas de Scopus, con el código que entiende `SUBJAREA`.
+   *
+   * Son las 27 de Scopus y ninguna más: el área es de la REVISTA, no del
+   * artículo, así que inventar subáreas propias prometería una precisión que
+   * Scopus no tiene. Van por orden alfabético en español, que es como se buscan.
+   */
+  readonly areas = [
+    { valor: 'AGRI', texto: 'Agricultura y biología' },
+    { valor: 'ARTS', texto: 'Artes y humanidades' },
+    { valor: 'BIOC', texto: 'Bioquímica, genética y biología molecular' },
+    { valor: 'BUSI', texto: 'Administración, negocios y contabilidad' },
+    { valor: 'CENG', texto: 'Ingeniería química' },
+    { valor: 'CHEM', texto: 'Química' },
+    { valor: 'COMP', texto: 'Ciencias de la computación' },
+    { valor: 'DECI', texto: 'Ciencias de la decisión' },
+    { valor: 'DENT', texto: 'Odontología' },
+    { valor: 'EART', texto: 'Ciencias de la Tierra y planetarias' },
+    { valor: 'ECON', texto: 'Economía, econometría y finanzas' },
+    { valor: 'ENER', texto: 'Energía' },
+    { valor: 'ENGI', texto: 'Ingeniería' },
+    { valor: 'ENVI', texto: 'Ciencias ambientales' },
+    { valor: 'HEAL', texto: 'Profesiones de la salud' },
+    { valor: 'IMMU', texto: 'Inmunología y microbiología' },
+    { valor: 'MATE', texto: 'Ciencia de materiales' },
+    { valor: 'MATH', texto: 'Matemáticas' },
+    { valor: 'MEDI', texto: 'Medicina' },
+    { valor: 'MULT', texto: 'Multidisciplinar' },
+    { valor: 'NEUR', texto: 'Neurociencia' },
+    { valor: 'NURS', texto: 'Enfermería' },
+    { valor: 'PHAR', texto: 'Farmacología, toxicología y farmacia' },
+    { valor: 'PHYS', texto: 'Física y astronomía' },
+    { valor: 'PSYC', texto: 'Psicología' },
+    { valor: 'SOCI', texto: 'Ciencias sociales' },
+    { valor: 'VETE', texto: 'Veterinaria' },
+  ].sort((a, b) => a.texto.localeCompare(b.texto, 'es'));
 
   readonly tipos = [
     { valor: 'ar', texto: 'Artículo' },
@@ -142,6 +232,7 @@ export class MiScopusPanel implements OnInit {
       if (desde !== null) partes.push(`PUBYEAR > ${desde - 1}`);
       if (hasta !== null) partes.push(`PUBYEAR < ${hasta + 1}`);
     }
+    if (this.area()) partes.push(`SUBJAREA(${this.area()})`);
     if (this.tipo()) partes.push(`DOCTYPE(${this.tipo()})`);
     if (this.idioma()) partes.push(`LANGUAGE(${this.idioma()})`);
     if (this.soloAbiertos()) partes.push('OPENACCESS(1)');
@@ -156,10 +247,12 @@ export class MiScopusPanel implements OnInit {
    * La del tesista va entre paréntesis: sin ellos, un `OR` suyo se comería el
    * primer filtro y `a OR b AND PUBYEAR > 2019` filtraría solo la mitad.
    */
-  private conFiltros(ecuacion: string): string {
+  readonly ecuacionCompleta = computed(() => {
+    const ecuacion = this.ecuacionBase();
     const clausulas = this.clausulas();
+    if (!ecuacion) return '';
     return clausulas.length ? [`(${ecuacion})`, ...clausulas].join(' AND ') : ecuacion;
-  }
+  });
 
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('scopus');
@@ -215,7 +308,7 @@ export class MiScopusPanel implements OnInit {
   }
 
   buscar(pagina = 1): void {
-    const ecuacion = this.ecuacion.value.trim();
+    const ecuacion = this.ecuacionCompleta();
     if (!ecuacion || this.buscando()) return;
 
     this.buscando.set(true);
@@ -223,7 +316,7 @@ export class MiScopusPanel implements OnInit {
     this.parte.set(null);
     this.marcados.set(new Set());
 
-    this.scopus.buscar(this.conFiltros(ecuacion), pagina).subscribe({
+    this.scopus.buscar(ecuacion, pagina).subscribe({
       next: (resultado) => {
         this.busqueda.set(resultado);
         this.buscando.set(false);
@@ -254,11 +347,17 @@ export class MiScopusPanel implements OnInit {
     this.tipo.set('');
     this.idioma.set('');
     this.soloAbiertos.set(false);
+    this.area.set('');
     this.filtrar();
   }
 
   usarEjemplo(): void {
-    this.ecuacion.setValue(this.ejemplo);
+    if (this.modo() === 'normal') {
+      this.campo.set('TITLE-ABS-KEY');
+      this.texto.set(this.ejemploNormal);
+    } else {
+      this.ecuacion.set(this.ejemplo);
+    }
   }
 
   /**
@@ -276,7 +375,8 @@ export class MiScopusPanel implements OnInit {
    * están guardadas y no dependen de esta pantalla.
    */
   limpiar(): void {
-    this.ecuacion.reset();
+    this.texto.set('');
+    this.ecuacion.set('');
     this.busqueda.set(null);
     this.marcados.set(new Set());
     this.parte.set(null);
