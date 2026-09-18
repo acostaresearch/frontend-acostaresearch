@@ -11,7 +11,48 @@
          «Sesión y seguridad» vive aquí y no abajo del todo por lo mismo de
          siempre: cerrar la sesión en un ordenador ajeno es lo que se busca con
          prisa, y ahora se encuentra sin bajar la página. -->
-    <aside class="lateral">
+    <!-- ── En móvil: la barra lateral se vuelve un cajón ─────────────────────
+         Antes se apilaba encima de todo y había que bajar una pantalla entera
+         de datos de la cuenta para llegar a «Mis compras» o al conector. Ahora
+         se abre con este botón y sale POR ENCIMA del contenido, sin empujarlo.
+         En escritorio el botón no se ve y la barra sigue fija a la izquierda. -->
+    <div class="barra-cuenta">
+      <button
+        type="button"
+        class="abrir-cuenta"
+        aria-controls="lateral-cuenta"
+        [attr.aria-expanded]="cuentaAbierta()"
+        (click)="cuentaAbierta.set(true)"
+      >
+        <span class="icono-menu" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="avatar mini" aria-hidden="true">{{ iniciales() }}</span>
+        <span class="abrir-cuenta-texto">
+          <b>Tu cuenta</b>
+          <small>{{ nombre() }}</small>
+        </span>
+      </button>
+    </div>
+
+    @if (cuentaAbierta()) {
+      <div class="lateral-fondo" aria-hidden="true" (click)="cuentaAbierta.set(false)"></div>
+    }
+
+    <aside
+      id="lateral-cuenta"
+      class="lateral"
+      [class.abierta]="cuentaAbierta()"
+      aria-label="Tu cuenta"
+    >
+      <button
+        type="button"
+        class="cerrar-cuenta"
+        aria-label="Cerrar el menú de la cuenta"
+        (click)="cuentaAbierta.set(false)"
+      >
+        ×
+      </button>
       <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
       <h1>{{ nombre() }}</h1>
       <p class="correo">{{ user.email }}</p>

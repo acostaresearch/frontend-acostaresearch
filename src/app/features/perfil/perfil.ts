@@ -1,5 +1,13 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -62,6 +70,18 @@ export class Perfil implements OnInit {
 
   readonly usuario = this.auth.user;
   readonly nombre = this.auth.fullName;
+
+  /**
+   * El cajón de la cuenta en móvil. En escritorio no hace nada: la barra lateral
+   * está siempre a la vista y el botón que lo abre no se pinta.
+   */
+  readonly cuentaAbierta = signal(false);
+
+  /** Escape cierra el cajón, como cierra cualquier cosa que se abre encima. */
+  @HostListener('document:keydown.escape')
+  cerrarCuenta(): void {
+    this.cuentaAbierta.set(false);
+  }
 
   /** Iniciales para el avatar: no pedimos foto, así que se dibuja con letras. */
   readonly iniciales = computed(() => {
