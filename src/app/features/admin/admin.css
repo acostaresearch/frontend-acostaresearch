@@ -310,7 +310,6 @@
   }
 }
 
-
 /* ── Tarjetas y formularios ─────────────────────────────────────────────── */
 .columnas {
   display: grid;
@@ -1036,12 +1035,15 @@ td.acciones {
   list-style: none;
 }
 
+/* Cada comprobante, dentro de la tarjeta que lo anuncia. En gris y no en
+   blanco: sobre la tarjeta blanca, una caja blanca con borde fino se pierde y
+   dos comprobantes seguidos se leen como uno solo. */
 .comprobante {
   display: grid;
   grid-template-columns: 132px 1fr;
   gap: 16px;
   padding: 14px;
-  background: var(--color-superficie);
+  background: var(--color-fondo);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
   transition: opacity var(--transicion);
@@ -1944,6 +1946,11 @@ td.acciones {
  *
  * La pestaña que junta códigos, comprobantes y pasarela en una sola tabla.
  */
+/* Las dos tarjetas de arriba, una debajo de otra y a todo lo ancho.
+   Estuvieron en dos columnas mientras la de revisar solo llevaba un aviso;
+   con los comprobantes dentro no cabían: para aprobar hay que leer el número
+   de operación en la captura, y eso pide ancho. El hueco entre ellas lo pone
+   el margen de `.tarjeta`. */
 .accesos-cabecera .tarjeta h2 {
   margin-bottom: 10px;
 }
