@@ -657,7 +657,43 @@ h1 {
 }
 
 .qr-pago {
+  display: grid;
+  gap: 8px;
   flex: none;
+  justify-items: stretch;
+}
+
+/* Guardar el código. Va pegado debajo de la imagen y no entre los pasos: es
+   otra forma de hacer el paso uno —la de quien compra desde el mismo móvil y
+   no tiene con qué escanear su propia pantalla—, no un paso más. */
+.qr-descargar {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition:
+    color var(--transicion),
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.qr-descargar:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+  text-decoration: none;
+}
+
+.qr-descargar .icono {
+  width: 15px;
+  height: 15px;
 }
 
 /* La imagen ya trae el morado de Yape, el logo y el titular: solo hay que

@@ -625,10 +625,31 @@
                     <div class="yape-guia">
                       <div class="qr-pago">
                         <img src="/qr-pago/qr-code.jpeg" alt="Código QR para pagar con Yape" />
+
+                        <!-- Descargarlo no es un extra: quien compra desde el
+                             móvil no puede escanear la pantalla de ese mismo
+                             móvil. Guarda la imagen y la abre desde la galería
+                             del propio Yape, que es como se paga de verdad
+                             cuando solo hay un teléfono delante. -->
+                        <a
+                          class="qr-descargar"
+                          href="/qr-pago/qr-code.jpeg"
+                          download="yape-acosta-research.jpeg"
+                        >
+                          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 4v12" />
+                            <path d="m7.5 11.5 4.5 4.5 4.5-4.5" />
+                            <path d="M4 15.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3.5" />
+                          </svg>
+                          Descargar QR
+                        </a>
                       </div>
 
                       <ol class="yape-pasos">
-                        <li>Abre Yape o Plin y escanea el código.</li>
+                        <li>
+                          Abre Yape o Plin y escanea el código. Si pagas desde este mismo teléfono,
+                          descárgalo y ábrelo desde la galería de tu app.
+                        </li>
                         <li>
                           Paga <strong>{{ precioFinal(plan) }}</strong> exactos.
                         </li>
