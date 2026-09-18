@@ -71,10 +71,7 @@ export class Perfil implements OnInit {
   readonly usuario = this.auth.user;
   readonly nombre = this.auth.fullName;
 
-  /**
-   * El cajón de la cuenta en móvil. En escritorio no hace nada: la barra lateral
-   * está siempre a la vista y el botón que lo abre no se pinta.
-   */
+  /** El cajón de la cuenta, que se abre con el botón ☰ en cualquier pantalla. */
   readonly cuentaAbierta = signal(false);
 
   /** Escape cierra el cajón, como cierra cualquier cosa que se abre encima. */
