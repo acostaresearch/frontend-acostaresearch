@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -8,9 +8,11 @@ import { MisFuentesService } from '../../core/services/mis-fuentes.service';
 import {
   BusquedaDeScopus,
   EstadoDeScopus,
+  FuenteParaResumir,
   ImportacionDeScopus,
   OrdenDeScopus,
   ResultadoDeScopus,
+  ResumenConIa,
   ScopusService,
 } from '../../core/services/scopus.service';
 
@@ -66,7 +68,7 @@ interface Faceta {
 
 @Component({
   selector: 'app-mi-scopus',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, NgTemplateOutlet],
   templateUrl: './mi-scopus.html',
   styleUrl: './mi-scopus.css',
 })
@@ -263,10 +265,44 @@ export class MiScopusPanel implements OnInit {
   readonly errorIa = signal<string | null>(null);
   readonly notaIa = signal<string | null>(null);
 
+  /**
+   * Lo que hizo el copiloto la última vez, para enseñar sus pasos como Scopus
+   * («Ocultar pasos del copiloto»): qué entendió, qué añadió y qué quitó.
+   */
+  readonly ultimaGeneracion = signal<{
+    tema: string;
+    conceptos: number;
+    sinonimos: number;
+    nota: string | null;
+  } | null>(null);
+
+  readonly pasosAbiertos = signal(true);
+
+  readonly pasosDelCopiloto = computed(() => {
+    const generacion = this.ultimaGeneracion();
+    if (!generacion) return [];
+    const pasos = [
+      `Leí tu tema y lo separé en ${generacion.conceptos} ${generacion.conceptos === 1 ? 'concepto' : 'conceptos'}.`,
+      generacion.sinonimos > 0
+        ? `Añadí ${generacion.sinonimos} sinónimos en inglés, los que usa de verdad la literatura.`
+        : 'No hacían falta sinónimos: los términos ya son los que usa la literatura.',
+    ];
+    if (generacion.nota) pasos.push(generacion.nota);
+    pasos.push('Armé la búsqueda: cada concepto con sus sinónimos (O), y todos los conceptos a la vez (Y).');
+    return pasos;
+  });
+
   alternarIa(encendida: boolean): void {
     this.iaAbierta.set(encendida);
     this.errorIa.set(null);
     if (encendida) this.cambiarModo('normal');
+  }
+
+  /** En la pregunta del copiloto, Enter propone y Mayúsculas+Enter parte la línea. */
+  enterEnPregunta(evento: KeyboardEvent): void {
+    if (evento.shiftKey) return;
+    evento.preventDefault();
+    this.generarConIa();
   }
 
   /** Desde el aviso de español: lleva lo escrito al generador para pasarlo a inglés. */
@@ -292,13 +328,105 @@ export class MiScopusPanel implements OnInit {
           Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
         );
         this.notaIa.set(nota);
-        this.iaAbierta.set(false);
+        this.ultimaGeneracion.set({
+          tema,
+          conceptos: conceptos.length,
+          sinonimos: conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
+          nota,
+        });
+        this.pasosAbiertos.set(true);
       },
       error: (fallo: unknown) => {
         this.generando.set(false);
         this.errorIa.set(toApiError(fallo).message);
       },
     });
+  }
+
+  // ── El resumen con citas ──────────────────────────────────────────────────
+
+  /**
+   * Las preguntas hechas sobre la página que se ve, con su respuesta. La
+   * primera es el resumen; las demás, las de seguimiento. Se vacía con cada
+   * búsqueda nueva: el resumen es de ESTOS artículos, y con otros ya no vale.
+   */
+  readonly hilo = signal<{ pregunta: string; resumen: ResumenConIa }[]>([]);
+  readonly resumiendo = signal(false);
+  readonly errorResumen = signal<string | null>(null);
+  readonly resumenAbierto = signal(true);
+  readonly seguimiento = signal('');
+  readonly referenciaResaltada = signal<number | null>(null);
+
+  /** Los artículos que lee la IA: los diez primeros de la página que se ve. */
+  readonly fuentesDelResumen = computed<FuenteParaResumir[]>(() =>
+    (this.busqueda()?.resultados ?? []).slice(0, 10).map((r) => ({
+      eid: r.eid,
+      doi: r.doi,
+      titulo: r.titulo,
+      anio: r.anio,
+    })),
+  );
+
+  /** Los mismos, enteros, para la columna de «Referencias». */
+  readonly referencias = computed(() => (this.busqueda()?.resultados ?? []).slice(0, 10));
+
+  /** Los números que la IA pudo leer con resumen, del último turno. */
+  readonly conResumen = computed(() => new Set(this.hilo().at(-1)?.resumen.conResumen ?? []));
+
+  /** La pregunta por defecto: la del copiloto, o lo que buscó escrito en palabras. */
+  private preguntaPorDefecto(): string {
+    const generacion = this.ultimaGeneracion();
+    if (generacion) return generacion.tema;
+    const conceptos = this.conceptos().map((c) => c.nombre);
+    return conceptos.length > 0
+      ? `¿Qué dice la literatura sobre ${conceptos.join(', ')}?`
+      : '¿Qué dicen estos artículos?';
+  }
+
+  /** Un turno, en texto plano, para que la IA entienda la de seguimiento. */
+  private comoTexto(resumen: ResumenConIa): string {
+    const puntos = resumen.secciones.flatMap((s) => s.puntos.map((p) => p.texto));
+    return [resumen.introduccion, ...puntos, resumen.conclusion].filter(Boolean).join(' ').slice(0, 2900);
+  }
+
+  resumir(pregunta = this.preguntaPorDefecto()): void {
+    const fuentes = this.fuentesDelResumen();
+    if (fuentes.length === 0 || this.resumiendo()) return;
+
+    this.resumiendo.set(true);
+    this.errorResumen.set(null);
+    this.resumenAbierto.set(true);
+
+    const anteriores = this.hilo().map((turno) => ({
+      pregunta: turno.pregunta,
+      respuesta: this.comoTexto(turno.resumen),
+    }));
+
+    this.scopus.resumir(pregunta, fuentes, anteriores).subscribe({
+      next: (resumen) => {
+        this.resumiendo.set(false);
+        this.hilo.update((turnos) => [...turnos, { pregunta, resumen }]);
+        this.seguimiento.set('');
+      },
+      error: (fallo: unknown) => {
+        this.resumiendo.set(false);
+        this.errorResumen.set(toApiError(fallo).message);
+      },
+    });
+  }
+
+  preguntarSeguimiento(): void {
+    const pregunta = this.seguimiento().trim();
+    if (pregunta.length < 3) return;
+    this.resumir(pregunta);
+  }
+
+  /** Una cita [n] lleva a su referencia de la columna y la resalta. */
+  verReferencia(numero: number): void {
+    this.referenciaResaltada.set(numero);
+    document
+      .getElementById(`sc-ref-${numero}`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   // ── El orden de los resultados ────────────────────────────────────────────
@@ -883,6 +1011,14 @@ export class MiScopusPanel implements OnInit {
     const ecuacion = this.ecuacionCompleta();
     if (!ecuacion || this.buscando()) return;
 
+    // Desde el copiloto, con conceptos ya propuestos, la primera página llega
+    // con su resumen, como en la IA de Scopus: la pregunta ya está hecha.
+    const generacion = this.ultimaGeneracion();
+    const resumirAlLlegar = this.iaAbierta() && generacion !== null && pagina === 1;
+    this.hilo.set([]);
+    this.errorResumen.set(null);
+    this.referenciaResaltada.set(null);
+
     this.buscando.set(true);
     this.error.set(null);
     this.parte.set(null);
@@ -892,6 +1028,7 @@ export class MiScopusPanel implements OnInit {
       next: (resultado) => {
         this.busqueda.set(resultado);
         this.buscando.set(false);
+        if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
       },
       error: (fallo: unknown) => {
         this.buscando.set(false);
@@ -949,6 +1086,10 @@ export class MiScopusPanel implements OnInit {
     this.texto.set('');
     this.sinonimos.set({});
     this.notaIa.set(null);
+    this.ultimaGeneracion.set(null);
+    this.temaIa.set('');
+    this.hilo.set([]);
+    this.errorResumen.set(null);
     this.ecuacion.set('');
     this.busqueda.set(null);
     this.marcados.set(new Set());

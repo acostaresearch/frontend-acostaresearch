@@ -72,6 +72,28 @@ export interface ConsultaGenerada {
   nota: string | null;
 }
 
+/** Un artículo tal como viaja para el resumen: lo justo para citarlo. */
+export interface FuenteParaResumir {
+  eid: string;
+  doi: string | null;
+  titulo: string;
+  anio: number | null;
+}
+
+/**
+ * El resumen con citas de la IA. Cada punto dice qué artículos lo sostienen,
+ * por su número en la lista de referencias (1 = el primero que se mandó).
+ */
+export interface ResumenConIa {
+  titulo: string;
+  introduccion: string;
+  secciones: { titulo: string; puntos: { texto: string; citas: number[] }[] }[];
+  conclusion: string;
+  limites: string;
+  /** Los números que tenían resumen; los demás se leyeron solo por el título. */
+  conResumen: number[];
+}
+
 export interface BusquedaDeScopus {
   total: number;
   pagina: number;
@@ -149,6 +171,20 @@ export class ScopusService {
   generarConsulta(tema: string): Observable<ConsultaGenerada> {
     return this.http
       .post<ApiResponse<ConsultaGenerada>>(`${this.base}/generar-consulta`, { tema })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Lo que dicen los artículos de la página, con citas. `anteriores` son las
+   * preguntas ya hechas sobre estos mismos artículos, para las de seguimiento.
+   */
+  resumir(
+    pregunta: string,
+    fuentes: FuenteParaResumir[],
+    anteriores: { pregunta: string; respuesta: string }[] = [],
+  ): Observable<ResumenConIa> {
+    return this.http
+      .post<ApiResponse<ResumenConIa>>(`${this.base}/resumir`, { pregunta, fuentes, anteriores })
       .pipe(map((res) => res.data));
   }
 

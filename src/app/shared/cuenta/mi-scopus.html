@@ -84,7 +84,7 @@
           <!-- El «Generador de consultas de IA» de Scopus: describe su tema en
                español y recibe los conceptos en inglés. -->
           <label class="sc-interruptor sc-interruptor-ia">
-            <span><span aria-hidden="true">✨</span> Generador con IA</span>
+            <span><span class="sc-copiloto-chispa" aria-hidden="true">✦</span> Copiloto IA</span>
             <input
               type="checkbox"
               role="switch"
@@ -106,43 +106,139 @@
           </span>
         </div>
 
-        <!-- ── El generador con IA ────────────────────────────────────────── -->
-        @if (iaAbierta()) {
-          <div class="sc-ia">
-            <label class="sc-ia-etiqueta" for="sc-tema-ia">
-              Describe tu tema en español, como se lo contarías a tu asesor
-            </label>
-            <textarea
-              id="sc-tema-ia"
-              class="sc-ia-campo"
-              rows="2"
-              placeholder="Quiero ver cómo el uso de la inteligencia artificial influye en el pensamiento crítico de los estudiantes universitarios"
-              [value]="temaIa()"
-              [disabled]="generando()"
-              (input)="temaIa.set($any($event.target).value)"
-            ></textarea>
-            <div class="sc-ia-pie">
-              <p>
-                La IA propone los conceptos en inglés con sus sinónimos. Tú los revisas antes de
-                buscar: puedes quitar, añadir o corregir cualquiera.
-              </p>
-              <button
-                type="button"
-                class="boton"
-                [disabled]="generando() || temaIa().trim().length < 8"
-                (click)="generarConIa()"
-              >
-                {{ generando() ? 'Pensando…' : 'Generar conceptos' }}
-              </button>
+        <!-- La tabla de conceptos, una sola vez: la usan el copiloto y la
+             búsqueda normal. Una fila por concepto, sus sinónimos al lado; sin
+             «o» ni «y» sueltos entre medias, que es lo que la hacía parecer un
+             borrador. Cómo se combinan se dice una vez, al pie. -->
+        <ng-template #tablaConceptos>
+          <div class="sc-tc">
+            <div class="sc-tc-cabecera" aria-hidden="true">
+              <span></span>
+              <span>Concepto</span>
+              <span>Sinónimos <small>amplían la búsqueda</small></span>
+              <span></span>
             </div>
-            @if (errorIa(); as mensaje) {
-              <p class="scopus-aviso scopus-mal sc-ia-error">{{ mensaje }}</p>
+            @for (concepto of conceptos(); track concepto.nombre; let i = $index) {
+              <div class="sc-tc-fila">
+                <span class="sc-tc-numero">{{ i + 1 }}</span>
+                <span class="sc-tc-nombre">{{ concepto.nombre }}</span>
+                <span class="sc-tc-sinonimos">
+                  @for (sinonimo of concepto.sinonimos; track sinonimo) {
+                    <span class="sc-ficha">
+                      {{ sinonimo }}
+                      <button
+                        type="button"
+                        [attr.aria-label]="'Quitar el sinónimo ' + sinonimo"
+                        (click)="quitarSinonimo(concepto.nombre, sinonimo)"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  }
+                  <input
+                    #campoSinonimo
+                    type="text"
+                    class="sc-sinonimo"
+                    placeholder="Añadir sinónimo"
+                    [attr.aria-label]="'Añadir un sinónimo a ' + concepto.nombre"
+                    (keydown.enter)="agregarSinonimo(concepto.nombre, campoSinonimo)"
+                    (change)="agregarSinonimo(concepto.nombre, campoSinonimo)"
+                  />
+                </span>
+                <button
+                  type="button"
+                  class="sc-quitar-concepto"
+                  [attr.aria-label]="'Quitar el concepto ' + concepto.nombre"
+                  (click)="quitarConcepto(concepto.nombre)"
+                >
+                  ×
+                </button>
+              </div>
             }
+            <p class="sc-tc-pie">
+              Tienen que aparecer <b>todos</b> los conceptos; cada sinónimo es una alternativa a su
+              concepto.
+            </p>
           </div>
-        }
+        </ng-template>
 
         <div class="sc-caja" [class.sc-caja-ocupada]="buscando()">
-          @if (modo() === 'normal') {
+          @if (iaAbierta()) {
+            <!-- ── El copiloto ───────────────────────────────────────────────
+                 La «IA de Scopus», con lo nuestro: pregunta en español, pasos
+                 a la vista y los conceptos que propone, que se revisan antes
+                 de buscar. Al buscar desde aquí, los resultados llegan con su
+                 resumen con citas. -->
+            <div class="sc-copiloto">
+              <div class="sc-copiloto-cabecera">
+                <span class="sc-copiloto-marca" aria-hidden="true">✦</span>
+                <div>
+                  <p class="sc-copiloto-titulo">Copiloto de búsqueda</p>
+                  <p class="sc-copiloto-sub">
+                    Pregunta en español. Te propongo los conceptos en inglés y, al buscar, te resumo
+                    lo que dicen los artículos con sus citas.
+                  </p>
+                </div>
+              </div>
+
+              <div class="sc-copiloto-pregunta">
+                <textarea
+                  class="sc-ia-campo"
+                  rows="2"
+                  aria-label="Tu pregunta o tu tema, en español"
+                  placeholder="¿Cómo influye el uso de la inteligencia artificial en el pensamiento crítico de los estudiantes universitarios?"
+                  [value]="temaIa()"
+                  [disabled]="generando()"
+                  (input)="temaIa.set($any($event.target).value)"
+                  (keydown.enter)="enterEnPregunta($any($event))"
+                ></textarea>
+                <button
+                  type="button"
+                  class="sc-copiloto-enviar"
+                  [attr.aria-label]="generando() ? 'Pensando' : 'Proponer conceptos'"
+                  [disabled]="generando() || temaIa().trim().length < 8"
+                  (click)="generarConIa()"
+                >
+                  @if (generando()) {
+                    <span class="sc-girando" aria-hidden="true"></span>
+                  } @else {
+                    <span aria-hidden="true">➤</span>
+                  }
+                </button>
+              </div>
+
+              @if (errorIa(); as mensaje) {
+                <p class="scopus-aviso scopus-mal sc-ia-error">{{ mensaje }}</p>
+              }
+
+              @if (generando()) {
+                <p class="sc-copiloto-pensando">Leyendo tu tema y buscando cómo lo nombra la literatura…</p>
+              } @else if (ultimaGeneracion(); as generacion) {
+                <div class="sc-copiloto-respuesta">
+                  <p class="sc-copiloto-eco">{{ generacion.tema }}</p>
+
+                  <button
+                    type="button"
+                    class="sc-pasos-boton"
+                    [attr.aria-expanded]="pasosAbiertos()"
+                    (click)="pasosAbiertos.set(!pasosAbiertos())"
+                  >
+                    {{ pasosAbiertos() ? 'Ocultar' : 'Mostrar' }} pasos del copiloto
+                    <span class="sc-orden-flecha" aria-hidden="true"></span>
+                  </button>
+                  @if (pasosAbiertos()) {
+                    <ol class="sc-pasos">
+                      @for (paso of pasosDelCopiloto(); track $index) {
+                        <li>{{ paso }}</li>
+                      }
+                    </ol>
+                  }
+
+                  <ng-container [ngTemplateOutlet]="tablaConceptos" />
+                </div>
+              }
+            </div>
+          } @else if (modo() === 'normal') {
             <div class="sc-campos">
               <!-- Las etiquetas dentro del borde, como en Scopus: el campo
                    dice qué es sin una línea de texto suelta encima. -->
@@ -184,16 +280,12 @@
               </label>
             </div>
 
-            @if (notaIa(); as nota) {
-              <p class="sc-nota-ia"><span aria-hidden="true">✨</span> {{ nota }}</p>
-            }
-
             @if (enEspanol()) {
               <p class="sc-idioma">
                 Parece que escribiste en español. Casi toda la literatura de Scopus está en inglés,
                 y en español saldrá muy poco.
                 <button type="button" class="sc-enlace" (click)="pasarAIngles()">
-                  Pasarlo a inglés con IA
+                  Pasarlo a inglés con el copiloto
                 </button>
               </p>
             }
@@ -201,50 +293,7 @@
             <!-- Los conceptos: cada coma separa una idea que tiene que aparecer,
                  y cada idea puede llevar sus sinónimos, que la amplían. -->
             @if (enConceptos() || conceptos().length > 1) {
-              <div class="sc-conceptos">
-                <p class="sc-conceptos-titulo">
-                  Conceptos de tu búsqueda
-                  <small>tienen que aparecer todos · los sinónimos amplían cada uno</small>
-                </p>
-                @for (concepto of conceptos(); track concepto.nombre; let ultimo = $last) {
-                  <div class="sc-concepto">
-                    <span class="sc-concepto-nombre">{{ concepto.nombre }}</span>
-                    @for (sinonimo of concepto.sinonimos; track sinonimo) {
-                      <span class="sc-o" aria-hidden="true">o</span>
-                      <span class="sc-ficha">
-                        {{ sinonimo }}
-                        <button
-                          type="button"
-                          [attr.aria-label]="'Quitar el sinónimo ' + sinonimo"
-                          (click)="quitarSinonimo(concepto.nombre, sinonimo)"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    }
-                    <input
-                      #campoSinonimo
-                      type="text"
-                      class="sc-sinonimo"
-                      placeholder="+ sinónimo"
-                      [attr.aria-label]="'Añadir un sinónimo a ' + concepto.nombre"
-                      (keydown.enter)="agregarSinonimo(concepto.nombre, campoSinonimo)"
-                      (change)="agregarSinonimo(concepto.nombre, campoSinonimo)"
-                    />
-                    <button
-                      type="button"
-                      class="sc-quitar-concepto"
-                      [attr.aria-label]="'Quitar el concepto ' + concepto.nombre"
-                      (click)="quitarConcepto(concepto.nombre)"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  @if (!ultimo) {
-                    <span class="sc-y" aria-hidden="true">y</span>
-                  }
-                }
-              </div>
+              <ng-container [ngTemplateOutlet]="tablaConceptos" />
             }
           } @else {
             <!-- Varias líneas: una ecuación real, con sus sinónimos, no cabe
@@ -510,8 +559,8 @@
                     tiene que aparecer, y a cada una le puedes añadir sinónimos.
                   </li>
                   <li>
-                    ¿No sabes cómo se dice en inglés? Enciende <b>Generador con IA</b> y cuéntale tu
-                    tema en español.
+                    ¿No sabes cómo se dice en inglés? Enciende el <b>Copiloto IA</b>: le preguntas en
+                    español y, al buscar, te resume lo que dicen los artículos con sus citas.
                   </li>
                   <li>
                     Con «Buscar dentro» eliges dónde: en el título, por autor, por revista o por DOI.
@@ -562,6 +611,164 @@
                 }
               </p>
             } @else {
+              <!-- ── El resumen con citas ──────────────────────────────────
+                   Lo que hace la IA de Scopus: qué dicen los primeros
+                   artículos de la página, cada afirmación con sus citas y la
+                   columna de referencias al lado. Se pide solo al buscar desde
+                   el copiloto; si no, con el botón. -->
+              <section class="sc-resumen" aria-label="Resumen con IA">
+                <header class="sc-resumen-cabecera">
+                  <span class="sc-copiloto-marca" aria-hidden="true">✦</span>
+                  <div>
+                    <p class="sc-resumen-titulo">Resumen con IA</p>
+                    <p class="sc-resumen-sub">
+                      De los {{ referencias().length }} primeros artículos de esta página, con la cita
+                      de cada afirmación
+                    </p>
+                  </div>
+                  @if (hilo().length > 0) {
+                    <button
+                      type="button"
+                      class="sc-pasos-boton sc-resumen-plegar"
+                      [attr.aria-expanded]="resumenAbierto()"
+                      (click)="resumenAbierto.set(!resumenAbierto())"
+                    >
+                      {{ resumenAbierto() ? 'Ocultar' : 'Mostrar' }}
+                      <span class="sc-orden-flecha" aria-hidden="true"></span>
+                    </button>
+                  } @else if (!resumiendo()) {
+                    <button type="button" class="boton sc-resumen-pedir" (click)="resumir()">
+                      Resumir con IA
+                    </button>
+                  }
+                </header>
+
+                @if (errorResumen(); as mensaje) {
+                  <p class="scopus-aviso scopus-mal sc-resumen-error">{{ mensaje }}</p>
+                }
+
+                @if (resumenAbierto() && (hilo().length > 0 || resumiendo())) {
+                  <div class="sc-resumen-cuerpo">
+                    <div class="sc-resumen-texto">
+                      @for (turno of hilo(); track $index; let primero = $first) {
+                        <article class="sc-turno">
+                          @if (!primero) {
+                            <p class="sc-turno-pregunta">{{ turno.pregunta }}</p>
+                          }
+                          @if (turno.resumen.titulo) {
+                            <h4 class="sc-turno-titulo">{{ turno.resumen.titulo }}</h4>
+                          }
+                          @if (turno.resumen.introduccion) {
+                            <p>{{ turno.resumen.introduccion }}</p>
+                          }
+                          @for (seccion of turno.resumen.secciones; track $index; let n = $index) {
+                            <h5>{{ n + 1 }}. {{ seccion.titulo }}</h5>
+                            <ul>
+                              @for (punto of seccion.puntos; track $index) {
+                                <li>
+                                  {{ punto.texto }}
+                                  @for (cita of punto.citas; track cita) {
+                                    <button
+                                      type="button"
+                                      class="sc-cita"
+                                      [class.activa]="referenciaResaltada() === cita"
+                                      [attr.aria-label]="'Ver la referencia ' + cita"
+                                      (click)="verReferencia(cita)"
+                                    >
+                                      {{ cita }}
+                                    </button>
+                                  }
+                                </li>
+                              }
+                            </ul>
+                          }
+                          @if (turno.resumen.conclusion) {
+                            <p class="sc-turno-conclusion">{{ turno.resumen.conclusion }}</p>
+                          }
+                          @if (turno.resumen.limites) {
+                            <p class="sc-turno-limites">
+                              <b>Lo que estos artículos no dicen:</b> {{ turno.resumen.limites }}
+                            </p>
+                          }
+                        </article>
+                      }
+
+                      @if (resumiendo()) {
+                        <div class="sc-resumen-cargando" aria-live="polite">
+                          <span class="sc-girando" aria-hidden="true"></span>
+                          Leyendo los resúmenes de {{ referencias().length }} artículos…
+                          <span class="sc-linea"></span>
+                          <span class="sc-linea sc-linea-corta"></span>
+                          <span class="sc-linea"></span>
+                        </div>
+                      }
+
+                      @if (hilo().length > 0) {
+                        <div class="sc-seguimiento">
+                          <input
+                            type="text"
+                            placeholder="Haz una pregunta de seguimiento sobre estos artículos"
+                            aria-label="Pregunta de seguimiento"
+                            [value]="seguimiento()"
+                            [disabled]="resumiendo()"
+                            (input)="seguimiento.set($any($event.target).value)"
+                            (keydown.enter)="preguntarSeguimiento()"
+                          />
+                          <button
+                            type="button"
+                            class="sc-copiloto-enviar"
+                            aria-label="Preguntar"
+                            [disabled]="resumiendo() || seguimiento().trim().length < 3"
+                            (click)="preguntarSeguimiento()"
+                          >
+                            <span aria-hidden="true">➤</span>
+                          </button>
+                        </div>
+                        <p class="sc-resumen-aviso">
+                          Lo redacta una IA a partir de los resúmenes de estos artículos. Antes de
+                          llevar una afirmación a tu tesis, abre el artículo y compruébala.
+                        </p>
+                      }
+                    </div>
+
+                    <aside class="sc-referencias" aria-label="Referencias">
+                      <p class="sc-referencias-titulo">Referencias</p>
+                      <ol>
+                        @for (ref of referencias(); track ref.eid; let i = $index) {
+                          <li
+                            [id]="'sc-ref-' + (i + 1)"
+                            [class.activa]="referenciaResaltada() === i + 1"
+                          >
+                            <span class="sc-ref-numero">Referencia {{ i + 1 }}</span>
+                            @if (ref.doi) {
+                              <a
+                                class="sc-ref-titulo"
+                                [href]="'https://doi.org/' + ref.doi"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >{{ ref.titulo }}</a
+                              >
+                            } @else {
+                              <span class="sc-ref-titulo">{{ ref.titulo }}</span>
+                            }
+                            <span class="sc-ref-autores">{{ ref.autores }}</span>
+                            @if (ref.revista) {
+                              <span class="sc-ref-revista">{{ ref.revista }}</span>
+                            }
+                            <span class="sc-ref-anio">
+                              {{ ref.anio ?? 's. f.' }}
+                              @if (hilo().length > 0 && !conResumen().has(i + 1)) {
+                                · <em>sin resumen: leída solo por el título</em>
+                              }
+                            </span>
+                          </li>
+                        }
+                      </ol>
+                    </aside>
+                  </div>
+                }
+              </section>
+
               <div class="sc-resultados-cabecera">
                 <p class="sc-total">
                   Se encontraron <strong>{{ lista.total | number }}</strong>
