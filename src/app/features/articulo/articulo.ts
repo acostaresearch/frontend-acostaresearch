@@ -12,6 +12,7 @@ import {
   SEÑAS_DEL_ARTICULO,
 } from '../../shared/contenido/skills-del-articulo';
 import { IconoRuta } from '../../shared/layout/icono-ruta';
+import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { PublicacionesAutor } from '../../shared/layout/publicaciones-autor';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
@@ -41,6 +42,7 @@ const GRUPO = 'ARTICULO_SCIENTIFICOS';
     SiteFooter,
     PublicacionesAutor,
     IconoRuta,
+    LineasNoche,
   ],
   templateUrl: './articulo.html',
   styleUrls: ['../../shared/estilos/ruta.css', './articulo.css'],

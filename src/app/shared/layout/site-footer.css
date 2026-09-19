@@ -6,16 +6,87 @@
  * oscuro cierra el documento, que es lo único que un pie tiene que hacer.
  */
 .pie {
-  padding: 64px var(--lado) 40px;
+  position: relative;
+  overflow: hidden;
+  padding: 0 var(--lado) 40px;
   font-size: 15px;
   color: var(--noche-texto);
   background: var(--noche-pie);
-  border-top: 1px solid rgba(224, 185, 115, 0.25);
+  border-top: 1px solid var(--noche-linea);
+}
+
+/* ── La banda de contacto ───────────────────────────────────────────────────
+   Abre el pie, separada del resto por una línea: es lo único de aquí abajo que
+   pide una acción, y entre columnas de enlaces se perdía. */
+.pie-contacto {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 40px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--centro);
+  margin: 0 auto;
+  padding: 34px 0;
+  border-bottom: 1px solid var(--noche-linea);
+}
+
+.pie-contacto p {
+  margin: 0;
+}
+
+.pie-contacto-titulo {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--noche-titulo);
+}
+
+.pie-contacto-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* En blanco y no en contorno: sobre el azul del pie, un botón de contorno se
+   lee como un enlace más de los veinte que hay debajo. */
+.pie-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+  background: #fff;
+  border-radius: 10px;
+  transition: background var(--transicion);
+}
+
+.pie-boton:hover {
+  background: #e8eefc;
+}
+
+.pie-boton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pie-boton-verde {
+  color: #16a34a;
+}
+
+/* El decorado va detrás; el contenido, delante. */
+.contenido,
+.legal {
+  position: relative;
 }
 
 .contenido {
+  padding-top: 44px;
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  grid-template-columns: 1.6fr 1fr 1fr 1.15fr;
   gap: 36px;
   max-width: var(--centro);
   margin: 0 auto;
@@ -53,11 +124,15 @@
   align-items: flex-start;
 }
 
+/* En versalitas pequeñas y en azul claro, como los rótulos de las secciones
+   del sitio: el dorado de antes pesaba más que los enlaces que encabeza. */
 .columna h3 {
-  margin: 0 0 2px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--noche-acento);
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8fb3ff;
 }
 
 .columna a {
@@ -95,6 +170,28 @@
   color: color-mix(in srgb, var(--noche-texto) 75%, transparent);
 }
 
+/* El acceso al Libro de Reclamaciones, en recuadro: la ley pide que se vea. */
+.pie-reclamaciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: var(--noche-titulo);
+  border: 1px solid color-mix(in srgb, var(--noche-texto) 32%, transparent);
+  border-radius: 8px;
+}
+
+.pie-reclamaciones:hover {
+  border-color: var(--noche-titulo);
+}
+
+.pie-reclamaciones svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* ── Redes y perfiles ───────────────────────────────────────────────────── */
 .redes {
   display: flex;
@@ -125,20 +222,26 @@
 }
 
 .redes a:hover {
-  color: var(--noche);
-  background: var(--dorado);
-  border-color: var(--dorado);
+  color: var(--noche-titulo);
+  background: color-mix(in srgb, var(--noche-texto) 14%, transparent);
+  border-color: var(--noche-titulo);
 }
 
 .redes a:focus-visible {
-  outline: 2px solid var(--dorado);
+  outline: 2px solid #8fb3ff;
   outline-offset: 2px;
 }
 
-/* ── Línea legal ────────────────────────────────────────────────────────── */
+/* ── Línea legal ──────────────────────────────────────────────────────────
+   El derecho reservado a un lado y el aviso al otro: uno es una fórmula y el
+   otro es lo que de verdad hay que leer, y en la misma línea se confundían. */
 .legal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 40px;
+  align-items: start;
   max-width: var(--centro);
-  margin: 44px auto 0;
+  margin: 40px auto 0;
   padding-top: 24px;
   border-top: 1px solid var(--noche-linea);
 }
@@ -152,6 +255,19 @@
 /* El aviso no es relleno legal: es la promesa que sí se puede sostener. */
 .legal .aviso {
   max-width: 78ch;
-  margin-top: 8px;
+  justify-self: end;
   line-height: 1.6;
+  text-align: right;
+  color: color-mix(in srgb, var(--noche-texto) 80%, transparent);
+}
+
+@media (max-width: 860px) {
+  .legal {
+    grid-template-columns: 1fr;
+  }
+
+  .legal .aviso {
+    justify-self: start;
+    text-align: left;
+  }
 }

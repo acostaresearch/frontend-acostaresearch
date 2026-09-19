@@ -4,20 +4,7 @@
   <!-- El encabezado, igual que el de «Las 11 Skills»: azul noche a sangre, con
        el fondo de líneas dibujado en CSS y las tres cifras al pie del texto. -->
   <header class="mt-hero">
-    <div class="mt-fondo" aria-hidden="true">
-      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; track a) {
-        <span class="mt-arco mt-arco-der" [style.--n]="a"></span>
-      }
-      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track a) {
-        <span class="mt-arco mt-arco-izq" [style.--n]="a"></span>
-      }
-      @for (a of [0, 1, 2, 3, 4]; track a) {
-        <span class="mt-anillo" [style.--n]="a"></span>
-      }
-      <span class="mt-rayas mt-rayas-der"></span>
-      <span class="mt-rayas mt-rayas-izq"></span>
-      <span class="mt-cuadricula"></span>
-    </div>
+    <app-lineas-noche foco="derecha" />
 
     <div class="mt-ancho mt-hero-fila">
       <div class="mt-hero-texto">
@@ -131,6 +118,7 @@
   <section class="mt-seccion mt-cierre-seccion">
     <div class="mt-ancho">
       <div class="mt-cierre">
+        <app-lineas-noche densidad="compacta" />
         <div>
           <h2>Quiero la ruta completa</h2>
           <p>Doce meses de acceso, renovables. Incluye el Humanizador académico.</p>

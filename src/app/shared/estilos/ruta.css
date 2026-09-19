@@ -54,12 +54,8 @@
 }
 
 /* ── El encabezado ──────────────────────────────────────────────────────────
- *
- * Azul noche, a sangre, con el fondo dibujado en CSS: arcos que salen de dos
- * esquinas, anillos punteados detrás del título, dos tramas de rayas y una
- * cuadrícula que solo asoma alrededor de las cifras. Ni una imagen ni una
- * línea de JavaScript, y nada se mueve: es un fondo, no una animación.
- */
+   Azul noche, a sangre y con el fondo de líneas que llevan todos los bloques
+   de este color (`app-lineas-noche`). */
 .mt-hero {
   position: relative;
   min-height: 360px;
@@ -67,86 +63,6 @@
   overflow: hidden;
   color: #fff;
   background: var(--mt-noche);
-}
-
-.mt-fondo {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.mt-arco {
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, calc(0.03 + var(--n) * 0.009));
-  border-radius: 50%;
-}
-
-/* Cada arco es una circunferencia centrada en la esquina: se ve el cuarto que
-   cae dentro del encabezado y el resto lo recorta `overflow: hidden`. */
-.mt-arco-der {
-  top: calc(var(--n) * -80px - 80px);
-  right: calc(var(--n) * -80px - 80px);
-  width: calc(var(--n) * 160px + 160px);
-  height: calc(var(--n) * 160px + 160px);
-}
-
-.mt-arco-izq {
-  bottom: calc(var(--n) * -90px - 90px);
-  left: calc(var(--n) * -90px - 90px);
-  width: calc(var(--n) * 180px + 180px);
-  height: calc(var(--n) * 180px + 180px);
-}
-
-.mt-anillo {
-  position: absolute;
-  top: 50%;
-  left: 32%;
-  width: calc(300px + var(--n) * 90px);
-  height: calc(300px + var(--n) * 90px);
-  transform: translate(-50%, -50%);
-  border: 1px dotted rgba(255, 255, 255, calc(0.12 - var(--n) * 0.018));
-  border-radius: 50%;
-}
-
-.mt-rayas {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
-}
-
-.mt-rayas-der {
-  right: 0;
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.07) 0 1px,
-    transparent 1px 14px
-  );
-  -webkit-mask-image: linear-gradient(to left, #000, transparent 85%);
-  mask-image: linear-gradient(to left, #000, transparent 85%);
-}
-
-.mt-rayas-izq {
-  left: 0;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.05) 0 1px,
-    transparent 1px 14px
-  );
-  -webkit-mask-image: linear-gradient(to right, #000, transparent 85%);
-  mask-image: linear-gradient(to right, #000, transparent 85%);
-}
-
-.mt-cuadricula {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
-  mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
 }
 
 .mt-hero-fila {
@@ -474,6 +390,8 @@
 }
 
 .mt-cierre {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
   gap: 24px 40px;
@@ -483,6 +401,11 @@
   color: #fff;
   background: var(--mt-noche);
   border-radius: 24px;
+}
+
+/* El decorado va detrás; el contenido, delante. */
+.mt-cierre > div {
+  position: relative;
 }
 
 .mt .mt-cierre h2 {

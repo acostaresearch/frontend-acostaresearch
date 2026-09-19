@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { LineasNoche } from './lineas-noche';
+
 import { environment } from '../../../environments/environment';
 
 /** Un perfil público del pie, con su icono. */
@@ -15,7 +17,7 @@ interface Red {
 
 @Component({
   selector: 'app-site-footer',
-  imports: [RouterLink],
+  imports: [RouterLink, LineasNoche],
   templateUrl: './site-footer.html',
   styleUrl: './site-footer.css',
 })

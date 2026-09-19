@@ -179,6 +179,8 @@
    respalda. A todo el ancho, aunque el bloque de arriba vaya recogido y
    centrado. Solo aquí: la rejilla de «Quién te acompaña» sigue clara. */
 .hero .cifras {
+  position: relative;
+  overflow: hidden;
   grid-template-columns: repeat(5, 1fr);
   margin-top: 64px;
   padding: 32px 36px;
@@ -191,7 +193,15 @@
    cuatro renglones. Los separadores, en el gris de la banda y muy bajos: sobre
    el noche, el borde claro de siempre cortaba la banda en cinco cajas. */
 .hero .cifras li {
+  position: relative;
   padding: 0 20px 0 0;
+}
+
+/* Es el único bloque de este azul que en modo oscuro se vuelve blanco (ver
+   `--cifras-fondo`), y unas líneas blancas sobre blanco no se ven: allí el
+   decorado sobra. */
+:host-context([data-tema='oscuro']) .hero .cifras app-lineas-noche {
+  display: none;
 }
 
 /* `:not(:first-child)` y no `li + li`: con los atributos que añade Angular,
@@ -604,6 +614,16 @@
 /* ── Los cinco pasos ─────────────────────────────────────────────────────────
    En banda oscura, con los números unidos por una línea: se lee que hay un
    orden sin necesidad de flechas. */
+.arranque-banda {
+  position: relative;
+  overflow: hidden;
+}
+
+.arranque-banda > .cab-fila,
+.arranque-banda > .arranque {
+  position: relative;
+}
+
 .arranque-banda .seccion-marca {
   color: #8fb3ff;
 }
@@ -781,6 +801,8 @@
 
 /* ── El cierre ────────────────────────────────────────────────────────────── */
 .cierre-caja {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
   gap: 24px 40px;
@@ -789,6 +811,10 @@
   padding: 38px 44px;
   background: var(--noche-fondo);
   border-radius: 20px;
+}
+
+.cierre-caja > div {
+  position: relative;
 }
 
 .cierre-titulo {

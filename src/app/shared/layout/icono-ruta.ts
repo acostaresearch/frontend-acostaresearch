@@ -83,6 +83,18 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           <path d="M20.5 3.5 3.5 10.2l6.4 2.6 2.4 6.4z" />
           <path d="m9.9 12.8 4.4-4.4" />
         }
+        @case ('birrete') {
+          <path d="m12 4 9 4.3-9 4.3-9-4.3z" />
+          <path d="M7 10.8v4.4c0 1.4 2.2 2.4 5 2.4s5-1 5-2.4v-4.4" />
+        }
+        @case ('play') {
+          <path d="M9 7.5v9l7.5-4.5z" fill="currentColor" stroke="none" />
+        }
+        @case ('nota') {
+          <path d="M9 18V6l10-2v12" />
+          <circle cx="6.5" cy="18" r="2.5" />
+          <circle cx="16.5" cy="16" r="2.5" />
+        }
         @case ('pulso') {
           <path d="M3 12h4l2.5-6 4 12 2.5-6H21" />
         }

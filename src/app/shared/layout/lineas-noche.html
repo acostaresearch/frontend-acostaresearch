@@ -1,0 +1,23 @@
+@if (esquinas() === 'ambas') {
+  @for (n of arcosArriba(); track n) {
+    <span class="ln-arco ln-arriba" [style.--n]="n"></span>
+  }
+}
+
+@for (n of arcosAbajo(); track n) {
+  <span
+    class="ln-arco ln-abajo"
+    [class.ln-abajo-der]="esquinas() === 'inferior-derecha'"
+    [style.--n]="n"
+  ></span>
+}
+
+@if (anillos()) {
+  @for (n of punteados(); track n) {
+    <span class="ln-anillo" [style.--n]="n"></span>
+  }
+}
+
+<span class="ln-rayas ln-rayas-der"></span>
+<span class="ln-rayas ln-rayas-izq"></span>
+<span class="ln-cuadricula" [class.ln-cuadricula-der]="foco() === 'derecha'"></span>

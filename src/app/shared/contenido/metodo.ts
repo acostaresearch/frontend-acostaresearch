@@ -57,9 +57,25 @@ export const CIFRAS = [
  * nada más. Una cuarta solo entra si se puede comprobar como las otras tres.
  */
 export const CIFRAS_AUTOR = [
-  { valor: 'Renacyt II', pie: 'investigador calificado' },
-  { valor: 'Jurado y revisor', pie: 'de tesis y artículos' },
-  { valor: '+500', pie: 'tesistas con las Skills' },
+  {
+    valor: 'Renacyt II',
+    pie: 'Investigador calificado',
+    detalle:
+      'Registrado por Concytec, con líneas de investigación en IA en la educación superior e ' +
+      'integridad académica.',
+  },
+  {
+    valor: 'Jurado y revisor',
+    pie: 'De tesis y artículos',
+    detalle:
+      'Revisor científico y jurado en sustentaciones; autor en revistas de Elsevier, Springer ' +
+      'Nature y Wiley.',
+  },
+  {
+    valor: '+500',
+    pie: 'Tesistas con las Skills',
+    detalle: 'Acompañados con el mismo método que uso cuando asesoro en persona.',
+  },
 ];
 
 export const DEMOS: Demo[] = [

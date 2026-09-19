@@ -12,6 +12,7 @@ import {
   FASES_TESIS,
   RAZONES,
 } from '../../shared/contenido/metodo';
+import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { Contador } from './contador';
@@ -31,7 +32,7 @@ import { HeroNetwork } from './hero-network/hero-network';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, SiteHeader, SiteFooter, HeroNetwork, Contador],
+  imports: [RouterLink, SiteHeader, SiteFooter, HeroNetwork, Contador, LineasNoche],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

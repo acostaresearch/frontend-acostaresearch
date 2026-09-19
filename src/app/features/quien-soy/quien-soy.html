@@ -1,62 +1,83 @@
 <app-site-header />
 
-<main class="pagina">
-  <!-- El nombre no va en una banda aparte: es la primera línea de la columna de
-       texto, y baja al centro con ella. Arriba y a lo ancho de la página
-       quedaba a 200 px de la frase que lo explica. -->
-  <section class="seccion">
-    <div class="autor">
-      <div class="autor-texto">
-        <p class="seccion-marca">Quién te acompaña</p>
-        <h1 class="titulo-seccion ancho">Benicio Gonzalo Acosta Enríquez</h1>
+<main class="pagina mt">
+  <!-- El encabezado, en el mismo azul noche de las dos rutas y con el mismo
+       fondo de líneas: doce arcos desde la esquina de arriba, siete desde la
+       de abajo y la trama de rayas a la derecha, detrás de la foto. -->
+  <header class="mt-hero qs-hero">
+    <app-lineas-noche foco="derecha" />
 
-        <p>
-          Investigador Renacyt Nivel II y docente universitario, con más de 5 años de experiencia en
-          investigación y asesoría de tesis. Revisor científico y autor en numerosas publicaciones
-          científicas, y jurado de tesis.
+    <div class="mt-ancho qs-fila">
+      <div class="qs-texto">
+        <p class="mt-rotulo">Quién te acompaña</p>
+        <h1>Benicio Gonzalo Acosta Enríquez</h1>
+
+        <p class="mt-hero-entrada">
+          Investigador Renacyt Nivel II y docente universitario, con más de 5 años de experiencia
+          en investigación y asesoría de tesis. Revisor científico y autor en numerosas
+          publicaciones científicas, y jurado de tesis.
         </p>
-        <p>
-          Estas Skills son, literalmente, el método que uso cuando asesoro: las mismas preguntas, el
-          mismo orden y los mismos criterios. Las escribí para que te acompañen a las once de la
+
+        <!-- El segundo párrafo es lo único de la página dicho en primera
+             persona, y es lo que explica por qué existen las Skills: va como
+             cita, no como otro párrafo más. -->
+        <blockquote class="qs-cita">
+          Estas Skills son, literalmente, el método que uso cuando asesoro: las mismas preguntas,
+          el mismo orden y los mismos criterios. Las escribí para que te acompañen a las once de la
           noche, cuando yo no puedo estar en la reunión y tú sí tienes que avanzar.
-        </p>
-        <div class="autor-enlaces">
-          <a [href]="redes.scholar" target="_blank" rel="noopener">Google Académico</a>
-          <a [href]="redes.ctivitae" target="_blank" rel="noopener">CTI Vitae</a>
-          <a [href]="redes.youtube" target="_blank" rel="noopener">YouTube</a>
-          <a [href]="redes.tiktok" target="_blank" rel="noopener">TikTok</a>
+        </blockquote>
+
+        <div class="qs-enlaces">
+          <a [href]="redes.scholar" target="_blank" rel="noopener">
+            <app-icono-ruta clave="birrete" />
+            Google Académico
+          </a>
+          <a [href]="redes.ctivitae" target="_blank" rel="noopener">
+            <app-icono-ruta clave="documento" />
+            CTI Vitae
+          </a>
+          <a [href]="redes.youtube" target="_blank" rel="noopener">
+            <app-icono-ruta clave="play" />
+            YouTube
+          </a>
+          <a [href]="redes.tiktok" target="_blank" rel="noopener">
+            <app-icono-ruta clave="nota" />
+            TikTok
+          </a>
         </div>
       </div>
 
-      <!-- El retrato, montado en capas: la mancha azul del foco de la propia
-           foto sale del marco por detrás y una línea dorada lo cruza por el
-           lado contrario. Las dos las pinta el CSS con `::before` y `::after`,
-           sin un `<div>` de adorno en la plantilla.
-
-           El pie ya no repite el nombre: es el titular de la página, tres
-           párrafos más arriba. Dice dónde está, que es lo que no se sabe. -->
-      <figure class="autor-retrato">
+      <!-- El retrato, apoyado en el borde de abajo del encabezado, con el
+           bloque azul detrás. La etiqueta dice dónde está, que es lo que no se
+           sabe; el nombre ya está tres párrafos más arriba. -->
+      <figure class="qs-foto">
+        <span class="qs-base" aria-hidden="true"></span>
         <img
-          src="home-img/IMG-109.jpg"
+          src="/home-img/IMG-109.jpg"
           alt="Benicio Gonzalo Acosta Enríquez"
           width="2400"
           height="3600"
+          decoding="async"
         />
-        <figcaption>Trujillo, Perú</figcaption>
+        <figcaption>
+          <app-icono-ruta clave="pin" />
+          Trujillo, Perú
+        </figcaption>
       </figure>
     </div>
-  </section>
+  </header>
 
-  <!-- Las credenciales, debajo del texto y en su propia banda. Iban dentro de
-       los párrafos —«Renacyt Nivel II», «más de 5 años», «más de 500
-       tesistas»—, donde hay que leerse tres frases para encontrarlas. En
-       rejilla se ven de una pasada, que es como se lee una credencial. -->
-  <section class="seccion gris corta">
-    <ul class="cifras autor-cifras">
+  <!-- Las credenciales. Iban dentro de los párrafos —«Renacyt Nivel II», «más
+       de 500 tesistas»—, donde hay que leerse tres frases para encontrarlas.
+       En tres columnas se ven de una pasada, que es como se lee una
+       credencial. -->
+  <section class="mt-seccion qs-credenciales-banda">
+    <ul class="mt-ancho qs-credenciales">
       @for (c of cifras; track c.pie) {
         <li>
-          <span class="cifra-valor">{{ c.valor }}</span>
-          <span class="cifra-pie">{{ c.pie }}</span>
+          <b>{{ c.valor }}</b>
+          <span class="qs-credencial-pie">{{ c.pie }}</span>
+          <span class="qs-credencial-detalle">{{ c.detalle }}</span>
         </li>
       }
     </ul>
@@ -64,12 +85,23 @@
 
   <app-publicaciones-autor />
 
-  <app-paso-siguiente
-    titulo="Preguntas frecuentes"
-    texto="Si te queda alguna duda —Claude Pro, tesis cualitativa, tu universidad—, está respondida aquí."
-    enlace="/preguntas"
-    etiqueta="Ver las respuestas"
-  />
+  <section class="mt-seccion qs-cierre-seccion">
+    <div class="mt-ancho">
+      <div class="qs-cierre">
+        <div>
+          <h2>¿Quieres verlo trabajando?</h2>
+          <p>Dos demostraciones completas y sin cortes, y lo que trae cada paquete.</p>
+        </div>
+        <div class="qs-cierre-acciones">
+          <a class="boton grande" routerLink="/en-accion">
+            <app-icono-ruta clave="play" />
+            Míralo en acción
+          </a>
+          <a class="boton secundario grande" routerLink="/planes">Ver los paquetes</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <app-site-footer />

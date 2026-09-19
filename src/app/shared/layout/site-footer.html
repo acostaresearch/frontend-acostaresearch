@@ -1,4 +1,47 @@
 <footer class="pie">
+  <app-lineas-noche densidad="compacta" esquinas="inferior-derecha" />
+
+  <!-- El contacto abre el pie en vez de ser la cuarta columna: quien baja
+       hasta aquí sin comprar suele venir a preguntar, y en una lista de
+       enlaces el WhatsApp pesaba lo mismo que «Política de reembolsos». -->
+  <div class="pie-contacto">
+    <div>
+      <p class="pie-contacto-titulo">¿Dudas antes de comprar?</p>
+      <p class="tenue">Te responde una persona, no un bot.</p>
+    </div>
+
+    <div class="pie-contacto-botones">
+      @if (whatsappUrl) {
+        <a class="pie-boton" [href]="whatsappUrl" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="pie-boton-verde">
+            <path
+              d="M20.5 11.7a8.5 8.5 0 0 1-12.4 7.5L3.5 20.5l1.4-4.5a8.5 8.5 0 1 1 15.6-4.3Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          WhatsApp · +51 923 095 940
+        </a>
+      }
+      <a class="pie-boton" href="mailto:asesoriaprofesional599&#64;gmail.com">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M3.5 6.5h17v11h-17zM3.8 7l8.2 6 8.2-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        asesoriaprofesional599&#64;gmail.com
+      </a>
+    </div>
+  </div>
+
   <div class="contenido">
     <div class="columna marca">
       <p class="nombre">Acosta <span>IA &amp; Research</span></p>
@@ -6,7 +49,7 @@
         Skills para Claude.ai que acompañan tu tesis o tu artículo científico, con tus fuentes, tu
         Zotero y las citas en la norma que te pidan.
       </p>
-      <p class="descripcion">
+      <p class="descripcion tenue">
         Benicio Gonzalo Acosta Enríquez · Trujillo, Perú. Investigador Renacyt Nivel II, docente
         universitario y jurado de tesis.
       </p>
@@ -53,21 +96,24 @@
     </div>
 
     <div class="columna">
+      <h3>Producto</h3>
+      <a routerLink="/metodo">Las 11 Skills</a>
+      <a routerLink="/articulo">Artículos científicos</a>
+      <a routerLink="/planes">Precios</a>
+      <a routerLink="/en-accion">Míralo en acción</a>
+      <a routerLink="/guias-de-instalacion">Guías en PDF</a>
+    </div>
+
+    <div class="columna">
       <h3>Legal</h3>
       <a routerLink="/terminos">Términos y Condiciones</a>
       <a routerLink="/terminos" fragment="reembolsos">Política de reembolsos</a>
       <a routerLink="/privacidad">Política de Privacidad</a>
-      <!-- Con su icono de libro: la ley pide que el acceso esté a la vista, y es
-           lo que el consumidor busca con los ojos en cualquier web peruana. -->
-      <a routerLink="/libro-de-reclamaciones">
-        <svg
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          aria-hidden="true"
-          focusable="false"
-          style="vertical-align: -3px; margin-right: 6px"
-        >
+      <!-- Con su recuadro y su icono de libro: la ley pide que el acceso esté
+           a la vista, y es lo que el consumidor busca con los ojos en
+           cualquier web peruana. -->
+      <a class="pie-reclamaciones" routerLink="/libro-de-reclamaciones">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path
             d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Zm0 0A2 2 0 0 0 6 22h13v-3M8 7h7M8 11h5"
             fill="none"
@@ -82,15 +128,6 @@
       <span class="tenue">
         Conforme a la Ley N.° 29733 de Protección de Datos Personales del Perú.
       </span>
-    </div>
-
-    <div class="columna">
-      <h3>Contacto</h3>
-      @if (whatsappUrl) {
-        <a [href]="whatsappUrl" target="_blank" rel="noopener">WhatsApp · +51 923 095 940</a>
-      }
-      <a href="mailto:asesoriaprofesional599&#64;gmail.com">asesoriaprofesional599&#64;gmail.com</a>
-      <span class="tenue">Te responde una persona, no un bot.</span>
     </div>
   </div>
 

@@ -12,6 +12,7 @@ import {
   PANEL_DEL_METODO,
 } from '../../shared/contenido/skills-del-metodo';
 import { IconoRuta } from '../../shared/layout/icono-ruta';
+import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -43,7 +44,7 @@ const GRUPO_DEL_METODO = 'METODO_DE_TESIS_HUMANIZADOR';
  */
 @Component({
   selector: 'app-metodo',
-  imports: [NgTemplateOutlet, RouterLink, SiteHeader, SiteFooter, IconoRuta],
+  imports: [NgTemplateOutlet, RouterLink, SiteHeader, SiteFooter, IconoRuta, LineasNoche],
   templateUrl: './metodo.html',
   styleUrls: ['../../shared/estilos/ruta.css', './metodo.css'],
 })

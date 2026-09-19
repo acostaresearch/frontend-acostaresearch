@@ -89,6 +89,9 @@
     </p>
 
     <ul class="cifras">
+      <!-- En modo oscuro esta franja se vuelve blanca, y ahí el decorado
+           se esconde (ver home.css). -->
+      <app-lineas-noche densidad="compacta" [anillos]="false" />
       @for (c of cifras; track c.pie) {
         <li>
           <span class="cifra-valor" [class.texto]="c.valor.length > 4" [appContador]="c.valor">{{
@@ -260,6 +263,7 @@
        En banda oscura: es el paso del «qué es» al «cómo se hace», y corta la
        página por la mitad para que se vea que empieza otra cosa. -->
   <section class="seccion noche arranque-banda">
+    <app-lineas-noche />
     <div class="cab-fila">
       <div class="cab">
         <p class="seccion-marca">Cómo se empieza</p>
@@ -378,6 +382,7 @@
        pregunta. -->
   <section class="seccion cierre-seccion">
     <div class="cierre-caja">
+      <app-lineas-noche densidad="compacta" />
       <div>
         <h2 class="cierre-titulo">Empieza hoy. Tu primer capítulo, esta semana.</h2>
         <p class="cierre-nota">
