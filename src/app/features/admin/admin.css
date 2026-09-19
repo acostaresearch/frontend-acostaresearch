@@ -2273,48 +2273,6 @@ td.acciones {
 }
 
 /* Varias tesis: texto a la izquierda, interruptor a la derecha. */
-.varias-tesis {
-  margin-top: 20px;
-  padding: 14px 16px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: 12px;
-}
-
-.varias-tesis-fila {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.varias-tesis h4 {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.varias-tesis p {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--color-texto-tenue);
-}
-
-.varias-tesis .varias-tesis-estado {
-  margin-top: 10px;
-  font-weight: 600;
-  color: var(--color-texto-suave);
-}
-
-.varias-tesis .varias-tesis-estado.encendido {
-  color: var(--color-exito);
-}
-
-.varias-tesis .aviso {
-  margin: 10px 0 0;
-}
-
 .interruptor {
   position: relative;
   flex: 0 0 auto;
@@ -2358,25 +2316,6 @@ td.acciones {
   transform: translateX(20px);
 }
 
-.mover-producto {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-borde);
-}
-
-.mover-producto h4 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.mover-producto p {
-  margin: 0 0 14px;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--color-texto-tenue);
-}
-
 .mover-fila {
   display: flex;
   flex-wrap: wrap;
@@ -2404,11 +2343,6 @@ td.acciones {
   border-color: var(--color-primario);
 }
 
-.mover-producto .correo-aviso {
-  margin: 10px 0 0;
-  color: var(--color-exito);
-}
-
 .mover-fila select {
   flex: 1 1 220px;
   min-width: 0;
@@ -2434,11 +2368,15 @@ td.acciones {
 
 .mover-fila .boton {
   flex: 0 0 auto;
+  width: auto;
+  padding: 9px 16px;
+  font-size: 13.5px;
 }
 
 /* En pantalla estrecha, cada uno en su fila y a lo ancho: partidos, el
    desplegable se queda sin sitio para el nombre del producto. */
 @media (max-width: 480px) {
+  .mover-fila input,
   .mover-fila select,
   .mover-fila .boton {
     flex: 1 1 100%;

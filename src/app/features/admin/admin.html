@@ -671,136 +671,156 @@
                   }
                 </div>
               }
-              <!-- ── Varias tesis ──────────────────────────────────────────────
-                 Por defecto, una tesis por licencia. Encenderlo le pone el botón
-                 «Nueva tesis» en su perfil para este método; apagarlo no le
-                 borra las que ya abrió. Va antes de mover el producto porque es
-                 un interruptor, no un formulario, y así se ve sin desplazarse. -->
-              @if (acceso.licenseId) {
-                <div class="varias-tesis">
-                  <div class="varias-tesis-fila">
-                    <div>
-                      <h4 id="rotulo-varias-tesis">Varias tesis</h4>
-                      <p>
-                        Que pueda abrir más de una tesis de este método desde su perfil y elegir con
-                        cuál trabaja Claude. Su URL no cambia.
-                      </p>
-                    </div>
+              <!-- ── Lo que se puede hacer con el acceso ─────────────────────────
+                 Una tarjeta con tres filas cortas, y no tres bloques con su
+                 párrafo cada uno: la ficha se hacía larguísima y lo de abajo
+                 quedaba fuera de la vista. «Varias tesis» es un interruptor y
+                 va a la vista; cambiar el correo o el producto son formularios
+                 que se usan poco, y se despliegan al pulsarlos, de uno en uno.
 
-                    @if (variasTesis() !== null) {
+                 Todo cuelga de la licencia: un código sin canjear o un
+                 comprobante en revisión todavía no tienen nada que tocar. Ni
+                 el correo ni el producto le cambian la URL del conector. -->
+              @if (acceso.licenseId) {
+                <div class="acciones-acceso">
+                  <div class="accion">
+                    <div class="accion-fila">
+                      <span class="accion-texto">
+                        <span class="accion-titulo" id="rotulo-varias-tesis">Varias tesis</span>
+                        <span
+                          class="accion-nota"
+                          [class.encendido]="variasTesis()"
+                          role="status"
+                          title="Que pueda abrir más de una tesis de este método desde su perfil y elegir con cuál trabaja Claude. Su URL no cambia."
+                        >
+                          @if (guardandoVariasTesis()) {
+                            Guardando…
+                          } @else if (avisoVariasTesis(); as mensaje) {
+                            {{ mensaje }}
+                          } @else if (variasTesis() === true) {
+                            Puede abrir varias tesis desde su perfil
+                          } @else if (variasTesis() === false) {
+                            Una sola tesis, como se vende
+                          } @else if (!errorVariasTesis()) {
+                            Consultando…
+                          }
+                        </span>
+                      </span>
+
+                      @if (variasTesis() !== null) {
+                        <button
+                          type="button"
+                          role="switch"
+                          class="interruptor"
+                          aria-labelledby="rotulo-varias-tesis"
+                          [attr.aria-checked]="variasTesis()"
+                          [disabled]="guardandoVariasTesis()"
+                          (click)="cambiarVariasTesis()"
+                        >
+                          <span class="interruptor-bola" aria-hidden="true"></span>
+                        </button>
+                      }
+                    </div>
+                    @if (errorVariasTesis(); as mensaje) {
+                      <div class="aviso error" role="alert">{{ mensaje }}</div>
+                    }
+                  </div>
+
+                  <div class="accion">
+                    <button
+                      type="button"
+                      class="accion-fila accion-boton"
+                      [attr.aria-expanded]="accionAbierta() === 'correo'"
+                      (click)="alternarAccion('correo')"
+                    >
+                      <span class="accion-texto">
+                        <span class="accion-titulo">Cambiar el correo</span>
+                        <span class="accion-nota">Con el que entra y le llegan los códigos</span>
+                      </span>
+                      <span class="accion-flecha" aria-hidden="true"></span>
+                    </button>
+
+                    @if (accionAbierta() === 'correo') {
+                      <div class="accion-cuerpo">
+                        <div class="mover-fila">
+                          <input
+                            type="email"
+                            aria-label="Correo nuevo"
+                            placeholder="correo.nuevo@gmail.com"
+                            autocomplete="off"
+                            spellcheck="false"
+                            [value]="correoNuevo()"
+                            (input)="correoNuevo.set($any($event.target).value)"
+                            (keyup.enter)="cambiarCorreoDelAcceso()"
+                          />
+                          <button
+                            type="button"
+                            class="boton"
+                            [disabled]="!correoNuevo().trim() || cambiandoCorreo()"
+                            (click)="cambiarCorreoDelAcceso()"
+                          >
+                            {{ cambiandoCorreo() ? 'Cambiando…' : 'Cambiar' }}
+                          </button>
+                        </div>
+                        <p class="accion-ayuda">
+                          Avisamos al correo viejo y al nuevo. Su URL, su licencia y su tesis siguen
+                          igual.
+                        </p>
+                        @if (avisoCorreo(); as mensaje) {
+                          <p class="accion-hecho" role="status">{{ mensaje }}</p>
+                        }
+                        @if (errorCorreo(); as mensaje) {
+                          <div class="aviso error" role="alert">{{ mensaje }}</div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (productosDestino().length > 0) {
+                    <div class="accion">
                       <button
                         type="button"
-                        role="switch"
-                        class="interruptor"
-                        aria-labelledby="rotulo-varias-tesis"
-                        [attr.aria-checked]="variasTesis()"
-                        [disabled]="guardandoVariasTesis()"
-                        (click)="cambiarVariasTesis()"
+                        class="accion-fila accion-boton"
+                        [attr.aria-expanded]="accionAbierta() === 'producto'"
+                        (click)="alternarAccion('producto')"
                       >
-                        <span class="interruptor-bola" aria-hidden="true"></span>
+                        <span class="accion-texto">
+                          <span class="accion-titulo">Ampliar o cambiar el producto</span>
+                          <span class="accion-nota">Sin cobrarle de nuevo</span>
+                        </span>
+                        <span class="accion-flecha" aria-hidden="true"></span>
                       </button>
-                    }
-                  </div>
 
-                  <p class="varias-tesis-estado" [class.encendido]="variasTesis()" role="status">
-                    @if (guardandoVariasTesis()) {
-                      Guardando…
-                    } @else if (avisoVariasTesis(); as mensaje) {
-                      {{ mensaje }}
-                    } @else if (variasTesis() === true) {
-                      Activado: puede abrir varias tesis.
-                    } @else if (variasTesis() === false) {
-                      Desactivado: una sola tesis, como se vende.
-                    } @else if (!errorVariasTesis()) {
-                      Consultando…
-                    }
-                  </p>
-
-                  @if (errorVariasTesis(); as mensaje) {
-                    <div class="aviso error" role="alert">{{ mensaje }}</div>
-                  }
-                </div>
-              }
-
-              <!-- ── Correo de la cuenta ──────────────────────────────────────
-                 Para quien compró con un correo mal escrito o perdió su
-                 bandeja. Cambia la cuenta dueña de la licencia, no la licencia:
-                 la URL que tiene instalada sigue sirviendo. -->
-              @if (acceso.licenseId) {
-                <div class="mover-producto">
-                  <h4>Cambiar el correo de la cuenta</h4>
-                  <p class="tenue">
-                    Con el que entra y al que le llegan los códigos. Le avisamos en el correo viejo
-                    y en el nuevo, y su URL, su licencia y su tesis siguen igual.
-                  </p>
-
-                  <div class="mover-fila">
-                    <input
-                      type="email"
-                      aria-label="Correo nuevo"
-                      placeholder="correo.nuevo@gmail.com"
-                      autocomplete="off"
-                      spellcheck="false"
-                      [value]="correoNuevo()"
-                      (input)="correoNuevo.set($any($event.target).value)"
-                      (keyup.enter)="cambiarCorreoDelAcceso()"
-                    />
-                    <button
-                      type="button"
-                      class="boton"
-                      [disabled]="!correoNuevo().trim() || cambiandoCorreo()"
-                      (click)="cambiarCorreoDelAcceso()"
-                    >
-                      {{ cambiandoCorreo() ? 'Cambiando…' : 'Cambiar correo' }}
-                    </button>
-                  </div>
-
-                  @if (avisoCorreo(); as mensaje) {
-                    <p class="correo-aviso" role="status">{{ mensaje }}</p>
-                  }
-                  @if (errorCorreo(); as mensaje) {
-                    <div class="aviso error" role="alert">{{ mensaje }}</div>
-                  }
-                </div>
-              }
-
-              <!-- ── Mover de producto ────────────────────────────────────────
-                 Solo si esta fila llegó a entregar una licencia: no se puede
-                 ampliar lo que todavía no existe. Un código sin canjear o un
-                 comprobante en revisión no tienen nada que mover.
-
-                 No hace falta que el comprador toque nada: la URL del conector
-                 cuelga de la licencia, y la licencia sigue siendo la misma. Lo
-                 que cambia es qué capítulos le devuelve, y es inmediato. -->
-              @if (acceso.licenseId && productosDestino().length > 0) {
-                <div class="mover-producto">
-                  <h4>Ampliar o cambiar el producto</h4>
-                  <p class="tenue">
-                    Pasa esta licencia a otro producto sin cobrarle de nuevo. Le llega un correo
-                    avisándole, y la URL que ya tiene instalada sigue funcionando.
-                  </p>
-
-                  <div class="mover-fila">
-                    <select
-                      aria-label="Producto de destino"
-                      [value]="productoElegido()"
-                      (change)="productoElegido.set($any($event.target).value)"
-                    >
-                      <option value="">Elige el producto…</option>
-                      @for (destino of productosDestino(); track destino.productCode) {
-                        <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                      @if (accionAbierta() === 'producto') {
+                        <div class="accion-cuerpo">
+                          <div class="mover-fila">
+                            <select
+                              aria-label="Producto de destino"
+                              [value]="productoElegido()"
+                              (change)="productoElegido.set($any($event.target).value)"
+                            >
+                              <option value="">Elige el producto…</option>
+                              @for (destino of productosDestino(); track destino.productCode) {
+                                <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              class="boton"
+                              [disabled]="!productoElegido() || moviendoProducto()"
+                              (click)="cambiarProductoDelAcceso()"
+                            >
+                              {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
+                            </button>
+                          </div>
+                          <p class="accion-ayuda">
+                            Le llega un correo avisándole, y la URL que ya tiene instalada sigue
+                            funcionando.
+                          </p>
+                        </div>
                       }
-                    </select>
-
-                    <button
-                      type="button"
-                      class="boton"
-                      [disabled]="!productoElegido() || moviendoProducto()"
-                      (click)="cambiarProductoDelAcceso()"
-                    >
-                      {{ moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
-                    </button>
-                  </div>
+                    </div>
+                  }
                 </div>
               }
             </div>

@@ -282,7 +282,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     ReclamosAdmin,
   ],
   templateUrl: './admin.html',
-  styleUrl: './admin.css',
+  styleUrls: ['./admin.css', './admin-acciones.css'],
 })
 export class Admin implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -3614,12 +3614,20 @@ export class Admin implements OnInit {
   // Para quien compró con un correo mal escrito o perdió su bandeja y nos lo
   // pide por WhatsApp. Cambia la cuenta, no la licencia: la URL sigue igual.
 
+  /** Qué formulario de la ficha está desplegado: de uno en uno, para que no se alargue. */
+  readonly accionAbierta = signal<'correo' | 'producto' | null>(null);
+
+  alternarAccion(cual: 'correo' | 'producto'): void {
+    this.accionAbierta.update((abierta) => (abierta === cual ? null : cual));
+  }
+
   readonly correoNuevo = signal('');
   readonly cambiandoCorreo = signal(false);
   readonly avisoCorreo = signal<string | null>(null);
   readonly errorCorreo = signal<string | null>(null);
 
   private limpiarCorreo(): void {
+    this.accionAbierta.set(null);
     this.correoNuevo.set('');
     this.cambiandoCorreo.set(false);
     this.avisoCorreo.set(null);
