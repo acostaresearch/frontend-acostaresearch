@@ -28,6 +28,13 @@
   --color-boton-hover: #1740ad;
   --color-sobre-boton: #ffffff;
 
+  /* Alias de compatibilidad: hubo componentes escritos con estos nombres, que
+     nunca llegaron a existir, y un color claro de reserva detrás. En modo
+     oscuro ese color de reserva se veía como un bloque blanco. */
+  --color-fondo-suave: var(--color-fondo);
+  --color-peligro: var(--color-error);
+  --color-marca: var(--color-primario);
+
   /* El anillo de foco y el velo que oscurece la página detrás de un diálogo. */
   --color-foco: #1d4ed8;
   --velo: rgba(16, 24, 40, 0.55);

@@ -961,7 +961,9 @@
   margin: 0;
   padding: 6px;
   list-style: none;
-  background: var(--color-superficie);
+  /* Flota sobre una tarjeta, así que de noche va un escalón más clara que
+     ella; si no, el desplegable y lo que hay debajo son la misma mancha. */
+  background: var(--color-superficie-alta);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-sm);
   box-shadow: var(--sombra);

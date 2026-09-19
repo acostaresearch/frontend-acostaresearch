@@ -52,13 +52,13 @@
   padding: 10px 12px;
   border-left: 3px solid var(--color-primario);
   border-radius: 0 6px 6px 0;
-  background: var(--color-fondo-suave, #f6f8fc);
+  background: var(--color-fondo);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .zotero-mal {
-  border-left-color: var(--color-peligro, #b42318);
+  border-left-color: var(--color-error);
 }
 
 .zotero-parte {
@@ -93,7 +93,7 @@
 .zotero-cifra .zotero-buscar-campo {
   width: 100%;
   padding: 7px 10px 7px 32px;
-  border: 1px solid var(--color-borde, #dfe3eb);
+  border: 1px solid var(--color-borde);
   border-radius: 6px;
   background: var(--color-superficie);
   font: inherit;
@@ -128,7 +128,7 @@
   gap: 12px;
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--color-borde, #dfe3eb);
+  border: 1px solid var(--color-borde);
   border-radius: 8px;
   background: var(--color-superficie);
   font: inherit;
@@ -139,7 +139,7 @@
 
 .zotero-opcion:hover:not(:disabled) {
   border-color: var(--color-primario);
-  background: var(--color-fondo-suave, #f6f8fc);
+  background: var(--color-fondo);
 }
 
 .zotero-opcion:disabled {

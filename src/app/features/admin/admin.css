@@ -2296,7 +2296,7 @@ td.acciones {
 }
 
 .interruptor:focus-visible {
-  outline: 2px solid var(--color-marca, #1a56db);
+  outline: 2px solid var(--color-foco);
   outline-offset: 2px;
 }
 
@@ -2362,7 +2362,7 @@ td.acciones {
 }
 
 .mover-fila select:focus-visible {
-  outline: 2px solid var(--color-marca, #1a56db);
+  outline: 2px solid var(--color-foco);
   outline-offset: 1px;
 }
 
