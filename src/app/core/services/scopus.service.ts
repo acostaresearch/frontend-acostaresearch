@@ -60,10 +60,38 @@ export interface ResultadoDeScopus {
   conResumen: boolean;
   /** Ya está en su biblioteca. Se marca, no se esconde. */
   yaLaTienes: boolean;
+  /** En la búsqueda por significado: lo cerca que está de la pregunta (coseno). */
+  afinidad?: number;
 }
 
 /** Cómo se ordenan los resultados. «citas» es el de siempre: más citados primero. */
-export type OrdenDeScopus = 'citas' | 'recientes' | 'antiguos' | 'relevancia';
+export type OrdenDeScopus = 'citas' | 'recientes' | 'antiguos' | 'relevancia' | 'significado';
+
+/** Los filtros que se cuentan exactos con Scopus. */
+export type FacetaExacta = 'anio' | 'tipo' | 'idioma' | 'abierto' | 'fuente' | 'etapa';
+
+/** Los números aproximados de OpenAlex, por filtro. */
+export interface CuentasAproximadas {
+  total: number | null;
+  grupos: Record<string, { valor: string; texto: string; n: number }[]>;
+}
+
+/** Una búsqueda guardada o una conversación del copiloto, en la lista. */
+export interface BusquedaGuardadaResumida {
+  id: string;
+  tipo: 'BUSQUEDA' | 'COPILOTO';
+  titulo: string;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** La misma, entera, para volver a ella. */
+export interface BusquedaGuardada extends BusquedaGuardadaResumida {
+  ecuacion: string;
+  estado: Record<string, unknown>;
+  hilo: unknown[] | null;
+}
 
 /** Lo que propone el generador con IA: conceptos en inglés con sus sinónimos. */
 export interface ConsultaGenerada {
@@ -103,6 +131,9 @@ export interface BusquedaDeScopus {
   porPagina: number;
   /** El orden con el que contestó el servidor. Opcional: uno anterior no lo manda. */
   orden?: OrdenDeScopus;
+  /** Por significado: de cuántos candidatos se eligieron estos. */
+  semantica?: boolean;
+  candidatos?: number;
   conResumenes: boolean;
   resultados: ResultadoDeScopus[];
 }
@@ -196,6 +227,80 @@ export class ScopusService {
     return this.http
       .post<ApiResponse<{ resumenes: Record<string, string> }>>(`${this.base}/resumenes`, { dois })
       .pipe(map((res) => res.data.resumenes));
+  }
+
+  /** Cuántos resultados hay en cada opción de un filtro, exactos, de Scopus. */
+  cuentas(ecuacion: string, faceta: FacetaExacta): Observable<Record<string, number | null>> {
+    return this.http
+      .post<ApiResponse<{ faceta: string; cuentas: Record<string, number | null> }>>(
+        `${this.base}/cuentas`,
+        { ecuacion, faceta },
+      )
+      .pipe(map((res) => res.data.cuentas));
+  }
+
+  /** Los números aproximados de OpenAlex para el área y los filtros de lo encontrado. */
+  aproximadas(
+    conceptos: { nombre: string; sinonimos: string[] }[],
+    desde: number | null,
+    hasta: number | null,
+  ): Observable<CuentasAproximadas> {
+    return this.http
+      .post<ApiResponse<CuentasAproximadas>>(`${this.base}/cuentas-aproximadas`, {
+        conceptos,
+        desde,
+        hasta,
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  /** Los 25 más cercanos a la pregunta, por significado. */
+  semantica(ecuacion: string, pregunta: string): Observable<BusquedaDeScopus> {
+    return this.http
+      .post<ApiResponse<BusquedaDeScopus>>(`${this.base}/semantica`, { ecuacion, pregunta })
+      .pipe(map((res) => res.data));
+  }
+
+  // ── Búsquedas guardadas y conversaciones del copiloto ─────────────────────
+
+  guardadas(): Observable<BusquedaGuardadaResumida[]> {
+    return this.http
+      .get<ApiResponse<{ guardadas: BusquedaGuardadaResumida[] }>>(`${this.base}/guardadas`)
+      .pipe(map((res) => res.data.guardadas));
+  }
+
+  guardada(id: string): Observable<BusquedaGuardada> {
+    return this.http
+      .get<ApiResponse<{ guardada: BusquedaGuardada }>>(`${this.base}/guardadas/${id}`)
+      .pipe(map((res) => res.data.guardada));
+  }
+
+  guardar(datos: {
+    tipo: 'BUSQUEDA' | 'COPILOTO';
+    titulo: string;
+    ecuacion: string;
+    estado: Record<string, unknown>;
+    hilo?: unknown[] | null;
+    total?: number;
+  }): Observable<BusquedaGuardadaResumida> {
+    return this.http
+      .post<ApiResponse<{ guardada: BusquedaGuardadaResumida }>>(`${this.base}/guardadas`, datos)
+      .pipe(map((res) => res.data.guardada));
+  }
+
+  actualizarGuardada(
+    id: string,
+    cambios: Partial<{ titulo: string; ecuacion: string; estado: Record<string, unknown>; hilo: unknown[]; total: number }>,
+  ): Observable<BusquedaGuardadaResumida> {
+    return this.http
+      .put<ApiResponse<{ guardada: BusquedaGuardadaResumida }>>(`${this.base}/guardadas/${id}`, cambios)
+      .pipe(map((res) => res.data.guardada));
+  }
+
+  borrarGuardada(id: string): Observable<{ ok: boolean }> {
+    return this.http
+      .delete<ApiResponse<{ ok: boolean }>>(`${this.base}/guardadas/${id}`)
+      .pipe(map((res) => res.data));
   }
 
   importar(eids: string[]): Observable<ImportacionDeScopus> {

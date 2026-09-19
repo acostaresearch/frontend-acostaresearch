@@ -7,6 +7,9 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { MisFuentesService } from '../../core/services/mis-fuentes.service';
 import {
   BusquedaDeScopus,
+  BusquedaGuardadaResumida,
+  CuentasAproximadas,
+  FacetaExacta,
   EstadoDeScopus,
   FuenteParaResumir,
   ImportacionDeScopus,
@@ -52,6 +55,26 @@ interface OpcionDeFaceta {
   texto: string;
 }
 
+/** Una fila más del buscador: «Agregar campo de búsqueda». */
+interface FilaDeBusqueda {
+  id: number;
+  operador: 'AND' | 'OR' | 'AND NOT';
+  campo: string;
+  texto: string;
+}
+
+/** Una búsqueda de esta sesión, en el historial numerado. */
+interface EntradaDeHistorial {
+  n: number;
+  ecuacion: string;
+  total: number;
+  cuando: number;
+}
+
+/** Los filtros que Scopus cuenta exactos, y los que se cuentan con OpenAlex. */
+const FACETAS_EXACTAS: readonly string[] = ['anio', 'tipo', 'idioma', 'abierto', 'fuente', 'etapa'];
+const FACETAS_APROXIMADAS: readonly string[] = ['area', 'pais', 'revista', 'autor', 'afiliacion', 'patrocinador'];
+
 /** Una sección de «Refinar búsqueda». Ver `facetas` en el componente. */
 interface Faceta {
   clave: string;
@@ -70,7 +93,7 @@ interface Faceta {
   selector: 'app-mi-scopus',
   imports: [DecimalPipe, NgTemplateOutlet],
   templateUrl: './mi-scopus.html',
-  styleUrl: './mi-scopus.css',
+  styleUrls: ['./mi-scopus.css', './mi-scopus-ia.css'],
 })
 export class MiScopusPanel implements OnInit {
   private readonly scopus = inject(ScopusService);
@@ -134,6 +157,23 @@ export class MiScopusPanel implements OnInit {
    * las palabras sueltas Scopus las junta con AND dentro del campo.
    */
   readonly ecuacionNormal = computed(() => {
+    let ecuacion = this.primeraFila();
+    // Las filas de «Agregar campo de búsqueda», de izquierda a derecha y con
+    // paréntesis: Scopus resuelve OR antes que AND y AND antes que AND NOT, y
+    // sin ellos «a OR b AND NOT c» no significaría lo que se ve en pantalla.
+    // Con el copiloto no cuentan: no se ven.
+    if (!this.iaAbierta()) {
+      for (const fila of this.filas()) {
+        const trozo = this.ecuacionDeTexto(fila.campo, fila.texto);
+        if (!trozo) continue;
+        ecuacion = ecuacion ? `(${ecuacion}) ${fila.operador} ${trozo}` : trozo;
+      }
+    }
+    return ecuacion;
+  });
+
+  /** La primera fila: la de los conceptos y sus sinónimos. */
+  private readonly primeraFila = computed(() => {
     if (this.enConceptos()) {
       const campo = this.campo();
       return this.conceptos()
@@ -146,6 +186,49 @@ export class MiScopusPanel implements OnInit {
     const limpio = this.texto().replace(/[(){}]/g, ' ').replace(/\s+/g, ' ').trim();
     return limpio ? `${this.campo()}(${limpio})` : '';
   });
+
+  /**
+   * Lo escrito en una fila, como ecuación. Con comas en un campo que admite
+   * conceptos, cada trozo es una frase y tienen que estar todos; si no, las
+   * palabras sueltas, como siempre.
+   */
+  private ecuacionDeTexto(campo: string, texto: string): string {
+    const conceptos = texto
+      .split(/[,;]/)
+      .map((trozo) => this.limpio(trozo))
+      .filter(Boolean);
+    if (conceptos.length === 0) return '';
+    if (conceptos.length > 1 && MiScopusPanel.CAMPOS_CON_CONCEPTOS.has(campo)) {
+      return `(${conceptos.map((c) => `${campo}(${this.comoFrase(c)})`).join(' AND ')})`;
+    }
+    return `${campo}(${conceptos.join(' ')})`;
+  }
+
+  // ── «Agregar campo de búsqueda» ───────────────────────────────────────────
+
+  readonly filas = signal<FilaDeBusqueda[]>([]);
+  private siguienteFila = 1;
+
+  readonly operadores: readonly { valor: FilaDeBusqueda['operador']; texto: string }[] = [
+    { valor: 'AND', texto: 'Y' },
+    { valor: 'OR', texto: 'O' },
+    { valor: 'AND NOT', texto: 'Y NO' },
+  ];
+
+  agregarFila(): void {
+    this.filas.update((filas) => [
+      ...filas,
+      { id: this.siguienteFila++, operador: 'AND', campo: 'TITLE-ABS-KEY', texto: '' },
+    ]);
+  }
+
+  cambiarFila(id: number, cambio: Partial<Omit<FilaDeBusqueda, 'id'>>): void {
+    this.filas.update((filas) => filas.map((fila) => (fila.id === id ? { ...fila, ...cambio } : fila)));
+  }
+
+  quitarFila(id: number): void {
+    this.filas.update((filas) => filas.filter((fila) => fila.id !== id));
+  }
 
   // ── Conceptos separados por comas ─────────────────────────────────────────
 
@@ -336,8 +419,11 @@ export class MiScopusPanel implements OnInit {
         });
         // Los pasos y los conceptos se quedan plegados: quien pregunta al
         // copiloto viene a por la respuesta, no a revisar la ecuación. Y se
-        // busca en el acto, con el resumen detrás.
+        // busca en el acto, por significado, con el resumen detrás; y es una
+        // conversación nueva, que se guardará sola.
         this.pasosAbiertos.set(false);
+        this.conversacionId = null;
+        this.orden.set('significado');
         this.buscar(1);
       },
       error: (fallo: unknown) => {
@@ -411,6 +497,7 @@ export class MiScopusPanel implements OnInit {
         this.resumiendo.set(false);
         this.hilo.update((turnos) => [...turnos, { pregunta, resumen }]);
         this.seguimiento.set('');
+        if (this.iaAbierta()) this.guardarConversacion();
       },
       error: (fallo: unknown) => {
         this.resumiendo.set(false);
@@ -487,15 +574,21 @@ export class MiScopusPanel implements OnInit {
   readonly orden = signal<OrdenDeScopus>('citas');
   readonly menuOrdenResultados = signal(false);
 
-  readonly ordenesDeResultados: readonly { valor: OrdenDeScopus; texto: string }[] = [
+  private readonly todasLasOrdenes: readonly { valor: OrdenDeScopus; texto: string }[] = [
+    { valor: 'significado', texto: 'Por significado ✦' },
     { valor: 'citas', texto: 'Más citados' },
     { valor: 'recientes', texto: 'Más recientes' },
     { valor: 'antiguos', texto: 'Más antiguos' },
     { valor: 'relevancia', texto: 'Relevancia' },
   ];
 
+  /** «Por significado» solo cuando hay una pregunta con la que comparar. */
+  readonly ordenesDeResultados = computed(() =>
+    this.todasLasOrdenes.filter((o) => o.valor !== 'significado' || Boolean(this.preguntaSemantica())),
+  );
+
   readonly textoDelOrdenDeResultados = computed(
-    () => this.ordenesDeResultados.find((o) => o.valor === this.orden())?.texto ?? '',
+    () => this.todasLasOrdenes.find((o) => o.valor === this.orden())?.texto ?? '',
   );
 
   /** Cambiar el orden vuelve a la primera página: la segunda de otro orden no es la misma. */
@@ -578,11 +671,12 @@ export class MiScopusPanel implements OnInit {
   /**
    * Las secciones de la columna de filtros que están abiertas.
    *
-   * Empiezan abiertas las cuatro que más se usan, como en Scopus; las demás
-   * plegadas, porque trece secciones abiertas hacen una columna más larga que
-   * la lista de resultados que tiene al lado.
+   * Empiezan abiertas el año —con sus barras— y el área; las demás plegadas.
+   * No es solo por espacio: cada sección abierta pide sus números, y los
+   * exactos gastan una consulta a Scopus por opción (el tipo, doce). Se
+   * cuentan cuando el tesista abre la sección, no en cada búsqueda.
    */
-  readonly abiertas = signal<ReadonlySet<string>>(new Set(['anio', 'area', 'tipo', 'idioma']));
+  readonly abiertas = signal<ReadonlySet<string>>(new Set(['anio', 'area']));
 
   /** En el móvil la columna de filtros se abre con un botón, encima de la lista. */
   readonly filtrosAbiertos = signal(false);
@@ -795,27 +889,250 @@ export class MiScopusPanel implements OnInit {
   }
 
   /** Las cláusulas que añaden los filtros, ya en el lenguaje de Scopus. */
-  readonly clausulas = computed(() => {
+  readonly clausulas = computed(() => this.construirClausulas());
+
+  /**
+   * Las cláusulas de los filtros; `sin` deja fuera una faceta. Para contar las
+   * opciones de un filtro se cuenta sobre lo demás: si «Artículo» está marcado,
+   * «Revisión» tiene que decir cuántas habría, no cero.
+   */
+  private construirClausulas(sin: string | null = null): string[] {
     const partes: string[] = [];
 
     const dentro = this.limpio(this.dentro());
     if (dentro) partes.push(`TITLE-ABS-KEY(${dentro})`);
 
-    const anios = this.clausulaDeAnios();
-    if (anios) partes.push(anios);
+    if (sin !== 'anio') {
+      const anios = this.clausulaDeAnios();
+      if (anios) partes.push(anios);
+    }
 
     const seleccion = this.seleccion();
     for (const faceta of this.facetas) {
+      if (faceta.clave === sin) continue;
       const valores = seleccion[faceta.clave] ?? [];
       if (valores.length === 0) continue;
       const trozos = valores.map((valor) => `${faceta.campo}(${valor})`);
       partes.push(trozos.length === 1 ? trozos[0] : `(${trozos.join(' OR ')})`);
     }
     return partes;
+  }
+
+  /**
+   * Lo excluido («todo menos esto»), por faceta. Va en un solo `AND NOT (… OR …)`
+   * al final: Scopus resuelve AND NOT lo último, y varios sueltos se
+   * encadenarían de una forma que nadie espera. Probado contra la API.
+   */
+  readonly exclusiones = signal<Readonly<Record<string, readonly string[]>>>({});
+
+  private construirExclusiones(sin: string | null = null): string[] {
+    const exclusiones = this.exclusiones();
+    return this.facetas.flatMap((faceta) =>
+      faceta.clave === sin
+        ? []
+        : (exclusiones[faceta.clave] ?? []).map((valor) => `${faceta.campo}(${valor})`),
+    );
+  }
+
+  readonly clausulasExcluidas = computed(() => this.construirExclusiones());
+
+  readonly hayFiltros = computed(
+    () => this.clausulas().length > 0 || this.clausulasExcluidas().length > 0,
+  );
+  readonly cuantosFiltros = computed(
+    () => this.clausulas().length + this.clausulasExcluidas().length,
+  );
+
+  excluido(faceta: Faceta, valor: string): boolean {
+    return (this.exclusiones()[faceta.clave] ?? []).includes(valor);
+  }
+
+  valoresExcluidosDe(faceta: Faceta): readonly string[] {
+    return this.exclusiones()[faceta.clave] ?? [];
+  }
+
+  /** Excluir, o dejar de excluir. Una opción no puede estar a la vez dentro y fuera. */
+  alternarExclusion(faceta: Faceta, valor: string): void {
+    const actuales = this.valoresExcluidosDe(faceta);
+    const excluir = !actuales.includes(valor);
+    this.exclusiones.update((e) => ({
+      ...e,
+      [faceta.clave]: excluir ? [...actuales, valor] : actuales.filter((v) => v !== valor),
+    }));
+    if (excluir && this.marcado(faceta, valor)) {
+      this.seleccion.update((s) => ({
+        ...s,
+        [faceta.clave]: (s[faceta.clave] ?? []).filter((v) => v !== valor),
+      }));
+    }
+    this.filtrar();
+  }
+
+  /** En las de escribir: el valor pasa de incluido a excluido y al revés. */
+  invertirValor(faceta: Faceta, valor: string): void {
+    if (this.excluido(faceta, valor)) {
+      this.exclusiones.update((e) => ({
+        ...e,
+        [faceta.clave]: (e[faceta.clave] ?? []).filter((v) => v !== valor),
+      }));
+      this.seleccion.update((s) => ({ ...s, [faceta.clave]: [...(s[faceta.clave] ?? []), valor] }));
+      this.filtrar();
+    } else {
+      this.alternarExclusion(faceta, valor);
+    }
+  }
+
+  quitarExcluido(faceta: Faceta, valor: string): void {
+    this.exclusiones.update((e) => ({
+      ...e,
+      [faceta.clave]: (e[faceta.clave] ?? []).filter((v) => v !== valor),
+    }));
+    this.filtrar();
+  }
+
+  // ── Los números de los filtros ────────────────────────────────────────────
+
+  /** Por faceta: la ecuación con la que se contó y lo que salió. */
+  readonly cuentasExactas = signal<Readonly<Record<string, { ecuacion: string; n: Record<string, number | null> }>>>({});
+  readonly contando = signal<ReadonlySet<string>>(new Set());
+  readonly aproximadas = signal<{ clave: string; datos: CuentasAproximadas } | null>(null);
+  readonly contandoAproximadas = signal(false);
+
+  /** La ecuación sobre la que se cuentan las opciones de una faceta: todo menos ella. */
+  private ecuacionParaContar(clave: string): string {
+    const base = this.ecuacionBase();
+    if (!base) return '';
+    const incluidas = this.construirClausulas(clave);
+    const excluidas = this.construirExclusiones(clave);
+    let ecuacion = incluidas.length ? [`(${base})`, ...incluidas].join(' AND ') : base;
+    if (excluidas.length) ecuacion = `(${ecuacion}) AND NOT (${excluidas.join(' OR ')})`;
+    return ecuacion;
+  }
+
+  /**
+   * Pide los números de las secciones abiertas que no los tengan para esta
+   * búsqueda. Se llama al llegar resultados y al abrir una sección: los
+   * números cuestan consultas, y una sección cerrada no los necesita.
+   */
+  private cargarCuentas(): void {
+    if (!this.busqueda() || this.iaAbierta() || this.orden() === 'significado') return;
+    const abiertas = this.abiertas();
+
+    for (const clave of FACETAS_EXACTAS) {
+      if (!abiertas.has(clave) || this.contando().has(clave)) continue;
+      const ecuacion = this.ecuacionParaContar(clave);
+      if (!ecuacion || this.cuentasExactas()[clave]?.ecuacion === ecuacion) continue;
+
+      this.contando.update((c) => new Set([...c, clave]));
+      this.scopus.cuentas(ecuacion, clave as FacetaExacta).subscribe({
+        next: (n) => {
+          this.cuentasExactas.update((todas) => ({ ...todas, [clave]: { ecuacion, n } }));
+          this.dejarDeContar(clave);
+        },
+        error: () => this.dejarDeContar(clave),
+      });
+    }
+
+    if (!FACETAS_APROXIMADAS.some((clave) => abiertas.has(clave))) return;
+    const conceptos = this.conceptosParaContar();
+    if (conceptos.length === 0 || this.contandoAproximadas()) return;
+    const desde = this.anio(this.anioDesde());
+    const hasta = this.anio(this.anioHasta());
+    const clave = JSON.stringify({ conceptos, desde, hasta });
+    if (this.aproximadas()?.clave === clave) return;
+
+    this.contandoAproximadas.set(true);
+    this.scopus.aproximadas(conceptos, desde, hasta).subscribe({
+      next: (datos) => {
+        this.aproximadas.set({ clave, datos });
+        this.contandoAproximadas.set(false);
+      },
+      error: () => this.contandoAproximadas.set(false),
+    });
+  }
+
+  private dejarDeContar(clave: string): void {
+    this.contando.update((c) => new Set([...c].filter((x) => x !== clave)));
+  }
+
+  /**
+   * Los conceptos para preguntarle a OpenAlex. Solo con la búsqueda normal en
+   * título, resumen o palabras clave: una ecuación avanzada no se puede
+   * traducir a OpenAlex sin inventarse la mitad.
+   */
+  private conceptosParaContar(): { nombre: string; sinonimos: string[] }[] {
+    if (this.modo() !== 'normal' || !MiScopusPanel.CAMPOS_CON_CONCEPTOS.has(this.campo())) return [];
+    return this.conceptos().map((c) => ({ nombre: c.nombre, sinonimos: [...c.sinonimos] }));
+  }
+
+  /** Si los números de una faceta exacta son de la búsqueda que se ve. */
+  private numerosDe(clave: string): Record<string, number | null> | null {
+    const guardadas = this.cuentasExactas()[clave];
+    return guardadas && guardadas.ecuacion === this.ecuacionParaContar(clave) ? guardadas.n : null;
+  }
+
+  /** El número de una opción: exacto, aproximado (área) o nada. */
+  cuentaDe(faceta: Faceta, valor: string): { n: number; aprox: boolean } | null {
+    const exactas = this.numerosDe(faceta.clave);
+    if (exactas) {
+      const n = exactas[valor];
+      return typeof n === 'number' ? { n, aprox: false } : null;
+    }
+    if (faceta.clave === 'area') {
+      const encontrada = this.aproximadas()?.datos.grupos['area']?.find((g) => g.valor === valor);
+      return encontrada ? { n: encontrada.n, aprox: true } : null;
+    }
+    return null;
+  }
+
+  esExacta(clave: string): boolean {
+    return FACETAS_EXACTAS.includes(clave);
+  }
+
+  esAproximada(clave: string): boolean {
+    return FACETAS_APROXIMADAS.includes(clave);
+  }
+
+  contandoFaceta(clave: string): boolean {
+    return this.esExacta(clave) ? this.contando().has(clave) : this.esAproximada(clave) && this.contandoAproximadas();
+  }
+
+  /** Sugerencias con número para las de escribir (país, revista, autor…). */
+  sugerencias(faceta: Faceta): { valor: string; texto: string; n: number }[] {
+    const ya = new Set([...this.valoresDe(faceta), ...this.valoresExcluidosDe(faceta)].map((v) => v.toLowerCase()));
+    return (this.aproximadas()?.datos.grupos[faceta.clave] ?? [])
+      .filter((g) => !ya.has(g.valor.toLowerCase()))
+      .slice(0, 5);
+  }
+
+  agregarValor(faceta: Faceta, valor: string): void {
+    const limpio = this.limpio(valor);
+    if (!limpio || this.valoresDe(faceta).includes(limpio)) return;
+    this.seleccion.update((s) => ({ ...s, [faceta.clave]: [...this.valoresDe(faceta), limpio] }));
+    this.filtrar();
+  }
+
+  /** Las barras de los años: los diez últimos con su número exacto. */
+  readonly barrasDeAnios = computed(() => {
+    // Se leen las señales de las que depende para recalcular a tiempo.
+    this.cuentasExactas();
+    this.seleccion();
+    this.anioDesde();
+    this.anioHasta();
+    const numeros = this.numerosDe('anio');
+    if (!numeros) return [];
+    const valores = Object.entries(numeros).map(([anio, n]) => ({ anio, n: n ?? 0 }));
+    const maximo = Math.max(1, ...valores.map((v) => v.n));
+    return valores.map((v) => ({ ...v, alto: Math.max(4, Math.round((v.n / maximo) * 100)) }));
   });
 
-  readonly hayFiltros = computed(() => this.clausulas().length > 0);
-  readonly cuantosFiltros = computed(() => this.clausulas().length);
+  /** Una barra elige ese año, como en Scopus. */
+  elegirAnio(anio: string): void {
+    this.modoAnio.set('rango');
+    this.anioDesde.set(anio);
+    this.anioHasta.set(anio);
+    this.filtrar();
+  }
 
   marcado(faceta: Faceta, valor: string): boolean {
     return (this.seleccion()[faceta.clave] ?? []).includes(valor);
@@ -831,10 +1148,17 @@ export class MiScopusPanel implements OnInit {
    * resto se elige en la ventana de «Mostrar todo».
    */
   opcionesVisibles(faceta: Faceta): readonly OpcionDeFaceta[] {
-    const opciones = faceta.opciones ?? [];
+    let opciones = faceta.opciones ?? [];
+    // Con números, primero las que más tienen, como en Scopus.
+    if (opciones.some((o) => this.cuentaDe(faceta, o.valor))) {
+      opciones = [...opciones].sort(
+        (a, b) => (this.cuentaDe(faceta, b.valor)?.n ?? -1) - (this.cuentaDe(faceta, a.valor)?.n ?? -1),
+      );
+    }
     if (!faceta.visibles) return opciones;
     return opciones.filter(
-      (opcion, i) => i < faceta.visibles! || this.marcado(faceta, opcion.valor),
+      (opcion, i) =>
+        i < faceta.visibles! || this.marcado(faceta, opcion.valor) || this.excluido(faceta, opcion.valor),
     );
   }
 
@@ -847,6 +1171,7 @@ export class MiScopusPanel implements OnInit {
     if (copia.has(clave)) copia.delete(clave);
     else copia.add(clave);
     this.abiertas.set(copia);
+    this.cargarCuentas();
   }
 
   // ── «Mostrar todo»: la ventana emergente ───────────────────────────────────
@@ -961,10 +1286,15 @@ export class MiScopusPanel implements OnInit {
 
   alternar(faceta: Faceta, valor: string): void {
     const actuales = this.valoresDe(faceta);
-    const nuevos = actuales.includes(valor)
-      ? actuales.filter((v) => v !== valor)
-      : [...actuales, valor];
+    const incluir = !actuales.includes(valor);
+    const nuevos = incluir ? [...actuales, valor] : actuales.filter((v) => v !== valor);
     this.seleccion.update((s) => ({ ...s, [faceta.clave]: nuevos }));
+    if (incluir && this.excluido(faceta, valor)) {
+      this.exclusiones.update((e) => ({
+        ...e,
+        [faceta.clave]: (e[faceta.clave] ?? []).filter((v) => v !== valor),
+      }));
+    }
     this.filtrar();
   }
 
@@ -1007,9 +1337,325 @@ export class MiScopusPanel implements OnInit {
     // aplicar algo que no está a la vista daría resultados que no se explican.
     // Siguen guardados y vuelven al apagarlo.
     const clausulas = this.iaAbierta() ? [] : this.clausulas();
+    const excluidas = this.iaAbierta() ? [] : this.clausulasExcluidas();
     if (!ecuacion) return '';
-    return clausulas.length ? [`(${ecuacion})`, ...clausulas].join(' AND ') : ecuacion;
+    let completa = clausulas.length ? [`(${ecuacion})`, ...clausulas].join(' AND ') : ecuacion;
+    if (excluidas.length) completa = `(${completa}) AND NOT (${excluidas.join(' OR ')})`;
+    return completa;
   });
+
+  // ── El historial de esta sesión ───────────────────────────────────────────
+
+  /**
+   * Las búsquedas de esta sesión, numeradas como en Scopus, para volver a una
+   * o combinar varias (#2 AND #4). Vive en la pestaña: `sessionStorage`, que se
+   * va al cerrarla. Lo que se quiere conservar se guarda con «Guardar búsqueda».
+   */
+  readonly historial = signal<EntradaDeHistorial[]>(this.leerHistorial());
+  readonly historialAbierto = signal(false);
+  readonly elegidasDelHistorial = signal<ReadonlySet<number>>(new Set());
+  readonly operadorCombinar = signal<'AND' | 'OR' | 'AND NOT'>('AND');
+
+  private leerHistorial(): EntradaDeHistorial[] {
+    try {
+      const guardado = JSON.parse(sessionStorage.getItem('scopus-historial') ?? '[]');
+      return Array.isArray(guardado) ? guardado.slice(-30) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private anotarEnHistorial(ecuacion: string, total: number): void {
+    const lista = this.historial();
+    const ultima = lista.at(-1);
+    let nueva: EntradaDeHistorial[];
+    if (ultima && ultima.ecuacion === ecuacion) {
+      nueva = [...lista.slice(0, -1), { ...ultima, total, cuando: Date.now() }];
+    } else {
+      const n = (lista.at(-1)?.n ?? 0) + 1;
+      nueva = [...lista, { n, ecuacion, total, cuando: Date.now() }].slice(-30);
+    }
+    this.historial.set(nueva);
+    try {
+      sessionStorage.setItem('scopus-historial', JSON.stringify(nueva));
+    } catch {
+      // Sin almacenamiento, el historial vive hasta recargar. No es grave.
+    }
+  }
+
+  elegirDelHistorial(n: number): void {
+    const copia = new Set(this.elegidasDelHistorial());
+    if (copia.has(n)) copia.delete(n);
+    else copia.add(n);
+    this.elegidasDelHistorial.set(copia);
+  }
+
+  /** Vuelve a lanzar una del historial tal cual, en la consulta avanzada. */
+  relanzar(entrada: EntradaDeHistorial): void {
+    this.lanzarEcuacion(entrada.ecuacion);
+  }
+
+  /** «Combinar consultas»: las elegidas, unidas con Y, O o Y NO. */
+  combinar(): void {
+    const elegidas = this.historial().filter((e) => this.elegidasDelHistorial().has(e.n));
+    if (elegidas.length < 2) return;
+    this.elegidasDelHistorial.set(new Set());
+    this.lanzarEcuacion(elegidas.map((e) => `(${e.ecuacion})`).join(` ${this.operadorCombinar()} `));
+  }
+
+  borrarDelHistorial(n: number): void {
+    const nueva = this.historial().filter((e) => e.n !== n);
+    this.historial.set(nueva);
+    this.elegidasDelHistorial.update((s) => new Set([...s].filter((x) => x !== n)));
+    try {
+      sessionStorage.setItem('scopus-historial', JSON.stringify(nueva));
+    } catch {
+      // Igual que al anotar.
+    }
+  }
+
+  /**
+   * Busca una ecuación ya completa en la consulta avanzada. Los filtros de la
+   * columna se vacían sin buscar: la ecuación ya los lleva dentro, y dejarlos
+   * los pegaría otra vez.
+   */
+  private lanzarEcuacion(ecuacion: string): void {
+    this.iaAbierta.set(false);
+    this.modo.set('avanzada');
+    this.ecuacion.set(ecuacion);
+    this.vaciarFiltros();
+    if (this.orden() === 'significado') this.orden.set('citas');
+    this.buscar(1);
+  }
+
+  private vaciarFiltros(): void {
+    this.dentro.set('');
+    this.anioDesde.set('');
+    this.anioHasta.set('');
+    this.aniosSueltos.set('');
+    this.seleccion.set({});
+    this.exclusiones.set({});
+  }
+
+  // ── Búsquedas guardadas y conversaciones del copiloto ─────────────────────
+
+  readonly guardadas = signal<BusquedaGuardadaResumida[] | null>(null);
+  readonly panelGuardadas = signal(false);
+  readonly errorGuardadas = signal<string | null>(null);
+  readonly avisoGuardada = signal<string | null>(null);
+  /** La conversación del copiloto que se está escribiendo, para ir añadiéndole preguntas. */
+  private conversacionId: string | null = null;
+  /** El hilo de una conversación que se acaba de abrir, a la espera de sus resultados. */
+  private hiloPendiente: { pregunta: string; resumen: ResumenConIa }[] | null = null;
+
+  /** La lista, por fechas, como en la IA de Scopus. */
+  readonly guardadasPorFecha = computed(() => {
+    const ahora = new Date();
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+    const dia = 24 * 60 * 60 * 1000;
+    const grupos: { titulo: string; lista: BusquedaGuardadaResumida[] }[] = [
+      { titulo: 'Hoy', lista: [] },
+      { titulo: 'Últimos 7 días', lista: [] },
+      { titulo: 'Últimos 30 días', lista: [] },
+      { titulo: 'Antes', lista: [] },
+    ];
+    for (const g of this.guardadas() ?? []) {
+      const cuando = new Date(g.updatedAt).getTime();
+      const i = cuando >= hoy ? 0 : cuando >= hoy - 7 * dia ? 1 : cuando >= hoy - 30 * dia ? 2 : 3;
+      grupos[i].lista.push(g);
+    }
+    return grupos.filter((g) => g.lista.length > 0);
+  });
+
+  abrirPanelGuardadas(): void {
+    this.panelGuardadas.set(true);
+    this.errorGuardadas.set(null);
+    this.scopus.guardadas().subscribe({
+      next: (lista) => this.guardadas.set(lista),
+      error: (fallo: unknown) => this.errorGuardadas.set(toApiError(fallo).message),
+    });
+  }
+
+  /** El estado del buscador, para volver a él tal cual. */
+  private estadoActual(): Record<string, unknown> {
+    return {
+      v: 1,
+      modo: this.modo(),
+      texto: this.texto(),
+      campo: this.campo(),
+      sinonimos: this.sinonimos(),
+      ecuacion: this.ecuacion(),
+      temaIa: this.temaIa(),
+      iaAbierta: this.iaAbierta(),
+      ultimaGeneracion: this.ultimaGeneracion(),
+      orden: this.orden(),
+      dentro: this.dentro(),
+      modoAnio: this.modoAnio(),
+      anioDesde: this.anioDesde(),
+      anioHasta: this.anioHasta(),
+      aniosSueltos: this.aniosSueltos(),
+      seleccion: this.seleccion(),
+      exclusiones: this.exclusiones(),
+      filas: this.filas(),
+    };
+  }
+
+  private restaurarEstado(e: Record<string, unknown>): void {
+    const texto = (v: unknown) => (typeof v === 'string' ? v : '');
+    const objeto = <T>(v: unknown, porDefecto: T): T => (v && typeof v === 'object' ? (v as T) : porDefecto);
+    this.modo.set(e['modo'] === 'avanzada' ? 'avanzada' : 'normal');
+    this.texto.set(texto(e['texto']));
+    this.campo.set(texto(e['campo']) || 'TITLE-ABS-KEY');
+    this.sinonimos.set(objeto(e['sinonimos'], {}));
+    this.ecuacion.set(texto(e['ecuacion']));
+    this.temaIa.set(texto(e['temaIa']));
+    this.iaAbierta.set(e['iaAbierta'] === true);
+    this.ultimaGeneracion.set(objeto(e['ultimaGeneracion'], null));
+    const orden = texto(e['orden']);
+    this.orden.set(
+      (['citas', 'recientes', 'antiguos', 'relevancia', 'significado'].includes(orden) ? orden : 'citas') as OrdenDeScopus,
+    );
+    this.dentro.set(texto(e['dentro']));
+    this.modoAnio.set(e['modoAnio'] === 'sueltos' ? 'sueltos' : 'rango');
+    this.anioDesde.set(texto(e['anioDesde']));
+    this.anioHasta.set(texto(e['anioHasta']));
+    this.aniosSueltos.set(texto(e['aniosSueltos']));
+    this.seleccion.set(objeto(e['seleccion'], {}));
+    this.exclusiones.set(objeto(e['exclusiones'], {}));
+    const filas = Array.isArray(e['filas']) ? (e['filas'] as FilaDeBusqueda[]) : [];
+    this.filas.set(filas);
+    this.siguienteFila = Math.max(1, ...filas.map((f) => f.id + 1));
+  }
+
+  /** El nombre con que se guarda: lo que se escribió, o el principio de la ecuación. */
+  private tituloPorDefecto(): string {
+    const escrito = this.modo() === 'normal' ? this.texto().trim() : '';
+    const titulo = escrito || this.ecuacionCompleta();
+    return titulo.length > 120 ? `${titulo.slice(0, 117)}…` : titulo;
+  }
+
+  guardarBusqueda(): void {
+    const ecuacion = this.ecuacionCompleta();
+    if (!ecuacion) return;
+    this.scopus
+      .guardar({
+        tipo: 'BUSQUEDA',
+        titulo: this.tituloPorDefecto(),
+        ecuacion,
+        estado: this.estadoActual(),
+        total: this.busqueda()?.total ?? 0,
+      })
+      .subscribe({
+        next: (guardada) => {
+          this.guardadas.update((lista) => (lista ? [guardada, ...lista] : lista));
+          this.avisar('Guardada en «Tus búsquedas».');
+        },
+        error: (fallo: unknown) => this.avisar(toApiError(fallo).message),
+      });
+  }
+
+  private avisar(texto: string): void {
+    this.avisoGuardada.set(texto);
+    setTimeout(() => this.avisoGuardada.set(null), 3500);
+  }
+
+  /**
+   * La conversación del copiloto se guarda sola: al llegar el primer resumen se
+   * crea, y cada pregunta de seguimiento la actualiza. Si falla no se dice
+   * nada: el resumen está en pantalla, que es lo que importa ahora.
+   */
+  private guardarConversacion(): void {
+    const generacion = this.ultimaGeneracion();
+    if (!generacion || this.hilo().length === 0) return;
+    const hilo = this.hilo();
+    const total = this.busqueda()?.total ?? 0;
+
+    if (this.conversacionId) {
+      this.scopus.actualizarGuardada(this.conversacionId, { hilo, total }).subscribe({
+        next: (guardada) => this.alFrente(guardada),
+        error: () => {},
+      });
+      return;
+    }
+
+    this.scopus
+      .guardar({
+        tipo: 'COPILOTO',
+        titulo: generacion.tema.slice(0, 200),
+        ecuacion: this.ecuacionCompleta(),
+        estado: this.estadoActual(),
+        hilo,
+        total,
+      })
+      .subscribe({
+        next: (guardada) => {
+          this.conversacionId = guardada.id;
+          this.alFrente(guardada);
+        },
+        error: () => {},
+      });
+  }
+
+  private alFrente(guardada: BusquedaGuardadaResumida): void {
+    this.guardadas.update((lista) =>
+      lista ? [guardada, ...lista.filter((g) => g.id !== guardada.id)] : lista,
+    );
+  }
+
+  /** Vuelve a una guardada: su estado, sus resultados otra vez y, si es del copiloto, su hilo. */
+  abrirGuardada(item: BusquedaGuardadaResumida): void {
+    this.scopus.guardada(item.id).subscribe({
+      next: (guardada) => {
+        this.panelGuardadas.set(false);
+        this.restaurarEstado(guardada.estado ?? {});
+        if (guardada.tipo === 'COPILOTO') {
+          this.conversacionId = guardada.id;
+          this.hiloPendiente = Array.isArray(guardada.hilo)
+            ? (guardada.hilo as { pregunta: string; resumen: ResumenConIa }[])
+            : [];
+        } else {
+          this.conversacionId = null;
+        }
+        this.buscar(1);
+      },
+      error: (fallo: unknown) => this.errorGuardadas.set(toApiError(fallo).message),
+    });
+  }
+
+  borrarGuardada(item: BusquedaGuardadaResumida, evento: Event): void {
+    evento.stopPropagation();
+    this.scopus.borrarGuardada(item.id).subscribe({
+      next: () => {
+        this.guardadas.update((lista) => (lista ?? []).filter((g) => g.id !== item.id));
+        if (this.conversacionId === item.id) this.conversacionId = null;
+      },
+      error: (fallo: unknown) => this.errorGuardadas.set(toApiError(fallo).message),
+    });
+  }
+
+  // ── Búsqueda por significado ──────────────────────────────────────────────
+
+  /** La pregunta con la que se ordena por significado: la del copiloto, o los conceptos. */
+  readonly preguntaSemantica = computed(() => {
+    const generacion = this.ultimaGeneracion();
+    if (generacion) return generacion.tema;
+    const conceptos = this.conceptos().map((c) => c.nombre);
+    return this.modo() === 'normal' && conceptos.length > 0 ? conceptos.join(', ') : '';
+  });
+
+  /** Cuán cerca está un resultado, relativo a los demás de la lista. */
+  cercania(resultado: ResultadoDeScopus): { texto: string; nivel: number } | null {
+    if (typeof resultado.afinidad !== 'number') return null;
+    const afinidades = (this.busqueda()?.resultados ?? [])
+      .map((r) => r.afinidad)
+      .filter((a): a is number => typeof a === 'number');
+    const maximo = Math.max(...afinidades);
+    const minimo = Math.min(...afinidades);
+    const relativo = maximo > minimo ? (resultado.afinidad - minimo) / (maximo - minimo) : 1;
+    if (relativo >= 0.66) return { texto: 'Muy cercano', nivel: 3 };
+    if (relativo >= 0.33) return { texto: 'Cercano', nivel: 2 };
+    return { texto: 'Relacionado', nivel: 1 };
+  }
 
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('scopus');
@@ -1071,7 +1717,12 @@ export class MiScopusPanel implements OnInit {
     // Desde el copiloto, con conceptos ya propuestos, la primera página llega
     // con su resumen, como en la IA de Scopus: la pregunta ya está hecha.
     const generacion = this.ultimaGeneracion();
-    const resumirAlLlegar = this.iaAbierta() && generacion !== null && pagina === 1;
+    const hiloGuardado = this.hiloPendiente;
+    this.hiloPendiente = null;
+    const resumirAlLlegar =
+      this.iaAbierta() && generacion !== null && pagina === 1 && !(hiloGuardado?.length);
+    const pregunta = this.preguntaSemantica();
+    const porSignificado = this.orden() === 'significado' && Boolean(pregunta);
     this.hilo.set([]);
     this.errorResumen.set(null);
     this.referenciaResaltada.set(null);
@@ -1083,11 +1734,18 @@ export class MiScopusPanel implements OnInit {
     this.parte.set(null);
     this.marcados.set(new Set());
 
-    this.scopus.buscar(ecuacion, pagina, this.orden()).subscribe({
+    const peticion = porSignificado
+      ? this.scopus.semantica(ecuacion, pregunta)
+      : this.scopus.buscar(ecuacion, pagina, this.orden() === 'significado' ? 'citas' : this.orden());
+
+    peticion.subscribe({
       next: (resultado) => {
         this.busqueda.set(resultado);
         this.buscando.set(false);
-        if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
+        if (pagina === 1) this.anotarEnHistorial(ecuacion, resultado.total);
+        if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
+        else if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
+        this.cargarCuentas();
       },
       error: (fallo: unknown) => {
         this.buscando.set(false);
@@ -1110,11 +1768,7 @@ export class MiScopusPanel implements OnInit {
   }
 
   quitarFiltros(): void {
-    this.dentro.set('');
-    this.anioDesde.set('');
-    this.anioHasta.set('');
-    this.aniosSueltos.set('');
-    this.seleccion.set({});
+    this.vaciarFiltros();
     this.filtrar();
   }
 
@@ -1142,6 +1796,8 @@ export class MiScopusPanel implements OnInit {
    * están guardadas y no dependen de esta pantalla.
    */
   limpiar(): void {
+    this.filas.set([]);
+    this.conversacionId = null;
     this.texto.set('');
     this.sinonimos.set({});
     this.notaIa.set(null);

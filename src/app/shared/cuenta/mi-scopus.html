@@ -76,7 +76,15 @@
         }
 
         <div class="sc-buscador-cabecera">
-          <span class="sc-buscador-titulo">Buscar en Scopus</span>
+          <span class="sc-buscador-izquierda">
+            <span class="sc-buscador-titulo">Buscar en Scopus</span>
+            <!-- La columna de la IA de Scopus: las búsquedas guardadas y las
+                 conversaciones del copiloto, por fechas. En un cajón que sale
+                 por la izquierda, para no quitarle ancho a la tabla. -->
+            <button type="button" class="sc-tus-busquedas" (click)="abrirPanelGuardadas()">
+              <span aria-hidden="true">☰</span> Tus búsquedas
+            </button>
+          </span>
           <!-- Un interruptor y no dos pestañas: como en Scopus, la avanzada es
                la misma búsqueda escrita de otra forma. Cada modo guarda su
                texto, así que ir y volver no borra nada. -->
@@ -294,6 +302,50 @@
               </label>
             </div>
 
+            <!-- Las filas de más: Y / O / Y NO, cada una con su «Buscar
+                 dentro». Se combinan de arriba abajo, como se leen. -->
+            @for (fila of filas(); track fila.id) {
+              <div class="sc-fila-extra">
+                <select
+                  class="sc-operador"
+                  aria-label="Cómo se combina con lo de arriba"
+                  (change)="cambiarFila(fila.id, { operador: $any($event.target).value })"
+                >
+                  @for (op of operadores; track op.valor) {
+                    <option [value]="op.valor" [selected]="fila.operador === op.valor">{{ op.texto }}</option>
+                  }
+                </select>
+                <label class="sc-flotante sc-donde">
+                  <span>Buscar dentro</span>
+                  <select (change)="cambiarFila(fila.id, { campo: $any($event.target).value })">
+                    @for (opcion of campos; track opcion.valor) {
+                      <option [value]="opcion.valor" [selected]="fila.campo === opcion.valor">
+                        {{ opcion.texto }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label class="sc-flotante sc-que">
+                  <span>Buscar documentos</span>
+                  <input
+                    type="text"
+                    [value]="fila.texto"
+                    autocomplete="off"
+                    (input)="cambiarFila(fila.id, { texto: $any($event.target).value })"
+                    (keydown.enter)="buscar()"
+                  />
+                </label>
+                <button
+                  type="button"
+                  class="sc-quitar-concepto"
+                  aria-label="Quitar este campo"
+                  (click)="quitarFila(fila.id)"
+                >
+                  ×
+                </button>
+              </div>
+            }
+
             @if (enEspanol()) {
               <p class="sc-idioma">
                 Parece que escribiste en español. Casi toda la literatura de Scopus está en inglés,
@@ -333,9 +385,19 @@
                 <span aria-hidden="true">✎</span> Editar en la búsqueda avanzada
               </button>
             }
+            @if (modo() === 'normal') {
+              <button type="button" class="sc-accion" (click)="agregarFila()">
+                <span aria-hidden="true">＋</span> Agregar campo de búsqueda
+              </button>
+            }
             <button type="button" class="sc-accion" (click)="usarEjemplo()">
-              <span aria-hidden="true">＋</span> Poner un ejemplo
+              Poner un ejemplo
             </button>
+            @if (busqueda()) {
+              <button type="button" class="sc-accion" (click)="guardarBusqueda()">
+                <span aria-hidden="true">🔖</span> Guardar búsqueda
+              </button>
+            }
             @if (busqueda() || texto() || ecuacion() || hayFiltros()) {
               <button type="button" class="sc-accion" (click)="reiniciar()">
                 Reiniciar
@@ -360,6 +422,83 @@
           <p class="scopus-anadido">
             Se busca: <code>{{ ecuacionCompleta() }}</code>
           </p>
+        }
+
+        @if (avisoGuardada(); as aviso) {
+          <p class="sc-aviso-guardada" role="status">{{ aviso }}</p>
+        }
+
+        <!-- ── Historial de búsqueda ─────────────────────────────────────
+             Las de esta sesión, numeradas como en Scopus, para relanzar una o
+             combinar varias. Con el copiloto no sale: es de la búsqueda
+             manual. -->
+        @if (!iaAbierta() && historial().length > 0) {
+          <section class="sc-historial">
+            <button
+              type="button"
+              class="sc-historial-cabecera"
+              [attr.aria-expanded]="historialAbierto()"
+              (click)="historialAbierto.set(!historialAbierto())"
+            >
+              Historial de búsqueda <span class="sc-cuantos">{{ historial().length }}</span>
+              <span class="sc-chevron" aria-hidden="true"></span>
+            </button>
+            @if (historialAbierto()) {
+              <div class="sc-historial-combinar">
+                <span>Combinar consultas</span>
+                <select
+                  class="sc-operador"
+                  aria-label="Cómo combinarlas"
+                  (change)="operadorCombinar.set($any($event.target).value)"
+                >
+                  @for (op of operadores; track op.valor) {
+                    <option [value]="op.valor" [selected]="operadorCombinar() === op.valor">
+                      {{ op.texto }}
+                    </option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  class="boton sc-combinar"
+                  [disabled]="elegidasDelHistorial().size < 2 || buscando()"
+                  (click)="combinar()"
+                >
+                  Combinar {{ elegidasDelHistorial().size >= 2 ? '(' + elegidasDelHistorial().size + ')' : '' }}
+                </button>
+                <small>Marca dos o más.</small>
+              </div>
+              <ol class="sc-historial-lista">
+                @for (entrada of historial().slice().reverse(); track entrada.n) {
+                  <li>
+                    <input
+                      type="checkbox"
+                      [attr.aria-label]="'Elegir la búsqueda ' + entrada.n"
+                      [checked]="elegidasDelHistorial().has(entrada.n)"
+                      (change)="elegirDelHistorial(entrada.n)"
+                    />
+                    <span class="sc-historial-n">#{{ entrada.n }}</span>
+                    <code class="sc-historial-ecuacion" [title]="entrada.ecuacion">{{ entrada.ecuacion }}</code>
+                    <button
+                      type="button"
+                      class="sc-enlace"
+                      [disabled]="buscando()"
+                      (click)="relanzar(entrada)"
+                    >
+                      {{ entrada.total | number }} resultados
+                    </button>
+                    <button
+                      type="button"
+                      class="sc-quitar-concepto"
+                      [attr.aria-label]="'Quitar la búsqueda ' + entrada.n"
+                      (click)="borrarDelHistorial(entrada.n)"
+                    >
+                      ×
+                    </button>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
         }
       </div>
 
@@ -422,6 +561,29 @@
             </button>
             @if (abiertas().has('anio')) {
               <div class="sc-faceta-cuerpo">
+                @if (barrasDeAnios().length > 0) {
+                  <!-- Los diez últimos años con su número exacto. Una barra
+                       elige ese año, como en Scopus. -->
+                  <div class="sc-barras" role="group" aria-label="Resultados por año">
+                    @for (barra of barrasDeAnios(); track barra.anio) {
+                      <button
+                        type="button"
+                        class="sc-barra"
+                        [style.height.%]="barra.alto"
+                        [title]="barra.anio + ': ' + barra.n + ' resultados'"
+                        [attr.aria-label]="barra.anio + ': ' + barra.n + ' resultados'"
+                        [disabled]="buscando()"
+                        (click)="elegirAnio(barra.anio)"
+                      ></button>
+                    }
+                  </div>
+                  <div class="sc-barras-pie" aria-hidden="true">
+                    <span>{{ barrasDeAnios()[0].anio }}</span>
+                    <span>{{ barrasDeAnios()[barrasDeAnios().length - 1].anio }}</span>
+                  </div>
+                } @else if (contandoFaceta('anio')) {
+                  <p class="sc-contando"><span class="sc-girando" aria-hidden="true"></span> Contando por año…</p>
+                }
                 <div class="sc-radios" role="radiogroup" aria-label="Cómo elegir los años">
                   <label class="sc-radio">
                     <input
@@ -504,15 +666,38 @@
                 <div class="sc-faceta-cuerpo">
                   @if (faceta.tipo === 'casillas') {
                     @for (opcion of opcionesVisibles(faceta); track opcion.valor) {
-                      <label class="sc-casilla">
-                        <input
-                          type="checkbox"
-                          [checked]="marcado(faceta, opcion.valor)"
+                      <div class="sc-opcion" [class.sc-opcion-fuera]="excluido(faceta, opcion.valor)">
+                        <label class="sc-casilla">
+                          <input
+                            type="checkbox"
+                            [checked]="marcado(faceta, opcion.valor)"
+                            [disabled]="buscando()"
+                            (change)="alternar(faceta, opcion.valor)"
+                          />
+                          <span>{{ opcion.texto }}</span>
+                        </label>
+                        @if (cuentaDe(faceta, opcion.valor); as cuenta) {
+                          <span class="sc-numero-opcion" [class.sc-aprox]="cuenta.aprox">
+                            {{ cuenta.aprox ? '≈' : '' }}{{ cuenta.n | number }}
+                          </span>
+                        }
+                        <!-- «Todo menos esto»: Scopus lo llama Excluir. -->
+                        <button
+                          type="button"
+                          class="sc-excluir"
+                          [class.activo]="excluido(faceta, opcion.valor)"
+                          [attr.aria-pressed]="excluido(faceta, opcion.valor)"
+                          [title]="excluido(faceta, opcion.valor) ? 'Dejar de excluir' : 'Excluir: todo menos esto'"
+                          [attr.aria-label]="(excluido(faceta, opcion.valor) ? 'Dejar de excluir ' : 'Excluir ') + opcion.texto"
                           [disabled]="buscando()"
-                          (change)="alternar(faceta, opcion.valor)"
-                        />
-                        <span>{{ opcion.texto }}</span>
-                      </label>
+                          (click)="alternarExclusion(faceta, opcion.valor)"
+                        >
+                          ⊘
+                        </button>
+                      </div>
+                    }
+                    @if (contandoFaceta(faceta.clave)) {
+                      <p class="sc-contando"><span class="sc-girando" aria-hidden="true"></span> Contando…</p>
                     }
                     @if (tieneMas(faceta)) {
                       <button type="button" class="sc-enlace" (click)="abrirModal(faceta)">
@@ -520,11 +705,20 @@
                       </button>
                     }
                   } @else {
-                    @if (valoresDe(faceta).length > 0) {
+                    @if (valoresDe(faceta).length > 0 || valoresExcluidosDe(faceta).length > 0) {
                       <div class="sc-fichas">
                         @for (valor of valoresDe(faceta); track valor) {
                           <span class="sc-ficha">
                             {{ valor }}
+                            <button
+                              type="button"
+                              title="Excluir: todo menos esto"
+                              [attr.aria-label]="'Excluir ' + valor"
+                              [disabled]="buscando()"
+                              (click)="invertirValor(faceta, valor)"
+                            >
+                              ⊘
+                            </button>
                             <button
                               type="button"
                               [attr.aria-label]="'Quitar ' + valor"
@@ -535,7 +729,48 @@
                             </button>
                           </span>
                         }
+                        @for (valor of valoresExcluidosDe(faceta); track valor) {
+                          <span class="sc-ficha sc-ficha-fuera">
+                            <s>{{ valor }}</s>
+                            <button
+                              type="button"
+                              title="Incluir en vez de excluir"
+                              [attr.aria-label]="'Incluir ' + valor"
+                              [disabled]="buscando()"
+                              (click)="invertirValor(faceta, valor)"
+                            >
+                              ⊘
+                            </button>
+                            <button
+                              type="button"
+                              [attr.aria-label]="'Quitar ' + valor"
+                              [disabled]="buscando()"
+                              (click)="quitarExcluido(faceta, valor)"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        }
                       </div>
+                    }
+                    <!-- Lo que más aparece en lo encontrado, según el catálogo
+                         abierto: un clic lo añade al filtro. -->
+                    @if (sugerencias(faceta).length > 0) {
+                      <div class="sc-sugerencias">
+                        @for (s of sugerencias(faceta); track s.valor) {
+                          <button
+                            type="button"
+                            class="sc-sugerencia"
+                            [title]="s.texto"
+                            [disabled]="buscando()"
+                            (click)="agregarValor(faceta, s.valor)"
+                          >
+                            + {{ s.texto }} <small>≈{{ s.n | number }}</small>
+                          </button>
+                        }
+                      </div>
+                    } @else if (contandoFaceta(faceta.clave)) {
+                      <p class="sc-contando"><span class="sc-girando" aria-hidden="true"></span> Buscando los más frecuentes…</p>
                     }
                     <input
                       #campoFaceta
@@ -554,8 +789,9 @@
           }
 
           <p class="sc-filtros-nota">
-            Dentro de una sección se suman las opciones; entre secciones se combinan. Scopus no nos
-            da cuántos resultados hay en cada opción, por eso no llevan número.
+            Dentro de una sección se suman las opciones; entre secciones se combinan. ⊘ excluye:
+            todo menos eso. Los números sin «≈» son exactos de Scopus; los que llevan «≈» son del
+            catálogo abierto (OpenAlex) y solo orientan: cuenta más obras que Scopus.
           </p>
         </aside>
         }
@@ -815,6 +1051,12 @@
                 <p class="sc-total">
                   Se encontraron <strong>{{ lista.total | number }}</strong>
                   {{ lista.total === 1 ? 'documento' : 'documentos' }}.
+                  @if (lista.semantica) {
+                    <small class="sc-total-semantica">
+                      Por significado: los {{ lista.resultados.length }} más cercanos a tu pregunta de
+                      entre los {{ lista.candidatos }} más relevantes.
+                    </small>
+                  }
                 </p>
                 <div class="sc-orden sc-orden-resultados">
                   <span>Ordenar por</span>
@@ -832,7 +1074,7 @@
                   @if (menuOrdenResultados()) {
                     <div class="sc-orden-capa" (click)="menuOrdenResultados.set(false)"></div>
                     <ul class="sc-orden-lista" role="listbox" aria-label="Ordenar por">
-                      @for (opcion of ordenesDeResultados; track opcion.valor) {
+                      @for (opcion of ordenesDeResultados(); track opcion.valor) {
                         <li>
                           <button
                             type="button"
@@ -903,6 +1145,13 @@
                         </td>
                         <td class="sc-col-titulo">
                           <span class="sc-meta">
+                            @if (cercania(resultado); as cerca) {
+                              <span class="sc-cercania" [attr.data-nivel]="cerca.nivel">
+                                <span class="sc-cercania-barra" aria-hidden="true"><i></i><i></i><i></i></span>
+                                {{ cerca.texto }}
+                              </span>
+                              ·
+                            }
                             {{ resultado.tipo || 'Documento' }}
                             @if (resultado.accesoAbierto) {
                               · <span class="sc-abierto">Acceso abierto</span>
@@ -1030,6 +1279,67 @@
           }
         </div>
       </div>
+
+      <!-- ── «Tus búsquedas»: la columna de la IA de Scopus ──────────────── -->
+      @if (panelGuardadas()) {
+        <div class="sc-cajon-fondo" (click)="panelGuardadas.set(false)"></div>
+        <aside class="sc-cajon" aria-label="Tus búsquedas">
+          <header class="sc-cajon-cabecera">
+            <p>Tus búsquedas</p>
+            <button
+              type="button"
+              class="sc-modal-cerrar"
+              aria-label="Cerrar"
+              (click)="panelGuardadas.set(false)"
+            >
+              ×
+            </button>
+          </header>
+          <p class="sc-cajon-nota">
+            Las conversaciones del copiloto se guardan solas; las demás, con «Guardar búsqueda».
+            Al abrir una se vuelve a buscar en Scopus.
+          </p>
+
+          @if (errorGuardadas(); as mensaje) {
+            <p class="scopus-aviso scopus-mal">{{ mensaje }}</p>
+          }
+
+          @if (guardadas() === null) {
+            <p class="sc-contando"><span class="sc-girando" aria-hidden="true"></span> Cargando…</p>
+          } @else if (guardadas()!.length === 0) {
+            <p class="sc-cajon-vacio">
+              Aún no hay nada. Pregunta al copiloto o pulsa «Guardar búsqueda» después de buscar.
+            </p>
+          } @else {
+            @for (grupo of guardadasPorFecha(); track grupo.titulo) {
+              <p class="sc-cajon-grupo">{{ grupo.titulo }}</p>
+              <ul class="sc-cajon-lista">
+                @for (item of grupo.lista; track item.id) {
+                  <li>
+                    <button type="button" class="sc-cajon-item" (click)="abrirGuardada(item)">
+                      <span class="sc-cajon-icono" aria-hidden="true">{{
+                        item.tipo === 'COPILOTO' ? '✦' : '🔖'
+                      }}</span>
+                      <span class="sc-cajon-texto">
+                        <span class="sc-cajon-titulo">{{ item.titulo }}</span>
+                        <small>{{ item.total | number }} resultados</small>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="sc-quitar-concepto"
+                      [attr.aria-label]="'Borrar ' + item.titulo"
+                      (click)="borrarGuardada(item, $event)"
+                    >
+                      ×
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </aside>
+      }
 
       <!-- ── El parte de la importación, en una ventana ──────────────────────
            Un import que no dice nada deja al tesista sin saber si funcionó, y
