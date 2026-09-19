@@ -2,6 +2,14 @@
 :root {
   --color-fondo: #f4f5f8;
   --color-superficie: #ffffff;
+
+  /* El fondo de la página y el de una tarjeta son el mismo blanco de día, pero
+     de noche no: la página es más oscura que lo que lleva encima, que es lo que
+     hace que una tarjeta se vea como tal. Por eso son dos tokens.
+     `--color-superficie-alta` es lo que va POR ENCIMA de una tarjeta: un
+     emergente, un diálogo, el asistente. */
+  --color-pagina: #ffffff;
+  --color-superficie-alta: #ffffff;
   --color-borde: #e6e8ee;
   --color-borde-fuerte: #d5d9e2;
   --color-texto: #161a23;
@@ -11,6 +19,18 @@
   --color-primario: #1d4ed8;
   --color-primario-oscuro: #1740ad;
   --color-primario-suave: #e8eefc;
+
+  /* El azul de un botón lleno va aparte del azul de un enlace. De noche el
+     texto azul tiene que aclararse para leerse sobre el fondo oscuro, pero el
+     botón sigue siendo un rectángulo azul con texto blanco: si se aclarara,
+     dejaría de parecer un botón. */
+  --color-boton: #1d4ed8;
+  --color-boton-hover: #1740ad;
+  --color-sobre-boton: #ffffff;
+
+  /* El anillo de foco y el velo que oscurece la página detrás de un diálogo. */
+  --color-foco: #1d4ed8;
+  --velo: rgba(16, 24, 40, 0.55);
 
   --color-error: #c62828;
   --color-error-suave: #fdecec;
@@ -107,25 +127,38 @@
 :root[data-tema='oscuro'] {
   color-scheme: dark;
 
-  --color-fondo: #0d1220;
-  --color-superficie: #151b2c;
-  --color-borde: #262e44;
-  --color-borde-fuerte: #353e58;
-  --color-texto: #e7eaf2;
-  --color-texto-suave: #a9b1c4;
-  --color-texto-tenue: #7f889d;
+  /* La página es lo más oscuro; encima van la banda alterna, la tarjeta y, por
+     último, lo que flota sobre una tarjeta. Cuatro escalones, no uno. */
+  --color-pagina: #0b1220;
+  --color-fondo: #0e1628;
+  --color-superficie: #121b30;
+  --color-superficie-alta: #16213a;
 
-  --color-primario: #7ea5ff;
-  --color-primario-oscuro: #a3bfff;
-  --color-primario-suave: #1c2a4f;
+  --color-borde: #1f2a44;
+  --color-borde-fuerte: #2a3650;
+  --color-texto: #f1f5f9;
+  --color-texto-suave: #cbd5e1;
+  --color-texto-tenue: #94a3b8;
 
-  --color-error: #ff8f85;
-  --color-error-suave: #3a1d22;
-  --color-error-oscuro: #ffb3ab;
-  --color-exito: #62d49a;
-  --color-exito-suave: #12301f;
-  --color-aviso: #f0b560;
-  --color-aviso-suave: #33260f;
+  /* El azul de marca se aclara para el texto y los rótulos —#1d4ed8 sobre casi
+     negro no llega al contraste mínimo—, y el celeste de los chips se vuelve
+     un azul profundo en vez de un celeste que aquí sería un foco. */
+  --color-primario: #60a5fa;
+  --color-primario-oscuro: #93c5fd;
+  --color-primario-suave: #172654;
+
+  --color-boton: #2563eb;
+  --color-boton-hover: #1d4ed8;
+  --color-foco: #93c5fd;
+  --velo: rgba(0, 0, 0, 0.7);
+
+  --color-error: #f87171;
+  --color-error-suave: #2a1212;
+  --color-error-oscuro: #fca5a5;
+  --color-exito: #4ade80;
+  --color-exito-suave: #0f2a1c;
+  --color-aviso: #fcd34d;
+  --color-aviso-suave: #2a1f06;
 
   --color-sobre-relleno: #0a1128;
 
@@ -133,29 +166,38 @@
   --crema-texto: #cdbf9f;
   --contorno-marca: var(--dorado);
 
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* Más difusas y más profundas: de noche una sombra corta no se ve, y lo que
+     separa una tarjeta del fondo es justamente la sombra. */
+  --sombra: 0 2px 6px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.55);
 
-  /* Las bandas noche y el pie, un tono más claros. Con su azul de siempre se
-     fundían con el fondo y dejaban de cortar la página; en blanco rompían el
-     modo oscuro. Un azul noche más claro las despega sin encender la pantalla.
-     Texto, dorado y botones siguen como en claro. */
-  --noche-fondo: #283457;
-  --noche-fondo-2: #323f66;
-  --noche-pie: #1e2745;
+  /* Los bloques azul marino. De día son el acento oscuro sobre blanco; de
+     noche, apenas más claros que la página, que es lo que les devuelve el
+     papel de «aquí pasa algo». */
+  --noche-fondo: #142352;
+  --noche-fondo-2: #1b2c63;
+  --noche-pie: #101c42;
+  --noche-linea: rgba(255, 255, 255, 0.12);
 
-  /* La franja de cifras del inicio, en blanco: sobre el fondo oscuro es lo que
-     respalda al titular y tiene que verse de un golpe. El dorado se oscurece
-     porque el de siempre, sobre blanco, no se lee. */
-  --cifras-fondo: #ffffff;
-  --cifras-valor: #9a6510;
-  --cifras-pie: #5b6272;
-  --cifras-linea: rgba(16, 24, 40, 0.12);
+  /* La franja de cifras es un bloque azul marino más: en blanco rompía la
+     página de noche y era el único de su color que no lo parecía. */
+  --cifras-fondo: var(--noche-fondo);
+  --cifras-valor: var(--dorado-claro);
+  --cifras-pie: var(--gris-noche);
+  --cifras-linea: rgba(255, 255, 255, 0.12);
 
   /* Las dos objeciones, en el crema del modo claro: son la conversación
      incómoda antes de cobrar y tienen que destacar sobre el fondo oscuro. */
   --objecion-fondo: #fff6e8;
   --objecion-titulo: #161a23;
   --objecion-texto: #5e5448;
+}
+
+/* Los bloques azul marino, de noche, con un filo claro arriba y abajo: a un
+   tono del fondo de la página, sin él se pierde dónde empiezan y acaban. */
+:root[data-tema='oscuro'] .seccion.noche,
+:root[data-tema='oscuro'] .pie {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /*
@@ -305,8 +347,8 @@ a:hover {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-sobre-relleno);
-  background: var(--color-primario);
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
   border: 1px solid transparent;
   border-radius: var(--radio-sm);
   cursor: pointer;
@@ -316,7 +358,7 @@ a:hover {
 }
 
 .boton:hover:not(:disabled) {
-  background: var(--color-primario-oscuro);
+  background: var(--color-boton-hover);
 }
 
 .boton:disabled {
@@ -512,7 +554,7 @@ a:hover {
      «Quien soy» —que es media pantalla de texto— el pie quedaba a media altura
      y debajo se veia el gris del cuerpo, como si faltara algo. */
   min-height: calc(100vh - 69px);
-  background: var(--color-superficie);
+  background: var(--color-pagina);
 }
 
 /*
@@ -800,6 +842,14 @@ h1.titulo-seccion {
    quita `FondoService`, que lleva la cuenta de las que hay abiertas. */
 body.sin-scroll {
   overflow: hidden;
+}
+
+/* El anillo de foco, igual en todo el sitio y visible en los dos temas. Va en
+   `:where()` —que no pesa nada— para que cualquier componente con su propio
+   estilo de foco siga mandando. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
 }
 
 /* ── El panel de las pantallas de acceso ─────────────────────────

@@ -197,12 +197,6 @@
   padding: 0 20px 0 0;
 }
 
-/* Es el único bloque de este azul que en modo oscuro se vuelve blanco (ver
-   `--cifras-fondo`), y unas líneas blancas sobre blanco no se ven: allí el
-   decorado sobra. */
-:host-context([data-tema='oscuro']) .hero .cifras app-lineas-noche {
-  display: none;
-}
 
 /* `:not(:first-child)` y no `li + li`: con los atributos que añade Angular,
    `li + li` pesaba más que los `:nth-child` de abajo y la cuarta seguía con su
@@ -917,4 +911,15 @@
     width: 100%;
     text-align: center;
   }
+}
+
+/* De noche, las tapas de las tres tarjetas: el celeste y el gris claro del
+   día son dos focos sobre un fondo oscuro. */
+:host-context([data-tema='oscuro']) .camino-tapa-azul {
+  background: linear-gradient(180deg, #172654, #14204a);
+}
+
+:host-context([data-tema='oscuro']) .camino-tapa-gris,
+:host-context([data-tema='oscuro']) .camino-tapa-noche {
+  background: linear-gradient(180deg, #1a2540, #172038);
 }

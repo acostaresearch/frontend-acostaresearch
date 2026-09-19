@@ -11,6 +11,9 @@
  */
 .mt {
   --mt-azul: #1d4ed8;
+  /* El trazo del icono dentro de su cuadrado celeste: de noche el azul del
+     texto no se ve sobre el azul profundo del cuadrado. */
+  --mt-ico: #1d4ed8;
   --mt-noche: #0f1b3d;
   --mt-tinta: #0f172a;
   --mt-gris: #475569;
@@ -28,17 +31,21 @@
 
 :host-context([data-tema='oscuro']) .mt {
   --mt-azul: var(--color-primario);
+  --mt-ico: var(--color-primario-oscuro);
+  --mt-noche: var(--noche-fondo);
   --mt-tinta: var(--color-texto);
   --mt-gris: var(--color-texto-suave);
   --mt-gris-2: var(--color-texto-tenue);
   --mt-gris-3: var(--color-texto-tenue);
-  --mt-gris-4: var(--color-borde-fuerte);
+  /* El número de una fase que no está en la ruta: gris apagado, no un gris
+     claro que de noche gritaría más que los azules. */
+  --mt-gris-4: #334155;
   --mt-linea: var(--color-borde);
   --mt-celeste: var(--color-primario-suave);
-  --mt-apagado: var(--color-fondo);
-  --mt-hover: var(--color-fondo);
-  --mt-verde: #4ade80;
-  --mt-fondo: var(--color-superficie);
+  --mt-apagado: #1a2540;
+  --mt-hover: var(--color-superficie-alta);
+  --mt-verde: var(--color-exito);
+  --mt-fondo: var(--color-pagina);
   --mt-banda: var(--color-fondo);
 }
 
@@ -246,7 +253,7 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  color: var(--mt-azul);
+  color: var(--mt-ico);
   background: var(--mt-celeste);
   border-radius: 8px;
 }
@@ -392,6 +399,7 @@
 .mt-cierre {
   position: relative;
   overflow: hidden;
+  border: 1px solid transparent;
   display: flex;
   flex-wrap: wrap;
   gap: 24px 40px;

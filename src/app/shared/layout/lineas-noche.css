@@ -107,3 +107,42 @@
   -webkit-mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
   mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
 }
+
+/*
+ * De noche el azul del bloque es más claro (#142352 en vez de #0f1b3d), así
+ * que las mismas líneas se veían menos. Suben un 30 %, sin pasar del 20 % de
+ * blanco: por encima empezarían a competir con el texto.
+ */
+:host-context([data-tema='oscuro']) .ln-arriba {
+  --o: 0.2;
+}
+
+:host-context([data-tema='oscuro']) .ln-abajo {
+  --o: 0.143;
+}
+
+:host-context([data-tema='oscuro']) .ln-anillo {
+  border-color: rgba(255, 255, 255, calc(0.091 - var(--n) * 0.012));
+}
+
+:host-context([data-tema='oscuro']) .ln-rayas-der {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.078) 0 1px,
+    transparent 1px 18px
+  );
+}
+
+:host-context([data-tema='oscuro']) .ln-rayas-izq {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.046) 0 1px,
+    transparent 1px 26px
+  );
+}
+
+:host-context([data-tema='oscuro']) .ln-cuadricula {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+}
