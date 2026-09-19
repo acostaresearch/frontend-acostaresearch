@@ -64,11 +64,6 @@ export class MiConector implements OnInit {
     this.ruta.snapshot.queryParamMap.has('zotero') ? 'zotero' : 'scopus',
   );
 
-  /**
-   * Guía de instalación en PDF. Cadena vacía = el archivo no está y no se
-   * ofrece la descarga; lo resuelve el generador de environments al compilar.
-   */
-  readonly guiaUrl = environment.guiaUrl;
 
   /** El WhatsApp de la casa, para quien ya probó el video y la guía. */
   readonly whatsappUrl = environment.whatsappUrl;

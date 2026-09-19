@@ -1,0 +1,81 @@
+.guias {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.guia {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 20px;
+  color: var(--color-texto);
+  text-decoration: none;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  transition: box-shadow var(--transicion);
+}
+
+.guia:hover {
+  box-shadow: var(--sombra);
+}
+
+.guia-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+  border-radius: 50%;
+}
+
+.guia-texto {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.guia-texto span {
+  font-size: 14.5px;
+  color: var(--color-texto-tenue);
+}
+
+.guia-texto small {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.guia-accion {
+  flex: none;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.ayuda {
+  margin-top: 28px;
+  color: var(--color-texto-tenue);
+}
+
+.cargando {
+  color: var(--color-texto-tenue);
+}
+
+@media (max-width: 560px) {
+  .guia {
+    flex-wrap: wrap;
+  }
+
+  .guia-accion {
+    width: 100%;
+    padding-left: 60px;
+  }
+}

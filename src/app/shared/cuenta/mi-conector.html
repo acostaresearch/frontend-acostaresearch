@@ -219,14 +219,14 @@
       <span class="recurso-accion">Ver video</span>
     </a>
 
-    @if (guiaUrl && tieneAccesoVigente()) {
-      <a class="recurso" [href]="guiaUrl" download target="_blank" rel="noopener">
+    @if (tieneAccesoVigente()) {
+      <a class="recurso" routerLink="/guias-de-instalacion">
         <span class="recurso-icono pdf" aria-hidden="true">PDF</span>
         <span class="recurso-texto">
-          <strong>Guía de instalación en PDF</strong>
-          <span>Cómo conectarlo a Claude, paso a paso y con capturas.</span>
+          <strong>Guías de instalación en PDF</strong>
+          <span>Cómo conectarlo a Claude, paso a paso y con capturas. Elige la que necesitas.</span>
         </span>
-        <span class="recurso-accion">Descargar</span>
+        <span class="recurso-accion">Ver guías</span>
       </a>
     }
 

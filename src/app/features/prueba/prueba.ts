@@ -9,7 +9,6 @@ import {
   PruebaService,
 } from '../../core/services/prueba.service';
 import { SiteHeader } from '../../shared/layout/site-header';
-import { environment } from '../../../environments/environment';
 
 /** Dónde se guarda el conector recogido, por enlace. */
 const CLAVE = (slug: string) => `prueba-conector:${slug}`;
@@ -38,8 +37,6 @@ const CLAVE = (slug: string) => `prueba-conector:${slug}`;
 export class Prueba implements OnInit {
   private readonly api = inject(PruebaService);
   private readonly slug = inject(ActivatedRoute).snapshot.paramMap.get('slug') ?? '';
-
-  readonly guiaUrl = environment.guiaUrl;
 
   readonly prueba = signal<PruebaPublica | null>(null);
   readonly conector = signal<ConectorDePrueba | null>(null);

@@ -941,3 +941,8 @@
   width: auto;
   white-space: nowrap;
 }
+
+.borrar-quedan {
+  margin-left: 4px;
+  white-space: nowrap;
+}

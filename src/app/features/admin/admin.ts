@@ -33,6 +33,7 @@ import { duracionDeAcceso,
   PruebaService,
 } from '../../core/services/prueba.service';
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
+import { Guia, GuiaEnvio, GuiaService } from '../../core/services/guia.service';
 import { Reclamo, ReclamoService } from '../../core/services/reclamo.service';
 import {
   EstadoCorpus,
@@ -2027,6 +2028,7 @@ export class Admin implements OnInit {
         break;
       case 'tutoriales':
         this.cargarTutoriales();
+        this.cargarGuias();
         break;
       case 'reclamos':
         this.cargarReclamos();
@@ -2408,6 +2410,7 @@ export class Admin implements OnInit {
     if (seccion === 'corpus' && this.corpus() === null) this.cargarCorpus();
 
     if (seccion === 'tutoriales' && this.tutoriales().length === 0) this.cargarTutoriales();
+    if (seccion === 'tutoriales' && this.guias().length === 0) this.cargarGuias();
 
     // Cada vez: una hoja nueva puede haber llegado mientras se miraba otra cosa.
     if (seccion === 'reclamos') this.cargarReclamos();
@@ -2887,6 +2890,132 @@ export class Admin implements OnInit {
       next: () => {
         this.cargarTutoriales();
         this.aviso.set(`«${tutorial.titulo}» borrado.`);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  // ── Guías en PDF ─────────────────────────────────────────────────────────
+  //
+  // Lo mismo que los videos, pero con archivo: salen en /guias-de-instalacion,
+  // que es adonde llevan «Guías de instalación» del perfil, la compra y la prueba.
+
+  private readonly guiasApi = inject(GuiaService);
+
+  readonly guias = signal<Guia[]>([]);
+  readonly guardandoGuia = signal(false);
+  /** Si la ventana está abierta. Con `guiaAbierta` null = una nueva. */
+  readonly formularioGuia = signal(false);
+  readonly guiaAbierta = signal<Guia | null>(null);
+  /** El PDF elegido en la ventana: obligatorio para una nueva, opcional al editar. */
+  readonly pdfElegido = signal<File | null>(null);
+
+  readonly formGuia = this.fb.nonNullable.group({
+    orden: [1, [Validators.required]],
+    titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
+    descripcion: ['', [Validators.maxLength(600)]],
+    active: [true],
+  });
+
+  cargarGuias(): void {
+    this.guiasApi.todas().subscribe({
+      next: (lista) => this.guias.set(lista),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  enlaceGuia(guia: Guia): string {
+    return this.guiasApi.enlace(guia);
+  }
+
+  /** «1,2 MB», para ver de un vistazo que el archivo subió entero. */
+  pesoGuia(bytes: number): string {
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  }
+
+  editarGuia(guia: Guia | null): void {
+    this.error.set(null);
+    this.aviso.set(null);
+    this.guiaAbierta.set(guia);
+    this.pdfElegido.set(null);
+    this.formularioGuia.set(true);
+    this.formGuia.reset({
+      orden: guia?.orden ?? this.guias().length + 1,
+      titulo: guia?.titulo ?? '',
+      descripcion: guia?.descripcion ?? '',
+      active: guia?.active ?? true,
+    });
+  }
+
+  cerrarGuia(): void {
+    this.formularioGuia.set(false);
+    this.guiaAbierta.set(null);
+    this.pdfElegido.set(null);
+    this.formGuia.reset();
+  }
+
+  elegirPdf(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    this.pdfElegido.set(entrada.files?.[0] ?? null);
+  }
+
+  /** Una nueva sin PDF no se puede guardar: no habría nada que descargar. */
+  puedeGuardarGuia(): boolean {
+    if (this.formGuia.invalid || this.guardandoGuia()) return false;
+    return this.guiaAbierta() !== null || this.pdfElegido() !== null;
+  }
+
+  guardarGuia(): void {
+    if (!this.puedeGuardarGuia()) return;
+
+    const datos = this.formGuia.getRawValue() as GuiaEnvio;
+    const abierta = this.guiaAbierta();
+    const pdf = this.pdfElegido();
+
+    this.guardandoGuia.set(true);
+    this.error.set(null);
+
+    // Al editar, primero la ficha y, si se eligió otro PDF, después el archivo.
+    const peticion = abierta
+      ? this.guiasApi
+          .actualizar(abierta.id, datos)
+          .pipe(switchMap((guia) => (pdf ? this.guiasApi.cambiarArchivo(guia.id, pdf) : of(guia))))
+      : this.guiasApi.crear(datos, pdf as File);
+
+    peticion.subscribe({
+      next: (guia) => {
+        this.guardandoGuia.set(false);
+        this.cerrarGuia();
+        this.cargarGuias();
+        this.aviso.set(
+          guia.active
+            ? `«${guia.titulo}» guardada. Ya se ve en la página de guías.`
+            : `«${guia.titulo}» guardada, pero oculta: no sale en la web.`,
+        );
+      },
+      error: (e: unknown) => {
+        this.guardandoGuia.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  async borrarGuia(guia: Guia): Promise<void> {
+    const seguro = await this.dialogos.confirmar({
+      titulo: `¿Borrar «${guia.titulo}»?`,
+      mensaje:
+        'Desaparece de la web y se borra el PDF. Si solo quieres retirarla un tiempo, ocúltala ' +
+        'en vez de borrarla.',
+      confirmar: 'Borrar',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.guiasApi.borrar(guia.id).subscribe({
+      next: () => {
+        this.cargarGuias();
+        this.aviso.set(`«${guia.titulo}» borrada.`);
       },
       error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });

@@ -42,6 +42,14 @@ export const routes: Routes = [
     title: 'Cómo usar tu conector · Acosta Research',
     loadComponent: () => import('./features/tutoriales/tutoriales').then((m) => m.Tutoriales),
   },
+  // Las guías en PDF, para elegir cuál bajar. Pública como los tutoriales. No
+  // se llama «guias» a secas porque /guias/ ya es la carpeta del PDF de siempre
+  // que sirve el backend.
+  {
+    path: 'guias-de-instalacion',
+    title: 'Guías en PDF · Acosta Research',
+    loadComponent: () => import('./features/guias/guias').then((m) => m.Guias),
+  },
   {
     path: 'quien-soy',
     title: 'Quién te acompaña · Acosta Research',

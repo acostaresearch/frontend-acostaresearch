@@ -96,11 +96,6 @@ export class Checkout implements OnInit {
   /** Lo que entra en el paquete del método. */
   readonly incluye = INCLUYE;
 
-  /**
-   * Guía de instalación en PDF. Cadena vacía = el archivo no está y no se
-   * ofrece la descarga; lo resuelve el generador de environments al compilar.
-   */
-  readonly guiaUrl = environment.guiaUrl;
 
   /**
    * Medio de pago elegido.

@@ -16,6 +16,9 @@ import {
 /** Qué se está bajando: la tesis armada, la bibliografía o el documento que subió, ya citado. */
 type Formato = 'word' | 'bib' | 'documento';
 
+/** Las veces que cada tesis puede empezar de cero. El tope lo pone el servidor; esto solo lo cuenta. */
+const MAX_REINICIOS = 3;
+
 /** Media lista de fases, con su rótulo: «Fases 1 a 6». */
 interface Columna {
   rotulo: string;
@@ -550,10 +553,14 @@ export class MiTesis implements OnInit {
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
 
+    const restantes = this.reiniciosRestantes(p);
+    if (restantes === 0) return;
+
     const palabras = this.palabrasTotales(p);
     const escrito = await this.dialogos.pedirTexto({
       titulo: `Borrar tu progreso de ${this.nombreCorto(p)}`,
       mensaje:
+        this.recordatorioDeReinicios(restantes) +
         'Se borra para siempre: el tema, lo anotado en cada fase, ' +
         (palabras > 0 ? `los capítulos escritos (${palabras} palabras), ` : '') +
         'el análisis, la norma de citas y el documento que subiste. Tus fases volverán a quedar sin empezar.\n' +
@@ -580,7 +587,7 @@ export class MiTesis implements OnInit {
     this.borrando.set(true);
 
     this.proyectos.borrar(p.productCode, escrito).subscribe({
-      next: () => {
+      next: ({ restantes: quedan }) => {
         this.borrando.set(false);
         this.abiertos.set(new Set());
         this.retomarAbierto.set(false);
@@ -590,7 +597,12 @@ export class MiTesis implements OnInit {
         this.elegido.set(p.productCode);
         this.avisoBorrado.set(
           `Tu progreso de ${this.nombreCorto(p)} volvió al comienzo. La próxima vez que trabajes ` +
-            'con Claude, empezará de cero.',
+            'con Claude, empezará de cero.' +
+            (quedan === null
+              ? ''
+              : quedan === 0
+                ? ' Era la última vez que podías empezar de cero esta tesis.'
+                : ` Te ${quedan === 1 ? 'queda 1 vez' : `quedan ${quedan} veces`} más para empezar de cero.`),
         );
         this.recargar();
       },
@@ -599,6 +611,28 @@ export class MiTesis implements OnInit {
         this.errorBorrado.set(toApiError(e).message);
       },
     });
+  }
+
+  /**
+   * Cuántas veces más puede empezar de cero. Null = sin tope: el administrador,
+   * o un backend anterior que todavía no lo cuenta.
+   */
+  reiniciosRestantes(p: Proyecto): number | null {
+    return p.reiniciosRestantes ?? null;
+  }
+
+  /**
+   * El primer párrafo de la ventana: se recuerda cada vez, no solo la última,
+   * porque quien lo gasta sin saberlo ya no puede recuperarlo.
+   */
+  private recordatorioDeReinicios(restantes: number | null): string {
+    if (restantes === null) return '';
+    const despues =
+      restantes === 1
+        ? 'Esta es la última: después ya no podrás volver a empezar de cero.'
+        : `Si lo haces, te ${restantes - 1 === 1 ? 'quedará 1 vez' : `quedarán ${restantes - 1} veces`}.`;
+    return `Recuerda: cada tesis puede empezar de cero solo ${MAX_REINICIOS} veces. ${despues}
+`;
   }
 
   // ── Varias tesis del mismo método (administradores) ──────────────────────

@@ -1,0 +1,50 @@
+<app-site-header />
+
+<main class="pagina">
+  <header class="encabezado-pagina">
+    <p class="seccion-marca">Guías en PDF</p>
+    <h1 class="titulo-seccion ancho">Elige la guía que necesitas</h1>
+    <p class="seccion-entrada">
+      Paso a paso y con capturas, para tenerlas a mano sin conexión. Si prefieres verlo, están los
+      <a routerLink="/tutoriales">videos</a>.
+    </p>
+  </header>
+
+  <section class="seccion">
+    @if (cargando()) {
+      <p class="cargando">Cargando las guías…</p>
+    } @else if (tarjetas().length === 0) {
+      <p class="cargando">
+        Todavía no hay guías publicadas. Mientras tanto, los
+        <a routerLink="/tutoriales">videos</a> enseñan lo mismo.
+      </p>
+    } @else {
+      <ul class="guias">
+        @for (guia of tarjetas(); track guia.enlace) {
+          <li>
+            <a class="guia" [href]="guia.enlace" download target="_blank" rel="noopener">
+              <span class="guia-icono" aria-hidden="true">PDF</span>
+              <span class="guia-texto">
+                <strong>{{ guia.titulo }}</strong>
+                @if (guia.descripcion) {
+                  <span>{{ guia.descripcion }}</span>
+                }
+                @if (guia.peso) {
+                  <small>{{ guia.peso }}</small>
+                }
+              </span>
+              <span class="guia-accion">Descargar</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+
+    <p class="ayuda">
+      ¿Te trabaste en algún paso?
+      <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>.
+    </p>
+  </section>
+</main>
+
+<app-site-footer />

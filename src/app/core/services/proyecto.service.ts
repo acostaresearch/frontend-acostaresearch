@@ -158,6 +158,11 @@ export interface Proyecto {
   siguiente: EtapaDelProyecto | null;
   /** Si `siguiente` la eligió él en el panel y no el orden del método. */
   retomarElegido: boolean;
+  /**
+   * Cuántas veces más puede empezar de cero esta tesis. Null = sin tope
+   * (administrador). Opcional porque un backend anterior no lo manda.
+   */
+  reiniciosRestantes?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -235,14 +240,15 @@ export class ProyectoService {
    * documento subido, y el método queda con sus fases en blanco.
    *
    * La palabra viaja al servidor, que la vuelve a comprobar: la de la pantalla
-   * solo enciende el botón.
+   * solo enciende el botón. Cada tesis puede hacerlo tres veces; devuelve las
+   * que le quedan (null = sin tope).
    */
-  borrar(productCode: string, confirmacion: string): Observable<void> {
+  borrar(productCode: string, confirmacion: string): Observable<{ restantes: number | null }> {
     return this.http
-      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}`, {
+      .delete<ApiResponse<{ restantes?: number | null }>>(`${this.base}/${encodeURIComponent(productCode)}`, {
         body: { confirmacion },
       })
-      .pipe(map(() => undefined));
+      .pipe(map((r) => ({ restantes: r.data?.restantes ?? null })));
   }
 
   /** Abre otra tesis del método y la deja activa. El servidor solo se lo permite a un administrador. */

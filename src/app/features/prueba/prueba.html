@@ -47,12 +47,10 @@
         </li>
       </ol>
 
-      @if (guiaUrl) {
-        <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
-          <span aria-hidden="true">📄</span>
-          <span><strong>Guía de instalación en PDF</strong> · los mismos pasos, con capturas</span>
-        </a>
-      }
+      <a class="guia" routerLink="/guias-de-instalacion" target="_blank">
+        <span aria-hidden="true">📄</span>
+        <span><strong>Guías de instalación en PDF</strong> · los mismos pasos, con capturas</span>
+      </a>
 
       <p class="nota">
         Es un conector de prueba: no lo compartas, cada persona del grupo tiene el suyo.

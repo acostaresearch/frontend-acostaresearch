@@ -47,16 +47,14 @@
 
         <!-- La guía con capturas. Solo aparece si el PDF existe de verdad: lo
              comprueba el generador de environments al compilar. -->
-        @if (guiaUrl) {
-          <a class="guia" [href]="guiaUrl" download target="_blank" rel="noopener">
-            <span class="guia-icono" aria-hidden="true">📄</span>
-            <span class="guia-texto">
-              <strong>Guía de instalación en PDF</strong>
-              <span>Los mismos tres pasos, con capturas de cada pantalla.</span>
-            </span>
-            <span class="guia-accion">Descargar</span>
-          </a>
-        }
+        <a class="guia" routerLink="/guias-de-instalacion" target="_blank">
+          <span class="guia-icono" aria-hidden="true">📄</span>
+          <span class="guia-texto">
+            <strong>Guías de instalación en PDF</strong>
+            <span>Los mismos tres pasos, con capturas de cada pantalla.</span>
+          </span>
+          <span class="guia-accion">Ver guías</span>
+        </a>
 
         <p class="nota">
           La licencia es individual. Compartir esta URL puede provocar que se desactive.

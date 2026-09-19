@@ -357,17 +357,29 @@
            Solo si hay algo guardado: un método que sale en blanco por tener
            licencia no tiene nada que borrar. -->
       @if (p.guardado) {
-        <p class="borrar-entrada">
-          ¿Te cambiaron el tema?
-          <button
-            type="button"
-            class="boton enlace"
-            [disabled]="borrando()"
-            (click)="borrarProgreso(p)"
-          >
-            {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
-          </button>
-        </p>
+        @if (reiniciosRestantes(p) === 0) {
+          <p class="borrar-entrada">
+            Ya usaste las tres veces que podías empezar de cero esta tesis. Si te cambiaron el tema,
+            escríbenos y lo vemos contigo.
+          </p>
+        } @else {
+          <p class="borrar-entrada">
+            ¿Te cambiaron el tema?
+            <button
+              type="button"
+              class="boton enlace"
+              [disabled]="borrando()"
+              (click)="borrarProgreso(p)"
+            >
+              {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
+            </button>
+            @if (reiniciosRestantes(p); as quedan) {
+              <span class="borrar-quedan">
+                ({{ quedan === 1 ? 'te queda 1 vez' : 'te quedan ' + quedan + ' veces' }})
+              </span>
+            }
+          </p>
+        }
       }
       @if (avisoBorrado(); as mensaje) {
         <p class="aviso-borrado" role="status">{{ mensaje }}</p>

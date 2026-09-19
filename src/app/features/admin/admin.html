@@ -2500,6 +2500,124 @@
           </div>
         </div>
       }
+
+      <section class="tarjeta">
+        <div class="tarjeta-cabecera">
+          <h2>Guías en PDF</h2>
+          <button type="button" class="boton" (click)="editarGuia(null)">Añadir guía</button>
+        </div>
+
+        <p class="nota">
+          Salen en <strong>acostaresearch.com/guias-de-instalacion</strong>, que es adonde lleva
+          «Guías de instalación» del perfil, de la compra y de la prueba: allí cada uno elige cuál
+          descargar. Sube el PDF y aparece al instante. Mientras no haya ninguna, se ofrece la guía
+          de siempre.
+        </p>
+
+        @if (guias().length === 0) {
+          <p class="tenue">Todavía no hay ninguna.</p>
+        } @else {
+          <ul class="lista-tutoriales">
+            @for (guia of guias(); track guia.id) {
+              <li [class.apagado]="!guia.active">
+                <div class="tutorial-datos">
+                  <p class="tutorial-titulo">
+                    <span class="tutorial-orden">{{ guia.orden }}</span>
+                    {{ guia.titulo }}
+                    @if (!guia.active) {
+                      <span class="pastilla">Oculta</span>
+                    }
+                  </p>
+                  <p class="tenue">
+                    {{ guia.archivoNombre }} · {{ pesoGuia(guia.bytes) }}
+                    @if (guia.active) {
+                      ·
+                      <a [href]="enlaceGuia(guia)" target="_blank" rel="noopener">descargar</a>
+                    }
+                  </p>
+                </div>
+
+                <div class="tutorial-acciones">
+                  <button type="button" class="boton secundario" (click)="editarGuia(guia)">
+                    Editar
+                  </button>
+                  <button type="button" class="enlace-peligro" (click)="borrarGuia(guia)">
+                    Borrar
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      @if (formularioGuia()) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-guia">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-guia">{{ guiaAbierta() ? 'Editar guía' : 'Guía nueva' }}</h3>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarGuia()">
+                ✕
+              </button>
+            </div>
+
+            <form [formGroup]="formGuia" (ngSubmit)="guardarGuia()">
+              <div class="ventana-cuerpo">
+                <label class="campo">
+                  <span>Archivo PDF</span>
+                  <input type="file" accept="application/pdf,.pdf" (change)="elegirPdf($event)" />
+                  <small class="ayuda">
+                    @if (guiaAbierta(); as abierta) {
+                      Ahora: {{ abierta.archivoNombre }} ({{ pesoGuia(abierta.bytes) }}). Elige otro
+                      solo si quieres cambiarlo.
+                    } @else {
+                      Máximo 25 MB.
+                    }
+                  </small>
+                </label>
+
+                <div class="fila">
+                  <label class="campo">
+                    <span>Título</span>
+                    <input type="text" formControlName="titulo" placeholder="Guía de instalación" />
+                  </label>
+                  <label class="campo estrecho">
+                    <span>Orden</span>
+                    <input type="number" formControlName="orden" min="0" />
+                  </label>
+                </div>
+
+                <label class="campo">
+                  <span>Qué trae</span>
+                  <textarea
+                    formControlName="descripcion"
+                    rows="3"
+                    placeholder="Cómo conectarlo a Claude, paso a paso y con capturas."
+                  ></textarea>
+                  <small class="ayuda">Una o dos frases, para que sepan cuál elegir.</small>
+                </label>
+
+                <label class="casilla">
+                  <input type="checkbox" formControlName="active" />
+                  <span>
+                    Visible en la web.
+                    <small>Desactívala para retirarla un tiempo sin perder el PDF.</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="ventana-pie">
+                <button type="button" class="boton secundario" (click)="cerrarGuia()">
+                  Cancelar
+                </button>
+                <button type="submit" class="boton" [disabled]="!puedeGuardarGuia()">
+                  {{ guardandoGuia() ? 'Subiendo…' : 'Guardar' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
     }
 
     @if (seccion() === 'perfil') {
