@@ -406,3 +406,8 @@
 .acciones-sesion .boton {
   width: auto;
 }
+
+/* La salida al canje, que vive en /planes: al pie de «Mis compras». */
+.canje-aviso {
+  margin: 14px 0 0;
+}

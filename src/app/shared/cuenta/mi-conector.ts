@@ -1,9 +1,7 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
-import { toApiError } from '../../core/http/api-error';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { LicenseService } from '../../core/services/license.service';
 import { MiTesis } from './mi-tesis';
@@ -21,14 +19,13 @@ import { PasosDeArranque } from './pasos-de-arranque';
  * que el dueño del producto era el único que no tenía dónde ver su propio
  * conector.
  *
- * Lo que cambia entre los dos usos es poco y cabe en `modo`: el administrador no
- * canjea códigos (los genera él, y canjearse uno a sí mismo apuntaría una venta
- * que no existió) y tampoco se le ofrece comprar lo que ya tiene.
+ * Lo que cambia entre los dos usos es poco y cabe en `modo`: al administrador no
+ * se le ofrece comprar lo que ya tiene. Los códigos ya no se canjean aquí sino
+ * en /planes, que es el único sitio donde se hace.
  */
 @Component({
   selector: 'app-mi-conector',
   imports: [
-    ReactiveFormsModule,
     RouterLink,
     MiTesis,
     MisFuentesPanel,
@@ -101,44 +98,7 @@ export class MiConector implements OnInit {
     ),
   );
 
-  /**
-   * URL recién generada al canjear un código. Solo se puede mostrar en el
-   * momento de crearla.
-   *
-   * La de «URL nueva» ya no sale aquí: cada acceso la pide desde la pestaña de
-   * su producto, en «Por dónde vas», y la enseña en su propia ventana.
-   */
-  readonly urlNueva = signal<string | null>(null);
-  readonly errorLicencia = signal<string | null>(null);
-  readonly urlCopiada = signal(false);
-
-  readonly codigo = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.minLength(6)],
-  });
-  readonly canjeando = signal(false);
-
   ngOnInit(): void {
-    /*
-     * El código que viene puesto en la URL.
-     *
-     * Lo manda la página de precios, que tiene el campo a la vista pero no
-     * puede canjear: canjear pide sesión y la respuesta trae la URL del
-     * conector, que solo se puede enseñar en el momento de crearla. Así que
-     * allí se escribe y aquí se canjea, con el código ya escrito.
-     *
-     * Se rellena y nada más: el botón lo pulsa quien mira. Canjear solo por
-     * llegar con un parámetro en la dirección significaría gastar el código
-     * por abrir un enlace, y un enlace se abre por error o se comparte.
-     *
-     * Al administrador no le llega: no tiene este formulario.
-     */
-    const traido = this.ruta.snapshot.queryParamMap.get('codigo')?.trim();
-    if (traido && this.modo() === 'comprador') {
-      this.codigo.setValue(traido);
-      this.codigo.markAsTouched();
-    }
-
     this.licencias.mine().subscribe({
       next: ({ licencias, progreso }) => {
         this.misLicencias.set(licencias);
@@ -150,42 +110,5 @@ export class MiConector implements OnInit {
         this.cargando.set(false);
       },
     });
-  }
-
-  canjearCodigo(): void {
-    if (this.codigo.invalid || this.canjeando()) {
-      this.codigo.markAsTouched();
-      return;
-    }
-
-    this.canjeando.set(true);
-    this.errorLicencia.set(null);
-    this.urlNueva.set(null);
-
-    this.licencias.redeem(this.codigo.value.trim()).subscribe({
-      next: ({ license, connectorUrl }) => {
-        this.urlNueva.set(connectorUrl);
-        this.misLicencias.update((lista) => [license, ...lista]);
-        this.codigo.reset();
-        this.canjeando.set(false);
-      },
-      error: (error: unknown) => {
-        this.errorLicencia.set(toApiError(error).message);
-        this.canjeando.set(false);
-      },
-    });
-  }
-
-  async copiarUrlNueva(): Promise<void> {
-    const url = this.urlNueva();
-    if (!url) return;
-
-    try {
-      await navigator.clipboard.writeText(url);
-      this.urlCopiada.set(true);
-      setTimeout(() => this.urlCopiada.set(false), 2500);
-    } catch {
-      this.errorLicencia.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
-    }
   }
 }

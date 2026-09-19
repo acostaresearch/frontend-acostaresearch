@@ -97,9 +97,27 @@
            con un código en el correo y no sabe dónde meterlo. Va al lado del
            titular, que es lo primero que se lee: así no tiene que recorrer los
            paquetes —que no le interesan, ya compró— para encontrar dónde
-           meterlo. El canje ocurre en el perfil; ver la nota de `codigoCanje`
-           en el componente. -->
+           meterlo. Es el ÚNICO sitio donde se canjea; ver la nota de
+           `codigoCanje` en el componente. -->
       <aside class="canje-atajo">
+        @if (canjeado(); as hecho) {
+          <!-- La URL se enseña una sola vez: aquí, con su botón de copiar. -->
+          <h2>¡Listo! Tu acceso a {{ hecho.producto }} está activo</h2>
+          <p>Esta es tu URL del conector. Cópiala ahora: no volveremos a mostrarla.</p>
+          <div class="canje-grupo">
+            <input type="text" aria-label="URL del conector" [value]="hecho.url" readonly />
+            <button type="button" (click)="copiarUrlCanjeada()">
+              {{ urlCopiada() ? '¡Copiada!' : 'Copiar' }}
+            </button>
+          </div>
+          <p class="canje-pie">
+            Pégala en Claude: Configuración → Conectores → Añadir personalizado. También te la
+            enviamos por correo. <a routerLink="/perfil">Ir a mi perfil</a>
+          </p>
+          @if (errorCanje(); as mensaje) {
+            <p class="canje-error" role="alert">{{ mensaje }}</p>
+          }
+        } @else {
         <h2>¿Compraste por Yape o transferencia a través de whatsapp?</h2>
         <p>Canjea aquí el código que te enviamos por correo.</p>
 
@@ -117,13 +135,17 @@
             autocomplete="off"
             autocapitalize="characters"
             spellcheck="false"
-            (keyup.enter)="irACanjear()"
+            [readonly]="canjeando()"
+            (keyup.enter)="canjear()"
           />
-          <button type="button" (click)="irACanjear()">Canjear</button>
+          <button type="button" [disabled]="canjeando()" (click)="canjear()">
+            {{ canjeando() ? 'Canjeando…' : 'Canjear' }}
+          </button>
         </div>
 
         @if (errorCanje(); as mensaje) {
           <p class="canje-error" role="alert">{{ mensaje }}</p>
+        }
         }
       </aside>
     </header>

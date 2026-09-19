@@ -134,13 +134,16 @@
          de ellas. En una rejilla de seis columnas cabe todo sin que nada se
          quede a medio ancho.
 
-         Las tarjetas del conector —el canje, los accesos, las fuentes y la
-         ayuda— las pinta `app-mi-conector`, y entran en ESTA rejilla: la regla
-         global le quita la caja al componente para que sus tarjetas sean
-         casillas de aquí. Por eso «¿Compraste por Yape?» sale al lado de «Mis
-         compras» sin que ninguno de los dos sepa del otro. -->
+         Las tarjetas del conector —los accesos, las fuentes y la ayuda— las
+         pinta `app-mi-conector`, y entran en ESTA rejilla: la regla global le
+         quita la caja al componente para que sus tarjetas sean casillas de
+         aquí.
+
+         «Mis compras» va a lo ancho: a su lado estaba el canje de códigos, que
+         ahora vive solo en /planes. Queda una línea que lleva hasta allí, para
+         quien sigue buscándolo aquí por un correo antiguo. -->
     <main class="contenido rejilla">
-      <section class="tarjeta tramo-4">
+      <section class="tarjeta tramo-6">
         <h2>Mis compras</h2>
 
         @if (cargandoCompras()) {
@@ -189,6 +192,11 @@
             quieras empezar.
           </p>
         }
+
+        <p class="nota canje-aviso">
+          ¿Pagaste por Yape o transferencia?
+          <a routerLink="/planes">Canjea tu código en Precios</a>.
+        </p>
       </section>
 
       <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo

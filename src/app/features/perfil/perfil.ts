@@ -116,11 +116,13 @@ export class Perfil implements OnInit {
     // Con la ventana de borrar la cuenta delante, la página no se mueve.
     effect(() => this.fondo.fijar('perfil', this.borrandoCuenta()));
 
-    // `/perfil?ver=metodo` ya no lleva a ninguna parte, y no hace falta: lo
-    // usaba el atajo de la página de precios para quien pagó por Yape y venía
-    // con un código sin saber dónde meterlo. Ahora «¿Compraste por Yape o
-    // transferencia?» está en la primera fila, sin pestaña que abrir. El enlace
-    // sigue funcionando; el parámetro, sencillamente, ya no hace nada.
+    // Los códigos ya no se canjean aquí sino en /planes. Quien llega con uno en
+    // la dirección —un enlace o un marcador de cuando se canjeaba aquí— sigue
+    // hasta allí con el código escrito. `?ver=metodo` ya no hace nada.
+    const codigo = this.router.parseUrl(this.router.url).queryParamMap.get('codigo')?.trim();
+    if (codigo) {
+      void this.router.navigate(['/planes'], { queryParams: { codigo }, replaceUrl: true });
+    }
   }
 
   ngOnInit(): void {

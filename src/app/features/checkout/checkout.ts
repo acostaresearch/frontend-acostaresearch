@@ -26,6 +26,7 @@ import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService, Promo } from '../../core/services/billing.service';
 import { FondoService } from '../../core/services/fondo.service';
+import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
 import { INCLUYE } from '../../shared/contenido/metodo';
@@ -89,6 +90,7 @@ export class Checkout implements OnInit {
   private readonly paypal = inject(PaypalSdkService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly licencias = inject(LicenseService);
   protected readonly auth = inject(AuthService);
 
   readonly whatsappUrl = environment.whatsappUrl;
@@ -204,18 +206,18 @@ export class Checkout implements OnInit {
   /**
    * El código de activación de quien pagó por Yape o por transferencia.
    *
-   * Se escribe aquí, pero se canjea en el perfil, y no por comodidad: canjear
-   * pide sesión —el acceso queda a nombre de alguien— y la respuesta trae la
-   * URL del conector, que solo puede verse en ese momento porque del token se
-   * guarda el hash. Canjeando en esta página y mandando luego al panel, la URL
-   * se perdería en el camino y habría que generar otra.
-   *
-   * Así que lo que hace este campo es llevar el código puesto hasta donde se
-   * puede canjear de verdad —pasando por el acceso si hace falta— en vez de
-   * dejar a quien viene del correo buscando un formulario en su perfil.
+   * Se canjea AQUÍ, y es el único sitio: el perfil ya no tiene recuadro. Canjear
+   * pide sesión —el acceso queda a nombre de alguien—, así que sin ella se pasa
+   * por el acceso y se vuelve con el código ya escrito. La respuesta trae la URL
+   * del conector, que solo puede verse en ese momento porque del token se guarda
+   * el hash, y por eso se enseña en el mismo recuadro, con su botón de copiar.
    */
   readonly codigoCanje = new FormControl('', { nonNullable: true });
   readonly errorCanje = signal<string | null>(null);
+  readonly canjeando = signal(false);
+  /** Lo canjeado: a qué producto da acceso y su URL, que no se vuelve a enseñar. */
+  readonly canjeado = signal<{ producto: string; url: string } | null>(null);
+  readonly urlCopiada = signal(false);
 
   constructor() {
     effect(() => {
@@ -231,6 +233,13 @@ export class Checkout implements OnInit {
   }
 
   ngOnInit(): void {
+    // El código que viene en la dirección: el del correo de activación, o el que
+    // se escribió aquí antes de pasar por el acceso. Se rellena y nada más: el
+    // botón lo pulsa quien mira. Canjear por abrir un enlace gastaría el código
+    // con un enlace abierto por error o compartido.
+    const traido = this.ruta.snapshot.queryParamMap.get('codigo')?.trim();
+    if (traido) this.codigoCanje.setValue(traido);
+
     // El saldo solo existe si hay sesión; sin ella la página sigue siendo útil
     // como escaparate de precios.
     if (this.auth.isAuthenticated()) {
@@ -555,26 +564,70 @@ export class Checkout implements OnInit {
     return plan.code === 'METODO_DE_TESIS_HUMANIZADOR' && this.metodo().length > 1;
   }
 
-  /** Lleva el código escrito hasta el perfil, que es donde se canjea. */
-  irACanjear(): void {
+  /**
+   * Canjea el código aquí mismo. Sin sesión, pasa antes por el acceso y vuelve
+   * a esta página con el código escrito, para pulsar Canjear otra vez.
+   */
+  canjear(): void {
+    if (this.canjeando()) return;
     const codigo = this.codigoCanje.value.trim();
 
     // Los códigos son del tipo ACR-XXXX-XXXX-XXXX; con menos de seis
-    // caracteres no hay nada que comprobar y el viaje sería para nada.
+    // caracteres no hay nada que comprobar.
     if (codigo.length < 6) {
       this.errorCanje.set('Escribe el código completo, tal como te llegó en el correo.');
       return;
     }
-
     this.errorCanje.set(null);
-    const destino = `/perfil?ver=metodo&codigo=${encodeURIComponent(codigo)}`;
 
-    if (this.auth.isAuthenticated()) {
-      void this.router.navigateByUrl(destino);
+    if (!this.auth.isAuthenticated()) {
+      const vuelta = `/planes?codigo=${encodeURIComponent(codigo)}`;
+      void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: vuelta } });
       return;
     }
 
-    void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: destino } });
+    // Los códigos los genera el administrador: canjearse uno a sí mismo
+    // apuntaría una venta que no existió.
+    if (this.auth.hasRole('ADMIN')) {
+      this.errorCanje.set('Con la cuenta de administrador no se canjean códigos.');
+      return;
+    }
+
+    this.canjeando.set(true);
+    this.licencias.redeem(codigo).subscribe({
+      next: ({ license, connectorUrl }) => {
+        this.canjeando.set(false);
+        this.codigoCanje.reset();
+        this.canjeado.set({
+          producto: license.productName ?? license.productCode,
+          url: connectorUrl,
+        });
+        // Quita el código de la dirección: ya está gastado, y recargar la
+        // página no debe volver a ponerlo en el campo.
+        void this.router.navigate([], {
+          relativeTo: this.ruta,
+          queryParams: { codigo: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      },
+      error: (error: unknown) => {
+        this.canjeando.set(false);
+        this.errorCanje.set(toApiError(error).message);
+      },
+    });
+  }
+
+  async copiarUrlCanjeada(): Promise<void> {
+    const url = this.canjeado()?.url;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.urlCopiada.set(true);
+      setTimeout(() => this.urlCopiada.set(false), 2500);
+    } catch {
+      this.errorCanje.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
+    }
   }
 
   /**
