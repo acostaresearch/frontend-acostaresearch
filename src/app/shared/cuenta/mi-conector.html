@@ -145,19 +145,16 @@
         class="herramientas-panel herramientas-panel-scopus"
         [hidden]="herramienta() !== 'scopus'"
       >
-        <!-- Buscar en Scopus, cuando el servidor lo tiene encendido. Va
-             DELANTE de la subida porque es el camino corto; el panel se calla
-             solo si no está disponible, y entonces queda la subida sola. -->
-        <app-mi-scopus />
-
-        <div class="herramientas-subida">
-          <h3>¿Ya exportaste de Scopus?</h3>
-          <p class="nota">
-            Sube el archivo que descargas de Scopus con el acceso de tu universidad. Desde que entran,
-            aparecen cuando Claude busca para tus capítulos.
-          </p>
+        <!-- Primero la franja de sus fuentes —cuántas tiene y «Subir export»—,
+             y debajo el buscador. La franja va arriba porque la cifra es a lo
+             que se vuelve, y al fondo, debajo de la tabla, no se veía. -->
+        <div class="herramientas-biblioteca">
           <app-mis-fuentes />
         </div>
+
+        <!-- Buscar en Scopus, cuando el servidor lo tiene encendido. Si no lo
+             está, el panel lo dice y queda la subida de la franja. -->
+        <app-mi-scopus />
       </div>
 
       <div

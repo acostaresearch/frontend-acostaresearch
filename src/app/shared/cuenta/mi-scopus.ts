@@ -540,6 +540,12 @@ export class MiScopusPanel implements OnInit {
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
     if (this.modalFaceta()) this.cerrarModal();
+    else if (this.parte()) this.cerrarParte();
+  }
+
+  /** Cierra la ventana de «fuentes añadidas». */
+  cerrarParte(): void {
+    this.parte.set(null);
   }
 
   /** «Consulta avanzada»: el interruptor de encima del buscador. */

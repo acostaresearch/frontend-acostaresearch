@@ -595,38 +595,6 @@
             }
           }
 
-          <!-- El parte de la importación. Un import que no dice nada deja al
-               comprador sin saber si funcionó, y es cuando repite la operación. -->
-          @if (parte(); as resumen) {
-            <div class="parte" [class.parte-incompleta]="resumen.guardadas === 0">
-              <p class="parte-titulo">
-                @if (resumen.guardadas === 1) {
-                  1 fuente añadida a tus fuentes.
-                } @else if (resumen.guardadas > 1) {
-                  {{ resumen.guardadas }} fuentes añadidas a tus fuentes.
-                } @else {
-                  No se añadió ninguna nueva.
-                }
-              </p>
-              <p class="tenue">
-                @if (resumen.repetidas > 0) {
-                  {{ resumen.repetidas }} ya las tenías y se actualizaron.
-                }
-                @if (resumen.noEncontradas > 0) {
-                  {{ resumen.noEncontradas }} ya no las devuelve Scopus.
-                }
-                Ya puedes pedírselas a Claude: «busca en mis fuentes sobre…».
-              </p>
-              @if (resumen.sinResumen > 0) {
-                <p class="parte-aviso">
-                  {{ resumen.sinResumen }} se quedaron <strong>sin resumen</strong> porque el
-                  catálogo abierto no las conoce. Se pueden citar, pero Claude solo podrá
-                  encontrarlas por el título.
-                </p>
-              }
-            </div>
-          }
-
           <!-- Desconectar solo tiene sentido si hay algo conectado: con la
                credencial del servidor no hay vínculo que deshacer. -->
           @if (datos.conOauth) {
@@ -638,6 +606,60 @@
           }
         </div>
       </div>
+
+      <!-- ── El parte de la importación, en una ventana ──────────────────────
+           Un import que no dice nada deja al tesista sin saber si funcionó, y
+           es cuando repite la operación. En ventana y no al fondo de la tabla:
+           ahí abajo quedaba fuera de la vista justo después de pulsar el botón
+           de arriba. -->
+      @if (parte(); as resumen) {
+        <div class="sc-modal-fondo" (click)="cerrarParte()">
+          <div
+            class="sc-modal sc-aviso-ventana"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sc-parte-titulo"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="sc-aviso-cuerpo">
+              <span
+                class="sc-aviso-icono"
+                [class.sc-aviso-icono-neutro]="resumen.guardadas === 0"
+                aria-hidden="true"
+                >{{ resumen.guardadas > 0 ? "✓" : "i" }}</span
+              >
+              <h3 id="sc-parte-titulo">
+                @if (resumen.guardadas === 1) {
+                  1 fuente añadida a tus fuentes
+                } @else if (resumen.guardadas > 1) {
+                  {{ resumen.guardadas }} fuentes añadidas a tus fuentes
+                } @else {
+                  No se añadió ninguna nueva
+                }
+              </h3>
+              <p>
+                @if (resumen.repetidas > 0) {
+                  {{ resumen.repetidas }} ya las tenías y se actualizaron.
+                }
+                @if (resumen.noEncontradas > 0) {
+                  {{ resumen.noEncontradas }} ya no las devuelve Scopus.
+                }
+                Ya puedes pedírselas a Claude: <em>«busca en mis fuentes sobre…»</em>.
+              </p>
+              @if (resumen.sinResumen > 0) {
+                <p class="parte-aviso">
+                  {{ resumen.sinResumen }} se quedaron <strong>sin resumen</strong> porque el
+                  catálogo abierto no las conoce. Se pueden citar, pero Claude solo podrá
+                  encontrarlas por el título.
+                </p>
+              }
+            </div>
+            <footer class="sc-modal-pie sc-aviso-pie">
+              <button type="button" class="boton" (click)="cerrarParte()">Entendido</button>
+            </footer>
+          </div>
+        </div>
+      }
 
       <!-- ── «Mostrar todo»: la lista entera de una faceta ─────────────────
            Área temática, tipo de documento e idioma. Trabaja sobre un

@@ -10,46 +10,202 @@
   color: var(--color-texto-tenue);
 }
 
-/* ── Cuántas tiene ──────────────────────────────────────────────────────────
-   La cifra, en grande y lo primero. Es a lo que se vuelve a esta tarjeta: la
-   subida se hace un rato al empezar, y después lo que se quiere saber de un
-   vistazo es cuántas fuentes hay detrás de lo que Claude va a citar. */
-.fuentes-cifra {
+/* ── La franja ──────────────────────────────────────────────────────────────
+   Una sola línea arriba de la pestaña: la cifra, el aviso de las que no traen
+   resumen y las dos acciones. Es a lo que se vuelve —cuántas fuentes hay
+   detrás de lo que Claude va a citar— y tiene que verse sin bajar. */
+.franja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.franja-cifra {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin: 0 0 14px;
+  margin: 0;
 }
 
-.fuentes-cifra strong {
-  font-size: 30px;
+.franja-cifra strong {
+  font-size: 22px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--color-primario);
 }
 
-.fuentes-cifra span {
+.franja-cifra span {
   font-size: 13px;
   color: var(--color-texto-suave);
 }
 
-.fuentes-acciones {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
+.franja-vacia {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
 }
 
-.fuentes-acciones .boton {
+.franja-vacia strong {
+  color: var(--color-texto);
+}
+
+/* El aviso es un botón: lleva a la ventana, que es donde está la explicación
+   entera y donde se arregla subiendo el archivo otra vez. */
+.franja-aviso {
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border: 1px solid rgba(150, 89, 13, 0.28);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.franja-aviso:hover {
+  border-color: var(--color-aviso);
+}
+
+.franja-acciones {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.franja-acciones .boton {
   width: auto;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  font-size: 13px;
 }
 
 /* «Borrar todas» va como enlace y no como botón: es la salida de emergencia de
    quien subió el archivo equivocado, no una acción que se ofrezca. */
-.fuentes-acciones .boton.enlace.peligro {
+.franja-acciones .boton.enlace.peligro {
   flex-shrink: 0;
+  padding: 0;
   color: var(--color-error);
+}
+
+.franja-mensaje {
+  margin: 12px 0 0;
+}
+
+/* ── La ventana de subir ──────────────────────────────────────────────────── */
+.ventana-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 24, 40, 0.5);
+}
+
+.ventana {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+}
+
+.ventana-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.ventana-cabecera h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.ventana-cerrar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-texto);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ventana-cerrar:hover {
+  background: var(--color-fondo);
+}
+
+.ventana-cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 22px;
+}
+
+.ventana-intro {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.ventana-pie {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 22px;
+  background: var(--color-fondo);
+  border-top: 1px solid var(--color-borde);
+}
+
+.ventana-pie .boton {
+  width: auto;
+  min-width: 96px;
+}
+
+.canje-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.canje-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+}
+
+.canje-fila .boton {
+  width: auto;
+}
+
+@media (max-width: 620px) {
+  .franja-acciones {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 /* ── La zona de soltar ────────────────────────────────────────────────────── */
@@ -212,9 +368,9 @@
   color: var(--color-aviso);
 }
 
-/* El mismo aviso, pero como estado permanente junto al recuento. */
+/* El mismo aviso, como estado permanente, dentro de la ventana. */
 .sin-resumen {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   padding: 12px 14px;
   font-size: 13px;
   line-height: 1.6;

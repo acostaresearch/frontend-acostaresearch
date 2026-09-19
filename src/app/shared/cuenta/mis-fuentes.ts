@@ -1,5 +1,5 @@
-import { DatePipe, UpperCasePipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
+import { Component, HostListener, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
@@ -40,7 +40,7 @@ const MAXIMO_BYTES = 8 * 1024 * 1024;
  */
 @Component({
   selector: 'app-mis-fuentes',
-  imports: [DatePipe, UpperCasePipe, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, UpperCasePipe, ReactiveFormsModule],
   templateUrl: './mis-fuentes.html',
   styleUrl: './mis-fuentes.css',
 })
@@ -62,18 +62,39 @@ export class MisFuentesPanel {
   readonly encima = signal(false);
 
   /**
-   * ¿Se pidió la caja de subir?
+   * La ventana de subir.
    *
-   * Con fuentes ya cargadas, la caja de arrastrar es lo más grande de la
-   * tarjeta y lo que menos se usa: subir un export es cosa de un rato al
-   * empezar, y después se vuelve aquí a mirar cuántas hay. Así que se pliega
-   * detrás de «Cargar más fuentes» y la tarjeta enseña la cifra, que es a lo
-   * que se viene.
+   * La franja de arriba enseña la cifra, que es a lo que se vuelve; subir un
+   * export es cosa de un rato al empezar, así que la caja de arrastrar y sus
+   * explicaciones viven en una ventana que se abre con «Subir export».
    */
-  readonly subiendoMas = signal(false);
+  readonly ventanaAbierta = signal(false);
 
-  /** Sin ninguna fuente todavía no hay nada que plegar: la caja ES la tarjeta. */
-  readonly cajaVisible = computed(() => this.subiendoMas() || (this.resumen()?.total ?? 0) === 0);
+  abrir(): void {
+    this.error.set(null);
+    this.conservadas.set(null);
+    this.ventanaAbierta.set(true);
+  }
+
+  /**
+   * Cierra la ventana y olvida el parte: la próxima vez que se abra empieza
+   * limpia, en vez de enseñar «Añadimos 40 fuentes» de la subida de ayer.
+   * Mientras sube no se cierra, para que el parte no llegue a una ventana que
+   * ya no está.
+   */
+  cerrar(): void {
+    if (this.subiendo()) return;
+    this.ventanaAbierta.set(false);
+    this.resultado.set(null);
+    this.porDoi.set(null);
+    this.sinDoi.set([]);
+    this.error.set(null);
+  }
+
+  @HostListener('document:keydown.escape')
+  alPulsarEscape(): void {
+    if (this.ventanaAbierta()) this.cerrar();
+  }
 
   constructor() {
     /**

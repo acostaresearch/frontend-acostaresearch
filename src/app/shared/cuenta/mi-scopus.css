@@ -162,9 +162,10 @@
     box-shadow var(--transicion);
 }
 
+/* El foco se marca en el campo, no en la caja: las dos a la vez pintaban un
+   doble borde azul alrededor del mismo sitio. */
 .sc-caja:focus-within {
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 3px var(--color-primario-suave);
+  border-color: var(--color-borde-fuerte);
 }
 
 .sc-caja-ocupada {
@@ -190,6 +191,7 @@
 
 .sc-flotante:focus-within {
   border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
 }
 
 .sc-flotante > span {
@@ -206,13 +208,44 @@
 .sc-flotante input {
   width: 100%;
   min-width: 0;
+  margin: 0;
   padding: 0;
   font: inherit;
   font-size: 13.5px;
   color: var(--color-texto);
   background: transparent;
   border: 0;
+  border-radius: 0;
+  box-shadow: none;
   outline: none;
+}
+
+/* El desplegable sin el aspecto del sistema. En Windows salía con su propio
+   borde gris y un botón de flecha gris dentro del campo: un recuadro dentro
+   de otro. La flecha es la de Scopus, dibujada aquí. */
+.sc-flotante select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 22px;
+  text-overflow: ellipsis;
+}
+
+.sc-donde::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  bottom: 13px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--color-primario);
+  border-bottom: 1.5px solid var(--color-primario);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.sc-flotante select option {
+  color: var(--color-texto);
+  background: var(--color-superficie);
 }
 
 .sc-donde {
@@ -967,6 +1000,71 @@
 .sc-modal-pie .boton {
   width: auto;
   min-width: 96px;
+}
+
+/* ── La ventana de «fuentes añadidas» ──────────────────────────────────── */
+.sc-aviso-ventana {
+  max-width: 440px;
+}
+
+.sc-aviso-cuerpo {
+  padding: 26px 26px 18px;
+  text-align: center;
+}
+
+.sc-aviso-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border-radius: 50%;
+}
+
+.sc-aviso-icono-neutro {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.sc-aviso-cuerpo h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.sc-aviso-cuerpo p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.sc-aviso-cuerpo em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.sc-aviso-cuerpo .parte-aviso {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  text-align: left;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
+}
+
+.sc-aviso-pie {
+  justify-content: center;
+}
+
+.sc-aviso-pie .boton {
+  min-width: 140px;
 }
 
 /* ── Pantallas estrechas ───────────────────────────────────────────────────
