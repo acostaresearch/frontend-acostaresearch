@@ -93,9 +93,7 @@
           <button type="button" class="boton secundario" (click)="cerrar()">Cerrar</button>
         </div>
       } @else {
-        @if (error(); as mensaje) {
-          <div class="aviso error" role="alert">{{ mensaje }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
         <div class="campo">
           <label for="respuesta-reclamo">Lo que se le contesta</label>
           <textarea

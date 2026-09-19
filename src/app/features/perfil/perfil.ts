@@ -23,6 +23,7 @@ import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /** Etiquetas en castellano: el backend solo maneja los códigos. */
 const ROLES: Record<Role, string> = {
@@ -55,7 +56,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
  */
 @Component({
   selector: 'app-perfil',
-  imports: [RouterLink, DatePipe, DecimalPipe, AjustesDeCuenta, MiConector, SiteHeader],
+  imports: [AvisoFlotante, RouterLink, DatePipe, DecimalPipe, AjustesDeCuenta, MiConector, SiteHeader],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })

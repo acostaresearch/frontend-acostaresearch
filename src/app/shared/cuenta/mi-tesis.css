@@ -920,15 +920,6 @@
   color: var(--color-texto-suave);
 }
 
-.url-error {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: var(--color-error);
-  background: var(--color-error-suave);
-  border-radius: var(--radio-sm);
-}
-
 .url-acciones {
   display: flex;
   justify-content: flex-end;

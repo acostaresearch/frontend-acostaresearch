@@ -15,6 +15,7 @@ import { toApiError } from '../../../core/http/api-error';
 import { AuthService } from '../../../core/services/auth.service';
 import { GoogleAuthService } from '../../../core/services/google-auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { AvisoFlotante } from '../../../shared/layout/aviso-flotante';
 
 /**
  * Botón «Continuar con Google», con el intercambio ya resuelto.
@@ -28,6 +29,7 @@ import { UserService } from '../../../core/services/user.service';
  * dibujaría un botón de cero píxeles.
  */
 @Component({
+  imports: [AvisoFlotante],
   selector: 'app-boton-google',
   template: `
     @if (google.disponible) {
@@ -35,9 +37,7 @@ import { UserService } from '../../../core/services/user.service';
 
       <div #contenedor class="contenedor" [class.ocupado]="enviando()"></div>
 
-      @if (error(); as mensaje) {
-        <p class="error-google" role="alert">{{ mensaje }}</p>
-      }
+      <app-aviso-flotante [(error)]="error" />
     }
   `,
   styles: `
@@ -74,13 +74,6 @@ import { UserService } from '../../../core/services/user.service';
     .contenedor.ocupado {
       pointer-events: none;
       opacity: 0.6;
-    }
-
-    .error-google {
-      margin: 10px 0 0;
-      font-size: 13px;
-      line-height: 1.5;
-      color: var(--color-error);
     }
   `,
 })

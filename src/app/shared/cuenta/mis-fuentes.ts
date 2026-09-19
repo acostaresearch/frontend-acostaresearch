@@ -11,6 +11,7 @@ import {
   ResultadoDeImportacion,
 } from '../../core/services/mis-fuentes.service';
 import { DialogoService } from '../../core/services/dialogo.service';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /** Lo que el navegador ofrece al abrir el diálogo. El servidor lo recomprueba. */
 const ACEPTA = '.csv,.ris,.bib,.bibtex,.txt,.pdf';
@@ -40,7 +41,7 @@ const MAXIMO_BYTES = 8 * 1024 * 1024;
  */
 @Component({
   selector: 'app-mis-fuentes',
-  imports: [DatePipe, DecimalPipe, UpperCasePipe, ReactiveFormsModule],
+  imports: [AvisoFlotante, DatePipe, DecimalPipe, UpperCasePipe, ReactiveFormsModule],
   templateUrl: './mis-fuentes.html',
   styleUrl: './mis-fuentes.css',
 })

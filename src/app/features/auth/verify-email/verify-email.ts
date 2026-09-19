@@ -6,13 +6,14 @@ import { toApiError } from '../../../core/http/api-error';
 import { ERROR_CODE } from '../../../core/models/api.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthCard } from '../auth-card/auth-card';
+import { AvisoFlotante } from '../../../shared/layout/aviso-flotante';
 
 /** Segundos de espera antes de poder pedir otro código. */
 const ESPERA_REENVIO = 60;
 
 @Component({
   selector: 'app-verify-email',
-  imports: [ReactiveFormsModule, RouterLink, AuthCard],
+  imports: [AvisoFlotante, ReactiveFormsModule, RouterLink, AuthCard],
   templateUrl: './verify-email.html',
   styleUrl: './verify-email.css',
 })

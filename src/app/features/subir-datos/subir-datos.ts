@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { mensajeDeError } from '../../core/http/api-error';
 import { DatosRService, DatosSubidos } from '../../core/services/datos-r.service';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
@@ -19,7 +20,7 @@ type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
  */
 @Component({
   selector: 'app-subir-datos',
-  imports: [SiteHeader],
+  imports: [AvisoFlotante, SiteHeader],
   templateUrl: './subir-datos.html',
   styleUrl: './subir-datos.css',
 })

@@ -15,16 +15,18 @@
       <!-- ── La hoja registrada ────────────────────────────────────────────
            Sustituye al formulario. Es la constancia del consumidor: se imprime
            tal cual, sin la cabecera ni el pie de la web. -->
-      @if (correoEnviado()) {
-        <div class="aviso exito no-imprimir" role="status">
-          Tu hoja quedó registrada. Te enviamos una copia a <strong>{{ h.email }}</strong>.
-        </div>
-      } @else {
-        <div class="aviso info no-imprimir" role="status">
-          Tu hoja quedó registrada, pero no pudimos enviarte la copia por correo. Imprímela o
-          guárdala en PDF ahora: es tu constancia.
-        </div>
-      }
+      <!-- Sin copia por correo el aviso se queda hasta cerrarlo: hay que
+           imprimir la hoja ahora, y eso no puede irse solo a los seis segundos. -->
+      <app-aviso-flotante
+        [aviso]="
+          correoEnviado() ? 'Tu hoja quedó registrada. Te enviamos una copia a ' + h.email + '.' : null
+        "
+        [error]="
+          correoEnviado()
+            ? null
+            : 'Tu hoja quedó registrada, pero no pudimos enviarte la copia por correo. Imprímela o guárdala en PDF ahora: es tu constancia.'
+        "
+      />
 
       <section class="hoja" aria-labelledby="titulo-hoja">
         <div class="hoja-cabecera">
@@ -327,9 +329,7 @@
           </li>
         </ul>
 
-        @if (error(); as mensaje) {
-          <div class="aviso error" role="alert">{{ mensaje }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
 
         <button type="submit" class="boton enviar" [disabled]="enviando()">
           {{ enviando() ? 'Enviando…' : 'Enviar hoja de reclamación' }}

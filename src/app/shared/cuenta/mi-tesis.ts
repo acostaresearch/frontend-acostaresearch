@@ -12,6 +12,7 @@ import {
   ProyectoService,
   TesisDelMetodo,
 } from '../../core/services/proyecto.service';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /** Qué se está bajando: la tesis armada, la bibliografía o el documento que subió, ya citado. */
 type Formato = 'word' | 'bib' | 'documento';
@@ -94,7 +95,7 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
  */
 @Component({
   selector: 'app-mi-tesis',
-  imports: [DatePipe],
+  imports: [AvisoFlotante, DatePipe],
   templateUrl: './mi-tesis.html',
   styleUrl: './mi-tesis.css',
 })

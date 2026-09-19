@@ -1,3 +1,11 @@
+<!-- El resultado de cada acción flota arriba, en la pila de avisos del sitio:
+     se ve aunque el botón que la lanzó quede lejos en la página. -->
+<app-aviso-flotante [(error)]="errorLicencia" />
+<app-aviso-flotante [(error)]="errorTesis" [(aviso)]="avisoTesis" />
+<app-aviso-flotante [(error)]="errorRetomar" />
+<app-aviso-flotante [(error)]="errorBorrado" [(aviso)]="avisoBorrado" />
+<app-aviso-flotante [(error)]="errorDocumento" [(aviso)]="documentoSubido" />
+
 @if (proyecto(); as p) {
   <section class="tesis">
     <header class="intro">
@@ -57,9 +65,6 @@
          este se le acaba el tiempo. Callado mientras no urge. -->
     @if (avisoDeAcceso(); as aviso) {
       <p class="acceso-aviso">{{ aviso }}</p>
-    }
-    @if (errorLicencia(); as mensaje) {
-      <p class="aviso-descarga">{{ mensaje }}</p>
     }
 
     <!-- Varias tesis del mismo método. Abren más el administrador y quien
@@ -131,12 +136,6 @@
 
         @if (cambiandoTesis()) {
           <p class="plantilla-nota">Un momento…</p>
-        }
-        @if (avisoTesis(); as mensaje) {
-          <p class="plantilla-nota ok" role="status">{{ mensaje }}</p>
-        }
-        @if (errorTesis(); as mensaje) {
-          <p class="aviso-descarga">{{ mensaje }}</p>
         }
       </div>
     }
@@ -321,9 +320,6 @@
             }
           </div>
         }
-        @if (errorRetomar(); as mensaje) {
-          <p class="aviso-descarga">{{ mensaje }}</p>
-        }
 
         @if (retomarAbierto()) {
           <div class="retomar-como">
@@ -380,12 +376,6 @@
             }
           </p>
         }
-      }
-      @if (avisoBorrado(); as mensaje) {
-        <p class="aviso-borrado" role="status">{{ mensaje }}</p>
-      }
-      @if (errorBorrado(); as mensaje) {
-        <p class="aviso-descarga">{{ mensaje }}</p>
       }
     </div>
 
@@ -587,12 +577,6 @@
       @if (subiendoDocumento()) {
         <p class="plantilla-nota">Leyendo tu documento…</p>
       }
-      @if (documentoSubido(); as mensaje) {
-        <p class="aviso-borrado" role="status">{{ mensaje }}</p>
-      }
-      @if (errorDocumento(); as mensaje) {
-        <p class="aviso-descarga">{{ mensaje }}</p>
-      }
     </div>
 
   </section>
@@ -618,9 +602,6 @@
 
       <p class="url-pie">Pégala en Claude: Configuración → Conectores → Añadir personalizado.</p>
 
-      @if (errorLicencia(); as mensaje) {
-        <p class="url-error">{{ mensaje }}</p>
-      }
 
       <!-- Se cierra solo con el botón: ni con Escape ni pulsando fuera. Un roce
            en el sitio equivocado obligaría a generar otra URL. -->

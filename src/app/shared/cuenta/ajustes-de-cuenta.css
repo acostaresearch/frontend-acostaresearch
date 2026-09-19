@@ -109,27 +109,6 @@ p.tenue {
   line-height: 1.55;
 }
 
-.alerta {
-  margin: 0;
-  padding: 10px 13px;
-  font-size: 0.86rem;
-  line-height: 1.55;
-  border-radius: var(--radio-sm);
-  border: 1px solid transparent;
-}
-
-.alerta.mala {
-  color: var(--color-error);
-  background: var(--color-error-suave);
-  border-color: color-mix(in srgb, var(--color-error) 25%, transparent);
-}
-
-.alerta.buena {
-  color: var(--color-exito);
-  background: var(--color-exito-suave);
-  border-color: color-mix(in srgb, var(--color-exito) 25%, transparent);
-}
-
 .acciones {
   display: flex;
   flex-wrap: wrap;

@@ -75,9 +75,7 @@
           }
         </label>
 
-        @if (error()) {
-          <div class="aviso error" role="alert">{{ error() }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
 
         <p class="nota">
           ¿Lo tienes en PDF o en .doc antiguo? Ábrelo en Word y guárdalo como «Documento de Word

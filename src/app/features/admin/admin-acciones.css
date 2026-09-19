@@ -76,17 +76,11 @@
   background: var(--color-fondo);
 }
 
-.accion-ayuda,
-.accion-hecho {
+.accion-ayuda {
   margin: 8px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--color-texto-tenue);
-}
-
-.accion-hecho {
-  font-weight: 600;
-  color: var(--color-exito);
 }
 
 .accion .aviso {

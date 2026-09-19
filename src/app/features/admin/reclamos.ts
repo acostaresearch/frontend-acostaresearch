@@ -10,6 +10,7 @@ import {
   fechaEnLima,
   soles,
 } from '../../core/services/reclamo.service';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
 
@@ -34,6 +35,7 @@ function diaEnLima(fecha: Date): number {
  * se escribieron, y eso es lo que las hace valer.
  */
 @Component({
+  imports: [AvisoFlotante],
   selector: 'app-reclamos-admin',
   templateUrl: './reclamos.html',
   styleUrl: './reclamos.css',

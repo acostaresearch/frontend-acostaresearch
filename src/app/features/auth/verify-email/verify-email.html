@@ -8,26 +8,22 @@
     titulo="Verifica tu correo"
     subtitulo="Tu cuenta se creará al escribir el código que te enviamos."
   >
-    @if (correoNoEnviado) {
-      <p class="aviso info">
-        Guardamos tus datos, pero no pudimos enviar el correo. Pulsa «Reenviar código».
-      </p>
-    }
+    <app-aviso-flotante
+      [(error)]="errorGeneral"
+      [(aviso)]="mensajeReenvio"
+      [info]="
+        correoNoEnviado
+          ? 'Guardamos tus datos, pero no pudimos enviar el correo. Pulsa «Reenviar código».'
+          : null
+      "
+    />
 
-    @if (errorGeneral(); as mensaje) {
-      <div class="aviso error" role="alert">
-        <span>{{ mensaje }}</span>
-        @if (codigoQuemado()) {
-          <span>Pide uno nuevo para continuar.</span>
-        }
-        @if (contrasenaNoCoincide()) {
-          <a routerLink="/auth/registro">Volver a registrarme</a>
-        }
-      </div>
+    <!-- El aviso flota arriba; lo que hay que hacer después se queda a mano. -->
+    @if (errorGeneral() && codigoQuemado()) {
+      <p class="nota">Pide uno nuevo para continuar.</p>
     }
-
-    @if (mensajeReenvio(); as mensaje) {
-      <p class="aviso exito">{{ mensaje }}</p>
+    @if (errorGeneral() && contrasenaNoCoincide()) {
+      <a routerLink="/auth/registro">Volver a registrarme</a>
     }
 
     <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>

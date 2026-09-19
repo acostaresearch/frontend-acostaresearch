@@ -3,9 +3,7 @@
   subtitulo="Es el paso previo a tener tu método conectado a tu propio Claude."
   pestana="crear"
 >
-  @if (errorGeneral(); as mensaje) {
-    <p class="aviso error" role="alert">{{ mensaje }}</p>
-  }
+  <app-aviso-flotante [(error)]="errorGeneral" />
 
   <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
     <div class="fila">

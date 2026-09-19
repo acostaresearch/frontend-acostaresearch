@@ -35,6 +35,10 @@
   border-left-color: var(--color-exito, #16a34a);
 }
 
+.af-info {
+  border-left-color: var(--color-primario, #2563eb);
+}
+
 .af-icono {
   display: grid;
   flex: none;
@@ -54,6 +58,10 @@
 
 .af-exito .af-icono {
   background: var(--color-exito, #16a34a);
+}
+
+.af-info .af-icono {
+  background: var(--color-primario, #2563eb);
 }
 
 .af-aviso p {

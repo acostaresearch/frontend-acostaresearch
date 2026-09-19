@@ -115,9 +115,6 @@
             Pégala en Claude: Configuración → Conectores → Añadir personalizado. También te la
             enviamos por correo. <a routerLink="/perfil">Ir a mi perfil</a>
           </p>
-          @if (errorCanje(); as mensaje) {
-            <p class="canje-error" role="alert">{{ mensaje }}</p>
-          }
         } @else {
         <h2>¿Compraste por Yape o transferencia a través de whatsapp?</h2>
         <p>Canjea aquí el código que te enviamos por correo.</p>
@@ -144,16 +141,15 @@
           </button>
         </div>
 
-        @if (errorCanje(); as mensaje) {
-          <p class="canje-error" role="alert">{{ mensaje }}</p>
-        }
         }
       </aside>
     </header>
 
-    @if (error(); as mensaje) {
-      <div class="aviso error" role="alert">{{ mensaje }}</div>
-    }
+    <!-- Los avisos flotan arriba: se ven aunque la ventana de pago tape la página. -->
+    <app-aviso-flotante [(error)]="error" />
+    <app-aviso-flotante [(error)]="errorCanje" />
+    <app-aviso-flotante [(error)]="errorPromo" />
+    <app-aviso-flotante [(error)]="errorComprobante" />
 
     <section class="planes">
       @if (cargando()) {
@@ -303,12 +299,13 @@
          importe—. -->
     <!-- Se cerró sola. Sin esto, la ventana desaparece y el comprador cree
          que algo falló. -->
-    @if (cerradaPorTiempo()) {
-      <div class="aviso" role="status">
-        Cerramos la ventana de pago porque pasaron unos minutos. No se cobró nada: elige tu paquete
-        otra vez y sigues donde estabas.
-      </div>
-    }
+    <app-aviso-flotante
+      [info]="
+        cerradaPorTiempo()
+          ? 'Cerramos la ventana de pago porque pasaron unos minutos. No se cobró nada: elige tu paquete otra vez y sigues donde estabas.'
+          : null
+      "
+    />
 
     @if (seleccionado(); as plan) {
       <div class="pago-fondo">
@@ -498,9 +495,6 @@
                     {{ comprobandoPromo() ? '…' : 'Aplicar' }}
                   </button>
                 </div>
-                @if (errorPromo(); as mensaje) {
-                  <p class="promo-error">{{ mensaje }}</p>
-                }
               </div>
             }
 
@@ -751,10 +745,6 @@
                             Elegir la captura del pago
                           </span>
                         </label>
-                      }
-
-                      @if (errorComprobante(); as mensaje) {
-                        <p class="promo-error">{{ mensaje }}</p>
                       }
 
                       <button

@@ -93,11 +93,7 @@
 
     <!-- ── Resultado ───────────────────────────────────────────────────── -->
     <section class="panel resultado">
-      @if (error(); as mensaje) {
-        <div class="aviso error" role="alert">
-          <span>{{ mensaje }}</span>
-        </div>
-      }
+      <app-aviso-flotante [(error)]="error" />
 
       @if (sinSaldo()) {
         <div class="recarga">

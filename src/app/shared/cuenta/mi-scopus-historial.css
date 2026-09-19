@@ -286,83 +286,6 @@
   border-top: 1px solid var(--color-borde);
 }
 
-/* ── El aviso de error, que baja desde arriba ──────────────────────────── */
-.sc-toast {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  z-index: 80;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: min(520px, calc(100vw - 32px));
-  padding: 14px 14px 14px 16px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-error);
-  border-left-width: 4px;
-  border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.18);
-  transform: translateX(-50%);
-  animation: sc-toast-bajar 0.25s ease-out;
-}
-
-.sc-toast-icono {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #fff;
-  background: var(--color-error);
-  border-radius: 50%;
-}
-
-.sc-toast-texto {
-  flex: 1;
-  min-width: 0;
-}
-
-.sc-toast-texto strong {
-  display: block;
-  font-size: 13.5px;
-  color: var(--color-texto);
-}
-
-.sc-toast-texto p {
-  margin: 3px 0 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.sc-toast-cerrar {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--color-texto-tenue);
-  background: none;
-  border: 0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.sc-toast-cerrar:hover {
-  color: var(--color-texto);
-  background: var(--color-fondo);
-}
-
-@keyframes sc-toast-bajar {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -16px);
-  }
-}
-
 @keyframes sc-hist-bajar {
   from {
     opacity: 0;
@@ -371,7 +294,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sc-toast,
   .sc-hist-combinar {
     animation: none;
   }

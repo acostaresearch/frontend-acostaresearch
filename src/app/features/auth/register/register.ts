@@ -11,12 +11,13 @@ import { revisarCorreo } from '../../../shared/validators/correo';
 import { matchFields } from '../../../shared/validators/match.validator';
 import { AuthCard } from '../auth-card/auth-card';
 import { BotonGoogle } from '../boton-google/boton-google';
+import { AvisoFlotante } from '../../../shared/layout/aviso-flotante';
 
 type CampoRegistro = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
+  imports: [AvisoFlotante, ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })

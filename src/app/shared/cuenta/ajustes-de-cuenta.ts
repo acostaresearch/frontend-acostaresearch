@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { mensajeDeError } from '../../core/http/api-error';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /** En qué punto va el cambio de contraseña. */
 type PasoDeClave = 'cerrado' | 'esperando-codigo' | 'con-codigo';
@@ -25,7 +26,7 @@ type PasoDeClave = 'cerrado' | 'esperando-codigo' | 'con-codigo';
  */
 @Component({
   selector: 'app-ajustes-de-cuenta',
-  imports: [ReactiveFormsModule],
+  imports: [AvisoFlotante, ReactiveFormsModule],
   templateUrl: './ajustes-de-cuenta.html',
   styleUrl: './ajustes-de-cuenta.css',
 })

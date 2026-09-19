@@ -83,9 +83,7 @@
           }
         </div>
 
-        @if (error(); as mensaje) {
-          <p class="asis-error" role="alert">{{ mensaje }}</p>
-        }
+        <app-aviso-flotante [(error)]="error" />
 
         <form class="asis-formulario" (submit)="$event.preventDefault(); enviar()">
           <textarea

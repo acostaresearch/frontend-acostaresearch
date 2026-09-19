@@ -84,9 +84,7 @@
           }
         </label>
 
-        @if (error()) {
-          <div class="aviso error" role="alert">{{ error() }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
         @if (resultado()?.detalle; as detalle) {
           <pre class="detalle">{{ detalle }}</pre>
         }

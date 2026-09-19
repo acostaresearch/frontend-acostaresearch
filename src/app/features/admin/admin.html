@@ -718,9 +718,7 @@
                         </button>
                       }
                     </div>
-                    @if (errorVariasTesis(); as mensaje) {
-                      <div class="aviso error" role="alert">{{ mensaje }}</div>
-                    }
+                    <app-aviso-flotante [(error)]="errorVariasTesis" />
                   </div>
 
                   <div class="accion">
@@ -763,12 +761,7 @@
                           Avisamos al correo viejo y al nuevo. Su URL, su licencia y su tesis siguen
                           igual.
                         </p>
-                        @if (avisoCorreo(); as mensaje) {
-                          <p class="accion-hecho" role="status">{{ mensaje }}</p>
-                        }
-                        @if (errorCorreo(); as mensaje) {
-                          <div class="aviso error" role="alert">{{ mensaje }}</div>
-                        }
+                        <app-aviso-flotante [(error)]="errorCorreo" [(aviso)]="avisoCorreo" />
                       </div>
                     }
                   </div>

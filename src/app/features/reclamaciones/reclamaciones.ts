@@ -19,6 +19,7 @@ import {
 } from '../../core/services/reclamo.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /** Lo que se dice junto a cada campo cuando falta o está mal. */
 const MENSAJES: Record<string, string> = {
@@ -48,7 +49,7 @@ const MENSAJES: Record<string, string> = {
  */
 @Component({
   selector: 'app-reclamaciones',
-  imports: [ReactiveFormsModule, RouterLink, SiteHeader, SiteFooter],
+  imports: [AvisoFlotante, ReactiveFormsModule, RouterLink, SiteHeader, SiteFooter],
   templateUrl: './reclamaciones.html',
   styleUrl: './reclamaciones.css',
 })

@@ -1,15 +1,13 @@
 <!-- La vuelta desde zotero.org. Se anuncia una vez y se limpia de la barra. -->
-@if (vuelta() === 'cancelado') {
-  <p class="zotero-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
-} @else if (vuelta() === 'error') {
-  <p class="zotero-aviso zotero-mal">
-    Zotero no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
-  </p>
-}
-
-@if (error(); as texto) {
-  <p class="zotero-aviso zotero-mal">{{ texto }}</p>
-}
+<app-aviso-flotante
+  [info]="vuelta() === 'cancelado' ? 'No autorizaste el acceso, así que no se conectó nada.' : null"
+  [error]="
+    vuelta() === 'error'
+      ? 'Zotero no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.'
+      : null
+  "
+/>
+<app-aviso-flotante [(error)]="error" />
 
 @if (!cargando()) {
   @if (estado(); as datos) {

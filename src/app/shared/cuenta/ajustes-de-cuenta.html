@@ -1,3 +1,10 @@
+<!-- Los resultados de guardar flotan arriba, en la pila de avisos del sitio. -->
+<app-aviso-flotante
+  [(error)]="errorDatos"
+  [aviso]="datosGuardados() ? 'Datos guardados.' : null"
+/>
+<app-aviso-flotante [(error)]="errorClave" [(aviso)]="avisoClave" />
+
 @if (panel() === 'datos') {
   <!-- ── Tus datos ────────────────────────────────────────────────────────────── -->
   <section class="bloque">
@@ -35,13 +42,6 @@
         </label>
       }
 
-      @if (errorDatos(); as e) {
-        <p class="alerta mala">{{ e }}</p>
-      }
-      @if (datosGuardados()) {
-        <p class="alerta buena">Datos guardados.</p>
-      }
-
       <div class="acciones">
         <button type="submit" class="boton" [disabled]="guardandoDatos() || !datosCambiados()">
           {{ guardandoDatos() ? 'Guardando…' : 'Guardar cambios' }}
@@ -59,13 +59,6 @@
       <p class="nota">
         Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
       </p>
-
-      @if (avisoClave(); as a) {
-        <p class="alerta buena">{{ a }}</p>
-      }
-      @if (errorClave(); as e) {
-        <p class="alerta mala">{{ e }}</p>
-      }
 
       <div class="acciones">
         <button type="button" class="boton secundario" (click)="pedirCodigo()">
@@ -116,10 +109,6 @@
             }
           </label>
         </div>
-
-        @if (errorClave(); as e) {
-          <p class="alerta mala">{{ e }}</p>
-        }
 
         <p class="tenue">Al cambiarla se cierran tus sesiones en otros dispositivos. Esta no.</p>
 

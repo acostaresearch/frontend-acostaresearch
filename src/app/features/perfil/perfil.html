@@ -265,9 +265,7 @@
           />
         </label>
 
-        @if (errorBorrado(); as mensaje) {
-          <p class="aviso error">{{ mensaje }}</p>
-        }
+        <app-aviso-flotante [(error)]="errorBorrado" />
 
         <div class="acciones-sesion">
           <button type="button" class="boton secundario" (click)="cerrarBorradoDeCuenta()">

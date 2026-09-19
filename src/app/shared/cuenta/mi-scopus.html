@@ -1,38 +1,20 @@
-<!-- Los avisos van dentro de un relleno propio: el panel se pinta de borde a
-     borde de la pestaña «Tus fuentes de Scopus», y sin él quedarían pegados
-     a la línea de las pestañas. -->
-@if (vuelta()) {
-  <div class="sc-relleno sc-relleno-avisos">
-    <!-- La vuelta desde Elsevier. Solo ocurre con OAuth, y se anuncia una vez. -->
-    @if (vuelta() === 'cancelado') {
-      <p class="scopus-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
-    } @else if (vuelta() === 'rechazado') {
-      <p class="scopus-aviso scopus-mal">
-        Elsevier no concedió el acceso. Puede ser que tu institución no tenga habilitada esta
-        conexión; mientras tanto, sube tu export de Scopus aquí abajo.
-      </p>
-    } @else if (vuelta() === 'error') {
-      <p class="scopus-aviso scopus-mal">
-        Elsevier no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
-      </p>
-    }
-  </div>
-}
-
-<!-- Los errores bajan desde arriba, a la vista esté donde esté el tesista:
+<!-- Los avisos bajan desde arriba, a la vista esté donde esté el tesista:
      arriba del panel quedaban fuera de la pantalla con la lista abierta. -->
-@if (error(); as texto) {
-  <div class="sc-toast" role="alert">
-    <span class="sc-toast-icono" aria-hidden="true">!</span>
-    <div class="sc-toast-texto">
-      <strong>Algo no salió bien</strong>
-      <p>{{ texto }}</p>
-    </div>
-    <button type="button" class="sc-toast-cerrar" aria-label="Cerrar el aviso" (click)="error.set(null)">
-      ×
-    </button>
-  </div>
-}
+<!-- La vuelta desde Elsevier. Solo ocurre con OAuth, y se anuncia una vez. -->
+<app-aviso-flotante
+  [info]="vuelta() === 'cancelado' ? 'No autorizaste el acceso, así que no se conectó nada.' : null"
+  [error]="
+    vuelta() === 'rechazado'
+      ? 'Elsevier no concedió el acceso. Puede ser que tu institución no tenga habilitada esta conexión; mientras tanto, sube tu export de Scopus aquí abajo.'
+      : vuelta() === 'error'
+        ? 'Elsevier no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.'
+        : null
+  "
+/>
+<app-aviso-flotante [(error)]="error" />
+<app-aviso-flotante [(error)]="errorIa" />
+<app-aviso-flotante [(error)]="errorResumen" />
+<app-aviso-flotante [(error)]="errorGuardadas" [(aviso)]="avisoGuardada" />
 
 @if (!cargando()) {
   @if (estado(); as datos) {
@@ -233,10 +215,6 @@
                   }
                 </button>
               </div>
-
-              @if (errorIa(); as mensaje) {
-                <p class="scopus-aviso scopus-mal sc-ia-error">{{ mensaje }}</p>
-              }
 
               <!-- Mientras trabaja se dice qué está haciendo; después, lo que
                    hizo queda plegado detrás de un enlace. Quien pregunta al
@@ -443,9 +421,6 @@
           </p>
         }
 
-        @if (avisoGuardada(); as aviso) {
-          <p class="sc-aviso-guardada" role="status">{{ aviso }}</p>
-        }
 
       </div>
 
@@ -843,10 +818,6 @@
                     </button>
                   }
                 </header>
-
-                @if (errorResumen(); as mensaje) {
-                  <p class="scopus-aviso scopus-mal sc-resumen-error">{{ mensaje }}</p>
-                }
 
                 @if (resumenAbierto() && (hilo().length > 0 || resumiendo())) {
                   <div class="sc-resumen-cuerpo">
@@ -1399,10 +1370,6 @@
             Las conversaciones del copiloto se guardan solas; las demás, con «Guardar búsqueda».
             Al abrir una se vuelve a buscar en Scopus.
           </p>
-
-          @if (errorGuardadas(); as mensaje) {
-            <p class="scopus-aviso scopus-mal">{{ mensaje }}</p>
-          }
 
           @if (guardadas() === null) {
             <p class="sc-contando"><span class="sc-girando" aria-hidden="true"></span> Cargando…</p>

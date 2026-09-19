@@ -96,9 +96,7 @@
           }
         </label>
 
-        @if (error()) {
-          <div class="aviso error" role="alert">{{ error() }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
 
         <p class="nota">
           ¿Lo tienes en PDF o en foto? Adjúntalo directamente en el chat de tu asistente, con el clip:

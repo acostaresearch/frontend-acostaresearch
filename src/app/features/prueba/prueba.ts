@@ -9,6 +9,7 @@ import {
   PruebaService,
 } from '../../core/services/prueba.service';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /** Dónde se guarda el conector recogido, por enlace. */
 const CLAVE = (slug: string) => `prueba-conector:${slug}`;
@@ -30,7 +31,7 @@ const CLAVE = (slug: string) => `prueba-conector:${slug}`;
  */
 @Component({
   selector: 'app-prueba',
-  imports: [DatePipe, RouterLink, SiteHeader],
+  imports: [AvisoFlotante, DatePipe, RouterLink, SiteHeader],
   templateUrl: './prueba.html',
   styleUrl: './prueba.css',
 })

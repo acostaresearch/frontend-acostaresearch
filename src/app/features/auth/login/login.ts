@@ -10,10 +10,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthCard } from '../auth-card/auth-card';
 import { BotonGoogle } from '../boton-google/boton-google';
+import { AvisoFlotante } from '../../../shared/layout/aviso-flotante';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
+  imports: [AvisoFlotante, ReactiveFormsModule, RouterLink, AuthCard, BotonGoogle],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

@@ -9,6 +9,7 @@ import {
   QuePuedeTraer,
   ZoteroService,
 } from '../../core/services/zotero.service';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /**
  * Conectar el Zotero del propio tesista.
@@ -32,7 +33,7 @@ import {
  */
 @Component({
   selector: 'app-mi-zotero',
-  imports: [DatePipe],
+  imports: [AvisoFlotante, DatePipe],
   templateUrl: './mi-zotero.html',
   styleUrl: './mi-zotero.css',
 })

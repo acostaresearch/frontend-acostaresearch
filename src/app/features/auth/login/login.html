@@ -3,20 +3,16 @@
   subtitulo="Desde aquí llegas a tu método, tu licencia y tus compras."
   pestana="entrar"
 >
-  @if (sesionExpirada) {
-    <p class="aviso info">Tu sesión caducó. Vuelve a iniciar sesión para continuar.</p>
-  }
+  <app-aviso-flotante
+    [(error)]="errorGeneral"
+    [info]="sesionExpirada ? 'Tu sesión caducó. Vuelve a iniciar sesión para continuar.' : null"
+  />
 
-  @if (errorGeneral(); as mensaje) {
-    <div class="aviso error" role="alert">
-      <span>{{ mensaje }}</span>
-
-      @if (correoSinVerificar()) {
-        <button type="button" class="boton enlace" (click)="irAVerificar()">
-          Introducir el código de verificación
-        </button>
-      }
-    </div>
+  <!-- El aviso flota arriba; la salida se queda a mano mientras haga falta. -->
+  @if (errorGeneral() && correoSinVerificar()) {
+    <button type="button" class="boton enlace" (click)="irAVerificar()">
+      Introducir el código de verificación
+    </button>
   }
 
   <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>

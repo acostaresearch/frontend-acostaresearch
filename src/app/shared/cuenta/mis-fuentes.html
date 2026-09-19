@@ -56,15 +56,9 @@
   </span>
 </div>
 
-<!-- Lo de «Borrar todas», que no pasa por la ventana. -->
-@if (!ventanaAbierta()) {
-  @if (conservadas(); as texto) {
-    <p class="aviso franja-mensaje">{{ texto }}</p>
-  }
-  @if (error(); as mensaje) {
-    <p class="aviso error franja-mensaje">{{ mensaje }}</p>
-  }
-}
+<!-- Lo que sale de subir o de «Borrar todas», flotando arriba: se ve igual
+     con la ventana abierta que cerrada. -->
+<app-aviso-flotante [(error)]="error" [(info)]="conservadas" />
 
 <!-- ── La ventana de subir ─────────────────────────────────────────────────── -->
 @if (ventanaAbierta()) {
@@ -147,14 +141,6 @@
           la ficha. Después, cuando Claude busque, recibe esa ficha en vez de cuarenta páginas: unas
           cien veces menos de conversación gastada por fuente.
         </p>
-
-        @if (conservadas(); as texto) {
-          <p class="aviso">{{ texto }}</p>
-        }
-
-        @if (error(); as mensaje) {
-          <p class="aviso error">{{ mensaje }}</p>
-        }
 
         <!-- El parte de los PDF. -->
         @if (porDoi(); as parte) {

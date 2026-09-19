@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { mensajeDeError } from '../../core/http/api-error';
 import { FormatoPuesto, FormatoService } from '../../core/services/formato.service';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
@@ -18,7 +19,7 @@ type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
  */
 @Component({
   selector: 'app-subir-formato',
-  imports: [SiteHeader, DatePipe],
+  imports: [AvisoFlotante, SiteHeader, DatePipe],
   templateUrl: './subir-formato.html',
   styleUrl: '../subir-datos/subir-datos.css',
 })

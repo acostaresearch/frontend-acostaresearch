@@ -74,9 +74,7 @@
           }
         </label>
 
-        @if (error()) {
-          <div class="aviso error" role="alert">{{ error() }}</div>
-        }
+        <app-aviso-flotante [(error)]="error" />
 
         <p class="nota">
           Solo se guarda el formato: el texto que traiga el documento no se conserva. Si es un .doc

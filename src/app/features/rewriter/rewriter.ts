@@ -19,10 +19,11 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { TEXTO_PENDIENTE } from '../../shared/texto-pendiente';
 import { RewriteService } from '../../core/services/rewrite.service';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 @Component({
   selector: 'app-rewriter',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
+  imports: [AvisoFlotante, ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe, SiteHeader, SiteFooter],
   templateUrl: './rewriter.html',
   styleUrl: './rewriter.css',
 })

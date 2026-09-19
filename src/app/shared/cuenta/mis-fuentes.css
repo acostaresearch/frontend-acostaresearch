@@ -148,10 +148,6 @@
   cursor: default;
 }
 
-.franja-mensaje {
-  margin: 12px 0 0;
-}
-
 /* ── La ventana de subir ──────────────────────────────────────────────────── */
 .ventana-fondo {
   position: fixed;

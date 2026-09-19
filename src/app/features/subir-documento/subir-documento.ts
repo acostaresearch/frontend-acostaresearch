@@ -6,6 +6,7 @@ import { mensajeDeError } from '../../core/http/api-error';
 import { DocumentoEnlaceService } from '../../core/services/documento-enlace.service';
 import { DocumentoSubido } from '../../core/services/proyecto.service';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
@@ -19,7 +20,7 @@ type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
  */
 @Component({
   selector: 'app-subir-documento',
-  imports: [SiteHeader, DatePipe],
+  imports: [AvisoFlotante, SiteHeader, DatePipe],
   templateUrl: './subir-documento.html',
   styleUrl: '../subir-datos/subir-datos.css',
 })

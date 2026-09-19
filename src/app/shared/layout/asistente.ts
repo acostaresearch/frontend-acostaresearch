@@ -8,6 +8,7 @@ import { mensajeDeError } from '../../core/http/api-error';
 import { AsistenteService, MensajeAsistente } from '../../core/services/asistente.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Bloque, trocear } from './asistente-texto';
+import { AvisoFlotante } from './aviso-flotante';
 
 interface Burbuja extends MensajeAsistente {
   bloques: Bloque[];
@@ -41,7 +42,7 @@ const CLAVE_ABIERTO = 'asistente-abierto';
  */
 @Component({
   selector: 'app-asistente',
-  imports: [NgTemplateOutlet, RouterLink],
+  imports: [AvisoFlotante, NgTemplateOutlet, RouterLink],
   templateUrl: './asistente.html',
   styleUrl: './asistente.css',
 })

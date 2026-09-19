@@ -18,6 +18,7 @@ import {
   ResumenConIa,
   ScopusService,
 } from '../../core/services/scopus.service';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /**
  * Buscar en Scopus desde aquí y traerse lo que elija.
@@ -101,7 +102,7 @@ interface Faceta {
 
 @Component({
   selector: 'app-mi-scopus',
-  imports: [DecimalPipe, NgTemplateOutlet],
+  imports: [AvisoFlotante, DecimalPipe, NgTemplateOutlet],
   templateUrl: './mi-scopus.html',
   styleUrls: ['./mi-scopus.css', './mi-scopus-ia.css', './mi-scopus-historial.css'],
 })

@@ -3,11 +3,12 @@ import { RouterOutlet } from '@angular/router';
 
 import { MantenimientoService } from './core/services/mantenimiento.service';
 import { Asistente } from './shared/layout/asistente';
+import { Avisos } from './shared/layout/avisos';
 import { Dialogo } from './shared/layout/dialogo';
 import { Mantenimiento } from './shared/layout/mantenimiento';
 
 @Component({
-  imports: [Asistente, Dialogo, Mantenimiento, RouterOutlet],
+  imports: [Asistente, Avisos, Dialogo, Mantenimiento, RouterOutlet],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

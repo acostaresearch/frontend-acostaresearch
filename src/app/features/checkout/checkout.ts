@@ -33,6 +33,7 @@ import { INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /**
  * Cuántos acentos hay para las tarjetas de plan.
@@ -72,6 +73,7 @@ function soles(cents: number): string {
 @Component({
   selector: 'app-checkout',
   imports: [
+    AvisoFlotante,
     RouterLink,
     ReactiveFormsModule,
     DecimalPipe,
@@ -97,7 +99,6 @@ export class Checkout implements OnInit {
 
   /** Lo que entra en el paquete del método. */
   readonly incluye = INCLUYE;
-
 
   /**
    * Medio de pago elegido.

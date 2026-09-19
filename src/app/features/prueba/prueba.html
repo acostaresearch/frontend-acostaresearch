@@ -79,9 +79,7 @@
             Quedan <strong>{{ p.quedan }}</strong> de {{ p.seats }} conectores.
           </p>
 
-          @if (error(); as mensaje) {
-            <div class="aviso error" role="alert">{{ mensaje }}</div>
-          }
+          <app-aviso-flotante [(error)]="error" />
 
           <button type="button" class="boton grande" [disabled]="pidiendo()" (click)="pedir()">
             {{ pidiendo() ? 'Preparando tu conector…' : 'Obtener mi conector' }}
