@@ -1,12 +1,12 @@
 <p class="nota">
-  Un mapa de coocurrencia de palabras clave, como el de VOSviewer: qué temas se estudian juntos en
-  tu campo, en qué grupos se reparten y cuáles son recientes. Lo usas en tu marco teórico o en tu
-  revisión, y te llevas los archivos para abrirlo en VOSviewer de escritorio.
+  Los mapas bibliométricos de VOSviewer: qué temas se estudian juntos, quién colabora con quién,
+  qué obras son la base del campo y cuáles son sus frentes actuales. Los usas en tu marco teórico o
+  en tu revisión, y te llevas los archivos para abrirlos en VOSviewer de escritorio.
 </p>
 
 <form class="mv-formulario" [formGroup]="formulario" (ngSubmit)="crear()">
   <fieldset class="mv-origen">
-    <legend>¿De dónde salen los artículos?</legend>
+    <legend>1. ¿De dónde salen los artículos?</legend>
     <label class="mv-opcion" [class.elegida]="origen() === 'openalex'">
       <input
         type="radio"
@@ -28,7 +28,7 @@
       />
       <span>
         <strong>Mis fuentes</strong>
-        <small>Las que subiste de Scopus o Web of Science, con sus palabras clave de autor.</small>
+        <small>Las que subiste de Scopus o Web of Science. Lo que falte se completa por el DOI.</small>
       </span>
     </label>
   </fieldset>
@@ -41,7 +41,7 @@
           id="mv-tema"
           formControlName="tema"
           maxlength="300"
-          placeholder="digital marketing small business"
+          placeholder="teacher burnout"
           autocomplete="off"
         />
         <span class="ayuda">Mejor en inglés: la mayoría de la literatura indexada lo está.</span>
@@ -70,12 +70,47 @@
         </select>
       </div>
     </div>
-  } @else {
-    <p class="aviso info">
-      Se usan las palabras clave de las fuentes que ya tienes. Si exportaste de Scopus sin marcar
-      <em>«Abstract &amp; keywords»</em>, vuelve a exportar y súbelo en «Tus fuentes de Scopus».
-    </p>
   }
+
+  <!-- El «Create map» de VOSviewer: tipo de análisis y unidad, con la pregunta
+       que responde cada uno. Es lo que el tesista necesita para elegir. -->
+  <fieldset class="mv-analisis">
+    <legend>2. ¿Qué quieres ver?</legend>
+    <div class="mv-fila">
+      <div class="campo">
+        <label for="mv-tipo">Tipo de análisis</label>
+        <select id="mv-tipo" [value]="analisis()" (change)="elegirAnalisis($any($event.target).value)">
+          @for (a of catalogo; track a.valor) {
+            <option [value]="a.valor" [selected]="a.valor === analisis()">{{ a.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="campo">
+        <label for="mv-unidad">Unidad de análisis</label>
+        <select id="mv-unidad" (change)="elegirUnidad($any($event.target).value)">
+          @for (u of unidadesDisponibles(); track u) {
+            <option [value]="u" [selected]="u === unidad()">{{ nombresDeUnidad[u].nombre }}</option>
+          }
+        </select>
+      </div>
+      @if (analisisActual().recuentos.length > 1) {
+        <div class="campo mv-recuento">
+          <label for="mv-recuento">Método de recuento</label>
+          <select id="mv-recuento" (change)="elegirRecuento($any($event.target).value)">
+            @for (r of analisisActual().recuentos; track r) {
+              <option [value]="r" [selected]="r === recuento()">{{ nombresDeRecuento[r] }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+    <p class="mv-pregunta">
+      <strong>{{ analisisActual().enVosviewer }}.</strong> {{ analisisActual().pregunta }}
+      @if (recuento() === 'fraccionado') {
+        Con recuento fraccionado, un artículo con muchos autores o palabras no pesa más que uno con pocos.
+      }
+    </p>
+  </fieldset>
 
   <button
     type="button"
@@ -83,43 +118,76 @@
     [attr.aria-expanded]="ajustesAbiertos()"
     (click)="ajustesAbiertos.set(!ajustesAbiertos())"
   >
-    {{ ajustesAbiertos() ? '▾' : '▸' }} Ajustes como en VOSviewer (umbral, sinónimos, excluir)
+    {{ ajustesAbiertos() ? '▾' : '▸' }} Ajustes como en VOSviewer (umbrales, tesauro, excluir)
   </button>
 
   @if (ajustesAbiertos()) {
     <div class="mv-ajustes">
       <div class="mv-fila">
+        @if (conMinimo()) {
+          <div class="campo">
+            <label for="mv-minimo">{{ etiquetaMinimo() }}</label>
+            <input id="mv-minimo" type="number" min="1" max="1000" formControlName="minimo" placeholder="Automático" />
+            <span class="ayuda">Vacío: lo elegimos para que el mapa se pueda leer.</span>
+          </div>
+        }
+        @if (conMinimoCitas()) {
+          <div class="campo">
+            <label for="mv-min-citas">Mínimo de citas</label>
+            <input id="mv-min-citas" type="number" min="0" formControlName="minimoCitas" placeholder="0" />
+            <span class="ayuda">Citas totales que debe sumar para entrar.</span>
+          </div>
+        }
         <div class="campo">
-          <label for="mv-minimo">Mínimo de ocurrencias</label>
-          <input id="mv-minimo" type="number" min="1" max="500" formControlName="minimo" placeholder="Automático" />
-          <span class="ayuda">En cuántos artículos tiene que salir un término. Vacío: lo elegimos.</span>
+          <label for="mv-maximo">Máximo en el mapa</label>
+          <input id="mv-maximo" type="number" min="5" max="1000" formControlName="maximo" />
+          <span class="ayuda">Entran los de mayor fuerza total de enlace.</span>
         </div>
-        <div class="campo">
-          <label for="mv-maximo">Máximo de términos</label>
-          <input id="mv-maximo" type="number" min="5" max="500" formControlName="maximo" />
-          <span class="ayuda">Entran los de mayor fuerza de enlace, como en VOSviewer.</span>
-        </div>
+        @if (conMaxAutores()) {
+          <div class="campo">
+            <label for="mv-max-autores">Ignorar documentos con más de</label>
+            <input id="mv-max-autores" type="number" min="1" max="1000" formControlName="maxAutores" />
+            <span class="ayuda">autores. VOSviewer usa 25.</span>
+          </div>
+        }
+        @if (conRelevancia()) {
+          <div class="campo">
+            <label for="mv-relevancia">% de términos más relevantes</label>
+            <input id="mv-relevancia" type="number" min="10" max="100" formControlName="relevancia" />
+            <span class="ayuda">VOSviewer usa 60 %: descarta los términos generales.</span>
+          </div>
+        }
       </div>
       <div class="mv-fila">
         <div class="campo">
-          <label for="mv-excluir">Excluir términos</label>
+          <label for="mv-excluir">Excluir</label>
           <textarea
             id="mv-excluir"
             rows="3"
             formControlName="excluir"
-            placeholder="context, order, product"
+            placeholder="Uno por línea: context&#10;order"
           ></textarea>
-          <span class="ayuda">Separados por comas. Útil para quitar tu propio tema o palabras vacías.</span>
+          <span class="ayuda">Uno por línea. También con el botón «Quitar» de la tabla.</span>
         </div>
         <div class="campo">
-          <label for="mv-sinonimos">Unir sinónimos</label>
+          <label for="mv-sinonimos">Tesauro (unir sinónimos)</label>
           <textarea
             id="mv-sinonimos"
             rows="3"
             formControlName="sinonimos"
             placeholder="sme = small and medium-sized enterprises&#10;covid-19 = coronavirus disease 2019"
           ></textarea>
-          <span class="ayuda">Uno por línea: <code>así = se llamará</code>. Es el tesauro de VOSviewer.</span>
+          <span class="ayuda">
+            <code>así = se llamará</code>, o
+            <label class="mv-archivo">
+              sube tu tesauro de VOSviewer (.txt)
+              <input type="file" accept=".txt,text/plain" (change)="cargarTesauro($event)" />
+            </label>
+            . Un reemplazo vacío lo ignora.
+          </span>
+          @if (avisoTesauro()) {
+            <span class="ayuda mv-aviso-tesauro">{{ avisoTesauro() }}</span>
+          }
         </div>
       </div>
     </div>
@@ -127,8 +195,11 @@
 
   <div class="mv-acciones">
     <button type="submit" class="boton" [disabled]="creando()">
-      {{ creando() ? 'Contando coocurrencias…' : mapa() ? 'Volver a crear el mapa' : 'Crear mapa' }}
+      {{ creando() ? 'Calculando la red…' : mapa() && !cambiado() ? 'Volver a crear el mapa' : 'Crear mapa' }}
     </button>
+    @if (creando()) {
+      <span class="mv-espera">Puede tardar hasta 15 segundos con citas y referencias.</span>
+    }
   </div>
 
   @if (error()) {
@@ -137,19 +208,45 @@
 </form>
 
 @if (mapa(); as m) {
-  <section class="mv-resultado" aria-label="Mapa de coocurrencia">
+  <section class="mv-resultado" aria-label="Mapa de VOSviewer">
     <p class="mv-cifras">
       @if (m.origen.tipo === 'openalex') {
         <strong>{{ m.origen.analizados | number }}</strong> artículos de
         {{ m.origen.total | number }} encontrados ·
       } @else {
-        <strong>{{ m.resumen.documentosConTerminos | number }}</strong> fuentes con palabras clave ·
+        <strong>{{ m.resumen.documentosConUnidades | number }}</strong> de tus
+        {{ m.origen.total | number }} fuentes ·
       }
-      <strong>{{ m.resumen.enElMapa | number }}</strong> términos ·
-      {{ m.resumen.enlaces | number }} enlaces · umbral de {{ m.resumen.minimo }} ocurrencias{{
-        m.resumen.minimoAutomatico ? ' (automático)' : ''
-      }}
+      <strong>{{ m.resumen.enElMapa | number }}</strong> {{ nombresDeUnidad[m.unidad].plural }} ·
+      {{ m.resumen.enlaces | number }} enlaces
+      @if (m.unidad !== 'documentos') {
+        · mínimo {{ m.resumen.minimo }}{{ m.resumen.minimoAutomatico ? ' (automático)' : '' }}
+      }
+      · recuento {{ nombresDeRecuento[m.recuento].toLowerCase() }}
     </p>
+
+    @if (m.detalle.encontradas !== undefined) {
+      <p class="aviso info">
+        Se encontraron en OpenAlex {{ m.detalle.encontradas | number }} de tus
+        {{ m.detalle.conDoi | number }} fuentes con DOI.
+        @if (m.detalle.sinDoi) {
+          {{ m.detalle.sinDoi | number }} no tienen DOI y quedaron fuera de este análisis.
+        }
+      </p>
+    }
+    @if (m.detalle.sinCitas && m.perfil !== 'terminos') {
+      <p class="aviso info">Tus fuentes no traen el número de citas, así que las citas salen en cero.</p>
+    }
+    @if (m.detalle.terminos; as t) {
+      <p class="aviso info">
+        De {{ t.distintos | number }} términos, {{ t.candidatos | number }} aparecen al menos
+        {{ m.resumen.minimo }} veces, y se quedó el {{ t.porcentaje }} % más relevante
+        ({{ t.seleccionados | number }}).
+        @if (t.conResumen < m.origen.analizados) {
+          {{ m.origen.analizados - t.conResumen | number }} artículos no tienen resumen y solo aportan su título.
+        }
+      </p>
+    }
 
     <div class="mv-visor">
       @if (cargandoVisor()) {
@@ -158,58 +255,79 @@
       <div #lienzo class="mv-lienzo"></div>
     </div>
     <p class="mv-pie">
-      Arrastra para moverte y usa la rueda para acercar. En el panel del visor cambias entre
-      <em>Network</em>, <em>Overlay</em> (color por año promedio) y <em>Density</em>, y con el
-      botón de captura guardas la imagen para tu tesis. Si se ven pocos grupos o demasiados,
-      ajusta <em>Resolution</em> en <em>Analysis</em>.
+      Arrastra para moverte y usa la rueda para acercar. En el visor cambias entre
+      <em>Network</em> (clústeres), <em>Overlay</em> (color por año o por citas: elige la puntuación en
+      el panel) y <em>Density</em>. Con el botón de captura guardas la imagen para tu tesis. Si ves pocos
+      grupos o demasiados, ajusta <em>Resolution</em> en <em>Analysis</em>.
     </p>
 
     <div class="mv-descargas">
       <button type="button" class="boton secundario" (click)="bajarJson()">Mapa (.json)</button>
       <button type="button" class="boton secundario" (click)="bajarMapa()">Archivo map (.txt)</button>
       <button type="button" class="boton secundario" (click)="bajarRed()">Archivo network (.txt)</button>
-      <button type="button" class="boton secundario" (click)="bajarTabla()">Tabla de términos (Excel)</button>
+      <button type="button" class="boton secundario" (click)="bajarTabla()">Tabla (Excel)</button>
     </div>
 
-    <details class="mv-metodo">
-      <summary>Para tu metodología: cómo reportarlo</summary>
-      <p>{{ parrafoMetodo() }}</p>
-      <ul>
-        @for (ref of referencias; track ref) {
-          <li>{{ ref }}</li>
-        }
-      </ul>
-      <button type="button" class="boton enlace" (click)="copiarParrafo()">
-        {{ copiado() ? 'Copiado' : 'Copiar párrafo y referencias' }}
-      </button>
-    </details>
+    @if (metodo(); as metodo) {
+      <details class="mv-metodo">
+        <summary>Para tu metodología: cómo reportarlo</summary>
+        <p>{{ metodo.parrafo }}</p>
+        <ul>
+          @for (ref of metodo.referencias; track ref) {
+            <li>{{ ref }}</li>
+          }
+        </ul>
+        <button type="button" class="boton enlace" (click)="copiarParrafo()">
+          {{ copiado() ? 'Copiado' : 'Copiar párrafo y referencias' }}
+        </button>
+      </details>
+    }
 
     <div class="mv-tabla-marco">
       <table class="mv-tabla">
         <caption>
-          Los {{ primeros().length }} términos más frecuentes
+          {{ nombresDeUnidad[m.unidad].nombre }}: los {{ primeros().length }} primeros
+          <small>· «Quitar» lo excluye y rehace el mapa</small>
         </caption>
         <thead>
           <tr>
-            <th scope="col">Término</th>
-            <th scope="col">Ocurrencias</th>
-            <th scope="col">Enlaces</th>
-            <th scope="col">Fuerza total</th>
-            @if (m.resumen.conAnio) {
-              <th scope="col">Año prom.</th>
+            <th scope="col">{{ nombresDeUnidad[m.unidad].nombre }}</th>
+            @for (c of columnas(); track c.titulo) {
+              <th scope="col">{{ c.titulo }}</th>
             }
+            <th scope="col"><span class="sr-solo">Acciones</span></th>
           </tr>
         </thead>
         <tbody>
-          @for (t of primeros(); track t.termino) {
+          @for (f of primeros(); track f.etiqueta) {
             <tr>
-              <td>{{ t.termino }}</td>
-              <td>{{ t.ocurrencias | number }}</td>
-              <td>{{ t.enlaces | number }}</td>
-              <td>{{ t.fuerza | number }}</td>
-              @if (m.resumen.conAnio) {
-                <td>{{ t.anioPromedio === null ? '—' : (t.anioPromedio | number: '1.1-1') }}</td>
+              <td>
+                @if (f.url) {
+                  <a [href]="f.url" target="_blank" rel="noopener">{{ f.etiqueta }}</a>
+                } @else {
+                  {{ f.etiqueta }}
+                }
+              </td>
+              @for (c of columnas(); track c.titulo) {
+                <td>
+                  @if (c.valor(f) === null || c.valor(f) === undefined) {
+                    —
+                  } @else {
+                    {{ c.valor(f) | number: (c.decimales ?? '1.0-0') }}
+                  }
+                </td>
               }
+              <td>
+                <button
+                  type="button"
+                  class="mv-quitar"
+                  [disabled]="creando()"
+                  [attr.aria-label]="'Quitar ' + f.etiqueta + ' y rehacer el mapa'"
+                  (click)="quitar(f)"
+                >
+                  Quitar
+                </button>
+              </td>
             </tr>
           }
         </tbody>

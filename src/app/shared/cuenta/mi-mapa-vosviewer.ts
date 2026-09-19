@@ -13,8 +13,17 @@ import {
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
-import { MapaDeCoocurrencia, MapasService, PedidoDeMapa } from '../../core/services/mapas.service';
+import {
+  FilaDelMapa,
+  MapaDeVosviewer,
+  MapasService,
+  PedidoDeMapa,
+  Recuento,
+  TipoDeAnalisis,
+  UnidadDeAnalisis,
+} from '../../core/services/mapas.service';
 import { TemaService } from '../../core/services/tema.service';
+import { ANALISIS, NOMBRE_DEL_RECUENTO, UNIDADES, metodoDelMapa } from './mapa-catalogo';
 
 /**
  * El script del visor. La versión va en el nombre: al cambiarla se construye
@@ -22,6 +31,9 @@ import { TemaService } from '../../core/services/tema.service';
  * el viejo en caché.
  */
 const SCRIPT_DEL_VISOR = '/vosviewer/vosviewer-1.2.4.js';
+
+/** Un tesauro de VOSviewer es texto: con esto sobra y se lee en el navegador. */
+const MAXIMO_TESAURO_BYTES = 60_000;
 
 interface VisorMontado {
   desmontar(): void;
@@ -74,15 +86,22 @@ function descargar(nombre: string, contenido: string, tipo: string): void {
 
 const ANIO_ACTUAL = new Date().getFullYear();
 
+/** Una columna de la tabla: cabecera, cómo se lee de la fila y cómo se escribe. */
+interface Columna {
+  titulo: string;
+  valor: (f: FilaDelMapa) => number | null | undefined;
+  decimales?: string;
+}
+
 /**
- * El mapa de coocurrencia de palabras clave, con VOSviewer.
+ * Los mapas bibliométricos de VOSviewer, con sus análisis.
  *
- * Lo que hace el tesista en VOSviewer de escritorio —exportar de Scopus, abrir
- * el programa, elegir «co-occurrence» y «all keywords», poner el umbral— en un
- * formulario. El servidor cuenta las coocurrencias; la disposición y los
- * clústeres los calcula VOSviewer Online aquí mismo, en el navegador, con el
- * algoritmo del de escritorio. El mapa que sale es de VOSviewer de verdad, y
- * se cita como tal.
+ * Lo que el tesista haría en VOSviewer de escritorio —exportar, abrir el
+ * programa, «Create map», elegir el tipo de análisis y la unidad, el método de
+ * recuento y el umbral, revisar la lista de lo seleccionado— en un formulario.
+ * El servidor cuenta; la disposición y los clústeres los calcula VOSviewer
+ * Online aquí mismo, con el algoritmo del de escritorio. El mapa que sale es de
+ * VOSviewer de verdad, y se cita como tal.
  *
  * Y se lleva los archivos: el JSON y el par `map`/`network` abren en el
  * VOSviewer de escritorio para quien quiera retocarlo allí.
@@ -101,14 +120,25 @@ export class MiMapaVosviewer implements OnDestroy {
   private visor: VisorMontado | null = null;
 
   readonly anioActual = ANIO_ACTUAL;
+  readonly catalogo = ANALISIS;
+  readonly nombresDeUnidad = UNIDADES;
+  readonly nombresDeRecuento = NOMBRE_DEL_RECUENTO;
 
   readonly origen = signal<'openalex' | 'mis-fuentes'>('openalex');
+  readonly analisis = signal<TipoDeAnalisis>('coocurrencia');
+  readonly unidad = signal<UnidadDeAnalisis>('palabras-openalex');
+  readonly recuento = signal<Recuento>('completo');
+
   readonly ajustesAbiertos = signal(false);
   readonly creando = signal(false);
   readonly cargandoVisor = signal(false);
   readonly error = signal<string | null>(null);
-  readonly mapa = signal<MapaDeCoocurrencia | null>(null);
+  readonly mapa = signal<MapaDeVosviewer | null>(null);
   readonly copiado = signal(false);
+  readonly avisoTesauro = signal<string | null>(null);
+
+  /** El `maxAutores` con el que se hizo el mapa que se ve, para el párrafo. */
+  private maxAutoresUsado: number | null = null;
 
   readonly formulario = new FormGroup({
     tema: new FormControl('', { nonNullable: true }),
@@ -116,57 +146,81 @@ export class MiMapaVosviewer implements OnDestroy {
     hastaAnio: new FormControl<number | null>(null),
     cuantas: new FormControl(500, { nonNullable: true }),
     minimo: new FormControl<number | null>(null),
+    minimoCitas: new FormControl<number | null>(null),
     maximo: new FormControl(100, { nonNullable: true }),
+    maxAutores: new FormControl<number | null>(25),
+    relevancia: new FormControl<number | null>(60),
     excluir: new FormControl('', { nonNullable: true }),
     sinonimos: new FormControl('', { nonNullable: true }),
   });
 
-  /** Los veinte primeros de la tabla: los que caben en una tabla de la tesis. */
-  readonly primeros = computed(() => this.mapa()?.resumen.terminos.slice(0, 20) ?? []);
+  readonly analisisActual = computed(() => ANALISIS.find((a) => a.valor === this.analisis())!);
 
-  /**
-   * El párrafo para la metodología, con las cifras de ESTE mapa.
-   *
-   * Es lo primero que pide un asesor de un mapa de VOSviewer: de dónde salieron
-   * los datos, cuántos documentos, qué umbral y cuántos términos. Escrito así
-   * se pega y se ajusta, y las cifras no se copian a mano.
-   */
-  readonly parrafoMetodo = computed(() => {
+  /** De una búsqueda no hay palabras de autor: esas solo las trae su export. */
+  readonly unidadesDisponibles = computed(() =>
+    this.analisisActual().unidades.filter((u) => this.origen() === 'mis-fuentes' || u !== 'palabras-autor'),
+  );
+
+  // Qué ajustes tienen sentido para el análisis elegido, como en el asistente de VOSviewer.
+  readonly conMinimo = computed(() => this.unidad() !== 'documentos');
+  readonly conMinimoCitas = computed(() => ['coautoria', 'citacion', 'acoplamiento'].includes(this.analisis()));
+  readonly conMaxAutores = computed(() => this.analisis() === 'coautoria');
+  readonly conRelevancia = computed(() => this.analisis() === 'terminos');
+  readonly etiquetaMinimo = computed(() => UNIDADES[this.unidad()].minimo);
+
+  /** El mapa en curso de pedirse con otro análisis del que se ve: el botón lo dice. */
+  readonly cambiado = computed(() => {
     const m = this.mapa();
-    if (!m) return '';
-    const r = m.resumen;
-    const o = m.origen;
-    const n = (x: number) => x.toLocaleString('es-PE');
-
-    const datos =
-      o.tipo === 'openalex'
-        ? `Se recuperaron de OpenAlex (Priem et al., 2022) los ${n(o.analizados)} artículos más citados de ` +
-          `los ${n(o.total)} que contenían «${o.tema}» en el título o el resumen` +
-          (o.desdeAnio || o.hastaAnio
-            ? `, publicados entre ${o.desdeAnio ?? 'el inicio del registro'} y ${o.hastaAnio ?? ANIO_ACTUAL}`
-            : '') +
-          `. Se emplearon las palabras clave que OpenAlex asigna a cada trabajo con una puntuación ` +
-          `de pertinencia de al menos 0,4, excluidas las diecinueve disciplinas generales de su ` +
-          `clasificación; ${n(r.documentosConTerminos)} documentos tenían al menos una.`
-        : // No dice «de autor»: sus fuentes pueden venir de Zotero o de un DOI, y
-          // entonces las palabras no las puso el autor. El tesista sabe de dónde
-          // salieron las suyas y lo precisa al pegarlo.
-          `Se analizaron las palabras clave de ${n(r.documentosConTerminos)} documentos ` +
-          `recuperados de las bases de datos consultadas.`;
-
-    return (
-      `${datos} Con VOSviewer (van Eck y Waltman, 2010) se construyó un mapa de coocurrencia de ` +
-      `palabras clave mediante recuento completo. De ${n(r.terminosDistintos)} términos distintos, ` +
-      `${n(r.cumplenMinimo)} alcanzaron el umbral mínimo de ${r.minimo} ocurrencias; se representaron ` +
-      `${n(r.enElMapa)} términos conectados por ${n(r.enlaces)} enlaces, y los clústeres se ` +
-      `identificaron con el algoritmo de agrupamiento del propio programa.`
-    );
+    return !!m && (m.analisis !== this.analisis() || m.unidad !== this.unidad());
   });
 
-  readonly referencias = [
-    'Priem, J., Piwowar, H., & Orr, R. (2022). OpenAlex: A fully-open index of scholarly works, authors, venues, institutions, and concepts. arXiv. https://doi.org/10.48550/arXiv.2205.01833',
-    'van Eck, N. J., & Waltman, L. (2010). Software survey: VOSviewer, a computer program for bibliometric mapping. Scientometrics, 84(2), 523–538. https://doi.org/10.1007/s11192-009-0146-3',
-  ];
+  /** Las columnas de la tabla, según lo que son los círculos. */
+  readonly columnas = computed<Columna[]>(() => {
+    const m = this.mapa();
+    if (!m) return [];
+    const enlaces: Columna[] = [
+      { titulo: 'Enlaces', valor: (f) => f.enlaces },
+      { titulo: 'Fuerza total', valor: (f) => f.fuerza, decimales: '1.0-2' },
+    ];
+    const anio: Columna[] = m.resumen.conAnio
+      ? [{ titulo: m.perfil === 'terminos' || m.perfil === 'unidades' ? 'Año prom.' : 'Año', valor: (f) => f.anio, decimales: '1.0-1' }]
+      : [];
+    switch (m.perfil) {
+      case 'unidades':
+        return [
+          { titulo: 'Documentos', valor: (f) => f.documentos },
+          { titulo: 'Citas', valor: (f) => f.citas },
+          ...enlaces,
+          ...anio,
+        ];
+      case 'documentos':
+        return [
+          { titulo: 'Citas', valor: (f) => f.citas },
+          { titulo: 'Citas norm.', valor: (f) => f.citasNorm, decimales: '1.2-2' },
+          ...enlaces,
+          ...anio,
+        ];
+      case 'referencias':
+        return [{ titulo: 'Citas', valor: (f) => f.citas }, ...enlaces, ...anio];
+      default:
+        return [
+          { titulo: 'Ocurrencias', valor: (f) => f.ocurrencias },
+          ...enlaces,
+          ...anio,
+          ...(m.analisis === 'terminos'
+            ? [{ titulo: 'Relevancia', valor: (f: FilaDelMapa) => f.extra, decimales: '1.2-2' }]
+            : []),
+        ];
+    }
+  });
+
+  /** Los treinta primeros: los que caben en una tabla de la tesis. */
+  readonly primeros = computed(() => this.mapa()?.resumen.filas.slice(0, 30) ?? []);
+
+  readonly metodo = computed(() => {
+    const m = this.mapa();
+    return m ? metodoDelMapa(m, this.maxAutoresUsado) : null;
+  });
 
   constructor() {
     // Al cambiar el tema de la web, el visor cambia con ella. Se vuelve a
@@ -180,6 +234,26 @@ export class MiMapaVosviewer implements OnDestroy {
   elegirOrigen(origen: 'openalex' | 'mis-fuentes'): void {
     this.origen.set(origen);
     this.error.set(null);
+    // Con sus fuentes, lo natural son SUS palabras clave: las que puso el autor.
+    if (this.analisis() === 'coocurrencia') {
+      this.unidad.set(origen === 'mis-fuentes' ? 'palabras-autor' : 'palabras-openalex');
+    }
+  }
+
+  elegirAnalisis(valor: string): void {
+    const analisis = valor as TipoDeAnalisis;
+    this.analisis.set(analisis);
+    this.unidad.set(this.unidadesDisponibles()[0]);
+    this.recuento.set(this.analisisActual().recuentos[0]);
+    this.error.set(null);
+  }
+
+  elegirUnidad(valor: string): void {
+    this.unidad.set(valor as UnidadDeAnalisis);
+  }
+
+  elegirRecuento(valor: string): void {
+    this.recuento.set(valor as Recuento);
   }
 
   crear(): void {
@@ -193,14 +267,20 @@ export class MiMapaVosviewer implements OnDestroy {
 
     const pedido: PedidoDeMapa = {
       origen,
+      analisis: this.analisis(),
+      unidad: this.unidad(),
+      recuento: this.recuento(),
       ...(origen === 'openalex' && {
         tema: v.tema.trim(),
         desdeAnio: v.desdeAnio || null,
         hastaAnio: v.hastaAnio || null,
         cuantas: v.cuantas,
       }),
-      minimo: v.minimo || null,
+      minimo: this.conMinimo() ? v.minimo || null : null,
+      minimoCitas: this.conMinimoCitas() ? v.minimoCitas || null : null,
       maximo: v.maximo,
+      maxAutores: this.conMaxAutores() ? v.maxAutores || null : null,
+      relevancia: this.conRelevancia() ? v.relevancia || null : null,
       excluir: v.excluir,
       sinonimos: v.sinonimos,
     };
@@ -208,9 +288,10 @@ export class MiMapaVosviewer implements OnDestroy {
     this.creando.set(true);
     this.error.set(null);
 
-    this.mapas.coocurrencia(pedido).subscribe({
+    this.mapas.crear(pedido).subscribe({
       next: (mapa) => {
         this.creando.set(false);
+        this.maxAutoresUsado = pedido.maxAutores ?? null;
         this.mapa.set(mapa);
         // El lienzo aparece con el mapa: se monta en el siguiente ciclo.
         setTimeout(() => void this.montar());
@@ -220,6 +301,40 @@ export class MiMapaVosviewer implements OnDestroy {
         this.error.set(toApiError(fallo).message);
       },
     });
+  }
+
+  /**
+   * Quita una fila del mapa y lo vuelve a crear: el «Verify selected items» de
+   * VOSviewer, donde se desmarca lo que sobra antes de dibujar.
+   *
+   * Va por líneas y no por comas: el nombre de un autor («Larcker, D.») o de
+   * una institución («University of California, Berkeley») lleva comas.
+   */
+  quitar(fila: FilaDelMapa): void {
+    const actual = this.formulario.controls.excluir.value.trim();
+    this.formulario.controls.excluir.setValue(actual ? `${actual}\n${fila.etiqueta}` : fila.etiqueta);
+    this.ajustesAbiertos.set(true);
+    this.crear();
+  }
+
+  /** Lee un tesauro de VOSviewer (label / replace by) y lo pone en el campo. */
+  cargarTesauro(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo) return;
+    if (archivo.size > MAXIMO_TESAURO_BYTES) {
+      this.avisoTesauro.set('Ese archivo es demasiado grande para un tesauro (más de 60 KB).');
+      return;
+    }
+    archivo.text().then(
+      (texto) => {
+        this.formulario.controls.sinonimos.setValue(texto.replace(/^﻿/, ''));
+        const pares = texto.split(/\r?\n/).filter((l) => l.includes('\t') || l.includes('=')).length;
+        this.avisoTesauro.set(`Tesauro cargado: ${archivo.name} (${pares} líneas).`);
+      },
+      () => this.avisoTesauro.set('No se pudo leer ese archivo.'),
+    );
   }
 
   private async montar(): Promise<void> {
@@ -244,7 +359,8 @@ export class MiMapaVosviewer implements OnDestroy {
   }
 
   private nombreBase(): string {
-    const o = this.mapa()?.origen;
+    const m = this.mapa();
+    const o = m?.origen;
     const tema = (o?.tipo === 'openalex' ? o.tema ?? 'mapa' : 'mis-fuentes')
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
@@ -252,7 +368,7 @@ export class MiMapaVosviewer implements OnDestroy {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
       .slice(0, 40);
-    return `vosviewer-${tema || 'mapa'}`;
+    return `vosviewer-${m?.analisis ?? 'mapa'}-${m?.unidad ?? ''}-${tema || 'mapa'}`;
   }
 
   bajarJson(): void {
@@ -271,7 +387,7 @@ export class MiMapaVosviewer implements OnDestroy {
   }
 
   /**
-   * La tabla de términos para Excel.
+   * La tabla para Excel, con las columnas de este mapa.
    *
    * Con punto y coma y la línea `sep=;` al principio: así Excel la abre en
    * columnas en cualquier configuración regional, también en la de Perú, que
@@ -280,22 +396,24 @@ export class MiMapaVosviewer implements OnDestroy {
   bajarTabla(): void {
     const m = this.mapa();
     if (!m) return;
-    const celda = (x: string | number | null) => {
-      const texto = x === null ? '' : String(x);
+    const celda = (x: string | number | null | undefined) => {
+      const texto = x === null || x === undefined ? '' : String(x);
       return /[;"\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
     };
+    const columnas = this.columnas();
+    const primera = UNIDADES[m.unidad].nombre;
     const filas = [
       'sep=;',
-      ['Término', 'Ocurrencias', 'Enlaces', 'Fuerza total de enlace', 'Año promedio', 'Citas promedio'].join(';'),
-      ...m.resumen.terminos.map((t) =>
-        [t.termino, t.ocurrencias, t.enlaces, t.fuerza, t.anioPromedio, t.citasPromedio].map(celda).join(';'),
-      ),
+      [primera, ...columnas.map((c) => c.titulo), 'Enlace'].map(celda).join(';'),
+      ...m.resumen.filas.map((f) => [f.etiqueta, ...columnas.map((c) => c.valor(f)), f.url].map(celda).join(';')),
     ];
-    descargar(`${this.nombreBase()}-terminos.csv`, '﻿' + filas.join('\r\n'), 'text/csv;charset=utf-8');
+    descargar(`${this.nombreBase()}-tabla.csv`, '﻿' + filas.join('\r\n'), 'text/csv;charset=utf-8');
   }
 
   copiarParrafo(): void {
-    const texto = [this.parrafoMetodo(), '', ...this.referencias].join('\n');
+    const metodo = this.metodo();
+    if (!metodo) return;
+    const texto = [metodo.parrafo, '', ...metodo.referencias].join('\n');
     navigator.clipboard?.writeText(texto).then(
       () => {
         this.copiado.set(true);
