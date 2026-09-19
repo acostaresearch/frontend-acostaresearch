@@ -391,3 +391,58 @@
     margin-left: 8px;
   }
 }
+
+/* ── El cajón del historial, por la derecha ────────────────────────────── */
+.sc-cajon-derecha {
+  right: 0;
+  left: auto;
+  width: min(460px, 92vw);
+  border-right: 0;
+  border-left: 1px solid var(--color-borde);
+  animation: sc-cajon-entrar 0.22s ease-out;
+}
+
+.sc-cajon-cabecera p .sc-cuantos {
+  margin-left: 4px;
+  vertical-align: 2px;
+}
+
+.sc-cajon-derecha .sc-hist-combinar {
+  margin-bottom: 10px;
+  border: 1px solid var(--color-primario);
+  border-radius: 8px;
+}
+
+.sc-cajon-derecha .sc-hist-lista {
+  max-height: none;
+  padding: 0;
+}
+
+.sc-cajon-derecha .sc-hist-titulo {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sc-cajon-derecha .sc-hist-ir {
+  display: none;
+}
+
+.sc-cajon-derecha .sc-hist-pie {
+  margin-top: 10px;
+  padding: 10px 0 0;
+}
+
+@keyframes sc-cajon-entrar {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-cajon-derecha {
+    animation: none;
+  }
+}

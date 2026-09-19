@@ -1297,6 +1297,7 @@ export class MiScopusPanel implements OnInit {
     // Escape cierra lo que esté más arriba: primero el menú, después la ventana.
     if (this.menuOrdenResultados()) this.menuOrdenResultados.set(false);
     else if (this.menuOrden()) this.menuOrden.set(false);
+    else if (this.historialAbierto()) this.historialAbierto.set(false);
     else if (this.modalFaceta()) this.cerrarModal();
     else if (this.parte()) this.cerrarParte();
   }
@@ -1462,6 +1463,7 @@ export class MiScopusPanel implements OnInit {
    */
   relanzar(entrada: EntradaDeHistorial): void {
     if (this.buscando()) return;
+    this.historialAbierto.set(false);
     // Las del copiloto, por su ecuación: sin la IA, su estado no sabe rehacerla.
     if (!entrada.estado || entrada.tipo === 'copiloto') {
       this.lanzarEcuacion(entrada.ecuacion);
@@ -1476,6 +1478,7 @@ export class MiScopusPanel implements OnInit {
   combinar(): void {
     const elegidas = this.historial().filter((e) => this.elegidasDelHistorial().has(e.n));
     if (elegidas.length < 2) return;
+    this.historialAbierto.set(false);
     this.proximaCombinada = { titulo: `Combinación ${this.vistaDeCombinar()}`, filtros: [] };
     this.elegidasDelHistorial.set(new Set());
     this.lanzarEcuacion(elegidas.map((e) => `(${e.ecuacion})`).join(` ${this.operadorCombinar()} `));

@@ -95,6 +95,14 @@
             <button type="button" class="sc-tus-busquedas" (click)="abrirPanelGuardadas()">
               <span aria-hidden="true">☰</span> Tus búsquedas
             </button>
+            <!-- El historial de esta pestaña, en un cajón a la derecha: el de
+                 «Tus búsquedas» sale por la izquierda, y así se distinguen. -->
+            @if (!iaAbierta() && historial().length > 0) {
+              <button type="button" class="sc-tus-busquedas" (click)="historialAbierto.set(true)">
+                <span aria-hidden="true">↺</span> Historial
+                <span class="sc-cuantos">{{ historial().length }}</span>
+              </button>
+            }
           </span>
           <!-- Un interruptor y no dos pestañas: como en Scopus, la avanzada es
                la misma búsqueda escrita de otra forma. Cada modo guarda su
@@ -439,153 +447,6 @@
           <p class="sc-aviso-guardada" role="status">{{ aviso }}</p>
         }
 
-        <!-- ── Historial de búsqueda ─────────────────────────────────────
-             Las de esta sesión, numeradas como en Scopus, para relanzar una o
-             combinar varias. Con el copiloto no sale: es de la búsqueda
-             manual. -->
-        @if (!iaAbierta() && historial().length > 0) {
-          <section class="sc-historial">
-            <button
-              type="button"
-              class="sc-historial-cabecera"
-              [attr.aria-expanded]="historialAbierto()"
-              (click)="historialAbierto.set(!historialAbierto())"
-            >
-              <span class="sc-hist-reloj" aria-hidden="true">↺</span>
-              Historial de búsqueda <span class="sc-cuantos">{{ historial().length }}</span>
-              <small class="sc-hist-sub">Lo que buscaste en esta pestaña</small>
-              <span class="sc-chevron" aria-hidden="true"></span>
-            </button>
-            @if (historialAbierto()) {
-              <p class="sc-hist-nota">
-                Pulsa una búsqueda para volver a ella, con sus filtros. Marca dos o más para
-                combinarlas. Se borran al cerrar la pestaña; lo que quieras conservar, guárdalo con
-                «🔖 Guardar búsqueda».
-              </p>
-
-              <!-- Combinar: aparece al marcar, y dice qué va a pasar antes de hacerlo. -->
-              @if (elegidasDelHistorial().size > 0) {
-                <div class="sc-hist-combinar">
-                  @if (elegidasDelHistorial().size < 2) {
-                    <span>Marca otra más para combinarlas.</span>
-                  } @else {
-                    <div class="sc-hist-operadores" role="radiogroup" aria-label="Cómo combinarlas">
-                      @for (op of operadores; track op.valor) {
-                        <button
-                          type="button"
-                          role="radio"
-                          [class.activo]="operadorCombinar() === op.valor"
-                          [attr.aria-checked]="operadorCombinar() === op.valor"
-                          (click)="operadorCombinar.set(op.valor)"
-                        >
-                          {{ op.texto }}
-                        </button>
-                      }
-                    </div>
-                    <span class="sc-hist-vista">
-                      <strong>{{ vistaDeCombinar() }}</strong>
-                      <small>{{ explicacionDeCombinar[operadorCombinar()] }}</small>
-                    </span>
-                    <button
-                      type="button"
-                      class="boton sc-combinar"
-                      [disabled]="buscando()"
-                      (click)="combinar()"
-                    >
-                      Combinar
-                    </button>
-                  }
-                  <button type="button" class="sc-enlace" (click)="desmarcarHistorial()">
-                    Desmarcar
-                  </button>
-                </div>
-              }
-
-              <ol class="sc-hist-lista">
-                @for (entrada of historial().slice().reverse(); track entrada.n) {
-                  <li [class.elegida]="elegidasDelHistorial().has(entrada.n)">
-                    <label class="sc-hist-marca" [title]="'Marcar #' + entrada.n + ' para combinar'">
-                      <input
-                        type="checkbox"
-                        [attr.aria-label]="'Marcar la búsqueda ' + entrada.n + ' para combinarla'"
-                        [checked]="elegidasDelHistorial().has(entrada.n)"
-                        (change)="elegirDelHistorial(entrada.n)"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      class="sc-hist-item"
-                      [disabled]="buscando()"
-                      title="Volver a esta búsqueda"
-                      (click)="relanzar(entrada)"
-                    >
-                      <span class="sc-hist-icono" [attr.data-tipo]="entrada.tipo ?? 'avanzada'" aria-hidden="true">{{
-                        entrada.tipo === 'copiloto'
-                          ? '✦'
-                          : entrada.tipo === 'combinada'
-                            ? '⋈'
-                            : entrada.tipo === 'normal'
-                              ? '⌕'
-                              : '{ }'
-                      }}</span>
-                      <span class="sc-hist-texto">
-                        <span class="sc-hist-titulo">
-                          <span class="sc-hist-n">#{{ entrada.n }}</span>
-                          {{ entrada.titulo || entrada.ecuacion }}
-                        </span>
-                        <small>
-                          <strong>{{ entrada.total | number }} resultados</strong> ·
-                          {{
-                            entrada.tipo === 'copiloto'
-                              ? 'Copiloto IA'
-                              : entrada.tipo === 'combinada'
-                                ? 'Combinada'
-                                : entrada.tipo === 'normal'
-                                  ? 'Búsqueda'
-                                  : 'Consulta avanzada'
-                          }}
-                          · {{ haceCuanto(entrada.cuando) }}
-                        </small>
-                        @if (entrada.filtros?.length) {
-                          <span class="sc-hist-filtros">
-                            @for (filtro of entrada.filtros; track filtro) {
-                              <span class="sc-hist-filtro" [class.fuera]="filtro.startsWith('Sin ')">{{ filtro }}</span>
-                            }
-                          </span>
-                        }
-                      </span>
-                      <span class="sc-hist-ir" aria-hidden="true">Volver a buscar →</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="sc-hist-accion"
-                      [attr.aria-expanded]="ecuacionesAbiertas().has(entrada.n)"
-                      [title]="ecuacionesAbiertas().has(entrada.n) ? 'Ocultar la ecuación' : 'Ver la ecuación de Scopus'"
-                      (click)="alternarEcuacion(entrada.n)"
-                    >
-                      &lt;/&gt;
-                    </button>
-                    <button
-                      type="button"
-                      class="sc-quitar-concepto"
-                      [attr.aria-label]="'Quitar la búsqueda ' + entrada.n"
-                      title="Quitar del historial"
-                      (click)="borrarDelHistorial(entrada.n)"
-                    >
-                      ×
-                    </button>
-                    @if (ecuacionesAbiertas().has(entrada.n)) {
-                      <code class="sc-hist-ecuacion">{{ entrada.ecuacion }}</code>
-                    }
-                  </li>
-                }
-              </ol>
-              <div class="sc-hist-pie">
-                <button type="button" class="sc-enlace" (click)="vaciarHistorial()">Vaciar el historial</button>
-              </div>
-            }
-          </section>
-        }
       </div>
 
       <!-- ── Filtros a la izquierda, resultados a la derecha ────────────────── -->
@@ -1367,6 +1228,159 @@
       </div>
 
       <!-- ── «Tus búsquedas»: la columna de la IA de Scopus ──────────────── -->
+<!-- ── Historial de búsqueda ───────────────────────────────────────────
+           Las de esta pestaña, numeradas como en Scopus, para volver a una o
+           combinar varias. En un cajón por la derecha, como «Tus búsquedas»
+           por la izquierda. -->
+      @if (historialAbierto()) {
+        <div class="sc-cajon-fondo" (click)="historialAbierto.set(false)"></div>
+        <aside class="sc-cajon sc-cajon-derecha" aria-label="Historial de búsqueda">
+          <header class="sc-cajon-cabecera">
+            <p>
+              <span class="sc-hist-reloj" aria-hidden="true">↺</span> Historial de búsqueda
+              <span class="sc-cuantos">{{ historial().length }}</span>
+            </p>
+            <button
+              type="button"
+              class="sc-modal-cerrar"
+              aria-label="Cerrar"
+              (click)="historialAbierto.set(false)"
+            >
+              ×
+            </button>
+          </header>
+          <p class="sc-cajon-nota">
+            Pulsa una búsqueda para volver a ella, con sus filtros. Marca dos o más para
+            combinarlas. Se borran al cerrar la pestaña; lo que quieras conservar, guárdalo con
+            «🔖 Guardar búsqueda».
+          </p>
+
+          <!-- Combinar: aparece al marcar, y dice qué va a pasar antes de hacerlo. -->
+          @if (elegidasDelHistorial().size > 0) {
+            <div class="sc-hist-combinar">
+              @if (elegidasDelHistorial().size < 2) {
+                <span>Marca otra más para combinarlas.</span>
+              } @else {
+                <div class="sc-hist-operadores" role="radiogroup" aria-label="Cómo combinarlas">
+                  @for (op of operadores; track op.valor) {
+                    <button
+                      type="button"
+                      role="radio"
+                      [class.activo]="operadorCombinar() === op.valor"
+                      [attr.aria-checked]="operadorCombinar() === op.valor"
+                      (click)="operadorCombinar.set(op.valor)"
+                    >
+                      {{ op.texto }}
+                    </button>
+                  }
+                </div>
+                <span class="sc-hist-vista">
+                  <strong>{{ vistaDeCombinar() }}</strong>
+                  <small>{{ explicacionDeCombinar[operadorCombinar()] }}</small>
+                </span>
+                <button
+                  type="button"
+                  class="boton sc-combinar"
+                  [disabled]="buscando()"
+                  (click)="combinar()"
+                >
+                  Combinar
+                </button>
+              }
+              <button type="button" class="sc-enlace" (click)="desmarcarHistorial()">
+                Desmarcar
+              </button>
+            </div>
+          }
+
+          <ol class="sc-hist-lista">
+            @for (entrada of historial().slice().reverse(); track entrada.n) {
+              <li [class.elegida]="elegidasDelHistorial().has(entrada.n)">
+                <label class="sc-hist-marca" [title]="'Marcar #' + entrada.n + ' para combinar'">
+                  <input
+                    type="checkbox"
+                    [attr.aria-label]="'Marcar la búsqueda ' + entrada.n + ' para combinarla'"
+                    [checked]="elegidasDelHistorial().has(entrada.n)"
+                    (change)="elegirDelHistorial(entrada.n)"
+                  />
+                </label>
+                <button
+                  type="button"
+                  class="sc-hist-item"
+                  [disabled]="buscando()"
+                  title="Volver a esta búsqueda"
+                  (click)="relanzar(entrada)"
+                >
+                  <span class="sc-hist-icono" [attr.data-tipo]="entrada.tipo ?? 'avanzada'" aria-hidden="true">{{
+                    entrada.tipo === 'copiloto'
+                      ? '✦'
+                      : entrada.tipo === 'combinada'
+                        ? '⋈'
+                        : entrada.tipo === 'normal'
+                          ? '⌕'
+                          : '{ }'
+                  }}</span>
+                  <span class="sc-hist-texto">
+                    <span class="sc-hist-titulo">
+                      <span class="sc-hist-n">#{{ entrada.n }}</span>
+                      {{ entrada.titulo || entrada.ecuacion }}
+                    </span>
+                    <small>
+                      <strong>{{ entrada.total | number }} resultados</strong> ·
+                      {{
+                        entrada.tipo === 'copiloto'
+                          ? 'Copiloto IA'
+                          : entrada.tipo === 'combinada'
+                            ? 'Combinada'
+                            : entrada.tipo === 'normal'
+                              ? 'Búsqueda'
+                              : 'Consulta avanzada'
+                      }}
+                      · {{ haceCuanto(entrada.cuando) }}
+                    </small>
+                    @if (entrada.filtros?.length) {
+                      <span class="sc-hist-filtros">
+                        @for (filtro of entrada.filtros; track filtro) {
+                          <span class="sc-hist-filtro" [class.fuera]="filtro.startsWith('Sin ')">{{ filtro }}</span>
+                        }
+                      </span>
+                    }
+                  </span>
+                  <span class="sc-hist-ir" aria-hidden="true">Volver a buscar →</span>
+                </button>
+                <button
+                  type="button"
+                  class="sc-hist-accion"
+                  [attr.aria-expanded]="ecuacionesAbiertas().has(entrada.n)"
+                  [title]="ecuacionesAbiertas().has(entrada.n) ? 'Ocultar la ecuación' : 'Ver la ecuación de Scopus'"
+                  (click)="alternarEcuacion(entrada.n)"
+                >
+                  &lt;/&gt;
+                </button>
+                <button
+                  type="button"
+                  class="sc-quitar-concepto"
+                  [attr.aria-label]="'Quitar la búsqueda ' + entrada.n"
+                  title="Quitar del historial"
+                  (click)="borrarDelHistorial(entrada.n)"
+                >
+                  ×
+                </button>
+                @if (ecuacionesAbiertas().has(entrada.n)) {
+                  <code class="sc-hist-ecuacion">{{ entrada.ecuacion }}</code>
+                }
+              </li>
+            }
+          </ol>
+          <div class="sc-hist-pie">
+            <button type="button" class="sc-enlace" (click)="vaciarHistorial()">Vaciar el historial</button>
+          </div>
+          @if (historial().length === 0) {
+            <p class="sc-cajon-vacio">Aún no has buscado nada en esta pestaña.</p>
+          }
+        </aside>
+      }
+
       @if (panelGuardadas()) {
         <div class="sc-cajon-fondo" (click)="panelGuardadas.set(false)"></div>
         <aside class="sc-cajon" aria-label="Tus búsquedas">
