@@ -3554,7 +3554,10 @@ export class Admin implements OnInit {
    * sabría qué capítulos darle.
    */
   readonly productosDestino = computed(() => {
-    const actual = this.accesoAbierto()?.productCode ?? '';
+    // Si ya se movió, lo que tiene es `productoActual`; `productCode` es lo que
+    // se vendió. Filtrar por este escondía justo el producto al que devolverlo.
+    const acceso = this.accesoAbierto();
+    const actual = acceso?.productoActual ?? acceso?.productCode ?? '';
     const vistos = new Set<string>();
 
     // De los grupos del panel y no de los planes públicos: esos esconden los que
