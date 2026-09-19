@@ -696,17 +696,43 @@
                   (input)="filtroModal.set($any($event.target).value)"
                 />
               </label>
-              <label class="sc-modal-orden">
-                Ordenar por
-                <select (change)="ordenModal.set($any($event.target).value)">
-                  <option value="alfabetico" [selected]="ordenModal() === 'alfabetico'">
-                    Alfabético
-                  </option>
-                  <option value="habitual" [selected]="ordenModal() === 'habitual'">
-                    Más usadas en tesis
-                  </option>
-                </select>
-              </label>
+              <!-- Un menú propio y no el desplegable del sistema: el de
+                   Windows sacaba su borde y su flecha grises en medio de una
+                   frase que tiene que leerse como texto. -->
+              <div class="sc-orden">
+                <span>Ordenar por</span>
+                <button
+                  type="button"
+                  class="sc-orden-boton"
+                  aria-haspopup="listbox"
+                  [attr.aria-expanded]="menuOrden()"
+                  (click)="menuOrden.set(!menuOrden())"
+                >
+                  {{ textoDelOrden() }}
+                  <span class="sc-orden-flecha" aria-hidden="true"></span>
+                </button>
+                @if (menuOrden()) {
+                  <div class="sc-orden-capa" (click)="menuOrden.set(false)"></div>
+                  <ul class="sc-orden-lista" role="listbox" aria-label="Ordenar por">
+                    @for (orden of ordenes; track orden.valor) {
+                      <li>
+                        <button
+                          type="button"
+                          role="option"
+                          [class.activa]="ordenModal() === orden.valor"
+                          [attr.aria-selected]="ordenModal() === orden.valor"
+                          (click)="elegirOrden(orden.valor)"
+                        >
+                          <span class="sc-orden-marca" aria-hidden="true">{{
+                            ordenModal() === orden.valor ? "✓" : ""
+                          }}</span>
+                          {{ orden.texto }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
               <span class="sc-modal-cuenta">
                 {{ borrador().size }}
                 {{ borrador().size === 1 ? 'seleccionada' : 'seleccionadas' }}

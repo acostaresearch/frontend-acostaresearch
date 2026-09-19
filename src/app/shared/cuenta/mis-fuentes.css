@@ -11,34 +11,58 @@
 }
 
 /* ── La franja ──────────────────────────────────────────────────────────────
-   Una sola línea arriba de la pestaña: la cifra, el aviso de las que no traen
-   resumen y las dos acciones. Es a lo que se vuelve —cuántas fuentes hay
-   detrás de lo que Claude va a citar— y tiene que verse sin bajar. */
+   Una tarjeta en una sola línea arriba de la pestaña: la cifra con su pie, el
+   aviso de las que no traen resumen, y a la derecha las dos acciones. Es a lo
+   que se vuelve —cuántas fuentes hay detrás de lo que Claude va a citar— y
+   tiene que verse sin bajar. */
 .franja {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 16px;
+  gap: 12px 18px;
+  padding: 14px 18px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
 }
 
 .franja-cifra {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 .franja-cifra strong {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--color-primario);
 }
 
-.franja-cifra span {
-  font-size: 13px;
-  color: var(--color-texto-suave);
+.franja-texto {
+  display: grid;
+  gap: 1px;
+  line-height: 1.3;
+}
+
+.franja-texto b {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.franja-texto small {
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.franja-separador {
+  align-self: stretch;
+  width: 1px;
+  min-height: 32px;
+  background: var(--color-borde-fuerte);
 }
 
 .franja-vacia {
@@ -55,15 +79,19 @@
 /* El aviso es un botón: lleva a la ventana, que es donde está la explicación
    entera y donde se arregla subiendo el archivo otra vez. */
 .franja-aviso {
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
   font: inherit;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--color-aviso);
   background: var(--color-aviso-suave);
-  border: 1px solid rgba(150, 89, 13, 0.28);
+  border: 1px solid rgba(150, 89, 13, 0.3);
   border-radius: 999px;
   cursor: pointer;
+  transition: border-color var(--transicion);
 }
 
 .franja-aviso:hover {
@@ -73,23 +101,51 @@
 .franja-acciones {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   margin-left: auto;
 }
 
-.franja-acciones .boton {
-  width: auto;
-  padding-top: 7px;
-  padding-bottom: 7px;
+.franja-subir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font: inherit;
   font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition: background var(--transicion);
 }
 
-/* «Borrar todas» va como enlace y no como botón: es la salida de emergencia de
-   quien subió el archivo equivocado, no una acción que se ofrezca. */
-.franja-acciones .boton.enlace.peligro {
-  flex-shrink: 0;
+.franja-subir:hover {
+  background: var(--color-primario-suave);
+}
+
+/* «Borrar todas» va como texto rojo y no como botón: es la salida de
+   emergencia de quien subió el archivo equivocado, no una acción que se
+   ofrezca. */
+.franja-borrar {
   padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--color-error);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.franja-borrar:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.franja-borrar:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .franja-mensaje {
@@ -202,9 +258,14 @@
 }
 
 @media (max-width: 620px) {
+  .franja-separador {
+    display: none;
+  }
+
   .franja-acciones {
     width: 100%;
     margin-left: 0;
+    justify-content: space-between;
   }
 }
 

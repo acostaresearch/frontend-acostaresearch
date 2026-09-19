@@ -490,6 +490,23 @@ export class MiScopusPanel implements OnInit {
   readonly filtroModal = signal('');
   readonly ordenModal = signal<'alfabetico' | 'habitual'>('alfabetico');
 
+  /** El menú de «Ordenar por» de la ventana, abierto o cerrado. */
+  readonly menuOrden = signal(false);
+
+  readonly ordenes = [
+    { valor: 'alfabetico' as const, texto: 'Alfabético' },
+    { valor: 'habitual' as const, texto: 'Más usadas en tesis' },
+  ];
+
+  readonly textoDelOrden = computed(
+    () => this.ordenes.find((orden) => orden.valor === this.ordenModal())?.texto ?? '',
+  );
+
+  elegirOrden(valor: 'alfabetico' | 'habitual'): void {
+    this.ordenModal.set(valor);
+    this.menuOrden.set(false);
+  }
+
   /** Las opciones de la ventana, filtradas por lo que escribe y en su orden. */
   readonly opcionesModal = computed(() => {
     const faceta = this.modalFaceta();
@@ -514,6 +531,7 @@ export class MiScopusPanel implements OnInit {
   }
 
   cerrarModal(): void {
+    this.menuOrden.set(false);
     this.modalFaceta.set(null);
   }
 
@@ -539,7 +557,9 @@ export class MiScopusPanel implements OnInit {
   /** Escape cierra la ventana, como cierra cualquier cosa que se abre encima. */
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
-    if (this.modalFaceta()) this.cerrarModal();
+    // Escape cierra lo que esté más arriba: primero el menú, después la ventana.
+    if (this.menuOrden()) this.menuOrden.set(false);
+    else if (this.modalFaceta()) this.cerrarModal();
     else if (this.parte()) this.cerrarParte();
   }
 

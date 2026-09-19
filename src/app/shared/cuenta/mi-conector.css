@@ -269,9 +269,7 @@
 
 /* La franja de sus fuentes, arriba de la pestaña de Scopus. */
 .herramientas-biblioteca {
-  padding: 14px 22px;
-  background: var(--color-fondo);
-  border-bottom: 1px solid var(--color-borde);
+  padding: 18px 22px 0;
 }
 
 /* El logo en un recuadro blanco del mismo tamaño para los tres: el de Scopus
@@ -307,9 +305,12 @@
     font-size: 13px;
   }
 
-  .herramientas-panel,
+  .herramientas-panel {
+    padding: 16px;
+  }
+
   .herramientas-biblioteca {
-    padding: 14px 16px;
+    padding: 14px 16px 0;
   }
 
   .herramientas-panel-scopus {

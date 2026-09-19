@@ -7,27 +7,32 @@
 <div class="franja">
   @if (resumen(); as datos) {
     @if (datos.total > 0) {
-      <p class="franja-cifra">
+      <div class="franja-cifra">
         <strong>{{ datos.total | number }}</strong>
-        <span>
-          fuentes tuyas
-          @if (datos.ultimaCarga) {
-            · última carga el {{ datos.ultimaCarga | date: 'd MMM y' }}
-          }
+        <span class="franja-texto">
+          <b>fuentes tuyas</b>
+          <small>
+            @if (datos.ultimaCarga) {
+              última carga el {{ datos.ultimaCarga | date: 'd MMM y' }} ·
+            }
+            solo tú las ves
+          </small>
         </span>
-      </p>
+      </div>
 
       <!-- Fichas sin resumen: se exportó sin marcar «Abstract & keywords».
            Va como estado, siempre a la vista, porque sigue ahí mañana. La
            explicación entera está en la ventana, que es donde se arregla. -->
       @if (datos.sinResumen > 0) {
+        <span class="franja-separador" aria-hidden="true"></span>
         <button type="button" class="franja-aviso" (click)="abrir()">
-          ⚠
+          <span aria-hidden="true">⚠</span>
           @if (datos.sinResumen === datos.total) {
             Ninguna trae resumen
           } @else {
             {{ datos.sinResumen }} sin resumen
           }
+          · cómo completarlas
         </button>
       }
     } @else {
@@ -39,11 +44,12 @@
   }
 
   <span class="franja-acciones">
-    <button type="button" class="boton secundario" (click)="abrir()">
-      <span aria-hidden="true">⬆</span> Subir export de Scopus
+    <button type="button" class="franja-subir" (click)="abrir()">
+      <span aria-hidden="true">⬆</span>
+      {{ (resumen()?.total ?? 0) > 0 ? 'Cargar más fuentes' : 'Subir export de Scopus' }}
     </button>
     @if ((resumen()?.total ?? 0) > 0) {
-      <button type="button" class="boton enlace peligro" [disabled]="vaciando()" (click)="vaciar()">
+      <button type="button" class="franja-borrar" [disabled]="vaciando()" (click)="vaciar()">
         {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
       </button>
     }
