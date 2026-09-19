@@ -1,0 +1,686 @@
+/*
+ * La red del hero. Todo va con prefijo `hn-` y dentro del componente: nada de
+ * aquí toca los estilos del resto del sitio.
+ *
+ * Las medidas son las del lienzo de diseño (600×560) y la escala se aplica al
+ * final con `--s`. `--ancho` es algo más que 600 porque la tarjeta de Word
+ * asoma por la derecha y hay que reservarle el hueco.
+ */
+:host {
+  --s: 1;
+  --ancho: 690px;
+  --alto: 560px;
+
+  --hn-scopus: #f86800;
+  --hn-zotero: #c02020;
+  --hn-mendeley: #9d1620;
+  --hn-vosviewer: #7c3aed;
+  --hn-atlasti: #0e7490;
+  --hn-r: #2065b8;
+  --hn-claude: #d87058;
+  --hn-chatgpt: #10a37f;
+  --hn-grok: #111111;
+  --hn-word: var(--color-primario);
+  --hn-sello: #16803d;
+  --hn-borde: #e2e8f0;
+  --hn-superficie: var(--color-superficie);
+  --hn-linea: var(--color-borde-fuerte);
+  --hn-tip-fondo: #0f172a;
+  --hn-marco-foto: #fff;
+
+  position: relative;
+  display: block;
+}
+
+/* En oscuro, Grok negro sobre fondo casi negro no se vería, y el verde del
+   sello necesita aclararse para pasar el contraste. */
+:host-context([data-tema='oscuro']) {
+  --hn-grok: #e5e7eb;
+  --hn-sello: #4ade80;
+  --hn-borde: var(--color-borde);
+  --hn-tip-fondo: #020617;
+  --hn-marco-foto: var(--color-superficie);
+}
+
+@media (max-width: 1100px) {
+  :host {
+    --s: 0.8;
+  }
+}
+
+@media (max-width: 900px) {
+  :host {
+    --s: 0.62;
+    --ancho: 600px;
+    --alto: 860px;
+  }
+}
+
+/* A 0,62 el lienzo mide 372 px y en un teléfono de 360 no cabe con sus
+   márgenes: se abriría el desplazamiento horizontal. */
+@media (max-width: 420px) {
+  :host {
+    --s: 0.54;
+  }
+}
+
+/* La cuadrícula de fondo, desvanecida hacia los bordes. Sin color ni brillo:
+   solo da suelo a la red. */
+.hn-cuadricula {
+  position: absolute;
+  inset: -80px -80px -40px -100px;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--hn-linea) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hn-linea) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.35;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
+  mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
+}
+
+.hn {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+.hn-marco {
+  position: relative;
+  width: calc(var(--ancho) * var(--s));
+  height: calc(var(--alto) * var(--s));
+  margin-inline: auto;
+}
+
+.hn-escena {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ancho);
+  height: var(--alto);
+  transform: scale(var(--s));
+  transform-origin: 0 0;
+  perspective: 1200px;
+}
+
+.hn-lienzo {
+  position: relative;
+  width: 600px;
+  height: 560px;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+  will-change: transform;
+}
+
+/* ── Cables y puntos ─────────────────────────────────────────────────────── */
+.hn-svg {
+  position: absolute;
+  inset: 0;
+  width: 600px;
+  height: 560px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hn-cable {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.22;
+  stroke-dasharray: var(--largo, 1000);
+  stroke-dashoffset: var(--largo, 1000);
+  transition:
+    stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1) calc(0.5s + var(--i) * 180ms),
+    opacity 0.35s ease,
+    stroke-width 0.35s ease;
+}
+
+.hn-visible .hn-cable {
+  stroke-dashoffset: 0;
+}
+
+.hn-cable.hn-cable-activo {
+  opacity: 0.9;
+  stroke-width: 2;
+}
+
+.hn-salida {
+  fill: none;
+  stroke: var(--hn-word);
+  stroke-width: 1.6;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.hn-visible .hn-salida {
+  opacity: 0.85;
+  transition-delay: 1.6s;
+}
+
+.hn-puntos {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.hn-visible .hn-puntos {
+  opacity: 1;
+  transition-delay: 1.9s;
+}
+
+/* ── La persona ─────────────────────────────────────────────────────────── */
+.hn-persona {
+  position: absolute;
+  z-index: 2;
+  width: 162px;
+  height: 162px;
+  transform: translate(-50%, -50%);
+}
+
+.hn-persona-entrada {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: scale(0.2);
+  transition:
+    transform 1s cubic-bezier(0.2, 0.9, 0.3, 1.15),
+    opacity 0.6s ease;
+}
+
+.hn-visible .hn-persona-entrada {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.hn-foto {
+  position: relative;
+  display: block;
+  width: 150px;
+  height: 150px;
+  border: 6px solid var(--hn-marco-foto);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 0;
+  background: var(--color-primario-suave);
+  box-shadow:
+    0 2px 6px rgba(16, 24, 40, 0.08),
+    0 14px 32px rgba(16, 24, 40, 0.14);
+}
+
+.hn-halo {
+  position: absolute;
+  inset: -46px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-primario) 12%, transparent) 0%,
+    transparent 68%
+  );
+}
+
+.hn-aro {
+  position: absolute;
+  inset: -14px;
+  border: 1.5px dashed var(--color-borde-fuerte);
+  border-radius: 50%;
+  animation: hn-giro 60s linear infinite;
+}
+
+.hn-pulso {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--hn-c, var(--hn-word));
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hn-firmas {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  padding: 3px 10px;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-texto);
+  background: var(--hn-superficie);
+  border: 1px solid var(--hn-borde);
+  border-radius: 6px;
+}
+
+/* ── Los nodos ──────────────────────────────────────────────────────────── */
+.hn-nodo-sitio {
+  position: absolute;
+  z-index: 3;
+  width: 150px;
+  height: 48px;
+}
+
+.hn-nodo-sitio:hover,
+.hn-nodo-sitio:focus-within {
+  z-index: 6;
+}
+
+.hn-nodo-entrada {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: translateY(16px) scale(0.85);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transition-delay: calc(0.5s + var(--i) * 180ms);
+}
+
+.hn-visible .hn-nodo-entrada {
+  opacity: 1;
+  transform: none;
+}
+
+.hn-nodo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 100%;
+  padding: 0 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  background: var(--hn-superficie);
+  border: 1px solid var(--hn-borde);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 6px 16px rgba(16, 24, 40, 0.06);
+  cursor: default;
+  transition: border-color 0.3s ease;
+  animation: hn-flotar 6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -1.07s);
+}
+
+/* La sombra del color va en una capa aparte que solo cambia de opacidad:
+   animar el `box-shadow` repintaría el nodo en cada fotograma. */
+.hn-nodo::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 1px var(--c),
+    0 8px 22px color-mix(in srgb, var(--c) 32%, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.hn-nodo.hn-activo {
+  border-color: var(--c);
+}
+
+.hn-nodo.hn-activo::after {
+  opacity: 1;
+}
+
+.hn-nodo:focus-visible {
+  outline: 2px solid var(--c);
+  outline-offset: 3px;
+}
+
+.hn-logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--hn-borde);
+  border-radius: 8px;
+}
+
+.hn-logo img {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  object-fit: contain;
+}
+
+.hn-inicial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--hn-superficie);
+  background: var(--c);
+}
+
+.hn-nodo-texto {
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.hn-nodo-texto b {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hn-nodo-texto small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-texto-tenue);
+}
+
+.hn-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  width: 210px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #fff;
+  background: var(--hn-tip-fondo);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.25);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
+
+.hn-tip.hn-tip-abajo {
+  top: calc(100% + 10px);
+  bottom: auto;
+  transform: translate(-50%, -4px);
+}
+
+.hn-nodo-entrada:hover .hn-tip,
+.hn-nodo:focus-visible + .hn-tip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ── La tarjeta de Word ─────────────────────────────────────────────────── */
+.hn-word-sitio {
+  position: absolute;
+  z-index: 4;
+  width: 240px;
+  transform: translate(-50%, -50%);
+}
+
+.hn-word {
+  position: relative;
+  padding: 12px 14px 10px;
+  background: var(--hn-superficie);
+  border: 1px solid var(--hn-borde);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 12px 28px rgba(16, 24, 40, 0.1);
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+.hn-visible .hn-word {
+  opacity: 1;
+  transform: none;
+  transition-delay: 1.6s;
+}
+
+.hn-word p {
+  margin: 0;
+}
+
+.hn-word-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.hn-w {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  background: #2b579a;
+  border-radius: 4px;
+}
+
+.hn-word-sub {
+  margin: 10px 0 6px !important;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.hn-word ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hn-word li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 3px 0;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+  opacity: 0.6;
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.hn-word li.hn-hecho {
+  color: var(--color-texto);
+  opacity: 1;
+}
+
+.hn-check {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--hn-borde);
+  border-radius: 50%;
+}
+
+.hn-check::before,
+.hn-check::after {
+  content: '';
+  position: absolute;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    opacity 0.3s ease;
+}
+
+/* El relleno del color, que crece desde el centro. */
+.hn-check::before {
+  inset: -1.5px;
+  background: var(--c);
+  border-radius: 50%;
+  transform: scale(0);
+}
+
+/* La palomita. */
+.hn-check::after {
+  top: 2px;
+  left: 3.5px;
+  width: 3.5px;
+  height: 6px;
+  border: solid #fff;
+  border-width: 0 1.6px 1.6px 0;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.4);
+}
+
+.hn-hecho .hn-check::before {
+  transform: scale(1);
+}
+
+.hn-hecho .hn-check::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.hn-word-pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px !important;
+  padding-top: 8px;
+  font-size: 10px;
+  color: var(--color-texto-tenue);
+  border-top: 1px solid var(--hn-borde);
+}
+
+.hn-word-pie b {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-texto);
+}
+
+.hn-sello {
+  position: absolute;
+  right: 8px;
+  bottom: 30px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--hn-sello);
+  background: color-mix(in srgb, var(--hn-superficie) 92%, transparent);
+  border: 2px solid var(--hn-sello);
+  border-radius: 5px;
+  opacity: 0;
+  transform: rotate(-8deg) scale(1.5);
+  transition:
+    opacity 0.2s ease,
+    transform 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+  pointer-events: none;
+}
+
+.hn-sello.hn-sello-visible {
+  opacity: 1;
+  transform: rotate(-8deg) scale(1);
+}
+
+/* ── Debajo del gráfico ─────────────────────────────────────────────────── */
+.hn-ahora {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.hn-ahora i {
+  width: 9px;
+  height: 9px;
+  background: var(--c);
+  border-radius: 2px;
+}
+
+.hn-ahora b {
+  color: var(--c);
+}
+
+.hn-reiniciar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 8;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--color-texto-tenue);
+  background: transparent;
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: 4px;
+  opacity: 0.25;
+  cursor: pointer;
+}
+
+.hn-reiniciar:hover,
+.hn-reiniciar:focus-visible {
+  opacity: 1;
+}
+
+@keyframes hn-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hn-flotar {
+  0%,
+  100% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* Sin movimiento: todo ya dibujado, sin flotar, sin girar, sin puntos. */
+@media (prefers-reduced-motion: reduce) {
+  .hn *,
+  .hn *::before,
+  .hn *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .hn-persona-entrada,
+  .hn-nodo-entrada,
+  .hn-word {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hn-cable {
+    stroke-dashoffset: 0;
+  }
+
+  .hn-salida {
+    opacity: 0.85;
+  }
+
+  .hn-puntos {
+    display: none;
+  }
+
+  .hn-lienzo {
+    transform: none !important;
+  }
+}

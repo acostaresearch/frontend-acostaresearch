@@ -53,11 +53,9 @@
   }
 
   <section class="seccion hero">
-    <!-- Texto a la izquierda y la captura a la derecha. El texto ya iba
-         estrecho a propósito —un titular de 16 caracteres por línea se lee
-         mejor—, así que la mitad derecha quedaba vacía y el hero parecía sin
-         terminar. La captura enseña lo que se vende antes de que nadie pulse
-         nada: esto vive dentro de Claude, no en otra web. -->
+    <!-- Texto a la izquierda y la red del método a la derecha: la persona al
+         centro, sus fuentes y los agentes de IA alrededor y el Word saliendo
+         por un lado. Enseña cómo se trabaja antes de que nadie pulse nada. -->
     <div class="hero-columnas">
       <div class="hero-texto">
         <p class="seccion-marca">Skills para Claude.ai · Tesis y artículos científicos</p>
@@ -81,27 +79,23 @@
         </p>
       </div>
 
-      <!-- Sin `loading="lazy"`: está en lo primero que se ve, y aplazarla solo
-           conseguiría que apareciera tarde. Las medidas van en el atributo para
-           que el navegador le reserve el hueco y el texto no dé un salto; son las
-           del recorte: el PNG original era de 408×612 y llevaba 83 px de
-           transparente a cada lado, que apartaban la foto del texto sin que se
-           viera el motivo. -->
-      <div class="hero-imagen">
-        <img
-          src="/home-img/image-sin-fondo-recortada.png"
-          alt="Una persona de pie, con un portátil en la mano"
-          width="245"
-          height="544"
-          decoding="async"
-        />
-      </div>
+      <!-- La red del método: tus fuentes y los agentes alrededor de ti, y el
+           Word saliendo por la derecha. Sustituye a la foto suelta, que sigue
+           estando, recortada en círculo en el centro de la red. -->
+      <app-hero-network class="hero-red" />
     </div>
+
+    <p class="hero-pie">
+      <span class="hero-pie-chip">Así trabaja el método</span>
+      Tus fuentes y los agentes de IA trabajan alrededor de ti; el resultado sale en Word.
+    </p>
 
     <ul class="cifras">
       @for (c of cifras; track c.pie) {
         <li>
-          <span class="cifra-valor" [class.texto]="c.valor.length > 4">{{ c.valor }}</span>
+          <span class="cifra-valor" [class.texto]="c.valor.length > 4" [appContador]="c.valor">{{
+            c.valor
+          }}</span>
           <span class="cifra-pie">{{ c.pie }}</span>
         </li>
       }

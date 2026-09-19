@@ -1,0 +1,137 @@
+<div class="hn-cuadricula" aria-hidden="true"></div>
+
+<figure
+  class="hn"
+  [class.hn-visible]="entrado()"
+  [class.hn-apilado]="apilado()"
+  aria-label="Tus fuentes y los agentes de IA trabajan alrededor de ti y el resultado sale en Word"
+>
+  <div class="hn-marco">
+    <div class="hn-escena" #escena>
+      <div class="hn-lienzo" #lienzo>
+        <svg
+          #svg
+          class="hn-svg"
+          viewBox="0 0 600 560"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          @for (d of cables; track $index) {
+            <path
+              class="hn-cable"
+              [class.hn-cable-activo]="activo() === $index"
+              [attr.d]="d"
+              [style.stroke]="herramientas[$index].color"
+              [style.--i]="$index"
+            />
+          }
+          <path class="hn-salida" [attr.d]="salida()" />
+          <g #puntos class="hn-puntos"></g>
+        </svg>
+
+        <!-- La persona. El anillo punteado gira; el pulso lo dispara el ciclo. -->
+        <div class="hn-persona" [style.left.px]="centro.x" [style.top.px]="centro.y">
+          <div class="hn-persona-entrada">
+            <span class="hn-halo"></span>
+            <span class="hn-aro"></span>
+            <span class="hn-pulso" #pulso></span>
+            <img
+              class="hn-foto"
+              src="/home-img/image-sin-fondo-recortada.png"
+              alt="Una persona con su portátil, al centro del método"
+              width="150"
+              height="150"
+              decoding="async"
+            />
+            <span class="hn-firmas">Tú verificas</span>
+          </div>
+        </div>
+
+        @for (h of herramientas; track h.clave; let i = $index) {
+          <div
+            class="hn-nodo-sitio"
+            [style.left.px]="h.x"
+            [style.top.px]="h.y"
+            [style.--i]="i"
+            [style.--c]="h.color"
+          >
+            <div class="hn-nodo-entrada">
+              <button
+                type="button"
+                class="hn-nodo"
+                [class.hn-activo]="activo() === i"
+                [attr.aria-describedby]="'hn-tip-' + h.clave"
+                (mouseenter)="tocar(i)"
+                (focus)="tocar(i)"
+              >
+                <span class="hn-logo">
+                  @if (sinLogo().has(h.clave)) {
+                    <span class="hn-inicial" aria-hidden="true">{{ h.nombre[0] }}</span>
+                  } @else {
+                    <img
+                      [src]="h.logo"
+                      alt=""
+                      width="30"
+                      height="30"
+                      decoding="async"
+                      (error)="logoFallo(h.clave)"
+                    />
+                  }
+                </span>
+                <span class="hn-nodo-texto">
+                  <b>{{ h.nombre }}</b>
+                  <small>{{ h.funcion }}</small>
+                </span>
+              </button>
+              <span
+                class="hn-tip"
+                [class.hn-tip-abajo]="h.y < 100"
+                role="tooltip"
+                [id]="'hn-tip-' + h.clave"
+                >{{ h.frase }}</span
+              >
+            </div>
+          </div>
+        }
+
+        <!-- La tarjeta de Word: una línea por herramienta. -->
+        <div class="hn-word-sitio" [style.left.px]="tarjeta().x" [style.top.px]="tarjeta().y">
+          <div class="hn-word">
+            <p class="hn-word-cab">
+              <span class="hn-w" aria-hidden="true">W</span>
+              Tu tesis en Word
+            </p>
+            <p class="hn-word-sub">Tu tesis · capítulo en curso</p>
+            <ul>
+              @for (h of herramientas; track h.clave; let i = $index) {
+                <li [class.hn-hecho]="hechos()[i]" [style.--c]="h.color">
+                  <span class="hn-check" aria-hidden="true"></span>
+                  {{ h.aporte }}
+                </li>
+              }
+            </ul>
+            <p class="hn-word-pie">
+              <span>15 normas de citas · tus fuentes</span>
+              <b>{{ porcentaje() }} %</b>
+            </p>
+            <span class="hn-sello" [class.hn-sello-visible]="sello()" aria-hidden="true"
+              >Listo para firmar</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <figcaption class="hn-ahora" [style.--c]="ahora().color">
+    <i aria-hidden="true"></i>
+    Ahora: <b>{{ ahora().nombre }}</b> · {{ ahora().funcion }}
+  </figcaption>
+
+  @if (desarrollo) {
+    <button type="button" class="hn-reiniciar" (click)="reiniciar()" title="Solo en desarrollo">
+      ↺ reiniciar
+    </button>
+  }
+</figure>

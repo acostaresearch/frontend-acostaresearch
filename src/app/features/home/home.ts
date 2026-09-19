@@ -8,6 +8,8 @@ import { LicenseService } from '../../core/services/license.service';
 import { CIFRAS, RAZONES } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { Contador } from './contador';
+import { HeroNetwork } from './hero-network/hero-network';
 
 /**
  * Inicio.
@@ -23,7 +25,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, SiteHeader, SiteFooter],
+  imports: [RouterLink, SiteHeader, SiteFooter, HeroNetwork, Contador],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

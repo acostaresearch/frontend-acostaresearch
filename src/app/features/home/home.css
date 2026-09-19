@@ -77,66 +77,57 @@
 }
 
 /*
- * Texto y foto, juntos y centrados en la banda.
+ * Texto y red, juntos y centrados en la banda.
  *
  * La columna de texto no necesita los 1480 px de la banda —el titular se corta
- * a 28ch y el párrafo a 545—, así que reservarle la mitad del ancho solo servía
- * para abrir un vacío hasta la foto. Con `auto` en la segunda, la foto ocupa lo
- * que mide y no un tercio de la banda; el bloque se recorta a la medida del
- * titular más la foto y se centra.
+ * a 28ch y el párrafo a 545—; la red ocupa lo que mide (`auto`) y el texto se
+ * queda el resto. El tope de 1280 es el del titular más la red a tamaño
+ * completo: más ancho solo abría un vacío entre los dos.
  */
 .hero-columnas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 40px;
+  gap: 48px;
   align-items: center;
-  max-width: 980px;
+  max-width: 1280px;
   margin-inline: auto;
 }
 
-.hero-imagen {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-/*
- * La foto, suelta sobre el fondo y sin caja.
- *
- * Dos cosas la sostienen. La sombra, que al ser `drop-shadow` sigue el
- * contorno de la persona y no un rectángulo; va corta y poco marcada, porque
- * con más desenfoque se convertía en una mancha gris alrededor.
- *
- * Y el degradado de abajo: el recorte viene cortado a media pierna por el
- * borde del PNG —la última fila tiene 173 px opacos— y esa línea recta se veía
- * como un error. Desvaneciéndola, la figura se acaba en vez de cortarse. Si
- * algún día llega una foto entera, esta línea sobra.
- */
-.hero-imagen img {
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  max-height: 500px;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(16, 24, 40, 0.16));
-  mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-}
-
-/* Debajo de 1100 px no caben dos columnas sin que el titular se rompa en
-   pedazos: la foto pasa a ir después del texto. */
-@media (max-width: 1100px) {
+/* Debajo de 900 px no caben dos columnas sin que el titular se rompa en
+   pedazos: la red pasa a ir después del texto, centrada. */
+@media (max-width: 900px) {
   .hero-columnas {
     grid-template-columns: 1fr;
     gap: 32px;
   }
 
-  /* En una sola columna la foto ya no acompaña al texto por el lado, va
-     debajo: pegada a la izquierda quedaba descolgada del bloque, con todo el
-     hueco a su derecha. Centrada cierra el hero en vez de sobrar. */
-  .hero-imagen {
-    justify-content: center;
+  .hero-red {
+    justify-self: center;
   }
+}
+
+/* El pie de la figura: qué es lo que se acaba de ver. */
+.hero-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  margin: 40px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-texto-suave);
+}
+
+.hero-pie-chip {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
 }
 
 /*
@@ -550,10 +541,6 @@
   .hero .entrada {
     margin-bottom: 24px;
     font-size: 16px;
-  }
-
-  .hero-imagen img {
-    max-height: 300px;
   }
 
   /* 64 px de separación se pensaron para una línea de cuatro cifras a lo
