@@ -255,3 +255,10 @@
   font-weight: 600;
   color: var(--color-texto);
 }
+
+/* La primera fila del perfil: «Mis compras» (order -2) y esta, a su derecha.
+   Con `order` y no moviendo el HTML, porque la ayuda es de este componente y
+   las compras son del perfil. */
+.arriba {
+  order: -1;
+}

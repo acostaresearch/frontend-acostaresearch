@@ -286,6 +286,7 @@
 .compras-tarjeta {
   display: flex;
   flex-direction: column;
+  order: -2;
 }
 
 .compras-cabecera {

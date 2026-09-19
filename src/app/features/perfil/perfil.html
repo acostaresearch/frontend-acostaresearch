@@ -139,8 +139,7 @@
          quita la caja al componente para que sus tarjetas sean casillas de
          aquí.
 
-         «Mis compras» va después del conector, a media anchura y al lado de la
-         ayuda. El canje de códigos vive solo en /planes; al pie de las compras
+         «Mis compras» va primero, a media anchura y con la ayuda a su derecha. El canje de códigos vive solo en /planes; al pie de las compras
          queda una salida hasta allí, para quien sigue buscándolo aquí por un
          correo antiguo. -->
     <main class="contenido rejilla">
@@ -148,12 +147,11 @@
       <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
            componente que usa el panel del administrador, que también es una
            persona con licencias que mirar. -->
-      <app-mi-conector />
-
-      <!-- «Mis compras», a media anchura y al lado de «¿Necesitas ayuda?», la
-           última tarjeta del conector: son las dos cosas que se miran cuando
-           algo no cuadra —¿entró el pago?, ¿a quién le escribo?— y juntas se
-           leen de un vistazo. El medio de pago va debajo del importe y no en
+      <!-- «Mis compras» y, a su derecha, «¿Necesitas ayuda?», lo primero de la
+           pantalla: son las dos cosas que se miran cuando algo no cuadra
+           —¿entró el pago?, ¿a quién le escribo?— y juntas se leen de un
+           vistazo. La ayuda la pinta el conector más abajo; las sube arriba
+           `order` en la rejilla, no el orden del HTML. El medio de pago va debajo del importe y no en
            columna propia: a media anchura cinco columnas no caben. -->
       <section class="tarjeta tramo-3 compras-tarjeta">
         <div class="compras-cabecera">
@@ -225,6 +223,8 @@
           <span class="canje-accion">Canjear</span>
         </a>
       </section>
+
+      <app-mi-conector />
 
       <!-- El mismo componente que usa el panel del administrador: la mitad que
            se le pida, con la caja que ponga cada pantalla. -->
