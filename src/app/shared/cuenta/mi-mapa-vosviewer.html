@@ -1,0 +1,219 @@
+<p class="nota">
+  Un mapa de coocurrencia de palabras clave, como el de VOSviewer: qué temas se estudian juntos en
+  tu campo, en qué grupos se reparten y cuáles son recientes. Lo usas en tu marco teórico o en tu
+  revisión, y te llevas los archivos para abrirlo en VOSviewer de escritorio.
+</p>
+
+<form class="mv-formulario" [formGroup]="formulario" (ngSubmit)="crear()">
+  <fieldset class="mv-origen">
+    <legend>¿De dónde salen los artículos?</legend>
+    <label class="mv-opcion" [class.elegida]="origen() === 'openalex'">
+      <input
+        type="radio"
+        name="origen"
+        [checked]="origen() === 'openalex'"
+        (change)="elegirOrigen('openalex')"
+      />
+      <span>
+        <strong>Buscar un tema</strong>
+        <small>En OpenAlex, catálogo abierto y gratuito. Los más citados primero.</small>
+      </span>
+    </label>
+    <label class="mv-opcion" [class.elegida]="origen() === 'mis-fuentes'">
+      <input
+        type="radio"
+        name="origen"
+        [checked]="origen() === 'mis-fuentes'"
+        (change)="elegirOrigen('mis-fuentes')"
+      />
+      <span>
+        <strong>Mis fuentes</strong>
+        <small>Las que subiste de Scopus o Web of Science, con sus palabras clave de autor.</small>
+      </span>
+    </label>
+  </fieldset>
+
+  @if (origen() === 'openalex') {
+    <div class="mv-fila">
+      <div class="campo mv-tema">
+        <label for="mv-tema">Tema</label>
+        <input
+          id="mv-tema"
+          formControlName="tema"
+          maxlength="300"
+          placeholder="digital marketing small business"
+          autocomplete="off"
+        />
+        <span class="ayuda">Mejor en inglés: la mayoría de la literatura indexada lo está.</span>
+      </div>
+      <div class="campo mv-anio">
+        <label for="mv-desde">Desde</label>
+        <input id="mv-desde" type="number" min="1900" [max]="anioActual" formControlName="desdeAnio" />
+      </div>
+      <div class="campo mv-anio">
+        <label for="mv-hasta">Hasta</label>
+        <input
+          id="mv-hasta"
+          type="number"
+          min="1900"
+          [max]="anioActual"
+          formControlName="hastaAnio"
+          [placeholder]="anioActual"
+        />
+      </div>
+      <div class="campo mv-cuantas">
+        <label for="mv-cuantas">Artículos</label>
+        <select id="mv-cuantas" formControlName="cuantas">
+          <option [ngValue]="200">200</option>
+          <option [ngValue]="500">500</option>
+          <option [ngValue]="1000">1000</option>
+        </select>
+      </div>
+    </div>
+  } @else {
+    <p class="aviso info">
+      Se usan las palabras clave de las fuentes que ya tienes. Si exportaste de Scopus sin marcar
+      <em>«Abstract &amp; keywords»</em>, vuelve a exportar y súbelo en «Tus fuentes de Scopus».
+    </p>
+  }
+
+  <button
+    type="button"
+    class="mv-ajustes-boton"
+    [attr.aria-expanded]="ajustesAbiertos()"
+    (click)="ajustesAbiertos.set(!ajustesAbiertos())"
+  >
+    {{ ajustesAbiertos() ? '▾' : '▸' }} Ajustes como en VOSviewer (umbral, sinónimos, excluir)
+  </button>
+
+  @if (ajustesAbiertos()) {
+    <div class="mv-ajustes">
+      <div class="mv-fila">
+        <div class="campo">
+          <label for="mv-minimo">Mínimo de ocurrencias</label>
+          <input id="mv-minimo" type="number" min="1" max="500" formControlName="minimo" placeholder="Automático" />
+          <span class="ayuda">En cuántos artículos tiene que salir un término. Vacío: lo elegimos.</span>
+        </div>
+        <div class="campo">
+          <label for="mv-maximo">Máximo de términos</label>
+          <input id="mv-maximo" type="number" min="5" max="500" formControlName="maximo" />
+          <span class="ayuda">Entran los de mayor fuerza de enlace, como en VOSviewer.</span>
+        </div>
+      </div>
+      <div class="mv-fila">
+        <div class="campo">
+          <label for="mv-excluir">Excluir términos</label>
+          <textarea
+            id="mv-excluir"
+            rows="3"
+            formControlName="excluir"
+            placeholder="context, order, product"
+          ></textarea>
+          <span class="ayuda">Separados por comas. Útil para quitar tu propio tema o palabras vacías.</span>
+        </div>
+        <div class="campo">
+          <label for="mv-sinonimos">Unir sinónimos</label>
+          <textarea
+            id="mv-sinonimos"
+            rows="3"
+            formControlName="sinonimos"
+            placeholder="sme = small and medium-sized enterprises&#10;covid-19 = coronavirus disease 2019"
+          ></textarea>
+          <span class="ayuda">Uno por línea: <code>así = se llamará</code>. Es el tesauro de VOSviewer.</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="mv-acciones">
+    <button type="submit" class="boton" [disabled]="creando()">
+      {{ creando() ? 'Contando coocurrencias…' : mapa() ? 'Volver a crear el mapa' : 'Crear mapa' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="aviso error" role="alert">{{ error() }}</p>
+  }
+</form>
+
+@if (mapa(); as m) {
+  <section class="mv-resultado" aria-label="Mapa de coocurrencia">
+    <p class="mv-cifras">
+      @if (m.origen.tipo === 'openalex') {
+        <strong>{{ m.origen.analizados | number }}</strong> artículos de
+        {{ m.origen.total | number }} encontrados ·
+      } @else {
+        <strong>{{ m.resumen.documentosConTerminos | number }}</strong> fuentes con palabras clave ·
+      }
+      <strong>{{ m.resumen.enElMapa | number }}</strong> términos ·
+      {{ m.resumen.enlaces | number }} enlaces · umbral de {{ m.resumen.minimo }} ocurrencias{{
+        m.resumen.minimoAutomatico ? ' (automático)' : ''
+      }}
+    </p>
+
+    <div class="mv-visor">
+      @if (cargandoVisor()) {
+        <p class="mv-cargando">Abriendo VOSviewer…</p>
+      }
+      <div #lienzo class="mv-lienzo"></div>
+    </div>
+    <p class="mv-pie">
+      Arrastra para moverte y usa la rueda para acercar. En el panel del visor cambias entre
+      <em>Network</em>, <em>Overlay</em> (color por año promedio) y <em>Density</em>, y con el
+      botón de captura guardas la imagen para tu tesis. Si se ven pocos grupos o demasiados,
+      ajusta <em>Resolution</em> en <em>Analysis</em>.
+    </p>
+
+    <div class="mv-descargas">
+      <button type="button" class="boton secundario" (click)="bajarJson()">Mapa (.json)</button>
+      <button type="button" class="boton secundario" (click)="bajarMapa()">Archivo map (.txt)</button>
+      <button type="button" class="boton secundario" (click)="bajarRed()">Archivo network (.txt)</button>
+      <button type="button" class="boton secundario" (click)="bajarTabla()">Tabla de términos (Excel)</button>
+    </div>
+
+    <details class="mv-metodo">
+      <summary>Para tu metodología: cómo reportarlo</summary>
+      <p>{{ parrafoMetodo() }}</p>
+      <ul>
+        @for (ref of referencias; track ref) {
+          <li>{{ ref }}</li>
+        }
+      </ul>
+      <button type="button" class="boton enlace" (click)="copiarParrafo()">
+        {{ copiado() ? 'Copiado' : 'Copiar párrafo y referencias' }}
+      </button>
+    </details>
+
+    <div class="mv-tabla-marco">
+      <table class="mv-tabla">
+        <caption>
+          Los {{ primeros().length }} términos más frecuentes
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Término</th>
+            <th scope="col">Ocurrencias</th>
+            <th scope="col">Enlaces</th>
+            <th scope="col">Fuerza total</th>
+            @if (m.resumen.conAnio) {
+              <th scope="col">Año prom.</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of primeros(); track t.termino) {
+            <tr>
+              <td>{{ t.termino }}</td>
+              <td>{{ t.ocurrencias | number }}</td>
+              <td>{{ t.enlaces | number }}</td>
+              <td>{{ t.fuerza | number }}</td>
+              @if (m.resumen.conAnio) {
+                <td>{{ t.anioPromedio === null ? '—' : (t.anioPromedio | number: '1.1-1') }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}

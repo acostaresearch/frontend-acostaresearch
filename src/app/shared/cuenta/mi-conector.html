@@ -29,7 +29,8 @@
        Solo con acceso vigente: sin conector que las lea, traer fuentes o pedir
        un análisis no serviría de nada.
 
-       Las tres pestañas se pintan siempre y se ESCONDEN, no se destruyen: así
+       Las pestañas se pintan siempre —menos la del mapa, ver su nota— y se
+       ESCONDEN, no se destruyen: así
        una búsqueda de Scopus a medias sigue ahí al volver de mirar Zotero, y
        la vuelta de autorizar Zotero (`?zotero=…`) la lee su panel aunque no
        sea la pestaña que se ve. -->
@@ -80,6 +81,19 @@
         >
           <span class="marca"><img src="/iconos/R_logo.svg.png" alt="" /></span>
           Tu análisis en R
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="pestana-mapa"
+          aria-controls="panel-mapa"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'mapa'"
+          [attr.aria-selected]="herramienta() === 'mapa'"
+          (click)="abrirMapa()"
+        >
+          <span class="marca"><img src="/iconos/mapa-red.svg" alt="" /></span>
+          Mapa en VOSviewer
         </button>
       </div>
 
@@ -137,6 +151,22 @@
           <li>Te da un enlace para subir tu Excel o tu SPSS.</li>
           <li>Elige la prueba contigo, la corre y te entrega el informe en Word.</li>
         </ol>
+      </div>
+
+      <!-- El mapa de VOSviewer. Solo se pinta la primera vez que se abre la
+           pestaña: el visor pesa 3,6 MB y quien no lo usa no tiene por qué
+           cargar ni el formulario. Después se esconde como las demás, para
+           que el mapa siga ahí al volver de otra pestaña. -->
+      <div
+        id="panel-mapa"
+        role="tabpanel"
+        aria-labelledby="pestana-mapa"
+        class="herramientas-panel"
+        [hidden]="herramienta() !== 'mapa'"
+      >
+        @if (mapaVisto()) {
+          <app-mi-mapa-vosviewer />
+        }
       </div>
     </section>
   }

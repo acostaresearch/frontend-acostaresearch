@@ -199,6 +199,9 @@ const CSP = [
   "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com",
   "connect-src 'self' https://accounts.google.com https://*.paypal.com",
   "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com",
+  // El visor de VOSviewer calcula la disposición y los clústeres en un Worker
+  // que crea desde un `blob:`. Sin esto, con la CSP activa el mapa no se pinta.
+  "worker-src 'self' blob:",
 ].join('; ');
 
 const CABECERAS_DE_SEGURIDAD = {

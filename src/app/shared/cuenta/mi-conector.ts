@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { LicenseService } from '../../core/services/license.service';
 import { MiTesis } from './mi-tesis';
+import { MiMapaVosviewer } from './mi-mapa-vosviewer';
 import { MiScopusPanel } from './mi-scopus';
 import { MisFuentesPanel } from './mis-fuentes';
 import { MiZoteroPanel } from './mi-zotero';
@@ -31,6 +32,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
     MisFuentesPanel,
     MiScopusPanel,
     MiZoteroPanel,
+    MiMapaVosviewer,
     PasosDeArranque,
   ],
   templateUrl: './mi-conector.html',
@@ -57,9 +59,21 @@ export class MiConector implements OnInit {
    * La pestaña de «Tus herramientas» que se ve. Se abre en Zotero si se vuelve
    * de autorizarlo: ahí es donde está el aviso de cómo fue.
    */
-  readonly herramienta = signal<'scopus' | 'zotero' | 'r'>(
+  readonly herramienta = signal<'scopus' | 'zotero' | 'r' | 'mapa'>(
     this.ruta.snapshot.queryParamMap.has('zotero') ? 'zotero' : 'scopus',
   );
+
+  /**
+   * Si ya abrió alguna vez la pestaña del mapa. Hasta entonces no se pinta:
+   * ver la nota del panel en la plantilla. Se queda en verdadero para no
+   * perder el mapa al cambiar de pestaña.
+   */
+  readonly mapaVisto = signal(false);
+
+  abrirMapa(): void {
+    this.herramienta.set('mapa');
+    this.mapaVisto.set(true);
+  }
 
 
   /** El WhatsApp de la casa, para quien ya probó el video y la guía. */

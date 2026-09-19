@@ -1,0 +1,18 @@
+{
+  "name": "acostaresearch-vosviewer",
+  "private": true,
+  "description": "Empaqueta VOSviewer Online (MIT, CWTS) en un solo script para la web. Ver construir.mjs.",
+  "scripts": {
+    "construir": "node construir.mjs"
+  },
+  "dependencies": {
+    "mobx": "6.13.7",
+    "mobx-react-lite": "3.4.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "vosviewer-online": "1.2.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

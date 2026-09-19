@@ -1,0 +1,240 @@
+.mv-formulario {
+  margin-top: 14px;
+}
+
+.mv-origen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+.mv-origen legend {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.mv-opcion {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition: border-color var(--transicion);
+}
+
+.mv-opcion.elegida {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.mv-opcion input {
+  margin-top: 3px;
+  accent-color: var(--color-primario);
+}
+
+.mv-opcion span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mv-opcion strong {
+  font-size: 14px;
+  color: var(--color-texto);
+}
+
+.mv-opcion small {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.mv-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+}
+
+.mv-fila > .campo {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.mv-fila > .mv-tema {
+  flex: 3 1 280px;
+}
+
+.mv-fila > .mv-anio,
+.mv-fila > .mv-cuantas {
+  flex: 0 1 110px;
+}
+
+/* `.campo` solo da estilo a los `input`: aquí también hay select y textarea. */
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  resize: vertical;
+}
+
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.campo code {
+  font-size: 12px;
+}
+
+.mv-ajustes-boton {
+  margin: 0 0 14px;
+  padding: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.mv-ajustes {
+  margin-bottom: 4px;
+  padding: 16px 16px 0;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.mv-acciones {
+  margin: 10px 0 4px;
+}
+
+.mv-resultado {
+  margin-top: 22px;
+}
+
+.mv-cifras {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+}
+
+.mv-cifras strong {
+  color: var(--color-texto);
+}
+
+/* El visor ocupa lo que le den: sin alto fijo, React lo pinta de 0 px. */
+.mv-visor {
+  position: relative;
+  height: min(680px, 75vh);
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.mv-lienzo {
+  width: 100%;
+  height: 100%;
+}
+
+.mv-cargando {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+}
+
+.mv-pie {
+  margin: 8px 0 14px;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.mv-descargas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mv-metodo {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.mv-metodo summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mv-metodo p {
+  line-height: 1.6;
+}
+
+.mv-metodo ul {
+  padding-left: 18px;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.mv-tabla-marco {
+  overflow-x: auto;
+}
+
+.mv-tabla {
+  width: 100%;
+  font-size: 13.5px;
+  border-collapse: collapse;
+}
+
+.mv-tabla caption {
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.mv-tabla th,
+.mv-tabla td {
+  padding: 7px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.mv-tabla th:first-child,
+.mv-tabla td:first-child {
+  text-align: left;
+}
+
+.mv-tabla th {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 640px) {
+  .mv-visor {
+    height: 70vh;
+  }
+}
