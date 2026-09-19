@@ -7,6 +7,51 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { MendeleyService } from '../../core/services/mendeley.service';
 import { EstadoDeZotero, QuePuedeTraer } from '../../core/services/zotero.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
+import { GuiaDeUso, MensajeDeEjemplo, PasoDeGuia } from './guia-de-uso';
+
+const PASOS: readonly PasoDeGuia[] = [
+  {
+    titulo: 'Conecta tu Mendeley',
+    detalle:
+      'Pulsa «Conectar mi Mendeley» y autoriza en mendeley.com. Mendeley pide permiso completo, pero solo leemos: no cambiamos ni borramos nada, y no tienes que copiar ninguna clave.',
+  },
+  {
+    titulo: 'Elige qué traer',
+    detalle:
+      'Una carpeta con las fuentes de tu tesis, o toda tu biblioteca. Luego se pone al día sola cada noche.',
+  },
+  {
+    titulo: 'Pídeselo a Claude',
+    detalle:
+      'En tu conector, pídele que te muestre tus fuentes o que busque en ellas un tema. Las usa para redactar y citar, y tu Word sale con las citas y la bibliografía en la norma de tu proyecto.',
+  },
+];
+
+const FRASES: readonly string[] = [
+  'muéstrame mis fuentes de Mendeley',
+  'busca en mis fuentes sobre…',
+  'usa mis fuentes de Mendeley para los antecedentes',
+];
+
+const EJEMPLO: readonly MensajeDeEjemplo[] = [
+  { de: 'tu', texto: 'Muéstrame mis fuentes de Mendeley.' },
+  {
+    de: 'claude',
+    texto:
+      'Tienes 42 fuentes de tu carpeta «Tesis». La mayoría son artículos de revista de los últimos cinco años.',
+  },
+  { de: 'tu', texto: 'Busca en mis fuentes sobre clima organizacional.' },
+  {
+    de: 'claude',
+    texto: 'Encontré 7 que tratan el tema. ¿Las uso para tus antecedentes?',
+  },
+  { de: 'tu', texto: 'Sí, redacta los antecedentes con ellas.' },
+  {
+    de: 'claude',
+    texto:
+      'Listo. Cada párrafo cita a su autor, y en tu Word las citas y la bibliografía salen en la norma de tu proyecto.',
+  },
+];
 
 /**
  * Conectar el Mendeley del propio tesista.
@@ -22,7 +67,7 @@ import { AvisoFlotante } from '../layout/aviso-flotante';
  */
 @Component({
   selector: 'app-mi-mendeley',
-  imports: [AvisoFlotante, DatePipe],
+  imports: [AvisoFlotante, DatePipe, GuiaDeUso],
   templateUrl: './mi-mendeley.html',
   // Los estilos del panel de Zotero: es la misma pieza con otro servicio.
   styleUrl: './mi-zotero.css',
@@ -34,6 +79,17 @@ export class MiMendeleyPanel implements OnInit {
   private readonly router = inject(Router);
 
   readonly estado = signal<EstadoDeZotero | null>(null);
+
+  readonly pasos = PASOS;
+  readonly frases = FRASES;
+  readonly ejemplo = EJEMPLO;
+
+  /** Por dónde va: sin conectar, sin elegir qué traer, o ya con sus fuentes. */
+  readonly pasoActual = computed(() => {
+    const datos = this.estado();
+    if (!datos?.conectado) return 0;
+    return datos.coleccion ? 2 : 1;
+  });
   readonly colecciones = signal<QuePuedeTraer | null>(null);
 
   readonly cargando = signal(true);
@@ -208,9 +264,7 @@ export class MiMendeleyPanel implements OnInit {
       next: (resultado) => {
         this.trayendo.set(false);
         this.parte.set(
-          resultado.guardadas > 0
-            ? `${resultado.guardadas} fuentes nuevas.`
-            : 'Ya estaba al día.',
+          resultado.guardadas > 0 ? `${resultado.guardadas} fuentes nuevas.` : 'Ya estaba al día.',
         );
         this.cargar();
       },

@@ -98,6 +98,19 @@
         <button
           type="button"
           role="tab"
+          id="pestana-atlas"
+          aria-controls="panel-atlas"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'atlas'"
+          [attr.aria-selected]="herramienta() === 'atlas'"
+          (click)="herramienta.set('atlas')"
+        >
+          <span class="marca"><img src="/iconos/atlasti.png" alt="" /></span>
+          Tu ATLAS.ti
+        </button>
+        <button
+          type="button"
+          role="tab"
           id="pestana-mapa"
           aria-controls="panel-mapa"
           class="herramientas-pestana"
@@ -164,6 +177,18 @@
         [hidden]="herramienta() !== 'r'"
       >
         <app-mi-analisis-r />
+      </div>
+
+      <!-- Análisis cualitativo: se codifica con Claude y sale en .qdpx para
+           ATLAS.ti y compañía. Ver `MiAtlasTi`. -->
+      <div
+        id="panel-atlas"
+        role="tabpanel"
+        aria-labelledby="pestana-atlas"
+        class="herramientas-panel"
+        [hidden]="herramienta() !== 'atlas'"
+      >
+        <app-mi-atlas-ti />
       </div>
 
       <!-- El mapa de VOSviewer. Solo se pinta la primera vez que se abre la

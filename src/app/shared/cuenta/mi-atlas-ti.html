@@ -1,0 +1,43 @@
+<p class="nota">
+  Para los resultados de una tesis cualitativa: entrevistas o grupos focales. Claude las codifica
+  contigo y te entrega el proyecto para abrirlo ya codificado en ATLAS.ti.
+  <strong>No necesitas tener ATLAS.ti.</strong>
+</p>
+
+<!-- Lo que más frena: «¿y cómo lo abro en mi programa?». Se elige el programa y
+     se ven los pasos; quien no tiene ninguno ve que no le hace falta. -->
+<section class="ar-prueba" aria-labelledby="at-programa-titulo">
+  <h3 id="at-programa-titulo">¿Con qué programa lo vas a abrir?</h3>
+  <p class="ar-ayuda">
+    Tu proyecto sale en .qdpx, el formato de intercambio que importan los programas de análisis
+    cualitativo.
+  </p>
+
+  <div class="ar-objetivos" role="radiogroup" aria-labelledby="at-programa-titulo">
+    @for (p of programas; track p.clave) {
+      <button
+        type="button"
+        role="radio"
+        class="ar-objetivo"
+        [class.ar-elegido]="programa() === p.clave"
+        [attr.aria-checked]="programa() === p.clave"
+        (click)="programa.set(p.clave)"
+      >
+        {{ p.texto }}
+      </button>
+    }
+  </div>
+
+  @if (comoSeAbre(); as c) {
+    <div class="ar-resultado" aria-live="polite">
+      <div class="ar-opcion">
+        @for (paso of c.pasos; track $index) {
+          <span>{{ $index + 1 }}. {{ paso }}</span>
+        }
+      </div>
+    </div>
+    <p class="ar-ayuda">{{ c.nota }} Si no encuentras el menú, busca «REFI-QDA»: cambia de nombre entre versiones.</p>
+  }
+</section>
+
+<app-guia-de-uso titulo="Cómo se usa" [pasos]="pasos" [frases]="frases" [ejemplo]="ejemplo" />

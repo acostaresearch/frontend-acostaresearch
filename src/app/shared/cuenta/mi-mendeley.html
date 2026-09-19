@@ -171,11 +171,16 @@
         lo que añadas, aparece.
       </p>
 
-      <p class="nota-pie">
-        Para usarlas, pídeselo a Claude en tu conector: «muéstrame mis fuentes de Mendeley» o
-        «busca en mis fuentes sobre…». Tu Word sale con las citas y la bibliografía en la norma de
-        tu proyecto.
-      </p>
+    }
+
+    @if (datos.disponible) {
+      <app-guia-de-uso
+        titulo="Cómo se usa tu Mendeley"
+        [pasos]="pasos"
+        [pasoActual]="pasoActual()"
+        [frases]="frases"
+        [ejemplo]="ejemplo"
+      />
     }
   }
 }
