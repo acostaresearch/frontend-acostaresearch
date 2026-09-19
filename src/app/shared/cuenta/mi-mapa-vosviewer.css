@@ -170,11 +170,64 @@
   color: var(--color-texto-tenue);
 }
 
-.mv-descargas {
+/* ── «Exportar»: un menú que cae bajo el botón ── */
+.mv-exportar {
+  position: relative;
+}
+
+.mv-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  min-width: 260px;
+  padding: 4px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+  animation: mv-caer 120ms ease-out;
+}
+
+@keyframes mv-caer {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.mv-menu button {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+}
+
+.mv-menu button:hover,
+.mv-menu button:focus-visible {
+  background: var(--color-primario-suave);
+  outline: none;
+}
+
+.mv-menu small {
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mv-menu {
+    animation: none;
+  }
 }
 
 .mv-metodo {

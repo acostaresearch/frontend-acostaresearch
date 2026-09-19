@@ -11,6 +11,36 @@
   <button type="button" class="boton" (click)="asistenteAbierto.set(true)">
     {{ mapa() ? 'Crear otro mapa…' : 'Crear mapa…' }}
   </button>
+  @if (mapa()) {
+    <!-- «Exportar», como el menú «File → Save/Export» de VOSviewer. -->
+    <div class="mv-exportar">
+      <button
+        type="button"
+        class="boton secundario"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="exportarAbierto()"
+        (click)="exportarAbierto.set(!exportarAbierto())"
+      >
+        Exportar <span aria-hidden="true">▾</span>
+      </button>
+      @if (exportarAbierto()) {
+        <div class="mv-menu" role="menu">
+          <button type="button" role="menuitem" (click)="exportar('json')">
+            Mapa (.json)<small>Para VOSviewer Online o de escritorio</small>
+          </button>
+          <button type="button" role="menuitem" (click)="exportar('mapa')">
+            Archivo map (.txt)<small>Los elementos, con sus puntuaciones</small>
+          </button>
+          <button type="button" role="menuitem" (click)="exportar('red')">
+            Archivo network (.txt)<small>Los enlaces y su fuerza</small>
+          </button>
+          <button type="button" role="menuitem" (click)="exportar('tabla')">
+            Tabla (Excel)<small>Todas las filas, para tu tesis</small>
+          </button>
+        </div>
+      }
+    </div>
+  }
   @if (mapa(); as m) {
     <span class="mv-titulo-mapa">
       <strong>{{ analisisDelMapa()?.nombre }}</strong> · {{ nombresDeUnidad[m.unidad].nombre }} · recuento
@@ -72,13 +102,6 @@
       el panel) y <em>Density</em>. Con el botón de captura guardas la imagen para tu tesis. Si ves pocos
       grupos o demasiados, ajusta <em>Resolution</em> en <em>Analysis</em>.
     </p>
-
-    <div class="mv-descargas">
-      <button type="button" class="boton secundario" (click)="bajarJson()">Mapa (.json)</button>
-      <button type="button" class="boton secundario" (click)="bajarMapa()">Archivo map (.txt)</button>
-      <button type="button" class="boton secundario" (click)="bajarRed()">Archivo network (.txt)</button>
-      <button type="button" class="boton secundario" (click)="bajarTabla()">Tabla (Excel)</button>
-    </div>
 
     @if (metodo(); as metodo) {
       <details class="mv-metodo">

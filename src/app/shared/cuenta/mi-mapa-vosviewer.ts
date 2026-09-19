@@ -100,6 +100,10 @@ interface Columna {
   imports: [AvisoFlotante, DecimalPipe, CrearMapa],
   templateUrl: './mi-mapa-vosviewer.html',
   styleUrl: './mi-mapa-vosviewer.css',
+  host: {
+    '(document:click)': 'cerrarExportarSiFuera($event)',
+    '(document:keydown.escape)': 'exportarAbierto.set(false)',
+  },
 })
 export class MiMapaVosviewer implements OnDestroy {
   private readonly mapas = inject(MapasService);
@@ -118,6 +122,8 @@ export class MiMapaVosviewer implements OnDestroy {
   readonly error = signal<string | null>(null);
   readonly mapa = signal<MapaDeVosviewer | null>(null);
   readonly copiado = signal(false);
+  /** El menú «Exportar» de la barra. */
+  readonly exportarAbierto = signal(false);
 
   /** Cómo se pidió el mapa que se ve: para «Quitar» y para el párrafo. */
   private ultimoPedido: PedidoDeMapa | null = null;
@@ -258,6 +264,21 @@ export class MiMapaVosviewer implements OnDestroy {
       .replace(/^-|-$/g, '')
       .slice(0, 40);
     return `vosviewer-${m?.analisis ?? 'mapa'}-${m?.unidad ?? ''}-${tema || 'mapa'}`;
+  }
+
+  exportar(que: 'json' | 'mapa' | 'red' | 'tabla'): void {
+    this.exportarAbierto.set(false);
+    if (que === 'json') this.bajarJson();
+    else if (que === 'mapa') this.bajarMapa();
+    else if (que === 'red') this.bajarRed();
+    else this.bajarTabla();
+  }
+
+  /** El menú se cierra al pulsar fuera de él o con Escape. */
+  cerrarExportarSiFuera(evento: Event): void {
+    if (!this.exportarAbierto()) return;
+    const destino = evento.target as HTMLElement | null;
+    if (!destino?.closest('.mv-exportar')) this.exportarAbierto.set(false);
   }
 
   bajarJson(): void {
