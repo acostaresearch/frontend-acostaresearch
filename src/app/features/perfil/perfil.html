@@ -139,12 +139,30 @@
          quita la caja al componente para que sus tarjetas sean casillas de
          aquí.
 
-         «Mis compras» va a lo ancho: a su lado estaba el canje de códigos, que
-         ahora vive solo en /planes. Queda una línea que lleva hasta allí, para
-         quien sigue buscándolo aquí por un correo antiguo. -->
+         «Mis compras» va después del conector, a media anchura y al lado de la
+         ayuda. El canje de códigos vive solo en /planes; al pie de las compras
+         queda una salida hasta allí, para quien sigue buscándolo aquí por un
+         correo antiguo. -->
     <main class="contenido rejilla">
-      <section class="tarjeta tramo-6">
-        <h2>Mis compras</h2>
+
+      <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
+           componente que usa el panel del administrador, que también es una
+           persona con licencias que mirar. -->
+      <app-mi-conector />
+
+      <!-- «Mis compras», a media anchura y al lado de «¿Necesitas ayuda?», la
+           última tarjeta del conector: son las dos cosas que se miran cuando
+           algo no cuadra —¿entró el pago?, ¿a quién le escribo?— y juntas se
+           leen de un vistazo. El medio de pago va debajo del importe y no en
+           columna propia: a media anchura cinco columnas no caben. -->
+      <section class="tarjeta tramo-3 compras-tarjeta">
+        <div class="compras-cabecera">
+          <h2>Mis compras</h2>
+          @if (compras().length > 0) {
+            <span class="compras-cuenta">{{ compras().length }}</span>
+          }
+        </div>
+        <p class="nota">Tus pagos, del más reciente al más antiguo.</p>
 
         @if (cargandoCompras()) {
           <p class="nota">Cargando tus compras…</p>
@@ -156,27 +174,32 @@
                   <th>Fecha</th>
                   <th>Plan</th>
                   <th class="derecha">Importe</th>
-                  <th>Medio</th>
                   <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
                 @for (pago of compras(); track pago.id) {
                   <tr>
-                    <td>{{ pago.paidAt ?? pago.createdAt | date: 'd MMM y' }}</td>
-                    <td>
+                    <td class="fecha">{{ pago.paidAt ?? pago.createdAt | date: 'd MMM y' }}</td>
+                    <td class="plan">
                       {{ pago.plan.name }}
                       @if (pago.plan.words > 0) {
                         <span class="tenue">{{ pago.plan.words | number }} palabras</span>
                       }
                     </td>
-                    <td class="derecha">{{ precio(pago) }}</td>
-                    <td class="tenue">{{ medioPago(pago) }}</td>
+                    <td class="derecha">
+                      <b class="importe">{{ precio(pago) }}</b>
+                      <span class="tenue">{{ medioPago(pago) }}</span>
+                    </td>
                     <td>
                       <span
-                        class="etiqueta"
+                        class="etiqueta estado"
                         [class.buena]="pago.status === 'PAID'"
-                        [class.mala]="pago.status === 'FAILED' || pago.status === 'CANCELLED'"
+                        [class.mala]="
+                          pago.status === 'FAILED' ||
+                          pago.status === 'CANCELLED' ||
+                          pago.status === 'REJECTED'
+                        "
                       >
                         {{ estadoPago(pago) }}
                       </span>
@@ -193,16 +216,15 @@
           </p>
         }
 
-        <p class="nota canje-aviso">
-          ¿Pagaste por Yape o transferencia?
-          <a routerLink="/planes">Canjea tu código en Precios</a>.
-        </p>
+        <a class="canje-aviso" routerLink="/planes">
+          <span class="canje-icono" aria-hidden="true">#</span>
+          <span class="canje-texto">
+            <strong>¿Pagaste por Yape o transferencia?</strong>
+            <span>Canjea tu código en Precios.</span>
+          </span>
+          <span class="canje-accion">Canjear</span>
+        </a>
       </section>
-
-      <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
-           componente que usa el panel del administrador, que también es una
-           persona con licencias que mirar. -->
-      <app-mi-conector />
 
       <!-- El mismo componente que usa el panel del administrador: la mitad que
            se le pida, con la caja que ponga cada pantalla. -->

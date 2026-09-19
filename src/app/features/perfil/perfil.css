@@ -279,9 +279,43 @@
   background: var(--color-error-suave);
 }
 
-/* ── Compras ────────────────────────────────────────────────────────────── */
+/* ── Compras ────────────────────────────────────────────────────────────────
+   A media anchura, al lado de la ayuda. La tarjeta es una columna flexible
+   para que la salida al canje quede siempre al pie, a la altura del último
+   botón de la ayuda, tenga la tabla dos filas o seis. */
+.compras-tarjeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.compras-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.compras-cabecera h2 {
+  margin-bottom: 0;
+}
+
+.compras-cuenta {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+/* El hueco entre la tabla y el pie, para cuando la tarjeta no estira. */
 .tabla-envoltura {
   overflow-x: auto;
+  margin: 4px 0 14px;
 }
 
 .compras {
@@ -291,27 +325,54 @@
 }
 
 .compras th {
-  padding: 0 12px 8px 0;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 0 10px 8px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-align: left;
   white-space: nowrap;
-  color: var(--color-texto-suave);
+  color: var(--color-texto-tenue);
   border-bottom: 1px solid var(--color-borde);
 }
 
 .compras td {
-  padding: 11px 12px 11px 0;
-  vertical-align: top;
+  padding: 11px 10px;
+  vertical-align: middle;
   border-bottom: 1px solid var(--color-borde);
+  transition: background var(--transicion);
+}
+
+.compras th:first-child,
+.compras td:first-child {
+  padding-left: 0;
+}
+
+.compras th:last-child,
+.compras td:last-child {
+  padding-right: 0;
+}
+
+.compras tbody tr:hover td {
+  background: var(--color-fondo);
 }
 
 /* La fecha y el importe no se parten: «S/ 220.00» en dos renglones deja de
    leerse como una cifra. El nombre del plan sí se parte, que para eso es el
    único que puede. */
-.compras td:first-child,
+.compras .fecha,
 .compras .derecha {
   white-space: nowrap;
+}
+
+.compras .fecha {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.compras .plan {
+  font-weight: 550;
+  line-height: 1.4;
 }
 
 .compras .derecha {
@@ -319,8 +380,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.compras .importe {
+  display: block;
+  font-weight: 650;
+}
+
 .compras td .tenue {
   display: block;
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .tenue {
@@ -330,6 +398,83 @@
 
 .compras tr:last-child td {
   border-bottom: none;
+}
+
+/* Un punto delante del estado: el color se lee antes que la palabra. */
+.etiqueta.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.etiqueta.estado::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+/* La salida al canje, que vive en /planes: al pie de «Mis compras», con la
+   misma caja que los botones de la ayuda de al lado. */
+.canje-aviso {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: auto;
+  padding: 11px 13px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--color-fondo);
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+
+.canje-aviso:hover {
+  background: var(--color-superficie);
+  border-color: var(--color-primario);
+}
+
+.canje-icono {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.canje-texto {
+  display: grid;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.canje-texto strong {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.canje-texto span {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.canje-accion {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primario);
 }
 
 /* ── Ventana de borrar la cuenta ────────────────────────────────────────────
@@ -407,7 +552,3 @@
   width: auto;
 }
 
-/* La salida al canje, que vive en /planes: al pie de «Mis compras». */
-.canje-aviso {
-  margin: 14px 0 0;
-}
