@@ -1,0 +1,88 @@
+<app-site-header />
+
+<main class="pagina subir">
+  <section class="tarjeta">
+    <p class="antetitulo">Tus entrevistas · desde tu conversación</p>
+
+    @switch (paso()) {
+      @case ('comprobando') {
+        <p class="nota">Comprobando el enlace…</p>
+      }
+
+      @case ('enlace-no-vale') {
+        <h1>Este enlace ya no vale</h1>
+        <div class="aviso error" role="alert">{{ error() }}</div>
+        <p>Vuelve a tu conversación y pide un enlace nuevo para subir tus entrevistas.</p>
+      }
+
+      @case ('subido') {
+        <h1>Tus entrevistas ya están guardadas</h1>
+
+        <ul class="nota">
+          @for (r of resultados(); track $index) {
+            <li [class.error]="!r.ok">{{ r.ok ? '✓' : '✗' }} {{ r.nombre }}: {{ r.mensaje }}</li>
+          }
+        </ul>
+
+        <div class="siguiente">
+          <strong>Ahora vuelve a tu conversación</strong> y dile «ya subí mis entrevistas». Las va a leer
+          una por una y te va a proponer los códigos; tú los revisas antes de que se guarden.
+        </div>
+
+        <p class="nota">¿Te faltó alguna? Súbela también aquí.</p>
+        <label class="boton secundario otro">
+          Subir más entrevistas
+          <input type="file" multiple [accept]="aceptados" (change)="elegir($event)" />
+        </label>
+      }
+
+      @default {
+        <h1>Sube tus entrevistas</h1>
+        <p>
+          Sube las transcripciones de tus entrevistas o grupos focales, <strong>una por archivo</strong>.
+          Tu asistente las lee, te propone los códigos y las citas de cada uno, y tú decides qué se queda.
+        </p>
+
+        @if (entrevistas().length > 0) {
+          <p class="nota">Ya subiste:</p>
+          <ul class="nota">
+            @for (e of entrevistas(); track e.id) {
+              <li>{{ e.id }} · {{ e.nombre }} · {{ e.parrafos }} párrafos</li>
+            }
+          </ul>
+        }
+
+        <label
+          class="zona"
+          [class.encima]="encima()"
+          [class.ocupada]="paso() === 'subiendo'"
+          (dragover)="arrastrar($event, true)"
+          (dragleave)="arrastrar($event, false)"
+          (drop)="soltar($event)"
+        >
+          <input type="file" multiple [accept]="aceptados" [disabled]="paso() === 'subiendo'" (change)="elegir($event)" />
+          @if (paso() === 'subiendo') {
+            <span class="zona-titulo">Subiendo y leyendo «{{ actual() }}»…</span>
+          } @else {
+            <span class="zona-titulo"><strong>Elige tus archivos</strong> o arrástralos aquí</span>
+            <span class="nota">Word (.docx), PDF o texto (.txt) · hasta 15 MB cada uno · hasta 40 entrevistas</span>
+          }
+        </label>
+
+        @if (resultados().length > 0) {
+          <ul class="nota">
+            @for (r of resultados(); track $index) {
+              <li [class.error]="!r.ok">{{ r.ok ? '✓' : '✗' }} {{ r.nombre }}: {{ r.mensaje }}</li>
+            }
+          </ul>
+        }
+
+        <p class="nota">
+          Si subes un archivo con el mismo nombre que otro, reemplaza al anterior. Un PDF escaneado (fotos
+          de las hojas) no se puede leer: expórtalo desde Word. Antes de subirlas, quita o cambia los nombres
+          reales de los participantes si tu comité de ética lo pide.
+        </p>
+      }
+    }
+  </section>
+</main>

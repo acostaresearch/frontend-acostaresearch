@@ -124,6 +124,14 @@ export const routes: Routes = [
     title: 'Sube el material de tu curso · Acosta Research',
     loadComponent: () => import('./features/subir-material/subir-material').then((m) => m.SubirMaterial),
   },
+  // Las entrevistas del análisis cualitativo, desde el enlace que da Claude con
+  // «analisis_cualitativo». Sin sesión, como el del material.
+  {
+    path: 'subir-entrevistas/:token',
+    title: 'Sube tus entrevistas · Acosta Research',
+    loadComponent: () =>
+      import('./features/subir-entrevistas/subir-entrevistas').then((m) => m.SubirEntrevistas),
+  },
   // La tesis o el artículo escrito por su cuenta, desde el enlace que da Claude al
   // citarlo o humanizarlo. Sin sesión, como el del formato.
   {
