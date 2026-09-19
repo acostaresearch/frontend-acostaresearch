@@ -9,6 +9,7 @@ import {
   BusquedaDeScopus,
   EstadoDeScopus,
   ImportacionDeScopus,
+  OrdenDeScopus,
   ResultadoDeScopus,
   ScopusService,
 } from '../../core/services/scopus.service';
@@ -115,6 +116,8 @@ export class MiScopusPanel implements OnInit {
   readonly campos = [
     { valor: 'TITLE-ABS-KEY', texto: 'Título, resumen y palabras clave' },
     { valor: 'TITLE', texto: 'Solo el título' },
+    { valor: 'ABS', texto: 'Solo el resumen' },
+    { valor: 'KEY', texto: 'Solo las palabras clave' },
     { valor: 'AUTHOR-NAME', texto: 'Autor' },
     { valor: 'SRCTITLE', texto: 'Revista' },
     { valor: 'DOI', texto: 'DOI' },
@@ -129,9 +132,198 @@ export class MiScopusPanel implements OnInit {
    * las palabras sueltas Scopus las junta con AND dentro del campo.
    */
   readonly ecuacionNormal = computed(() => {
+    if (this.enConceptos()) {
+      const campo = this.campo();
+      return this.conceptos()
+        .map((concepto) => {
+          const terminos = [concepto.nombre, ...concepto.sinonimos].map((t) => this.comoFrase(t));
+          return `${campo}(${terminos.join(' OR ')})`;
+        })
+        .join(' AND ');
+    }
     const limpio = this.texto().replace(/[(){}]/g, ' ').replace(/\s+/g, ' ').trim();
     return limpio ? `${this.campo()}(${limpio})` : '';
   });
+
+  // ── Conceptos separados por comas ─────────────────────────────────────────
+
+  /**
+   * Los campos en los que una coma separa conceptos. En autor, revista y DOI
+   * la coma es parte de lo que se busca —«Kansal, P.»— y no se toca.
+   */
+  private static readonly CAMPOS_CON_CONCEPTOS = new Set(['TITLE-ABS-KEY', 'TITLE', 'ABS', 'KEY']);
+
+  /** Los sinónimos de cada concepto, por su nombre en minúsculas. */
+  readonly sinonimos = signal<Readonly<Record<string, readonly string[]>>>({});
+
+  /**
+   * Lo escrito, partido por comas: cada trozo es un concepto de la búsqueda.
+   *
+   * «use of AI, critical thinking, college students» son TRES ideas que tienen
+   * que aparecer a la vez, no nueve palabras sueltas: sin separarlas, la «AI»
+   * del primero se cruzaba con cualquier cosa.
+   */
+  readonly conceptos = computed(() => {
+    const vistos = new Set<string>();
+    const sinonimos = this.sinonimos();
+    return this.texto()
+      .split(/[,;]/)
+      .map((trozo) => this.limpio(trozo))
+      .filter((nombre) => {
+        const clave = nombre.toLowerCase();
+        if (!nombre || vistos.has(clave)) return false;
+        vistos.add(clave);
+        return true;
+      })
+      .map((nombre) => ({ nombre, sinonimos: sinonimos[nombre.toLowerCase()] ?? [] }));
+  });
+
+  /**
+   * Si la búsqueda normal va por conceptos: en un campo que los admite, con
+   * más de uno o con sinónimos. Una sola idea sin comas se busca como siempre,
+   * palabra por palabra, para no volver frase exacta lo que no lo era.
+   */
+  readonly enConceptos = computed(
+    () =>
+      MiScopusPanel.CAMPOS_CON_CONCEPTOS.has(this.campo()) &&
+      (this.conceptos().length > 1 || this.conceptos().some((c) => c.sinonimos.length > 0)),
+  );
+
+  /** Un término de varias palabras va entre comillas: es una idea, no palabras sueltas. */
+  private comoFrase(termino: string): string {
+    const limpio = this.limpio(termino);
+    return /\s/.test(limpio) ? `"${limpio}"` : limpio;
+  }
+
+  agregarSinonimo(nombre: string, campo: HTMLInputElement): void {
+    const valor = this.limpio(campo.value);
+    campo.value = '';
+    if (!valor) return;
+    const clave = nombre.toLowerCase();
+    const actuales = this.sinonimos()[clave] ?? [];
+    const repetido =
+      valor.toLowerCase() === clave ||
+      actuales.some((s) => s.toLowerCase() === valor.toLowerCase());
+    if (repetido) return;
+    this.sinonimos.update((todos) => ({ ...todos, [clave]: [...actuales, valor] }));
+  }
+
+  quitarSinonimo(nombre: string, sinonimo: string): void {
+    const clave = nombre.toLowerCase();
+    this.sinonimos.update((todos) => ({
+      ...todos,
+      [clave]: (todos[clave] ?? []).filter((s) => s !== sinonimo),
+    }));
+  }
+
+  /** Quita un concepto del campo, y sus sinónimos con él. */
+  quitarConcepto(nombre: string): void {
+    const clave = nombre.toLowerCase();
+    this.texto.set(
+      this.conceptos()
+        .filter((c) => c.nombre.toLowerCase() !== clave)
+        .map((c) => c.nombre)
+        .join(', '),
+    );
+    this.sinonimos.update((todos) => {
+      const copia = { ...todos };
+      delete copia[clave];
+      return copia;
+    });
+  }
+
+  /**
+   * ¿Lo escribió en español?
+   *
+   * Casi toda la literatura de Scopus está indexada en inglés, y buscar
+   * «pensamiento crítico» da una décima parte que «critical thinking». Se mira
+   * por tildes o por dos palabras que solo existen en español; sin pretender
+   * acertar siempre: es un aviso, no un bloqueo.
+   */
+  readonly enEspanol = computed(() => {
+    const texto = this.texto().toLowerCase();
+    if (!texto.trim() || !MiScopusPanel.CAMPOS_CON_CONCEPTOS.has(this.campo())) return false;
+    if (/[áéíóúñ¿¡]/.test(texto)) return true;
+    const palabras = texto.match(
+      /\b(de|del|la|las|los|el|en|para|con|por|y|uso|estudiantes|universitarios|docentes|pensamiento|aprendizaje|calidad|gestion|nivel|salud|empresa|trabajo)\b/g,
+    );
+    return (palabras?.length ?? 0) >= 2;
+  });
+
+  // ── El generador con IA ───────────────────────────────────────────────────
+
+  /**
+   * El «Generador de consultas de IA» de Scopus, hecho con Gemini: describe su
+   * tema en español y recibe los conceptos en inglés con sus sinónimos, ya
+   * como etiquetas. No busca: propone, y él revisa antes de pulsar «Buscar».
+   */
+  readonly iaAbierta = signal(false);
+  readonly temaIa = signal('');
+  readonly generando = signal(false);
+  readonly errorIa = signal<string | null>(null);
+  readonly notaIa = signal<string | null>(null);
+
+  alternarIa(encendida: boolean): void {
+    this.iaAbierta.set(encendida);
+    this.errorIa.set(null);
+    if (encendida) this.cambiarModo('normal');
+  }
+
+  /** Desde el aviso de español: lleva lo escrito al generador para pasarlo a inglés. */
+  pasarAIngles(): void {
+    this.temaIa.set(this.texto());
+    this.alternarIa(true);
+  }
+
+  generarConIa(): void {
+    const tema = this.temaIa().trim();
+    if (tema.length < 8 || this.generando()) return;
+
+    this.generando.set(true);
+    this.errorIa.set(null);
+    this.notaIa.set(null);
+
+    this.scopus.generarConsulta(tema).subscribe({
+      next: ({ conceptos, nota }) => {
+        this.generando.set(false);
+        this.campo.set('TITLE-ABS-KEY');
+        this.texto.set(conceptos.map((c) => c.nombre).join(', '));
+        this.sinonimos.set(
+          Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
+        );
+        this.notaIa.set(nota);
+        this.iaAbierta.set(false);
+      },
+      error: (fallo: unknown) => {
+        this.generando.set(false);
+        this.errorIa.set(toApiError(fallo).message);
+      },
+    });
+  }
+
+  // ── El orden de los resultados ────────────────────────────────────────────
+
+  readonly orden = signal<OrdenDeScopus>('citas');
+  readonly menuOrdenResultados = signal(false);
+
+  readonly ordenesDeResultados: readonly { valor: OrdenDeScopus; texto: string }[] = [
+    { valor: 'citas', texto: 'Más citados' },
+    { valor: 'recientes', texto: 'Más recientes' },
+    { valor: 'antiguos', texto: 'Más antiguos' },
+    { valor: 'relevancia', texto: 'Relevancia' },
+  ];
+
+  readonly textoDelOrdenDeResultados = computed(
+    () => this.ordenesDeResultados.find((o) => o.valor === this.orden())?.texto ?? '',
+  );
+
+  /** Cambiar el orden vuelve a la primera página: la segunda de otro orden no es la misma. */
+  elegirOrdenDeResultados(valor: OrdenDeScopus): void {
+    this.menuOrdenResultados.set(false);
+    if (valor === this.orden()) return;
+    this.orden.set(valor);
+    if (this.busqueda()) this.buscar(1);
+  }
 
   /** La ecuación del modo en el que está, sin filtros. */
   private readonly ecuacionBase = computed(() =>
@@ -170,7 +362,7 @@ export class MiScopusPanel implements OnInit {
   readonly ejemplo = 'TITLE-ABS-KEY("mobile applications" AND education) AND PUBYEAR > 2019';
 
   /** El de la búsqueda normal: palabras, en inglés, sin sintaxis. */
-  readonly ejemploNormal = '"mobile learning" university students';
+  readonly ejemploNormal = 'generative AI, critical thinking, university students';
 
   /**
    * «Refinar búsqueda»: los mismos filtros que el panel de Scopus.
@@ -558,7 +750,8 @@ export class MiScopusPanel implements OnInit {
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
     // Escape cierra lo que esté más arriba: primero el menú, después la ventana.
-    if (this.menuOrden()) this.menuOrden.set(false);
+    if (this.menuOrdenResultados()) this.menuOrdenResultados.set(false);
+    else if (this.menuOrden()) this.menuOrden.set(false);
     else if (this.modalFaceta()) this.cerrarModal();
     else if (this.parte()) this.cerrarParte();
   }
@@ -695,7 +888,7 @@ export class MiScopusPanel implements OnInit {
     this.parte.set(null);
     this.marcados.set(new Set());
 
-    this.scopus.buscar(ecuacion, pagina).subscribe({
+    this.scopus.buscar(ecuacion, pagina, this.orden()).subscribe({
       next: (resultado) => {
         this.busqueda.set(resultado);
         this.buscando.set(false);
@@ -754,6 +947,8 @@ export class MiScopusPanel implements OnInit {
    */
   limpiar(): void {
     this.texto.set('');
+    this.sinonimos.set({});
+    this.notaIa.set(null);
     this.ecuacion.set('');
     this.busqueda.set(null);
     this.marcados.set(new Set());

@@ -80,6 +80,19 @@
           <!-- Un interruptor y no dos pestañas: como en Scopus, la avanzada es
                la misma búsqueda escrita de otra forma. Cada modo guarda su
                texto, así que ir y volver no borra nada. -->
+          <span class="sc-interruptores">
+          <!-- El «Generador de consultas de IA» de Scopus: describe su tema en
+               español y recibe los conceptos en inglés. -->
+          <label class="sc-interruptor sc-interruptor-ia">
+            <span><span aria-hidden="true">✨</span> Generador con IA</span>
+            <input
+              type="checkbox"
+              role="switch"
+              [checked]="iaAbierta()"
+              (change)="alternarIa($any($event.target).checked)"
+            />
+            <span class="sc-interruptor-pista" aria-hidden="true"></span>
+          </label>
           <label class="sc-interruptor">
             <span>Consulta avanzada</span>
             <input
@@ -90,7 +103,43 @@
             />
             <span class="sc-interruptor-pista" aria-hidden="true"></span>
           </label>
+          </span>
         </div>
+
+        <!-- ── El generador con IA ────────────────────────────────────────── -->
+        @if (iaAbierta()) {
+          <div class="sc-ia">
+            <label class="sc-ia-etiqueta" for="sc-tema-ia">
+              Describe tu tema en español, como se lo contarías a tu asesor
+            </label>
+            <textarea
+              id="sc-tema-ia"
+              class="sc-ia-campo"
+              rows="2"
+              placeholder="Quiero ver cómo el uso de la inteligencia artificial influye en el pensamiento crítico de los estudiantes universitarios"
+              [value]="temaIa()"
+              [disabled]="generando()"
+              (input)="temaIa.set($any($event.target).value)"
+            ></textarea>
+            <div class="sc-ia-pie">
+              <p>
+                La IA propone los conceptos en inglés con sus sinónimos. Tú los revisas antes de
+                buscar: puedes quitar, añadir o corregir cualquiera.
+              </p>
+              <button
+                type="button"
+                class="boton"
+                [disabled]="generando() || temaIa().trim().length < 8"
+                (click)="generarConIa()"
+              >
+                {{ generando() ? 'Pensando…' : 'Generar conceptos' }}
+              </button>
+            </div>
+            @if (errorIa(); as mensaje) {
+              <p class="scopus-aviso scopus-mal sc-ia-error">{{ mensaje }}</p>
+            }
+          </div>
+        }
 
         <div class="sc-caja" [class.sc-caja-ocupada]="buscando()">
           @if (modo() === 'normal') {
@@ -127,13 +176,76 @@
                     class="sc-vaciar"
                     aria-label="Vaciar el campo"
                     [disabled]="buscando()"
-                    (click)="texto.set('')"
+                    (click)="texto.set(''); sinonimos.set({})"
                   >
                     ×
                   </button>
                 }
               </label>
             </div>
+
+            @if (notaIa(); as nota) {
+              <p class="sc-nota-ia"><span aria-hidden="true">✨</span> {{ nota }}</p>
+            }
+
+            @if (enEspanol()) {
+              <p class="sc-idioma">
+                Parece que escribiste en español. Casi toda la literatura de Scopus está en inglés,
+                y en español saldrá muy poco.
+                <button type="button" class="sc-enlace" (click)="pasarAIngles()">
+                  Pasarlo a inglés con IA
+                </button>
+              </p>
+            }
+
+            <!-- Los conceptos: cada coma separa una idea que tiene que aparecer,
+                 y cada idea puede llevar sus sinónimos, que la amplían. -->
+            @if (enConceptos() || conceptos().length > 1) {
+              <div class="sc-conceptos">
+                <p class="sc-conceptos-titulo">
+                  Conceptos de tu búsqueda
+                  <small>tienen que aparecer todos · los sinónimos amplían cada uno</small>
+                </p>
+                @for (concepto of conceptos(); track concepto.nombre; let ultimo = $last) {
+                  <div class="sc-concepto">
+                    <span class="sc-concepto-nombre">{{ concepto.nombre }}</span>
+                    @for (sinonimo of concepto.sinonimos; track sinonimo) {
+                      <span class="sc-o" aria-hidden="true">o</span>
+                      <span class="sc-ficha">
+                        {{ sinonimo }}
+                        <button
+                          type="button"
+                          [attr.aria-label]="'Quitar el sinónimo ' + sinonimo"
+                          (click)="quitarSinonimo(concepto.nombre, sinonimo)"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    }
+                    <input
+                      #campoSinonimo
+                      type="text"
+                      class="sc-sinonimo"
+                      placeholder="+ sinónimo"
+                      [attr.aria-label]="'Añadir un sinónimo a ' + concepto.nombre"
+                      (keydown.enter)="agregarSinonimo(concepto.nombre, campoSinonimo)"
+                      (change)="agregarSinonimo(concepto.nombre, campoSinonimo)"
+                    />
+                    <button
+                      type="button"
+                      class="sc-quitar-concepto"
+                      [attr.aria-label]="'Quitar el concepto ' + concepto.nombre"
+                      (click)="quitarConcepto(concepto.nombre)"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  @if (!ultimo) {
+                    <span class="sc-y" aria-hidden="true">y</span>
+                  }
+                }
+              </div>
+            }
           } @else {
             <!-- Varias líneas: una ecuación real, con sus sinónimos, no cabe
                  en una. Enter busca; Mayúsculas+Enter parte la línea. -->
@@ -393,8 +505,13 @@
                 </p>
                 <ul class="scopus-pistas">
                   <li>
-                    Las palabras sueltas se buscan todas a la vez. Entre comillas,
-                    <code>"mobile learning"</code>, se busca la frase exacta.
+                    <b>Separa con comas las ideas de tu tema</b>:
+                    <code>generative AI, critical thinking, university students</code>. Cada una
+                    tiene que aparecer, y a cada una le puedes añadir sinónimos.
+                  </li>
+                  <li>
+                    ¿No sabes cómo se dice en inglés? Enciende <b>Generador con IA</b> y cuéntale tu
+                    tema en español.
                   </li>
                   <li>
                     Con «Buscar dentro» eliges dónde: en el título, por autor, por revista o por DOI.
@@ -450,7 +567,41 @@
                   Se encontraron <strong>{{ lista.total | number }}</strong>
                   {{ lista.total === 1 ? 'documento' : 'documentos' }}.
                 </p>
-                <span class="sc-orden">Ordenados por <b>más citados</b></span>
+                <div class="sc-orden sc-orden-resultados">
+                  <span>Ordenar por</span>
+                  <button
+                    type="button"
+                    class="sc-orden-boton"
+                    aria-haspopup="listbox"
+                    [attr.aria-expanded]="menuOrdenResultados()"
+                    [disabled]="buscando()"
+                    (click)="menuOrdenResultados.set(!menuOrdenResultados())"
+                  >
+                    {{ textoDelOrdenDeResultados() }}
+                    <span class="sc-orden-flecha" aria-hidden="true"></span>
+                  </button>
+                  @if (menuOrdenResultados()) {
+                    <div class="sc-orden-capa" (click)="menuOrdenResultados.set(false)"></div>
+                    <ul class="sc-orden-lista" role="listbox" aria-label="Ordenar por">
+                      @for (opcion of ordenesDeResultados; track opcion.valor) {
+                        <li>
+                          <button
+                            type="button"
+                            role="option"
+                            [class.activa]="orden() === opcion.valor"
+                            [attr.aria-selected]="orden() === opcion.valor"
+                            (click)="elegirOrdenDeResultados(opcion.valor)"
+                          >
+                            <span class="sc-orden-marca" aria-hidden="true">{{
+                              orden() === opcion.valor ? "✓" : ""
+                            }}</span>
+                            {{ opcion.texto }}
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
                 <button
                   type="button"
                   class="boton sc-importar"

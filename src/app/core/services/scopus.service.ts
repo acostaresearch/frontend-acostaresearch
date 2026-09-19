@@ -62,6 +62,16 @@ export interface ResultadoDeScopus {
   yaLaTienes: boolean;
 }
 
+/** Cómo se ordenan los resultados. «citas» es el de siempre: más citados primero. */
+export type OrdenDeScopus = 'citas' | 'recientes' | 'antiguos' | 'relevancia';
+
+/** Lo que propone el generador con IA: conceptos en inglés con sus sinónimos. */
+export interface ConsultaGenerada {
+  conceptos: { nombre: string; sinonimos: string[] }[];
+  /** Una frase para el tesista: qué se dejó fuera y por qué. */
+  nota: string | null;
+}
+
 export interface BusquedaDeScopus {
   total: number;
   pagina: number;
@@ -69,6 +79,8 @@ export interface BusquedaDeScopus {
   /** El número del primer resultado de esta página, para poder numerarlos. */
   desde: number;
   porPagina: number;
+  /** El orden con el que contestó el servidor. Opcional: uno anterior no lo manda. */
+  orden?: OrdenDeScopus;
   conResumenes: boolean;
   resultados: ResultadoDeScopus[];
 }
@@ -124,9 +136,19 @@ export class ScopusService {
       .pipe(map((res) => res.data));
   }
 
-  buscar(ecuacion: string, pagina = 1): Observable<BusquedaDeScopus> {
+  buscar(ecuacion: string, pagina = 1, orden: OrdenDeScopus = 'citas'): Observable<BusquedaDeScopus> {
     return this.http
-      .post<ApiResponse<BusquedaDeScopus>>(`${this.base}/buscar`, { ecuacion, pagina })
+      .post<ApiResponse<BusquedaDeScopus>>(`${this.base}/buscar`, { ecuacion, pagina, orden })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Del tema en español a los conceptos en inglés, con IA. No busca nada:
+   * propone, y el tesista revisa antes de pulsar «Buscar».
+   */
+  generarConsulta(tema: string): Observable<ConsultaGenerada> {
+    return this.http
+      .post<ApiResponse<ConsultaGenerada>>(`${this.base}/generar-consulta`, { tema })
       .pipe(map((res) => res.data));
   }
 
