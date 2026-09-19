@@ -1,135 +1,207 @@
 <app-site-header />
 
-<main class="pagina">
-  <header class="encabezado-pagina">
-    <p class="seccion-marca">El método completo</p>
-    <h1 class="titulo-seccion ancho">Las 11 Skills, en el orden en que se hace una tesis</h1>
-    <p class="seccion-entrada">
-      Trabajan dentro de tu Claude.ai a través de tu conector: pides la fase y la Skill la hace
-      contigo, con tus fuentes. No tienes que empezar por la primera: entra por donde estés hoy.
-    </p>
-  </header>
+<main class="pagina mt">
+  <!-- El encabezado, en azul noche y a sangre. El fondo son líneas finas
+       dibujadas con CSS —arcos, anillos, rayas y una cuadrícula—: ninguna
+       imagen que cargar y nada que se anime, así que no cuesta nada. -->
+  <header class="mt-hero">
+    <div class="mt-fondo" aria-hidden="true">
+      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; track a) {
+        <span class="mt-arco mt-arco-der" [style.--n]="a"></span>
+      }
+      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track a) {
+        <span class="mt-arco mt-arco-izq" [style.--n]="a"></span>
+      }
+      @for (a of [0, 1, 2, 3, 4]; track a) {
+        <span class="mt-anillo" [style.--n]="a"></span>
+      }
+      <span class="mt-rayas mt-rayas-der"></span>
+      <span class="mt-rayas mt-rayas-izq"></span>
+      <span class="mt-cuadricula"></span>
+    </div>
 
-  <section class="seccion">
-    @if (cargando()) {
-      <p class="cargando">Cargando el método…</p>
-    } @else if (capitulos().length === 0) {
-      <p class="cargando">
-        No pudimos cargar el listado. Escríbenos por WhatsApp y te lo contamos capítulo por
-        capítulo.
-      </p>
-    } @else {
-      <ol class="capitulos">
-        @for (c of capitulos(); track c.nombre) {
+    <div class="mt-ancho mt-hero-fila">
+      <div class="mt-hero-texto">
+        <p class="mt-rotulo">El método completo</p>
+        <h1>Las 11 Skills, en el orden en que se hace una tesis</h1>
+        <p class="mt-hero-entrada">
+          Trabajan dentro de tu Claude.ai a través de tu conector: pides la fase y la Skill la
+          hace contigo, con tus fuentes. No tienes que empezar por la primera: entra por donde
+          estés hoy.
+        </p>
+      </div>
+
+      <ul class="mt-cifras">
+        @for (c of cifras; track c.pie) {
           <li>
-            <span class="capitulo-numero" aria-hidden="true">{{ c.numero }}</span>
-            <div class="capitulo-cuerpo">
-              <h2>{{ c.nombre }}</h2>
-              <p>{{ c.descripcion }}</p>
-              @if (c.entregable) {
-                <p class="entregable">
-                  <span class="entregable-rotulo">Entregable</span>
-                  {{ c.entregable }}
-                </p>
-              }
-            </div>
+            <b>{{ c.valor }}</b>
+            <span>{{ c.pie }}</span>
           </li>
         }
-      </ol>
-    }
-  </section>
+      </ul>
+    </div>
+  </header>
 
-  <!-- Aquí iba la asesoría personalizada, con sus fotos. Se dejó de ofrecer el
-       13 de septiembre de 2026 y la sección se fue con ella: prometerla en el
-       escaparate contradecía los Términos y Condiciones. -->
+  <section class="mt-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cab">
+        <div>
+          <p class="mt-rotulo mt-rotulo-azul">Las Skills</p>
+          <h2 class="mt-titulo">Doce, en el orden en que se sustenta una tesis</h2>
+        </div>
+        <p class="mt-cab-nota">
+          Las de número azul forman la ruta. Las de número gris son la vía cualitativa, que
+          reemplaza a la 07, y las dos que se usan en cualquier momento.
+        </p>
+      </div>
+
+      @if (cargando()) {
+        <p class="cargando">Cargando el método…</p>
+      } @else if (capitulos().length === 0) {
+        <p class="cargando">
+          No pudimos cargar el listado. Escríbenos por WhatsApp y te lo contamos capítulo por
+          capítulo.
+        </p>
+      } @else {
+        <!-- La ruta entera en una tira: doce trazos, y los tres grises son los
+             que no son pasos en orden. -->
+        <div class="mt-tira" aria-hidden="true">
+          @for (t of trazos(); track $index) {
+            <span
+              [class.mt-trazo-fuera]="t.fuera"
+              [style.opacity]="t.fuera ? null : t.peso"
+            ></span>
+          }
+        </div>
+
+        <div class="mt-columnas">
+          <ol class="mt-col">
+            @for (c of columnaIzquierda(); track c.nombre) {
+              <ng-container [ngTemplateOutlet]="ficha" [ngTemplateOutletContext]="{ $implicit: c }" />
+            }
+          </ol>
+          <ol class="mt-col">
+            @for (c of columnaDerecha(); track c.nombre) {
+              <ng-container [ngTemplateOutlet]="ficha" [ngTemplateOutletContext]="{ $implicit: c }" />
+            }
+          </ol>
+        </div>
+      }
+    </div>
+  </section>
 
   <!-- Lo que acompaña a las Skills fuera de la conversación. Cada tarjeta es
        algo que ya está en el perfil del comprador: si una función se retira del
        panel, se retira de aquí. -->
-  <section class="seccion">
-    <div class="cab">
-      <p class="seccion-marca">Además de las Skills</p>
-      <h2 class="titulo-seccion">Lo que tienes en tu panel</h2>
-    </div>
+  <section class="mt-seccion mt-seccion-lineas">
+    <div class="mt-ancho">
+      <p class="mt-rotulo mt-rotulo-azul">Además de las Skills</p>
+      <h2 class="mt-titulo mt-titulo-grande">Lo que tienes en tu panel</h2>
 
-    <ul class="panel-lista">
-      <li>
-        <h3>Por dónde vas</h3>
-        <p>
-          Claude anota lo que vas decidiendo y tu panel te muestra qué fases están terminadas. En
-          una conversación nueva no tienes que volver a explicarle tu tema.
-        </p>
-      </li>
-      <li>
-        <h3>Tus fuentes y tu Zotero</h3>
-        <p>
-          Sube tu export de Scopus, Web of Science, SciELO o PubMed, o tus PDF. Si usas Zotero,
-          conéctalo y tus referencias se mantienen al día solas.
-        </p>
-      </li>
-      <li>
-        <h3>Analiza tus datos en R</h3>
-        <p>
-          Claude corre el análisis en R contigo, en la misma conversación y sin instalar nada: tú
-          subes tu Excel y él te pregunta, lo ejecuta y te lo explica. Te entrega el informe en
-          Word, y las cifras del Capítulo IV salen de ahí.
-        </p>
-      </li>
-      <li>
-        <h3>Tu tesis en un solo Word</h3>
-        <p>
-          Portada, índice y todos tus capítulos, en la norma de citas que te pidan entre quince. Y
-          en BibTeX, si escribes en LaTeX.
-        </p>
-      </li>
-    </ul>
+      <ul class="mt-tarjetas">
+        @for (p of panel; track p.titulo) {
+          <li>
+            <span class="mt-ico mt-ico-grande" aria-hidden="true">
+              <app-icono-ruta [clave]="p.icono" />
+            </span>
+            <h3>{{ p.titulo }}</h3>
+            <p>{{ p.texto }}</p>
+          </li>
+        }
+      </ul>
+    </div>
   </section>
 
   <!-- El respaldo bibliográfico. Después del panel y antes del precio: es el
        último argumento antes de pedir la decisión. -->
-  <section class="seccion gris libros">
-    <div class="cab">
-      <p class="seccion-marca">Respaldo académico</p>
-      <h2 class="titulo-seccion">No es un método improvisado</h2>
-      <p class="seccion-entrada ancho">
-        Cada Skill sigue la estructura de los libros de metodología que tu asesor ya conoce y exige.
-        Es un plus, no una sorpresa en tu sustentación.
-      </p>
-    </div>
-
-    <ul class="libros-lista">
-      @for (libro of libros; track libro.titulo) {
-        <li>
-          <img
-            [src]="libro.portada"
-            [alt]="'Portada de ' + libro.titulo"
-            loading="lazy"
-            decoding="async"
-          />
-          <h3>{{ libro.titulo }}</h3>
-          <p>{{ libro.autores }}</p>
-        </li>
-      }
-    </ul>
-  </section>
-
-  <section class="seccion noche corta">
-    <div class="cierre-pagina">
-      <div>
-        <h2 class="titulo-seccion">Quiero el paquete completo</h2>
-        <p class="seccion-entrada">
-          Doce meses de acceso, renovables, tu panel y los videos guía.
+  <section class="mt-seccion mt-libros-banda">
+    <div class="mt-ancho">
+      <div class="mt-cab">
+        <div>
+          <p class="mt-rotulo mt-rotulo-azul">Respaldo académico</p>
+          <h2 class="mt-titulo mt-titulo-grande">No es un método improvisado</h2>
+        </div>
+        <p class="mt-cab-nota">
+          Cada Skill sigue la estructura de los libros de metodología que tu asesor ya conoce y
+          exige. Es un plus, no una sorpresa en tu sustentación.
         </p>
       </div>
-      <a
-        class="boton oro grande"
-        routerLink="/planes"
-        [queryParams]="{ plan: 'METODO_DE_TESIS_HUMANIZADOR' }"
-      >
-        Ver el precio
-      </a>
+
+      <ul class="mt-libros">
+        @for (libro of libros; track libro.titulo) {
+          <li>
+            <img
+              [src]="libro.portada"
+              [alt]="'Portada de ' + libro.titulo"
+              loading="lazy"
+              decoding="async"
+            />
+            <h3>{{ libro.titulo }}</h3>
+            <p>{{ libro.autores }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="mt-seccion mt-cierre-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cierre">
+        <div>
+          <h2>Quiero el paquete completo</h2>
+          <p>Doce meses de acceso, renovables, tu panel y los videos guía.</p>
+        </div>
+        <div class="mt-cierre-compra">
+          @if (precio(); as valor) {
+            <p class="mt-precio">
+              <span>desde</span>
+              <b>{{ valor }}</b>
+            </p>
+          }
+          <a
+            class="boton grande"
+            routerLink="/planes"
+            [queryParams]="{ plan: 'METODO_DE_TESIS_HUMANIZADOR' }"
+          >
+            Ver los paquetes
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
 <app-site-footer />
+
+<!-- La ficha de una Skill. Una sola plantilla para las dos columnas: el orden
+     lo decide el componente, no el HTML repetido dos veces. -->
+<ng-template #ficha let-c>
+  <li class="mt-skill" [class.mt-skill-fuera]="c.fuera">
+    <span class="mt-num" aria-hidden="true">{{ c.numero }}</span>
+
+    <div class="mt-skill-cuerpo">
+      <p class="mt-skill-cab">
+        <span class="mt-ico" aria-hidden="true">
+          <app-icono-ruta [clave]="c.icono" />
+        </span>
+        <b class="mt-skill-nombre">{{ c.nombre }}</b>
+        @if (c.capitulo) {
+          <span class="mt-chip">{{ c.capitulo }}</span>
+        }
+      </p>
+
+      <p class="mt-skill-texto">{{ c.descripcion }}</p>
+
+      @if (c.entregable) {
+        <p class="mt-entregable">
+          <span class="mt-word" aria-hidden="true">W</span>
+          <b>Entregable</b>
+          <span class="mt-entregable-texto">{{ c.entregable }}</span>
+          @if (c.video) {
+            <a class="mt-video" [href]="c.video" target="_blank" rel="noopener">▶ Ver video</a>
+          }
+        </p>
+      }
+    </div>
+  </li>
+</ng-template>

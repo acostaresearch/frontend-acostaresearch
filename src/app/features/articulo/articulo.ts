@@ -1,8 +1,17 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { Plan } from '../../core/models/rewrite.model';
+import { BillingService } from '../../core/services/billing.service';
 import { SkillPublica, SkillService } from '../../core/services/skill.service';
 import { DESCRIPCIONES } from '../../shared/contenido/metodo';
+import {
+  CIFRAS_DEL_ARTICULO,
+  GARANTIAS_DEL_ARTICULO,
+  SEÑAS_DEL_ARTICULO,
+} from '../../shared/contenido/skills-del-articulo';
+import { IconoRuta } from '../../shared/layout/icono-ruta';
 import { PublicacionesAutor } from '../../shared/layout/publicaciones-autor';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
@@ -17,7 +26,7 @@ const GRUPO = 'ARTICULO_SCIENTIFICOS';
  * misma página con el grupo en la URL, pero las dos venden a personas distintas
  * —una tesis se entrega a un asesor, un artículo se envía a una revista— y casi
  * todo el texto que las rodea cambia. Lo que sí se comparte de verdad es la
- * rejilla de fases, y eso vive en los estilos globales.
+ * presentación, y eso vive en `shared/estilos/ruta.css`.
  *
  * Si algún día hay cuatro productos, esto se convierte en una ruta con
  * parámetro. Con dos, dos páginas se mantienen mejor que una llena de «si es
@@ -25,15 +34,27 @@ const GRUPO = 'ARTICULO_SCIENTIFICOS';
  */
 @Component({
   selector: 'app-articulo',
-  imports: [RouterLink, SiteHeader, SiteFooter, PublicacionesAutor],
+  imports: [
+    NgTemplateOutlet,
+    RouterLink,
+    SiteHeader,
+    SiteFooter,
+    PublicacionesAutor,
+    IconoRuta,
+  ],
   templateUrl: './articulo.html',
-  styleUrl: './articulo.css',
+  styleUrls: ['../../shared/estilos/ruta.css', './articulo.css'],
 })
 export class Articulo implements OnInit {
   private readonly skillsApi = inject(SkillService);
+  private readonly billing = inject(BillingService);
 
   readonly publicadas = signal<SkillPublica[]>([]);
   readonly cargando = signal(true);
+  private readonly planes = signal<Plan[]>([]);
+
+  readonly cifras = CIFRAS_DEL_ARTICULO;
+  readonly garantias = GARANTIAS_DEL_ARTICULO;
 
   /**
    * De qué fase es cada skill, sacado de su código.
@@ -46,48 +67,52 @@ export class Articulo implements OnInit {
    */
   private static readonly FASE = /^articulo-fase(\d+)([a-z])?/;
 
-  /** Quita del nombre la posición que ya pinta la propia lista («3 · …»). */
-  private ficha(skill: SkillPublica, conNumero = true) {
-    const parte = Articulo.FASE.exec(skill.code);
-    const letra = parte?.[2]?.toUpperCase() ?? '';
-
-    return {
-      numero: conNumero && parte ? parte[1] + letra : '',
-      /** Una variante ocupa la fila entera y dice a cuál sustituye. */
-      alternativa: letra ? `En lugar de la fase ${parte?.[1]}` : '',
-      nombre: skill.displayName.replace(/^\s*\d+\s*·\s*/, ''),
-      ...(DESCRIPCIONES[skill.code] ?? { descripcion: skill.summary, entregable: '' }),
-    };
-  }
-
   /**
-   * Las fases de la ruta, numeradas.
-   *
-   * El listado sale del catálogo, no de un array escrito aquí: si mañana se
-   * publica una fase más desde el panel, aparece sola. `DESCRIPCIONES` añade la
-   * descripción larga y el entregable; la que no la tenga cae a su propio
-   * resumen, que es el que lee el investigador dentro de Claude.
+   * Las fases de la ruta y lo que viene con el paquete sin serlo, en una sola
+   * lista. Sale del catálogo, no de un array escrito aquí: si mañana se publica
+   * una fase más desde el panel, aparece sola. `DESCRIPCIONES` pone el texto y
+   * el entregable, y las señas de esta página, el icono y la etiqueta.
    */
   readonly fases = computed(() =>
-    this.publicadas()
-      .filter((skill) => skill.code.startsWith('articulo-fase'))
-      .map((skill) => this.ficha(skill)),
+    this.publicadas().map((skill) => {
+      const parte = Articulo.FASE.exec(skill.code);
+      const letra = parte?.[2]?.toUpperCase() ?? '';
+      const seña = SEÑAS_DEL_ARTICULO[skill.code];
+
+      return {
+        // El Humanizador no es una fase y no lleva número: un «11» ahí diría
+        // que hay un paso más que dar, y no lo hay.
+        numero: parte ? (parte[1] + letra).padStart(2, '0') : '+',
+        nombre: skill.displayName.replace(/^\s*(Fase\s*\d+[a-zA-Z]?\s*[—–-]|\d+\s*·)\s*/, ''),
+        etiqueta: seña?.etiqueta ?? '',
+        icono: seña?.icono ?? 'diana',
+        fuera: seña?.fuera ?? false,
+        ...(DESCRIPCIONES[skill.code] ?? { descripcion: skill.summary, entregable: '' }),
+      };
+    }),
+  );
+
+  /** Las dos columnas: impares a la izquierda, pares a la derecha. */
+  readonly columnaIzquierda = computed(() => this.fases().filter((_, i) => i % 2 === 0));
+  readonly columnaDerecha = computed(() => this.fases().filter((_, i) => i % 2 === 1));
+
+  /** Un trazo por fase, gris para las que no son un paso en orden. */
+  readonly trazos = computed(() =>
+    this.fases().map((f, i) => ({
+      fuera: f.fuera,
+      peso: 0.35 + (0.65 * i) / Math.max(1, this.fases().length - 1),
+    })),
   );
 
   /**
-   * Lo que viene con el paquete pero no es una fase de la ruta: hoy, el
-   * Humanizador académico.
-   *
-   * Va aparte porque el `orden` de un capítulo es uno solo para toda la casa, y
-   * el del Humanizador está entre los de tesis. Sin separarlo, esta página
-   * empezaba en «01 · Humanizador» y la Fase 0 quedaba de segunda: una ruta que
-   * no arranca por su principio se lee como si estuviera mal montada.
+   * El precio de la ruta, para el cierre. Sale del catálogo de planes, que es
+   * con el que se cobra: escribirlo aquí es la forma de que un día la página
+   * diga una cifra y el checkout otra.
    */
-  readonly complementos = computed(() =>
-    this.publicadas()
-      .filter((skill) => !skill.code.startsWith('articulo-fase'))
-      .map((skill) => this.ficha(skill, false)),
-  );
+  readonly precio = computed(() => {
+    const plan = this.planes().find((p) => p.code === GRUPO);
+    return plan ? `S/ ${(plan.priceCents / 100).toFixed(0)}` : null;
+  });
 
   ngOnInit(): void {
     this.skillsApi.catalogo(GRUPO).subscribe({
@@ -97,5 +122,7 @@ export class Articulo implements OnInit {
       },
       error: () => this.cargando.set(false),
     });
+
+    this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
   }
 }

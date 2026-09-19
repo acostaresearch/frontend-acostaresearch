@@ -1,170 +1,186 @@
 <app-site-header />
 
-<main class="pagina">
-  <header class="encabezado-pagina">
-    <p class="seccion-marca">Ruta del Artículo Científico</p>
-    <h1 class="titulo-seccion ancho">De una idea a un artículo enviado a una revista real</h1>
-    <p class="seccion-entrada">
-      Diez fases en estructura IMRyD, en el orden en que se publica, y una variante para artículos
-      de revisión. Trabajan dentro de tu Claude.ai a través de tu conector, con tus fuentes. No
-      tienes que empezar por la primera: entra por donde estés hoy.
-    </p>
-  </header>
+<main class="pagina mt">
+  <!-- El encabezado, igual que el de «Las 11 Skills»: azul noche a sangre, con
+       el fondo de líneas dibujado en CSS y las tres cifras al pie del texto. -->
+  <header class="mt-hero">
+    <div class="mt-fondo" aria-hidden="true">
+      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; track a) {
+        <span class="mt-arco mt-arco-der" [style.--n]="a"></span>
+      }
+      @for (a of [0, 1, 2, 3, 4, 5, 6, 7, 8]; track a) {
+        <span class="mt-arco mt-arco-izq" [style.--n]="a"></span>
+      }
+      @for (a of [0, 1, 2, 3, 4]; track a) {
+        <span class="mt-anillo" [style.--n]="a"></span>
+      }
+      <span class="mt-rayas mt-rayas-der"></span>
+      <span class="mt-rayas mt-rayas-izq"></span>
+      <span class="mt-cuadricula"></span>
+    </div>
 
-  <section class="seccion">
-    @if (cargando()) {
-      <p class="cargando">Cargando la ruta…</p>
-    } @else if (fases().length === 0) {
-      <p class="cargando">
-        No pudimos cargar el listado. Escríbenos por WhatsApp y te lo contamos fase por fase.
-      </p>
-    } @else {
-      <ol class="capitulos">
-        @for (f of fases(); track f.nombre) {
-          <li [class.ancho]="f.alternativa">
-            <span class="capitulo-numero" aria-hidden="true">{{ f.numero }}</span>
-            <div class="capitulo-cuerpo">
-              <h2>{{ f.nombre }}</h2>
-              @if (f.alternativa) {
-                <p class="capitulo-alterna">{{ f.alternativa }}</p>
-              }
-              <p>{{ f.descripcion }}</p>
-              @if (f.entregable) {
-                <p class="entregable">
-                  <span class="entregable-rotulo">Entregable</span>
-                  {{ f.entregable }}
-                </p>
-              }
-            </div>
-          </li>
-        }
-      </ol>
-    }
-  </section>
-
-  <!-- Lo que viene en el paquete sin ser una fase de la ruta. Va después del
-       listado y sin número, para no dar a entender que hay un paso once. -->
-  @if (complementos().length > 0) {
-    <section class="seccion gris complementos">
-      <div class="cab">
-        <p class="seccion-marca">Además</p>
-        <h2 class="titulo-seccion">Incluido en el paquete</h2>
+    <div class="mt-ancho mt-hero-fila">
+      <div class="mt-hero-texto">
+        <p class="mt-rotulo">Ruta del Artículo Científico</p>
+        <h1>De una idea a un artículo enviado a una revista real</h1>
+        <p class="mt-hero-entrada">
+          Diez fases en estructura IMRyD, en el orden en que se publica, y una variante para
+          artículos de revisión. Trabajan dentro de tu Claude.ai a través de tu conector, con tus
+          fuentes. No tienes que empezar por la primera: entra por donde estés hoy.
+        </p>
       </div>
 
-      <ol class="capitulos">
-        @for (c of complementos(); track c.nombre) {
+      <ul class="mt-cifras">
+        @for (c of cifras; track c.pie) {
           <li>
-            <span class="capitulo-numero" aria-hidden="true">+</span>
-            <div class="capitulo-cuerpo">
-              <h3>{{ c.nombre }}</h3>
-              <p>{{ c.descripcion }}</p>
-              @if (c.entregable) {
-                <p class="entregable">
-                  <span class="entregable-rotulo">Entregable</span>
-                  {{ c.entregable }}
-                </p>
-              }
-            </div>
+            <b>{{ c.valor }}</b>
+            <span>{{ c.pie }}</span>
           </li>
         }
-        <!-- La rejilla es de dos columnas y el complemento es uno solo: sin
-             esto, a su lado quedaba media fila vacía en gris. -->
-        <li class="ilustracion">
-          <img
-            src="/humanizador/humanizador01.jpeg"
-            alt="Un texto antes y después de pasar por el Humanizador académico"
-            loading="lazy"
-            decoding="async"
-          />
-        </li>
-      </ol>
-    </section>
-  }
+      </ul>
+    </div>
+  </header>
+
+  <section class="mt-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cab">
+        <div>
+          <p class="mt-rotulo mt-rotulo-azul">Las fases</p>
+          <h2 class="mt-titulo">Doce, en el orden en que se publica un artículo</h2>
+        </div>
+        <p class="mt-cab-nota">
+          Las de número azul forman la ruta. La 3B es la variante bibliométrica, que reemplaza a
+          la 03, y el Humanizador se usa en cualquier momento.
+        </p>
+      </div>
+
+      @if (cargando()) {
+        <p class="cargando">Cargando la ruta…</p>
+      } @else if (fases().length === 0) {
+        <p class="cargando">
+          No pudimos cargar el listado. Escríbenos por WhatsApp y te lo contamos fase por fase.
+        </p>
+      } @else {
+        <div class="mt-tira" aria-hidden="true">
+          @for (t of trazos(); track $index) {
+            <span
+              [class.mt-trazo-fuera]="t.fuera"
+              [style.opacity]="t.fuera ? null : t.peso"
+            ></span>
+          }
+        </div>
+
+        <div class="mt-columnas">
+          <ol class="mt-col">
+            @for (f of columnaIzquierda(); track f.nombre) {
+              <ng-container
+                [ngTemplateOutlet]="ficha"
+                [ngTemplateOutletContext]="{ $implicit: f }"
+              />
+            }
+          </ol>
+          <ol class="mt-col">
+            @for (f of columnaDerecha(); track f.nombre) {
+              <ng-container
+                [ngTemplateOutlet]="ficha"
+                [ngTemplateOutletContext]="{ $implicit: f }"
+              />
+            }
+          </ol>
+        </div>
+      }
+    </div>
+  </section>
 
   <!-- La objeción que aparece justo al terminar de leer la lista: «¿y esto no
        se inventa los datos?». Se responde antes de pedir la decisión, y con lo
-       que la ruta hace de verdad, no con una promesa.
+       que la ruta hace de verdad, no con una promesa. Cada tarjeta es algo que
+       el panel hace hoy: si una función se retira, se retira su tarjeta. -->
+  <section class="mt-seccion mt-seccion-lineas">
+    <div class="mt-ancho">
+      <div class="mt-cab">
+        <div>
+          <p class="mt-rotulo mt-rotulo-azul">Cómo trabaja</p>
+          <h2 class="mt-titulo mt-titulo-grande">Escribe contigo, no por ti</h2>
+        </div>
+        <p class="mt-cab-nota">
+          Tú decides y tú firmas. Las revistas se comprueban en la fuente antes de
+          recomendártelas, y ninguna fase rellena por su cuenta un dato que falta: te lo pide.
+        </p>
+      </div>
 
-       Era un solo párrafo. Ahora lleva también lo que el panel del cliente hace
-       por el manuscrito —sus fuentes, su Zotero, citar lo ya escrito, la norma y el
-       repaso—: si una de esas funciones se retira, se retira su tarjeta. -->
-  <section class="seccion">
-    <div class="cab">
-      <p class="seccion-marca">Cómo trabaja</p>
-      <h2 class="titulo-seccion">Escribe contigo, no por ti</h2>
-      <p class="seccion-entrada ancho">
-        Tú decides y tú firmas. Las revistas se comprueban en la fuente antes de recomendártelas, y
-        ninguna fase rellena por su cuenta un dato que falta: te lo pide.
-      </p>
+      <ul class="mt-tarjetas">
+        @for (g of garantias; track g.titulo) {
+          <li>
+            <span class="mt-ico mt-ico-grande" aria-hidden="true">
+              <app-icono-ruta [clave]="g.icono" />
+            </span>
+            <h3>{{ g.titulo }}</h3>
+            <p>{{ g.texto }}</p>
+          </li>
+        }
+      </ul>
     </div>
-
-    <ul class="garantias">
-      <li>
-        <h3>Con tus propias fuentes</h3>
-        <p>
-          Tu export de Scopus, Web of Science, SciELO o PubMed, tus PDF, y lo que Claude encuentra
-          en la literatura publicada. Siempre con DOI real: aquí no aparecen autores que no
-          existen.
-        </p>
-      </li>
-      <li>
-        <h3>Zotero integrado</h3>
-        <p>
-          Conectas tu Zotero y tus citas y referencias se gestionan solas. Ahorras horas de
-          trabajo, y ninguna cita queda huérfana.
-        </p>
-      </li>
-      <li>
-        <h3>Tu manuscrito, citado</h3>
-        <p>
-          ¿Ya lo escribiste? Sube tu Word y Claude pone cada cita y la lista de referencias dentro
-          de tu mismo documento, con fuentes de tu Zotero, Scopus y OpenAlex. Su formato no se toca.
-        </p>
-      </li>
-      <li>
-        <h3>15 normas de citas</h3>
-        <p>
-          APA, Vancouver, IEEE, AMA, Nature, ACS, Chicago y más. Si la revista te pide otra, se lo
-          dices a Claude y no reescribes una línea.
-        </p>
-      </li>
-      <li>
-        <h3>Cifras que no se inventan</h3>
-        <p>
-          Se trasladan desde tu análisis, nunca se producen. Un tamaño de muestra o una aprobación
-          de comité que no existan te comprometen ante el editor.
-        </p>
-      </li>
-      <li>
-        <h3>Un repaso antes de enviar</h3>
-        <p>
-          Claude coteja tu manuscrito consigo mismo: objetivos sin conclusión, citas rotas y
-          afirmaciones sin fuente, antes de que los encuentre el revisor.
-        </p>
-      </li>
-    </ul>
   </section>
 
   <!-- Quién escribió la ruta, justo antes de pedir la decisión. -->
   <app-publicaciones-autor [resumen]="true" />
 
-  <section class="seccion noche corta">
-    <div class="cierre-pagina">
-      <div>
-        <h2 class="titulo-seccion">Quiero la ruta completa</h2>
-        <p class="seccion-entrada">
-          Doce meses de acceso, renovables. Incluye el Humanizador académico.
-        </p>
+  <section class="mt-seccion mt-cierre-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cierre">
+        <div>
+          <h2>Quiero la ruta completa</h2>
+          <p>Doce meses de acceso, renovables. Incluye el Humanizador académico.</p>
+        </div>
+        <div class="mt-cierre-compra">
+          @if (precio(); as valor) {
+            <p class="mt-precio">
+              <span>desde</span>
+              <b>{{ valor }}</b>
+            </p>
+          }
+          <a
+            class="boton grande"
+            routerLink="/planes"
+            [queryParams]="{ plan: 'ARTICULO_SCIENTIFICOS' }"
+          >
+            Ver los paquetes
+          </a>
+        </div>
       </div>
-      <a
-        class="boton oro grande"
-        routerLink="/planes"
-        [queryParams]="{ plan: 'ARTICULO_SCIENTIFICOS' }"
-      >
-        Ver el precio
-      </a>
     </div>
   </section>
 </main>
 
 <app-site-footer />
+
+<!-- La ficha de una fase. Una sola plantilla para las dos columnas: el orden lo
+     decide el componente, no el HTML repetido dos veces. -->
+<ng-template #ficha let-f>
+  <li class="mt-skill" [class.mt-skill-fuera]="f.fuera">
+    <span class="mt-num" aria-hidden="true">{{ f.numero }}</span>
+
+    <div class="mt-skill-cuerpo">
+      <p class="mt-skill-cab">
+        <span class="mt-ico" aria-hidden="true">
+          <app-icono-ruta [clave]="f.icono" />
+        </span>
+        <b class="mt-skill-nombre">{{ f.nombre }}</b>
+        @if (f.etiqueta) {
+          <span class="mt-chip">{{ f.etiqueta }}</span>
+        }
+      </p>
+
+      <p class="mt-skill-texto">{{ f.descripcion }}</p>
+
+      @if (f.entregable) {
+        <p class="mt-entregable">
+          <span class="mt-word" aria-hidden="true">W</span>
+          <b>Entregable</b>
+          <span class="mt-entregable-texto">{{ f.entregable }}</span>
+        </p>
+      }
+    </div>
+  </li>
+</ng-template>

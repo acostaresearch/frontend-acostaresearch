@@ -1,0 +1,595 @@
+/*
+ * El armazón de las dos rutas: «Las 11 Skills» y la Ruta del Artículo.
+ *
+ * La página tiene su propia paleta y su propio ancho (1120 px, más estrecho
+ * que los 1480 del resto del sitio) porque es un catálogo de doce fichas en
+ * dos columnas: a la anchura de las demás páginas, cada ficha quedaba a 700 px
+ * y la descripción se leía como un párrafo suelto.
+ *
+ * Los colores van en variables y no escritos en cada regla: el modo oscuro
+ * solo tiene que redefinirlas, igual que hace el resto del sitio.
+ */
+.mt {
+  --mt-azul: #1d4ed8;
+  --mt-noche: #0f1b3d;
+  --mt-tinta: #0f172a;
+  --mt-gris: #475569;
+  --mt-gris-2: #64748b;
+  --mt-gris-3: #94a3b8;
+  --mt-gris-4: #cbd5e1;
+  --mt-linea: #e2e8f0;
+  --mt-celeste: #eef3ff;
+  --mt-apagado: #f1f5f9;
+  --mt-hover: #f8fafc;
+  --mt-verde: #16803d;
+  --mt-fondo: #fff;
+  --mt-banda: #f6f8fd;
+}
+
+:host-context([data-tema='oscuro']) .mt {
+  --mt-azul: var(--color-primario);
+  --mt-tinta: var(--color-texto);
+  --mt-gris: var(--color-texto-suave);
+  --mt-gris-2: var(--color-texto-tenue);
+  --mt-gris-3: var(--color-texto-tenue);
+  --mt-gris-4: var(--color-borde-fuerte);
+  --mt-linea: var(--color-borde);
+  --mt-celeste: var(--color-primario-suave);
+  --mt-apagado: var(--color-fondo);
+  --mt-hover: var(--color-fondo);
+  --mt-verde: #4ade80;
+  --mt-fondo: var(--color-superficie);
+  --mt-banda: var(--color-fondo);
+}
+
+.mt-ancho {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.mt-seccion {
+  padding: 72px 0;
+  background: var(--mt-fondo);
+}
+
+/* ── El encabezado ──────────────────────────────────────────────────────────
+ *
+ * Azul noche, a sangre, con el fondo dibujado en CSS: arcos que salen de dos
+ * esquinas, anillos punteados detrás del título, dos tramas de rayas y una
+ * cuadrícula que solo asoma alrededor de las cifras. Ni una imagen ni una
+ * línea de JavaScript, y nada se mueve: es un fondo, no una animación.
+ */
+.mt-hero {
+  position: relative;
+  min-height: 360px;
+  padding: 64px 0 56px;
+  overflow: hidden;
+  color: #fff;
+  background: var(--mt-noche);
+}
+
+.mt-fondo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mt-arco {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, calc(0.03 + var(--n) * 0.009));
+  border-radius: 50%;
+}
+
+/* Cada arco es una circunferencia centrada en la esquina: se ve el cuarto que
+   cae dentro del encabezado y el resto lo recorta `overflow: hidden`. */
+.mt-arco-der {
+  top: calc(var(--n) * -80px - 80px);
+  right: calc(var(--n) * -80px - 80px);
+  width: calc(var(--n) * 160px + 160px);
+  height: calc(var(--n) * 160px + 160px);
+}
+
+.mt-arco-izq {
+  bottom: calc(var(--n) * -90px - 90px);
+  left: calc(var(--n) * -90px - 90px);
+  width: calc(var(--n) * 180px + 180px);
+  height: calc(var(--n) * 180px + 180px);
+}
+
+.mt-anillo {
+  position: absolute;
+  top: 50%;
+  left: 32%;
+  width: calc(300px + var(--n) * 90px);
+  height: calc(300px + var(--n) * 90px);
+  transform: translate(-50%, -50%);
+  border: 1px dotted rgba(255, 255, 255, calc(0.12 - var(--n) * 0.018));
+  border-radius: 50%;
+}
+
+.mt-rayas {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+
+.mt-rayas-der {
+  right: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0 1px,
+    transparent 1px 14px
+  );
+  -webkit-mask-image: linear-gradient(to left, #000, transparent 85%);
+  mask-image: linear-gradient(to left, #000, transparent 85%);
+}
+
+.mt-rayas-izq {
+  left: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 14px
+  );
+  -webkit-mask-image: linear-gradient(to right, #000, transparent 85%);
+  mask-image: linear-gradient(to right, #000, transparent 85%);
+}
+
+.mt-cuadricula {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
+  mask-image: radial-gradient(ellipse 340px 190px at 80% 62%, #000, transparent 70%);
+}
+
+.mt-hero-fila {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px 48px;
+  align-items: end;
+}
+
+.mt-rotulo {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.mt-rotulo.mt-rotulo-azul {
+  color: var(--mt-azul);
+}
+
+.mt .mt-hero h1 {
+  max-width: 13ch;
+  margin: 0 0 18px;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: #fff;
+}
+
+.mt-hero-entrada {
+  max-width: 620px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #c7d2fe;
+}
+
+/* Las tres cifras, al pie del texto y no arriba: es el dato que remata el
+   párrafo —doce Skills, pero solo diez en orden—, no un titular aparte. */
+.mt-cifras {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-cifras li {
+  min-width: 96px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+}
+
+.mt-cifras b {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.mt-cifras span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #c7d2fe;
+}
+
+/* ── Cabecera de sección ────────────────────────────────────────────────── */
+.mt-cab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 430px);
+  gap: 20px 48px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.mt .mt-titulo {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--mt-tinta);
+}
+
+.mt .mt-titulo.mt-titulo-grande {
+  font-size: 42px;
+}
+
+.mt-cab-nota {
+  margin: 0 0 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mt-gris-2);
+}
+
+/* ── La tira de doce trazos ───────────────────────────────────────────────
+   La ruta entera de un vistazo: los trazos van aclarándose hasta el final y
+   los tres grises son los que no son pasos en orden. */
+.mt-tira {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  margin: 0 0 34px;
+}
+
+.mt-tira span {
+  height: 4px;
+  background: var(--mt-azul);
+  border-radius: 2px;
+}
+
+.mt-tira span.mt-trazo-fuera {
+  background: var(--mt-gris-4);
+}
+
+/* ── Las doce fichas ──────────────────────────────────────────────────────
+   Sin tarjetas: doce cajas con su borde y su sombra pesaban más que lo que
+   dicen. Una línea entre ficha y ficha basta para separarlas. */
+.mt-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 48px;
+}
+
+.mt-col {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-skill {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  padding: 20px 12px;
+  margin-inline: -12px;
+  border-bottom: 1px solid var(--mt-linea);
+  border-radius: 12px;
+  transition: background var(--transicion);
+}
+
+.mt-skill:hover {
+  background: var(--mt-hover);
+}
+
+.mt-col li:last-child {
+  border-bottom: 0;
+}
+
+.mt-num {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--mt-azul);
+}
+
+.mt-skill-fuera .mt-num {
+  color: var(--mt-gris-4);
+}
+
+.mt-skill-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 7px;
+}
+
+.mt-ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--mt-azul);
+  background: var(--mt-celeste);
+  border-radius: 8px;
+}
+
+.mt-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mt-skill-fuera .mt-ico {
+  color: var(--mt-gris-3);
+  background: var(--mt-apagado);
+}
+
+.mt .mt-skill-nombre {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--mt-tinta);
+}
+
+.mt-chip {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mt-azul);
+  background: var(--mt-celeste);
+  border-radius: 6px;
+}
+
+.mt-skill-fuera .mt-chip {
+  color: var(--mt-gris-2);
+  background: var(--mt-apagado);
+}
+
+.mt-skill-texto {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mt-gris);
+}
+
+/* Lo que se lleva de esta Skill, con el icono de Word: en una lista de doce,
+   es lo que distingue «te ayuda con el marco teórico» de «te entrega el
+   Capítulo II». */
+.mt-entregable {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 11px 0 0;
+  font-size: 12.5px;
+  color: var(--mt-gris-2);
+}
+
+.mt-word {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 22px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #2b579a;
+  border-radius: 2px;
+}
+
+.mt-entregable b {
+  font-weight: 800;
+  color: var(--mt-verde);
+}
+
+.mt-video {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mt-azul);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mt-video:hover {
+  text-decoration: underline;
+}
+
+/* ── Lo que tienes en tu panel ────────────────────────────────────────────── */
+.mt-seccion-lineas {
+  border-top: 1px solid var(--mt-linea);
+  border-bottom: 1px solid var(--mt-linea);
+}
+
+/* Las tarjetas de apoyo de cada ruta. Tres por fila salvo que la página pida
+   otra cosa: «Lo que tienes en tu panel» son cuatro. */
+.mt-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-tarjetas li {
+  padding: 22px;
+  background: var(--mt-fondo);
+  border: 1px solid var(--mt-linea);
+  border-radius: 14px;
+}
+
+.mt-ico.mt-ico-grande {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+}
+
+.mt-ico-grande svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mt .mt-tarjetas h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--mt-tinta);
+}
+
+.mt-tarjetas p {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--mt-gris);
+}
+
+/* ── El cierre ────────────────────────────────────────────────────────────── */
+.mt-cierre-seccion {
+  padding-top: 0;
+  padding-bottom: 96px;
+}
+
+.mt-cierre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 40px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 34px 40px;
+  color: #fff;
+  background: var(--mt-noche);
+  border-radius: 24px;
+}
+
+.mt .mt-cierre h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.mt-cierre p {
+  margin: 8px 0 0;
+  font-size: 14.5px;
+  color: #c7d2fe;
+}
+
+.mt-cierre-compra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.mt-precio {
+  display: grid;
+  justify-items: end;
+  margin: 0;
+}
+
+.mt-precio span {
+  font-size: 11.5px;
+  color: #c7d2fe;
+}
+
+.mt-precio b {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* ── Pantallas estrechas ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .mt-hero {
+    min-height: 0;
+    padding: 48px 0 40px;
+  }
+
+  .mt-hero-fila,
+  .mt-cab {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .mt .mt-hero h1 {
+    max-width: none;
+    font-size: 34px;
+  }
+
+  .mt-cifras {
+    flex-wrap: wrap;
+  }
+
+  .mt .mt-titulo {
+    font-size: 27px;
+  }
+
+  .mt .mt-titulo.mt-titulo-grande {
+    font-size: 30px;
+  }
+
+  .mt-seccion {
+    padding: 48px 0;
+  }
+
+  .mt-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .mt-tarjetas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mt-libros {
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .mt-cierre {
+    padding: 28px 24px;
+  }
+
+  .mt-cierre-seccion {
+    padding-bottom: 64px;
+  }
+}
+
+@media (max-width: 560px) {
+  .mt-tarjetas {
+    grid-template-columns: 1fr;
+  }
+
+  .mt-skill {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .mt-num {
+    font-size: 26px;
+  }
+}

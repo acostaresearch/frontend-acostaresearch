@@ -1,101 +1,55 @@
-/* ── Lo que tienes en tu panel ────────────────────────────────────────────
-   Cuatro, sin caja y con la línea azul arriba, como los pasos del inicio: son
-   partes del mismo producto, no productos que comparar. */
-.panel-lista {
-  display: grid;
+/* Lo propio de «Las 11 Skills». El armazón que comparte con la Ruta del
+   Artículo está en `shared/estilos/ruta.css`. */
+
+/* Las cuatro del panel entran en una fila: son cuatro frases cortas. */
+.mt-tarjetas {
   grid-template-columns: repeat(4, 1fr);
-  gap: 32px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.panel-lista li {
-  padding-top: 20px;
-  border-top: 3px solid var(--color-primario);
-}
-
-.panel-lista h3 {
-  margin: 0;
-}
-
-.panel-lista p {
-  margin: 8px 0 0;
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
-}
-
-/* ── Los libros ───────────────────────────────────────────────────────────── */
-.libros-lista {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  margin: 32px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.libros-lista img {
-  display: block;
-  width: 100%;
-  max-width: 190px;
-  height: auto;
-  /* Proporción de portada de libro. Contain y no cover: recortar una portada
-     le corta el título, que es justo lo que se quiere que se lea. */
-  aspect-ratio: 3 / 4;
-  object-fit: contain;
-  margin-bottom: 16px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
-}
-
-.libros-lista h3 {
-  margin: 0 0 4px;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--color-texto);
-}
-
-.libros-lista p {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--color-texto-tenue);
-}
-
-@media (max-width: 1100px) {
-  .panel-lista {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 36px;
-  }
 }
 
 @media (max-width: 900px) {
-  .libros-lista {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  /* En una columna, la portada al lado del texto en vez de encima: apiladas
-     ocuparían tres pantallas para tres libros. */
-  .libros-lista li {
-    display: grid;
-    grid-template-columns: 96px 1fr;
-    gap: 16px;
-    align-items: center;
-  }
-
-  .libros-lista img {
-    margin-bottom: 0;
+  .mt-tarjetas {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (max-width: 620px) {
-  .panel-lista {
-    grid-template-columns: 1fr;
-    row-gap: 28px;
-  }
+/* ── Los libros ───────────────────────────────────────────────────────────── */
+.mt-libros-banda {
+  background: var(--mt-banda);
 }
+
+.mt-libros {
+  display: flex;
+  gap: 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mt-libros li {
+  flex: 1;
+  min-width: 0;
+}
+
+.mt-libros img {
+  display: block;
+  width: 190px;
+  height: 260px;
+  margin-bottom: 16px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 14px 30px rgba(15, 27, 61, 0.18);
+}
+
+.mt .mt-libros h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mt-tinta);
+}
+
+.mt-libros p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--mt-gris-2);
+}
+
