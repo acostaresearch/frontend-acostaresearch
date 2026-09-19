@@ -28,7 +28,12 @@
 </ng-template>
 
 @if (disponible()) {
-  <aside class="asis" [class.asis-abierto]="abierto()" aria-label="Asistente Acosta">
+  <aside
+    class="asis"
+    data-tour="asistente"
+    [class.asis-abierto]="abierto()"
+    aria-label="Asistente Acosta"
+  >
     <!-- La barra es el propio desplegable: pulsarla abre y cierra. -->
     <button
       #cabecera

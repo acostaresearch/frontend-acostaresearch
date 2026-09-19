@@ -38,7 +38,12 @@
     <h2 class="herramientas-titulo tramo-6">Tus herramientas</h2>
 
     <section class="tarjeta tramo-6 herramientas">
-      <div class="herramientas-pestanas" role="tablist" aria-label="Tus herramientas">
+      <div
+        class="herramientas-pestanas"
+        data-tour="herramientas"
+        role="tablist"
+        aria-label="Tus herramientas"
+      >
         <!-- El logo de quien pone los datos, no un adorno: son herramientas de
              fuera y la marca se reconoce antes de leer el nombre. El `alt` va
              vacío a propósito: el nombre está al lado, y repetirlo obliga a
@@ -60,6 +65,7 @@
           type="button"
           role="tab"
           id="pestana-zotero"
+          data-tour="pestana-zotero"
           aria-controls="panel-zotero"
           class="herramientas-pestana"
           [class.activa]="herramienta() === 'zotero'"
@@ -144,6 +150,7 @@
 
       <div
         id="panel-zotero"
+        data-tour="panel-zotero"
         role="tabpanel"
         aria-labelledby="pestana-zotero"
         class="herramientas-panel"
@@ -221,7 +228,7 @@
        le va a responder. -->
   <!-- En el perfil sube a la primera fila, a la derecha de «Mis compras»
        (`arriba`). En el panel del administrador se queda en su sitio. -->
-  <section class="tarjeta tramo-3" [class.arriba]="modo() === 'comprador'">
+  <section class="tarjeta tramo-3" data-tour="ayuda" [class.arriba]="modo() === 'comprador'">
     <h2>¿Necesitas ayuda?</h2>
     <p class="nota">Todo lo que te sirve para conectar y usar tus skills.</p>
 
@@ -244,6 +251,18 @@
         <span class="recurso-accion">Ver guías</span>
       </a>
     }
+
+    <!-- El recorrido guiado, que solo sale por su cuenta la primera vez. Vive aquí
+         porque quien lo quiere de vuelta es quien ya no encuentra algo, y este
+         es el sitio al que va a mirar. Ver `TourService`. -->
+    <button type="button" class="recurso" (click)="verElRecorrido()">
+      <span class="recurso-icono" aria-hidden="true">?</span>
+      <span class="recurso-texto">
+        <strong>Ver el recorrido del panel</strong>
+        <span>Te señalo dónde está cada cosa de esta pantalla, en un minuto.</span>
+      </span>
+      <span class="recurso-accion">Empezar</span>
+    </button>
 
     <!-- Una persona al otro lado, no una página de ayuda más. Quien llega aquí
          ya probó el video y el PDF. -->

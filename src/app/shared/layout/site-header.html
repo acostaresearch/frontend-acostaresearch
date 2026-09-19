@@ -27,12 +27,12 @@
          envoltorio no existe (`display: contents`) y los dos bloques quedan
          como estaban; en móvil se convierte en el desplegable. -->
     <div id="menu-principal" class="menu" [class.abierto]="menuAbierto()">
-      <nav class="navegacion">
+      <nav class="navegacion" data-tour="menu">
         <a routerLink="/metodo" routerLinkActive="activo">Las 11 Skills</a>
         <a routerLink="/articulo" routerLinkActive="activo">Artículos</a>
         <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
         <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
-        <a routerLink="/planes" routerLinkActive="activo">Comprar</a>
+        <a routerLink="/planes" routerLinkActive="activo" data-tour="comprar">Comprar</a>
       </nav>
 
       <div class="acciones">

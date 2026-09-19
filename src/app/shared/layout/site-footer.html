@@ -93,6 +93,10 @@
            enlaces y este no es para elegir qué comprar, es para cuando ya
            compraste y no sabes seguir. Aquí es donde se busca eso. -->
       <a routerLink="/tutoriales">Videos guía</a>
+      <!-- El recorrido guiado, para el que no lo vio o lo saltó. Va en el pie
+           porque tiene que alcanzarse desde cualquier página, y sale solo la
+           primera vez. Ver `TourService`. -->
+      <button type="button" (click)="verElRecorrido()">Ver el recorrido de la web</button>
     </div>
 
     <div class="columna">

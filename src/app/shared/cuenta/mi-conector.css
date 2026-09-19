@@ -36,6 +36,15 @@
     background var(--transicion);
 }
 
+/* El recorrido guiado es un botón y no un enlace —no lleva a ninguna parte—,
+   así que hay que devolverle lo que el navegador le quita a un botón. */
+button.recurso {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .recurso:last-child {
   margin-bottom: 0;
 }

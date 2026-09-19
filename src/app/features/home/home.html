@@ -10,7 +10,7 @@
        ninguno de los dos. Ver la nota de `saludo` en el componente. -->
   @switch (saludo()) {
     @case ('admin') {
-      <section class="saludo">
+      <section class="saludo" data-tour="saludo">
         <p>
           Hola, <b>{{ nombre() }}</b
           >. Entraste como administrador: las ventas, las cuentas y los grupos están en el panel.
@@ -19,7 +19,7 @@
       </section>
     }
     @case ('cliente') {
-      <section class="saludo">
+      <section class="saludo" data-tour="saludo">
         <p>
           Hola, <b>{{ nombre() }}</b
           >. Tu conector y tus compras están en tu perfil.
@@ -30,7 +30,7 @@
     @case ('nuevo') {
       <!-- Tiene cuenta y no tiene nada más. Se le dice qué le falta y se le da
            el botón, en vez de mandarle a un perfil vacío a que lo adivine. -->
-      <section class="saludo invita">
+      <section class="saludo invita" data-tour="saludo">
         <p>
           Hola, <b>{{ nombre() }}</b
           >. Tu cuenta ya está lista, pero todavía no tienes conector: se activa en cuanto eliges
@@ -80,7 +80,7 @@
       <!-- La red del método: tus fuentes y los agentes alrededor de ti, y el
            Word saliendo por la derecha. Sustituye a la foto suelta, que sigue
            estando, recortada en círculo en el centro de la red. -->
-      <app-hero-network class="hero-red" />
+      <app-hero-network class="hero-red" data-tour="red" />
     </div>
 
     <p class="hero-pie">
@@ -109,7 +109,7 @@
        ruta —sus fases numeradas— y con qué se sale; el precio sale de la API,
        no escrito aquí. -->
   @if (rutas().length > 0) {
-    <section class="seccion gris">
+    <section class="seccion gris" data-tour="rutas">
       <div class="cab-fila">
         <div class="cab">
           <p class="seccion-marca">Dos rutas</p>
@@ -262,7 +262,7 @@
 
        En banda oscura: es el paso del «qué es» al «cómo se hace», y corta la
        página por la mitad para que se vea que empieza otra cosa. -->
-  <section class="seccion noche arranque-banda">
+  <section class="seccion noche arranque-banda" data-tour="arranque-web">
     <app-lineas-noche />
     <div class="cab-fila">
       <div class="cab">

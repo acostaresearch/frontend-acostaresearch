@@ -6,6 +6,8 @@ import { Plan } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
+import { TourService } from '../../core/services/tour.service';
+import { TOUR_DE_LA_PORTADA, TOUR_PORTADA } from '../../shared/contenido/tour-de-la-portada';
 import {
   CIFRAS,
   FASES_ARTICULO,
@@ -39,6 +41,7 @@ import { HeroNetwork } from './hero-network/hero-network';
 export class Home implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly licencias = inject(LicenseService);
+  private readonly tour = inject(TourService);
   protected readonly auth = inject(AuthService);
 
   readonly cifras = CIFRAS;
@@ -163,7 +166,27 @@ export class Home implements OnInit {
         error: () => this.tieneConector.set(true),
       });
     }
+
+    this.ofrecerElRecorrido();
   }
+
+  /**
+   * El recorrido de la portada, la primera vez que alguien llega.
+   *
+   * A cualquiera, haya entrado o no: la portada es lo que ve todo el mundo, y
+   * el paso que señala la banda de saludo se cae solo si no hay sesión.
+   *
+   * La espera es porque media página depende de lo que conteste el servidor
+   * —los planes pintan las dos rutas, las licencias la banda de arriba— y los
+   * pasos que señalan algo ausente se caen al empezar. Sin este respiro, el
+   * recorrido se quedaría en la mitad de sus pasos.
+   */
+  private ofrecerElRecorrido(): void {
+    if (!this.tour.leToca(TOUR_PORTADA)) return;
+
+    setTimeout(() => this.tour.ofrecer(TOUR_PORTADA, TOUR_DE_LA_PORTADA), 1200);
+  }
+
 
   /**
    * El acceso, en meses. En días («365 días de acceso») obligaba a dividir

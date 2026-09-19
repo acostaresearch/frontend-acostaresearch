@@ -40,7 +40,7 @@
       }
 
       @if (licenciaActual(); as licencia) {
-        <div class="acceso">
+        <div class="acceso" data-tour="acceso">
           <!-- El gasto, del producto elegido. El número solo —«12 consultas»—
                no dice si eso es mucho: contra el tope contratado, sí. -->
           @if (licencia.callsPerDay && licencia.usage) {
@@ -222,6 +222,7 @@
          primeras pintan igual. -->
     <div
       class="tramos"
+      data-tour="avance"
       role="img"
       [attr.aria-label]="p.avance.listos + ' de ' + p.avance.total + ' fases terminadas'"
     >
@@ -238,7 +239,7 @@
 
     <!-- El recuadro se pinta siempre, terminado o no: dentro va también lo de
          empezar de cero, y con dos recuadros distintos habría que repetirlo. -->
-    <div class="retomar" [class.completo]="!p.siguiente">
+    <div class="retomar" data-tour="retomar" [class.completo]="!p.siguiente">
       @if (p.siguiente; as siguiente) {
         <div class="retomar-fila">
           <div>

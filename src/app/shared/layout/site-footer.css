@@ -135,13 +135,27 @@
   color: #8fb3ff;
 }
 
-.columna a {
+/* El botón del recorrido es uno más de la lista, no un botón: lo que hace
+   —enseñar la web— está a la altura de «Videos guía», y con aspecto de botón
+   pesaría más que los enlaces de alrededor. */
+.columna a,
+.columna button {
   font-size: 15px;
   color: var(--noche-texto);
   text-decoration: none;
 }
 
-.columna a:hover {
+.columna button {
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.columna a:hover,
+.columna button:hover {
   color: var(--noche-titulo);
 }
 

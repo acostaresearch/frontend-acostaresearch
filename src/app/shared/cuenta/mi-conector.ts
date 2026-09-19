@@ -4,6 +4,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { LicenseService } from '../../core/services/license.service';
+import { TourService } from '../../core/services/tour.service';
+import { TOUR_DEL_PANEL, TOUR_PANEL } from '../contenido/tour-del-panel';
 import { MiTesis } from './mi-tesis';
 import { MiMapaVosviewer } from './mi-mapa-vosviewer';
 import { MiScopusPanel } from './mi-scopus';
@@ -46,6 +48,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
 })
 export class MiConector implements OnInit {
   private readonly licencias = inject(LicenseService);
+  private readonly tour = inject(TourService);
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
@@ -79,6 +82,13 @@ export class MiConector implements OnInit {
    * perder el mapa al cambiar de pestaña.
    */
   readonly mapaVisto = signal(false);
+
+  /**
+   * El recorrido guiado, a mano. El de la primera vez lo ofrece `ngOnInit`.
+   */
+  verElRecorrido(): void {
+    this.tour.empezar(TOUR_PANEL, TOUR_DEL_PANEL);
+  }
 
   abrirMapa(): void {
     this.herramienta.set('mapa');
@@ -128,11 +138,30 @@ export class MiConector implements OnInit {
         this.misLicencias.set(licencias);
         this.progreso.set(progreso);
         this.cargando.set(false);
+        this.ofrecerElRecorrido();
       },
       error: () => {
         this.misLicencias.set([]);
         this.cargando.set(false);
       },
     });
+  }
+
+  /**
+   * El recorrido de la primera vez.
+   *
+   * Solo al comprador y solo con acceso vigente: a quien no lo tiene, medio
+   * panel no se le pinta y el recorrido se quedaría en dos pasos que no
+   * explican nada. El administrador no está arrancando nada.
+   *
+   * La espera es porque «Por dónde vas» pide lo suyo al servidor por su cuenta
+   * y todavía no está en pantalla: los pasos que señalan algo ausente se caen
+   * al empezar, y sin este respiro se caerían los tres del medio.
+   */
+  private ofrecerElRecorrido(): void {
+    if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
+    if (!this.tour.leToca(TOUR_PANEL)) return;
+
+    setTimeout(() => this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL), 900);
   }
 }
