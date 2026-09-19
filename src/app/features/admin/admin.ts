@@ -3537,7 +3537,10 @@ export class Admin implements OnInit {
   nombreDeProducto(productCode: string | null): string {
     if (!productCode) return '';
     const plan = this.planesLicencia().find((p) => p.productCode === productCode);
-    return plan?.name ?? productCode;
+    // Los planes públicos no traen los que están en prueba; los grupos del
+    // panel sí, y sin ellos el historial enseñaba el código en vez del nombre.
+    const grupo = this.grupos().find((g) => g.productCode === productCode);
+    return plan?.name ?? grupo?.name ?? productCode;
   }
 
   readonly productoElegido = signal('');
@@ -3554,10 +3557,14 @@ export class Admin implements OnInit {
     const actual = this.accesoAbierto()?.productCode ?? '';
     const vistos = new Set<string>();
 
-    return this.planesLicencia()
-      .filter((plan) => plan.productCode && plan.productCode !== actual)
-      .filter((plan) => !vistos.has(plan.productCode!) && vistos.add(plan.productCode!))
-      .map((plan) => ({ productCode: plan.productCode!, nombre: plan.name }));
+    // De los grupos del panel y no de los planes públicos: esos esconden los que
+    // están en prueba, y entonces no había forma de devolver a nadie a uno de
+    // ellos. Los retirados sí se quedan fuera, porque el servidor exige un plan
+    // activo para copiar sus topes.
+    return this.grupos()
+      .filter((grupo) => grupo.active && grupo.productCode && grupo.productCode !== actual)
+      .filter((grupo) => !vistos.has(grupo.productCode!) && vistos.add(grupo.productCode!))
+      .map((grupo) => ({ productCode: grupo.productCode!, nombre: grupo.name }));
   });
 
   cambiarProductoDelAcceso(): void {
