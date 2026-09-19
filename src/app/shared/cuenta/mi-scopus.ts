@@ -10,6 +10,7 @@ import {
   BusquedaGuardadaResumida,
   CuentasAproximadas,
   FacetaExacta,
+  EnlaceAbierto,
   EstadoDeScopus,
   FuenteParaResumir,
   ImportacionDeScopus,
@@ -1834,6 +1835,44 @@ export class MiScopusPanel implements OnInit {
     if (relativo >= 0.66) return { texto: 'Muy cercano', nivel: 3 };
     if (relativo >= 0.33) return { texto: 'Cercano', nivel: 2 };
     return { texto: 'Relacionado', nivel: 1 };
+  }
+
+  /**
+   * Cómo se le dice al tesista qué copia abierta va a abrir.
+   *
+   * No es un adorno. Una copia abierta no siempre es EL artículo, y la
+   * diferencia le importa justo a quien está citando: el manuscrito aceptado
+   * tiene el mismo texto con otra maquetación —así que la página 14 no es la
+   * página 14— y el preprint puede decir cosas que el artículo publicado ya
+   * no dice. Quien cite un preprint creyendo que es el publicado se lo va a
+   * oír al asesor, así que se avisa antes de que haga clic.
+   *
+   * Devuelve nulo cuando es la versión del editor: ahí no hay nada que
+   * advertir y un cartel de más solo ensucia la lista.
+   */
+  avisoDeVersion(enlace: EnlaceAbierto): string | null {
+    if (enlace.version === 'acceptedVersion') return 'Manuscrito aceptado (otra paginación)';
+    if (enlace.version === 'submittedVersion') return 'Preprint, sin revisión por pares';
+    return null;
+  }
+
+  /** El texto del botón: «PDF» si es el archivo, «Leer gratis» si es la página. */
+  textoDelEnlaceAbierto(enlace: EnlaceAbierto): string {
+    return enlace.esPdf ? 'Descargar PDF gratis' : 'Leer gratis';
+  }
+
+  /**
+   * Si se enseña el botón aparte.
+   *
+   * Cuando la copia abierta está en la propia editorial, el enlace es el mismo
+   * `doi.org` al que ya lleva «Ver en la editorial», y poner dos botones al
+   * mismo sitio no ayuda a nadie. La etiqueta de acceso abierto sigue estando:
+   * el dato útil —que ahí se lee gratis— no se pierde.
+   */
+  enlaceAbiertoAparte(resultado: ResultadoDeScopus): EnlaceAbierto | null {
+    const enlace = resultado.enlaceAbierto;
+    if (!enlace || enlace.mismoQueEditorial) return null;
+    return enlace;
   }
 
   ngOnInit(): void {

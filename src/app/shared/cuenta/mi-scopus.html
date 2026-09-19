@@ -1073,6 +1073,17 @@
                             {{ resultado.tipo || 'Documento' }}
                             @if (resultado.accesoAbierto) {
                               · <span class="sc-abierto">Acceso abierto</span>
+                            } @else if (resultado.enlaceAbierto) {
+                              <!-- Scopus solo marca lo abierto en la editorial. Cuando la
+                                   copia está en un repositorio no lo marca, y el artículo
+                                   se lee gratis igual: por eso se dice de otra forma y no
+                                   se le llama «acceso abierto», que significa otra cosa. -->
+                              · <span class="sc-abierto">Copia gratuita</span>
+                            }
+                            @if (resultado.enlaceAbierto; as abierto) {
+                              @if (avisoDeVersion(abierto); as aviso) {
+                                · <span class="sc-version">{{ aviso }}</span>
+                              }
                             }
                             @if (resultado.yaLaTienes) {
                               · <span class="sc-ya">Ya la tienes</span>
@@ -1095,6 +1106,20 @@
                                 {{ resumenesAbiertos().has(resultado.eid) ? 'Ocultar' : 'Ver' }} resumen
                                 <span class="sc-orden-flecha" aria-hidden="true"></span>
                               </button>
+                            }
+                            <!-- Primero el que se puede leer ya. Scopus dice SI un
+                                 artículo es abierto pero no DÓNDE está la copia, y sin el
+                                 dónde el cartel no servía de nada. Lo dan los catálogos
+                                 abiertos; aquí no se aloja ningún PDF. -->
+                            @if (enlaceAbiertoAparte(resultado); as abierto) {
+                              <a
+                                class="sc-abierto-enlace"
+                                [href]="abierto.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.title]="abierto.donde ? 'En ' + abierto.donde : null"
+                                >{{ textoDelEnlaceAbierto(abierto) }} ↗</a
+                              >
                             }
                             @if (resultado.enlace) {
                               <a [href]="resultado.enlace" target="_blank" rel="noopener noreferrer"

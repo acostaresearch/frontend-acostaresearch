@@ -35,6 +35,32 @@ export interface EstadoDeScopus {
   error?: string | null;
 }
 
+/**
+ * Dónde se lee gratis un artículo, si es que se puede.
+ *
+ * Lo dan los catálogos abiertos (OpenAlex, y Unpaywall para lo recién
+ * depositado), nunca Elsevier: el enlace apunta a la copia que el propio
+ * editor o un repositorio pusieron en abierto. Aquí no se aloja ningún PDF.
+ */
+export interface EnlaceAbierto {
+  url: string;
+  /** Si al otro lado está el PDF o la página desde la que se descarga. */
+  esPdf: boolean;
+  /**
+   * Cuál de las tres copias es, y no es un detalle:
+   * `publishedVersion` es la del editor y se cita sin más;
+   * `acceptedVersion` tiene otra maquetación, así que no sirve para citar
+   * con número de página; `submittedVersion` es un preprint sin revisar.
+   */
+  version: 'publishedVersion' | 'acceptedVersion' | 'submittedVersion' | null;
+  licencia: string | null;
+  /** El repositorio o la revista que la aloja. */
+  donde: string | null;
+  catalogo: 'openalex' | 'unpaywall';
+  /** La copia abierta está en la editorial: es el mismo sitio que «Ver en la editorial». */
+  mismoQueEditorial: boolean;
+}
+
 /** Un artículo de la lista de resultados. */
 export interface ResultadoDeScopus {
   /** Lo único que vuelve al importar. Ver `importar`. */
@@ -62,6 +88,11 @@ export interface ResultadoDeScopus {
   yaLaTienes: boolean;
   /** En la búsqueda por significado: lo cerca que está de la pregunta (coseno). */
   afinidad?: number;
+  /**
+   * Dónde leerlo gratis. Nulo si no hay copia abierta, y ausente si contesta
+   * un servidor anterior a esto: la vista trata los dos casos igual.
+   */
+  enlaceAbierto?: EnlaceAbierto | null;
 }
 
 /** Cómo se ordenan los resultados. «citas» es el de siempre: más citados primero. */

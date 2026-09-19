@@ -675,6 +675,29 @@
   color: var(--color-exito);
 }
 
+/*
+ * El aviso de que la copia abierta no es la del editor.
+ *
+ * En color de aviso y no en verde, a propósito: dice «puedes leerlo, PERO
+ * mira qué estás citando». Un preprint y el artículo publicado no son la
+ * misma fuente.
+ */
+.sc-version {
+  color: var(--color-aviso);
+}
+
+/*
+ * El enlace a la copia que se lee gratis.
+ *
+ * Es el único de la fila que lleva a algo que el tesista puede abrir y leer
+ * ahora mismo —los otros dos llevan a fichas y a muros de pago— así que pesa
+ * un poco más. Nada de fondos ni bordes: sigue siendo un enlace en una lista.
+ */
+.sc-abierto-enlace {
+  font-weight: 600;
+  color: var(--color-exito);
+}
+
 .sc-ya {
   font-weight: 600;
   color: var(--color-primario);
