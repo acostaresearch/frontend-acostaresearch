@@ -843,76 +843,10 @@ a.sc-ref-titulo:hover {
   transform: rotate(-135deg) translateY(-2px);
 }
 
-.sc-historial-combinar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 10px 12px;
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.sc-historial-combinar small {
-  font-size: 11.5px;
-  color: var(--color-texto-tenue);
-}
-
 .sc-combinar {
   width: auto;
-  padding: 5px 12px;
+  padding: 5px 14px;
   font-size: 12.5px;
-}
-
-.sc-historial-lista {
-  max-height: 240px;
-  margin: 0;
-  padding: 4px 0;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.sc-historial-lista li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
-}
-
-.sc-historial-lista li + li {
-  border-top: 1px solid var(--color-borde);
-}
-
-.sc-historial-lista input {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  accent-color: var(--color-primario);
-}
-
-.sc-historial-n {
-  flex: none;
-  min-width: 26px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-texto-tenue);
-}
-
-.sc-historial-ecuacion {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--color-texto-suave);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.sc-historial-lista .sc-enlace {
-  flex: none;
-  white-space: nowrap;
 }
 
 /* ── Los números de los filtros ────────────────────────────────────────── */

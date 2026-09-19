@@ -1,0 +1,393 @@
+/* El historial de búsqueda y el aviso de error. Aparte de mi-scopus.css y
+   mi-scopus-ia.css porque Angular pone un tope de tamaño a cada hoja. */
+
+/* ── La cabecera ───────────────────────────────────────────────────────── */
+.sc-hist-reloj {
+  font-size: 15px;
+  color: var(--color-primario);
+}
+
+.sc-hist-sub {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
+.sc-hist-nota {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+/* ── Combinar: una barra que aparece al marcar ─────────────────────────── */
+.sc-hist-combinar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-primario-suave);
+  border-bottom: 1px solid var(--color-borde);
+  animation: sc-hist-bajar 0.18s ease-out;
+}
+
+.sc-hist-operadores {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+}
+
+.sc-hist-operadores button {
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 0;
+  cursor: pointer;
+}
+
+.sc-hist-operadores button + button {
+  border-left: 1px solid var(--color-borde-fuerte);
+}
+
+.sc-hist-operadores button.activo {
+  color: #fff;
+  background: var(--color-primario);
+}
+
+.sc-hist-vista {
+  display: grid;
+  flex: 1;
+  min-width: 180px;
+}
+
+.sc-hist-vista strong {
+  font-size: 13px;
+  color: var(--color-texto);
+}
+
+.sc-hist-vista small {
+  font-size: 11.5px;
+  color: var(--color-texto-suave);
+}
+
+/* ── La lista, con la cara de «Tus búsquedas» ──────────────────────────── */
+.sc-hist-lista {
+  display: grid;
+  gap: 2px;
+  max-height: 340px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.sc-hist-lista li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  padding: 0 4px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background var(--transicion), border-color var(--transicion);
+}
+
+.sc-hist-lista li:hover {
+  background: var(--color-superficie);
+}
+
+.sc-hist-lista li.elegida {
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.sc-hist-marca {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.sc-hist-marca input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--color-primario);
+  cursor: pointer;
+}
+
+.sc-hist-item {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 6px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.sc-hist-item:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.sc-hist-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 8px;
+}
+
+.sc-hist-icono[data-tipo='avanzada'] {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+}
+
+.sc-hist-icono[data-tipo='normal'] {
+  font-size: 16px;
+}
+
+.sc-hist-texto {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sc-hist-titulo {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sc-hist-n {
+  margin-right: 4px;
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+}
+
+.sc-hist-texto small {
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.sc-hist-texto small strong {
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.sc-hist-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.sc-hist-filtro {
+  max-width: 100%;
+  padding: 1px 8px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.sc-hist-filtro.fuera {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-color: transparent;
+}
+
+/* «Volver a buscar →» solo al pasar por encima: la fila entera es el botón. */
+.sc-hist-ir {
+  flex: none;
+  align-self: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primario);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--transicion);
+}
+
+.sc-hist-item:hover .sc-hist-ir,
+.sc-hist-item:focus-visible .sc-hist-ir {
+  opacity: 1;
+}
+
+.sc-hist-accion {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sc-hist-accion:hover,
+.sc-hist-accion[aria-expanded='true'] {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.sc-hist-ecuacion {
+  flex: 1 1 100%;
+  margin: 0 8px 10px 36px;
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  word-break: break-word;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+}
+
+.sc-hist-pie {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 14px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* ── El aviso de error, que baja desde arriba ──────────────────────────── */
+.sc-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(520px, calc(100vw - 32px));
+  padding: 14px 14px 14px 16px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-error);
+  border-left-width: 4px;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.18);
+  transform: translateX(-50%);
+  animation: sc-toast-bajar 0.25s ease-out;
+}
+
+.sc-toast-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--color-error);
+  border-radius: 50%;
+}
+
+.sc-toast-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc-toast-texto strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--color-texto);
+}
+
+.sc-toast-texto p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.sc-toast-cerrar {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sc-toast-cerrar:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+@keyframes sc-toast-bajar {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -16px);
+  }
+}
+
+@keyframes sc-hist-bajar {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-toast,
+  .sc-hist-combinar {
+    animation: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .sc-hist-sub,
+  .sc-hist-ir {
+    display: none;
+  }
+
+  .sc-hist-titulo {
+    white-space: normal;
+  }
+
+  .sc-hist-ecuacion {
+    margin-left: 8px;
+  }
+}

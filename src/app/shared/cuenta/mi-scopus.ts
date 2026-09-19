@@ -69,6 +69,13 @@ interface EntradaDeHistorial {
   ecuacion: string;
   total: number;
   cuando: number;
+  /** Lo que se buscó, dicho como lo escribió el tesista. Las viejas no lo traen. */
+  titulo?: string;
+  tipo?: 'normal' | 'avanzada' | 'copiloto' | 'combinada';
+  /** Los filtros en palabras: «2020–2024», «Idioma: Español», «Sin Inglés». */
+  filtros?: string[];
+  /** El buscador tal cual, para volver a él con sus filtros. */
+  estado?: Record<string, unknown>;
 }
 
 /** Cómo se ordena la lista de la ventana de «Mostrar todo». */
@@ -96,7 +103,7 @@ interface Faceta {
   selector: 'app-mi-scopus',
   imports: [DecimalPipe, NgTemplateOutlet],
   templateUrl: './mi-scopus.html',
-  styleUrls: ['./mi-scopus.css', './mi-scopus-ia.css'],
+  styleUrls: ['./mi-scopus.css', './mi-scopus-ia.css', './mi-scopus-historial.css'],
 })
 export class MiScopusPanel implements OnInit {
   private readonly scopus = inject(ScopusService);
@@ -1387,6 +1394,26 @@ export class MiScopusPanel implements OnInit {
   readonly historialAbierto = signal(false);
   readonly elegidasDelHistorial = signal<ReadonlySet<number>>(new Set());
   readonly operadorCombinar = signal<'AND' | 'OR' | 'AND NOT'>('AND');
+  /** Las entradas con la ecuación desplegada. */
+  readonly ecuacionesAbiertas = signal<ReadonlySet<number>>(new Set());
+  /** Lo que diga «Combinar» para la entrada que va a crear, en vez de describir el buscador. */
+  private proximaCombinada: { titulo: string; filtros: string[] } | null = null;
+
+  /** Qué hace cada forma de combinar, dicho en cristiano. */
+  readonly explicacionDeCombinar: Readonly<Record<'AND' | 'OR' | 'AND NOT', string>> = {
+    AND: 'Solo los documentos que aparecen en todas las marcadas.',
+    OR: 'Los documentos de cualquiera de las marcadas, juntos.',
+    'AND NOT': 'Los de la primera marcada, quitando los que salen en las demás.',
+  };
+
+  /** Cómo se leerá la combinación: «#2 Y #4». */
+  readonly vistaDeCombinar = computed(() => {
+    const texto = this.operadores.find((o) => o.valor === this.operadorCombinar())?.texto ?? 'Y';
+    return this.historial()
+      .filter((e) => this.elegidasDelHistorial().has(e.n))
+      .map((e) => `#${e.n}`)
+      .join(` ${texto} `);
+  });
 
   private leerHistorial(): EntradaDeHistorial[] {
     try {
@@ -1405,8 +1432,13 @@ export class MiScopusPanel implements OnInit {
       nueva = [...lista.slice(0, -1), { ...ultima, total, cuando: Date.now() }];
     } else {
       const n = (lista.at(-1)?.n ?? 0) + 1;
-      nueva = [...lista, { n, ecuacion, total, cuando: Date.now() }].slice(-30);
+      const combinada = this.proximaCombinada;
+      const descripcion = combinada
+        ? { ...combinada, tipo: 'combinada' as const }
+        : { ...this.describirBusqueda(), estado: this.estadoActual() };
+      nueva = [...lista, { n, ecuacion, total, cuando: Date.now(), ...descripcion }].slice(-30);
     }
+    this.proximaCombinada = null;
     this.historial.set(nueva);
     try {
       sessionStorage.setItem('scopus-historial', JSON.stringify(nueva));
@@ -1422,17 +1454,114 @@ export class MiScopusPanel implements OnInit {
     this.elegidasDelHistorial.set(copia);
   }
 
-  /** Vuelve a lanzar una del historial tal cual, en la consulta avanzada. */
+  /**
+   * Vuelve a una del historial. Si se guardó cómo estaba el buscador, vuelve
+   * así, con sus filtros y en su modo; si no (las combinadas y las viejas),
+   * con la ecuación en la consulta avanzada. Nunca con el copiloto encendido:
+   * volver a una búsqueda no es volver a pedirle un resumen a la IA.
+   */
   relanzar(entrada: EntradaDeHistorial): void {
-    this.lanzarEcuacion(entrada.ecuacion);
+    if (this.buscando()) return;
+    // Las del copiloto, por su ecuación: sin la IA, su estado no sabe rehacerla.
+    if (!entrada.estado || entrada.tipo === 'copiloto') {
+      this.lanzarEcuacion(entrada.ecuacion);
+      return;
+    }
+    this.restaurarEstado(entrada.estado);
+    this.iaAbierta.set(false);
+    this.buscar(1);
   }
 
   /** «Combinar consultas»: las elegidas, unidas con Y, O o Y NO. */
   combinar(): void {
     const elegidas = this.historial().filter((e) => this.elegidasDelHistorial().has(e.n));
     if (elegidas.length < 2) return;
+    this.proximaCombinada = { titulo: `Combinación ${this.vistaDeCombinar()}`, filtros: [] };
     this.elegidasDelHistorial.set(new Set());
     this.lanzarEcuacion(elegidas.map((e) => `(${e.ecuacion})`).join(` ${this.operadorCombinar()} `));
+  }
+
+  desmarcarHistorial(): void {
+    this.elegidasDelHistorial.set(new Set());
+  }
+
+  alternarEcuacion(n: number): void {
+    const copia = new Set(this.ecuacionesAbiertas());
+    if (copia.has(n)) copia.delete(n);
+    else copia.add(n);
+    this.ecuacionesAbiertas.set(copia);
+  }
+
+  vaciarHistorial(): void {
+    this.historial.set([]);
+    this.elegidasDelHistorial.set(new Set());
+    try {
+      sessionStorage.removeItem('scopus-historial');
+    } catch {
+      // Igual que al anotar.
+    }
+  }
+
+  /** «hace 5 min»: el historial es de esta pestaña, así que basta con minutos y horas. */
+  haceCuanto(cuando: number): string {
+    const minutos = Math.round((Date.now() - cuando) / 60_000);
+    if (minutos < 1) return 'hace un momento';
+    if (minutos < 60) return `hace ${minutos} min`;
+    const horas = Math.round(minutos / 60);
+    return horas === 1 ? 'hace 1 hora' : `hace ${horas} horas`;
+  }
+
+  /** Lo que se está buscando ahora, en palabras, para el historial. */
+  private describirBusqueda(): Pick<EntradaDeHistorial, 'titulo' | 'tipo' | 'filtros'> {
+    const generacion = this.ultimaGeneracion();
+    let titulo: string;
+    let tipo: EntradaDeHistorial['tipo'];
+    if (this.iaAbierta() && generacion) {
+      titulo = generacion.tema;
+      tipo = 'copiloto';
+    } else if (this.modo() === 'normal') {
+      const campo = this.campos.find((c) => c.valor === this.campo());
+      titulo = this.texto().trim();
+      for (const fila of this.filas()) {
+        if (!fila.texto.trim()) continue;
+        const operador = this.operadores.find((o) => o.valor === fila.operador)?.texto ?? 'Y';
+        titulo += ` ${operador} ${fila.texto.trim()}`;
+      }
+      if (campo && this.campo() !== 'TITLE-ABS-KEY') titulo += ` · ${campo.texto}`;
+      tipo = 'normal';
+    } else {
+      titulo = this.ecuacion().trim();
+      tipo = 'avanzada';
+    }
+    if (titulo.length > 140) titulo = `${titulo.slice(0, 137)}…`;
+    // Con el copiloto los filtros no cuentan: la búsqueda los ignora.
+    return { titulo, tipo, filtros: tipo === 'copiloto' ? [] : this.filtrosEnPalabras() };
+  }
+
+  /** Los filtros puestos, uno por ficha, en palabras. */
+  private filtrosEnPalabras(): string[] {
+    const fichas: string[] = [];
+    const desde = this.anioDesde().trim();
+    const hasta = this.anioHasta().trim();
+    if (this.modoAnio() === 'sueltos' && this.aniosSueltos().trim()) {
+      fichas.push(`Años: ${this.aniosSueltos().trim()}`);
+    } else if (desde && hasta) {
+      fichas.push(desde === hasta ? `Año ${desde}` : `${desde}–${hasta}`);
+    } else if (desde) {
+      fichas.push(`Desde ${desde}`);
+    } else if (hasta) {
+      fichas.push(`Hasta ${hasta}`);
+    }
+    if (this.dentro().trim()) fichas.push(`Dentro: «${this.dentro().trim()}»`);
+    const textoDe = (faceta: Faceta, valor: string) =>
+      faceta.opciones?.find((o) => o.valor === valor)?.texto ?? valor;
+    for (const faceta of this.facetas) {
+      const puestas = this.seleccion()[faceta.clave] ?? [];
+      if (puestas.length) fichas.push(`${faceta.titulo}: ${puestas.map((v) => textoDe(faceta, v)).join(', ')}`);
+      const fuera = this.exclusiones()[faceta.clave] ?? [];
+      if (fuera.length) fichas.push(`Sin ${fuera.map((v) => textoDe(faceta, v)).join(', ')}`);
+    }
+    return fichas;
   }
 
   borrarDelHistorial(n: number): void {
@@ -1586,6 +1715,18 @@ export class MiScopusPanel implements OnInit {
       });
   }
 
+  /**
+   * Un error, en el aviso que baja desde arriba. Arriba del panel quedaba
+   * fuera de la vista cuando el fallo llegaba con la lista de resultados en
+   * pantalla, y el tesista no sabía por qué no pasaba nada.
+   */
+  private mostrarError(texto: string): void {
+    this.error.set(texto);
+    setTimeout(() => {
+      if (this.error() === texto) this.error.set(null);
+    }, 12_000);
+  }
+
   private avisar(texto: string): void {
     this.avisoGuardada.set(texto);
     setTimeout(() => this.avisoGuardada.set(null), 3500);
@@ -1672,7 +1813,9 @@ export class MiScopusPanel implements OnInit {
     const generacion = this.ultimaGeneracion();
     if (generacion) return generacion.tema;
     const conceptos = this.conceptos().map((c) => c.nombre);
-    return this.modo() === 'normal' && conceptos.length > 0 ? conceptos.join(', ') : '';
+    const pregunta = this.modo() === 'normal' ? conceptos.join(', ').trim() : '';
+    // El servidor pide al menos dos letras: con menos no hay significado que comparar.
+    return pregunta.length >= 2 ? pregunta : '';
   });
 
   /** Cuán cerca está un resultado, relativo a los demás de la lista. */
@@ -1737,7 +1880,7 @@ export class MiScopusPanel implements OnInit {
       },
       error: (fallo: unknown) => {
         this.conectando.set(false);
-        this.error.set(toApiError(fallo).message);
+        this.mostrarError(toApiError(fallo).message);
       },
     });
   }
@@ -1781,7 +1924,18 @@ export class MiScopusPanel implements OnInit {
       },
       error: (fallo: unknown) => {
         this.buscando.set(false);
-        this.error.set(toApiError(fallo).message);
+        if (porSignificado) {
+          // Ordenar por significado es un extra: si falla, se busca igual,
+          // por citas, y se dice por qué el orden no es el pedido.
+          this.orden.set('citas');
+          // Primero la búsqueda, que al empezar borra el aviso anterior.
+          this.buscar(pagina);
+          this.mostrarError(
+            `No se pudo ordenar por significado (${toApiError(fallo).message}). Te los mostramos por más citados.`,
+          );
+          return;
+        }
+        this.mostrarError(toApiError(fallo).message);
         // Una búsqueda que falló no puede dejar en pantalla los resultados de
         // la anterior: parecería que esos son la respuesta a lo que escribió.
         this.busqueda.set(null);
@@ -1911,7 +2065,7 @@ export class MiScopusPanel implements OnInit {
       },
       error: (fallo: unknown) => {
         this.importando.set(false);
-        this.error.set(toApiError(fallo).message);
+        this.mostrarError(toApiError(fallo).message);
       },
     });
   }
@@ -1955,7 +2109,7 @@ export class MiScopusPanel implements OnInit {
         this.marcados.set(new Set());
         this.cargar();
       },
-      error: (fallo: unknown) => this.error.set(toApiError(fallo).message),
+      error: (fallo: unknown) => this.mostrarError(toApiError(fallo).message),
     });
   }
 }
