@@ -433,6 +433,55 @@ export class MiScopusPanel implements OnInit {
       ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
+  // ── «Ver resumen» en cada resultado ───────────────────────────────────────
+
+  /**
+   * Los resúmenes de la página, por DOI en minúsculas. Nulo mientras no se ha
+   * abierto ninguno: se piden los de toda la página al abrir el primero, en
+   * una sola consulta a OpenAlex, y abrir los demás ya no cuesta nada.
+   */
+  readonly resumenesDePagina = signal<Record<string, string> | null>(null);
+  readonly cargandoResumenes = signal(false);
+  readonly resumenesAbiertos = signal<ReadonlySet<string>>(new Set());
+
+  verResumen(resultado: ResultadoDeScopus): void {
+    const copia = new Set(this.resumenesAbiertos());
+    if (copia.has(resultado.eid)) copia.delete(resultado.eid);
+    else copia.add(resultado.eid);
+    this.resumenesAbiertos.set(copia);
+
+    if (this.resumenesDePagina() !== null || this.cargandoResumenes()) return;
+    const dois = (this.busqueda()?.resultados ?? [])
+      .map((r) => r.doi)
+      .filter((doi): doi is string => Boolean(doi));
+    if (dois.length === 0) return;
+
+    this.cargandoResumenes.set(true);
+    this.scopus.resumenes(dois).subscribe({
+      next: (resumenes) => {
+        this.resumenesDePagina.set(resumenes);
+        this.cargandoResumenes.set(false);
+      },
+      error: () => {
+        // Sin resumen no se rompe nada: cada fila dirá que no lo hay.
+        this.resumenesDePagina.set({});
+        this.cargandoResumenes.set(false);
+      },
+    });
+  }
+
+  resumenDe(resultado: ResultadoDeScopus): string | null {
+    if (!resultado.doi) return null;
+    return this.resumenesDePagina()?.[resultado.doi.toLowerCase()] ?? null;
+  }
+
+  /** Cuántas de las referencias del resumen aún no están en su biblioteca. */
+  readonly referenciasPorAnadir = computed(() => this.referencias().filter((r) => !r.yaLaTienes));
+
+  anadirReferencias(): void {
+    this.importarEids(this.referenciasPorAnadir().map((r) => r.eid));
+  }
+
   // ── El orden de los resultados ────────────────────────────────────────────
 
   readonly orden = signal<OrdenDeScopus>('citas');
@@ -1026,6 +1075,8 @@ export class MiScopusPanel implements OnInit {
     this.hilo.set([]);
     this.errorResumen.set(null);
     this.referenciaResaltada.set(null);
+    this.resumenesDePagina.set(null);
+    this.resumenesAbiertos.set(new Set());
 
     this.buscando.set(true);
     this.error.set(null);
@@ -1141,7 +1192,14 @@ export class MiScopusPanel implements OnInit {
   }
 
   importar(): void {
-    const eids = [...this.marcados()];
+    this.importarEids([...this.marcados()]);
+  }
+
+  /**
+   * Trae a su biblioteca estos artículos. Lo usan las casillas de la tabla y
+   * los botones de la columna de referencias del resumen.
+   */
+  importarEids(eids: string[]): void {
     if (eids.length === 0 || this.importando()) return;
 
     this.importando.set(true);

@@ -750,7 +750,19 @@
                     </div>
 
                     <aside class="sc-referencias" aria-label="Referencias">
-                      <p class="sc-referencias-titulo">Referencias</p>
+                      <div class="sc-referencias-cabecera">
+                        <p class="sc-referencias-titulo">Referencias</p>
+                        @if (referenciasPorAnadir().length > 0) {
+                          <button
+                            type="button"
+                            class="sc-enlace"
+                            [disabled]="importando()"
+                            (click)="anadirReferencias()"
+                          >
+                            Añadir las {{ referenciasPorAnadir().length }} a mis fuentes
+                          </button>
+                        }
+                      </div>
                       <ol>
                         @for (ref of referencias(); track ref.eid; let i = $index) {
                           <li
@@ -779,6 +791,18 @@
                                 · <em>sin resumen: leída solo por el título</em>
                               }
                             </span>
+                            @if (ref.yaLaTienes) {
+                              <span class="sc-ref-ya">✓ En tus fuentes</span>
+                            } @else {
+                              <button
+                                type="button"
+                                class="sc-ref-anadir"
+                                [disabled]="importando()"
+                                (click)="importarEids([ref.eid])"
+                              >
+                                + Añadir a mis fuentes
+                              </button>
+                            }
                           </li>
                         }
                       </ol>
@@ -894,6 +918,17 @@
                           </span>
                           <span class="sc-titulo">{{ resultado.titulo }}</span>
                           <span class="sc-enlaces">
+                            @if (resultado.doi) {
+                              <button
+                                type="button"
+                                class="sc-ver-resumen"
+                                [attr.aria-expanded]="resumenesAbiertos().has(resultado.eid)"
+                                (click)="verResumen(resultado)"
+                              >
+                                {{ resumenesAbiertos().has(resultado.eid) ? 'Ocultar' : 'Ver' }} resumen
+                                <span class="sc-orden-flecha" aria-hidden="true"></span>
+                              </button>
+                            }
                             @if (resultado.enlace) {
                               <a [href]="resultado.enlace" target="_blank" rel="noopener noreferrer"
                                 >Ver en Scopus ↗</a
@@ -908,6 +943,19 @@
                               >
                             }
                           </span>
+                          @if (resumenesAbiertos().has(resultado.eid)) {
+                            <span class="sc-abstract">
+                              @if (cargandoResumenes()) {
+                                <span class="sc-girando" aria-hidden="true"></span> Trayendo el resumen…
+                              } @else if (resumenDe(resultado); as texto) {
+                                {{ texto }}
+                                <small>Resumen del catálogo abierto (OpenAlex).</small>
+                              } @else {
+                                <em>El catálogo abierto no tiene el resumen de este artículo. Ábrelo en la
+                                  editorial para leerlo.</em>
+                              }
+                            </span>
+                          }
                         </td>
                         <td class="sc-col-autores" data-titulo="Autores">
                           {{ resultado.autores || '(Autor no consignado)' }}

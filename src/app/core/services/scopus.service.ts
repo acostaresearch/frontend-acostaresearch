@@ -188,6 +188,16 @@ export class ScopusService {
       .pipe(map((res) => res.data));
   }
 
+  /**
+   * Los resúmenes de los artículos de la página, de OpenAlex, por DOI en
+   * minúsculas. Los que no tiene no vienen.
+   */
+  resumenes(dois: string[]): Observable<Record<string, string>> {
+    return this.http
+      .post<ApiResponse<{ resumenes: Record<string, string> }>>(`${this.base}/resumenes`, { dois })
+      .pipe(map((res) => res.data.resumenes));
+  }
+
   importar(eids: string[]): Observable<ImportacionDeScopus> {
     return this.http
       .post<ApiResponse<ImportacionDeScopus>>(`${this.base}/importar`, { eids })
