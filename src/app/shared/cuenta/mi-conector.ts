@@ -57,6 +57,14 @@ export class MiConector implements OnInit {
   readonly cargando = signal(true);
 
   /**
+   * La pestaña de «Tus herramientas» que se ve. Se abre en Zotero si se vuelve
+   * de autorizarlo: ahí es donde está el aviso de cómo fue.
+   */
+  readonly herramienta = signal<'scopus' | 'zotero' | 'r'>(
+    this.ruta.snapshot.queryParamMap.has('zotero') ? 'zotero' : 'scopus',
+  );
+
+  /**
    * Guía de instalación en PDF. Cadena vacía = el archivo no está y no se
    * ofrece la descarga; lo resuelve el generador de environments al compilar.
    */

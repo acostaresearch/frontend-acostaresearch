@@ -73,96 +73,129 @@
        dónde vas». Eran los mismos datos dos veces, y con varios métodos
        comprados esta lista obligaba a emparejar a mano cada ficha con la
        pestaña de arriba. -->
-  <!-- Sus propias fuentes. Solo con acceso vigente, como la guía: sin conector
-       que las lea, subir un export no serviría de nada.
+  <!-- ── Tus herramientas ─────────────────────────────────────────────────────
+       Scopus, Zotero y R en UNA tarjeta con pestañas, y no en tres tarjetas de
+       medio ancho. El buscador de Scopus necesita la fila entera —filtros a la
+       izquierda y una tabla de resultados con cinco columnas— y a medio ancho
+       no cabía ni la tabla. Las otras dos van en pestañas porque son la misma
+       pregunta, de dónde salen las fuentes y los datos de la tesis, y apiladas
+       empujaban la ayuda tres pantallas abajo.
 
-       Va aquí, y no en una pantalla aparte, porque es parte de la puesta en
-       marcha: quien acaba de conectar Claude es exactamente quien está a punto
-       de descubrir que su tema no está en la biblioteca de la casa. -->
+       Solo con acceso vigente: sin conector que las lea, traer fuentes o pedir
+       un análisis no serviría de nada.
+
+       Las tres pestañas se pintan siempre y se ESCONDEN, no se destruyen: así
+       una búsqueda de Scopus a medias sigue ahí al volver de mirar Zotero, y
+       la vuelta de autorizar Zotero (`?zotero=…`) la lee su panel aunque no
+       sea la pestaña que se ve. -->
   @if (tieneAccesoVigente()) {
-    <section class="tarjeta tramo-3">
-      <!-- El logo de quien pone los datos, no un adorno: estas tres tarjetas
-           hablan de herramientas de fuera —Scopus, Zotero, R— y la marca es lo
-           que se reconoce antes de leer el título. El `alt` va vacío a
-           propósito: el nombre está en el titular de al lado, y repetirlo
-           obliga a oírlo dos veces con lector de pantalla. -->
-      <div class="cabecera-marca">
-        <span class="marca">
-          <img src="/iconos/scopus_icon.png" alt="" />
-        </span>
-        <div>
-          <h2>Tus fuentes de Scopus</h2>
-          <p class="marca-pie">Elsevier · base bibliográfica</p>
+    <h2 class="herramientas-titulo tramo-6">Tus herramientas</h2>
+
+    <section class="tarjeta tramo-6 herramientas">
+      <div class="herramientas-pestanas" role="tablist" aria-label="Tus herramientas">
+        <!-- El logo de quien pone los datos, no un adorno: son herramientas de
+             fuera y la marca se reconoce antes de leer el nombre. El `alt` va
+             vacío a propósito: el nombre está al lado, y repetirlo obliga a
+             oírlo dos veces con lector de pantalla. -->
+        <button
+          type="button"
+          role="tab"
+          id="pestana-scopus"
+          aria-controls="panel-scopus"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'scopus'"
+          [attr.aria-selected]="herramienta() === 'scopus'"
+          (click)="herramienta.set('scopus')"
+        >
+          <span class="marca"><img src="/iconos/scopus_icon.png" alt="" /></span>
+          Tus fuentes de Scopus
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="pestana-zotero"
+          aria-controls="panel-zotero"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'zotero'"
+          [attr.aria-selected]="herramienta() === 'zotero'"
+          (click)="herramienta.set('zotero')"
+        >
+          <span class="marca"><img src="/iconos/Zotero_icon.png" alt="" /></span>
+          Tu Zotero
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="pestana-r"
+          aria-controls="panel-r"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'r'"
+          [attr.aria-selected]="herramienta() === 'r'"
+          (click)="herramienta.set('r')"
+        >
+          <span class="marca"><img src="/iconos/R_logo.svg.png" alt="" /></span>
+          Tu análisis en R
+        </button>
+      </div>
+
+      <div
+        id="panel-scopus"
+        role="tabpanel"
+        aria-labelledby="pestana-scopus"
+        class="herramientas-panel herramientas-panel-scopus"
+        [hidden]="herramienta() !== 'scopus'"
+      >
+        <!-- Buscar en Scopus, cuando el servidor lo tiene encendido. Va
+             DELANTE de la subida porque es el camino corto; el panel se calla
+             solo si no está disponible, y entonces queda la subida sola. -->
+        <app-mi-scopus />
+
+        <div class="herramientas-subida">
+          <h3>¿Ya exportaste de Scopus?</h3>
+          <p class="nota">
+            Sube el archivo que descargas de Scopus con el acceso de tu universidad. Desde que entran,
+            aparecen cuando Claude busca para tus capítulos.
+          </p>
+          <app-mis-fuentes />
         </div>
       </div>
 
-      <p class="nota">
-        Desde que entran, aparecen cuando Claude busca para tus capítulos. Por dos caminos: buscando
-        en Scopus desde aquí, o subiendo el archivo que exportas.
-      </p>
-
-      <!-- Buscar en Scopus, cuando el servidor lo tiene encendido. Va DELANTE
-           de la subida porque es el camino corto; el panel se calla solo si no
-           está disponible, y entonces la tarjeta queda como estaba. -->
-      <app-mi-scopus />
-
-      <app-mis-fuentes />
-    </section>
-  }
-
-  <!-- El Zotero del propio tesista. Va justo detrás de sus fuentes de Scopus
-       porque es la misma pregunta -de dónde salen las fuentes que Claude va a
-       citar- por la otra puerta: el que ya lleva su biblioteca en Zotero no
-       tiene por qué exportar un archivo cada vez que la amplía.
-
-       Con acceso vigente, como lo de arriba: sin conector que las lea, traer
-       una coleccion no serviria de nada. -->
-  @if (tieneAccesoVigente()) {
-    <section class="tarjeta tramo-3">
-      <div class="cabecera-marca">
-        <span class="marca">
-          <img src="/iconos/Zotero_icon.png" alt="" />
-        </span>
-        <div>
-          <h2>Tu Zotero</h2>
-          <p class="marca-pie">Gestor de referencias</p>
-        </div>
+      <div
+        id="panel-zotero"
+        role="tabpanel"
+        aria-labelledby="pestana-zotero"
+        class="herramientas-panel"
+        [hidden]="herramienta() !== 'zotero'"
+      >
+        <p class="nota">
+          Elige una colección y sus fuentes quedan listas para citar, al día cada noche.
+        </p>
+        <app-mi-zotero />
       </div>
 
-      <p class="nota">
-        Elige una colección y sus fuentes quedan listas para citar, al día cada noche.
-      </p>
-      <app-mi-zotero />
-    </section>
-  }
+      <!-- R, en corto. Aquí no hay nada que configurar —el análisis se pide a
+           Claude y el archivo se sube por el enlace que él da—, así que la
+           pestaña solo cuenta que existe, para qué sirve y cómo se arranca. Sin
+           ella, el tesista cuantitativo llega al Capítulo IV pensando que tiene
+           que instalar RStudio o pagar a alguien que le corra el SPSS. -->
+      <div
+        id="panel-r"
+        role="tabpanel"
+        aria-labelledby="pestana-r"
+        class="herramientas-panel"
+        [hidden]="herramienta() !== 'r'"
+      >
+        <p class="nota">
+          Para los resultados de una tesis cuantitativa: descriptivos, alfa de Cronbach, normalidad
+          y la prueba de tus hipótesis. Lo corre Claude por ti; tú no escribes código.
+        </p>
 
-  <!-- R, en corto. Aquí no hay nada que configurar —el análisis se pide a
-       Claude y el archivo se sube por el enlace que él da—, así que la tarjeta
-       solo cuenta que existe, para qué sirve y cómo se arranca. Sin ella, el
-       tesista cuantitativo llega al Capítulo IV pensando que tiene que instalar
-       RStudio o pagar a alguien que le corra el SPSS. -->
-  @if (tieneAccesoVigente()) {
-    <section class="tarjeta tramo-3">
-      <div class="cabecera-marca">
-        <span class="marca">
-          <img src="/iconos/R_logo.svg.png" alt="" />
-        </span>
-        <div>
-          <h2>Tu análisis en R</h2>
-          <p class="marca-pie">Estadística · sin instalar nada</p>
-        </div>
+        <ol class="r-pasos">
+          <li>Dile a Claude en tu conector: <em>«analicemos mis datos en R»</em>.</li>
+          <li>Te da un enlace para subir tu Excel o tu SPSS.</li>
+          <li>Elige la prueba contigo, la corre y te entrega el informe en Word.</li>
+        </ol>
       </div>
-
-      <p class="nota">
-        Para los resultados de una tesis cuantitativa: descriptivos, alfa de Cronbach, normalidad y
-        la prueba de tus hipótesis. Lo corre Claude por ti; tú no escribes código.
-      </p>
-
-      <ol class="r-pasos">
-        <li>Dile a Claude en tu conector: <em>«analicemos mis datos en R»</em>.</li>
-        <li>Te da un enlace para subir tu Excel o tu SPSS.</li>
-        <li>Elige la prueba contigo, la corre y te entrega el informe en Word.</li>
-      </ol>
     </section>
   }
 

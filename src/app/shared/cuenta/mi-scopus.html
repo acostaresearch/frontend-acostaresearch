@@ -1,19 +1,26 @@
-<!-- La vuelta desde Elsevier. Solo ocurre con OAuth, y se anuncia una vez. -->
-@if (vuelta() === 'cancelado') {
-  <p class="scopus-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
-} @else if (vuelta() === 'rechazado') {
-  <p class="scopus-aviso scopus-mal">
-    Elsevier no concedió el acceso. Puede ser que tu institución no tenga habilitada esta
-    conexión; mientras tanto, sube tu export de Scopus aquí abajo.
-  </p>
-} @else if (vuelta() === 'error') {
-  <p class="scopus-aviso scopus-mal">
-    Elsevier no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
-  </p>
-}
+<!-- Los avisos van dentro de un relleno propio: el panel se pinta de borde a
+     borde de la pestaña «Tus fuentes de Scopus», y sin él quedarían pegados
+     a la línea de las pestañas. -->
+@if (vuelta() || error()) {
+  <div class="sc-relleno sc-relleno-avisos">
+    <!-- La vuelta desde Elsevier. Solo ocurre con OAuth, y se anuncia una vez. -->
+    @if (vuelta() === 'cancelado') {
+      <p class="scopus-aviso">No autorizaste el acceso, así que no se conectó nada.</p>
+    } @else if (vuelta() === 'rechazado') {
+      <p class="scopus-aviso scopus-mal">
+        Elsevier no concedió el acceso. Puede ser que tu institución no tenga habilitada esta
+        conexión; mientras tanto, sube tu export de Scopus aquí abajo.
+      </p>
+    } @else if (vuelta() === 'error') {
+      <p class="scopus-aviso scopus-mal">
+        Elsevier no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.
+      </p>
+    }
 
-@if (error(); as texto) {
-  <p class="scopus-aviso scopus-mal">{{ texto }}</p>
+    @if (error(); as texto) {
+      <p class="scopus-aviso scopus-mal">{{ texto }}</p>
+    }
+  </div>
 }
 
 @if (!cargando()) {
@@ -22,538 +29,691 @@
       <!-- Configuración ausente en el servidor: no se ofrece un botón que
            llevaría a un error. Y se dice qué hacer mientras tanto, porque la
            otra vía sigue estando y es la de siempre. -->
-      <p class="nota">
-        Buscar en Scopus desde aquí todavía no está disponible. Busca en Scopus con el acceso de
-        tu universidad y sube el archivo que exportes: aparece igual cuando Claude busque.
-      </p>
+      <div class="sc-relleno">
+        <p class="nota">
+          Buscar en Scopus desde aquí todavía no está disponible. Busca en Scopus con el acceso de
+          tu universidad y sube el archivo que exportes: aparece igual cuando Claude busque.
+        </p>
+      </div>
     } @else if (!datos.conectado) {
       <!-- Solo se llega aquí con el OAuth de Elsevier habilitado: ahí la
            conexión son SUS tokens y hay algo real que autorizar. Sin OAuth se
            busca con la credencial del servidor y no hay nada que conectar, así
            que el buscador sale directo. -->
-      <p class="scopus-invitacion">
-        Conecta tu cuenta de Scopus para <strong>buscar e importar referencias directamente</strong>
-        desde aquí, sin pasar por el export.
-      </p>
-      <ul class="scopus-garantias">
-        <li><strong>Solo lectura.</strong> Buscamos y traemos fichas; no tocamos nada tuyo.</li>
-        <li>
-          <strong>No te pedimos tu contraseña de Scopus</strong>, ni tu usuario, ni ninguna clave.
-        </li>
-        <li>Eliges tú qué artículos entran, uno a uno.</li>
-      </ul>
-      <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
-        {{ conectando() ? 'Conectando…' : 'Conectar Scopus' }}
-      </button>
-    } @else {
-      @if (datos.estado === 'CADUCADA') {
-        <p class="scopus-aviso">
-          Tu autorización venció. Pulsa para renovarla.
-          <button type="button" class="boton enlace" (click)="conectar()">Renovar ahora</button>
+      <div class="sc-relleno">
+        <p class="scopus-invitacion">
+          Conecta tu cuenta de Scopus para
+          <strong>buscar e importar referencias directamente</strong> desde aquí, sin pasar por el
+          export.
         </p>
-      }
-
-      @if (datos.error; as fallo) {
-        <p class="scopus-aviso scopus-mal">{{ fallo }}</p>
-      }
-
-      <!-- ── Buscar ────────────────────────────────────────────────────────
-           Sin preámbulos y sin anunciar que se está conectado: se está, y
-           quien abre esta tarjeta viene a buscar. -->
-      <div class="scopus-cabecera">
-        <span class="scopus-etiqueta">Buscar en Scopus</span>
-        <!-- Dos pestañas, como en la web de Scopus. Cada una guarda su texto. -->
-        <div class="scopus-modos" role="tablist" aria-label="Tipo de búsqueda">
-          <button
-            type="button"
-            role="tab"
-            class="scopus-modo"
-            [class.activo]="modo() === 'normal'"
-            [attr.aria-selected]="modo() === 'normal'"
-            (click)="cambiarModo('normal')"
-          >
-            Normal
-          </button>
-          <button
-            type="button"
-            role="tab"
-            class="scopus-modo"
-            [class.activo]="modo() === 'avanzada'"
-            [attr.aria-selected]="modo() === 'avanzada'"
-            (click)="cambiarModo('avanzada')"
-          >
-            Avanzada
-          </button>
-        </div>
-      </div>
-
-      <div class="scopus-fila">
-        @if (modo() === 'normal') {
-          <select
-            class="scopus-donde"
-            aria-label="Dónde buscar"
-            [disabled]="buscando()"
-            (change)="campo.set($any($event.target).value)"
-          >
-            @for (opcion of campos; track opcion.valor) {
-              <option [value]="opcion.valor" [selected]="campo() === opcion.valor">
-                {{ opcion.texto }}
-              </option>
-            }
-          </select>
-          <input
-            type="search"
-            class="scopus-campo scopus-campo-normal"
-            aria-label="Palabras a buscar"
-            [value]="texto()"
-            [placeholder]="ejemploNormal"
-            [disabled]="buscando()"
-            autocomplete="off"
-            (input)="texto.set($any($event.target).value)"
-            (keydown.enter)="buscar()"
-          />
-        } @else {
-          <input
-            type="search"
-            class="scopus-campo"
-            aria-label="Ecuación de búsqueda"
-            [value]="ecuacion()"
-            [placeholder]="ejemplo"
-            [disabled]="buscando()"
-            autocomplete="off"
-            spellcheck="false"
-            (input)="ecuacion.set($any($event.target).value)"
-            (keydown.enter)="buscar()"
-          />
-        }
-        <button type="button" class="boton" [disabled]="buscando()" (click)="buscar()">
-          {{ buscando() ? 'Buscando…' : 'Buscar' }}
+        <ul class="scopus-garantias">
+          <li><strong>Solo lectura.</strong> Buscamos y traemos fichas; no tocamos nada tuyo.</li>
+          <li>
+            <strong>No te pedimos tu contraseña de Scopus</strong>, ni tu usuario, ni ninguna clave.
+          </li>
+          <li>Eliges tú qué artículos entran, uno a uno.</li>
+        </ul>
+        <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
+          {{ conectando() ? 'Conectando…' : 'Conectar Scopus' }}
         </button>
       </div>
-
-      <!-- ── Refinar búsqueda ──────────────────────────────────────────────
-           Los filtros del panel de Scopus, plegados para no tapar el buscador.
-           Se convierten en cláusulas de la ecuación (ver `clausulas` en el
-           .ts). Lo que se escribe se aplica con Enter o al salir del campo, no
-           a cada tecla: «2» ya sería una búsqueda y gastaría cuota por nada. -->
-      <details class="scopus-refinar">
-        <summary>
-          Refinar búsqueda
-          @if (cuantosFiltros() > 0) {
-            <span class="scopus-cuantos">{{ cuantosFiltros() }}</span>
-          }
-        </summary>
-
-        <div class="scopus-secciones">
-          <fieldset class="scopus-seccion scopus-seccion-ancha">
-            <legend>Buscar dentro de los resultados</legend>
-            <input
-              type="search"
-              class="scopus-texto"
-              placeholder="Palabras que también deben aparecer"
-              [value]="dentro()"
-              [disabled]="buscando()"
-              (input)="dentro.set($any($event.target).value)"
-              (change)="filtrar()"
-            />
-          </fieldset>
-
-          <fieldset class="scopus-seccion">
-            <legend>Año</legend>
-            <div class="scopus-conmutador" role="radiogroup" aria-label="Cómo elegir los años">
-              <button
-                type="button"
-                [class.activo]="modoAnio() === 'rango'"
-                [attr.aria-checked]="modoAnio() === 'rango'"
-                role="radio"
-                (click)="cambiarModoAnio('rango')"
-              >
-                Rango
-              </button>
-              <button
-                type="button"
-                [class.activo]="modoAnio() === 'sueltos'"
-                [attr.aria-checked]="modoAnio() === 'sueltos'"
-                role="radio"
-                (click)="cambiarModoAnio('sueltos')"
-              >
-                Individual
-              </button>
-            </div>
-            @if (modoAnio() === 'rango') {
-              <div class="scopus-anios">
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  min="1900"
-                  placeholder="Desde"
-                  aria-label="Desde el año"
-                  [value]="anioDesde()"
-                  [disabled]="buscando()"
-                  (input)="anioDesde.set($any($event.target).value)"
-                  (change)="filtrar()"
-                />
-                <span aria-hidden="true">–</span>
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  min="1900"
-                  placeholder="Hasta"
-                  aria-label="Hasta el año"
-                  [value]="anioHasta()"
-                  [disabled]="buscando()"
-                  (input)="anioHasta.set($any($event.target).value)"
-                  (change)="filtrar()"
-                />
-              </div>
-            } @else {
-              <input
-                type="text"
-                class="scopus-texto"
-                inputmode="numeric"
-                placeholder="2020, 2022, 2024"
-                aria-label="Años sueltos, separados por comas"
-                [value]="aniosSueltos()"
-                [disabled]="buscando()"
-                (input)="aniosSueltos.set($any($event.target).value)"
-                (change)="filtrar()"
-              />
-            }
-          </fieldset>
-
-          @for (faceta of facetas; track faceta.clave) {
-            <fieldset class="scopus-seccion">
-              <legend>{{ faceta.titulo }}</legend>
-
-              @if (faceta.tipo === 'casillas') {
-                @for (opcion of opcionesVisibles(faceta); track opcion.valor) {
-                  <label class="scopus-casilla">
-                    <input
-                      type="checkbox"
-                      [checked]="marcado(faceta, opcion.valor)"
-                      [disabled]="buscando()"
-                      (change)="alternar(faceta, opcion.valor)"
-                    />
-                    <span>{{ opcion.texto }}</span>
-                  </label>
-                }
-                @if (faceta.visibles && (faceta.opciones?.length ?? 0) > faceta.visibles) {
-                  <button type="button" class="boton enlace" (click)="desplegar(faceta)">
-                    {{ desplegadas().has(faceta.clave) ? 'Ver menos' : 'Ver todas' }}
-                  </button>
-                }
-              } @else {
-                @if (valoresDe(faceta).length > 0) {
-                  <div class="scopus-fichas">
-                    @for (valor of valoresDe(faceta); track valor) {
-                      <span class="scopus-ficha-filtro">
-                        {{ valor }}
-                        <button
-                          type="button"
-                          [attr.aria-label]="'Quitar ' + valor"
-                          [disabled]="buscando()"
-                          (click)="quitar(faceta, valor)"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    }
-                  </div>
-                }
-                <input
-                  #campoFaceta
-                  type="text"
-                  class="scopus-texto"
-                  [placeholder]="faceta.ejemplo ?? ''"
-                  [attr.aria-label]="faceta.titulo"
-                  [disabled]="buscando()"
-                  (keydown.enter)="agregar(faceta, campoFaceta)"
-                  (change)="agregar(faceta, campoFaceta)"
-                />
-              }
-            </fieldset>
-          }
-        </div>
-
-        <p class="tenue">
-          Dentro de cada sección se suman las opciones (artículo <em>o</em> ponencia); entre
-          secciones se combinan (inglés <em>y</em> ciencias sociales). Scopus no nos da cuántos
-          resultados hay en cada opción con nuestro acceso, por eso no llevan número.
-        </p>
-      </details>
-
-      <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
-           «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
-           avanzada sin filtros sería repetir el campo, así que no sale. -->
-      @if (ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
-        <p class="scopus-anadido">
-          Se busca: <code>{{ ecuacionCompleta() }}</code>
-          @if (hayFiltros()) {
-            <button
-              type="button"
-              class="boton enlace"
-              [disabled]="buscando()"
-              (click)="quitarFiltros()"
-            >
-              Quitar filtros
-            </button>
-          }
-        </p>
-      } @else if (hayFiltros()) {
-        <p class="scopus-anadido">
-          Se añadirá: <code>AND {{ clausulas().join(' AND ') }}</code>
-          <button type="button" class="boton enlace" [disabled]="buscando()" (click)="quitarFiltros()">
-            Quitar filtros
-          </button>
-        </p>
-      }
-
-      <!-- Lo que hace falta para escribir una ecuación DE SU TEMA.
-           Antes aquí había una explicación de cómo se completan las fichas por
-           dentro, que es cierta y no le sirve a nadie para buscar: quien mira
-           un campo vacío no necesita saber cómo funciona el catálogo abierto,
-           necesita saber qué escribir. -->
-      @if (!busqueda() && modo() === 'normal') {
-        <div class="scopus-ayuda">
-          <p>
-            <strong>Escribe las palabras de tu tema, mejor en inglés</strong>: es el idioma en el
-            que está indexada casi toda la literatura, y en español saldrá muy poco.
-          </p>
-          <ul class="scopus-pistas">
-            <li>
-              Las palabras sueltas se buscan todas a la vez. Entre comillas,
-              <code>"mobile learning"</code>, se busca la frase exacta.
-            </li>
-            <li>
-              Con el desplegable de la izquierda eliges dónde: en el título, por autor, por revista
-              o por DOI.
-            </li>
-            <li>
-              ¿Necesitas sinónimos, <code>OR</code> o varios campos a la vez? Pasa a
-              <button type="button" class="boton enlace" (click)="cambiarModo('avanzada')">
-                búsqueda avanzada</button
-              >: se lleva lo que escribiste ya convertido en ecuación.
-            </li>
-          </ul>
-          <p class="tenue">
-            <button type="button" class="boton enlace" (click)="usarEjemplo()">
-              Poner un ejemplo en el campo
-            </button>
-          </p>
-        </div>
-      } @else if (!busqueda()) {
-        <div class="scopus-ayuda">
-          <p>
-            <strong>¿No sabes qué poner?</strong> Pídesela a Claude en tu conector:
-            <em>«dame la ecuación de búsqueda de Scopus para mi tema»</em>. Te la arma con los
-            términos en inglés —que es el idioma en el que está indexada casi toda la literatura—
-            y la pegas aquí tal cual.
-          </p>
-          <ul class="scopus-pistas">
-            <li>
-              <code>TITLE-ABS-KEY(…)</code> busca en el título, el resumen y las palabras clave.
-              Es con la que se empieza.
-            </li>
-            <li>
-              Las comillas son para una frase exacta:
-              <code>"aprendizaje móvil"</code> no es lo mismo que <code>aprendizaje móvil</code>.
-            </li>
-            <li>
-              <code>AND</code> estrecha y <code>OR</code> amplía. Tu tema suele tener dos o tres
-              nombres: <code>("mobile learning" OR "m-learning")</code>.
-            </li>
-            <li>
-              Los años, el tipo de documento y el idioma no hace falta escribirlos: ponlos en los
-              filtros de arriba. Lo viejo es lo primero que mira un jurado.
-            </li>
-          </ul>
-          <p class="tenue">
-            <button type="button" class="boton enlace" (click)="usarEjemplo()">
-              Poner un ejemplo en el campo
-            </button>
-          </p>
-        </div>
-      }
-
-      <!-- ── Resultados ──────────────────────────────────────────────────── -->
-      @if (busqueda(); as lista) {
-        @if (lista.total === 0) {
+    } @else {
+      <!-- ── El buscador ───────────────────────────────────────────────────
+           Una caja, como en Scopus: el campo arriba y, en su pie, las acciones
+           secundarias a la izquierda y «Buscar» a la derecha. Sin preámbulos y
+           sin anunciar que se está conectado: se está, y quien abre esta
+           pestaña viene a buscar. -->
+      <div class="sc-buscador">
+        @if (datos.estado === 'CADUCADA') {
           <p class="scopus-aviso">
-            Scopus no encontró nada con esa ecuación. Suele ser por afinar de más: quita un
-            <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
-            @if (hayFiltros()) {
-              Prueba también a quitar algún filtro.
-            }
-          </p>
-          <div class="scopus-acciones">
-            <button type="button" class="boton secundario" (click)="limpiar()">
-              Borrar búsqueda
-            </button>
-          </div>
-        } @else {
-          <p class="scopus-recuento">
-            <strong>{{ lista.total }}</strong> resultados · página {{ lista.pagina }} de
-            {{ lista.paginas }}
-            <button type="button" class="boton enlace" (click)="limpiar()">Borrar búsqueda</button>
-            <button type="button" class="boton enlace" (click)="marcarTodo()">
-              Marcar toda la página
-            </button>
-          </p>
-
-          <ul class="scopus-lista">
-            @for (resultado of lista.resultados; track resultado.eid; let i = $index) {
-              <li class="scopus-item" [class.scopus-item-tuya]="resultado.yaLaTienes">
-                <label class="scopus-marca">
-                  <input
-                    type="checkbox"
-                    [checked]="marcados().has(resultado.eid)"
-                    [disabled]="importando()"
-                    (change)="marcar(resultado.eid)"
-                  />
-                  <span class="scopus-ficha">
-                    <span class="scopus-titulo">{{ lista.desde + i }}. {{ resultado.titulo }}</span>
-                    <span class="scopus-autores">
-                      {{ resultado.autores || '(Autor no consignado)' }}
-                      ({{ resultado.anio ?? 's. f.' }})
-                    </span>
-                    @if (resultado.revista) {
-                      <span class="scopus-revista">{{ resultado.revista }}</span>
-                    }
-                    <span class="scopus-datos">
-                      @if (resultado.tipo) {
-                        <span class="scopus-etiqueta-dato">{{ resultado.tipo }}</span>
-                      }
-                      @if (resultado.citas > 0) {
-                        <span class="scopus-etiqueta-dato">{{ resultado.citas }} citas</span>
-                      }
-                      @if (resultado.accesoAbierto) {
-                        <span class="scopus-etiqueta-dato scopus-abierto">Acceso abierto</span>
-                      }
-                      <!-- Solo cuando no hay forma de completarlo: sin DOI no
-                           se le puede preguntar al catálogo abierto, y esa sí
-                           se va a guardar sin resumen de verdad. -->
-                      @if (!resultado.conResumen && !resultado.doi) {
-                        <span class="scopus-etiqueta-dato scopus-flojo">Sin resumen</span>
-                      }
-                      @if (resultado.doi) {
-                        <a
-                          class="scopus-enlace"
-                          [href]="'https://doi.org/' + resultado.doi"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          >{{ resultado.doi }}</a
-                        >
-                      }
-                      @if (resultado.enlace) {
-                        <a
-                          class="scopus-enlace"
-                          [href]="resultado.enlace"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          >Ver en Scopus</a
-                        >
-                      }
-                      @if (resultado.yaLaTienes) {
-                        <span class="scopus-etiqueta-dato scopus-ya">Ya la tienes</span>
-                      }
-                    </span>
-                  </span>
-                </label>
-              </li>
-            }
-          </ul>
-
-          <div class="scopus-acciones">
-            <button
-              type="button"
-              class="boton"
-              [disabled]="cuantosMarcados() === 0 || importando()"
-              (click)="importar()"
-            >
-              @if (importando()) {
-                Importando…
-              } @else if (cuantosMarcados() === 0) {
-                Importar seleccionados
-              } @else if (cuantosMarcados() === 1) {
-                Importar 1 seleccionado
-              } @else {
-                Importar {{ cuantosMarcados() }} seleccionados
-              }
-            </button>
-
-            @if (lista.paginas > 1) {
-              <span class="scopus-paginas">
-                <button
-                  type="button"
-                  class="boton secundario"
-                  [disabled]="lista.pagina <= 1 || buscando()"
-                  (click)="pagina(lista.pagina - 1)"
-                >
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  class="boton secundario"
-                  [disabled]="lista.pagina >= lista.paginas || buscando()"
-                  (click)="pagina(lista.pagina + 1)"
-                >
-                  Siguiente
-                </button>
-              </span>
-            }
-          </div>
-
-          <!-- Las dos cosas que hay que saber JUSTO AQUÍ, donde se decide:
-               por qué la importación tarda, y que las marcas no cruzan página. -->
-          <p class="tenue">
-            Se importa la página que tienes delante: al cambiar de página, las marcas se sueltan.
-            @if (!lista.conResumenes) {
-              Tarda unos segundos porque completamos el resumen y los autores de cada artículo
-              desde el catálogo abierto, para que la referencia salga entera en tu bibliografía.
-            }
+            Tu autorización venció. Pulsa para renovarla.
+            <button type="button" class="boton enlace" (click)="conectar()">Renovar ahora</button>
           </p>
         }
-      }
 
-      <!-- El parte de la importación. Un import que no dice nada deja al
-           comprador sin saber si funcionó, y es cuando repite la operación. -->
-      @if (parte(); as resumen) {
-        <div class="parte" [class.parte-incompleta]="resumen.guardadas === 0">
-          <p class="parte-titulo">
-            @if (resumen.guardadas === 1) {
-              1 fuente importada correctamente.
-            } @else if (resumen.guardadas > 1) {
-              {{ resumen.guardadas }} fuentes importadas correctamente.
+        @if (datos.error; as fallo) {
+          <p class="scopus-aviso scopus-mal">{{ fallo }}</p>
+        }
+
+        <div class="sc-buscador-cabecera">
+          <span class="sc-buscador-titulo">Buscar en Scopus</span>
+          <!-- Un interruptor y no dos pestañas: como en Scopus, la avanzada es
+               la misma búsqueda escrita de otra forma. Cada modo guarda su
+               texto, así que ir y volver no borra nada. -->
+          <label class="sc-interruptor">
+            <span>Consulta avanzada</span>
+            <input
+              type="checkbox"
+              role="switch"
+              [checked]="modo() === 'avanzada'"
+              (change)="alternarAvanzada($any($event.target).checked)"
+            />
+            <span class="sc-interruptor-pista" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="sc-caja" [class.sc-caja-ocupada]="buscando()">
+          @if (modo() === 'normal') {
+            <div class="sc-campos">
+              <!-- Las etiquetas dentro del borde, como en Scopus: el campo
+                   dice qué es sin una línea de texto suelta encima. -->
+              <label class="sc-flotante sc-donde">
+                <span>Buscar dentro</span>
+                <select
+                  [disabled]="buscando()"
+                  (change)="campo.set($any($event.target).value)"
+                >
+                  @for (opcion of campos; track opcion.valor) {
+                    <option [value]="opcion.valor" [selected]="campo() === opcion.valor">
+                      {{ opcion.texto }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <label class="sc-flotante sc-que">
+                <span>Buscar documentos <b aria-hidden="true">*</b></span>
+                <input
+                  type="text"
+                  [value]="texto()"
+                  [placeholder]="ejemploNormal"
+                  [disabled]="buscando()"
+                  autocomplete="off"
+                  (input)="texto.set($any($event.target).value)"
+                  (keydown.enter)="buscar()"
+                />
+                @if (texto()) {
+                  <button
+                    type="button"
+                    class="sc-vaciar"
+                    aria-label="Vaciar el campo"
+                    [disabled]="buscando()"
+                    (click)="texto.set('')"
+                  >
+                    ×
+                  </button>
+                }
+              </label>
+            </div>
+          } @else {
+            <!-- Varias líneas: una ecuación real, con sus sinónimos, no cabe
+                 en una. Enter busca; Mayúsculas+Enter parte la línea. -->
+            <textarea
+              class="sc-ecuacion"
+              rows="3"
+              aria-label="Ecuación de búsqueda"
+              [value]="ecuacion()"
+              [placeholder]="ejemplo"
+              [disabled]="buscando()"
+              autocomplete="off"
+              spellcheck="false"
+              (input)="ecuacion.set($any($event.target).value)"
+              (keydown.enter)="enterEnEcuacion($any($event))"
+            ></textarea>
+          }
+
+          <div class="sc-caja-pie">
+            @if (modo() === 'normal') {
+              <button type="button" class="sc-accion" (click)="cambiarModo('avanzada')">
+                <span aria-hidden="true">✎</span> Editar en la búsqueda avanzada
+              </button>
+            }
+            <button type="button" class="sc-accion" (click)="usarEjemplo()">
+              <span aria-hidden="true">＋</span> Poner un ejemplo
+            </button>
+            @if (busqueda() || texto() || ecuacion() || hayFiltros()) {
+              <button type="button" class="sc-accion" (click)="reiniciar()">
+                Reiniciar
+              </button>
+            }
+            <button
+              type="button"
+              class="boton sc-buscar"
+              [disabled]="buscando() || !ecuacionCompleta()"
+              (click)="buscar()"
+            >
+              {{ buscando() ? 'Buscando…' : 'Buscar' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
+             «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
+             avanzada sin filtros sería repetir el campo, así que no sale. -->
+        @if (ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
+          <p class="scopus-anadido">
+            Se busca: <code>{{ ecuacionCompleta() }}</code>
+          </p>
+        }
+      </div>
+
+      <!-- ── Filtros a la izquierda, resultados a la derecha ────────────────── -->
+      <div class="sc-cuerpo">
+        <!-- En el móvil la columna no cabe al lado: se abre con este botón y se
+             despliega encima de la lista. -->
+        <button
+          type="button"
+          class="sc-abrir-filtros"
+          aria-controls="sc-filtros"
+          [attr.aria-expanded]="filtrosAbiertos()"
+          (click)="filtrosAbiertos.set(!filtrosAbiertos())"
+        >
+          <span aria-hidden="true">☰</span> Refinar la búsqueda
+          @if (cuantosFiltros() > 0) {
+            <span class="sc-cuantos">{{ cuantosFiltros() }}</span>
+          }
+        </button>
+
+        <aside id="sc-filtros" class="sc-filtros" [class.abierto]="filtrosAbiertos()">
+          <h3 class="sc-filtros-titulo">Refinar la búsqueda</h3>
+
+          <input
+            type="search"
+            class="sc-texto"
+            placeholder="Buscar dentro de los resultados"
+            aria-label="Buscar dentro de los resultados"
+            [value]="dentro()"
+            [disabled]="buscando()"
+            (input)="dentro.set($any($event.target).value)"
+            (change)="filtrar()"
+          />
+
+          <div class="sc-filtros-sub">
+            <span>Filtros</span>
+            @if (hayFiltros()) {
+              <button
+                type="button"
+                class="sc-enlace"
+                [disabled]="buscando()"
+                (click)="quitarFiltros()"
+              >
+                Quitar filtros ({{ cuantosFiltros() }})
+              </button>
+            }
+          </div>
+
+          <!-- Año -->
+          <section class="sc-faceta">
+            <button
+              type="button"
+              class="sc-faceta-cabecera"
+              [attr.aria-expanded]="abiertas().has('anio')"
+              (click)="alternarSeccion('anio')"
+            >
+              Año
+              <span class="sc-chevron" aria-hidden="true"></span>
+            </button>
+            @if (abiertas().has('anio')) {
+              <div class="sc-faceta-cuerpo">
+                <div class="sc-radios" role="radiogroup" aria-label="Cómo elegir los años">
+                  <label class="sc-radio">
+                    <input
+                      type="radio"
+                      name="sc-modo-anio"
+                      [checked]="modoAnio() === 'rango'"
+                      (change)="cambiarModoAnio('rango')"
+                    />
+                    Rango
+                  </label>
+                  <label class="sc-radio">
+                    <input
+                      type="radio"
+                      name="sc-modo-anio"
+                      [checked]="modoAnio() === 'sueltos'"
+                      (change)="cambiarModoAnio('sueltos')"
+                    />
+                    Individual
+                  </label>
+                </div>
+                @if (modoAnio() === 'rango') {
+                  <div class="sc-anios">
+                    <input
+                      type="number"
+                      inputmode="numeric"
+                      min="1900"
+                      placeholder="de"
+                      aria-label="Desde el año"
+                      [value]="anioDesde()"
+                      [disabled]="buscando()"
+                      (input)="anioDesde.set($any($event.target).value)"
+                      (change)="filtrar()"
+                    />
+                    <span aria-hidden="true">–</span>
+                    <input
+                      type="number"
+                      inputmode="numeric"
+                      min="1900"
+                      placeholder="a"
+                      aria-label="Hasta el año"
+                      [value]="anioHasta()"
+                      [disabled]="buscando()"
+                      (input)="anioHasta.set($any($event.target).value)"
+                      (change)="filtrar()"
+                    />
+                  </div>
+                } @else {
+                  <input
+                    type="text"
+                    class="sc-texto"
+                    inputmode="numeric"
+                    placeholder="2020, 2022, 2024"
+                    aria-label="Años sueltos, separados por comas"
+                    [value]="aniosSueltos()"
+                    [disabled]="buscando()"
+                    (input)="aniosSueltos.set($any($event.target).value)"
+                    (change)="filtrar()"
+                  />
+                }
+              </div>
+            }
+          </section>
+
+          @for (faceta of facetas; track faceta.clave) {
+            <section class="sc-faceta">
+              <button
+                type="button"
+                class="sc-faceta-cabecera"
+                [attr.aria-expanded]="abiertas().has(faceta.clave)"
+                (click)="alternarSeccion(faceta.clave)"
+              >
+                {{ faceta.titulo }}
+                @if (valoresDe(faceta).length > 0) {
+                  <span class="sc-cuantos">{{ valoresDe(faceta).length }}</span>
+                }
+                <span class="sc-chevron" aria-hidden="true"></span>
+              </button>
+
+              @if (abiertas().has(faceta.clave)) {
+                <div class="sc-faceta-cuerpo">
+                  @if (faceta.tipo === 'casillas') {
+                    @for (opcion of opcionesVisibles(faceta); track opcion.valor) {
+                      <label class="sc-casilla">
+                        <input
+                          type="checkbox"
+                          [checked]="marcado(faceta, opcion.valor)"
+                          [disabled]="buscando()"
+                          (change)="alternar(faceta, opcion.valor)"
+                        />
+                        <span>{{ opcion.texto }}</span>
+                      </label>
+                    }
+                    @if (tieneMas(faceta)) {
+                      <button type="button" class="sc-enlace" (click)="abrirModal(faceta)">
+                        Mostrar todo
+                      </button>
+                    }
+                  } @else {
+                    @if (valoresDe(faceta).length > 0) {
+                      <div class="sc-fichas">
+                        @for (valor of valoresDe(faceta); track valor) {
+                          <span class="sc-ficha">
+                            {{ valor }}
+                            <button
+                              type="button"
+                              [attr.aria-label]="'Quitar ' + valor"
+                              [disabled]="buscando()"
+                              (click)="quitar(faceta, valor)"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    }
+                    <input
+                      #campoFaceta
+                      type="text"
+                      class="sc-texto"
+                      [placeholder]="faceta.ejemplo ?? ''"
+                      [attr.aria-label]="faceta.titulo"
+                      [disabled]="buscando()"
+                      (keydown.enter)="agregar(faceta, campoFaceta)"
+                      (change)="agregar(faceta, campoFaceta)"
+                    />
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <p class="sc-filtros-nota">
+            Dentro de una sección se suman las opciones; entre secciones se combinan. Scopus no nos
+            da cuántos resultados hay en cada opción, por eso no llevan número.
+          </p>
+        </aside>
+
+        <div class="sc-resultados">
+          @if (!busqueda()) {
+            <!-- Lo que hace falta para escribir una búsqueda DE SU TEMA, no
+                 cómo funciona esto por dentro. -->
+            <div class="scopus-ayuda">
+              @if (modo() === 'normal') {
+                <p>
+                  <strong>Escribe las palabras de tu tema, mejor en inglés</strong>: es el idioma en
+                  el que está indexada casi toda la literatura, y en español saldrá muy poco.
+                </p>
+                <ul class="scopus-pistas">
+                  <li>
+                    Las palabras sueltas se buscan todas a la vez. Entre comillas,
+                    <code>"mobile learning"</code>, se busca la frase exacta.
+                  </li>
+                  <li>
+                    Con «Buscar dentro» eliges dónde: en el título, por autor, por revista o por DOI.
+                  </li>
+                  <li>
+                    ¿Necesitas sinónimos, <code>OR</code> o varios campos a la vez? Enciende
+                    <b>Consulta avanzada</b>: se lleva lo que escribiste ya convertido en ecuación.
+                  </li>
+                  <li>
+                    Los años, el área y el tipo de documento se eligen en la columna de la
+                    izquierda, antes o después de buscar.
+                  </li>
+                </ul>
+              } @else {
+                <p>
+                  <strong>¿No sabes qué poner?</strong> Pídesela a Claude en tu conector:
+                  <em>«dame la ecuación de búsqueda de Scopus para mi tema»</em>. Te la arma con los
+                  términos en inglés y la pegas aquí tal cual.
+                </p>
+                <ul class="scopus-pistas">
+                  <li>
+                    <code>TITLE-ABS-KEY(…)</code> busca en el título, el resumen y las palabras
+                    clave. Es con la que se empieza.
+                  </li>
+                  <li>
+                    Las comillas son para una frase exacta:
+                    <code>"aprendizaje móvil"</code> no es lo mismo que
+                    <code>aprendizaje móvil</code>.
+                  </li>
+                  <li>
+                    <code>AND</code> estrecha y <code>OR</code> amplía. Tu tema suele tener dos o
+                    tres nombres: <code>("mobile learning" OR "m-learning")</code>.
+                  </li>
+                  <li>
+                    Los años, el área y el tipo de documento no hace falta escribirlos: están en la
+                    columna de la izquierda.
+                  </li>
+                </ul>
+              }
+            </div>
+          } @else if (busqueda(); as lista) {
+            @if (lista.total === 0) {
+              <p class="scopus-aviso">
+                Scopus no encontró nada con esa búsqueda. Suele ser por afinar de más: quita un
+                <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
+                @if (hayFiltros()) {
+                  Prueba también a quitar algún filtro.
+                }
+              </p>
             } @else {
-              No se añadió ninguna nueva.
+              <div class="sc-resultados-cabecera">
+                <p class="sc-total">
+                  Se encontraron <strong>{{ lista.total | number }}</strong>
+                  {{ lista.total === 1 ? 'documento' : 'documentos' }}.
+                </p>
+                <span class="sc-orden">Ordenados por <b>más citados</b></span>
+                <button
+                  type="button"
+                  class="boton sc-importar"
+                  [disabled]="cuantosMarcados() === 0 || importando()"
+                  (click)="importar()"
+                >
+                  @if (importando()) {
+                    Añadiendo…
+                  } @else {
+                    Añadir seleccionadas a mis fuentes
+                  }
+                </button>
+              </div>
+
+              <div class="sc-tabla-envoltura">
+                <table class="sc-tabla">
+                  <thead>
+                    <tr>
+                      <th class="sc-col-marca">
+                        <input
+                          type="checkbox"
+                          aria-label="Marcar toda la página"
+                          [checked]="paginaMarcada()"
+                          [disabled]="importando()"
+                          (change)="marcarTodo()"
+                        />
+                      </th>
+                      <th>Título del documento</th>
+                      <th class="sc-col-autores">Autores</th>
+                      <th class="sc-col-fuente">Fuente</th>
+                      <th class="sc-col-anio">Año</th>
+                      <th class="sc-col-citas">Citas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (resultado of lista.resultados; track resultado.eid; let i = $index) {
+                      <tr
+                        [class.sc-fila-marcada]="marcados().has(resultado.eid)"
+                        [class.sc-fila-tuya]="resultado.yaLaTienes"
+                      >
+                        <td class="sc-col-marca">
+                          <input
+                            type="checkbox"
+                            [attr.aria-label]="'Seleccionar: ' + resultado.titulo"
+                            [checked]="marcados().has(resultado.eid)"
+                            [disabled]="importando()"
+                            (change)="marcar(resultado.eid)"
+                          />
+                          <span class="sc-numero">{{ lista.desde + i }}</span>
+                        </td>
+                        <td class="sc-col-titulo">
+                          <span class="sc-meta">
+                            {{ resultado.tipo || 'Documento' }}
+                            @if (resultado.accesoAbierto) {
+                              · <span class="sc-abierto">Acceso abierto</span>
+                            }
+                            @if (resultado.yaLaTienes) {
+                              · <span class="sc-ya">Ya la tienes</span>
+                            }
+                            <!-- Solo cuando no hay forma de completarlo: sin DOI
+                                 no se le puede preguntar al catálogo abierto. -->
+                            @if (!resultado.conResumen && !resultado.doi) {
+                              · <span class="sc-flojo">Sin resumen</span>
+                            }
+                          </span>
+                          <span class="sc-titulo">{{ resultado.titulo }}</span>
+                          <span class="sc-enlaces">
+                            @if (resultado.enlace) {
+                              <a [href]="resultado.enlace" target="_blank" rel="noopener noreferrer"
+                                >Ver en Scopus ↗</a
+                              >
+                            }
+                            @if (resultado.doi) {
+                              <a
+                                [href]="'https://doi.org/' + resultado.doi"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >Ver en la editorial ↗</a
+                              >
+                            }
+                          </span>
+                        </td>
+                        <td class="sc-col-autores" data-titulo="Autores">
+                          {{ resultado.autores || '(Autor no consignado)' }}
+                        </td>
+                        <td class="sc-col-fuente" data-titulo="Fuente">
+                          @if (resultado.revista) {
+                            <span class="sc-revista">{{ resultado.revista }}</span>
+                          }
+                          @if (detalleDeFuente(resultado); as detalle) {
+                            <span class="sc-detalle">{{ detalle }}</span>
+                          }
+                        </td>
+                        <td class="sc-col-anio" data-titulo="Año">{{ resultado.anio ?? 's. f.' }}</td>
+                        <td class="sc-col-citas" data-titulo="Citas">{{ resultado.citas }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="sc-pie">
+                <span class="sc-seleccion">
+                  @if (cuantosMarcados() === 1) {
+                    1 seleccionado
+                  } @else {
+                    {{ cuantosMarcados() }} seleccionados
+                  }
+                </span>
+                @if (lista.paginas > 1) {
+                  <span class="sc-paginas">
+                    <button
+                      type="button"
+                      class="sc-enlace"
+                      [disabled]="lista.pagina <= 1 || buscando()"
+                      (click)="pagina(lista.pagina - 1)"
+                    >
+                      ‹ Anterior
+                    </button>
+                    <span>Página {{ lista.pagina }} de {{ lista.paginas }}</span>
+                    <button
+                      type="button"
+                      class="sc-enlace"
+                      [disabled]="lista.pagina >= lista.paginas || buscando()"
+                      (click)="pagina(lista.pagina + 1)"
+                    >
+                      Siguiente ›
+                    </button>
+                  </span>
+                }
+              </div>
+
+              <!-- Las dos cosas que hay que saber JUSTO AQUÍ, donde se decide:
+                   por qué la importación tarda, y que las marcas no cruzan página. -->
+              <p class="tenue">
+                Se añade la página que tienes delante: al cambiar de página, las marcas se sueltan.
+                @if (!lista.conResumenes) {
+                  Tarda unos segundos porque completamos el resumen y los autores de cada artículo
+                  desde el catálogo abierto, para que la referencia salga entera en tu bibliografía.
+                }
+              </p>
             }
-          </p>
-          <p class="tenue">
-            @if (resumen.repetidas > 0) {
-              {{ resumen.repetidas }} ya las tenías y se actualizaron.
-            }
-            @if (resumen.noEncontradas > 0) {
-              {{ resumen.noEncontradas }} ya no las devuelve Scopus.
-            }
-            Ya puedes pedírselas a Claude: «busca en mis fuentes sobre…».
-          </p>
-          @if (resumen.sinResumen > 0) {
-            <p class="parte-aviso">
-              {{ resumen.sinResumen }} se quedaron <strong>sin resumen</strong> porque el catálogo
-              abierto no las conoce. Se pueden citar, pero Claude solo podrá encontrarlas por el
-              título.
-            </p>
+          }
+
+          <!-- El parte de la importación. Un import que no dice nada deja al
+               comprador sin saber si funcionó, y es cuando repite la operación. -->
+          @if (parte(); as resumen) {
+            <div class="parte" [class.parte-incompleta]="resumen.guardadas === 0">
+              <p class="parte-titulo">
+                @if (resumen.guardadas === 1) {
+                  1 fuente añadida a tus fuentes.
+                } @else if (resumen.guardadas > 1) {
+                  {{ resumen.guardadas }} fuentes añadidas a tus fuentes.
+                } @else {
+                  No se añadió ninguna nueva.
+                }
+              </p>
+              <p class="tenue">
+                @if (resumen.repetidas > 0) {
+                  {{ resumen.repetidas }} ya las tenías y se actualizaron.
+                }
+                @if (resumen.noEncontradas > 0) {
+                  {{ resumen.noEncontradas }} ya no las devuelve Scopus.
+                }
+                Ya puedes pedírselas a Claude: «busca en mis fuentes sobre…».
+              </p>
+              @if (resumen.sinResumen > 0) {
+                <p class="parte-aviso">
+                  {{ resumen.sinResumen }} se quedaron <strong>sin resumen</strong> porque el
+                  catálogo abierto no las conoce. Se pueden citar, pero Claude solo podrá
+                  encontrarlas por el título.
+                </p>
+              }
+            </div>
+          }
+
+          <!-- Desconectar solo tiene sentido si hay algo conectado: con la
+               credencial del servidor no hay vínculo que deshacer. -->
+          @if (datos.conOauth) {
+            <div class="sc-pie">
+              <button type="button" class="boton enlace peligro" (click)="desconectar()">
+                Desconectar Scopus
+              </button>
+            </div>
           }
         </div>
-      }
+      </div>
 
-      <!-- Desconectar solo tiene sentido si hay algo conectado: con la
-           credencial del servidor no hay vínculo que deshacer. -->
-      @if (datos.conOauth) {
-        <div class="scopus-acciones">
-          <button type="button" class="boton enlace peligro" (click)="desconectar()">
-            Desconectar Scopus
-          </button>
+      <!-- ── «Mostrar todo»: la lista entera de una faceta ─────────────────
+           Área temática, tipo de documento e idioma. Trabaja sobre un
+           borrador: nada se busca hasta «Aplicar». -->
+      @if (modalFaceta(); as faceta) {
+        <div class="sc-modal-fondo" (click)="cerrarModal()">
+          <div
+            class="sc-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sc-modal-titulo"
+            (click)="$event.stopPropagation()"
+          >
+            <header class="sc-modal-cabecera">
+              <h3 id="sc-modal-titulo">Filtrar por {{ faceta.titulo.toLowerCase() }}</h3>
+              <button
+                type="button"
+                class="sc-modal-cerrar"
+                aria-label="Cerrar"
+                (click)="cerrarModal()"
+              >
+                ×
+              </button>
+            </header>
+
+            <div class="sc-modal-herramientas">
+              <label class="sc-modal-buscar">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  type="search"
+                  [placeholder]="'Buscar entre las ' + (faceta.opciones?.length ?? 0) + ' opciones'"
+                  aria-label="Buscar en la lista"
+                  [value]="filtroModal()"
+                  (input)="filtroModal.set($any($event.target).value)"
+                />
+              </label>
+              <label class="sc-modal-orden">
+                Ordenar por
+                <select (change)="ordenModal.set($any($event.target).value)">
+                  <option value="alfabetico" [selected]="ordenModal() === 'alfabetico'">
+                    Alfabético
+                  </option>
+                  <option value="habitual" [selected]="ordenModal() === 'habitual'">
+                    Más usadas en tesis
+                  </option>
+                </select>
+              </label>
+              <span class="sc-modal-cuenta">
+                {{ borrador().size }}
+                {{ borrador().size === 1 ? 'seleccionada' : 'seleccionadas' }}
+              </span>
+            </div>
+
+            <div class="sc-modal-lista">
+              @for (opcion of opcionesModal(); track opcion.valor) {
+                <label class="sc-casilla sc-modal-opcion">
+                  <input
+                    type="checkbox"
+                    [checked]="borrador().has(opcion.valor)"
+                    (change)="alternarBorrador(opcion.valor)"
+                  />
+                  <span>{{ opcion.texto }}</span>
+                </label>
+              } @empty {
+                <p class="tenue">Nada coincide con «{{ filtroModal() }}».</p>
+              }
+            </div>
+
+            <footer class="sc-modal-pie">
+              <p>Scopus no nos da cuántos resultados hay en cada opción; por eso no llevan número.</p>
+              <button type="button" class="boton secundario" (click)="cerrarModal()">Cancelar</button>
+              <button type="button" class="boton" (click)="aplicarModal()">
+                Aplicar ({{ borrador().size }})
+              </button>
+            </footer>
+          </div>
         </div>
       }
     }

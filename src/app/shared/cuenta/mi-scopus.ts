@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -8,6 +9,7 @@ import {
   BusquedaDeScopus,
   EstadoDeScopus,
   ImportacionDeScopus,
+  ResultadoDeScopus,
   ScopusService,
 } from '../../core/services/scopus.service';
 
@@ -55,7 +57,7 @@ interface Faceta {
   /** El campo de Scopus: `SUBJAREA`, `DOCTYPE`, `AFFILCOUNTRY`… */
   campo: string;
   opciones?: readonly OpcionDeFaceta[];
-  /** Cuántas casillas se ven antes de «Ver todas». Sin esto, todas. */
+  /** Cuántas casillas se ven antes de «Mostrar todo». Sin esto, todas. */
   visibles?: number;
   /** El texto de muestra del campo, en las de escribir. */
   ejemplo?: string;
@@ -63,6 +65,7 @@ interface Faceta {
 
 @Component({
   selector: 'app-mi-scopus',
+  imports: [DecimalPipe],
   templateUrl: './mi-scopus.html',
   styleUrl: './mi-scopus.css',
 })
@@ -157,6 +160,12 @@ export class MiScopusPanel implements OnInit {
 
   readonly cuantosMarcados = computed(() => this.marcados().size);
 
+  /** Si toda la página en pantalla está marcada: la casilla de la cabecera. */
+  readonly paginaMarcada = computed(() => {
+    const enPantalla = this.busqueda()?.resultados ?? [];
+    return enPantalla.length > 0 && enPantalla.every((r) => this.marcados().has(r.eid));
+  });
+
   /** El ejemplo que se ofrece. Es el mismo que arma la skill del método. */
   readonly ejemplo = 'TITLE-ABS-KEY("mobile applications" AND education) AND PUBYEAR > 2019';
 
@@ -193,8 +202,17 @@ export class MiScopusPanel implements OnInit {
   /** Lo marcado o escrito en cada faceta, por su clave. */
   readonly seleccion = signal<Readonly<Record<string, readonly string[]>>>({});
 
-  /** Las facetas con la lista completa desplegada («Ver todas»). */
-  readonly desplegadas = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Las secciones de la columna de filtros que están abiertas.
+   *
+   * Empiezan abiertas las cuatro que más se usan, como en Scopus; las demás
+   * plegadas, porque trece secciones abiertas hacen una columna más larga que
+   * la lista de resultados que tiene al lado.
+   */
+  readonly abiertas = signal<ReadonlySet<string>>(new Set(['anio', 'area', 'tipo', 'idioma']));
+
+  /** En el móvil la columna de filtros se abre con un botón, encima de la lista. */
+  readonly filtrosAbiertos = signal(false);
 
   /**
    * Las secciones del panel, en el orden de Scopus.
@@ -209,7 +227,7 @@ export class MiScopusPanel implements OnInit {
       titulo: 'Área temática',
       tipo: 'casillas',
       campo: 'SUBJAREA',
-      visibles: 6,
+      visibles: 5,
       opciones: [
         { valor: 'SOCI', texto: 'Ciencias sociales' },
         { valor: 'COMP', texto: 'Ciencias de la computación' },
@@ -245,7 +263,7 @@ export class MiScopusPanel implements OnInit {
       titulo: 'Tipo de documento',
       tipo: 'casillas',
       campo: 'DOCTYPE',
-      visibles: 6,
+      visibles: 4,
       opciones: [
         { valor: 'ar', texto: 'Artículo' },
         { valor: 're', texto: 'Revisión' },
@@ -434,21 +452,110 @@ export class MiScopusPanel implements OnInit {
     return this.seleccion()[faceta.clave] ?? [];
   }
 
-  /** Lo que se ve de una faceta de casillas: las primeras, o todas. */
+  /**
+   * Lo que se ve de una faceta de casillas en la columna: las primeras y, más
+   * abajo del corte, las que estén marcadas, que tienen que verse siempre. El
+   * resto se elige en la ventana de «Mostrar todo».
+   */
   opcionesVisibles(faceta: Faceta): readonly OpcionDeFaceta[] {
     const opciones = faceta.opciones ?? [];
-    if (!faceta.visibles || this.desplegadas().has(faceta.clave)) return opciones;
-    // Las marcadas se ven siempre, aunque estén más abajo del corte.
+    if (!faceta.visibles) return opciones;
     return opciones.filter(
       (opcion, i) => i < faceta.visibles! || this.marcado(faceta, opcion.valor),
     );
   }
 
-  desplegar(faceta: Faceta): void {
-    const copia = new Set(this.desplegadas());
-    if (copia.has(faceta.clave)) copia.delete(faceta.clave);
-    else copia.add(faceta.clave);
-    this.desplegadas.set(copia);
+  tieneMas(faceta: Faceta): boolean {
+    return Boolean(faceta.visibles && (faceta.opciones?.length ?? 0) > faceta.visibles);
+  }
+
+  alternarSeccion(clave: string): void {
+    const copia = new Set(this.abiertas());
+    if (copia.has(clave)) copia.delete(clave);
+    else copia.add(clave);
+    this.abiertas.set(copia);
+  }
+
+  // ── «Mostrar todo»: la ventana emergente ───────────────────────────────────
+
+  /**
+   * La faceta cuya lista completa está abierta, o nada.
+   *
+   * La ventana trabaja sobre un BORRADOR y no sobre la selección: marcar cinco
+   * áreas no lanza cinco búsquedas contra la cuota de la casa, y «Cancelar»
+   * deja las cosas como estaban. Solo «Aplicar» toca la búsqueda.
+   */
+  readonly modalFaceta = signal<Faceta | null>(null);
+  readonly borrador = signal<ReadonlySet<string>>(new Set());
+  readonly filtroModal = signal('');
+  readonly ordenModal = signal<'alfabetico' | 'habitual'>('alfabetico');
+
+  /** Las opciones de la ventana, filtradas por lo que escribe y en su orden. */
+  readonly opcionesModal = computed(() => {
+    const faceta = this.modalFaceta();
+    if (!faceta) return [];
+    const buscado = this.sinTildes(this.filtroModal().trim());
+    const opciones = (faceta.opciones ?? []).filter(
+      (opcion) => !buscado || this.sinTildes(opcion.texto).includes(buscado),
+    );
+    return this.ordenModal() === 'alfabetico'
+      ? [...opciones].sort((a, b) => a.texto.localeCompare(b.texto, 'es'))
+      : opciones;
+  });
+
+  private sinTildes(texto: string): string {
+    return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+
+  abrirModal(faceta: Faceta): void {
+    this.borrador.set(new Set(this.valoresDe(faceta)));
+    this.filtroModal.set('');
+    this.modalFaceta.set(faceta);
+  }
+
+  cerrarModal(): void {
+    this.modalFaceta.set(null);
+  }
+
+  alternarBorrador(valor: string): void {
+    const copia = new Set(this.borrador());
+    if (copia.has(valor)) copia.delete(valor);
+    else copia.add(valor);
+    this.borrador.set(copia);
+  }
+
+  /** Aplica lo marcado en la ventana, en el orden de la lista y no del clic. */
+  aplicarModal(): void {
+    const faceta = this.modalFaceta();
+    if (!faceta) return;
+    const elegidas = (faceta.opciones ?? [])
+      .map((opcion) => opcion.valor)
+      .filter((valor) => this.borrador().has(valor));
+    this.seleccion.update((s) => ({ ...s, [faceta.clave]: elegidas }));
+    this.modalFaceta.set(null);
+    this.filtrar();
+  }
+
+  /** Escape cierra la ventana, como cierra cualquier cosa que se abre encima. */
+  @HostListener('document:keydown.escape')
+  alPulsarEscape(): void {
+    if (this.modalFaceta()) this.cerrarModal();
+  }
+
+  /** «Consulta avanzada»: el interruptor de encima del buscador. */
+  alternarAvanzada(encendida: boolean): void {
+    this.cambiarModo(encendida ? 'avanzada' : 'normal');
+  }
+
+  /**
+   * «26(1), 534»: volumen, número y páginas, como los pinta Scopus debajo de
+   * la revista. Solo lo que haya: muchas fichas de congreso no traen número.
+   */
+  detalleDeFuente(resultado: ResultadoDeScopus): string {
+    const volumen = resultado.volumen
+      ? `${resultado.volumen}${resultado.numero ? `(${resultado.numero})` : ''}`
+      : '';
+    return [volumen, resultado.paginas].filter(Boolean).join(', ');
   }
 
   alternar(faceta: Faceta, valor: string): void {
@@ -626,6 +733,19 @@ export class MiScopusPanel implements OnInit {
     this.marcados.set(new Set());
     this.parte.set(null);
     this.error.set(null);
+  }
+
+  /** «Reiniciar»: la búsqueda y los filtros, todo de vuelta al principio. */
+  reiniciar(): void {
+    this.limpiar();
+    this.quitarFiltros();
+  }
+
+  /** En la ecuación, Enter busca y Mayúsculas+Enter parte la línea. */
+  enterEnEcuacion(evento: KeyboardEvent): void {
+    if (evento.shiftKey) return;
+    evento.preventDefault();
+    this.buscar();
   }
 
   pagina(numero: number): void {

@@ -44,6 +44,13 @@ export interface ResultadoDeScopus {
   autores: string;
   anio: number | null;
   revista: string | null;
+  /**
+   * Volumen, número y páginas, para el «26(1), 534» de debajo de la revista.
+   * Opcionales porque un servidor anterior no los manda.
+   */
+  volumen?: string | null;
+  numero?: string | null;
+  paginas?: string | null;
   doi: string | null;
   tipo: string | null;
   citas: number;
