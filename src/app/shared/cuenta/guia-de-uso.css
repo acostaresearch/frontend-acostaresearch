@@ -1,0 +1,347 @@
+.gu {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 18px;
+  padding: 18px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.gu-titulo {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+/* ── Los pasos ── */
+.gu-pasos {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gu-paso {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  transition: border-color 150ms;
+}
+
+.gu-paso.gu-actual {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.gu-paso-cabecera {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.gu-numero {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.gu-actual .gu-numero {
+  color: var(--color-sobre-relleno, #fff);
+  background: var(--color-primario);
+}
+
+.gu-hecho .gu-numero {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.gu-pendiente .gu-paso-titulo {
+  color: var(--color-texto-suave);
+}
+
+.gu-paso-titulo {
+  flex: 1;
+  font-weight: 600;
+}
+
+.gu-aqui,
+.gu-listo {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.gu-aqui {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.gu-listo {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.gu-detalle {
+  margin: 0;
+  padding: 0 12px 12px 44px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+/* ── Las frases para copiar ── */
+.gu-rotulo {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gu-frases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gu-frase {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 100%;
+  padding: 7px 8px 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: 999px;
+  transition:
+    border-color 150ms,
+    background 150ms;
+}
+
+.gu-frase:hover {
+  border-color: var(--color-primario);
+}
+
+.gu-frase-texto {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.gu-frase-accion {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.gu-copiada {
+  border-style: solid;
+  border-color: var(--color-exito);
+}
+
+.gu-copiada .gu-frase-accion {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+/* ── La conversación de ejemplo ── */
+.gu-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.gu-chat-barra {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.gu-chat-punto {
+  width: 8px;
+  height: 8px;
+  background: #d97757;
+  border-radius: 50%;
+}
+
+.gu-chat-etiqueta {
+  margin-left: auto;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.gu-chat-cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 12px;
+}
+
+.gu-chat-vacio {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.gu-play {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-sobre-relleno, #fff);
+  cursor: pointer;
+  background: var(--color-primario);
+  border: 0;
+  border-radius: 999px;
+}
+
+.gu-play:hover {
+  background: var(--color-primario-oscuro);
+}
+
+.gu-burbuja {
+  max-width: 88%;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  border-radius: 12px;
+  animation: gu-entrar 220ms ease-out;
+}
+
+.gu-tu {
+  align-self: flex-end;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  border-bottom-right-radius: 4px;
+}
+
+.gu-claude {
+  align-self: flex-start;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-bottom-left-radius: 4px;
+}
+
+.gu-escribiendo {
+  display: inline-flex;
+  gap: 4px;
+  align-self: flex-start;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+}
+
+.gu-escribiendo span {
+  width: 6px;
+  height: 6px;
+  background: var(--color-texto-tenue);
+  border-radius: 50%;
+  animation: gu-punto 1s infinite ease-in-out;
+}
+
+.gu-escribiendo span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.gu-escribiendo span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.gu-chat-pie {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+  border-top: 1px solid var(--color-borde);
+}
+
+@keyframes gu-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes gu-punto {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gu-burbuja,
+  .gu-escribiendo span {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .gu {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+}

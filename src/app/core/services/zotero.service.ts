@@ -10,7 +10,8 @@ export interface ColeccionDeZotero {
   clave: string;
   /** «Tesis › Antecedentes». El servidor arma el camino. */
   nombre: string;
-  cuantas: number;
+  /** Nulo cuando el servicio no lo dice: Mendeley no cuenta por carpeta. */
+  cuantas: number | null;
 }
 
 /**

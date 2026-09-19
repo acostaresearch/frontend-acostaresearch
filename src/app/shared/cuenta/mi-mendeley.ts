@@ -4,99 +4,36 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
-import { EstadoDeZotero, QuePuedeTraer, ZoteroService } from '../../core/services/zotero.service';
+import { MendeleyService } from '../../core/services/mendeley.service';
+import { EstadoDeZotero, QuePuedeTraer } from '../../core/services/zotero.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
-import { GuiaDeUso, MensajeDeEjemplo, PasoDeGuia } from './guia-de-uso';
-
-const PASOS: readonly PasoDeGuia[] = [
-  {
-    titulo: 'Conecta tu Zotero',
-    detalle:
-      'Pulsa «Conectar mi Zotero» y autoriza en zotero.org. Es solo lectura: no cambiamos ni borramos nada de tu biblioteca, y no tienes que copiar ninguna clave.',
-  },
-  {
-    titulo: 'Elige qué traer',
-    detalle:
-      'Una colección con las fuentes de tu tesis, o toda tu biblioteca. Se trae al momento y luego se pone al día sola cada noche.',
-  },
-  {
-    titulo: 'Pídeselo a Claude',
-    detalle:
-      'En tu conector, pídele que te muestre tus fuentes o que busque en ellas un tema. Las usa para redactar y citar, y tu Word sale con las citas listas.',
-  },
-];
-
-const FRASES: readonly string[] = [
-  'muéstrame mis fuentes de Zotero',
-  'busca en mis fuentes sobre…',
-  'usa mis fuentes de Zotero para los antecedentes',
-];
-
-const EJEMPLO: readonly MensajeDeEjemplo[] = [
-  { de: 'tu', texto: 'Muéstrame mis fuentes de Zotero.' },
-  {
-    de: 'claude',
-    texto:
-      'Tienes 38 fuentes de tu colección «Tesis». Las más recientes son de 2024 y 2025, casi todas artículos de revista.',
-  },
-  { de: 'tu', texto: 'Busca en mis fuentes sobre satisfacción laboral.' },
-  {
-    de: 'claude',
-    texto:
-      'Encontré 6 que tratan el tema. También busqué en inglés, «job satisfaction», porque la mitad de tus fuentes están en ese idioma. ¿Las uso para tus antecedentes?',
-  },
-  { de: 'tu', texto: 'Sí, redacta los antecedentes con ellas.' },
-  {
-    de: 'claude',
-    texto:
-      'Listo. Cada párrafo cita a su autor y al final va la lista de referencias. En tu Word las citas salen enlazadas a tus ítems de Zotero.',
-  },
-];
 
 /**
- * Conectar el Zotero del propio tesista.
+ * Conectar el Mendeley del propio tesista.
  *
- * TRES DECISIONES QUE SE VEN EN LA PANTALLA
- * -----------------------------------------
- * 1. Se elige QUÉ traer, y conectar no lo trae: al volver de Zotero todavía no
- *    hay nada importado. Lo recomendable es una colección —la biblioteca de un
- *    tesista lleva años de asignaturas encima, y entera le llenaría sus propias
- *    búsquedas de ruido que él no puso— pero traerlo todo es una opción de
- *    primera fila, porque hay quien no usa carpetas y a ese no se le puede
- *    mandar a crearlas para poder empezar.
+ * Es el gemelo de `MiZoteroPanel`, y las tres decisiones de aquel valen aquí:
+ * se elige QUÉ traer (una carpeta o toda la biblioteca), nunca se pide una
+ * clave —autoriza en mendeley.com— y desconectar no borra sus fuentes.
  *
- * 2. Nunca se le pide una clave de API. Autoriza en zotero.org y la clave la
- *    emite Zotero a su nombre. Aquí no se enseña, ni entera ni con asteriscos:
- *    no la tenemos y no debe pasar por el navegador.
- *
- * 3. Desconectar no borra sus fuentes. Están citadas en sus capítulos, y
- *    llevárselas le dejaría la tesis con claves que no resuelven. Se dice en la
- *    propia ventana de confirmar, porque es justo lo que teme quien la abre.
+ * Lo que cambia es una advertencia que Zotero no necesita: Mendeley no tiene
+ * permiso de solo lectura, así que la autorización que concede el tesista
+ * permitiría escribir. No lo hacemos, y la pantalla lo dice en esos términos
+ * en vez de prometer «solo lectura».
  */
 @Component({
-  selector: 'app-mi-zotero',
-  imports: [AvisoFlotante, DatePipe, GuiaDeUso],
-  templateUrl: './mi-zotero.html',
+  selector: 'app-mi-mendeley',
+  imports: [AvisoFlotante, DatePipe],
+  templateUrl: './mi-mendeley.html',
+  // Los estilos del panel de Zotero: es la misma pieza con otro servicio.
   styleUrl: './mi-zotero.css',
 })
-export class MiZoteroPanel implements OnInit {
-  private readonly zotero = inject(ZoteroService);
+export class MiMendeleyPanel implements OnInit {
+  private readonly mendeley = inject(MendeleyService);
   private readonly dialogos = inject(DialogoService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   readonly estado = signal<EstadoDeZotero | null>(null);
-
-  readonly pasos = PASOS;
-  readonly frases = FRASES;
-  readonly ejemplo = EJEMPLO;
-
-  /** Por dónde va: sin conectar, sin elegir qué traer, o ya con sus fuentes. */
-  readonly pasoActual = computed(() => {
-    const datos = this.estado();
-    if (!datos?.conectado) return 0;
-    return datos.coleccion ? 2 : 1;
-  });
   readonly colecciones = signal<QuePuedeTraer | null>(null);
 
   readonly cargando = signal(true);
@@ -107,9 +44,9 @@ export class MiZoteroPanel implements OnInit {
   readonly parte = signal<string | null>(null);
 
   /**
-   * Lo que trajo la vuelta desde zotero.org: ok, cancelado o error.
+   * Lo que trajo la vuelta desde mendeley.com: ok, cancelado o error.
    *
-   * Llega en la dirección porque quien redirige es Zotero y no nosotros. Se lee
+   * Llega en la dirección porque quien redirige es Mendeley y no nosotros. Se lee
    * una vez y se limpia de la barra: recargar la página no debería volver a
    * anunciar algo que pasó hace diez minutos.
    */
@@ -118,8 +55,8 @@ export class MiZoteroPanel implements OnInit {
   /**
    * Buscar entre sus colecciones.
    *
-   * Quien lleva años en Zotero tiene decenas, y la de la tesis queda enterrada
-   * bajo las de cada asignatura. Se busca por el camino entero —«Tesis ›
+   * Quien lleva años en Mendeley tiene decenas de carpetas, y la de la tesis
+   * queda enterrada bajo las de cada asignatura. Se busca por el camino entero —«Tesis ›
    * Antecedentes»—, sin distinguir mayúsculas ni tildes: nadie escribe
    * «Metodología» con la tilde cuando busca deprisa.
    */
@@ -133,12 +70,12 @@ export class MiZoteroPanel implements OnInit {
   });
 
   ngOnInit(): void {
-    const resultado = this.ruta.snapshot.queryParamMap.get('zotero');
+    const resultado = this.ruta.snapshot.queryParamMap.get('mendeley');
     if (resultado) {
       this.vuelta.set(resultado);
       void this.router.navigate([], {
         relativeTo: this.ruta,
-        queryParams: { zotero: null },
+        queryParams: { mendeley: null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
@@ -148,7 +85,7 @@ export class MiZoteroPanel implements OnInit {
   }
 
   private cargar(): void {
-    this.zotero.estado().subscribe({
+    this.mendeley.estado().subscribe({
       next: (estado) => {
         this.estado.set(estado);
         this.cargando.set(false);
@@ -168,9 +105,9 @@ export class MiZoteroPanel implements OnInit {
     this.conectando.set(true);
     this.error.set(null);
 
-    this.zotero.conectar().subscribe({
+    this.mendeley.conectar().subscribe({
       next: ({ url }) => {
-        // Navegación completa y en esta misma pestaña: al terminar, Zotero
+        // Navegación completa y en esta misma pestaña: al terminar, Mendeley
         // devuelve al tesista aquí. Una pestaña nueva lo dejaría mirando la
         // vieja, que no se entera de nada.
         window.location.href = url;
@@ -183,7 +120,7 @@ export class MiZoteroPanel implements OnInit {
   }
 
   /**
-   * El campo está siempre a la vista junto a «Zotero conectado», también con
+   * El campo está siempre a la vista junto a «Mendeley conectado», también con
    * la lista cerrada: al entrar en él se pide la lista para filtrarla.
    */
   abrirBusqueda(): void {
@@ -205,7 +142,7 @@ export class MiZoteroPanel implements OnInit {
    *
    * El buscador la pide al escribir mientras no haya lista. Si fallaba, la lista
    * seguía vacía y cada tecla lanzaba otra: en segundos se gastaba el límite del
-   * servidor y «Conectar Zotero» respondía 429. Después de un fallo se reintenta
+   * servidor y «Conectar» respondía 429. Después de un fallo se reintenta
    * solo con el botón.
    */
   private pidiendoColecciones = false;
@@ -216,7 +153,7 @@ export class MiZoteroPanel implements OnInit {
     this.pidiendoColecciones = true;
     this.fallaronColecciones.set(false);
     this.error.set(null);
-    this.zotero.colecciones().subscribe({
+    this.mendeley.carpetas().subscribe({
       next: (lo) => {
         this.pidiendoColecciones = false;
         this.colecciones.set(lo);
@@ -236,13 +173,13 @@ export class MiZoteroPanel implements OnInit {
     this.error.set(null);
     this.parte.set(null);
 
-    this.zotero.elegir(clave).subscribe({
+    this.mendeley.elegir(clave).subscribe({
       next: () => {
         this.colecciones.set(null);
         this.limpiarBusqueda();
         // La primera pasada la lanza el servidor por detrás, así que aquí no
         // hay cifras todavía: se vuelve a preguntar el estado en unos segundos.
-        this.parte.set('Trayendo tu colección. Tarda unos segundos.');
+        this.parte.set('Trayendo tu carpeta. Tarda unos segundos.');
         setTimeout(() => {
           this.trayendo.set(false);
           this.cargar();
@@ -267,11 +204,13 @@ export class MiZoteroPanel implements OnInit {
     this.error.set(null);
     this.parte.set(null);
 
-    this.zotero.sincronizar().subscribe({
+    this.mendeley.sincronizar().subscribe({
       next: (resultado) => {
         this.trayendo.set(false);
         this.parte.set(
-          resultado.guardadas > 0 ? `${resultado.guardadas} fuentes nuevas.` : 'Ya estaba al día.',
+          resultado.guardadas > 0
+            ? `${resultado.guardadas} fuentes nuevas.`
+            : 'Ya estaba al día.',
         );
         this.cargar();
       },
@@ -285,8 +224,8 @@ export class MiZoteroPanel implements OnInit {
 
   async desconectar(): Promise<void> {
     const seguro = await this.dialogos.confirmar({
-      titulo: 'Desconectar Zotero',
-      mensaje: 'Dejaremos de entrar en tu biblioteca de Zotero.',
+      titulo: 'Desconectar Mendeley',
+      mensaje: 'Dejaremos de entrar en tu biblioteca de Mendeley.',
       nota: 'Las fuentes que ya se trajeron se quedan donde están: si las quitáramos, las citas que ya escribiste en tus capítulos dejarían de resolver.',
       confirmar: 'Desconectar',
       tono: 'peligro',
@@ -294,7 +233,7 @@ export class MiZoteroPanel implements OnInit {
     if (!seguro) return;
 
     this.error.set(null);
-    this.zotero.desconectar().subscribe({
+    this.mendeley.desconectar().subscribe({
       next: () => {
         this.colecciones.set(null);
         this.limpiarBusqueda();

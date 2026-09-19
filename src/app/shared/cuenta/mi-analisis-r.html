@@ -1,0 +1,50 @@
+<p class="nota">
+  Para los resultados de una tesis cuantitativa: descriptivos, alfa de Cronbach, normalidad y la
+  prueba de tus hipótesis. Lo corre Claude por ti; tú no escribes código.
+</p>
+
+<!-- Lo que más frena antes de empezar: «¿y qué prueba me toca?». Aquí se
+     adelanta; la definitiva la decide Claude con la normalidad de sus datos. -->
+<section class="ar-prueba" aria-labelledby="ar-prueba-titulo">
+  <h3 id="ar-prueba-titulo">¿Qué prueba me toca?</h3>
+  <p class="ar-ayuda">Elige lo que quieres demostrar con tus hipótesis.</p>
+
+  <div class="ar-objetivos" role="radiogroup" aria-labelledby="ar-prueba-titulo">
+    @for (o of objetivos; track o.clave) {
+      <button
+        type="button"
+        role="radio"
+        class="ar-objetivo"
+        [class.ar-elegido]="objetivo() === o.clave"
+        [attr.aria-checked]="objetivo() === o.clave"
+        (click)="objetivo.set(o.clave)"
+      >
+        {{ o.texto }}
+      </button>
+    }
+  </div>
+
+  @if (sugerencia(); as s) {
+    <div class="ar-resultado" aria-live="polite">
+      <div class="ar-opcion">
+        <strong>{{ s.normal.nombre }}</strong>
+        <span>{{ s.normal.cuando }}</span>
+      </div>
+      @if (s.noNormal; as otra) {
+        <span class="ar-o" aria-hidden="true">o</span>
+        <div class="ar-opcion">
+          <strong>{{ otra.nombre }}</strong>
+          <span>{{ otra.cuando }}</span>
+        </div>
+      }
+    </div>
+    @if (s.noNormal) {
+      <p class="ar-ayuda">
+        No tienes que saber si tus datos son normales: Claude lo comprueba con tu matriz
+        (Shapiro-Wilk, o Kolmogorov-Smirnov con más de 50 casos) y elige entre las dos.
+      </p>
+    }
+  }
+</section>
+
+<app-guia-de-uso titulo="Cómo se usa" [pasos]="pasos" [frases]="frases" [ejemplo]="ejemplo" />

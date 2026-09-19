@@ -8,7 +8,9 @@ import { MiTesis } from './mi-tesis';
 import { MiMapaVosviewer } from './mi-mapa-vosviewer';
 import { MiScopusPanel } from './mi-scopus';
 import { MisFuentesPanel } from './mis-fuentes';
+import { MiAnalisisR } from './mi-analisis-r';
 import { MiZoteroPanel } from './mi-zotero';
+import { MiMendeleyPanel } from './mi-mendeley';
 import { PasosDeArranque } from './pasos-de-arranque';
 
 /**
@@ -27,11 +29,13 @@ import { PasosDeArranque } from './pasos-de-arranque';
 @Component({
   selector: 'app-mi-conector',
   imports: [
+    MiAnalisisR,
     RouterLink,
     MiTesis,
     MisFuentesPanel,
     MiScopusPanel,
     MiZoteroPanel,
+    MiMendeleyPanel,
     MiMapaVosviewer,
     PasosDeArranque,
   ],
@@ -56,11 +60,15 @@ export class MiConector implements OnInit {
   readonly cargando = signal(true);
 
   /**
-   * La pestaña de «Tus herramientas» que se ve. Se abre en Zotero si se vuelve
-   * de autorizarlo: ahí es donde está el aviso de cómo fue.
+   * La pestaña de «Tus herramientas» que se ve. Se abre en Zotero o en
+   * Mendeley si se vuelve de autorizarlo: ahí es donde está el aviso de cómo fue.
    */
-  readonly herramienta = signal<'scopus' | 'zotero' | 'r' | 'mapa'>(
-    this.ruta.snapshot.queryParamMap.has('zotero') ? 'zotero' : 'scopus',
+  readonly herramienta = signal<'scopus' | 'zotero' | 'mendeley' | 'r' | 'mapa'>(
+    this.ruta.snapshot.queryParamMap.has('zotero')
+      ? 'zotero'
+      : this.ruta.snapshot.queryParamMap.has('mendeley')
+        ? 'mendeley'
+        : 'scopus',
   );
 
   /**

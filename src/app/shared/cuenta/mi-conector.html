@@ -72,6 +72,19 @@
         <button
           type="button"
           role="tab"
+          id="pestana-mendeley"
+          aria-controls="panel-mendeley"
+          class="herramientas-pestana"
+          [class.activa]="herramienta() === 'mendeley'"
+          [attr.aria-selected]="herramienta() === 'mendeley'"
+          (click)="herramienta.set('mendeley')"
+        >
+          <span class="marca"><img src="/iconos/mendeley.svg" alt="" /></span>
+          Tu Mendeley
+        </button>
+        <button
+          type="button"
+          role="tab"
           id="pestana-r"
           aria-controls="panel-r"
           class="herramientas-pestana"
@@ -129,11 +142,20 @@
         <app-mi-zotero />
       </div>
 
-      <!-- R, en corto. Aquí no hay nada que configurar —el análisis se pide a
-           Claude y el archivo se sube por el enlace que él da—, así que la
-           pestaña solo cuenta que existe, para qué sirve y cómo se arranca. Sin
-           ella, el tesista cuantitativo llega al Capítulo IV pensando que tiene
-           que instalar RStudio o pagar a alguien que le corra el SPSS. -->
+      <div
+        id="panel-mendeley"
+        role="tabpanel"
+        aria-labelledby="pestana-mendeley"
+        class="herramientas-panel"
+        [hidden]="herramienta() !== 'mendeley'"
+      >
+        <p class="nota">
+          Elige una carpeta y sus fuentes quedan listas para citar, al día cada noche.
+        </p>
+        <app-mi-mendeley />
+      </div>
+
+      <!-- R: cómo se pide y qué prueba toca. Ver `MiAnalisisR`. -->
       <div
         id="panel-r"
         role="tabpanel"
@@ -141,16 +163,7 @@
         class="herramientas-panel"
         [hidden]="herramienta() !== 'r'"
       >
-        <p class="nota">
-          Para los resultados de una tesis cuantitativa: descriptivos, alfa de Cronbach, normalidad
-          y la prueba de tus hipótesis. Lo corre Claude por ti; tú no escribes código.
-        </p>
-
-        <ol class="r-pasos">
-          <li>Dile a Claude en tu conector: <em>«analicemos mis datos en R»</em>.</li>
-          <li>Te da un enlace para subir tu Excel o tu SPSS.</li>
-          <li>Elige la prueba contigo, la corre y te entrega el informe en Word.</li>
-        </ol>
+        <app-mi-analisis-r />
       </div>
 
       <!-- El mapa de VOSviewer. Solo se pinta la primera vez que se abre la

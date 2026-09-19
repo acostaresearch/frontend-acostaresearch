@@ -1,9 +1,9 @@
-<!-- La vuelta desde zotero.org. Se anuncia una vez y se limpia de la barra. -->
+<!-- La vuelta desde mendeley.com. Se anuncia una vez y se limpia de la barra. -->
 <app-aviso-flotante
   [info]="vuelta() === 'cancelado' ? 'No autorizaste el acceso, así que no se conectó nada.' : null"
   [error]="
     vuelta() === 'error'
-      ? 'Zotero no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.'
+      ? 'Mendeley no terminó de darnos el acceso. Vuelve a intentarlo; si sigue igual, escríbenos.'
       : null
   "
 />
@@ -12,30 +12,33 @@
 @if (!cargando()) {
   @if (estado(); as datos) {
     @if (!datos.disponible) {
-      <!-- Configuración ausente en el servidor: no se ofrece un botón que
-           llevaría a un error. -->
-      <p class="nota">Conectar Zotero todavía no está disponible.</p>
+      <p class="nota">Conectar Mendeley todavía no está disponible.</p>
     } @else if (!datos.conectado) {
       <p class="zotero-invitacion">
-        Si llevas tus fuentes en Zotero, conéctalo y elige <strong>qué traer</strong>: una
-        colección, o toda tu biblioteca. Lo que entre queda disponible para citar en tus
+        Si llevas tus fuentes en Mendeley, conéctalo y elige <strong>qué traer</strong>: una
+        carpeta, o toda tu biblioteca. Lo que entre queda disponible para citar en tus
         capítulos, y se actualiza solo cada noche.
       </p>
+      <!-- «Solo lectura» no se promete: Mendeley no tiene ese permiso, y la
+           autorización que da el tesista permitiría escribir. Se dice lo que
+           es verdad: que no escribimos. -->
       <ul class="zotero-garantias">
-        <li><strong>Solo lectura.</strong> No modificamos ni borramos nada de tu Zotero.</li>
-        <li>Autorizas en zotero.org. <strong>No tienes que copiar ninguna clave.</strong></li>
+        <li>
+          <strong>No modificamos ni borramos nada de tu Mendeley.</strong> Mendeley pide
+          permiso completo, pero solo leemos.
+        </li>
+        <li>Autorizas en mendeley.com. <strong>No tienes que copiar ninguna clave.</strong></li>
         <li>Solo lo que elijas, y puedes cambiarlo cuando quieras.</li>
       </ul>
       <button type="button" class="boton" [disabled]="conectando()" (click)="conectar()">
-        {{ conectando() ? 'Abriendo Zotero…' : 'Conectar mi Zotero' }}
+        {{ conectando() ? 'Abriendo Mendeley…' : 'Conectar mi Mendeley' }}
       </button>
     } @else {
       <p class="zotero-cifra">
-        <strong>Zotero conectado</strong>
+        <strong>Mendeley conectado</strong>
         @if (datos.usuario) {
           <span>como {{ datos.usuario }}</span>
         }
-        <!-- Sin colecciones no hay nada que buscar. -->
         @if ((colecciones()?.colecciones?.length ?? 1) > 0) {
           <label class="zotero-buscar">
             <svg
@@ -55,8 +58,8 @@
             <input
               type="search"
               class="zotero-buscar-campo"
-              placeholder="Buscar colección"
-              aria-label="Buscar una colección"
+              placeholder="Buscar carpeta"
+              aria-label="Buscar una carpeta"
               [value]="busqueda()"
               [disabled]="trayendo()"
               (focus)="abrirBusqueda()"
@@ -67,9 +70,9 @@
         }
       </p>
 
-      @if (datos.coleccion; as coleccion) {
+      @if (datos.coleccion; as carpeta) {
         <p class="zotero-coleccion">
-          Se trae: <strong>{{ coleccion.nombre }}</strong>
+          Se trae: <strong>{{ carpeta.nombre }}</strong>
           @if (datos.fuentes) {
             · {{ datos.fuentes }} fuentes traídas
           }
@@ -92,12 +95,9 @@
         <p class="zotero-parte">{{ texto }}</p>
       }
 
-      <!-- Qué puede traer: al conectar, y cuando pide cambiarlo.
-
-           «Toda tu biblioteca» va primera y siempre, tenga colecciones o no.
-           Hay tesistas que lo tienen todo suelto en la raíz, y a esos la
-           pantalla les decía «crea una colección y vuelve»: deberes antes de
-           poder usar lo que pagaron. -->
+      <!-- «Toda tu biblioteca» va primera y siempre, tenga carpetas o no. Las
+           carpetas no llevan número: Mendeley no lo da sin una petición por
+           cada una. -->
       @if (colecciones(); as puede) {
         <ul class="zotero-lista">
           <li>
@@ -112,35 +112,37 @@
             </button>
           </li>
 
-          @for (coleccion of encontradas(); track coleccion.clave) {
+          @for (carpeta of encontradas(); track carpeta.clave) {
             <li>
               <button
                 type="button"
                 class="zotero-opcion"
                 [disabled]="trayendo()"
-                (click)="elegir(coleccion.clave)"
+                (click)="elegir(carpeta.clave)"
               >
-                <span class="zotero-opcion-nombre">{{ coleccion.nombre }}</span>
-                <span class="zotero-opcion-cuantas">{{ coleccion.cuantas }}</span>
+                <span class="zotero-opcion-nombre">{{ carpeta.nombre }}</span>
+                @if (carpeta.cuantas !== null) {
+                  <span class="zotero-opcion-cuantas">{{ carpeta.cuantas }}</span>
+                }
               </button>
             </li>
           }
         </ul>
 
         @if (puede.colecciones.length > 0 && encontradas().length === 0) {
-          <p class="nota">Ninguna colección se llama «{{ busqueda().trim() }}».</p>
+          <p class="nota">Ninguna carpeta se llama «{{ busqueda().trim() }}».</p>
         }
 
         @if (puede.colecciones.length === 0) {
           <p class="nota">
-            No tienes colecciones en Zotero. Puedes traerlo todo, o crear una allí con las
-            fuentes de tu tesis y volver: así entra solo lo tuyo y no los trabajos de otros
-            cursos.
+            No tienes carpetas en Mendeley. Puedes traerlo todo, o crear una allí con las fuentes
+            de tu tesis y volver: así entra solo lo tuyo y no los trabajos de otros cursos.
           </p>
         } @else {
           <p class="nota">
-            Una colección es mejor que toda la biblioteca si llevas años usando Zotero: entra
-            solo lo de tu tesis, y no los trabajos de otros cursos.
+            Una carpeta es mejor que toda la biblioteca si llevas años usando Mendeley: entra solo
+            lo de tu tesis, y no los trabajos de otros cursos. Se trae la carpeta elegida, sin sus
+            subcarpetas.
           </p>
         }
       }
@@ -165,25 +167,15 @@
       </div>
 
       <p class="nota-pie">
-        Se actualiza solo cada noche. Lo que saques de ahí en Zotero desaparece de aquí; lo que
-        añadas, aparece.
+        Se actualiza solo cada noche. Lo que saques de esa carpeta en Mendeley desaparece de aquí;
+        lo que añadas, aparece.
       </p>
 
       <p class="nota-pie">
-        Tu Word sale con las citas listas aunque no uses Zotero. Si lo abres con el complemento
-        de Zotero, las citas de esta colección quedan enlazadas a tus ítems, siempre que tu Zotero
-        de escritorio esté sincronizado con esta misma cuenta.
+        Para usarlas, pídeselo a Claude en tu conector: «muéstrame mis fuentes de Mendeley» o
+        «busca en mis fuentes sobre…». Tu Word sale con las citas y la bibliografía en la norma de
+        tu proyecto.
       </p>
-    }
-
-    @if (datos.disponible) {
-      <app-guia-de-uso
-        titulo="Cómo se usa tu Zotero"
-        [pasos]="pasos"
-        [pasoActual]="pasoActual()"
-        [frases]="frases"
-        [ejemplo]="ejemplo"
-      />
     }
   }
 }

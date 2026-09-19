@@ -1,0 +1,105 @@
+<section class="gu" [attr.aria-label]="titulo()">
+  <div class="gu-columna">
+    <h3 class="gu-titulo">{{ titulo() }}</h3>
+
+    <!-- Los pasos. El que toca va marcado; los hechos, con su ✓. -->
+    <ol class="gu-pasos">
+      @for (paso of pasos(); track $index; let i = $index) {
+        <li
+          class="gu-paso"
+          [class]="'gu-' + estadoDelPaso(i)"
+          [class.gu-abierto]="pasoAbierto() === i"
+        >
+          <button
+            type="button"
+            class="gu-paso-cabecera"
+            [attr.aria-expanded]="pasoAbierto() === i"
+            (click)="alternar(i)"
+          >
+            <span class="gu-numero" aria-hidden="true">
+              {{ estadoDelPaso(i) === 'hecho' ? '✓' : i + 1 }}
+            </span>
+            <span class="gu-paso-titulo">{{ paso.titulo }}</span>
+            @if (estadoDelPaso(i) === 'actual') {
+              <span class="gu-aqui">Estás aquí</span>
+            } @else if (estadoDelPaso(i) === 'hecho') {
+              <span class="gu-listo">Hecho</span>
+            }
+          </button>
+          @if (pasoAbierto() === i) {
+            <p class="gu-detalle">{{ paso.detalle }}</p>
+          }
+        </li>
+      }
+    </ol>
+
+    <!-- Qué escribirle a Claude, listo para pegar. -->
+    @if (frases().length) {
+      <p class="gu-rotulo">Qué decirle a Claude</p>
+      <ul class="gu-frases">
+        @for (frase of frases(); track frase) {
+          <li>
+            <button
+              type="button"
+              class="gu-frase"
+              [class.gu-copiada]="copiada() === frase"
+              (click)="copiar(frase)"
+              [attr.aria-label]="'Copiar «' + frase + '»'"
+            >
+              <span class="gu-frase-texto">«{{ frase }}»</span>
+              <span class="gu-frase-accion">{{
+                copiada() === frase ? '¡Copiada!' : 'Copiar'
+              }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <!-- La conversación de ejemplo, que se reproduce al pulsar. -->
+  @if (ejemplo().length) {
+    <div class="gu-chat" aria-live="polite">
+      <div class="gu-chat-barra">
+        <span class="gu-chat-punto" aria-hidden="true"></span>
+        <span>Así se ve en Claude</span>
+        <span class="gu-chat-etiqueta">ejemplo</span>
+      </div>
+
+      <div class="gu-chat-cuerpo">
+        @if (vistos() === 0) {
+          <div class="gu-chat-vacio">
+            <button type="button" class="gu-play" (click)="reproducir()">
+              <span aria-hidden="true">▶</span> Ver el ejemplo
+            </button>
+            <button type="button" class="boton enlace" (click)="verTodo()">
+              o leerlo de una vez
+            </button>
+          </div>
+        } @else {
+          @for (m of mensajes(); track $index) {
+            <p
+              class="gu-burbuja"
+              [class.gu-tu]="m.de === 'tu'"
+              [class.gu-claude]="m.de === 'claude'"
+            >
+              {{ m.texto }}
+            </p>
+          }
+          @if (escribiendo()) {
+            <p class="gu-burbuja gu-escribiendo" aria-label="Escribiendo">
+              <span></span><span></span><span></span>
+            </p>
+          }
+        }
+      </div>
+
+      @if (terminado()) {
+        <div class="gu-chat-pie">
+          <button type="button" class="boton enlace" (click)="reproducir()">↻ Repetir</button>
+          <span>Los datos del ejemplo son inventados.</span>
+        </div>
+      }
+    </div>
+  }
+</section>
