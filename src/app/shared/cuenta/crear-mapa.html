@@ -1,0 +1,515 @@
+@if (abierto()) {
+  <div class="cm-fondo" (click)="cargando() ? null : cancelar()"></div>
+  <div
+    #ventana
+    class="cm-ventana"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cm-titulo-barra"
+    tabindex="-1"
+  >
+    <!-- La barra de título, como la de una ventana de Windows. -->
+    <div class="cm-barra">
+      <span id="cm-titulo-barra">Crear mapa</span>
+      <button type="button" class="cm-x" aria-label="Cerrar" [disabled]="!!cargando()" (click)="cancelar()">✕</button>
+    </div>
+
+    <!-- La cabecera con el icono y el título del paso. -->
+    <div class="cm-cabecera">
+      <img class="cm-icono" src="/iconos/mapa-red.svg" alt="" />
+      <h2>{{ titulo() }}</h2>
+    </div>
+
+    <div class="cm-cuerpo">
+      @switch (paso()) {
+        <!-- ══ 1. Tipo de datos ══ -->
+        @case ('tipo-datos') {
+          <div class="cm-opciones">
+            <label class="cm-radio grande">
+              <input
+                type="radio"
+                name="cm-tipo-datos"
+                [checked]="tipoDatos() === 'bibliograficos'"
+                (change)="elegirTipoDatos('bibliograficos')"
+              />
+              <span>
+                <strong>Crear un mapa a partir de datos bibliográficos</strong>
+                <small>
+                  Para mapas de coautoría, coocurrencia de palabras clave, citación, acoplamiento
+                  bibliográfico o cocitación.
+                </small>
+              </span>
+            </label>
+            <label class="cm-radio grande">
+              <input
+                type="radio"
+                name="cm-tipo-datos"
+                [checked]="tipoDatos() === 'texto'"
+                (change)="elegirTipoDatos('texto')"
+              />
+              <span>
+                <strong>Crear un mapa a partir de datos de texto</strong>
+                <small>Para un mapa de coocurrencia de los términos de los títulos y los resúmenes.</small>
+              </span>
+            </label>
+          </div>
+        }
+
+        <!-- ══ 2. Fuente de datos ══ -->
+        @case ('fuente') {
+          <div class="cm-opciones">
+            <label class="cm-radio grande">
+              <input
+                type="radio"
+                name="cm-origen"
+                [checked]="origen() === 'openalex'"
+                (change)="elegirOrigen('openalex')"
+              />
+              <span>
+                <strong>Leer datos de OpenAlex</strong>
+                <small>Buscar un tema en OpenAlex, catálogo abierto y gratuito. Los más citados primero.</small>
+              </span>
+            </label>
+            <label class="cm-radio grande">
+              <input
+                type="radio"
+                name="cm-origen"
+                [checked]="origen() === 'mis-fuentes'"
+                (change)="elegirOrigen('mis-fuentes')"
+              />
+              <span>
+                <strong>Leer datos de mis fuentes</strong>
+                <small>
+                  Los exports de Scopus o Web of Science que subiste. Lo que falte (autores, revistas,
+                  referencias) se completa en OpenAlex por el DOI.
+                </small>
+              </span>
+            </label>
+          </div>
+        }
+
+        <!-- ══ 3a. Búsqueda en OpenAlex ══ -->
+        @case ('busqueda') {
+          <div class="cm-campos">
+            <label class="cm-campo">
+              <span>Tema de búsqueda (en título y resumen):</span>
+              <input
+                type="text"
+                maxlength="300"
+                placeholder="teacher burnout"
+                [value]="tema()"
+                (input)="tema.set(textoDe($event))"
+              />
+              <small>Mejor en inglés: la mayoría de la literatura indexada lo está.</small>
+            </label>
+            <div class="cm-fila">
+              <label class="cm-campo corto">
+                <span>Desde el año:</span>
+                <input
+                  type="number"
+                  min="1900"
+                  [max]="anioActual"
+                  [value]="desdeAnio() ?? ''"
+                  (input)="desdeAnio.set(numeroDe($event))"
+                />
+              </label>
+              <label class="cm-campo corto">
+                <span>Hasta el año:</span>
+                <input
+                  type="number"
+                  min="1900"
+                  [max]="anioActual"
+                  [placeholder]="anioActual"
+                  [value]="hastaAnio() ?? ''"
+                  (input)="hastaAnio.set(numeroDe($event))"
+                />
+              </label>
+              <label class="cm-campo corto">
+                <span>Número de documentos:</span>
+                <select (change)="cuantas.set(+textoDe($event))">
+                  @for (n of [200, 500, 1000]; track n) {
+                    <option [value]="n" [selected]="n === cuantas()">{{ n }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+          </div>
+        }
+
+        <!-- ══ 3b. Sus fuentes ══ -->
+        @case ('mis-fuentes') {
+          @if (misFuentes(); as f) {
+            <p class="cm-texto">
+              Tienes <strong>{{ f.total | number }}</strong> fuentes en tu biblioteca.
+              @if (f.total === 0) {
+                Sube primero el export de Scopus o Web of Science en «Tus fuentes de Scopus».
+              }
+            </p>
+            @if (f.sinResumen > 0) {
+              <p class="cm-texto tenue">
+                {{ f.sinResumen | number }} no tienen resumen: si exportaste de Scopus sin marcar
+                «Abstract &amp; keywords», tampoco traen palabras clave.
+              </p>
+            }
+          }
+        }
+
+        <!-- ══ 4. Tipo de análisis (datos bibliográficos) ══ -->
+        @case ('analisis') {
+          <div class="cm-columnas">
+            <fieldset>
+              <legend>
+                Tipo de análisis:
+                <span class="cm-ayuda" title="Qué relación une a los círculos del mapa.">?</span>
+              </legend>
+              @for (a of catalogo; track a.valor) {
+                <label class="cm-radio" [title]="a.pregunta">
+                  <input
+                    type="radio"
+                    name="cm-analisis"
+                    [checked]="analisis() === a.valor"
+                    (change)="elegirAnalisis(a.valor)"
+                  />
+                  {{ a.nombre }}
+                </label>
+              }
+            </fieldset>
+            <fieldset>
+              <legend>Unidad de análisis:</legend>
+              @for (u of unidadesDisponibles(); track u) {
+                <label class="cm-radio">
+                  <input type="radio" name="cm-unidad" [checked]="unidad() === u" (change)="unidad.set(u)" />
+                  {{ nombres[u].nombre }}
+                </label>
+              }
+            </fieldset>
+          </div>
+
+          <fieldset class="cm-recuento">
+            <legend>
+              Método de recuento:
+              <span
+                class="cm-ayuda"
+                title="Completo: cada documento suma 1 a cada enlace. Fraccionado: un documento con muchos autores o palabras reparte ese 1, para que no pese más que los demás."
+                >?</span
+              >
+            </legend>
+            <label class="cm-radio">
+              <input
+                type="radio"
+                name="cm-recuento"
+                [checked]="recuento() === 'completo'"
+                (change)="recuento.set('completo')"
+              />
+              Recuento completo
+            </label>
+            <label class="cm-radio" [class.desactivado]="!admiteFraccionado()">
+              <input
+                type="radio"
+                name="cm-recuento"
+                [disabled]="!admiteFraccionado()"
+                [checked]="recuento() === 'fraccionado'"
+                (change)="recuento.set('fraccionado')"
+              />
+              Recuento fraccionado
+            </label>
+          </fieldset>
+
+          <p class="cm-pregunta">{{ preguntaActual() }}</p>
+          <ng-container *ngTemplateOutlet="tesauroTpl" />
+        }
+
+        <!-- ══ 4. Campos (datos de texto) ══ -->
+        @case ('campos') {
+          <div class="cm-columnas">
+            <fieldset>
+              <legend>Extraer los términos de:</legend>
+              <label class="cm-radio">
+                <input
+                  type="radio"
+                  name="cm-campo"
+                  [checked]="campo() === 'titulo-resumen'"
+                  (change)="campo.set('titulo-resumen')"
+                />
+                Título y resumen
+              </label>
+              <label class="cm-radio">
+                <input type="radio" name="cm-campo" [checked]="campo() === 'titulo'" (change)="campo.set('titulo')" />
+                Solo el título
+              </label>
+              <label class="cm-radio desactivado">
+                <input type="checkbox" checked disabled />
+                Ignorar los rótulos de resúmenes estructurados
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>
+                Método de recuento:
+                <span
+                  class="cm-ayuda"
+                  title="Binario: cuenta si el término aparece o no en cada documento. Completo: cuenta todas las veces que aparece."
+                  >?</span
+                >
+              </legend>
+              <label class="cm-radio">
+                <input
+                  type="radio"
+                  name="cm-recuento-texto"
+                  [checked]="recuentoTexto() === 'binario'"
+                  (change)="recuentoTexto.set('binario')"
+                />
+                Recuento binario
+              </label>
+              <label class="cm-radio">
+                <input
+                  type="radio"
+                  name="cm-recuento-texto"
+                  [checked]="recuentoTexto() === 'completo'"
+                  (change)="recuentoTexto.set('completo')"
+                />
+                Recuento completo
+              </label>
+            </fieldset>
+          </div>
+          <ng-container *ngTemplateOutlet="tesauroTpl" />
+        }
+
+        <!-- ══ 5. Umbral ══ -->
+        @case ('umbral') {
+          @if (datosUmbral(); as d) {
+            <div class="cm-campos">
+              @if (conMinimo()) {
+                <label class="cm-campo en-linea">
+                  <span>{{ nombres[unidadReal()].minimo }}:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    [value]="minimo() ?? ''"
+                    (input)="minimo.set(numeroDe($event))"
+                  />
+                </label>
+              }
+              @if (conMinimoCitas()) {
+                <label class="cm-campo en-linea">
+                  <span>Número mínimo de citas {{ nombres[unidadReal()].deUn }}:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    [value]="minimoCitas() ?? 0"
+                    (input)="minimoCitas.set(numeroDe($event))"
+                  />
+                </label>
+              }
+              @if (analisisReal() === 'coautoria') {
+                <label class="cm-radio">
+                  <input type="checkbox" [checked]="ignorarMuchosAutores()" (change)="cambiarIgnorar($event)" />
+                  Ignorar los documentos con un gran número de autores
+                </label>
+                @if (ignorarMuchosAutores()) {
+                  <label class="cm-campo en-linea sangria">
+                    <span>Número máximo de autores por documento:</span>
+                    <input type="number" min="1" [value]="maxAutores()" (input)="cambiarMaxAutores($event)" />
+                  </label>
+                }
+              }
+            </div>
+            <p class="cm-resultado">
+              De {{ nombres[unidadReal()].art }} {{ d.pares.length | number }} {{ nombres[unidadReal()].plural }},
+              <strong>{{ cumplen() | number }}</strong>
+              {{ cumplen() === 1 ? 'cumple' : 'cumplen' }}
+              {{ conMinimo() && conMinimoCitas() ? 'los umbrales' : 'el umbral' }}.
+            </p>
+            <p class="cm-texto tenue">
+              Datos: {{ d.origen.analizados | number }}
+              {{ d.origen.tipo === 'openalex' ? 'artículos de ' + (d.origen.total | number) + ' encontrados en OpenAlex' : 'de tus fuentes' }}.
+              @if (d.detalle.sinDoi) {
+                {{ d.detalle.sinDoi | number }} fuentes sin DOI quedaron fuera.
+              }
+            </p>
+          }
+        }
+
+        <!-- ══ 6. Número ══ -->
+        @case ('numero') {
+          <div class="cm-campos">
+            <label class="cm-campo en-linea">
+              <span>Número de {{ nombres[unidadReal()].plural }} a seleccionar:</span>
+              <input
+                type="number"
+                min="2"
+                [max]="cumplen()"
+                [value]="numero() ?? ''"
+                (input)="numero.set(numeroDe($event))"
+              />
+            </label>
+          </div>
+          @if (esTexto()) {
+            <p class="cm-texto">
+              Para cada uno de los {{ cumplen() | number }} términos se calculará una puntuación de
+              relevancia. A partir de ella se seleccionarán los términos más relevantes. La opción por
+              defecto es seleccionar el 60 % más relevante.
+            </p>
+          } @else {
+            <p class="cm-texto">
+              Para cada {{ nombres[unidadReal()].art === 'las' ? 'una de las' : 'uno de los' }}
+              {{ cumplen() | number }} {{ nombres[unidadReal()].plural }} se calculará la fuerza total de
+              los enlaces de {{ nombreDelEnlace() }} con {{ nombres[unidadReal()].art === 'las' ? 'otras' : 'otros' }}
+              {{ nombres[unidadReal()].plural }}. Se seleccionarán {{ nombres[unidadReal()].art }}
+              {{ nombres[unidadReal()].plural }} con la mayor fuerza total de enlace.
+            </p>
+            @if (cumplen() > 1000) {
+              <p class="cm-texto tenue">El mapa admite hasta 1000.</p>
+            }
+          }
+        }
+
+        <!-- ══ 7. Verificar ══ -->
+        @case ('verificar') {
+          @if (previo(); as p) {
+            <div class="cm-tabla-marco">
+              <table class="cm-tabla">
+                <thead>
+                  <tr>
+                    <th scope="col" class="cm-check">
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todas"
+                        [checked]="todasMarcadas()"
+                        (change)="marcarTodas($event)"
+                      />
+                    </th>
+                    <th scope="col">{{ nombres[unidadReal()].singular | titlecase }}</th>
+                    @switch (p.perfil) {
+                      @case ('unidades') {
+                        <th scope="col">Documentos</th>
+                        <th scope="col">Citas</th>
+                      }
+                      @case ('documentos') {
+                        <th scope="col">Citas</th>
+                      }
+                      @case ('referencias') {
+                        <th scope="col">Citas</th>
+                      }
+                      @default {
+                        <th scope="col">Ocurrencias</th>
+                        @if (esTexto()) {
+                          <th scope="col">Relevancia</th>
+                        }
+                      }
+                    }
+                    <th scope="col">Fuerza total de enlace</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (f of p.resumen.filas; track f.clave) {
+                    <tr [class.desmarcada]="!marcadas().has(f.clave)">
+                      <td class="cm-check">
+                        <input
+                          type="checkbox"
+                          [attr.aria-label]="'Incluir ' + f.etiqueta"
+                          [checked]="marcadas().has(f.clave)"
+                          (change)="marcar(f.clave, $event)"
+                        />
+                      </td>
+                      <td>{{ f.etiqueta }}</td>
+                      @switch (p.perfil) {
+                        @case ('unidades') {
+                          <td>{{ f.documentos | number }}</td>
+                          <td>{{ f.citas | number }}</td>
+                        }
+                        @case ('documentos') {
+                          <td>{{ f.citas | number }}</td>
+                        }
+                        @case ('referencias') {
+                          <td>{{ f.citas | number }}</td>
+                        }
+                        @default {
+                          <td>{{ f.ocurrencias | number }}</td>
+                          @if (esTexto()) {
+                            <td>{{ f.extra | number: '1.2-2' }}</td>
+                          }
+                        }
+                      }
+                      <td>{{ f.fuerza | number: '1.0-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="cm-texto tenue">
+              {{ marcadas().size | number }} de {{ p.resumen.filas.length | number }} seleccionad{{
+                nombres[unidadReal()].art === 'las' ? 'as' : 'os'
+              }}. Desmarca lo que no quieras en el mapa.
+            </p>
+          }
+        }
+      }
+
+      @if (cargando(); as mensaje) {
+        <p class="cm-cargando" role="status"><span class="cm-giro" aria-hidden="true"></span>{{ mensaje }}</p>
+      }
+      <app-aviso-flotante [(error)]="error" />
+    </div>
+
+    <div class="cm-pie">
+      <span class="cm-paso">Paso {{ indice() + 1 }} de {{ pasos().length }}</span>
+      <button type="button" class="cm-boton" [disabled]="indice() === 0 || !!cargando()" (click)="atras()">
+        &lt; Atrás
+      </button>
+      <button
+        type="button"
+        class="cm-boton"
+        [class.principal]="paso() !== 'verificar'"
+        [disabled]="!puedeSeguir()"
+        (click)="siguiente()"
+      >
+        Siguiente &gt;
+      </button>
+      <button
+        type="button"
+        class="cm-boton"
+        [class.principal]="paso() === 'verificar'"
+        [disabled]="!puedeFinalizar()"
+        (click)="finalizar()"
+      >
+        Finalizar
+      </button>
+      <button type="button" class="cm-boton" [disabled]="!!cargando()" (click)="cancelar()">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- El archivo de tesauro, como en VOSviewer: opcional, con su «…» para elegirlo. -->
+<ng-template #tesauroTpl>
+  <div class="cm-tesauro">
+    <span class="cm-etiqueta">
+      Archivo de tesauro de VOSviewer (opcional):
+      <span
+        class="cm-ayuda"
+        title="Un .txt con dos columnas, «label» y «replace by», separadas por tabulador. Une sinónimos; si «replace by» está vacío, ese término se ignora."
+        >?</span
+      >
+    </span>
+    <div class="cm-archivo">
+      <input type="text" readonly [value]="nombreTesauro() ?? (tesauro() ? 'Escrito a mano' : '')" aria-label="Tesauro elegido" />
+      <label class="cm-boton pequeno">
+        …
+        <input type="file" accept=".txt,text/plain" (change)="cargarTesauro($event)" />
+      </label>
+      @if (tesauro()) {
+        <button type="button" class="cm-boton pequeno" aria-label="Quitar el tesauro" (click)="quitarTesauro()">✕</button>
+      }
+    </div>
+    <button type="button" class="cm-enlace" (click)="editarTesauro.set(!editarTesauro())">
+      {{ editarTesauro() ? 'Ocultar' : 'Escribirlo a mano' }}
+    </button>
+    @if (editarTesauro()) {
+      <textarea
+        rows="4"
+        placeholder="label&#9;replace by&#10;ai&#9;artificial intelligence&#10;o también: sme = small business"
+        [value]="tesauro()"
+        (input)="tesauro.set(textoDe($event)); nombreTesauro.set(null)"
+      ></textarea>
+    }
+  </div>
+</ng-template>

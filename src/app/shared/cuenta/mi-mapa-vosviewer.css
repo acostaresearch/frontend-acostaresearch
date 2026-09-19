@@ -332,3 +332,25 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ── La barra de arriba: «Crear mapa…» y qué mapa se ve ── */
+.mv-barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.mv-titulo-mapa {
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+}
+
+.mv-titulo-mapa strong {
+  color: var(--color-texto);
+}
+
+.mv-vacio .nota {
+  max-width: 720px;
+}

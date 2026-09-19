@@ -1,0 +1,460 @@
+/* La ventana «Crear mapa»: un diálogo de escritorio, como el de VOSviewer,
+   con los colores de la web para que no parezca un anuncio metido encima. */
+
+.cm-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgb(10 14 25 / 45%);
+}
+
+.cm-ventana {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1101;
+  display: flex;
+  flex-direction: column;
+  width: min(680px, calc(100vw - 24px));
+  height: min(600px, calc(100vh - 24px));
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 30%);
+  transform: translate(-50%, -50%);
+  outline: none;
+  animation: cm-aparecer 160ms ease-out;
+}
+
+@keyframes cm-aparecer {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+}
+
+/* ── Barra de título ── */
+.cm-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 8px 14px;
+  font-size: 13px;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.cm-x {
+  padding: 2px 8px;
+  font-size: 15px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+}
+
+.cm-x:hover:not(:disabled) {
+  color: #fff;
+  background: #c42b1c;
+}
+
+/* ── Cabecera del paso ── */
+.cm-cabecera {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.cm-icono {
+  width: 34px;
+  height: 34px;
+}
+
+.cm-cabecera h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+/* ── Cuerpo ── */
+.cm-cuerpo {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  font-size: 13.5px;
+  color: var(--color-texto);
+}
+
+.cm-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cm-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+
+.cm-cuerpo fieldset {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.cm-cuerpo legend {
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.cm-radio {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.cm-radio input {
+  margin: 0;
+  accent-color: var(--color-primario);
+}
+
+.cm-radio.grande {
+  align-items: flex-start;
+}
+
+.cm-radio.grande input {
+  margin-top: 3px;
+}
+
+.cm-radio.grande span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cm-radio small,
+.cm-campo small {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.cm-radio.desactivado {
+  color: var(--color-texto-tenue);
+  cursor: default;
+}
+
+.cm-ayuda {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--color-texto-tenue);
+  vertical-align: 1px;
+  cursor: help;
+  border: 1px solid var(--color-texto-tenue);
+  border-radius: 50%;
+}
+
+.cm-pregunta {
+  margin: -4px 0 14px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-radius: 4px;
+}
+
+/* ── Campos ── */
+.cm-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cm-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cm-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cm-campo.corto {
+  flex: 1 1 140px;
+}
+
+.cm-campo.en-linea {
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 520px;
+}
+
+.cm-campo.en-linea input {
+  width: 90px;
+}
+
+.cm-campo.sangria {
+  margin-left: 24px;
+  max-width: 496px;
+}
+
+.cm-cuerpo input[type='text'],
+.cm-cuerpo input[type='number'],
+.cm-cuerpo select,
+.cm-cuerpo textarea {
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 3px;
+}
+
+.cm-cuerpo input:focus,
+.cm-cuerpo select:focus,
+.cm-cuerpo textarea:focus {
+  outline: 2px solid var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.cm-resultado {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  background: var(--color-primario-suave);
+  border-radius: 4px;
+}
+
+.cm-texto {
+  margin: 0 0 10px;
+  line-height: 1.55;
+}
+
+.cm-texto.tenue {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── Tesauro ── */
+.cm-tesauro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.cm-etiqueta {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.cm-archivo {
+  display: flex;
+  gap: 6px;
+}
+
+.cm-archivo input[type='text'] {
+  flex: 1;
+  background: var(--color-fondo);
+}
+
+.cm-archivo input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.cm-enlace {
+  align-self: flex-start;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-primario);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.cm-tesauro textarea {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  resize: vertical;
+}
+
+/* ── Verificar ── */
+.cm-tabla-marco {
+  max-height: 300px;
+  margin-bottom: 8px;
+  overflow: auto;
+  border: 1px solid var(--color-borde);
+}
+
+.cm-tabla {
+  width: 100%;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.cm-tabla th {
+  position: sticky;
+  top: 0;
+  padding: 6px 8px;
+  font-weight: 600;
+  text-align: right;
+  background: var(--color-fondo);
+  border-bottom: 1px solid var(--color-borde-fuerte);
+}
+
+.cm-tabla td {
+  padding: 4px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.cm-tabla th:nth-child(2),
+.cm-tabla td:nth-child(2) {
+  text-align: left;
+}
+
+.cm-tabla .cm-check {
+  width: 28px;
+  text-align: center;
+}
+
+.cm-tabla tr.desmarcada td {
+  color: var(--color-texto-tenue);
+}
+
+/* ── Carga y error ── */
+.cm-cargando {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 0;
+  color: var(--color-texto-suave);
+}
+
+.cm-giro {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-borde-fuerte);
+  border-top-color: var(--color-primario);
+  border-radius: 50%;
+  animation: cm-girar 0.8s linear infinite;
+}
+
+@keyframes cm-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cm-error {
+  margin-top: 12px;
+}
+
+/* ── Botones de abajo, como los de VOSviewer ── */
+.cm-pie {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: var(--color-fondo);
+  border-top: 1px solid var(--color-borde);
+}
+
+.cm-paso {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.cm-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 3px;
+}
+
+.cm-boton:hover:not(:disabled) {
+  border-color: var(--color-primario);
+}
+
+.cm-boton.principal {
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+
+.cm-boton:disabled {
+  color: var(--color-texto-tenue);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.cm-boton.pequeno {
+  min-width: 32px;
+  padding: 5px 8px;
+}
+
+.cm-boton:focus-visible,
+.cm-enlace:focus-visible,
+.cm-x:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 1px;
+}
+
+@media (max-width: 560px) {
+  .cm-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-boton {
+    min-width: 0;
+  }
+
+  .cm-paso {
+    display: none;
+  }
+
+  .cm-campo.en-linea {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-ventana,
+  .cm-giro {
+    animation: none;
+  }
+}

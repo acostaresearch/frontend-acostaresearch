@@ -49,10 +49,28 @@ export interface PedidoDeMapa {
   relevancia?: number | null;
   excluir?: string;
   sinonimos?: string;
+  /** «Choose number of terms»: cuántos términos, en vez de un porcentaje. */
+  cuantosTerminos?: number | null;
+  /** «Verify selected items»: las claves que se quedan. Solo esas. */
+  seleccion?: string[] | null;
+}
+
+/** El paso «Elegir el umbral»: documentos y citas de cada unidad, sin nombres. */
+export interface UmbralDelMapa {
+  analisis: TipoDeAnalisis;
+  unidad: UnidadDeAnalisis;
+  /** `[documentos u ocurrencias, citas]` de cada unidad. */
+  pares: [number, number][];
+  /** El mínimo que propondríamos; nulo cuando no aplica (documentos). */
+  propuesto: number | null;
+  origen: { tipo: 'openalex' | 'mis-fuentes'; total: number; analizados: number };
+  detalle: MapaDeVosviewer['detalle'];
 }
 
 /** Una fila de la tabla: los números de un círculo del mapa. */
 export interface FilaDelMapa {
+  /** Con lo que se identifica en «Verificar» y en «Quitar». */
+  clave: string;
   etiqueta: string;
   url: string | null;
   documentos: number;
@@ -124,6 +142,12 @@ export interface MapaDeVosviewer {
 export class MapasService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/mis-mapas`;
+
+  umbral(pedido: PedidoDeMapa): Observable<UmbralDelMapa> {
+    return this.http
+      .post<ApiResponse<UmbralDelMapa>>(`${this.base}/umbral`, pedido)
+      .pipe(map((res) => res.data));
+  }
 
   crear(pedido: PedidoDeMapa): Observable<MapaDeVosviewer> {
     return this.http

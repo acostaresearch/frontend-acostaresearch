@@ -1,4 +1,8 @@
-import { MapaDeVosviewer, TipoDeAnalisis, UnidadDeAnalisis } from '../../core/services/mapas.service';
+import {
+  MapaDeVosviewer,
+  TipoDeAnalisis,
+  UnidadDeAnalisis,
+} from '../../core/services/mapas.service';
 
 /**
  * Los análisis de VOSviewer, contados para un tesista.
@@ -31,7 +35,8 @@ export const ANALISIS: Analisis[] = [
     valor: 'coautoria',
     nombre: 'Coautoría',
     enVosviewer: 'Co-authorship',
-    pregunta: 'Quién publica con quién: las redes de colaboración entre autores, instituciones o países.',
+    pregunta:
+      'Quién publica con quién: las redes de colaboración entre autores, instituciones o países.',
     unidades: ['autores', 'instituciones', 'paises'],
     recuentos: ['completo', 'fraccionado'],
   },
@@ -39,7 +44,8 @@ export const ANALISIS: Analisis[] = [
     valor: 'citacion',
     nombre: 'Citación',
     enVosviewer: 'Citation',
-    pregunta: 'Quién cita a quién dentro de los artículos analizados, y qué trabajos son los más influyentes.',
+    pregunta:
+      'Quién cita a quién dentro de los artículos analizados, y qué trabajos son los más influyentes.',
     unidades: ['documentos', 'fuentes', 'autores', 'instituciones', 'paises'],
     recuentos: ['completo'],
   },
@@ -47,7 +53,8 @@ export const ANALISIS: Analisis[] = [
     valor: 'acoplamiento',
     nombre: 'Acoplamiento bibliográfico',
     enVosviewer: 'Bibliographic coupling',
-    pregunta: 'Qué trabajos se parecen porque citan las mismas fuentes: los frentes de investigación actuales.',
+    pregunta:
+      'Qué trabajos se parecen porque citan las mismas fuentes: los frentes de investigación actuales.',
     unidades: ['documentos', 'fuentes', 'autores', 'instituciones', 'paises'],
     recuentos: ['completo'],
   },
@@ -69,38 +76,98 @@ export const ANALISIS: Analisis[] = [
   },
 ];
 
-/** Cómo se llama cada unidad, en singular y plural, y cómo se escribe su mínimo. */
-export const UNIDADES: Record<UnidadDeAnalisis, { nombre: string; plural: string; minimo: string }> = {
-  'palabras-autor': {
-    nombre: 'Palabras clave de autor',
-    plural: 'palabras clave de autor',
-    minimo: 'Mínimo de ocurrencias de una palabra',
-  },
-  'palabras-openalex': {
-    nombre: 'Palabras clave de OpenAlex',
-    plural: 'palabras clave',
-    minimo: 'Mínimo de ocurrencias de una palabra',
-  },
-  autores: { nombre: 'Autores', plural: 'autores', minimo: 'Mínimo de documentos de un autor' },
-  instituciones: {
-    nombre: 'Instituciones',
-    plural: 'instituciones',
-    minimo: 'Mínimo de documentos de una institución',
-  },
-  paises: { nombre: 'Países', plural: 'países', minimo: 'Mínimo de documentos de un país' },
-  fuentes: { nombre: 'Fuentes (revistas)', plural: 'fuentes', minimo: 'Mínimo de documentos de una fuente' },
-  documentos: { nombre: 'Documentos', plural: 'documentos', minimo: '' },
-  referencias: {
-    nombre: 'Referencias citadas',
-    plural: 'referencias citadas',
-    minimo: 'Mínimo de citas de una referencia',
-  },
-  'titulo-resumen': {
-    nombre: 'Título y resumen',
-    plural: 'términos',
-    minimo: 'Mínimo de ocurrencias de un término',
-  },
-  titulo: { nombre: 'Solo el título', plural: 'términos', minimo: 'Mínimo de ocurrencias de un término' },
+/**
+ * Cómo se llama cada unidad, y lo que hace falta para escribir las frases del
+ * asistente con su género: «De LAS 579 palabras clave…», «Número mínimo de
+ * documentos DE UN autor», como las de VOSviewer pero en castellano.
+ */
+export interface NombreDeUnidad {
+  nombre: string;
+  plural: string;
+  singular: string;
+  /** «de un autor», «de una institución». */
+  deUn: string;
+  /** El artículo del plural: «los autores», «las fuentes». */
+  art: 'los' | 'las';
+  /** Qué se cuenta para el mínimo: documentos, ocurrencias o citas. */
+  cuenta: 'documentos' | 'ocurrencias' | 'citas';
+  /** Lo que se escribe en la tabla y en el mapa. Mantener por compatibilidad. */
+  minimo: string;
+}
+
+const unidad = (
+  nombre: string,
+  plural: string,
+  singular: string,
+  deUn: string,
+  art: 'los' | 'las',
+  cuenta: NombreDeUnidad['cuenta'],
+): NombreDeUnidad => ({
+  nombre,
+  plural,
+  singular,
+  deUn,
+  art,
+  cuenta,
+  minimo: `Número mínimo de ${cuenta} ${deUn}`,
+});
+
+export const UNIDADES: Record<UnidadDeAnalisis, NombreDeUnidad> = {
+  'palabras-autor': unidad(
+    'Palabras clave de autor',
+    'palabras clave de autor',
+    'palabra clave',
+    'de una palabra clave',
+    'las',
+    'ocurrencias',
+  ),
+  'palabras-openalex': unidad(
+    'Palabras clave de OpenAlex',
+    'palabras clave',
+    'palabra clave',
+    'de una palabra clave',
+    'las',
+    'ocurrencias',
+  ),
+  autores: unidad('Autores', 'autores', 'autor', 'de un autor', 'los', 'documentos'),
+  instituciones: unidad(
+    'Instituciones',
+    'instituciones',
+    'institución',
+    'de una institución',
+    'las',
+    'documentos',
+  ),
+  paises: unidad('Países', 'países', 'país', 'de un país', 'los', 'documentos'),
+  fuentes: unidad('Fuentes', 'fuentes', 'fuente', 'de una fuente', 'las', 'documentos'),
+  documentos: unidad('Documentos', 'documentos', 'documento', 'de un documento', 'los', 'citas'),
+  referencias: unidad(
+    'Referencias citadas',
+    'referencias citadas',
+    'referencia citada',
+    'de una referencia citada',
+    'las',
+    'citas',
+  ),
+  'titulo-resumen': unidad(
+    'Título y resumen',
+    'términos',
+    'término',
+    'de un término',
+    'los',
+    'ocurrencias',
+  ),
+  titulo: unidad('Solo el título', 'términos', 'término', 'de un término', 'los', 'ocurrencias'),
+};
+
+/** Cómo se llaman los enlaces de cada análisis, para «la fuerza total de los enlaces de …». */
+export const NOMBRE_DEL_ENLACE: Record<TipoDeAnalisis, string> = {
+  coocurrencia: 'coocurrencia',
+  coautoria: 'coautoría',
+  citacion: 'citación',
+  acoplamiento: 'acoplamiento bibliográfico',
+  cocitacion: 'cocitación',
+  terminos: 'coocurrencia',
 };
 
 export const NOMBRE_DEL_RECUENTO = {
@@ -131,7 +198,10 @@ const n = (x: number) => x.toLocaleString('es-PE');
  * cuántas unidades. Escrito así se pega y se ajusta, y las cifras no se copian
  * a mano. Las referencias son solo las que el párrafo cita.
  */
-export function metodoDelMapa(m: MapaDeVosviewer, maxAutores: number | null): { parrafo: string; referencias: string[] } {
+export function metodoDelMapa(
+  m: MapaDeVosviewer,
+  maxAutores: number | null,
+): { parrafo: string; referencias: string[] } {
   const r = m.resumen;
   const o = m.origen;
   const u = UNIDADES[m.unidad];
@@ -157,10 +227,17 @@ export function metodoDelMapa(m: MapaDeVosviewer, maxAutores: number | null): { 
     datos = `Se analizaron ${n(r.documentosConUnidades)} documentos recuperados de las bases de datos consultadas.`;
   }
 
-  const recuento = m.recuento === 'fraccionado' ? 'fraccionado' : m.recuento === 'binario' ? 'binario' : 'completo';
+  const recuento =
+    m.recuento === 'fraccionado'
+      ? 'fraccionado'
+      : m.recuento === 'binario'
+        ? 'binario'
+        : 'completo';
   if (m.recuento === 'fraccionado') referencias.push(REFERENCIAS.fraccionado);
   const conRecuento =
-    m.recuento === 'fraccionado' ? ` mediante recuento fraccionado (Perianes-Rodriguez et al., 2016)` : ` mediante recuento ${recuento}`;
+    m.recuento === 'fraccionado'
+      ? ` mediante recuento fraccionado (Perianes-Rodriguez et al., 2016)`
+      : ` mediante recuento ${recuento}`;
   const citas = r.minimoCitas > 0 ? ` y al menos ${n(r.minimoCitas)} citas` : '';
   const cierre =
     ` El mapa final muestra ${n(r.enElMapa)} ${u.plural} y ${n(r.enlaces)} enlaces (fuerza total de enlace de ` +
@@ -185,7 +262,9 @@ export function metodoDelMapa(m: MapaDeVosviewer, maxAutores: number | null): { 
         `Con VOSviewer (van Eck y Waltman, 2010) se realizó un análisis de citación entre ${u.plural}: dos unidades ` +
         `se enlazan cuando un documento de una cita a un documento de la otra dentro del conjunto analizado.` +
         (m.unidad === 'documentos'
-          ? citas ? ` Se consideraron los documentos con al menos ${n(r.minimoCitas)} citas.` : ''
+          ? citas
+            ? ` Se consideraron los documentos con al menos ${n(r.minimoCitas)} citas.`
+            : ''
           : ` De ${n(r.unidadesDistintas)} ${u.plural}, ${n(r.cumplenMinimo)} tenían al menos ${r.minimo} documentos${citas}.`);
       break;
     case 'acoplamiento':
@@ -193,7 +272,9 @@ export function metodoDelMapa(m: MapaDeVosviewer, maxAutores: number | null): { 
         `Con VOSviewer (van Eck y Waltman, 2010) se realizó un análisis de acoplamiento bibliográfico de ${u.plural}: ` +
         `la fuerza del enlace entre dos unidades es el número de referencias que comparten sus documentos.` +
         (m.unidad === 'documentos'
-          ? citas ? ` Se consideraron los documentos con al menos ${n(r.minimoCitas)} citas.` : ''
+          ? citas
+            ? ` Se consideraron los documentos con al menos ${n(r.minimoCitas)} citas.`
+            : ''
           : ` De ${n(r.unidadesDistintas)} ${u.plural}, ${n(r.cumplenMinimo)} tenían al menos ${r.minimo} documentos${citas}.`);
       break;
     case 'cocitacion':
@@ -209,8 +290,9 @@ export function metodoDelMapa(m: MapaDeVosviewer, maxAutores: number | null): { 
         `Con VOSviewer (van Eck y Waltman, 2010) se construyó un mapa de coocurrencia de términos extraídos de ` +
         `${m.unidad === 'titulo' ? 'los títulos' : 'los títulos y resúmenes'} mediante la identificación de frases nominales, ` +
         `con recuento ${recuento}. De ${n(t?.distintos ?? r.unidadesDistintas)} términos, ${n(t?.candidatos ?? r.cumplenMinimo)} ` +
-        `alcanzaron el mínimo de ${r.minimo} ocurrencias, y de ellos se seleccionó el ${t?.porcentaje ?? 60} % más ` +
-        `relevante según su puntuación de relevancia (van Eck y Waltman, 2011).`;
+        `alcanzaron el mínimo de ${r.minimo} ocurrencias, y de ellos se seleccionaron los ` +
+        `${n(t?.seleccionados ?? r.enElMapa)} más relevantes (el ${t?.porcentaje ?? 60} %) según su puntuación ` +
+        `de relevancia (van Eck y Waltman, 2011).`;
       break;
     }
   }

@@ -10,20 +10,13 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
-import {
-  FilaDelMapa,
-  MapaDeVosviewer,
-  MapasService,
-  PedidoDeMapa,
-  Recuento,
-  TipoDeAnalisis,
-  UnidadDeAnalisis,
-} from '../../core/services/mapas.service';
+import { FilaDelMapa, MapaDeVosviewer, MapasService, PedidoDeMapa } from '../../core/services/mapas.service';
 import { TemaService } from '../../core/services/tema.service';
+import { CrearMapa, MapaCreado } from './crear-mapa';
 import { ANALISIS, NOMBRE_DEL_RECUENTO, UNIDADES, metodoDelMapa } from './mapa-catalogo';
+import { AvisoFlotante } from '../layout/aviso-flotante';
 
 /**
  * El script del visor. La versión va en el nombre: al cambiarla se construye
@@ -31,9 +24,6 @@ import { ANALISIS, NOMBRE_DEL_RECUENTO, UNIDADES, metodoDelMapa } from './mapa-c
  * el viejo en caché.
  */
 const SCRIPT_DEL_VISOR = '/vosviewer/vosviewer-1.2.4.js';
-
-/** Un tesauro de VOSviewer es texto: con esto sobra y se lee en el navegador. */
-const MAXIMO_TESAURO_BYTES = 60_000;
 
 interface VisorMontado {
   desmontar(): void;
@@ -84,8 +74,6 @@ function descargar(nombre: string, contenido: string, tipo: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-const ANIO_ACTUAL = new Date().getFullYear();
-
 /** Una columna de la tabla: cabecera, cómo se lee de la fila y cómo se escribe. */
 interface Columna {
   titulo: string;
@@ -98,7 +86,8 @@ interface Columna {
  *
  * Lo que el tesista haría en VOSviewer de escritorio —exportar, abrir el
  * programa, «Create map», elegir el tipo de análisis y la unidad, el método de
- * recuento y el umbral, revisar la lista de lo seleccionado— en un formulario.
+ * recuento y el umbral, revisar la lista de lo seleccionado— en el mismo asistente
+ * (`CrearMapa`), paso a paso.
  * El servidor cuenta; la disposición y los clústeres los calcula VOSviewer
  * Online aquí mismo, con el algoritmo del de escritorio. El mapa que sale es de
  * VOSviewer de verdad, y se cita como tal.
@@ -108,7 +97,7 @@ interface Columna {
  */
 @Component({
   selector: 'app-mi-mapa-vosviewer',
-  imports: [DecimalPipe, ReactiveFormsModule],
+  imports: [AvisoFlotante, DecimalPipe, CrearMapa],
   templateUrl: './mi-mapa-vosviewer.html',
   styleUrl: './mi-mapa-vosviewer.css',
 })
@@ -119,59 +108,23 @@ export class MiMapaVosviewer implements OnDestroy {
   private readonly lienzo = viewChild<ElementRef<HTMLDivElement>>('lienzo');
   private visor: VisorMontado | null = null;
 
-  readonly anioActual = ANIO_ACTUAL;
-  readonly catalogo = ANALISIS;
   readonly nombresDeUnidad = UNIDADES;
   readonly nombresDeRecuento = NOMBRE_DEL_RECUENTO;
 
-  readonly origen = signal<'openalex' | 'mis-fuentes'>('openalex');
-  readonly analisis = signal<TipoDeAnalisis>('coocurrencia');
-  readonly unidad = signal<UnidadDeAnalisis>('palabras-openalex');
-  readonly recuento = signal<Recuento>('completo');
-
-  readonly ajustesAbiertos = signal(false);
+  /** La ventana «Crear mapa». Se abre sola la primera vez que se entra. */
+  readonly asistenteAbierto = signal(true);
   readonly creando = signal(false);
   readonly cargandoVisor = signal(false);
   readonly error = signal<string | null>(null);
   readonly mapa = signal<MapaDeVosviewer | null>(null);
   readonly copiado = signal(false);
-  readonly avisoTesauro = signal<string | null>(null);
 
-  /** El `maxAutores` con el que se hizo el mapa que se ve, para el párrafo. */
-  private maxAutoresUsado: number | null = null;
+  /** Cómo se pidió el mapa que se ve: para «Quitar» y para el párrafo. */
+  private ultimoPedido: PedidoDeMapa | null = null;
 
-  readonly formulario = new FormGroup({
-    tema: new FormControl('', { nonNullable: true }),
-    desdeAnio: new FormControl<number | null>(ANIO_ACTUAL - 10),
-    hastaAnio: new FormControl<number | null>(null),
-    cuantas: new FormControl(500, { nonNullable: true }),
-    minimo: new FormControl<number | null>(null),
-    minimoCitas: new FormControl<number | null>(null),
-    maximo: new FormControl(100, { nonNullable: true }),
-    maxAutores: new FormControl<number | null>(25),
-    relevancia: new FormControl<number | null>(60),
-    excluir: new FormControl('', { nonNullable: true }),
-    sinonimos: new FormControl('', { nonNullable: true }),
-  });
-
-  readonly analisisActual = computed(() => ANALISIS.find((a) => a.valor === this.analisis())!);
-
-  /** De una búsqueda no hay palabras de autor: esas solo las trae su export. */
-  readonly unidadesDisponibles = computed(() =>
-    this.analisisActual().unidades.filter((u) => this.origen() === 'mis-fuentes' || u !== 'palabras-autor'),
-  );
-
-  // Qué ajustes tienen sentido para el análisis elegido, como en el asistente de VOSviewer.
-  readonly conMinimo = computed(() => this.unidad() !== 'documentos');
-  readonly conMinimoCitas = computed(() => ['coautoria', 'citacion', 'acoplamiento'].includes(this.analisis()));
-  readonly conMaxAutores = computed(() => this.analisis() === 'coautoria');
-  readonly conRelevancia = computed(() => this.analisis() === 'terminos');
-  readonly etiquetaMinimo = computed(() => UNIDADES[this.unidad()].minimo);
-
-  /** El mapa en curso de pedirse con otro análisis del que se ve: el botón lo dice. */
-  readonly cambiado = computed(() => {
+  readonly analisisDelMapa = computed(() => {
     const m = this.mapa();
-    return !!m && (m.analisis !== this.analisis() || m.unidad !== this.unidad());
+    return m ? ANALISIS.find((a) => a.valor === m.analisis) ?? null : null;
   });
 
   /** Las columnas de la tabla, según lo que son los círculos. */
@@ -183,7 +136,13 @@ export class MiMapaVosviewer implements OnDestroy {
       { titulo: 'Fuerza total', valor: (f) => f.fuerza, decimales: '1.0-2' },
     ];
     const anio: Columna[] = m.resumen.conAnio
-      ? [{ titulo: m.perfil === 'terminos' || m.perfil === 'unidades' ? 'Año prom.' : 'Año', valor: (f) => f.anio, decimales: '1.0-1' }]
+      ? [
+          {
+            titulo: m.perfil === 'terminos' || m.perfil === 'unidades' ? 'Año prom.' : 'Año',
+            valor: (f) => f.anio,
+            decimales: '1.0-1',
+          },
+        ]
       : [];
     switch (m.perfil) {
       case 'unidades':
@@ -219,7 +178,7 @@ export class MiMapaVosviewer implements OnDestroy {
 
   readonly metodo = computed(() => {
     const m = this.mapa();
-    return m ? metodoDelMapa(m, this.maxAutoresUsado) : null;
+    return m ? metodoDelMapa(m, this.ultimoPedido?.maxAutores ?? null) : null;
   });
 
   constructor() {
@@ -231,110 +190,40 @@ export class MiMapaVosviewer implements OnDestroy {
     });
   }
 
-  elegirOrigen(origen: 'openalex' | 'mis-fuentes'): void {
-    this.origen.set(origen);
+  /** Lo que entrega el asistente al pulsar «Finalizar». */
+  alCrear({ mapa, pedido }: MapaCreado): void {
+    this.asistenteAbierto.set(false);
+    this.ultimoPedido = pedido;
     this.error.set(null);
-    // Con sus fuentes, lo natural son SUS palabras clave: las que puso el autor.
-    if (this.analisis() === 'coocurrencia') {
-      this.unidad.set(origen === 'mis-fuentes' ? 'palabras-autor' : 'palabras-openalex');
-    }
+    this.mapa.set(mapa);
+    // El lienzo aparece con el mapa: se monta en el siguiente ciclo.
+    setTimeout(() => void this.montar());
   }
 
-  elegirAnalisis(valor: string): void {
-    const analisis = valor as TipoDeAnalisis;
-    this.analisis.set(analisis);
-    this.unidad.set(this.unidadesDisponibles()[0]);
-    this.recuento.set(this.analisisActual().recuentos[0]);
-    this.error.set(null);
-  }
-
-  elegirUnidad(valor: string): void {
-    this.unidad.set(valor as UnidadDeAnalisis);
-  }
-
-  elegirRecuento(valor: string): void {
-    this.recuento.set(valor as Recuento);
-  }
-
-  crear(): void {
-    const v = this.formulario.getRawValue();
-    const origen = this.origen();
-
-    if (origen === 'openalex' && v.tema.trim().length < 3) {
-      this.error.set('Escribe el tema que quieres mapear, mejor en inglés.');
-      return;
-    }
-
-    const pedido: PedidoDeMapa = {
-      origen,
-      analisis: this.analisis(),
-      unidad: this.unidad(),
-      recuento: this.recuento(),
-      ...(origen === 'openalex' && {
-        tema: v.tema.trim(),
-        desdeAnio: v.desdeAnio || null,
-        hastaAnio: v.hastaAnio || null,
-        cuantas: v.cuantas,
-      }),
-      minimo: this.conMinimo() ? v.minimo || null : null,
-      minimoCitas: this.conMinimoCitas() ? v.minimoCitas || null : null,
-      maximo: v.maximo,
-      maxAutores: this.conMaxAutores() ? v.maxAutores || null : null,
-      relevancia: this.conRelevancia() ? v.relevancia || null : null,
-      excluir: v.excluir,
-      sinonimos: v.sinonimos,
+  /**
+   * Quita una fila y rehace el mapa con las demás: lo mismo que desmarcarla
+   * en «Verificar», sin volver a abrir el asistente.
+   */
+  quitar(fila: FilaDelMapa): void {
+    const m = this.mapa();
+    if (!m || !this.ultimoPedido || this.creando()) return;
+    const pedido = {
+      ...this.ultimoPedido,
+      seleccion: m.resumen.filas.map((f) => f.clave).filter((c) => c !== fila.clave),
     };
 
     this.creando.set(true);
     this.error.set(null);
-
     this.mapas.crear(pedido).subscribe({
       next: (mapa) => {
         this.creando.set(false);
-        this.maxAutoresUsado = pedido.maxAutores ?? null;
-        this.mapa.set(mapa);
-        // El lienzo aparece con el mapa: se monta en el siguiente ciclo.
-        setTimeout(() => void this.montar());
+        this.alCrear({ mapa, pedido });
       },
       error: (fallo) => {
         this.creando.set(false);
         this.error.set(toApiError(fallo).message);
       },
     });
-  }
-
-  /**
-   * Quita una fila del mapa y lo vuelve a crear: el «Verify selected items» de
-   * VOSviewer, donde se desmarca lo que sobra antes de dibujar.
-   *
-   * Va por líneas y no por comas: el nombre de un autor («Larcker, D.») o de
-   * una institución («University of California, Berkeley») lleva comas.
-   */
-  quitar(fila: FilaDelMapa): void {
-    const actual = this.formulario.controls.excluir.value.trim();
-    this.formulario.controls.excluir.setValue(actual ? `${actual}\n${fila.etiqueta}` : fila.etiqueta);
-    this.ajustesAbiertos.set(true);
-    this.crear();
-  }
-
-  /** Lee un tesauro de VOSviewer (label / replace by) y lo pone en el campo. */
-  cargarTesauro(evento: Event): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    entrada.value = '';
-    if (!archivo) return;
-    if (archivo.size > MAXIMO_TESAURO_BYTES) {
-      this.avisoTesauro.set('Ese archivo es demasiado grande para un tesauro (más de 60 KB).');
-      return;
-    }
-    archivo.text().then(
-      (texto) => {
-        this.formulario.controls.sinonimos.setValue(texto.replace(/^﻿/, ''));
-        const pares = texto.split(/\r?\n/).filter((l) => l.includes('\t') || l.includes('=')).length;
-        this.avisoTesauro.set(`Tesauro cargado: ${archivo.name} (${pares} líneas).`);
-      },
-      () => this.avisoTesauro.set('No se pudo leer ese archivo.'),
-    );
   }
 
   private async montar(): Promise<void> {
