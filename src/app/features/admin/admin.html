@@ -133,12 +133,9 @@
       </div>
     </header>
 
-    @if (error(); as mensaje) {
-      <div class="aviso error" role="alert">{{ mensaje }}</div>
-    }
-    @if (aviso(); as mensaje) {
-      <div class="aviso exito" role="status">{{ mensaje }}</div>
-    }
+    <!-- El resultado de cada acción, flotando arriba: se ve aunque la lista
+         esté bajada y no empuja la página. Ver `AvisoFlotante`. -->
+    <app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
 
     <!-- ══ ACCESOS ══════════════════════════════════════════════════════════
        Las tres pantallas de venta contadas como una. Arriba, lo que hay que

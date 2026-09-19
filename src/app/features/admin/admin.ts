@@ -46,6 +46,7 @@ import { User } from '../../core/models/user.model';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 import {
   RevisionDeCorreo,
   leerListaDeCorreos,
@@ -280,6 +281,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     AjustesDeCuenta,
     MiConector,
     ReclamosAdmin,
+    AvisoFlotante,
   ],
   templateUrl: './admin.html',
   styleUrls: ['./admin.css', './admin-acciones.css'],
