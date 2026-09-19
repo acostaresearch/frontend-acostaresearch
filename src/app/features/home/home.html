@@ -102,33 +102,91 @@
 
   <!-- Las dos rutas, lo primero después del hero. Antes la portada hablaba solo
        de tesis y quien venía a publicar un artículo se iba creyendo que aquí no
-       había nada para él. Cada tarjeta lleva a su página, donde está el detalle
-       fase por fase; el precio sale de la API, no escrito aquí. -->
+       había nada para él. Cada ficha enseña de un vistazo por dónde pasa la
+       ruta —sus fases numeradas— y con qué se sale; el precio sale de la API,
+       no escrito aquí. -->
   @if (rutas().length > 0) {
     <section class="seccion gris">
-      <div class="cab">
-        <p class="seccion-marca">Dos rutas</p>
-        <h2 class="titulo-seccion">Elige por dónde vas</h2>
+      <div class="cab-fila">
+        <div class="cab">
+          <p class="seccion-marca">Dos rutas</p>
+          <h2 class="titulo-seccion">Elige por dónde vas</h2>
+        </div>
+        <p class="cab-nota">
+          Las dos se instalan en Claude.ai, funcionan con el plan gratuito y terminan en un Word
+          con tus fuentes.
+        </p>
       </div>
 
       <div class="rutas">
         @for (ruta of rutas(); track ruta.titulo) {
-          <article class="ruta">
-            <h3>{{ ruta.titulo }}</h3>
-            <p class="ruta-detalle">{{ ruta.detalle }}</p>
-            <p class="ruta-texto">{{ ruta.texto }}</p>
-
-            <p class="ruta-precio">
-              @if (ruta.desde) {
-                <span class="ruta-desde">desde</span>
+          <article class="ruta" [class.ruta-destacada]="ruta.destacado">
+            <header class="ruta-cab">
+              <span class="ruta-icono" aria-hidden="true">
+                @if (ruta.icono === 'birrete') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="m12 4 9 4.3-9 4.3-9-4.3z" stroke-linejoin="round" />
+                    <path
+                      d="M7 10.8v4.4c0 1.4 2.2 2.4 5 2.4s5-1 5-2.4v-4.4"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path
+                      d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"
+                      stroke-linejoin="round"
+                    />
+                    <path d="M14 3v5h5M9 13h6M9 17h4" stroke-linecap="round" />
+                  </svg>
+                }
+              </span>
+              <span class="ruta-nombre">
+                <h3>{{ ruta.titulo }}</h3>
+                <span class="ruta-para">{{ ruta.subtitulo }}</span>
+              </span>
+              @if (ruta.destacado; as sello) {
+                <span class="ruta-sello">{{ sello }}</span>
               }
-              <b>{{ ruta.precio }}</b>
-              @if (ruta.antes; as antes) {
-                <s>{{ antes }}</s>
-              }
-            </p>
+            </header>
 
-            <a class="boton" [routerLink]="ruta.enlace">{{ ruta.verbo }}</a>
+            <div class="ruta-cuerpo">
+              <p class="ruta-texto">{{ ruta.texto }}</p>
+
+              <p class="ruta-precio">
+                @if (ruta.desde) {
+                  <span class="ruta-desde">desde</span>
+                }
+                <b>{{ ruta.precio }}</b>
+                <span class="ruta-antes">
+                  @if (ruta.antes; as antes) {
+                    <s>{{ antes }}</s>
+                    ·
+                  }
+                  {{ ruta.meses }}
+                </span>
+              </p>
+            </div>
+
+            <ol class="ruta-fases">
+              @for (fase of ruta.fases; track fase; let i = $index) {
+                <li>
+                  <b>{{ i + 1 }}.</b>
+                  {{ fase }}
+                </li>
+              }
+            </ol>
+
+            <ul class="ruta-incluye">
+              @for (linea of ruta.incluye; track linea) {
+                <li>{{ linea }}</li>
+              }
+            </ul>
+
+            <div class="ruta-acciones">
+              <a class="boton" routerLink="/planes">{{ ruta.comprar }}</a>
+              <a class="ruta-mas" [routerLink]="ruta.enlace">{{ ruta.verbo }} →</a>
+            </div>
           </article>
         }
       </div>
@@ -136,16 +194,57 @@
   }
 
   <section class="seccion">
-    <div class="cab">
-      <p class="seccion-marca">Qué lo hace distinto</p>
-      <h2 class="titulo-seccion ancho">
-        Tus fuentes, tu norma y tu propio Word. Y cada decisión la tomas tú.
-      </h2>
+    <div class="cab-fila">
+      <div class="cab">
+        <p class="seccion-marca">Qué lo hace distinto</p>
+        <h2 class="titulo-seccion ancho">
+          Tus fuentes, tu norma y tu propio Word. Y cada decisión la tomas tú.
+        </h2>
+      </div>
+      <p class="cab-nota">
+        Seis razones por las que una tesis hecha con el método se puede defender delante de
+        cualquier jurado.
+      </p>
     </div>
 
     <div class="razones">
       @for (razon of razones; track razon.titulo) {
         <article class="razon">
+          <span class="razon-icono" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              @switch (razon.icono) {
+                @case ('buscar') {
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m20 20-3.6-3.6" />
+                }
+                @case ('marcador') {
+                  <path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z" />
+                }
+                @case ('documento') {
+                  <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 3v5h5M9 13h6M9 17h4" />
+                }
+                @case ('lista') {
+                  <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />
+                }
+                @case ('revisar') {
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path d="m8.3 12.2 2.5 2.5 4.9-5.4" />
+                }
+                @default {
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" />
+                }
+              }
+            </svg>
+          </span>
           <h3>{{ razon.titulo }}</h3>
           <p>{{ razon.texto }}</p>
         </article>
@@ -158,12 +257,15 @@
        Quien duda se va sin saber si esto es complicado — y «pegar una URL» es
        precisamente lo que quita el miedo.
 
-       Eran tres pasos y el panel ya tiene cinco momentos: traer las fuentes y
-       bajar la tesis entera no existían cuando se escribió. -->
-  <section class="seccion gris">
-    <div class="cab">
-      <p class="seccion-marca">Cómo se empieza</p>
-      <h2 class="titulo-seccion">Cinco pasos, y el último es tu tesis en Word</h2>
+       En banda oscura: es el paso del «qué es» al «cómo se hace», y corta la
+       página por la mitad para que se vea que empieza otra cosa. -->
+  <section class="seccion noche arranque-banda">
+    <div class="cab-fila">
+      <div class="cab">
+        <p class="seccion-marca">Cómo se empieza</p>
+        <h2 class="titulo-seccion">Cinco pasos, y el último es tu tesis en Word</h2>
+      </div>
+      <a class="boton claro" routerLink="/tutoriales">Ver los videos guía →</a>
     </div>
 
     <ol class="arranque">
@@ -201,10 +303,6 @@
         </p>
       </li>
     </ol>
-
-    <p class="arranque-pie">
-      <a routerLink="/tutoriales">Ver los videos guía →</a>
-    </p>
   </section>
 
   <!-- Los tres caminos desde el inicio. Sustituyen al desplazamiento: quien
@@ -217,40 +315,82 @@
 
     <div class="caminos">
       <a class="camino" routerLink="/en-accion">
+        <span class="camino-tapa camino-tapa-azul" aria-hidden="true">
+          <span class="camino-icono">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 7.5v9l7.5-4.5z" /></svg>
+          </span>
+        </span>
         <h3>Míralo en acción</h3>
         <p>
           Dos demostraciones completas y sin cortes, y cómo empiezas tú desde la instalación hasta
           el primer capítulo.
         </p>
-        <span class="camino-ir">Ver las demostraciones →</span>
+        <span class="camino-ir">Ver los videos →</span>
       </a>
       <a class="camino" routerLink="/preguntas">
+        <span class="camino-tapa camino-tapa-gris" aria-hidden="true">
+          <span class="camino-icono">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9.2 9.3a2.9 2.9 0 1 1 3.6 2.8c-.5.2-.8.7-.8 1.2v.6" />
+              <path d="M12 17.2h.01" />
+            </svg>
+          </span>
+        </span>
         <h3>Preguntas frecuentes</h3>
         <p>Si detectan IA, si sirve para tu carrera, qué pasa cuando se acaba el acceso.</p>
         <span class="camino-ir">Leer las respuestas →</span>
       </a>
       <a class="camino" routerLink="/quien-soy">
+        <span class="camino-tapa camino-tapa-noche" aria-hidden="true">
+          <span class="camino-icono">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="8.5" r="3.4" />
+              <path d="M5.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8" />
+            </svg>
+          </span>
+        </span>
         <h3>Quién te acompaña</h3>
         <p>
-          Investigador Renacyt II, docente y jurado de tesis, con artículos en revistas de Elsevier,
-          Springer Nature y Wiley.
+          Investigador Renacyt II, docente y jurado de tesis, con artículos en revistas de
+          Elsevier, Springer Nature y Wiley.
         </p>
-        <span class="camino-ir">Conocerme →</span>
+        <span class="camino-ir">Conocer al autor →</span>
       </a>
     </div>
   </section>
 
-  <!-- El cierre. Va en oscuro porque es donde se pide la decisión, y en un
-       sitio entero de blanco y gris una sección más no se distingue. -->
-  <section class="seccion noche corta">
-    <div class="cierre-pagina">
+  <!-- El cierre. Va en una caja oscura y no a sangre: es lo último de la
+       página y a todo el ancho se leía como una sección más, no como la última
+       pregunta. -->
+  <section class="seccion cierre-seccion">
+    <div class="cierre-caja">
       <div>
-        <h2 class="titulo-seccion">Empieza por la fase en la que estás hoy.</h2>
-        <p class="seccion-entrada">No tienes que empezar por la primera: entra por donde estés.</p>
+        <h2 class="cierre-titulo">Empieza hoy. Tu primer capítulo, esta semana.</h2>
+        <p class="cierre-nota">
+          Sin suscripción. Se instala en tu cuenta de Claude.ai y funciona con el plan gratuito.
+        </p>
       </div>
       <div class="acciones">
-        <a class="boton oro grande" routerLink="/planes">Ver los paquetes</a>
-        <a class="boton claro grande" routerLink="/en-accion">Míralo en acción</a>
+        <a class="boton grande" routerLink="/planes">Ver los paquetes</a>
+        @if (whatsapp) {
+          <a class="boton claro grande" [href]="whatsapp" target="_blank" rel="noopener"
+            >Pregúntanos por WhatsApp</a
+          >
+        }
       </div>
     </div>
   </section>

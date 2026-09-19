@@ -1,11 +1,17 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { environment } from '../../../environments/environment';
 import { Plan } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
-import { CIFRAS, RAZONES } from '../../shared/contenido/metodo';
+import {
+  CIFRAS,
+  FASES_ARTICULO,
+  FASES_TESIS,
+  RAZONES,
+} from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { Contador } from './contador';
@@ -35,6 +41,8 @@ export class Home implements OnInit {
   protected readonly auth = inject(AuthService);
 
   readonly cifras = CIFRAS;
+  /** El cierre ofrece WhatsApp solo si el entorno trae número. */
+  readonly whatsapp = environment.whatsappUrl;
   readonly razones = RAZONES;
 
   readonly nombre = this.auth.fullName;
@@ -93,30 +101,49 @@ export class Home implements OnInit {
 
     return [
       tesis && {
+        icono: 'birrete',
         titulo: 'Tesis',
+        subtitulo: 'Si tienes que sustentar · pregrado, maestría o doctorado',
+        destacado: 'El más elegido',
         texto:
-          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes. Tu tesis ' +
-          'sale en un solo Word, en la norma de citas que te pidan. ' +
-          'Incluye videos guía.',
-        detalle: `9 fases · ${tesis.durationDays} días de acceso`,
+          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes.',
+        fases: FASES_TESIS,
+        incluye: [
+          'Tu tesis en un solo Word, en la norma que te pidan',
+          'Con tus fuentes: Scopus, PDF o Zotero',
+          'Análisis en R',
+          'Videos guía',
+        ],
         precio: this.precio(tesis),
         antes: this.precioAntes(tesis),
         desde: true,
+        meses: this.meses(tesis),
+        comprar: 'Empezar la ruta de tesis',
         enlace: '/metodo',
         verbo: 'Ver las 11 Skills',
       },
       articulo && {
+        icono: 'documento',
         titulo: 'Artículo científico',
+        subtitulo: 'Si quieres publicar en una revista indexada',
+        destacado: null,
         texto:
-          'De una idea a un manuscrito enviado a una revista real: se elige el destino, se ' +
-          'escribe en estructura IMRyD con la norma que pida la revista y se responde a los ' +
-          'revisores. Incluye el Humanizador.',
-        detalle: `10 fases · ${articulo.durationDays} días de acceso`,
+          'De una idea a un manuscrito enviado a una revista real, con respuesta a los ' +
+          'revisores.',
+        fases: FASES_ARTICULO,
+        incluye: [
+          'Revista con cuartil verificado',
+          'Manuscrito IMRyD en la norma de la revista',
+          'Carta de presentación',
+          'Respuesta a revisores',
+        ],
         precio: this.precio(articulo),
         antes: this.precioAntes(articulo),
         desde: false,
+        meses: this.meses(articulo),
+        comprar: 'Empezar la ruta del artículo',
         enlace: '/articulo',
-        verbo: 'Ver la ruta completa',
+        verbo: 'Ver las 10 fases',
       },
     ].filter((ruta) => ruta !== null);
   });
@@ -135,6 +162,15 @@ export class Home implements OnInit {
         error: () => this.tieneConector.set(true),
       });
     }
+  }
+
+  /**
+   * El acceso, en meses. En días («365 días de acceso») obligaba a dividir
+   * mentalmente para saber si era un año.
+   */
+  meses(plan: Plan): string {
+    const meses = Math.round(plan.durationDays / 30);
+    return meses === 1 ? '1 mes' : `${meses} meses`;
   }
 
   precio(plan: Plan): string {

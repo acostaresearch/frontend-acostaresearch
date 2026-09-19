@@ -298,12 +298,62 @@
   }
 }
 
+/* El azul noche de las piezas de marca —el icono de la ruta del artículo, su
+   botón, el icono de «Quién te acompaña»—. No se usa `--contorno-marca` porque
+   en modo oscuro esa variable es dorada, y un botón dorado con texto blanco no
+   se lee. */
+.pagina {
+  --tinta-marca: var(--noche);
+}
+
+:host-context([data-tema='oscuro']) .pagina {
+  --tinta-marca: #2b3558;
+}
+
+/* ── El rótulo de cada sección ──────────────────────────────────────────────
+   En versalitas y más pequeño que en el resto del sitio: en la portada abre
+   seis bloques seguidos y a 14,5 px competía con el titular que lleva debajo.
+   Solo aquí; las páginas interiores siguen con el rótulo grande. */
+.seccion-marca {
+  margin-bottom: 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Título a la izquierda y, al otro extremo, de qué va la sección (o el botón
+   que la acompaña). Antes esa frase iba debajo del título y empujaba el
+   contenido media pantalla hacia abajo. */
+.cab-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: 20px 48px;
+  align-items: end;
+  margin-bottom: 40px;
+}
+
+.cab-fila .cab {
+  margin-bottom: 0;
+}
+
+.cab-nota {
+  margin: 0 0 6px;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.cab-fila .boton {
+  justify-self: end;
+}
+
 /* ── Las dos rutas ─────────────────────────────────────────────────────────
  *
- * Dos tarjetas del mismo peso, sin una destacada. Marcar una como «la
- * recomendada» tendría sentido si fueran dos versiones del mismo producto;
- * aquí son dos destinos distintos, y quien viene a publicar un artículo no
- * necesita que le empujen hacia la tesis.
+ * Cada ficha cuenta la ruta entera de un vistazo: para quién es, por dónde
+ * pasa (las fases numeradas), qué se lleva y cuánto cuesta. La de tesis va
+ * marcada como la más elegida porque es la que compran nueve de cada diez, y
+ * quien viene a publicar un artículo tiene la suya al lado con el mismo peso.
  */
 .rutas {
   display: grid;
@@ -314,82 +364,250 @@
 .ruta {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 34px;
+  overflow: hidden;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: 16px;
+  border-radius: 18px;
 }
 
-.ruta h3 {
+.ruta-cab {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+/* La cabecera de la ruta destacada, en el azul suave de marca: distingue las
+   dos fichas sin repetir el sello en cada esquina. */
+.ruta-destacada .ruta-cab {
+  background: var(--color-primario-suave);
+  border-bottom-color: color-mix(in srgb, var(--color-primario) 18%, transparent);
+}
+
+.ruta-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  color: var(--noche-titulo);
+  background: var(--tinta-marca);
+  border-radius: 14px;
+}
+
+.ruta-destacada .ruta-icono {
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+}
+
+.ruta-icono svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ruta-nombre {
+  flex: 1;
+  min-width: 0;
+}
+
+.ruta-nombre h3 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
-.ruta-detalle {
-  margin: 4px 0 0;
-  font-size: 14.5px;
-  color: var(--color-texto-tenue);
+.ruta-para {
+  display: block;
+  margin-top: 3px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--color-texto-suave);
+}
+
+.ruta-sello {
+  flex: none;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+  border-radius: 999px;
+}
+
+/* El texto y el precio, en la misma fila: el número no necesita una línea
+   propia y así la ficha entera cabe sin desplazarse. */
+.ruta-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 28px;
+  align-items: start;
+  padding: 20px 28px 0;
 }
 
 .ruta-texto {
-  flex: 1;
-  margin: 16px 0 0;
-  font-size: 16px;
+  margin: 0;
+  font-size: 15px;
   line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
-/* El precio, con el tachado al lado y no encima: el número que se paga es el
-   grande, y el otro está solo para que se vea cuánto se ahorra. */
 .ruta-precio {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 24px 0 20px;
-}
-
-.ruta-precio b {
-  font-size: 38px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.ruta-precio s {
-  font-size: 18px;
-  color: var(--color-texto-tenue);
+  display: grid;
+  justify-items: end;
+  margin: 0;
+  text-align: right;
 }
 
 .ruta-desde {
-  font-size: 15px;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.ruta-precio b {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* Lo que costaba y cuánto dura el acceso, en la misma línea y en gris: son el
+   contexto del número grande, no otro precio. */
+.ruta-antes {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.ruta-fases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 20px 0 0;
+  padding: 0 28px;
+  list-style: none;
+}
+
+.ruta-fases li {
+  padding: 5px 10px;
+  font-size: 12.5px;
   color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.ruta-fases b {
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+}
+
+.ruta-incluye {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 18px 0 0;
+  padding: 0 28px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  list-style: none;
+}
+
+.ruta-incluye li::before {
+  content: '✓ ';
+  font-weight: 800;
+  color: var(--color-exito);
+}
+
+.ruta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  padding: 24px 28px 26px;
+}
+
+/* La ruta que no va destacada lleva su botón en azul noche: dos botones azules
+   del mismo tono, uno al lado del otro, se leían como el mismo. */
+.ruta:not(.ruta-destacada) .ruta-acciones .boton {
+  background: var(--tinta-marca);
+  border-color: var(--tinta-marca);
+}
+
+.ruta:not(.ruta-destacada) .ruta-acciones .boton:hover {
+  background: var(--noche-2);
+  border-color: var(--noche-2);
+}
+
+.ruta-mas {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--color-primario);
+  text-decoration: none;
+}
+
+.ruta-mas:hover {
+  text-decoration: underline;
 }
 
 /* ── Las razones ────────────────────────────────────────────────────────────
-   Sin caja: son párrafos de argumento, no productos que comparar, y
-   encajonados pedían la misma atención que las tarjetas de precio de arriba. */
+   Seis argumentos, cada uno en su tarjeta con su icono y el filo azul a la
+   izquierda: sueltas sobre el fondo blanco se leían como un solo bloque de
+   texto a tres columnas y no se distinguía dónde acababa una. */
 .razones {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 48px;
+  gap: 24px;
+}
+
+.razon {
+  padding: 24px 26px 26px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-left: 3px solid var(--color-primario);
+  border-radius: 14px;
+}
+
+.razon-icono {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 11px;
+}
+
+.razon-icono svg {
+  width: 21px;
+  height: 21px;
 }
 
 .razon h3 {
   margin: 0;
+  font-size: 17.5px;
 }
 
 .razon p {
   margin: 10px 0 0;
-  font-size: 16px;
+  font-size: 14.5px;
   line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
 /* ── Los cinco pasos ─────────────────────────────────────────────────────────
-   Con la línea azul arriba, como una barra de progreso partida en cinco: se lee
-   que hay un orden sin necesidad de flechas. */
+   En banda oscura, con los números unidos por una línea: se lee que hay un
+   orden sin necesidad de flechas. */
+.arranque-banda .seccion-marca {
+  color: #8fb3ff;
+}
+
 .arranque {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -400,20 +618,24 @@
 }
 
 .arranque li {
-  padding: 22px 12px 0 0;
-  border-top: 3px solid var(--color-primario);
+  position: relative;
+  padding-right: 12px;
 }
 
-/* Cinco columnas de 180 px ya no dejan leer el texto: se reparten en tres columnas
-   (tres arriba y dos abajo) antes de caer a una sola en el móvil. */
-@media (max-width: 1200px) {
-  .arranque {
-    grid-template-columns: repeat(3, 1fr);
-    row-gap: 36px;
-  }
+/* La línea que va de un número al siguiente. Se corta en el último y en el
+   final de cada fila, que es donde no hay paso al que llegar. */
+.arranque li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: 42px;
+  right: -20px;
+  height: 1px;
+  background: var(--noche-linea);
 }
 
 .arranque-numero {
+  position: relative;
   display: grid;
   place-items: center;
   width: 34px;
@@ -428,27 +650,26 @@
 
 .arranque li h3 {
   margin: 0;
+  font-size: 17px;
 }
 
 .arranque li p {
   margin: 8px 0 0;
-  font-size: 16px;
+  font-size: 14.5px;
   line-height: 1.55;
-  color: var(--color-texto-suave);
 }
 
-.arranque-pie {
-  margin: 32px 0 0;
-}
+/* Cinco columnas de 180 px ya no dejan leer el texto: se reparten en tres
+   (tres arriba y dos abajo) antes de caer a una sola en el móvil. */
+@media (max-width: 1200px) {
+  .arranque {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 36px;
+  }
 
-.arranque-pie a {
-  font-weight: 700;
-  color: var(--color-primario);
-  text-decoration: none;
-}
-
-.arranque-pie a:hover {
-  text-decoration: underline;
+  .arranque li::before {
+    display: none;
+  }
 }
 
 /* ── Los tres caminos ─────────────────────────────────────────────────────── */
@@ -460,11 +681,12 @@
 
 .camino {
   display: block;
-  padding: 28px;
+  padding-bottom: 26px;
+  overflow: hidden;
   text-decoration: none;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: 14px;
+  border-radius: 16px;
   transition:
     border-color var(--transicion),
     transform var(--transicion);
@@ -475,27 +697,132 @@
   transform: translateY(-2px);
 }
 
+/* La tapa con el icono: da a las tres tarjetas una entrada que se reconoce de
+   lejos —el video, la duda, la persona— sin meter una imagen que cargar. */
+.camino-tapa {
+  display: grid;
+  place-items: center;
+  height: 108px;
+  margin-bottom: 22px;
+}
+
+.camino-tapa-azul {
+  background: linear-gradient(
+    180deg,
+    var(--color-primario-suave),
+    color-mix(in srgb, var(--color-primario-suave) 25%, var(--color-superficie))
+  );
+}
+
+.camino-tapa-gris {
+  background: linear-gradient(180deg, var(--color-fondo), var(--color-superficie));
+}
+
+.camino-tapa-noche {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tinta-marca) 10%, var(--color-superficie)),
+    var(--color-superficie)
+  );
+}
+
+.camino-icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.camino-icono svg {
+  width: 24px;
+  height: 24px;
+}
+
+.camino-tapa-azul .camino-icono {
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+}
+
+.camino-tapa-gris .camino-icono {
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+}
+
+.camino-tapa-noche .camino-icono {
+  color: var(--noche-titulo);
+  background: var(--tinta-marca);
+}
+
 .camino h3 {
   margin: 0;
+  padding: 0 26px;
+  font-size: 18px;
   color: var(--color-texto);
 }
 
 .camino p {
   margin: 8px 0 0;
-  font-size: 16px;
-  line-height: 1.5;
+  padding: 0 26px;
+  font-size: 14.5px;
+  line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
 .camino-ir {
   display: inline-block;
   margin-top: 16px;
-  font-size: 15px;
+  padding: 0 26px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--color-primario);
 }
 
+/* ── El cierre ────────────────────────────────────────────────────────────── */
+.cierre-caja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 40px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 38px 44px;
+  background: var(--noche-fondo);
+  border-radius: 20px;
+}
+
+.cierre-titulo {
+  max-width: 20ch;
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--noche-titulo);
+}
+
+.cierre-nota {
+  margin: 12px 0 0;
+  font-size: 14.5px;
+  color: #8fb3ff;
+}
+
+.cierre-caja .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 @media (max-width: 1000px) {
+  .cab-fila {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .cab-fila .boton {
+    justify-self: start;
+  }
+
   .rutas,
   .razones,
   .arranque,
@@ -503,12 +830,21 @@
     grid-template-columns: 1fr;
   }
 
-  .razones {
-    gap: 32px;
+  .ruta-cuerpo {
+    grid-template-columns: 1fr;
+  }
+
+  .ruta-precio {
+    justify-items: start;
+    text-align: left;
   }
 
   .arranque li {
     padding-right: 0;
+  }
+
+  .cierre-caja {
+    padding: 30px 26px;
   }
 }
 

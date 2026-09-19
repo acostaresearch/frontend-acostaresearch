@@ -88,6 +88,7 @@ export const DEMOS: Demo[] = [
 export const RAZONES = [
   {
     titulo: 'Solo con fuentes que existen',
+    icono: 'buscar',
     texto:
       'Se escribe con lo que tú traes —tu export de Scopus, Web of Science, SciELO o PubMed, ' +
       'tus PDF o tu Zotero— y con lo que Claude encuentra en la literatura publicada, incluidas ' +
@@ -95,6 +96,7 @@ export const RAZONES = [
   },
   {
     titulo: 'Tu Zotero, conectado',
+    icono: 'marcador',
     texto:
       'Eliges una colección y sus referencias quedan listas para citar, al día cada noche. La ' +
       'lista de referencias se arma sola con lo que citaste: horas de trabajo menos y ninguna ' +
@@ -102,6 +104,7 @@ export const RAZONES = [
   },
   {
     titulo: '¿Ya la escribiste? Te la citamos',
+    icono: 'documento',
     texto:
       'Sube tu Word tal cual, aunque no tenga una sola referencia. Claude lo lee, busca las ' +
       'fuentes en tu Zotero, en Scopus y en OpenAlex, y pone cada cita y la lista de referencias ' +
@@ -109,6 +112,7 @@ export const RAZONES = [
   },
   {
     titulo: '15 normas de citas',
+    icono: 'lista',
     texto:
       'APA 7, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
       'o Chile, o en inglés. Claude te pregunta cuál te piden, y si tu asesor luego pide otra, ' +
@@ -116,17 +120,52 @@ export const RAZONES = [
   },
   {
     titulo: 'Un repaso antes de entregar',
+    icono: 'revisar',
     texto:
       'Antes de llevarla a tu asesor, Claude revisa tu tesis completa: variables que no están ' +
       'en ningún objetivo, objetivos sin conclusión, citas rotas y afirmaciones sin fuente.',
   },
   {
     titulo: 'Tú tomas las decisiones',
+    icono: 'persona',
     texto:
       'La Skill te pregunta, te explica el porqué metodológico y te pone las opciones sobre ' +
       'la mesa. El diseño, la muestra y la interpretación las eliges tú, y por eso las puedes ' +
       'defender.',
   },
+];
+
+/*
+ * El nombre corto de cada fase, para las fichas de las dos rutas del inicio.
+ *
+ * Son etiquetas de un vistazo, no los títulos de las Skills: ahí caben dos
+ * palabras y el título entero («Tema y delimitación del problema») no. El
+ * detalle fase por fase vive en /metodo y /articulo, que es adonde lleva el
+ * enlace de cada ficha.
+ */
+export const FASES_TESIS = [
+  'Tema',
+  'Problema',
+  'Marco teórico',
+  'Metodología',
+  'Instrumento',
+  'Datos',
+  'Resultados',
+  'Discusión',
+  'Conclusiones',
+];
+
+export const FASES_ARTICULO = [
+  'Tema y revista',
+  'Matriz',
+  'Introducción',
+  'Literatura',
+  'Métodos',
+  'Resultados',
+  'Discusión',
+  'Conclusiones',
+  'Envío',
+  'Revisores',
 ];
 
 export const DESCRIPCIONES: Record<string, Detalle> = {
