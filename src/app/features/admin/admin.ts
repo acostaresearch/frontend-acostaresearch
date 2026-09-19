@@ -788,12 +788,40 @@ export class Admin implements OnInit {
     this.listaCorreos().correos.filter((r) => r.problema),
   );
 
+  /**
+   * Los productos que se pueden regalar o vender con código.
+   *
+   * Los públicos y, detrás, los que están en prueba: esos no salen en la web,
+   * así que un código es la única manera de dárselos a alguien que no es
+   * administrador. Los retirados no, porque no tienen topes que copiar.
+   */
+  readonly productosCodigos = computed(() => {
+    const lista = this.planesLicencia().map((plan) => ({
+      productCode: plan.productCode ?? plan.code,
+      nombre: plan.name,
+      priceCents: plan.priceCents,
+    }));
+    const vistos = new Set(lista.map((p) => p.productCode));
+
+    for (const grupo of this.grupos()) {
+      const codigo = grupo.productCode ?? grupo.code;
+      if (!grupo.active || !grupo.soloPara || vistos.has(codigo)) continue;
+      vistos.add(codigo);
+      lista.push({
+        productCode: codigo,
+        nombre: `${grupo.name} · en prueba`,
+        priceCents: grupo.priceCents,
+      });
+    }
+    return lista;
+  });
+
   /** Cuántos códigos salen y cuánto se apunta, para verlo antes de generar. */
   readonly resumenLista = computed(() => {
     const { cantidad, productCode, paymentMethod, importe } = this.valoresCodigos();
     const correos = this.listaCorreos().correos.length;
     const codigos = correos * (Number(cantidad) || 0);
-    const plan = this.planesLicencia().find((p) => (p.productCode ?? p.code) === productCode);
+    const plan = this.productosCodigos().find((p) => p.productCode === productCode);
     const porCodigoCents =
       paymentMethod === 'CORTESIA'
         ? 0
