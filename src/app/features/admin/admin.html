@@ -722,6 +722,48 @@
                 </div>
               }
 
+              <!-- ── Correo de la cuenta ──────────────────────────────────────
+                 Para quien compró con un correo mal escrito o perdió su
+                 bandeja. Cambia la cuenta dueña de la licencia, no la licencia:
+                 la URL que tiene instalada sigue sirviendo. -->
+              @if (acceso.licenseId) {
+                <div class="mover-producto">
+                  <h4>Cambiar el correo de la cuenta</h4>
+                  <p class="tenue">
+                    Con el que entra y al que le llegan los códigos. Le avisamos en el correo viejo
+                    y en el nuevo, y su URL, su licencia y su tesis siguen igual.
+                  </p>
+
+                  <div class="mover-fila">
+                    <input
+                      type="email"
+                      aria-label="Correo nuevo"
+                      placeholder="correo.nuevo@gmail.com"
+                      autocomplete="off"
+                      spellcheck="false"
+                      [value]="correoNuevo()"
+                      (input)="correoNuevo.set($any($event.target).value)"
+                      (keyup.enter)="cambiarCorreoDelAcceso()"
+                    />
+                    <button
+                      type="button"
+                      class="boton"
+                      [disabled]="!correoNuevo().trim() || cambiandoCorreo()"
+                      (click)="cambiarCorreoDelAcceso()"
+                    >
+                      {{ cambiandoCorreo() ? 'Cambiando…' : 'Cambiar correo' }}
+                    </button>
+                  </div>
+
+                  @if (avisoCorreo(); as mensaje) {
+                    <p class="correo-aviso" role="status">{{ mensaje }}</p>
+                  }
+                  @if (errorCorreo(); as mensaje) {
+                    <div class="aviso error" role="alert">{{ mensaje }}</div>
+                  }
+                </div>
+              }
+
               <!-- ── Mover de producto ────────────────────────────────────────
                  Solo si esta fila llegó a entregar una licencia: no se puede
                  ampliar lo que todavía no existe. Un código sin canjear o un

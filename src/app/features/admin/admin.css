@@ -2386,6 +2386,29 @@ td.acciones {
 
 /* El desplegable heredaba el aspecto crudo del navegador, que al lado de un
    botón del panel canta. Se le da la misma caja que a los campos del resto. */
+/* El correo nuevo, con la misma caja que el desplegable de al lado. */
+.mover-fila input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-chico, 8px);
+}
+
+.mover-fila input:focus {
+  outline: none;
+  border-color: var(--color-primario);
+}
+
+.mover-producto .correo-aviso {
+  margin: 10px 0 0;
+  color: var(--color-exito);
+}
+
 .mover-fila select {
   flex: 1 1 220px;
   min-width: 0;

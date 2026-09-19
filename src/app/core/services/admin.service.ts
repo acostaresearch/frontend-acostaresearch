@@ -158,6 +158,16 @@ export class AdminService {
       .pipe(map((res) => ({ license: res.data.license, mensaje: res.message ?? '' })));
   }
 
+  /**
+   * Cambia el correo de la cuenta dueña de esa licencia: con el que entra y al
+   * que le llegan los códigos. Avisa a los dos correos; la URL no cambia.
+   */
+  cambiarCorreo(id: string, email: string): Observable<{ email: string; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ email: string }>>(`${this.licencias}/${id}/email`, { email })
+      .pipe(map((res) => ({ email: res.data.email, mensaje: res.message ?? '' })));
+  }
+
   /** Si esa licencia puede abrir varias tesis. Sale de su ficha. */
   variasTesisDe(id: string): Observable<boolean> {
     return this.http

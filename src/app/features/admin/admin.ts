@@ -3596,6 +3596,7 @@ export class Admin implements OnInit {
     this.accesoAbierto.set(acceso);
     this.soltarCaptura();
     this.limpiarVariasTesis();
+    this.limpiarCorreo();
     if (acceso.tieneComprobante) this.descargarCaptura(acceso);
     if (acceso.licenseId) this.consultarVariasTesis(acceso.licenseId);
   }
@@ -3605,6 +3606,60 @@ export class Admin implements OnInit {
     this.productoElegido.set('');
     this.soltarCaptura();
     this.limpiarVariasTesis();
+    this.limpiarCorreo();
+  }
+
+  // ── Cambiar el correo de la cuenta ───────────────────────────────────────
+  //
+  // Para quien compró con un correo mal escrito o perdió su bandeja y nos lo
+  // pide por WhatsApp. Cambia la cuenta, no la licencia: la URL sigue igual.
+
+  readonly correoNuevo = signal('');
+  readonly cambiandoCorreo = signal(false);
+  readonly avisoCorreo = signal<string | null>(null);
+  readonly errorCorreo = signal<string | null>(null);
+
+  private limpiarCorreo(): void {
+    this.correoNuevo.set('');
+    this.cambiandoCorreo.set(false);
+    this.avisoCorreo.set(null);
+    this.errorCorreo.set(null);
+  }
+
+  async cambiarCorreoDelAcceso(): Promise<void> {
+    const acceso = this.accesoAbierto();
+    const email = this.correoNuevo().trim().toLowerCase();
+    if (!acceso?.licenseId || !email || this.cambiandoCorreo()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: '¿Cambiar el correo de la cuenta?',
+      mensaje:
+        `Desde ahora entrará con ${email}, y ahí le llegarán los códigos y los avisos. ` +
+        'Si entraba con Google, tendrá que volver a entrar con Google con el correo nuevo.',
+      nota: 'Le avisamos en los dos correos. Su URL del conector, su licencia y su tesis no cambian.',
+      confirmar: 'Cambiar el correo',
+    });
+    if (!seguro || this.accesoAbierto() !== acceso) return;
+
+    this.cambiandoCorreo.set(true);
+    this.avisoCorreo.set(null);
+    this.errorCorreo.set(null);
+
+    this.admin.cambiarCorreo(acceso.licenseId, email).subscribe({
+      next: ({ email: nuevo, mensaje }) => {
+        this.cambiandoCorreo.set(false);
+        this.correoNuevo.set('');
+        this.avisoCorreo.set(mensaje);
+        // Un cobro enseña el correo de la cuenta: se pone al día en la ficha y en
+        // la lista. Un código enseña a quién se mandó, que no cambia.
+        if (acceso.canal !== 'codigo') this.accesoAbierto.set({ ...acceso, comprador: nuevo });
+        this.recargar();
+      },
+      error: (fallo) => {
+        this.cambiandoCorreo.set(false);
+        this.errorCorreo.set(mensajeDeError(fallo));
+      },
+    });
   }
 
   // ── Varias tesis por licencia ────────────────────────────────────────────
