@@ -14,7 +14,7 @@ const PROGRAMAS: readonly { clave: Programa; texto: string }[] = [
   { clave: 'nvivo', texto: 'NVivo' },
   { clave: 'maxqda', texto: 'MAXQDA' },
   { clave: 'qualcoder', texto: 'QualCoder (gratis)' },
-  { clave: 'ninguno', texto: 'No tengo ninguno' },
+  { clave: 'ninguno', texto: 'No, lo hago todo aquí' },
 ];
 
 /**
@@ -57,8 +57,8 @@ const COMO_SE_ABRE: Record<Programa, ComoSeAbre> = {
   },
   ninguno: {
     pasos: [
-      'No te hace falta: la codificación, las tablas, la red de códigos y el capítulo salen de aquí.',
-      'Si tu asesor trabaja con ATLAS.ti, pásale el .qdpx y lo abre ya codificado.',
+      'Es lo normal: la codificación, las tablas, la red de códigos y el capítulo salen de aquí.',
+      'Si más adelante tu asesor o tu jurado quieren revisarlo en su programa, pide el archivo entonces.',
     ],
     nota: 'El .qdpx es un extra, no un requisito.',
   },
@@ -86,9 +86,9 @@ const PASOS: readonly PasoDeGuia[] = [
       'Con todo codificado, recibes la tabla de frecuencias, la de coocurrencia de códigos y la red dibujada, como en ATLAS.ti.',
   },
   {
-    titulo: 'Tu capítulo y tu .qdpx',
+    titulo: 'Tu capítulo en Word',
     detalle:
-      'Claude redacta tu capítulo de resultados con citas de tus entrevistados, comprobadas contra las transcripciones, y te da el Word. Si quieres, también el proyecto para abrirlo en ATLAS.ti.',
+      'Claude redacta tu capítulo de resultados, organizado por objetivos, con citas de tus entrevistados comprobadas contra las transcripciones. Queda guardado en tu tesis y lo descargas en Word.',
   },
 ];
 
@@ -110,25 +110,32 @@ const EJEMPLO: readonly MensajeDeEjemplo[] = [
     de: 'claude',
     texto: 'Guardada, con todas las citas comprobadas en tu transcripción. Sigo con la E2.',
   },
-  { de: 'tu', texto: 'Dame el archivo para ATLAS.ti.' },
+  { de: 'tu', texto: 'Sácame las tablas y la red de códigos.' },
   {
     de: 'claude',
-    texto: 'Listo: 4 entrevistas, 18 códigos y 52 citas. Ábrelo en ATLAS.ti con Importar → Proyecto REFI-QDA.',
+    texto:
+      'Listo: 18 códigos en 5 categorías. «Falta de apoyo del asesor» aparece en las cuatro entrevistas y casi siempre junto a «Ayuda externa». Aquí tienes la red.',
+  },
+  { de: 'tu', texto: 'Redacta el capítulo de resultados.' },
+  {
+    de: 'claude',
+    texto:
+      'Tu capítulo está listo, organizado por objetivos, con las tablas, la red y 12 citas de tus entrevistados, todas encontradas en tus transcripciones. Descárgalo en Word.',
   },
 ];
 
 /**
  * La pestaña «Tu ATLAS.ti» del perfil.
  *
- * El análisis cualitativo no se hace EN ATLAS.ti —no hay forma de manejarlo
- * desde fuera—: se hace con Claude, y el resultado se entrega en el formato de
- * intercambio (.qdpx) que ATLAS.ti, NVivo, MAXQDA y QualCoder importan ya
- * codificado. La pestaña lleva el nombre de ATLAS.ti porque es el programa que
- * el tesista y su asesor conocen, y lo primero que dice es que no hace falta
- * tenerlo.
+ * El análisis cualitativo se hace ENTERO aquí, en el chat con Claude y en la
+ * plataforma: codificación, tablas, red de códigos y capítulo. Es lo que haría
+ * ATLAS.ti, sin instalarlo ni pagarlo, y eso es lo que la pestaña enseña. La
+ * pestaña lleva el nombre de ATLAS.ti porque es el programa que el tesista y su
+ * asesor conocen.
  *
- * Como la de R, no hay nada que configurar: enseña cómo se pide y adelanta la
- * duda que más frena, que aquí es «¿y cómo lo abro en mi programa?».
+ * El .qdpx —el proyecto para abrirlo ya codificado en ATLAS.ti, NVivo, MAXQDA o
+ * QualCoder— va al final y como opcional: para el asesor o el jurado que
+ * quieran revisarlo en su programa, no como meta del tesista.
  */
 @Component({
   selector: 'app-mi-atlas-ti',
@@ -143,7 +150,6 @@ export class MiAtlasTi {
     'quiero analizar mis entrevistas',
     'sácame las tablas y la red de códigos',
     'redacta el capítulo de resultados',
-    'dame el archivo para ATLAS.ti',
   ];
   readonly programas = PROGRAMAS;
 

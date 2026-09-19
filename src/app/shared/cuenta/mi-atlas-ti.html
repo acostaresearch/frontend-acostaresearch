@@ -1,16 +1,18 @@
 <p class="nota">
-  Para los resultados de una tesis cualitativa: entrevistas o grupos focales. Claude las codifica
-  contigo y te entrega el proyecto para abrirlo ya codificado en ATLAS.ti.
-  <strong>No necesitas tener ATLAS.ti.</strong>
+  Para los resultados de una tesis cualitativa: entrevistas o grupos focales. Todo el análisis se hace
+  aquí, con Claude: la codificación, las tablas, la red de códigos y tu capítulo en Word. Es lo que harías
+  en ATLAS.ti, <strong>sin instalarlo ni pagarlo</strong>.
 </p>
 
-<!-- Lo que más frena: «¿y cómo lo abro en mi programa?». Se elige el programa y
-     se ven los pasos; quien no tiene ninguno ve que no le hace falta. -->
+<app-guia-de-uso titulo="Cómo se usa" [pasos]="pasos" [frases]="frases" [ejemplo]="ejemplo" />
+
+<!-- Opcional y al final: el .qdpx es para el asesor o el jurado que quieran
+     revisar el análisis en su programa, no la meta del tesista. -->
 <section class="ar-prueba" aria-labelledby="at-programa-titulo">
-  <h3 id="at-programa-titulo">¿Con qué programa lo vas a abrir?</h3>
+  <h3 id="at-programa-titulo">¿Tu asesor trabaja con ATLAS.ti u otro programa?</h3>
   <p class="ar-ayuda">
-    Tu proyecto sale en .qdpx, el formato de intercambio que importan los programas de análisis
-    cualitativo.
+    Opcional. Si alguien quiere revisar tu análisis en su programa, Claude te da el proyecto ya
+    codificado (.qdpx) y lo abre tal cual.
   </p>
 
   <div class="ar-objetivos" role="radiogroup" aria-labelledby="at-programa-titulo">
@@ -36,8 +38,11 @@
         }
       </div>
     </div>
-    <p class="ar-ayuda">{{ c.nota }} Si no encuentras el menú, busca «REFI-QDA»: cambia de nombre entre versiones.</p>
+    <p class="ar-ayuda">
+      {{ c.nota }}
+      @if (programa() !== 'ninguno') {
+        Si no encuentras el menú, busca «REFI-QDA»: cambia de nombre entre versiones.
+      }
+    </p>
   }
 </section>
-
-<app-guia-de-uso titulo="Cómo se usa" [pasos]="pasos" [frases]="frases" [ejemplo]="ejemplo" />
