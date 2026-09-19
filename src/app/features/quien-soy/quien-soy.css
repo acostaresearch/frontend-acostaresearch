@@ -2,6 +2,22 @@
    son los de las dos rutas (`shared/estilos/ruta.css`); aquí va lo propio de
    esta página: el retrato apoyado en su base, las credenciales y el cierre. */
 
+/*
+ * La página entera va en la misma banda que «Lo que investigo, publicado».
+ *
+ * Esa sección viene de un componente compartido y usa la rejilla del sitio, y
+ * el resto de «Quién soy» tenía su propio ancho de 1120 px centrado: el nombre
+ * empezaba 70 px más adentro que ese titular y se leía como dos páginas
+ * pegadas. Estas dos líneas son la misma geometría de `.seccion`: como mucho
+ * `--centro` de contenido, y nunca menos de `--lado` a cada lado.
+ */
+.mt .mt-ancho {
+  width: auto;
+  max-width: calc(var(--centro) + var(--lado) * 2);
+  margin-inline: auto;
+  padding-inline: var(--lado);
+}
+
 .qs-hero {
   padding-bottom: 0;
 }
@@ -19,7 +35,7 @@
 }
 
 .mt .qs-texto h1 {
-  max-width: 14ch;
+  max-width: 17ch;
   margin: 0 0 18px;
   font-size: 52px;
   font-weight: 800;
@@ -28,14 +44,16 @@
   color: #fff;
 }
 
+/* El párrafo y la cita llegan casi hasta la foto. Cortados a 600 px dejaban
+   un pasillo vacío de cuatro dedos en medio del encabezado. */
 .qs-texto .mt-hero-entrada {
-  max-width: 600px;
+  max-width: 820px;
 }
 
 /* La cita: mismo bloque que un párrafo, con la barra azul a la izquierda. Las
    esquinas se redondean solo por el lado que no lleva barra. */
 .qs-cita {
-  max-width: 600px;
+  max-width: 820px;
   margin: 24px 0 0;
   padding: 18px 22px;
   font-size: 15.5px;
@@ -76,23 +94,6 @@
   width: 14px;
   height: 14px;
   color: #93c5fd;
-}
-
-/*
- * El encabezado usa una banda más ancha que el resto de la página.
- *
- * El texto pide sitio a la izquierda y la foto a la derecha, y a 1120 px los
- * dos tiraban hacia el centro. Ensanchando solo esta fila —200 px, 100 por
- * lado— el texto empieza más a la izquierda y la foto acaba más a la derecha
- * sin quitarle ancho a ninguno de los dos: estrechando la columna de texto, el
- * párrafo ganaba líneas y el bloque bajaba en vez de apartarse.
- *
- * Solo cuando hay sitio: por debajo de 1280 px la banda vuelve a la del resto.
- */
-@media (min-width: 1280px) {
-  .qs-hero .qs-fila {
-    max-width: 1320px;
-  }
 }
 
 /* ── El retrato ────────────────────────────────────────────────────────────
@@ -199,7 +200,10 @@
   color: var(--mt-gris-2);
 }
 
-/* ── El cierre ────────────────────────────────────────────────────────────── */
+/* ── El cierre ──────────────────────────────────────────────────────────────
+   La última tarjeta de la página, con el icono del video delante: en gris
+   plano y con los dos botones sueltos a la derecha se leía como un aviso del
+   sistema, no como la invitación que es. */
 .qs-cierre-seccion {
   padding-top: 0;
   padding-bottom: 80px;
@@ -208,13 +212,43 @@
 .qs-cierre {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px 40px;
+  gap: 20px 28px;
   align-items: center;
-  justify-content: space-between;
-  padding: 30px 36px;
-  background: var(--mt-hover);
-  border: 1px solid var(--mt-linea);
+  padding: 30px 34px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--color-primario-suave) 0%,
+      color-mix(in srgb, var(--color-primario-suave) 35%, var(--color-superficie)) 55%,
+      var(--color-superficie) 100%
+    );
+  border: 1px solid var(--color-borde);
   border-radius: 24px;
+}
+
+.qs-cierre-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+  border-radius: 50%;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-boton) 35%, transparent);
+}
+
+.qs-cierre-icono svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* El texto se queda con el hueco que sobra y empuja a los botones al extremo,
+   sin necesidad de `space-between`: con él, en cuanto la tarjeta se estrechaba
+   los botones se quedaban colgados en medio. */
+.qs-cierre-texto {
+  flex: 1;
+  min-width: 260px;
 }
 
 .mt .qs-cierre h2 {
@@ -226,9 +260,9 @@
 }
 
 .qs-cierre p {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: var(--mt-gris-2);
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  color: var(--mt-gris);
 }
 
 .qs-cierre-acciones {
@@ -242,13 +276,14 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding-inline: 22px;
   white-space: nowrap;
 }
 
-.qs-cierre-acciones svg {
-  flex: none;
-  width: 16px;
-  height: 16px;
+/* El de contorno, sobre el tinte azul de la tarjeta, va en blanco de verdad:
+   el gris de siempre se confundía con el fondo. */
+.qs-cierre-acciones .boton.secundario {
+  background: var(--color-superficie);
 }
 
 @media (max-width: 900px) {
@@ -297,6 +332,10 @@
 
   .qs-cierre {
     padding: 24px;
+  }
+
+  .qs-cierre-texto {
+    min-width: 0;
   }
 
   .qs-cierre-acciones {
