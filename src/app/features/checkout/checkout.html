@@ -80,7 +80,8 @@
   } @else {
     <header class="cabecera">
       <div>
-        <h1>Precios</h1>
+        <p class="antetitulo">Precios</p>
+        <h1>Elige tu paquete</h1>
         <p class="subtitulo">
           Sin suscripciones ni cobros automáticos. Compras lo que necesitas y punto.
         </p>
@@ -160,7 +161,9 @@
       }
 
       @if (metodo().length > 0) {
-        <h2 class="grupo">{{ metodo().length === 1 ? 'Método de tesis' : 'Elige tu paquete' }}</h2>
+        @if (metodo().length === 1) {
+          <h2 class="grupo">Método de tesis</h2>
+        }
         <div class="rejilla-planes" [class.varios]="metodo().length > 1">
           @for (plan of metodo(); track plan.code; let i = $index) {
             <!-- Tarjeta de venta, no factura.
@@ -181,14 +184,6 @@
                 <p class="cinta-elegido">El más elegido</p>
               }
 
-              <p class="cinta">
-                {{
-                  plan.durationDays > 0
-                    ? vigencia(plan) + ' de acceso'
-                    : 'Pago único · sin suscripción'
-                }}
-              </p>
-
               <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
               @if (plan.description) {
                 <p class="tarjeta-lema">{{ plan.description }}</p>
@@ -208,22 +203,38 @@
                   <span class="antes">{{ antes }}</span>
                 }
               </p>
+              <p class="tarjeta-vigencia">
+                {{
+                  plan.durationDays > 0
+                    ? 'por ' + vigencia(plan) + ' de acceso'
+                    : 'Pago único · sin suscripción'
+                }}
+              </p>
 
               <!-- El código, pegado al precio: es el motivo de esa cifra.
                    Va aquí y no en un recuadro aparte porque no es una acción
                    —ya está aplicado— sino la explicación de por qué son 159. -->
               @if (promoDe(plan); as promo) {
                 <p class="tarjeta-cupon">
-                  <span class="cupon-codigo">{{ promo.code }}</span>
-                  <span class="cupon-texto"> aplicado · te ahorras {{ ahorro(plan) }} </span>
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
+                  <span>Código {{ promo.code }} aplicado · te ahorras {{ ahorro(plan) }}</span>
                 </p>
               } @else if (ahorro(plan); as rebaja) {
-                <p class="tarjeta-oferta">Precio por tiempo limitado · te ahorras {{ rebaja }}</p>
+                <p class="tarjeta-oferta">
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5.2l3 1.8" />
+                  </svg>
+                  <span>Precio por tiempo limitado · te ahorras {{ rebaja }}</span>
+                </p>
               }
 
               <button
                 type="button"
                 class="boton grande bloque"
+                [class.secundario]="!esElMasElegido(plan) && metodo().length > 1"
                 (click)="elegir(plan)"
                 [attr.aria-pressed]="seleccionado()?.code === plan.code"
               >
@@ -235,12 +246,20 @@
               </button>
 
               <p class="tarjeta-rotulo">Qué incluye</p>
-              <!-- Las tres primeras en negrita: son las que deciden la compra.
+              <!-- Las tres primeras destacadas: son las que deciden la compra.
                    Con las siete iguales, «se instala en tu cuenta» pesaba lo
-                   mismo que los nueve capítulos. -->
+                   mismo que los nueve capítulos. De una frase larga solo va en
+                   negrita el arranque (ver `partirVentaja`). -->
               <ul class="tarjeta-lista">
                 @for (item of loQueIncluye(plan); track item; let j = $index) {
-                  <li [class.clave]="j < clavesDe(plan)">{{ item }}</li>
+                  <li>
+                    @if (j < clavesDe(plan)) {
+                      @let partes = partirVentaja(item);
+                      <strong>{{ partes[0] }}</strong>{{ partes[1] }}
+                    } @else {
+                      {{ item }}
+                    }
+                  </li>
                 }
               </ul>
             </article>

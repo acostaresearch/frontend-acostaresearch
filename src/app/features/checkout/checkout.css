@@ -3,7 +3,7 @@
    perteneciera a otra web. */
 .pagina {
   padding: var(--banda) var(--lado);
-  background: var(--color-fondo);
+  background: var(--color-superficie);
 }
 
 .pagina {
@@ -26,8 +26,17 @@
   color: var(--color-texto-suave);
 }
 
+.antetitulo {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
 h1 {
-  font-size: clamp(36px, 4vw, 56px);
+  font-size: clamp(34px, 3.6vw, 48px);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -35,8 +44,8 @@ h1 {
 
 .subtitulo {
   max-width: 640px;
-  margin: 14px 0 0;
-  font-size: 18.5px;
+  margin: 12px 0 0;
+  font-size: 16.5px;
   color: var(--color-texto-suave);
 }
 
@@ -966,177 +975,140 @@ h1 {
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 38px;
+  padding: 30px 26px 26px;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
 .tarjeta-plan.elegido {
   border-color: var(--color-primario);
-  border-width: 2px;
 }
 
 /* ── La cinta de «El más elegido» ───────────────────────────────
  *
  * Montada sobre el borde de arriba, a la izquierda. Fuera del flujo para que
- * las dos tarjetas de la fila sigan empezando a la misma altura: dentro, la
- * que la llevaba bajaba 30 px respecto a la otra.
- *
- * En azul noche y no en el azul de la casa: al lado de la cinta clara de «12
- * meses de acceso» y del botón de comprar, un tercer azul igual no se
- * distinguía de los otros dos.
+ * las tarjetas de la fila sigan empezando a la misma altura: dentro, la que la
+ * llevaba bajaba 30 px respecto a las otras.
  */
 .cinta-elegido {
   position: absolute;
-  top: -14px;
-  left: 28px;
+  top: -11px;
+  left: 20px;
   margin: 0;
-  padding: 5px 14px;
-  font-size: 12.5px;
+  padding: 4px 11px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #fff;
-  background: var(--noche);
+  background: var(--color-primario);
   border-radius: 999px;
 }
 
-/* La tarjeta que la lleva: el borde marcado con su acento, para que la cinta
-   no vaya suelta sobre una tarjeta igual a las demás. */
+/* La tarjeta que la lleva: solo el borde en azul. Las demás, blancas con el
+   borde fino; la diferencia la marcan la cinta, el borde y el botón lleno. */
 .rejilla-planes.varios .tarjeta-plan.destacada {
   border-color: var(--acento);
-  box-shadow: var(--sombra);
+  box-shadow: 0 0 0 1px var(--acento);
 }
 
-/* El sitio por donde la cinta se sale de la tarjeta. Sin esto se montaba sobre
-   el rótulo de arriba, que está a 14 px. */
+/* El sitio por donde la cinta se sale de la tarjeta. */
 .rejilla-planes.varios {
   margin-top: 14px;
 }
 
-.cinta {
-  align-self: flex-start;
-  margin: 0 0 18px;
-  padding: 5px 12px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 999px;
-}
-
 .tarjeta-nombre {
-  margin: 0 0 12px;
-  font-size: 25px;
+  margin: 0 0 10px;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
   color: var(--color-texto);
 }
 
-/* Tres líneas de hueco reservado: es lo que hace que los precios de una fila
+/* Cuatro líneas de hueco reservado: es lo que hace que los precios de una fila
    caigan a la misma altura aunque una descripción sea más larga que otra. */
 .tarjeta-lema {
-  min-height: 72px;
-  max-width: 46ch;
-  margin: 0 0 24px;
-  font-size: 16px;
+  min-height: 84px;
+  margin: 0 0 22px;
+  font-size: 13.5px;
   line-height: 1.55;
   color: var(--color-texto-suave);
 }
 
 /* El tachado va pegado al importe y ARRIBA, no en su misma línea de base: así
    se lee como un apunte sobre la cifra grande y no como una segunda cifra que
-   compite con ella. Es la forma en que lo hace cualquier página de precios, y
-   funciona porque el ojo lee primero lo grande y después el matiz. */
+   compite con ella. */
 .tarjeta-precio {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 6px;
   align-items: flex-start;
-  margin: 0 0 14px;
+  margin: 0 0 4px;
 }
 
 .tarjeta-precio .importe {
-  font-size: 52px;
+  font-size: 44px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--color-primario);
+  color: var(--color-texto);
 }
 
-/* El precio de antes.
-   La raya va en rojo y el número en gris: el rojo tiene que marcar que ESA
-   cifra ya no vale, no gritar más que la que se cobra. Al revés —número rojo,
-   raya gris— la vista se va al precio viejo, que es justo lo contrario de lo
-   que se quiere.
-   `text-decoration-thickness` fijo porque a 22px la raya por defecto sale casi
-   invisible sobre un número en negrita. */
+/* El precio de antes, en gris y pequeño: es el contexto, no el titular. */
 .tarjeta-precio .antes {
-  /* Alineado con la parte alta del importe, no con su base. */
-  align-self: flex-start;
-  padding-top: 3px;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  align-self: flex-end;
+  padding-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-texto-tenue);
   text-decoration: line-through;
-  text-decoration-color: var(--color-error);
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 1.5px;
+}
+
+.tarjeta-vigencia {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
 }
 
 /* ── El código que explica esa cifra ──────────────────────────────────────── */
 
 /* Va pegado al precio porque es su motivo, no una acción aparte: al elegir el
-   plan el código ya se aplica solo, así que aquí no hay nada que pulsar. Un
-   recuadro con aire de botón invitaría a hacer algo que ya está hecho. */
-.tarjeta-cupon {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  align-items: center;
-  margin: 0 0 18px;
-  font-size: 12.5px;
-}
-
-/* Monoespaciado y con caja: es un código para reconocer o dictar, y así se
-   distingue letra a letra del texto que lo rodea. */
-.cupon-codigo {
-  padding: 3px 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--color-exito);
-  background: var(--color-exito-suave);
-  border: 1px dashed var(--color-exito);
-  border-radius: 5px;
-}
-
-.cupon-texto {
-  font-weight: 650;
-  color: var(--color-exito);
-}
-
-/* El rótulo de la oferta va debajo del precio y no en la cinta de arriba: la
-   cinta dice cuánto dura el acceso, que es otra cosa y ya estaba ahí. */
+   plan el código ya se aplica solo, así que aquí no hay nada que pulsar. */
+.tarjeta-cupon,
 .tarjeta-oferta {
-  margin: 0 0 18px;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--color-error);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0 0 20px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-exito);
+}
+
+/* La oferta sin código, en naranja y con el reloj: dura lo que dure. */
+.tarjeta-oferta {
+  color: var(--color-aviso);
+}
+
+.tarjeta-cupon .icono,
+.tarjeta-oferta .icono {
+  width: 14px;
+  height: 14px;
 }
 
 .tarjeta-rotulo {
   /* Margen superior automático: empuja el bloque de ventajas al fondo, que es
      lo que alinea el pie de todas las de una fila. */
-  margin: auto 0 10px;
-  padding-top: 22px;
-  font-size: 12px;
+  margin: auto 0 8px;
+  padding-top: 26px;
+  font-size: 11.5px;
   font-weight: 650;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-texto-tenue);
-  border-top: 1px solid var(--color-borde);
 }
 
 .tarjeta-lista {
@@ -1147,30 +1119,32 @@ h1 {
 
 .tarjeta-lista li {
   position: relative;
-  padding: 8px 0 8px 28px;
-  font-size: 14.5px;
-  line-height: 1.55;
+  padding: 6px 0 6px 28px;
+  font-size: 13.5px;
+  line-height: 1.5;
   color: var(--color-texto-suave);
 }
 
-/* Las tres primeras van en negro y con el visto en verde; las demás, en gris
-   y con el visto en azul. Lo que se lleva primero y lo que viene de serie. */
-.tarjeta-lista li.clave {
+.tarjeta-lista strong {
   font-weight: 650;
   color: var(--color-texto);
 }
 
+/* El visto dentro de un círculo azul claro. */
 .tarjeta-lista li::before {
   content: '✓';
   position: absolute;
   top: 8px;
-  left: 2px;
-  font-weight: 700;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--color-primario);
-}
-
-.tarjeta-lista li.clave::before {
-  color: var(--color-exito);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
 }
 
 /* ══ Qué se está comprando ════════════════════════════════════════════════
@@ -1555,15 +1529,6 @@ h1 {
  * hay cuatro productos que sí convenga agrupar.
  */
 
-.tarjeta-plan .cinta {
-  color: var(--acento);
-  background: var(--acento-suave);
-}
-
-.tarjeta-plan .tarjeta-precio .importe {
-  color: var(--acento);
-}
-
 .tarjeta-plan .tarjeta-lista li::before {
   color: var(--acento);
 }
@@ -1578,6 +1543,19 @@ h1 {
 .tarjeta-plan .boton:hover:not(:disabled) {
   background: var(--acento);
   filter: brightness(0.92);
+}
+
+/* Los paquetes que no son el destacado llevan el botón blanco con borde: un
+   solo botón lleno por fila, el del más elegido. */
+.tarjeta-plan .boton.secundario {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border-color: var(--color-borde-fuerte);
+}
+
+.tarjeta-plan .boton.secundario:hover:not(:disabled) {
+  background: var(--color-fondo);
+  filter: none;
 }
 
 .rejilla-planes.varios .tarjeta-plan.elegido {
@@ -1709,10 +1687,10 @@ h1 {
  */
 .canje-atajo {
   max-width: 420px;
-  padding: 20px 22px;
-  background: var(--color-superficie);
-  border: 2.5px solid var(--contorno-marca);
-  border-radius: 14px;
+  padding: 18px 20px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
 }
 
 .canje-atajo h2 {

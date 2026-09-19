@@ -531,11 +531,32 @@ export class Checkout implements OnInit {
     const escrita = this.incluye[plan.code];
     if (escrita) return [...escrita.slice(0, 2), duracion, ...escrita.slice(2)];
 
+    // Sin lista escrita: el producto y su duración primero, que son las dos
+    // que se destacan, y detrás lo que vale para cualquier paquete.
     return [
+      `El ${plan.name}`,
+      duracion,
       'Se conecta a tu cuenta de Claude.ai',
       'Funciona también con el plan gratuito de Claude',
-      duracion,
     ];
+  }
+
+  /**
+   * Qué trozo de una ventaja destacada va en negrita: [negrita, resto].
+   *
+   * «Las 11 Skills: las 9 fases…» se lee por su arranque, hasta los dos
+   * puntos; una frase larga sin ellos, hasta la primera coma. Las cortas —«12
+   * meses de acceso, renovables»— van enteras: partidas, la negrita se queda
+   * en dos palabras sueltas.
+   */
+  partirVentaja(item: string): [string, string] {
+    const dosPuntos = item.indexOf(':');
+    if (dosPuntos > 0) return [item.slice(0, dosPuntos + 1), item.slice(dosPuntos + 1)];
+
+    const coma = item.indexOf(',');
+    if (item.length > 45 && coma > 0) return [item.slice(0, coma + 1), item.slice(coma + 1)];
+
+    return [item, ''];
   }
 
   /**
@@ -543,12 +564,12 @@ export class Checkout implements OnInit {
    *
    * Son las que deciden la compra —las Skills, el panel y la duración— y en
    * una lista de seis todas iguales se leían como requisitos
-   * técnicos. Un paquete sin lista escrita no destaca ninguna: sus tres
-   * viñetas son las genéricas, y ponerlas en negrita sería subrayar «se
-   * instala en tu cuenta» como si fuera el argumento de venta.
+   * técnicos. Un paquete sin lista escrita destaca dos: el producto y su
+   * duración. Las genéricas de detrás no, que sería subrayar «se conecta a tu
+   * cuenta» como si fuera el argumento de venta.
    */
   clavesDe(plan: Plan): number {
-    return this.incluye[plan.code] ? 3 : 0;
+    return this.incluye[plan.code] ? 3 : 2;
   }
 
   /**
