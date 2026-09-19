@@ -1448,7 +1448,7 @@
                 @if (menuOrden()) {
                   <div class="sc-orden-capa" (click)="menuOrden.set(false)"></div>
                   <ul class="sc-orden-lista" role="listbox" aria-label="Ordenar por">
-                    @for (orden of ordenes; track orden.valor) {
+                    @for (orden of ordenes(); track orden.valor) {
                       <li>
                         <button
                           type="button"
@@ -1482,6 +1482,11 @@
                     (change)="alternarBorrador(opcion.valor)"
                   />
                   <span>{{ opcion.texto }}</span>
+                  @if (cuentaDe(faceta, opcion.valor); as cuenta) {
+                    <span class="sc-modal-numero" [class.sc-aprox]="cuenta.aprox">
+                      {{ cuenta.aprox ? '≈' : '' }}{{ cuenta.n | number }}
+                    </span>
+                  }
                 </label>
               } @empty {
                 <p class="tenue">Nada coincide con «{{ filtroModal() }}».</p>
@@ -1489,7 +1494,17 @@
             </div>
 
             <footer class="sc-modal-pie">
-              <p>Scopus no nos da cuántos resultados hay en cada opción; por eso no llevan número.</p>
+              @if (contandoFaceta(faceta.clave)) {
+                <p>Contando cuántos resultados hay en cada opción…</p>
+              } @else if (modalConNumeros() && faceta.clave === 'area') {
+                <p>Los números con ≈ son aproximados: salen de OpenAlex, que suele contar más que Scopus.</p>
+              } @else if (modalConNumeros()) {
+                <p>Resultados de tu búsqueda en Scopus en cada opción.</p>
+              } @else if (modalCuenta()) {
+                <p>Haz una búsqueda para ver cuántos resultados hay en cada opción.</p>
+              } @else {
+                <p>Scopus no nos da cuántos resultados hay en cada opción; por eso no llevan número.</p>
+              }
               <button type="button" class="boton secundario" (click)="cerrarModal()">Cancelar</button>
               <button type="button" class="boton" (click)="aplicarModal()">
                 Aplicar ({{ borrador().size }})

@@ -71,6 +71,9 @@ interface EntradaDeHistorial {
   cuando: number;
 }
 
+/** Cómo se ordena la lista de la ventana de «Mostrar todo». */
+type OrdenDeLaVentana = 'resultados' | 'alfabetico' | 'habitual';
+
 /** Los filtros que Scopus cuenta exactos, y los que se cuentan con OpenAlex. */
 const FACETAS_EXACTAS: readonly string[] = ['anio', 'tipo', 'idioma', 'abierto', 'fuente', 'etapa'];
 const FACETAS_APROXIMADAS: readonly string[] = ['area', 'pais', 'revista', 'autor', 'afiliacion', 'patrocinador'];
@@ -1186,21 +1189,38 @@ export class MiScopusPanel implements OnInit {
   readonly modalFaceta = signal<Faceta | null>(null);
   readonly borrador = signal<ReadonlySet<string>>(new Set());
   readonly filtroModal = signal('');
-  readonly ordenModal = signal<'alfabetico' | 'habitual'>('alfabetico');
+  readonly ordenModal = signal<OrdenDeLaVentana>('alfabetico');
 
   /** El menú de «Ordenar por» de la ventana, abierto o cerrado. */
   readonly menuOrden = signal(false);
 
-  readonly ordenes = [
+  /** Si las opciones de la ventana ya tienen su número de resultados. */
+  readonly modalConNumeros = computed(() => {
+    const faceta = this.modalFaceta();
+    return Boolean(faceta && (faceta.opciones ?? []).some((o) => this.cuentaDe(faceta, o.valor)));
+  });
+
+  /** Si la faceta de la ventana es de las que llevan número, aunque aún no lo tenga. */
+  readonly modalCuenta = computed(() => {
+    const faceta = this.modalFaceta();
+    // El área se cuenta con OpenAlex, que solo entiende la búsqueda normal.
+    return Boolean(
+      faceta && (this.esExacta(faceta.clave) || (faceta.clave === 'area' && this.modo() === 'normal')),
+    );
+  });
+
+  /** «Más resultados» solo tiene sentido cuando hay números con los que ordenar. */
+  readonly ordenes = computed(() => [
+    ...(this.modalConNumeros() ? [{ valor: 'resultados' as const, texto: 'Más resultados' }] : []),
     { valor: 'alfabetico' as const, texto: 'Alfabético' },
     { valor: 'habitual' as const, texto: 'Más usadas en tesis' },
-  ];
+  ]);
 
   readonly textoDelOrden = computed(
-    () => this.ordenes.find((orden) => orden.valor === this.ordenModal())?.texto ?? '',
+    () => this.ordenes().find((orden) => orden.valor === this.ordenModal())?.texto ?? 'Alfabético',
   );
 
-  elegirOrden(valor: 'alfabetico' | 'habitual'): void {
+  elegirOrden(valor: OrdenDeLaVentana): void {
     this.ordenModal.set(valor);
     this.menuOrden.set(false);
   }
@@ -1213,9 +1233,17 @@ export class MiScopusPanel implements OnInit {
     const opciones = (faceta.opciones ?? []).filter(
       (opcion) => !buscado || this.sinTildes(opcion.texto).includes(buscado),
     );
-    return this.ordenModal() === 'alfabetico'
-      ? [...opciones].sort((a, b) => a.texto.localeCompare(b.texto, 'es'))
-      : opciones;
+    if (this.ordenModal() === 'resultados' && this.modalConNumeros()) {
+      // Como en la columna: primero las que más tienen; sin número, al final.
+      return [...opciones].sort(
+        (a, b) =>
+          (this.cuentaDe(faceta, b.valor)?.n ?? -1) - (this.cuentaDe(faceta, a.valor)?.n ?? -1) ||
+          a.texto.localeCompare(b.texto, 'es'),
+      );
+    }
+    return this.ordenModal() === 'habitual'
+      ? opciones
+      : [...opciones].sort((a, b) => a.texto.localeCompare(b.texto, 'es'));
   });
 
   private sinTildes(texto: string): string {
@@ -1226,6 +1254,10 @@ export class MiScopusPanel implements OnInit {
     this.borrador.set(new Set(this.valoresDe(faceta)));
     this.filtroModal.set('');
     this.modalFaceta.set(faceta);
+    // Si la columna ya enseña números, la ventana abre ordenada por ellos,
+    // igual que Scopus; si no, por orden alfabético.
+    this.ordenModal.set(this.modalConNumeros() ? 'resultados' : 'alfabetico');
+    this.cargarCuentas();
   }
 
   cerrarModal(): void {
