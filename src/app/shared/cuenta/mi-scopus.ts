@@ -276,7 +276,7 @@ export class MiScopusPanel implements OnInit {
     nota: string | null;
   } | null>(null);
 
-  readonly pasosAbiertos = signal(true);
+  readonly pasosAbiertos = signal(false);
 
   readonly pasosDelCopiloto = computed(() => {
     const generacion = this.ultimaGeneracion();
@@ -334,7 +334,11 @@ export class MiScopusPanel implements OnInit {
           sinonimos: conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
           nota,
         });
-        this.pasosAbiertos.set(true);
+        // Los pasos y los conceptos se quedan plegados: quien pregunta al
+        // copiloto viene a por la respuesta, no a revisar la ecuación. Y se
+        // busca en el acto, con el resumen detrás.
+        this.pasosAbiertos.set(false);
+        this.buscar(1);
       },
       error: (fallo: unknown) => {
         this.generando.set(false);
@@ -891,6 +895,7 @@ export class MiScopusPanel implements OnInit {
 
   /** «Consulta avanzada»: el interruptor de encima del buscador. */
   alternarAvanzada(encendida: boolean): void {
+    if (encendida) this.iaAbierta.set(false);
     this.cambiarModo(encendida ? 'avanzada' : 'normal');
   }
 
@@ -949,7 +954,10 @@ export class MiScopusPanel implements OnInit {
    */
   readonly ecuacionCompleta = computed(() => {
     const ecuacion = this.ecuacionBase();
-    const clausulas = this.clausulas();
+    // Con el copiloto, los filtros de la columna no se ven y tampoco cuentan:
+    // aplicar algo que no está a la vista daría resultados que no se explican.
+    // Siguen guardados y vuelven al apagarlo.
+    const clausulas = this.iaAbierta() ? [] : this.clausulas();
     if (!ecuacion) return '';
     return clausulas.length ? [`(${ecuacion})`, ...clausulas].join(' AND ') : ecuacion;
   });

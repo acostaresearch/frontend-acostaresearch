@@ -1908,3 +1908,30 @@ a.sc-ref-titulo:hover {
 .sc-orden-resultados {
   margin-left: 0;
 }
+
+/* ── Con el copiloto encendido ─────────────────────────────────────────────
+   Sin la columna de filtros: es de la búsqueda manual, y el copiloto arma la
+   suya. Los resultados ocupan todo el ancho, como en la IA de Scopus. */
+.sc-cuerpo-ia {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sc-copiloto-pensando {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-copiloto-pensando .sc-girando {
+  color: var(--color-primario);
+}
+
+.sc-copiloto-respuesta {
+  padding-top: 10px;
+}
+
+.sc-copiloto-nota {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}

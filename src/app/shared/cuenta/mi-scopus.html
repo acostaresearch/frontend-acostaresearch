@@ -211,19 +211,28 @@
                 <p class="scopus-aviso scopus-mal sc-ia-error">{{ mensaje }}</p>
               }
 
+              <!-- Mientras trabaja se dice qué está haciendo; después, lo que
+                   hizo queda plegado detrás de un enlace. Quien pregunta al
+                   copiloto viene a por la respuesta, que sale abajo. -->
               @if (generando()) {
-                <p class="sc-copiloto-pensando">Leyendo tu tema y buscando cómo lo nombra la literatura…</p>
-              } @else if (ultimaGeneracion(); as generacion) {
+                <p class="sc-copiloto-pensando">
+                  <span class="sc-girando" aria-hidden="true"></span>
+                  Leyendo tu pregunta y buscando cómo lo nombra la literatura…
+                </p>
+              } @else if (buscando()) {
+                <p class="sc-copiloto-pensando">
+                  <span class="sc-girando" aria-hidden="true"></span>
+                  Buscando en Scopus…
+                </p>
+              } @else if (ultimaGeneracion()) {
                 <div class="sc-copiloto-respuesta">
-                  <p class="sc-copiloto-eco">{{ generacion.tema }}</p>
-
                   <button
                     type="button"
                     class="sc-pasos-boton"
                     [attr.aria-expanded]="pasosAbiertos()"
                     (click)="pasosAbiertos.set(!pasosAbiertos())"
                   >
-                    {{ pasosAbiertos() ? 'Ocultar' : 'Mostrar' }} pasos del copiloto
+                    {{ pasosAbiertos() ? 'Ocultar' : 'Ver' }} cómo buscó el copiloto
                     <span class="sc-orden-flecha" aria-hidden="true"></span>
                   </button>
                   @if (pasosAbiertos()) {
@@ -232,9 +241,14 @@
                         <li>{{ paso }}</li>
                       }
                     </ol>
+                    <ng-container [ngTemplateOutlet]="tablaConceptos" />
+                    <p class="sc-copiloto-nota">
+                      ¿Cambiaste algún concepto?
+                      <button type="button" class="sc-enlace" [disabled]="buscando()" (click)="buscar(1)">
+                        Volver a buscar
+                      </button>
+                    </p>
                   }
-
-                  <ng-container [ngTemplateOutlet]="tablaConceptos" />
                 </div>
               }
             </div>
@@ -312,6 +326,7 @@
             ></textarea>
           }
 
+          @if (!iaAbierta()) {
           <div class="sc-caja-pie">
             @if (modo() === 'normal') {
               <button type="button" class="sc-accion" (click)="cambiarModo('avanzada')">
@@ -335,12 +350,13 @@
               {{ buscando() ? 'Buscando…' : 'Buscar' }}
             </button>
           </div>
+          }
         </div>
 
         <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
              «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
              avanzada sin filtros sería repetir el campo, así que no sale. -->
-        @if (ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
+        @if (!iaAbierta() && ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
           <p class="scopus-anadido">
             Se busca: <code>{{ ecuacionCompleta() }}</code>
           </p>
@@ -348,9 +364,10 @@
       </div>
 
       <!-- ── Filtros a la izquierda, resultados a la derecha ────────────────── -->
-      <div class="sc-cuerpo">
+      <div class="sc-cuerpo" [class.sc-cuerpo-ia]="iaAbierta()">
         <!-- En el móvil la columna no cabe al lado: se abre con este botón y se
              despliega encima de la lista. -->
+        @if (!iaAbierta()) {
         <button
           type="button"
           class="sc-abrir-filtros"
@@ -541,9 +558,10 @@
             da cuántos resultados hay en cada opción, por eso no llevan número.
           </p>
         </aside>
+        }
 
         <div class="sc-resultados">
-          @if (!busqueda()) {
+          @if (!busqueda() && !iaAbierta()) {
             <!-- Lo que hace falta para escribir una búsqueda DE SU TEMA, no
                  cómo funciona esto por dentro. -->
             <div class="scopus-ayuda">
