@@ -44,13 +44,21 @@
       </svg>
     </button>
 
-    <p class="cuenta">{{ tour.numero() }} de {{ tour.total() }}</p>
+    <!-- El contador va por tandas y vuelve a empezar en cada página: ver la
+         nota de `recorridoDeLaWeb`. -->
+    <p class="cuenta">
+      @if (tour.seccion(); as seccion) {
+        <span class="cuenta-seccion">{{ seccion }}</span>
+        <span aria-hidden="true">·</span>
+      }
+      {{ tour.numeroEnTanda() }} de {{ tour.totalDeTanda() }}
+    </p>
     <h3 id="tour-titulo">{{ paso.titulo }}</h3>
     <p id="tour-texto" class="texto">{{ paso.texto }}</p>
 
     <div class="barra" aria-hidden="true">
       @for (punto of puntos(); track punto) {
-        <span [class.hecho]="punto <= tour.numero()"></span>
+        <span [class.hecho]="punto <= tour.numeroEnTanda()"></span>
       }
     </div>
 

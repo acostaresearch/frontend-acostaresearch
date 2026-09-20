@@ -17,7 +17,7 @@
         </p>
       </div>
 
-      <ul class="mt-cifras">
+      <ul data-tour="articulo-cifras" class="mt-cifras">
         @for (c of cifras; track c.pie) {
           <li>
             <b>{{ c.valor }}</b>
@@ -28,7 +28,7 @@
     </div>
   </header>
 
-   <section class="mt-seccion">
+   <section data-tour="articulo-fases" class="mt-seccion">
     <div class="mt-ancho">
       <div class="mt-cab">
         <div>
@@ -83,7 +83,7 @@
        se inventa los datos?». Se responde antes de pedir la decisión, y con lo
        que la ruta hace de verdad, no con una promesa. Cada tarjeta es algo que
        el panel hace hoy: si una función se retira, se retira su tarjeta. -->
-  <section class="mt-seccion mt-seccion-lineas">
+  <section data-tour="articulo-como" class="mt-seccion mt-seccion-lineas">
     <div class="mt-ancho">
       <div class="mt-cab">
         <div>
@@ -115,7 +115,7 @@
   <br>
   <br>
 
-  <section class="mt-seccion mt-cierre-seccion">
+  <section data-tour="articulo-precio" class="mt-seccion mt-cierre-seccion">
     <div class="mt-ancho">
       <div class="mt-cierre">
         <app-lineas-noche densidad="compacta" />

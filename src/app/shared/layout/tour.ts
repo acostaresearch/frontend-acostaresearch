@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Injector,
   OnDestroy,
   computed,
   effect,
@@ -10,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationStart, Router, RouterPreloader } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { PasoDelTour, TourService } from '../../core/services/tour.service';
@@ -42,11 +43,19 @@ const BORDE = 16;
  * conteste.
  */
 const ESPERA = 700;
-const ESPERA_AL_LLEGAR = 3000;
+const ESPERA_AL_LLEGAR = 2000;
 
-/** Cuánto se sigue midiendo tras cambiar de paso, mientras el desplazamiento llega. */
-const SEGUIMIENTO = 1100;
-const SEGUIMIENTO_AL_LLEGAR = 2200;
+/**
+ * Cuánto se sigue midiendo tras colocar el foco, por si la página se asienta
+ * después: una imagen que carga, una tarjeta que llega del servidor.
+ *
+ * Se corta antes en cuanto la medida se repite unas cuantas veces seguidas. Lo
+ * que se ahorra no es trabajo de más: es que mientras se mide se está
+ * repintando un velo del tamaño de la pantalla en cada cuadro, y eso se ve.
+ */
+const SEGUIMIENTO = 900;
+const SEGUIMIENTO_AL_LLEGAR = 1600;
+const CUADROS_QUIETOS = 5;
 
 /**
  * El recorrido guiado: el velo, el foco y el globo.
@@ -88,10 +97,13 @@ export class Tour implements OnDestroy {
    */
   readonly abajo = signal(false);
 
-  /** Un punto por paso en la barra de abajo. */
-  readonly puntos = computed(() => Array.from({ length: this.tour.total() }, (_, i) => i + 1));
+  /** Un punto por paso de la tanda de ahora, en la barra de abajo. */
+  readonly puntos = computed(() =>
+    Array.from({ length: this.tour.totalDeTanda() }, (_, i) => i + 1),
+  );
 
   private readonly router = inject(Router);
+  private readonly inyector = inject(Injector);
 
   private cuadro = 0;
   private desde = 0;
@@ -100,6 +112,18 @@ export class Tour implements OnDestroy {
 
   /** Si al paso de ahora se llegó cambiando de página. Alarga las esperas. */
   private recienLlegado = false;
+
+  /** Cuántos cuadros seguidos ha dado la misma medida. Ver `CUADROS_QUIETOS`. */
+  private quietos = 0;
+
+  /** La última medida escrita, para no repetir escrituras que no cambian nada. */
+  private ultimo: Recuadro | null = null;
+
+  /** La primera medida de un paso se escribe siempre, aunque coincida. */
+  private primera = true;
+
+  /** Si ya se repitió el desplazamiento tras llegar de otra página. */
+  private reDesplazado = false;
 
   /**
    * Si se desplaza con animación. Se consulta cada vez y no una sola al nacer:
@@ -127,6 +151,17 @@ export class Tour implements OnDestroy {
         if (this.tour.activo() && !this.tour.navegando()) this.tour.terminar();
       });
 
+    // En marcha el recorrido, las páginas que va a visitar se empiezan a traer
+    // en segundo plano: son diez saltos seguidos y cada uno es un trozo de
+    // código que el navegador todavía no tiene. Ver `PreloadDelRecorrido`.
+    //
+    // El precargador se pide aquí y no en el servicio porque él depende de la
+    // estrategia, y la estrategia del servicio: pedirlo desde fuera del círculo
+    // es lo que lo rompe.
+    effect(() => {
+      if (this.tour.activo()) this.inyector.get(RouterPreloader).preload().subscribe();
+    });
+
     effect(() => {
       const paso = this.tour.paso();
       cancelAnimationFrame(this.cuadro);
@@ -134,6 +169,7 @@ export class Tour implements OnDestroy {
       if (!paso) {
         this.foco.set(null);
         this.globo.set(null);
+        this.ultimo = null;
         return;
       }
 
@@ -187,6 +223,9 @@ export class Tour implements OnDestroy {
     this.desde = performance.now();
     this.desplazado = false;
     this.enfocado = false;
+    this.quietos = 0;
+    this.primera = true;
+    this.reDesplazado = false;
     this.seguir(paso);
   }
 
@@ -237,12 +276,29 @@ export class Tour implements OnDestroy {
       return;
     }
 
-    if (el && !this.desplazado) {
-      el.scrollIntoView({ block: 'center', behavior: this.animar ? 'smooth' : 'auto' });
+    // De golpe, no animado. Con desplazamiento suave el foco persigue al
+    // elemento cuadro a cuadro durante medio segundo, y como además el velo
+    // tiene su propia transición, lo que se ve es un recuadro que va detrás de
+    // la página. Así salta la página —tapada por el velo, casi no se nota— y lo
+    // único que se mueve a la vista es el foco, en un solo gesto.
+    //
+    // Al llegar de otra página se repite una vez: el router restaura el
+    // desplazamiento por su cuenta un instante después, y sin esto nos deja
+    // mirando el sitio equivocado.
+    if (
+      el &&
+      (!this.desplazado || (this.recienLlegado && !this.reDesplazado && transcurrido > 250))
+    ) {
+      el.scrollIntoView({ block: 'center', behavior: 'auto' });
+      this.reDesplazado = this.desplazado;
       this.desplazado = true;
     }
 
     this.colocar(el);
+
+    // Quieto unos cuantos cuadros: la página ya se asentó y no hay nada más que
+    // mirar hasta que alguien la mueva.
+    if (this.quietos >= CUADROS_QUIETOS) return;
 
     if (transcurrido < (this.recienLlegado ? SEGUIMIENTO_AL_LLEGAR : SEGUIMIENTO)) {
       this.cuadro = requestAnimationFrame(() => this.seguir(paso));
@@ -250,18 +306,20 @@ export class Tour implements OnDestroy {
   }
 
   private colocar(el: HTMLElement | null): void {
-    if (!el) {
-      this.foco.set(null);
-    } else {
-      const r = el.getBoundingClientRect();
-      this.foco.set({
-        top: r.top - MARGEN,
-        left: r.left - MARGEN,
-        ancho: r.width + MARGEN * 2,
-        alto: r.height + MARGEN * 2,
-      });
+    const medida = this.medir(el);
+
+    // Escribir la misma medida otra vez no cambia nada en pantalla, pero obliga
+    // a Angular a revisar y al navegador a repintar un velo del tamaño de la
+    // pantalla. Sesenta veces por segundo, eso SÍ se nota.
+    if (!this.primera && this.mismaMedida(medida, this.ultimo)) {
+      this.quietos++;
+      return;
     }
 
+    this.primera = false;
+    this.quietos = 0;
+    this.ultimo = medida;
+    this.foco.set(medida);
     this.colocarGlobo();
 
     // El botón de avanzar se lleva el foco del teclado una vez por paso: así se
@@ -270,6 +328,29 @@ export class Tour implements OnDestroy {
       this.botonRef()?.nativeElement.focus({ preventScroll: true });
       this.enfocado = true;
     }
+  }
+
+  private medir(el: HTMLElement | null): Recuadro | null {
+    if (!el) return null;
+
+    const r = el.getBoundingClientRect();
+    return {
+      top: r.top - MARGEN,
+      left: r.left - MARGEN,
+      ancho: r.width + MARGEN * 2,
+      alto: r.height + MARGEN * 2,
+    };
+  }
+
+  /** Iguales al píxel: por debajo de eso no hay nada que repintar. */
+  private mismaMedida(a: Recuadro | null, b: Recuadro | null): boolean {
+    if (a === null || b === null) return a === b;
+    return (
+      Math.round(a.top) === Math.round(b.top) &&
+      Math.round(a.left) === Math.round(b.left) &&
+      Math.round(a.ancho) === Math.round(b.ancho) &&
+      Math.round(a.alto) === Math.round(b.alto)
+    );
   }
 
   private colocarGlobo(): void {

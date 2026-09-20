@@ -207,7 +207,7 @@ export class Home implements OnInit {
       if (!params.has('tour')) return;
 
       await this.router.navigate([], { queryParams: {}, replaceUrl: true });
-      setTimeout(() => this.tour.empezar(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 900);
+      setTimeout(() => this.tour.empezar(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 350);
     });
   }
 

@@ -93,14 +93,23 @@
 }
 
 .cuenta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
   margin: 0;
-  /* Sitio para el aspa: el número es corto, pero el título de al lado no. */
+  /* Sitio para el aspa: el número es corto, pero el nombre de la tanda no. */
   padding-right: 26px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-texto-tenue);
+}
+
+/* El nombre de la tanda manda sobre el número: dice DÓNDE estás, que es lo que
+   se pregunta al cambiar de página. */
+.cuenta-seccion {
+  color: var(--color-primario);
 }
 
 .globo h3 {

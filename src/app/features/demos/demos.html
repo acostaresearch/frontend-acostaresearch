@@ -10,7 +10,7 @@
     </p>
   </header>
 
-  <section class="seccion">
+  <section data-tour="demos-pasos" class="seccion">
     <ol class="pasos">
       @for (paso of pasos; track paso.titulo; let i = $index) {
         <li>
@@ -24,7 +24,7 @@
 
   <!-- Explicado el arranque, toca enseñarlo: los videos son la prueba de que
        los tres pasos de arriba terminan en un documento de verdad. -->
-  <section class="seccion noche">
+  <section data-tour="demos-videos" class="seccion noche">
     <div class="cab">
       <p class="seccion-marca">Demostración en vivo</p>
       <h2 class="titulo-seccion">Antes de decidir, siéntate a verme trabajar</h2>
@@ -70,7 +70,7 @@
     </p>
   </section>
 
- data-tour="dudas"  <section class="seccion">
+  <section data-tour="demos-dudas" class="seccion">
     <div class="cab">
       <h2 class="titulo-seccion">Las dos dudas que siempre aparecen</h2>
     </div>

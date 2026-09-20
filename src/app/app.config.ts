@@ -5,12 +5,18 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withPreloading,
+} from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { mantenimientoInterceptor } from './core/interceptors/mantenimiento.interceptor';
+import { PreloadDelRecorrido } from './core/router/preload-del-recorrido';
 import { AuthService } from './core/services/auth.service';
 import { MantenimientoService, esCaidaDelServicio } from './core/services/mantenimiento.service';
 import { UserService } from './core/services/user.service';
@@ -55,6 +61,8 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
+      // Solo durante el recorrido guiado. Ver `PreloadDelRecorrido`.
+      withPreloading(PreloadDelRecorrido),
     ),
     provideAppInitializer(restaurarSesion),
   ],

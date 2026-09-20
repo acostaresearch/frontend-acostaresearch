@@ -21,6 +21,11 @@ export interface QuienMira {
  * encuentra: las guías en PDF, las preguntas frecuentes, dónde mirar si algo
  * falla.
  *
+ * VA POR TANDAS. Los pasos seguidos que comparten `seccion` son una tanda, y el
+ * contador del globo cuenta DENTRO de ella: «2 de 5 · Las 11 Skills» y no «9 de
+ * 39». Un contador corrido hasta cuarenta no informa, desanima; por tandas se
+ * ve que cada página se despacha en cuatro o cinco pasos.
+ *
  * NO ES LA MISMA LISTA PARA TODOS. Se arma con lo que se sabe de quien mira: el
  * panel solo si hay algo que enseñar en él, y el de administración solo al
  * administrador. Un paso que señala algo ausente se cae al empezar, pero eso no
@@ -31,16 +36,19 @@ export interface QuienMira {
  */
 export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
   return [
+    // ── La portada ─────────────────────────────────────────────────────────
     {
+      seccion: 'Bienvenida',
       ruta: '/',
       titulo: 'Te enseño el sitio entero',
       texto:
-        'Vamos a recorrerlo página por página: qué hay, dónde está y para qué sirve. Puedes salir ' +
-        'cuando quieras con la X de arriba.',
+        'Vamos página por página: qué hay, dónde está y para qué sirve. Puedes salir cuando ' +
+        'quieras con la X de arriba.',
     },
     ...(quien.conSesion
       ? [
           {
+            seccion: 'La portada',
             ruta: '/',
             ancla: '[data-tour="saludo"]',
             titulo: 'Lo tuyo, arriba del todo',
@@ -50,6 +58,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         ]
       : []),
     {
+      seccion: 'La portada',
       ruta: '/',
       ancla: '[data-tour="red"]',
       titulo: 'Así trabaja el método',
@@ -58,12 +67,14 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'es un dibujo: es lo que hace cada herramienta.',
     },
     {
+      seccion: 'La portada',
       ruta: '/',
       ancla: '[data-tour="menu"]',
       titulo: 'Todo está aquí arriba',
       texto: 'Estas cinco entradas son el sitio entero. Ahora las vemos una por una.',
     },
     {
+      seccion: 'La portada',
       ruta: '/',
       ancla: '[data-tour="rutas"]',
       titulo: 'Dos rutas, no una',
@@ -72,6 +83,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'enseña por dónde pasa la suya y con qué sales.',
     },
     {
+      seccion: 'La portada',
       ruta: '/',
       ancla: '[data-tour="arranque-web"]',
       titulo: 'Cómo se empieza',
@@ -80,61 +92,170 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'con el plan gratuito.',
     },
 
-    // ── Las páginas del método ─────────────────────────────────────────────
+    // ── Las 11 Skills ──────────────────────────────────────────────────────
     {
+      seccion: 'Las 11 Skills',
       ruta: '/metodo',
-      ancla: '[data-tour="skills"]',
-      titulo: 'Las 11 Skills, en orden',
+      ancla: '[data-tour="metodo-cifras"]',
+      titulo: 'La ruta de la tesis, en cifras',
       texto:
-        'Esta es la ruta de la tesis: una skill por fase, desde elegir el tema hasta el abstract. ' +
-        'Cada una dice qué te pide y qué te devuelve.',
+        'Once skills, diez fases en orden, una vía cualitativa aparte y dos que se usan en ' +
+        'cualquier momento. Esto es lo que compras.',
     },
     {
+      seccion: 'Las 11 Skills',
+      ruta: '/metodo',
+      ancla: '[data-tour="metodo-skills"]',
+      titulo: 'Una skill por fase, en orden',
+      texto:
+        'De «no sé qué investigar» al abstract. Cada ficha dice qué te pide, qué te devuelve y en ' +
+        'qué capítulo de tu Word queda.',
+    },
+    {
+      seccion: 'Las 11 Skills',
+      ruta: '/metodo',
+      ancla: '[data-tour="metodo-panel"]',
+      titulo: 'Y lo que viene además',
+      texto:
+        'Las skills son el método; esto es lo que traen de propina: tus fuentes, tu Zotero, tu ' +
+        'análisis en R y tu documento en Word.',
+    },
+    {
+      seccion: 'Las 11 Skills',
+      ruta: '/metodo',
+      ancla: '[data-tour="metodo-libros"]',
+      titulo: 'De dónde sale el método',
+      texto:
+        'No está improvisado: detrás hay libros publicados y el criterio metodológico con el que ' +
+        'se evalúa una tesis de verdad.',
+    },
+    {
+      seccion: 'Las 11 Skills',
+      ruta: '/metodo',
+      ancla: '[data-tour="metodo-precio"]',
+      titulo: 'Y cuánto cuesta',
+      texto: 'El paquete completo, con su precio, al final de la misma página. Sin suscripción.',
+    },
+
+    // ── Ruta del artículo ──────────────────────────────────────────────────
+    {
+      seccion: 'Ruta del artículo',
       ruta: '/articulo',
-      ancla: '[data-tour="fases-articulo"]',
-      titulo: 'Y la ruta del artículo',
+      ancla: '[data-tour="articulo-cifras"]',
+      titulo: 'La otra ruta, para publicar',
       texto:
-        'La otra ruta, para publicar en una revista: de la idea al manuscrito enviado, con la ' +
-        'respuesta a los revisores incluida.',
+        'Si lo tuyo no es sustentar sino publicar en una revista indexada, esta es tu ruta y ' +
+        'estas sus cifras.',
     },
     {
-      ruta: '/en-accion',
-      ancla: '[data-tour="demos"]',
-      titulo: 'Míralo trabajar antes de decidir',
-      texto: 'Demostraciones completas y sin cortes, con el conector funcionando de verdad.',
+      seccion: 'Ruta del artículo',
+      ruta: '/articulo',
+      ancla: '[data-tour="articulo-fases"]',
+      titulo: 'Doce fases hasta el envío',
+      texto:
+        'De la idea al manuscrito enviado, con la carta de presentación y la respuesta a los ' +
+        'revisores incluidas.',
     },
     {
+      seccion: 'Ruta del artículo',
+      ruta: '/articulo',
+      ancla: '[data-tour="articulo-como"]',
+      titulo: 'Escribe contigo, no por ti',
+      texto:
+        'Cómo trabaja en cada fase: te pregunta, te explica el criterio y ordena lo que tú ' +
+        'decides. La firma del artículo sigue siendo tuya.',
+    },
+    {
+      seccion: 'Ruta del artículo',
+      ruta: '/articulo',
+      ancla: '[data-tour="articulo-precio"]',
+      titulo: 'Y su precio',
+      texto: 'La ruta completa, al final de la página, con lo que incluye.',
+    },
+
+    // ── Míralo en acción ───────────────────────────────────────────────────
+    {
+      seccion: 'Míralo en acción',
       ruta: '/en-accion',
-      ancla: '[data-tour="dudas"]',
+      ancla: '[data-tour="demos-pasos"]',
+      titulo: 'Hoy mismo puedes empezar',
+      texto: 'Lo que pasa desde que compras hasta tu primer capítulo, paso a paso.',
+    },
+    {
+      seccion: 'Míralo en acción',
+      ruta: '/en-accion',
+      ancla: '[data-tour="demos-videos"]',
+      titulo: 'Verlo trabajar antes de decidir',
+      texto:
+        'Demostraciones completas y sin cortes, con el conector funcionando de verdad. Nada está ' +
+        'montado.',
+    },
+    {
+      seccion: 'Míralo en acción',
+      ruta: '/en-accion',
+      ancla: '[data-tour="demos-dudas"]',
       titulo: 'Las dos dudas de siempre',
       texto:
-        'Si esto lo detecta el Turnitin y si el jurado lo acepta. Están contestadas aquí, sin rodeos.',
+        'Si esto lo detecta el Turnitin y si el jurado lo acepta. Contestadas aquí, sin rodeos.',
     },
+
+    // ── Quién te acompaña ──────────────────────────────────────────────────
     {
+      seccion: 'Quién te acompaña',
       ruta: '/quien-soy',
-      ancla: '[data-tour="credenciales"]',
-      titulo: 'Quién te acompaña',
-      texto:
-        'Quién está detrás del método y con qué credenciales: investigador Renacyt, docente ' +
-        'universitario y jurado de tesis.',
+      ancla: '[data-tour="qs-quien"]',
+      titulo: 'Quién está detrás',
+      texto: 'No es una empresa sin cara: hay una persona que responde y da la suya.',
     },
     {
+      seccion: 'Quién te acompaña',
+      ruta: '/quien-soy',
+      ancla: '[data-tour="qs-enlaces"]',
+      titulo: 'Compruébalo tú',
+      texto: 'Sus perfiles académicos, para que no haya que creerse nada: se abren y se miran.',
+    },
+    {
+      seccion: 'Quién te acompaña',
+      ruta: '/quien-soy',
+      ancla: '[data-tour="qs-credenciales"]',
+      titulo: 'Las credenciales',
+      texto:
+        'Investigador Renacyt, docente universitario y jurado de tesis. Quien hizo el método ha ' +
+        'estado al otro lado de la mesa.',
+    },
+
+    // ── Preguntas ──────────────────────────────────────────────────────────
+    {
+      seccion: 'Preguntas',
       ruta: '/preguntas',
       ancla: '[data-tour="faq"]',
       titulo: 'Lo que preguntan antes de decidirse',
-      texto: 'Precio, normas, universidades, devoluciones. Si tu duda es común, está aquí.',
+      texto: 'Precio, normas de cita, universidades, devoluciones. Si tu duda es común, está aquí.',
+    },
+
+    // ── Los paquetes ───────────────────────────────────────────────────────
+    {
+      seccion: 'Los paquetes',
+      ruta: '/planes',
+      ancla: '[data-tour="planes-lista"]',
+      titulo: 'Lo que se vende, y a cuánto',
+      texto:
+        'Cada tarjeta dice qué te llevas y cuánto cuesta. Se paga una vez: no hay suscripción ni ' +
+        'cobros automáticos.',
     },
     {
+      seccion: 'Los paquetes',
       ruta: '/planes',
-      ancla: '[data-tour="paquetes"]',
-      titulo: 'Los paquetes',
+      ancla: '[data-tour="planes-canje"]',
+      titulo: 'Si ya pagaste por Yape',
       texto:
-        'Lo que trae cada uno y su precio. Sin suscripción: se paga una vez y se instala en tu ' +
-        'cuenta de Claude.ai.',
+        'Aquí se canjea el código que te llega al correo. Es el único sitio donde se hace, y no ' +
+        'hay que recorrer los paquetes para encontrarlo.',
     },
 
     // ── Lo que hace falta DESPUÉS de comprar ───────────────────────────────
     {
+      seccion: 'Videos y guías',
       ruta: '/tutoriales',
       ancla: '[data-tour="videos"]',
       titulo: 'Los videos guía',
@@ -143,6 +264,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'compró y no sabe seguir.',
     },
     {
+      seccion: 'Videos y guías',
       ruta: '/tutoriales',
       ancla: '#fallas',
       titulo: 'Cuando algo no sale',
@@ -151,6 +273,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'que se rompió algo.',
     },
     {
+      seccion: 'Videos y guías',
       ruta: '/guias-de-instalacion',
       ancla: '[data-tour="guias-pdf"]',
       titulo: 'Las guías en PDF',
@@ -159,13 +282,18 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
 
     // ── El panel, solo si hay algo que enseñar en él ───────────────────────
     ...(quien.tieneConector
-      ? TOUR_DEL_PANEL.filter((paso) => paso.ancla).map((paso) => ({ ...paso, ruta: '/perfil' }))
+      ? TOUR_DEL_PANEL.filter((paso) => paso.ancla).map((paso) => ({
+          ...paso,
+          ruta: '/perfil',
+          seccion: 'Tu panel',
+        }))
       : []),
 
     // ── Y el de administración, solo al administrador ──────────────────────
     ...(quien.esAdmin
       ? [
           {
+            seccion: 'Administración',
             ruta: '/admin',
             ancla: '[data-tour="admin-menu"]',
             titulo: 'El panel de administración',
@@ -174,6 +302,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
               'es una entrada de esta columna.',
           },
           {
+            seccion: 'Administración',
             ruta: '/admin',
             ancla: '[data-tour="admin-cifras"]',
             titulo: 'Cómo va el negocio',
@@ -184,6 +313,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
 
     // ── El cierre, de vuelta en la portada ─────────────────────────────────
     {
+      seccion: 'Para terminar',
       ancla: '[data-tour="asistente"]',
       titulo: 'Y si algo no queda claro',
       texto:
@@ -191,6 +321,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'el pie está el WhatsApp.',
     },
     {
+      seccion: 'Para terminar',
       ruta: '/',
       ancla: '[data-tour="recorrido"]',
       titulo: 'Eso es todo',

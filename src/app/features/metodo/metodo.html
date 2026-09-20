@@ -18,7 +18,7 @@
         </p>
       </div>
 
-      <ul class="mt-cifras">
+      <ul data-tour="metodo-cifras" class="mt-cifras">
         @for (c of cifras; track c.pie) {
           <li>
             <b>{{ c.valor }}</b>
@@ -29,7 +29,7 @@
     </div>
   </header>
 
-  <section class="mt-seccion">
+  <section data-tour="metodo-skills" class="mt-seccion">
     <div class="mt-ancho">
       <div class="mt-cab">
         <div>
@@ -80,7 +80,7 @@
   <!-- Lo que acompaña a las Skills fuera de la conversación. Cada tarjeta es
        algo que ya está en el perfil del comprador: si una función se retira del
        panel, se retira de aquí. -->
-  <section class="mt-seccion mt-seccion-lineas">
+  <section data-tour="metodo-panel" class="mt-seccion mt-seccion-lineas">
     <div class="mt-ancho">
       <p class="mt-rotulo mt-rotulo-azul">Además de las Skills</p>
       <h2 class="mt-titulo mt-titulo-grande">Lo que tienes en tu panel</h2>
@@ -101,7 +101,7 @@
 
   <!-- El respaldo bibliográfico. Después del panel y antes del precio: es el
        último argumento antes de pedir la decisión. -->
-  <section class="mt-seccion mt-libros-banda">
+  <section data-tour="metodo-libros" class="mt-seccion mt-libros-banda">
     <div class="mt-ancho">
       <div class="mt-cab">
         <div>
@@ -131,7 +131,7 @@
     </div>
   </section>
 
-  <section class="mt-seccion mt-cierre-seccion">
+  <section data-tour="metodo-precio" class="mt-seccion mt-cierre-seccion">
     <div class="mt-ancho">
       <div class="mt-cierre">
         <app-lineas-noche densidad="compacta" />

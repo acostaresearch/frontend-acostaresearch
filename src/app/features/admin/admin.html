@@ -11,8 +11,7 @@
   <aside class="lateral">
     <p class="lateral-titulo">Panel de control</p>
 
-    data-tour="admin-menu"
-    <nav class="lateral-nav" aria-label="Secciones del panel">
+    <nav data-tour="admin-menu" class="lateral-nav" aria-label="Secciones del panel">
       <p class="lateral-grupo">Ventas</p>
       <button type="button" [class.activa]="seccion() === 'accesos'" (click)="ir('accesos')">
         <span>Accesos</span>
@@ -143,8 +142,7 @@
        hacer hoy: revisar comprobantes y emitir códigos. Abajo, todo lo que ya
        pasó, sin importar por dónde entró. -->
     @if (seccion() === 'accesos') {
-      data-tour="admin-cifras"
-      <section class="graficos">
+      <section data-tour="admin-cifras" class="graficos">
         <article class="grafico">
           <h2>Ingresos por semana</h2>
           <p class="grafico-cifra">{{ soles(ingresosPorSemana().total) }}</p>

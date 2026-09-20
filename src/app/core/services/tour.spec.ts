@@ -141,6 +141,28 @@ describe('Tour', () => {
     expect(tour.visto('panel')).toBe(true);
   });
 
+  it('el contador va por tandas: vuelve a empezar en cada página', () => {
+    const tour = servicio();
+    tour.empezar('web', [
+      { seccion: 'La portada', titulo: 'Uno', texto: '.' },
+      { seccion: 'La portada', titulo: 'Dos', texto: '.' },
+      { seccion: 'Las 11 Skills', titulo: 'Tres', texto: '.' },
+    ]);
+
+    expect(tour.seccion()).toBe('La portada');
+    expect(tour.numeroEnTanda()).toBe(1);
+    expect(tour.totalDeTanda()).toBe(2);
+
+    tour.siguiente();
+    expect(tour.numeroEnTanda()).toBe(2);
+
+    // Nueva página, contador a cero.
+    tour.siguiente();
+    expect(tour.seccion()).toBe('Las 11 Skills');
+    expect(tour.numeroEnTanda()).toBe(1);
+    expect(tour.totalDeTanda()).toBe(1);
+  });
+
   it('un paso de otra página se guarda: desde aquí no se puede saber si está', () => {
     const tour = servicio();
     tour.empezar('web', [

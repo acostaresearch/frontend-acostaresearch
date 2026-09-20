@@ -100,7 +100,7 @@
            paquetes —que no le interesan, ya compró— para encontrar dónde
            meterlo. Es el ÚNICO sitio donde se canjea; ver la nota de
            `codigoCanje` en el componente. -->
-      <aside class="canje-atajo">
+      <aside data-tour="planes-canje" class="canje-atajo">
         @if (canjeado(); as hecho) {
           <!-- La URL se enseña una sola vez: aquí, con su botón de copiar. -->
           <h2>¡Listo! Tu acceso a {{ hecho.producto }} está activo</h2>
@@ -151,7 +151,7 @@
     <app-aviso-flotante [(error)]="errorPromo" />
     <app-aviso-flotante [(error)]="errorComprobante" />
 
- <section class="planes">
+ <section data-tour="planes-lista" class="planes">
       @if (cargando()) {
         <p class="tenue">Cargando precios…</p>
       }

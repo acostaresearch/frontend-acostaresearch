@@ -44,7 +44,7 @@
           <a routerLink="/tutoriales">videos</a> enseñan lo mismo.
         </p>
       } @else {
-     <ul class="lista">
+     <ul data-tour="guias-pdf" class="lista">
           @for (guia of tarjetas(); track guia.enlace) {
             <li class="fila">
               <svg class="icono-pdf" viewBox="0 0 44 52" aria-hidden="true">

@@ -6,6 +6,12 @@ import { AuthService } from './auth.service';
 /** Un alto del recorrido: a qué se le hace foco y qué se cuenta de ello. */
 export interface PasoDelTour {
   /**
+   * La tanda a la que pertenece: el nombre de la página o del bloque, tal cual
+   * se le enseña a quien mira. Los pasos SEGUIDOS que comparten sección forman
+   * una tanda, y el contador cuenta dentro de ella. Ver `recorridoDeLaWeb`.
+   */
+  seccion?: string;
+  /**
    * La página donde vive este paso. Si no se está en ella, el recorrido navega
    * solo antes de enseñarlo. Sin ruta, el paso es de la página en la que se esté.
    */
@@ -82,6 +88,31 @@ export class TourService {
   readonly paso = computed<PasoDelTour | null>(() => this.pasos()[this.indice()] ?? null);
   readonly numero = computed(() => this.indice() + 1);
   readonly total = computed(() => this.pasos().length);
+
+  /**
+   * La tanda de ahora: los pasos seguidos que comparten sección.
+   *
+   * Se calcula mirando a los vecinos y no agrupando por nombre, para que dos
+   * tandas con el mismo nombre en dos momentos distintos del recorrido sigan
+   * siendo dos y no una sola partida en dos trozos.
+   */
+  private readonly tanda = computed(() => {
+    const pasos = this.pasos();
+    const i = this.indice();
+    const actual = pasos[i];
+    if (!actual) return { desde: 0, hasta: 0 };
+
+    let desde = i;
+    let hasta = i;
+    while (desde > 0 && pasos[desde - 1].seccion === actual.seccion) desde--;
+    while (hasta < pasos.length - 1 && pasos[hasta + 1].seccion === actual.seccion) hasta++;
+    return { desde, hasta };
+  });
+
+  /** Dónde se está, contado dentro de la tanda. Es lo que enseña el globo. */
+  readonly seccion = computed(() => this.paso()?.seccion ?? '');
+  readonly numeroEnTanda = computed(() => this.indice() - this.tanda().desde + 1);
+  readonly totalDeTanda = computed(() => this.tanda().hasta - this.tanda().desde + 1);
   readonly esElPrimero = computed(() => this.indice() === 0);
   readonly esElUltimo = computed(() => this.indice() >= this.pasos().length - 1);
 

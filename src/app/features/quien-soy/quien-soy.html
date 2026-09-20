@@ -8,7 +8,7 @@
     <app-lineas-noche foco="derecha" />
 
     <div class="mt-ancho qs-fila">
-      <div class="qs-texto">
+      <div data-tour="qs-quien" class="qs-texto">
         <p class="mt-rotulo">Quién te acompaña</p>
         <h1>Benicio Gonzalo Acosta Enríquez</h1>
 
@@ -27,7 +27,7 @@
           noche, cuando yo no puedo estar en la reunión y tú sí tienes que avanzar.
         </blockquote>
 
-        <div class="qs-enlaces">
+        <div data-tour="qs-enlaces" class="qs-enlaces">
           <a [href]="redes.scholar" target="_blank" rel="noopener">
             <app-icono-ruta clave="birrete" />
             Google Académico
@@ -71,7 +71,7 @@
        de 500 tesistas»—, donde hay que leerse tres frases para encontrarlas.
        En tres columnas se ven de una pasada, que es como se lee una
        credencial. -->
-  <section class="mt-seccion qs-credenciales-banda">
+  <section data-tour="qs-credenciales" class="mt-seccion qs-credenciales-banda">
     <ul class="mt-ancho qs-credenciales">
       @for (c of cifras; track c.pie) {
         <li>
