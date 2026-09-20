@@ -102,7 +102,16 @@
       </div>
 
       @if (visibles().length === 0) {
-        <p class="vacio">Ninguno encaja con eso. Prueba a quitar algún filtro.</p>
+        <!-- No es lo mismo que no haya nadie a que no encaje nadie: mandar a
+             quitar filtros a quien no tiene ninguno puesto es hacerle perder el
+             tiempo buscando algo que no existe. -->
+        @if (asesores().length === 0) {
+          <p class="vacio">
+            Ahora mismo no hay asesores disponibles. Escríbenos y te avisamos en cuanto haya.
+          </p>
+        } @else {
+          <p class="vacio">Ninguno encaja con eso. Prueba a quitar algún filtro.</p>
+        }
       } @else {
         <ul class="tarjetas">
           @for (a of visibles(); track a.id) {

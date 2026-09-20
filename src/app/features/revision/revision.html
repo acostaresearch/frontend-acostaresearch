@@ -107,8 +107,15 @@
 
         @if (visibles().length === 0) {
           <section class="aviso-caja">
-            <h2>Ninguno encaja con eso</h2>
-            <p>Prueba a quitar algún filtro: el directorio todavía es pequeño.</p>
+            <!-- Con cero asesores el consejo de quitar filtros es falso: no hay
+                 filtro que quitar y no va a aparecer nadie. -->
+            @if (asesores().length === 0) {
+              <h2>Ahora mismo no hay asesores disponibles</h2>
+              <p>Escríbenos y te avisamos en cuanto haya alguien para tu área.</p>
+            } @else {
+              <h2>Ninguno encaja con eso</h2>
+              <p>Prueba a quitar algún filtro: el directorio todavía es pequeño.</p>
+            }
           </section>
         } @else {
           <ul class="tarjetas">
