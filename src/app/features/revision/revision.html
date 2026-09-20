@@ -3,7 +3,7 @@
 <main class="pagina">
   <article class="revision-pagina">
     @if (cargando()) {
-      <p class="cargando">Abriendo el formulario…</p>
+      <p class="cargando">Abriendo el directorio…</p>
     } @else if (error() && !convocatoria()) {
       <section class="aviso-caja">
         <h1>Este enlace no está disponible</h1>
@@ -12,189 +12,382 @@
       </section>
     } @else if (convocatoria(); as c) {
       @if (codigo(); as cod) {
-        <!-- El acuse. Lo único que se lleva es el código, así que la página
-             entera se dedica a que no lo pierda. -->
+        <!-- ── El acuse ──────────────────────────────────────────────────── -->
         <section class="acuse">
-          <h1>Recibimos tu trabajo</h1>
-          <p>Este es tu código. Guárdalo: con él consultas cómo va tu revisión.</p>
+          <h1>Se lo mandamos a tu asesor</h1>
+          <p>
+            @if (elegido(); as a) {
+              {{ a.nombre }} tiene que aceptar el encargo. Te avisamos en cuanto responda.
+            }
+          </p>
           <p class="codigo">{{ cod }}</p>
           <a class="boton-enlace" [routerLink]="['/pedido', cod]">Ver cómo va mi revisión</a>
           <p class="tenue">
-            También te escribimos al correo cuando tus observaciones estén listas. Si cierras esta
-            página, el enlace es
+            Guarda ese código: es con lo que vuelves a entrar. El enlace directo es
             <strong>acostaresearch.com/pedido/{{ cod }}</strong>
           </p>
         </section>
-      } @else {
+      } @else if (!c.abierta) {
+        <section class="aviso-caja">
+          <h2>Ahora mismo no estamos recibiendo</h2>
+          <p>Este enlace sigue vivo, pero ya no admite trabajos nuevos. Escríbenos y te avisamos.</p>
+        </section>
+      } @else if (elegido() === null) {
+        <!-- ══ PASO 1 · EL DIRECTORIO ══════════════════════════════════════ -->
         <header class="cabeza">
-          <p class="antetitulo">Revisión de tesis</p>
-          <h1>{{ c.nombre }}</h1>
-          @if (c.intro) {
-            <p class="entradilla">{{ c.intro }}</p>
-          } @else {
-            <p class="entradilla">
-              Sube el capítulo que estás trabajando y un asesor te devuelve observaciones concretas:
-              qué está mal, por qué y qué se espera en su lugar. Tú haces las correcciones.
-            </p>
-          }
+          <p class="antetitulo">{{ c.nombre }}</p>
+          <h1>Elige a quién le confías tu tesis</h1>
+          <p class="entradilla">
+            @if (c.intro) {
+              {{ c.intro }}
+            } @else {
+              Todos están verificados: comprobamos su grado en SUNEDU antes de que aparezcan aquí.
+              Te devuelven observaciones concretas —qué está mal, por qué y qué se espera— y tú
+              haces las correcciones.
+            }
+          </p>
         </header>
 
-        @if (!c.abierta) {
+        <!-- Lo pequeño de arriba: quien ya mandó su trabajo no viene a elegir. -->
+        <div class="ya-mande">
+          <span>¿Ya mandaste tu trabajo?</span>
+          <a routerLink="/pedido">Consulta tu revisión con tu código →</a>
+        </div>
+
+        <section class="filtros" aria-label="Filtrar asesores">
+          <label class="filtro">
+            <span>Área</span>
+            <select [value]="fArea()" (change)="filtrar('fArea', $event)">
+              <option value="">Todas</option>
+              @for (opcion of c.catalogos.areas; track opcion.codigo) {
+                <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="filtro">
+            <span>Grado</span>
+            <select [value]="fGrado()" (change)="filtrar('fGrado', $event)">
+              <option value="">Cualquiera</option>
+              <option value="DOCTOR">Doctor</option>
+              <option value="MAGISTER">Magíster</option>
+              <option value="BACHILLER">Bachiller</option>
+            </select>
+          </label>
+
+          <label class="filtro">
+            <span>Enfoque</span>
+            <select [value]="fMetodo()" (change)="filtrar('fMetodo', $event)">
+              <option value="">Cualquiera</option>
+              @for (opcion of c.catalogos.metodos; track opcion.codigo) {
+                <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="filtro filtro-ancho">
+            <span>Universidad</span>
+            <input
+              type="text"
+              placeholder="UCV, UNT, USS…"
+              [value]="fUniversidad()"
+              (input)="filtrar('fUniversidad', $event)"
+            />
+          </label>
+
+          @if (hayFiltros()) {
+            <button type="button" class="limpiar" (click)="limpiarFiltros()">Quitar filtros</button>
+          }
+        </section>
+
+        <p class="cuantos">
+          {{ visibles().length }}
+          {{ visibles().length === 1 ? 'asesor disponible' : 'asesores disponibles' }}
+        </p>
+
+        @if (visibles().length === 0) {
           <section class="aviso-caja">
-            <h2>Ahora mismo no estamos recibiendo</h2>
-            <p>Este enlace sigue vivo, pero ya no admite trabajos nuevos. Escríbenos y te avisamos.</p>
+            <h2>Ninguno encaja con eso</h2>
+            <p>Prueba a quitar algún filtro: el directorio todavía es pequeño.</p>
           </section>
         } @else {
-          <section class="como">
-            <h2>Cómo funciona</h2>
-            <ol>
-              <li>Subes tu capítulo en Word y nos cuentas qué te preocupa.</li>
-              <li>Un asesor lo revisa y te devuelve una lista de observaciones numeradas.</li>
-              <li>
-                <strong>Tú corriges.</strong> No escribimos tu tesis por ti: te decimos qué hay que
-                arreglar para que la defiendas tú.
+          <ul class="tarjetas">
+            @for (a of visibles(); track a.id) {
+              <li class="tarjeta-asesor">
+                <div class="tarjeta-cabeza">
+                  <span class="avatar" aria-hidden="true">{{ a.iniciales }}</span>
+                  <div>
+                    <p class="nombre">{{ a.nombre }}</p>
+                    <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+                  </div>
+                </div>
+
+                <p class="etiquetas">
+                  @for (area of a.areas; track area) {
+                    <span class="etiqueta">{{ area }}</span>
+                  }
+                  @for (metodo of a.metodos; track metodo) {
+                    <span class="etiqueta etiqueta-suave">{{ metodo }}</span>
+                  }
+                </p>
+
+                @if (a.universidades) {
+                  <p class="universidades">Conoce: {{ a.universidades }}</p>
+                }
+
+                <dl class="numeros">
+                  <div>
+                    <dt>Experiencia</dt>
+                    <dd>{{ a.anosExperiencia }} {{ a.anosExperiencia === 1 ? 'año' : 'años' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Revisadas</dt>
+                    <dd>{{ a.tesisRevisadas }}</dd>
+                  </div>
+                  <div>
+                    <dt>Opinión</dt>
+                    <dd>
+                      @if (a.nota !== null) {
+                        <span class="estrellas">{{ estrellas(a.nota) }}</span>
+                        {{ nota(a.nota) }} <span class="tenue">({{ a.resenas }})</span>
+                      } @else {
+                        <span class="tenue">Aún sin reseñas</span>
+                      }
+                    </dd>
+                  </div>
+                </dl>
+
+                <div class="tarjeta-pie">
+                  <button type="button" class="secundario" (click)="verPerfil(a)">Ver perfil</button>
+                  <button type="button" class="principal" (click)="elegir(a)">Elegirlo</button>
+                </div>
               </li>
-            </ol>
-            <p class="tenue">
-              Tu documento es tuyo y no se comparte con nadie más que con el asesor que lo revisa.
-            </p>
-          </section>
-
-          <app-aviso-flotante [error]="error()" />
-
-          <form class="formulario" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
-            <fieldset>
-              <legend>Tu trabajo</legend>
-
-              <div class="campo">
-                <span class="etiqueta">El documento en Word (.docx)</span>
-                <label class="soltar" [class.soltar-mal]="errorArchivo()">
-                  <input type="file" accept=".docx" (change)="elegirArchivo($event)" />
-                  @if (archivo(); as a) {
-                    <span class="archivo-nombre">{{ a.name }}</span>
-                    <span class="archivo-peso">{{ peso(a) }} · toca para cambiarlo</span>
-                  } @else {
-                    <span class="archivo-nombre">Elegir mi documento</span>
-                    <span class="archivo-peso">Word .docx, hasta 25 MB</span>
-                  }
-                </label>
-                @if (errorArchivo(); as m) {
-                  <small class="mal">{{ m }}</small>
-                }
-              </div>
-
-              <div class="fila">
-                <label class="campo">
-                  <span class="etiqueta">Qué parte nos mandas</span>
-                  <select formControlName="capitulo">
-                    @for (opcion of c.catalogos.capitulos; track opcion.codigo) {
-                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
-                    }
-                  </select>
-                </label>
-
-                <label class="campo">
-                  <span class="etiqueta">Nivel</span>
-                  <select formControlName="nivel">
-                    @for (opcion of c.catalogos.niveles; track opcion.codigo) {
-                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
-                    }
-                  </select>
-                </label>
-              </div>
-
-              <div class="fila">
-                <label class="campo">
-                  <span class="etiqueta">Área</span>
-                  <select formControlName="area">
-                    @for (opcion of c.catalogos.areas; track opcion.codigo) {
-                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
-                    }
-                  </select>
-                </label>
-
-                <label class="campo">
-                  <span class="etiqueta">Enfoque de tu tesis</span>
-                  <select formControlName="metodo">
-                    @for (opcion of c.catalogos.metodos; track opcion.codigo) {
-                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
-                    }
-                  </select>
-                </label>
-              </div>
-
-              <label class="campo">
-                <span class="etiqueta">Tu tema</span>
-                <input
-                  type="text"
-                  formControlName="tema"
-                  placeholder="Liderazgo directivo y clima escolar en instituciones públicas"
-                />
-                @if (mensaje('tema'); as m) {
-                  <small class="mal">{{ m }}</small>
-                }
-              </label>
-
-              <label class="campo">
-                <span class="etiqueta">¿Qué quieres que miremos con más cuidado? <em>(opcional)</em></span>
-                <textarea
-                  formControlName="mensaje"
-                  rows="3"
-                  placeholder="Mi asesor dice que la muestra no se justifica y no sé cómo arreglarlo."
-                ></textarea>
-              </label>
-            </fieldset>
-
-            <fieldset>
-              <legend>Cómo te contactamos</legend>
-
-              <label class="campo">
-                <span class="etiqueta">Tu nombre completo</span>
-                <input type="text" formControlName="nombre" autocomplete="name" />
-                @if (mensaje('nombre'); as m) {
-                  <small class="mal">{{ m }}</small>
-                }
-              </label>
-
-              <div class="fila">
-                <label class="campo">
-                  <span class="etiqueta">Correo</span>
-                  <input type="email" formControlName="email" autocomplete="email" />
-                  @if (mensaje('email'); as m) {
-                    <small class="mal">{{ m }}</small>
-                  }
-                </label>
-
-                <label class="campo">
-                  <span class="etiqueta">WhatsApp <em>(opcional)</em></span>
-                  <input type="tel" formControlName="telefono" autocomplete="tel" />
-                  @if (mensaje('telefono'); as m) {
-                    <small class="mal">{{ m }}</small>
-                  }
-                </label>
-              </div>
-
-              <label class="campo">
-                <span class="etiqueta">Tu universidad</span>
-                <input type="text" formControlName="universidad" />
-                @if (mensaje('universidad'); as m) {
-                  <small class="mal">{{ m }}</small>
-                }
-              </label>
-            </fieldset>
-
-            <button type="submit" class="enviar" [disabled]="enviando()">
-              {{ enviando() ? 'Subiendo tu documento…' : 'Enviar mi trabajo' }}
-            </button>
-
-            <p class="tenue pie-nota">
-              Durante esta prueba no se cobra nada. No te pedimos DNI ni ningún dato de pago.
-            </p>
-          </form>
+            }
+          </ul>
         }
+      } @else {
+        <!-- ══ PASO 2 · EL FORMULARIO ══════════════════════════════════════ -->
+        @if (elegido(); as a) {
+          <section class="elegido">
+            <span class="avatar" aria-hidden="true">{{ a.iniciales }}</span>
+            <div class="elegido-datos">
+              <p class="elegido-titulo">Le mandas tu trabajo a {{ a.nombre }}</p>
+              <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+            </div>
+            <button type="button" class="secundario" (click)="cambiarDeAsesor()">Cambiar</button>
+          </section>
+        }
+
+        <app-aviso-flotante [error]="error()" />
+
+        <form class="formulario" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+          <fieldset>
+            <legend>Tu trabajo</legend>
+
+            <div class="campo">
+              <span class="etiqueta-campo">El documento en Word (.docx)</span>
+              <label class="soltar" [class.soltar-mal]="errorArchivo()">
+                <input type="file" accept=".docx" (change)="elegirArchivo($event)" />
+                @if (archivo(); as f) {
+                  <span class="archivo-nombre">{{ f.name }}</span>
+                  <span class="archivo-peso">{{ peso(f) }} · toca para cambiarlo</span>
+                } @else {
+                  <span class="archivo-nombre">Elegir mi documento</span>
+                  <span class="archivo-peso">Word .docx, hasta 25 MB</span>
+                }
+              </label>
+              @if (errorArchivo(); as m) {
+                <small class="mal">{{ m }}</small>
+              }
+              <span class="ayuda">
+                Tu asesor no lo abre hasta que acepta el encargo. Nadie más lo ve.
+              </span>
+            </div>
+
+            <div class="fila">
+              <label class="campo">
+                <span class="etiqueta-campo">Qué parte le mandas</span>
+                <select formControlName="capitulo">
+                  @for (opcion of c.catalogos.capitulos; track opcion.codigo) {
+                    <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="campo">
+                <span class="etiqueta-campo">Nivel</span>
+                <select formControlName="nivel">
+                  @for (opcion of c.catalogos.niveles; track opcion.codigo) {
+                    <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <div class="fila">
+              <label class="campo">
+                <span class="etiqueta-campo">Área</span>
+                <select formControlName="area">
+                  @for (opcion of c.catalogos.areas; track opcion.codigo) {
+                    <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="campo">
+                <span class="etiqueta-campo">Enfoque de tu tesis</span>
+                <select formControlName="metodo">
+                  @for (opcion of c.catalogos.metodos; track opcion.codigo) {
+                    <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <label class="campo">
+              <span class="etiqueta-campo">Tu tema</span>
+              <input
+                type="text"
+                formControlName="tema"
+                placeholder="Liderazgo directivo y clima escolar en instituciones públicas"
+              />
+              @if (mensaje('tema'); as m) {
+                <small class="mal">{{ m }}</small>
+              }
+            </label>
+
+            <label class="campo">
+              <span class="etiqueta-campo">
+                ¿Qué quieres que mire con más cuidado? <em>(opcional)</em>
+              </span>
+              <textarea
+                formControlName="mensaje"
+                rows="3"
+                placeholder="Mi asesor dice que la muestra no se justifica y no sé cómo arreglarlo."
+              ></textarea>
+              <span class="ayuda">Esto sí lo lee antes de decidir si puede tomarlo.</span>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Cómo te contactamos</legend>
+
+            <label class="campo">
+              <span class="etiqueta-campo">Tu nombre completo</span>
+              <input type="text" formControlName="nombre" autocomplete="name" />
+              @if (mensaje('nombre'); as m) {
+                <small class="mal">{{ m }}</small>
+              }
+            </label>
+
+            <div class="fila">
+              <label class="campo">
+                <span class="etiqueta-campo">Correo</span>
+                <input type="email" formControlName="email" autocomplete="email" />
+                @if (mensaje('email'); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </label>
+
+              <label class="campo">
+                <span class="etiqueta-campo">WhatsApp <em>(opcional)</em></span>
+                <input type="tel" formControlName="telefono" autocomplete="tel" />
+                @if (mensaje('telefono'); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </label>
+            </div>
+
+            <label class="campo">
+              <span class="etiqueta-campo">Tu universidad</span>
+              <input type="text" formControlName="universidad" />
+              @if (mensaje('universidad'); as m) {
+                <small class="mal">{{ m }}</small>
+              }
+            </label>
+          </fieldset>
+
+          <button type="submit" class="enviar" [disabled]="enviando()">
+            {{ enviando() ? 'Subiendo tu documento…' : 'Mandárselo' }}
+          </button>
+
+          <p class="tenue pie-nota">
+            Durante esta prueba no se cobra nada. No te pedimos DNI ni ningún dato de pago.
+          </p>
+        </form>
       }
     }
   </article>
 </main>
+
+<!-- ── El perfil, en una ventana ──────────────────────────────────────────── -->
+@if (perfil(); as a) {
+  <div class="fondo" (click)="cerrarPerfil()">
+    <div class="ventana" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="ventana-cabeza">
+        <span class="avatar avatar-grande" aria-hidden="true">{{ a.iniciales }}</span>
+        <div>
+          <h2>{{ a.nombre }}</h2>
+          <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarPerfil()">✕</button>
+      </div>
+
+      <dl class="numeros numeros-ventana">
+        <div>
+          <dt>Experiencia</dt>
+          <dd>{{ a.anosExperiencia }} {{ a.anosExperiencia === 1 ? 'año' : 'años' }}</dd>
+        </div>
+        <div>
+          <dt>Tesis revisadas</dt>
+          <dd>{{ a.tesisRevisadas }}</dd>
+        </div>
+        <div>
+          <dt>Opinión</dt>
+          <dd>
+            @if (a.nota !== null) {
+              <span class="estrellas">{{ estrellas(a.nota) }}</span> {{ nota(a.nota) }}
+            } @else {
+              <span class="tenue">Aún sin reseñas</span>
+            }
+          </dd>
+        </div>
+      </dl>
+
+      <h3>Qué revisa</h3>
+      <p class="etiquetas">
+        @for (area of a.areas; track area) {
+          <span class="etiqueta">{{ area }}</span>
+        }
+        @for (metodo of a.metodos; track metodo) {
+          <span class="etiqueta etiqueta-suave">{{ metodo }}</span>
+        }
+      </p>
+      @if (a.universidades) {
+        <p class="universidades">Conoce el reglamento de: {{ a.universidades }}</p>
+      }
+
+      <h3>En sus palabras</h3>
+      <p class="presentacion">{{ a.presentacion }}</p>
+
+      @if (a.ultimasResenas.length > 0) {
+        <h3>Lo que dicen sus tesistas</h3>
+        <ul class="resenas">
+          @for (r of a.ultimasResenas; track r.createdAt) {
+            <li>
+              <span class="estrellas">{{ estrellas(r.estrellas) }}</span>
+              <p>{{ r.comentario }}</p>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="ventana-pie">
+        <button type="button" class="secundario" (click)="cerrarPerfil()">Volver</button>
+        <button type="button" class="principal" (click)="elegir(a)">Elegirlo</button>
+      </div>
+    </div>
+  </div>
+}
 
 <app-site-footer />

@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 
 import { mensajeDeError } from '../../core/http/api-error';
-import { Asesor, Convocatoria } from '../../core/services/asesor.service';
+import { Convocatoria } from '../../core/services/asesor.service';
 import {
   EstadoDePedido,
   NOMBRE_DEL_ESTADO_PEDIDO,
@@ -12,17 +12,18 @@ import {
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /**
- * Los encargos de revisión, en el panel.
+ * Las revisiones, en el panel de la casa.
  *
- * EL TABLERO DEL PILOTO
- * ---------------------
- * Aquí se hace todo lo que la plataforma no automatiza: bajarse el Word,
- * asignárselo a un asesor, pegar el enlace del documento de observaciones y
- * darlo por entregado. La revisión en sí ocurre fuera; esto es el tablero que
- * dice en qué va cada cosa y quién la tiene.
+ * ESTO ES UN MIRADOR, NO UN REPARTIDOR
+ * ------------------------------------
+ * El tesista elige a su asesor y el encargo le llega directo; quien acepta,
+ * revisa y entrega es el asesor. Aquí no se asigna ni se entrega nada: se ve
+ * cómo va todo, se anota lo que haga falta recordar y se puede parar un pedido
+ * que se torció. Meter aquí un paso obligatorio sería volver a poner a la casa
+ * en medio de una decisión que no es suya.
  *
- * Componente aparte, como el libro y los asesores: la hoja de estilos de
- * `admin` ya roza el tope de la compilación.
+ * Arriba sigue estando la puerta: el enlace que se reparte y los dos
+ * interruptores que deciden quién llega a él.
  */
 @Component({
   imports: [AvisoFlotante, DatePipe],
@@ -33,23 +34,19 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 export class PedidosAdmin implements OnInit {
   private readonly api = inject(PedidoService);
 
-  /** Las listas las carga el panel, que necesita el contador lateral. */
+  /** La lista la carga el panel, que necesita el contador lateral. */
   readonly pedidos = input.required<Pedido[]>();
-  readonly asesores = input.required<Asesor[]>();
   readonly cambiado = output<string>();
 
   readonly nombreDelEstado = NOMBRE_DEL_ESTADO_PEDIDO;
 
   readonly convocatorias = signal<Convocatoria[]>([]);
   readonly abierto = signal<Pedido | null>(null);
-  readonly filtro = signal<EstadoDePedido | 'TODOS'>('RECIBIDO');
+  readonly filtro = signal<EstadoDePedido | 'TODOS'>('ESPERANDO');
   readonly guardando = signal(false);
   readonly bajando = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** Lo que se edita en la ventana, antes de guardar. */
-  readonly asesorElegido = signal('');
-  readonly enlace = signal('');
   readonly notas = signal('');
 
   readonly nombreNuevo = signal('');
@@ -57,26 +54,35 @@ export class PedidosAdmin implements OnInit {
   readonly creando = signal(false);
   readonly copiada = signal<string | null>(null);
 
-  /** Solo los aprobados: a los demás no se les puede asignar nada. */
-  readonly asignables = computed(() => this.asesores().filter((a) => a.estado === 'APROBADO'));
-
   readonly filtros: { codigo: EstadoDePedido | 'TODOS'; nombre: string }[] = [
-    { codigo: 'RECIBIDO', nombre: 'Sin asignar' },
+    { codigo: 'ESPERANDO', nombre: 'Esperando respuesta' },
     { codigo: 'EN_REVISION', nombre: 'En revisión' },
     { codigo: 'ENTREGADO', nombre: 'Entregados' },
+    { codigo: 'RECHAZADO', nombre: 'Sin asesor' },
     { codigo: 'TODOS', nombre: 'Todos' },
   ];
 
   readonly visibles = computed(() => {
     const filtro = this.filtro();
     const lista = this.pedidos();
-    // «Todos» incluye los cancelados; los demás filtros, no.
     return filtro === 'TODOS' ? lista : lista.filter((pedido) => pedido.estado === filtro);
   });
 
   cuantos(codigo: EstadoDePedido | 'TODOS'): number {
     const lista = this.pedidos();
     return codigo === 'TODOS' ? lista.length : lista.filter((p) => p.estado === codigo).length;
+  }
+
+  /**
+   * Cuánto lleva esperando sin que su asesor conteste.
+   *
+   * Es el único número que pide una intervención: al otro lado hay alguien
+   * mirando su seguimiento, y un encargo parado dos días es un tesista que
+   * empieza a pensar que esto no funciona.
+   */
+  diasEsperando(pedido: Pedido): number {
+    const desde = new Date(pedido.asignadoAt ?? pedido.createdAt).getTime();
+    return Math.floor((Date.now() - desde) / (24 * 60 * 60 * 1000));
   }
 
   ngOnInit(): void {
@@ -90,15 +96,8 @@ export class PedidosAdmin implements OnInit {
     });
   }
 
-  escribir(
-    senal: 'nombreNuevo' | 'introNueva' | 'enlace' | 'notas',
-    evento: Event,
-  ): void {
+  escribir(senal: 'nombreNuevo' | 'introNueva' | 'notas', evento: Event): void {
     this[senal].set((evento.target as HTMLInputElement | HTMLTextAreaElement).value);
-  }
-
-  elegirAsesor(evento: Event): void {
-    this.asesorElegido.set((evento.target as HTMLSelectElement).value);
   }
 
   // ── La puerta ────────────────────────────────────────────────────────────
@@ -116,7 +115,7 @@ export class PedidosAdmin implements OnInit {
         this.nombreNuevo.set('');
         this.introNueva.set('');
         this.convocatorias.update((lista) => [convocatoria, ...lista]);
-        this.cambiado.emit('Enlace creado. Copia y repártelo a mano.');
+        this.cambiado.emit('Enlace creado. Cópialo y repártelo a mano.');
       },
       error: (e: unknown) => {
         this.creando.set(false);
@@ -143,7 +142,7 @@ export class PedidosAdmin implements OnInit {
   publicarOEsconder(convocatoria: Convocatoria): void {
     const publicar = !convocatoria.publica;
     const pregunta = publicar
-      ? '¿Abrir el formulario al público? A partir de ahora cualquiera podrá llegar a /revision sin el enlace.'
+      ? '¿Abrir el directorio al público? A partir de ahora cualquiera podrá llegar a /revision sin el enlace.'
       : '¿Volver a dejarlo solo con enlace? Quien entre a /revision ya no lo encontrará.';
     if (!confirm(pregunta)) return;
 
@@ -167,8 +166,6 @@ export class PedidosAdmin implements OnInit {
 
   abrir(pedido: Pedido): void {
     this.abierto.set(pedido);
-    this.asesorElegido.set(pedido.asesorId ?? '');
-    this.enlace.set(pedido.enlaceObservaciones);
     this.notas.set(pedido.notas ?? '');
     this.error.set(null);
   }
@@ -199,40 +196,38 @@ export class PedidosAdmin implements OnInit {
     });
   }
 
-  /** Guardar lo de la ventana sin cambiar el estado. */
   guardar(): void {
     this.aplicar({});
   }
 
-  /** Marcar el paso siguiente: asignar pone en revisión, y luego se entrega. */
-  marcar(estado: EstadoDePedido): void {
-    this.aplicar({ estado });
+  /** Lo único que la casa puede parar. Se pregunta: el tesista lo ve caer. */
+  cancelar(): void {
+    if (!confirm('¿Cancelar este pedido? El tesista dejará de verlo en su seguimiento.')) return;
+    this.aplicar({ estado: 'CANCELADO' });
   }
 
-  private aplicar(extra: { estado?: EstadoDePedido }): void {
+  private aplicar(extra: { estado?: 'CANCELADO' }): void {
     const pedido = this.abierto();
     if (!pedido || this.guardando()) return;
 
     this.guardando.set(true);
     this.error.set(null);
 
-    this.api
-      .cambiar(pedido.id, {
-        asesorId: this.asesorElegido(),
-        enlaceObservaciones: this.enlace().trim(),
-        notas: this.notas().trim(),
-        ...extra,
-      })
-      .subscribe({
-        next: ({ mensaje }) => {
-          this.guardando.set(false);
-          this.cerrar();
-          this.cambiado.emit(mensaje);
-        },
-        error: (e: unknown) => {
-          this.guardando.set(false);
-          this.error.set(mensajeDeError(e));
-        },
-      });
+    this.api.cambiar(pedido.id, { notas: this.notas().trim(), ...extra }).subscribe({
+      next: ({ mensaje }) => {
+        this.guardando.set(false);
+        this.cerrar();
+        this.cambiado.emit(mensaje);
+      },
+      error: (e: unknown) => {
+        this.guardando.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  estrellas(valor: number): string {
+    const llenas = Math.round(valor);
+    return '★★★★★'.slice(0, llenas) + '☆☆☆☆☆'.slice(0, 5 - llenas);
   }
 }

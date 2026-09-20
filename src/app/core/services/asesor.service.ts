@@ -85,6 +85,14 @@ export interface Asesor {
   aceptaReglas: boolean;
   estado: EstadoDeFicha;
   notas: string | null;
+  /** ¿Sale en el directorio? Lo apaga él mismo cuando está lleno. */
+  visible: boolean;
+  /**
+   * Su pantalla privada, la que hay que mandarle al aprobarlo.
+   *
+   * Vacía mientras no esté aprobado: la llave se le da al entrar.
+   */
+  enlacePanel: string;
   revisadoAt: string | null;
   createdAt: string;
 }

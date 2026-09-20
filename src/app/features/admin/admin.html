@@ -63,8 +63,8 @@
       <p class="lateral-grupo">Revisión de tesis</p>
       <button type="button" [class.activa]="seccion() === 'pedidos'" (click)="ir('pedidos')">
         <span>Revisiones</span>
-        @if (pedidosSinAsignar() > 0) {
-          <span class="lateral-contador">{{ pedidosSinAsignar() }}</span>
+        @if (pedidosEsperando() > 0) {
+          <span class="lateral-contador">{{ pedidosEsperando() }}</span>
         }
       </button>
       <button type="button" [class.activa]="seccion() === 'asesores'" (click)="ir('asesores')">
@@ -2413,11 +2413,7 @@
        Los capítulos que mandan los tesistas y el enlace por el que llegan. En
        su propio componente, como los asesores. -->
     @if (seccion() === 'pedidos') {
-      <app-pedidos-admin
-        [pedidos]="pedidos()"
-        [asesores]="asesores()"
-        (cambiado)="pedidoCambiado($event)"
-      />
+      <app-pedidos-admin [pedidos]="pedidos()" (cambiado)="pedidoCambiado($event)" />
     }
 
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════

@@ -6,7 +6,12 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 import { Convocatoria, Opcion } from './asesor.service';
 
-export type EstadoDePedido = 'RECIBIDO' | 'EN_REVISION' | 'ENTREGADO' | 'CANCELADO';
+export type EstadoDePedido =
+  | 'ESPERANDO'
+  | 'EN_REVISION'
+  | 'ENTREGADO'
+  | 'RECHAZADO'
+  | 'CANCELADO';
 export type NivelDeTesis = 'PREGRADO' | 'MAESTRIA' | 'DOCTORADO';
 
 /** Las listas que necesita el formulario del tesista. */
@@ -17,7 +22,6 @@ export interface CatalogosDePedido {
   niveles: Opcion[];
 }
 
-/** Lo que ve quien abre el enlace del formulario. */
 export interface ConvocatoriaDeRevision {
   slug: string;
   nombre: string;
@@ -26,8 +30,44 @@ export interface ConvocatoriaDeRevision {
   catalogos: CatalogosDePedido;
 }
 
+/** Una reseña, como se enseña en el perfil de un asesor. */
+export interface ResenaPublica {
+  estrellas: number;
+  comentario: string;
+  createdAt: string;
+}
+
+/**
+ * La ficha pública de un asesor: lo que decide a quién le confías tu tesis.
+ *
+ * `nota` viene nula mientras no tenga reseñas suficientes. Con una o dos, una
+ * media dice más del azar que de la persona, así que el servidor prefiere no
+ * enseñarla a enseñar un 5,0 de un solo tesista.
+ */
+export interface AsesorPublico {
+  id: string;
+  nombre: string;
+  iniciales: string;
+  /** El código, para filtrar: BACHILLER, MAGISTER o DOCTOR. */
+  grado: string;
+  gradoNombre: string;
+  especialidad: string;
+  areas: string[];
+  areasCodigos: string[];
+  metodos: string[];
+  metodosCodigos: string[];
+  universidades: string;
+  anosExperiencia: number;
+  presentacion: string;
+  tesisRevisadas: number;
+  resenas: number;
+  nota: number | null;
+  ultimasResenas: ResenaPublica[];
+}
+
 /** Lo que acompaña al Word. Viaja en la query, no en el cuerpo. */
 export interface DatosDelPedido {
+  asesorId: string;
   nombre: string;
   email: string;
   telefono: string;
@@ -40,27 +80,77 @@ export interface DatosDelPedido {
   mensaje: string;
 }
 
-/**
- * Lo que el tesista ve de su propio pedido.
- *
- * No trae quién lo está revisando ni las notas internas: durante el piloto el
- * asesor es anónimo para él.
- */
+/** Quién está revisando, como lo ve el tesista que lo eligió. */
+export interface AsesorDelPedido {
+  nombre: string;
+  iniciales: string;
+  gradoNombre: string;
+  especialidad: string;
+}
+
 export interface Seguimiento {
   codigo: string;
   nombre: string;
   universidad: string;
   capitulo: string;
   nivel: string;
+  tema: string;
   estado: EstadoDePedido;
   archivoNombre: string;
+  asesor: AsesorDelPedido | null;
+  /** Con qué palabras dijo que no. Vacío si no rechazó. */
+  motivoRechazo: string;
   /** Solo llega con valor cuando el pedido está entregado. */
   enlaceObservaciones: string;
+  resena: ResenaPublica | null;
+  puedeResenar: boolean;
   createdAt: string;
+  aceptadoAt: string | null;
   entregadoAt: string | null;
 }
 
-/** Un pedido, como lo lee el panel. */
+/** Un encargo, como lo ve el asesor en su pantalla. */
+export interface Encargo {
+  id: string;
+  codigo: string;
+  estado: EstadoDePedido;
+  capitulo: string;
+  nivel: string;
+  area: string;
+  metodo: string;
+  universidad: string;
+  tema: string;
+  mensaje: string;
+  /** Vacío mientras no lo haya aceptado: hasta entonces no ve el documento. */
+  archivoNombre: string;
+  bytes: number;
+  /** Nulo mientras no lo haya aceptado. */
+  tesista: { nombre: string; email: string; telefono: string } | null;
+  enlaceObservaciones: string;
+  resena: ResenaPublica | null;
+  createdAt: string;
+  aceptadoAt: string | null;
+  entregadoAt: string | null;
+}
+
+/** La cabecera de su pantalla: quién es y cómo le está yendo. */
+export interface FichaDelAsesor {
+  nombre: string;
+  iniciales: string;
+  gradoNombre: string;
+  especialidad: string;
+  visible: boolean;
+  tesisRevisadas: number;
+  resenas: number;
+  nota: number | null;
+}
+
+export interface PanelDelAsesor {
+  asesor: FichaDelAsesor;
+  encargos: Encargo[];
+}
+
+/** Un pedido, como lo lee el panel de la casa. */
 export interface Pedido {
   id: string;
   codigo: string;
@@ -68,13 +158,9 @@ export interface Pedido {
   email: string;
   telefono: string;
   universidad: string;
-  nivel: NivelDeTesis;
   nivelNombre: string;
-  area: string;
   areaNombre: string;
-  metodo: string;
   metodoNombre: string;
-  capitulo: string;
   capituloNombre: string;
   tema: string;
   mensaje: string;
@@ -84,29 +170,34 @@ export interface Pedido {
   asesorId: string | null;
   asesor: { id: string; nombre: string; estado: string } | null;
   enlaceObservaciones: string;
+  motivoRechazo: string;
   notas: string | null;
   asignadoAt: string | null;
+  aceptadoAt: string | null;
   entregadoAt: string | null;
   createdAt: string;
+  resena: ResenaPublica | null;
 }
 
 export const NOMBRE_DEL_ESTADO_PEDIDO: Record<EstadoDePedido, string> = {
-  RECIBIDO: 'Recibido',
+  ESPERANDO: 'Esperando respuesta',
   EN_REVISION: 'En revisión',
   ENTREGADO: 'Entregado',
+  RECHAZADO: 'Sin asesor',
   CANCELADO: 'Cancelado',
 };
 
 /** Lo que se le dice al tesista en cada estado, en su idioma y no en el nuestro. */
 export const PASO_DEL_PEDIDO: Record<EstadoDePedido, string> = {
-  RECIBIDO: 'Tenemos tu trabajo y estamos asignándotelo.',
-  EN_REVISION: 'Un asesor lo está revisando ahora mismo.',
+  ESPERANDO: 'Tu asesor tiene que aceptar el encargo. Suele responder en menos de un día.',
+  EN_REVISION: 'Ya lo aceptó y lo está revisando.',
   ENTREGADO: 'Tus observaciones están listas.',
+  RECHAZADO: 'Tu asesor no pudo tomarlo. Elige a otro: no tienes que volver a subir nada.',
   CANCELADO: 'Este pedido se canceló.',
 };
 
 /**
- * Los encargos de revisión, por los dos lados.
+ * Los encargos de revisión, por los tres lados: el tesista, el asesor y la casa.
  *
  * El documento va en crudo con su ficha en la query, igual que las guías en
  * PDF: el servidor lo espera así para no montar `multipart` por un solo
@@ -117,7 +208,7 @@ export class PedidoService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/pedidos`;
 
-  // ── Público ────────────────────────────────────────────────────────────
+  // ── El tesista ─────────────────────────────────────────────────────────
 
   verConvocatoria(slug: string): Observable<ConvocatoriaDeRevision> {
     return this.http
@@ -133,6 +224,13 @@ export class PedidoService {
         `${this.base}/convocatoria/publica`,
       )
       .pipe(map((res) => res.data.convocatoria));
+  }
+
+  /** El directorio: entre quiénes elige. Se filtra en el navegador. */
+  directorio(slug: string): Observable<AsesorPublico[]> {
+    return this.http
+      .get<ApiResponse<{ asesores: AsesorPublico[] }>>(`${this.base}/convocatoria/${slug}/asesores`)
+      .pipe(map((res) => res.data.asesores));
   }
 
   enviar(slug: string, datos: DatosDelPedido, archivo: File): Observable<string> {
@@ -159,7 +257,77 @@ export class PedidoService {
       .pipe(map((res) => res.data.pedido));
   }
 
-  // ── Administrador ──────────────────────────────────────────────────────
+  /** Entre quiénes puede elegir si le dijeron que no. Sin el que lo rechazó. */
+  directorioParaPedido(codigo: string): Observable<AsesorPublico[]> {
+    return this.http
+      .get<ApiResponse<{ asesores: AsesorPublico[] }>>(`${this.base}/${codigo}/asesores`)
+      .pipe(map((res) => res.data.asesores));
+  }
+
+  /** Su asesor no pudo: elige otro sin volver a subir el documento. */
+  reasignar(codigo: string, asesorId: string): Observable<Seguimiento> {
+    return this.http
+      .post<ApiResponse<{ pedido: Seguimiento }>>(`${this.base}/${codigo}/asesor`, { asesorId })
+      .pipe(map((res) => res.data.pedido));
+  }
+
+  resenar(codigo: string, estrellas: number, comentario: string): Observable<Seguimiento> {
+    return this.http
+      .post<ApiResponse<{ pedido: Seguimiento }>>(`${this.base}/${codigo}/resena`, {
+        estrellas,
+        comentario,
+      })
+      .pipe(map((res) => res.data.pedido));
+  }
+
+  // ── El asesor, por su enlace privado ───────────────────────────────────
+
+  panelDelAsesor(token: string): Observable<PanelDelAsesor> {
+    return this.http
+      .get<ApiResponse<PanelDelAsesor>>(`${this.base}/asesor/${token}`)
+      .pipe(map((res) => res.data));
+  }
+
+  disponibilidad(token: string, visible: boolean): Observable<PanelDelAsesor> {
+    return this.http
+      .patch<ApiResponse<PanelDelAsesor>>(`${this.base}/asesor/${token}`, { visible })
+      .pipe(map((res) => res.data));
+  }
+
+  aceptar(token: string, id: string): Observable<Encargo> {
+    return this.http
+      .post<ApiResponse<{ encargo: Encargo }>>(`${this.base}/asesor/${token}/${id}/aceptar`, {})
+      .pipe(map((res) => res.data.encargo));
+  }
+
+  rechazar(token: string, id: string, motivo: string): Observable<Encargo> {
+    return this.http
+      .post<ApiResponse<{ encargo: Encargo }>>(`${this.base}/asesor/${token}/${id}/rechazar`, {
+        motivo,
+      })
+      .pipe(map((res) => res.data.encargo));
+  }
+
+  entregar(token: string, id: string, enlaceObservaciones: string): Observable<Encargo> {
+    return this.http
+      .post<ApiResponse<{ encargo: Encargo }>>(`${this.base}/asesor/${token}/${id}/entregar`, {
+        enlaceObservaciones,
+      })
+      .pipe(map((res) => res.data.encargo));
+  }
+
+  /**
+   * El documento de un encargo aceptado.
+   *
+   * Se baja como blob y se guarda desde memoria, no con un enlace normal: así
+   * el navegador manda las cabeceras y el servidor puede comprobar que ese
+   * encargo es suyo y que ya lo aceptó.
+   */
+  documentoDelEncargo(token: string, id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/asesor/${token}/${id}/documento`, { responseType: 'blob' });
+  }
+
+  // ── La casa ────────────────────────────────────────────────────────────
 
   listar(): Observable<Pedido[]> {
     return this.http
@@ -169,20 +337,13 @@ export class PedidoService {
 
   cambiar(
     id: string,
-    cambios: Partial<Pick<Pedido, 'estado' | 'asesorId' | 'enlaceObservaciones' | 'notas'>>,
+    cambios: { estado?: 'CANCELADO'; notas?: string },
   ): Observable<{ pedido: Pedido; mensaje: string }> {
     return this.http
       .patch<ApiResponse<{ pedido: Pedido }>>(`${this.base}/admin/${id}`, cambios)
       .pipe(map((res) => ({ pedido: res.data.pedido, mensaje: res.message ?? '' })));
   }
 
-  /**
-   * El Word que subió el tesista.
-   *
-   * No puede ser un enlace normal: el documento se sirve por la API y exige el
-   * token, que un `target="_blank"` no manda. Se baja con la sesión puesta y se
-   * guarda desde el blob, como el comprobante de un código.
-   */
   documento(id: string): Observable<Blob> {
     return this.http.get(`${this.base}/admin/${id}/documento`, { responseType: 'blob' });
   }

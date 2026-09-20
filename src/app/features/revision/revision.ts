@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { fieldErrors, mensajeDeError, toApiError } from '../../core/http/api-error';
 import {
+  AsesorPublico,
   ConvocatoriaDeRevision,
   NivelDeTesis,
   PedidoService,
@@ -25,27 +26,36 @@ const MENSAJES: Record<string, string> = {
 /** El techo del servidor. Una tesis con figuras ronda los 10 MB. */
 const MAXIMO_BYTES = 25 * 1024 * 1024;
 
+/** Sin tildes y en minúsculas, para que «César» encuentre «cesar». */
+const plano = (texto: string) =>
+  texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+
 /**
- * El formulario del tesista: manda su capítulo y recibe observaciones.
+ * Elegir asesor y mandarle el capítulo.
+ *
+ * DOS PASOS, Y EL PRIMERO ES LA VITRINA
+ * -------------------------------------
+ * Lo primero que ve el tesista son las personas, no un formulario. Elige a
+ * quién le confía su tesis —puede filtrar por área, universidad, grado y
+ * enfoque, y abrir el perfil de cada uno— y solo después rellena sus datos y
+ * sube el documento. Al revés sería pedirle trabajo antes de enseñarle nada.
  *
  * SIN CUENTA Y SIN PAGO
  * ---------------------
  * Ni registro ni cobro durante el piloto. Lo que se está midiendo es si alguien
- * entrega su capítulo a desconocidos, que es la pregunta difícil; cobrar es la
- * fácil y se cierra aparte. Cada paso que se le añade aquí es gente que se cae
- * antes de llegar al final.
+ * entrega su capítulo, que es la pregunta difícil; cobrar es la fácil y se
+ * cierra aparte. Cada paso que se añada aquí es gente que se cae antes del
+ * final.
  *
  * NO ESTÁ ENLAZADA DESDE NINGUNA PARTE
  * ------------------------------------
- * Igual que la ficha del asesor: se llega con el enlace que se reparte a mano,
- * y sin slug la página pregunta si hay alguna convocatoria pública y, mientras
- * no la haya, lleva a la portada. Lleva `noindex` por lo mismo: una URL que
- * nadie enlaza no es secreta.
- *
- * LO QUE SE LLEVA ES UN CÓDIGO
- * ----------------------------
- * Con él consulta su pedido en /pedido/<codigo>, sin cuenta. Por eso el acuse
- * insiste en que lo guarde: es lo único que tiene.
+ * Se llega con el enlace que se reparte a mano, y sin slug la página pregunta
+ * si hay alguna convocatoria pública y, mientras no la haya, lleva a la
+ * portada. Lleva `noindex` por lo mismo: una URL que nadie enlaza no es
+ * secreta.
  */
 @Component({
   selector: 'app-revision',
@@ -61,15 +71,45 @@ export class Revision implements OnInit, OnDestroy {
   private readonly slug = inject(ActivatedRoute).snapshot.paramMap.get('slug');
 
   readonly convocatoria = signal<ConvocatoriaDeRevision | null>(null);
+  readonly asesores = signal<AsesorPublico[]>([]);
   readonly cargando = signal(true);
   readonly enviando = signal(false);
   readonly error = signal<string | null>(null);
   readonly errores = signal<Record<string, string>>({});
-  /** Con valor, la página enseña el acuse con su código y no el formulario. */
   readonly codigo = signal<string | null>(null);
+
+  /** A quién eligió. Con valor, la página enseña el formulario. */
+  readonly elegido = signal<AsesorPublico | null>(null);
+  /** El perfil abierto en la ventana. */
+  readonly perfil = signal<AsesorPublico | null>(null);
 
   readonly archivo = signal<File | null>(null);
   readonly errorArchivo = signal<string | null>(null);
+
+  // ── Filtros del directorio ───────────────────────────────────────────────
+  readonly fArea = signal('');
+  readonly fGrado = signal('');
+  readonly fMetodo = signal('');
+  readonly fUniversidad = signal('');
+
+  readonly hayFiltros = computed(
+    () => !!(this.fArea() || this.fGrado() || this.fMetodo() || this.fUniversidad().trim()),
+  );
+
+  readonly visibles = computed(() => {
+    const area = this.fArea();
+    const grado = this.fGrado();
+    const metodo = this.fMetodo();
+    const universidad = plano(this.fUniversidad().trim());
+
+    return this.asesores().filter((asesor) => {
+      if (area && !asesor.areasCodigos.includes(area)) return false;
+      if (grado && asesor.grado !== grado) return false;
+      if (metodo && !asesor.metodosCodigos.includes(metodo)) return false;
+      if (universidad && !plano(asesor.universidades).includes(universidad)) return false;
+      return true;
+    });
+  });
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
@@ -95,13 +135,12 @@ export class Revision implements OnInit, OnDestroy {
           return;
         }
         this.convocatoria.set(convocatoria);
-        // Lo primero de cada lista, para que el formulario no arranque vacío.
         this.form.patchValue({
           area: convocatoria.catalogos.areas[0]?.codigo ?? '',
           metodo: convocatoria.catalogos.metodos[0]?.codigo ?? '',
           capitulo: convocatoria.catalogos.capitulos[0]?.codigo ?? '',
         });
-        this.cargando.set(false);
+        this.cargarDirectorio(convocatoria.slug);
       },
       error: (e: unknown) => {
         if (!this.slug) {
@@ -117,6 +156,70 @@ export class Revision implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.meta.removeTag("name='robots'");
   }
+
+  private cargarDirectorio(slug: string): void {
+    this.api.directorio(slug).subscribe({
+      next: (lista) => {
+        this.asesores.set(lista);
+        this.cargando.set(false);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.cargando.set(false);
+      },
+    });
+  }
+
+  // ── El directorio ────────────────────────────────────────────────────────
+
+  filtrar(cual: 'fArea' | 'fGrado' | 'fMetodo' | 'fUniversidad', evento: Event): void {
+    this[cual].set((evento.target as HTMLInputElement | HTMLSelectElement).value);
+  }
+
+  limpiarFiltros(): void {
+    this.fArea.set('');
+    this.fGrado.set('');
+    this.fMetodo.set('');
+    this.fUniversidad.set('');
+  }
+
+  verPerfil(asesor: AsesorPublico): void {
+    this.perfil.set(asesor);
+  }
+
+  cerrarPerfil(): void {
+    this.perfil.set(null);
+  }
+
+  /** Elegirlo lleva al formulario, con lo que ya sabemos de él precargado. */
+  elegir(asesor: AsesorPublico): void {
+    this.elegido.set(asesor);
+    this.perfil.set(null);
+    // Si solo trabaja un área o un enfoque, se da por supuesto: es el suyo.
+    if (asesor.areasCodigos.length === 1) this.form.patchValue({ area: asesor.areasCodigos[0] });
+    if (asesor.metodosCodigos.length === 1) {
+      this.form.patchValue({ metodo: asesor.metodosCodigos[0] });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** Volver a la vitrina sin perder lo que ya escribió. */
+  cambiarDeAsesor(): void {
+    this.elegido.set(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** «4,8» y no «4.8»: se lee en español. */
+  nota(valor: number): string {
+    return valor.toFixed(1).replace('.', ',');
+  }
+
+  estrellas(valor: number): string {
+    const llenas = Math.round(valor);
+    return '★★★★★'.slice(0, llenas) + '☆☆☆☆☆'.slice(0, 5 - llenas);
+  }
+
+  // ── El formulario ────────────────────────────────────────────────────────
 
   mensaje(campo: string): string | null {
     const delServidor = this.errores()[campo];
@@ -163,12 +266,11 @@ export class Revision implements OnInit, OnDestroy {
 
   enviar(): void {
     const convocatoria = this.convocatoria();
+    const asesor = this.elegido();
     const archivo = this.archivo();
-    if (!convocatoria || this.enviando()) return;
+    if (!convocatoria || !asesor || this.enviando()) return;
 
-    if (!archivo) {
-      this.errorArchivo.set('Adjunta tu documento de Word.');
-    }
+    if (!archivo) this.errorArchivo.set('Adjunta tu documento de Word.');
     if (this.form.invalid || !archivo) {
       this.form.markAllAsTouched();
       return;
@@ -178,16 +280,19 @@ export class Revision implements OnInit, OnDestroy {
     this.error.set(null);
     this.errores.set({});
 
-    this.api.enviar(convocatoria.slug, this.form.getRawValue(), archivo).subscribe({
-      next: (codigo) => {
-        this.enviando.set(false);
-        this.codigo.set(codigo);
-      },
-      error: (e: unknown) => {
-        this.enviando.set(false);
-        this.errores.set(fieldErrors(toApiError(e)));
-        this.error.set(mensajeDeError(e));
-      },
-    });
+    this.api
+      .enviar(convocatoria.slug, { ...this.form.getRawValue(), asesorId: asesor.id }, archivo)
+      .subscribe({
+        next: (codigo) => {
+          this.enviando.set(false);
+          this.codigo.set(codigo);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        error: (e: unknown) => {
+          this.enviando.set(false);
+          this.errores.set(fieldErrors(toApiError(e)));
+          this.error.set(mensajeDeError(e));
+        },
+      });
   }
 }

@@ -80,9 +80,10 @@
 <section class="tarjeta">
   <h2>Capítulos por revisar</h2>
   <p class="nota">
-    Bájate el Word, pásale tu revisión de máquina, mándaselo al asesor y, cuando te devuelva sus
-    observaciones, pega aquí el enlace del documento y dale por entregado. El tesista ve el cambio
-    en su seguimiento en cuanto lo marcas.
+    El tesista elige a su asesor y el encargo le llega directo: aquí no se asigna ni se entrega
+    nada. Esto es el mirador —en qué va cada cosa y quién la tiene—, con dos cosas que sí puedes
+    hacer: anotar lo que convenga recordar y parar un pedido que se torció. Lo que conviene vigilar
+    es la columna de los que llevan días esperando respuesta.
   </p>
 
   <div class="filtros">
@@ -117,6 +118,11 @@
               {{ p.createdAt | date: 'd MMM y, HH:mm' }}
               @if (p.asesor) {
                 · con {{ p.asesor.nombre }}
+              }
+              @if (p.estado === 'ESPERANDO' && diasEsperando(p) >= 2) {
+                <span class="tardando">
+                  · lleva {{ diasEsperando(p) }} días esperando respuesta
+                </span>
               }
             </p>
           </div>
@@ -185,38 +191,39 @@
       </div>
 
       <h4>Qué se hace con él</h4>
-
-      <div class="campo">
-        <label for="pedido-asesor">Asesor</label>
-        <select id="pedido-asesor" [value]="asesorElegido()" (change)="elegirAsesor($event)">
-          <option value="">— sin asignar —</option>
-          @for (a of asignables(); track a.id) {
-            <option [value]="a.id">{{ a.nombre }} · {{ a.areas.join(', ') }}</option>
+      <dl>
+        <dt>Asesor</dt>
+        <dd>
+          @if (p.asesor) {
+            {{ p.asesor.nombre }}
+          } @else {
+            <span class="tenue">Sin asesor: el tesista tiene que elegir a otro</span>
           }
-        </select>
-        @if (asignables().length === 0) {
-          <span class="ayuda">
-            No hay asesores aprobados todavía. Apruébalos en la sección Asesores.
-          </span>
-        } @else {
-          <span class="ayuda">Solo salen los aprobados. Asignar lo pone en revisión.</span>
+        </dd>
+        <dt>Estado</dt>
+        <dd>{{ nombreDelEstado[p.estado] }}</dd>
+        @if (p.motivoRechazo) {
+          <dt>Por qué lo rechazó</dt>
+          <dd>«{{ p.motivoRechazo }}»</dd>
         }
-      </div>
-
-      <div class="campo">
-        <label for="pedido-enlace">Enlace del documento de observaciones</label>
-        <input
-          id="pedido-enlace"
-          type="url"
-          maxlength="500"
-          placeholder="https://docs.google.com/document/d/…"
-          [value]="enlace()"
-          (input)="escribir('enlace', $event)"
-        />
-        <span class="ayuda">
-          Es lo único que el tesista ve al final, y hace falta para poder entregar.
-        </span>
-      </div>
+        @if (p.enlaceObservaciones) {
+          <dt>Observaciones</dt>
+          <dd>
+            <a [href]="p.enlaceObservaciones" target="_blank" rel="noopener noreferrer">
+              {{ p.enlaceObservaciones }}
+            </a>
+          </dd>
+        }
+        @if (p.resena; as r) {
+          <dt>Lo que dijo el tesista</dt>
+          <dd>
+            <span class="estrellas">{{ estrellas(r.estrellas) }}</span>
+            @if (r.comentario) {
+              «{{ r.comentario }}»
+            }
+          </dd>
+        }
+      </dl>
 
       <div class="campo">
         <label for="pedido-notas">Notas internas</label>
@@ -224,27 +231,23 @@
           id="pedido-notas"
           rows="3"
           maxlength="2000"
+          placeholder="Escribí al asesor el 21-sep porque llevaba tres días sin contestar."
           [value]="notas()"
           (input)="escribir('notas', $event)"
         ></textarea>
-        <span class="ayuda">Solo las ves tú. No se le enseñan.</span>
+        <span class="ayuda">Solo las ves tú. No se le enseñan a nadie.</span>
       </div>
 
       <div class="pie">
-        <button type="button" class="boton secundario" (click)="cerrar()">Cancelar</button>
-        @if (p.estado !== 'CANCELADO') {
-          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="marcar('CANCELADO')">
+        <button type="button" class="boton secundario" (click)="cerrar()">Cerrar</button>
+        @if (p.estado !== 'CANCELADO' && p.estado !== 'ENTREGADO') {
+          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="cancelar()">
             Cancelar pedido
           </button>
         }
-        <button type="button" class="boton secundario" [disabled]="guardando()" (click)="guardar()">
-          Guardar
+        <button type="button" class="boton" [disabled]="guardando()" (click)="guardar()">
+          {{ guardando() ? 'Guardando…' : 'Guardar notas' }}
         </button>
-        @if (p.estado !== 'ENTREGADO') {
-          <button type="button" class="boton" [disabled]="guardando()" (click)="marcar('ENTREGADO')">
-            {{ guardando() ? 'Guardando…' : 'Entregar al tesista' }}
-          </button>
-        }
       </div>
     </div>
   </div>

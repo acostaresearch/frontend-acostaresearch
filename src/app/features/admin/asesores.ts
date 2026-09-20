@@ -170,6 +170,19 @@ export class AsesoresAdmin implements OnInit {
     this.abierta.set(null);
   }
 
+  /** El enlace privado que hay que mandarle al aprobarlo. */
+  readonly enlaceCopiado = signal(false);
+
+  copiarEnlace(asesor: Asesor): void {
+    void navigator.clipboard.writeText(asesor.enlacePanel).then(
+      () => {
+        this.enlaceCopiado.set(true);
+        setTimeout(() => this.enlaceCopiado.set(false), 2500);
+      },
+      () => this.error.set('No se pudo copiar. Selecciona el enlace y cópialo a mano.'),
+    );
+  }
+
   /** Lo que se busca en SUNEDU para comprobar el grado que declara. */
   buscarEnSunedu(asesor: Asesor): string {
     return `https://enlinea.sunedu.gob.pe/?nombres=${encodeURIComponent(asesor.nombre)}`;

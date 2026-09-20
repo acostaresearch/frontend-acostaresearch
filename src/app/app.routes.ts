@@ -213,6 +213,18 @@ export const routes: Routes = [
     title: 'Mi revisión · Acosta Research',
     loadComponent: () => import('./features/pedido/pedido').then((m) => m.PedidoSeguimiento),
   },
+  /*
+   * La pantalla del asesor, con su llave privada.
+   *
+   * Sin cuenta ni contraseña: el encargo le llega directo del tesista que lo
+   * eligió, y para eso tiene que poder entrar hoy. El enlace ES la llave, como
+   * los de subida que reparte el conector. Se le da al aprobarlo.
+   */
+  {
+    path: 'asesor/:token',
+    title: 'Mis encargos · Acosta Research',
+    loadComponent: () => import('./features/asesor/asesor').then((m) => m.PanelAsesor),
+  },
   // El enlace de prueba que el administrador reparte a un grupo. Sin sesión a
   // propósito: quien lo recibe no se registra, solo recoge su conector.
   {

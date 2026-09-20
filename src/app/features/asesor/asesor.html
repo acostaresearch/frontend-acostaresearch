@@ -1,0 +1,281 @@
+<app-site-header />
+
+<main class="pagina">
+  <article class="panel">
+    @if (cargando()) {
+      <p class="cargando">Abriendo tu pantalla…</p>
+    } @else if (!ficha()) {
+      <section class="caja">
+        <h1>Este enlace no está disponible</h1>
+        <p>{{ error() }}</p>
+        <p class="tenue">Si eres asesor y perdiste tu enlace, escríbenos y te mandamos otro.</p>
+      </section>
+    } @else if (ficha(); as f) {
+      <!-- ── Quién es y cómo le va ───────────────────────────────────────── -->
+      <header class="cabeza">
+        <span class="avatar" aria-hidden="true">{{ f.iniciales }}</span>
+        <div class="cabeza-datos">
+          <h1>{{ f.nombre }}</h1>
+          <p class="cargo">{{ f.gradoNombre }} · {{ f.especialidad }}</p>
+        </div>
+        <label class="interruptor" [class.apagado]="!f.visible">
+          <input
+            type="checkbox"
+            [checked]="f.visible"
+            [disabled]="guardando()"
+            (change)="cambiarDisponibilidad()"
+          />
+          <span>{{ f.visible ? 'Acepto encargos' : 'No acepto encargos' }}</span>
+        </label>
+      </header>
+
+      <dl class="numeros">
+        <div>
+          <dt>Esperando tu respuesta</dt>
+          <dd>{{ esperando().length }}</dd>
+        </div>
+        <div>
+          <dt>Revisando</dt>
+          <dd>{{ enRevision().length }}</dd>
+        </div>
+        <div>
+          <dt>Tesis revisadas</dt>
+          <dd>{{ f.tesisRevisadas }}</dd>
+        </div>
+        <div>
+          <dt>Opinión</dt>
+          <dd>
+            @if (f.nota !== null) {
+              <span class="estrellas">{{ estrellas(f.nota) }}</span> {{ nota(f.nota) }}
+            } @else {
+              <span class="tenue">{{ f.resenas }} de 3</span>
+            }
+          </dd>
+        </div>
+      </dl>
+
+      @if (aviso(); as a) {
+        <p class="bien">{{ a }}</p>
+      }
+      @if (error(); as e) {
+        <p class="mal">{{ e }}</p>
+      }
+
+      <!-- ── Esperando respuesta ─────────────────────────────────────────── -->
+      <section class="bloque">
+        <h2>Esperan tu respuesta</h2>
+        @if (esperando().length === 0) {
+          <p class="vacio">Nada pendiente. Cuando alguien te elija, aparecerá aquí.</p>
+        } @else {
+          <p class="nota-bloque">
+            Todavía no ves el documento: se abre cuando aceptas. Con el tema y lo que te cuenta el
+            tesista tienes para decidir si puedes con ello.
+          </p>
+          <ul class="lista">
+            @for (e of esperando(); track e.id) {
+              <li (click)="abrir(e)">
+                <div class="datos">
+                  <p class="titulo">{{ e.capitulo }}</p>
+                  <p class="tenue">{{ e.tema }}</p>
+                  <p class="tenue">
+                    {{ e.universidad }} · {{ e.nivel }} · {{ e.area }} · {{ e.metodo }} ·
+                    {{ peso(e.bytes) }}
+                  </p>
+                </div>
+                <span class="estado espera">Esperando</span>
+                <button type="button" class="principal">Ver y decidir</button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- ── En revisión ─────────────────────────────────────────────────── -->
+      @if (enRevision().length > 0) {
+        <section class="bloque">
+          <h2>Los estás revisando</h2>
+          <ul class="lista">
+            @for (e of enRevision(); track e.id) {
+              <li>
+                <div class="datos">
+                  <p class="titulo">{{ e.capitulo }}</p>
+                  <p class="tenue">{{ e.tema }}</p>
+                  <p class="tenue">
+                    {{ e.tesista?.nombre }} · aceptado el
+                    {{ e.aceptadoAt | date: 'd MMM, HH:mm' }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="secundario"
+                  [disabled]="bajando() === e.id"
+                  (click)="bajar(e)"
+                >
+                  {{ bajando() === e.id ? 'Bajando…' : 'Bajar Word' }}
+                </button>
+                <button type="button" class="principal" (click)="abrir(e)">Entregar</button>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <!-- ── Cerrados ────────────────────────────────────────────────────── -->
+      @if (cerrados().length > 0) {
+        <section class="bloque">
+          <h2>Cerrados</h2>
+          <ul class="lista">
+            @for (e of cerrados(); track e.id) {
+              <li>
+                <div class="datos">
+                  <p class="titulo">{{ e.capitulo }}</p>
+                  <p class="tenue">{{ e.tema }}</p>
+                  @if (e.resena; as r) {
+                    <p class="tenue">
+                      <span class="estrellas">{{ estrellas(r.estrellas) }}</span>
+                      @if (r.comentario) {
+                        «{{ r.comentario }}»
+                      }
+                    </p>
+                  }
+                </div>
+                <span
+                  class="estado"
+                  [class.hecho]="e.estado === 'ENTREGADO'"
+                  [class.no]="e.estado === 'RECHAZADO'"
+                >
+                  {{ e.estado === 'ENTREGADO' ? 'Entregado' : 'Rechazado' }}
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </article>
+</main>
+
+<!-- ── La ventana de un encargo ───────────────────────────────────────────── -->
+@if (abierto(); as e) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true">
+      <div class="ventana-cabeza">
+        <div>
+          <h2>{{ e.capitulo }}</h2>
+          <p class="tenue">
+            Código {{ e.codigo }} · llegó el {{ e.createdAt | date: 'd MMM y, HH:mm' }}
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrar()">✕</button>
+      </div>
+
+      <dl class="ficha">
+        <dt>Tema</dt>
+        <dd>{{ e.tema }}</dd>
+        <dt>Universidad</dt>
+        <dd>{{ e.universidad }} · {{ e.nivel }}</dd>
+        <dt>Área y enfoque</dt>
+        <dd>{{ e.area }} · {{ e.metodo }}</dd>
+        <dt>Documento</dt>
+        <dd>
+          @if (e.archivoNombre) {
+            {{ e.archivoNombre }} ({{ peso(e.bytes) }})
+          } @else {
+            <span class="tenue">{{ peso(e.bytes) }} · se abre cuando aceptes</span>
+          }
+        </dd>
+        @if (e.tesista; as t) {
+          <dt>Tesista</dt>
+          <dd>{{ t.nombre }} · {{ t.email }}@if (t.telefono) { · {{ t.telefono }} }</dd>
+        }
+      </dl>
+
+      @if (e.mensaje) {
+        <h3>Qué le preocupa</h3>
+        <p class="mensaje">{{ e.mensaje }}</p>
+      }
+
+      @if (error(); as msg) {
+        <p class="mal">{{ msg }}</p>
+      }
+
+      @if (e.estado === 'ESPERANDO') {
+        @if (rechazando()) {
+          <h3>¿Por qué no puedes tomarlo?</h3>
+          <p class="tenue">
+            El tesista lo lee. No es lo mismo «ahora no tengo hueco» que «esto no es lo mío»: le
+            sirven para elegir distinto.
+          </p>
+          <textarea
+            rows="3"
+            maxlength="300"
+            placeholder="Este mes estoy lleno. Inténtalo en dos semanas."
+            [value]="motivo()"
+            (input)="escribir('motivo', $event)"
+          ></textarea>
+          <div class="pie">
+            <button type="button" class="secundario" (click)="rechazando.set(false)">Volver</button>
+            <button
+              type="button"
+              class="principal"
+              [disabled]="motivo().trim().length < 5 || guardando()"
+              (click)="rechazar()"
+            >
+              {{ guardando() ? 'Enviando…' : 'Rechazar el encargo' }}
+            </button>
+          </div>
+        } @else {
+          <div class="pie">
+            <button type="button" class="secundario" (click)="rechazando.set(true)">
+              No puedo tomarlo
+            </button>
+            <button type="button" class="principal" [disabled]="guardando()" (click)="aceptar()">
+              {{ guardando() ? 'Aceptando…' : 'Aceptar y abrir el documento' }}
+            </button>
+          </div>
+        }
+      } @else if (e.estado === 'EN_REVISION') {
+        <h3>Entregar</h3>
+        <div class="campo">
+          <label for="enlace-observaciones">Enlace de tu documento de observaciones</label>
+          <input
+            id="enlace-observaciones"
+            type="url"
+            maxlength="500"
+            placeholder="https://docs.google.com/document/d/…"
+            [value]="enlace()"
+            (input)="escribir('enlace', $event)"
+          />
+          <span class="ayuda">
+            Comprueba que esté compartido para que lo pueda abrir cualquiera con el enlace. Es lo
+            único que el tesista recibe.
+          </span>
+        </div>
+        <div class="pie">
+          <button
+            type="button"
+            class="secundario"
+            [disabled]="bajando() === e.id"
+            (click)="bajar(e)"
+          >
+            {{ bajando() === e.id ? 'Bajando…' : 'Bajar su Word' }}
+          </button>
+          <button
+            type="button"
+            class="principal"
+            [disabled]="enlace().trim().length === 0 || guardando()"
+            (click)="entregar()"
+          >
+            {{ guardando() ? 'Entregando…' : 'Entregar al tesista' }}
+          </button>
+        </div>
+      } @else {
+        <div class="pie">
+          <button type="button" class="secundario" (click)="cerrar()">Cerrar</button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<app-site-footer />

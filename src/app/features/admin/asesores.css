@@ -281,3 +281,15 @@
     margin-bottom: 6px;
   }
 }
+
+/* El enlace privado del asesor: se lee entero, aunque sea largo. */
+.enlace-asesor {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}

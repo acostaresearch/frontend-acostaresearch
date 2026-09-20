@@ -8,19 +8,82 @@
       <header class="cabeza">
         <p class="antetitulo">Tu revisión</p>
         <h1>{{ p.capitulo }}</h1>
-        <p class="entradilla">
-          {{ p.nombre }} · {{ p.universidad }} · {{ p.nivel }}
-        </p>
+        <p class="entradilla">{{ p.nombre }} · {{ p.universidad }} · {{ p.nivel }}</p>
         <p class="codigo">Código {{ p.codigo }}</p>
       </header>
 
-      @if (avance() < 0) {
+      @if (aviso(); as a) {
+        <p class="bien">{{ a }}</p>
+      }
+      @if (error(); as e) {
+        <p class="mal">{{ e }}</p>
+      }
+
+      <!-- ── Quién lo lleva ───────────────────────────────────────────────── -->
+      @if (p.asesor; as asesor) {
+        <section class="asesor">
+          <span class="avatar" aria-hidden="true">{{ asesor.iniciales }}</span>
+          <div>
+            <p class="asesor-nombre">{{ asesor.nombre }}</p>
+            <p class="cargo">{{ asesor.gradoNombre }} · {{ asesor.especialidad }}</p>
+          </div>
+        </section>
+      }
+
+      @if (p.estado === 'RECHAZADO') {
+        <!-- ── El desvío ─────────────────────────────────────────────────── -->
+        <section class="caja caja-parada">
+          <h2>Tu asesor no pudo tomarlo</h2>
+          @if (p.motivoRechazo) {
+            <p class="motivo">«{{ p.motivoRechazo }}»</p>
+          }
+          <p>Elige a otro. Tu documento sigue aquí: no tienes que volver a subir nada.</p>
+          @if (!eligiendo()) {
+            <button type="button" class="principal" (click)="verOtros()">Elegir a otro asesor</button>
+          }
+        </section>
+
+        @if (eligiendo()) {
+          @if (otros().length === 0) {
+            <p class="cargando">Buscando a quién más puede revisarlo…</p>
+          } @else {
+            <ul class="tarjetas">
+              @for (a of otros(); track a.id) {
+                <li class="tarjeta-asesor">
+                  <div class="tarjeta-cabeza">
+                    <span class="avatar" aria-hidden="true">{{ a.iniciales }}</span>
+                    <div>
+                      <p class="asesor-nombre">{{ a.nombre }}</p>
+                      <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+                    </div>
+                  </div>
+                  <p class="etiquetas">
+                    @for (area of a.areas; track area) {
+                      <span class="etiqueta">{{ area }}</span>
+                    }
+                  </p>
+                  <p class="tenue">
+                    {{ a.anosExperiencia }} {{ a.anosExperiencia === 1 ? 'año' : 'años' }} ·
+                    {{ a.tesisRevisadas }} revisadas
+                    @if (a.nota !== null) {
+                      · <span class="estrellas">{{ estrellas(a.nota) }}</span> {{ nota(a.nota) }}
+                    }
+                  </p>
+                  <button type="button" class="principal" [disabled]="guardando()" (click)="elegir(a)">
+                    Mandárselo a {{ a.nombre.split(' ')[0] }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+      } @else if (p.estado === 'CANCELADO') {
         <section class="caja caja-parada">
           <h2>Este pedido se canceló</h2>
           <p>Si crees que es un error, escríbenos con tu código.</p>
         </section>
       } @else {
-        <!-- Los tres pasos. El que toca, marcado; los pasados, hechos. -->
+        <!-- ── El camino normal ──────────────────────────────────────────── -->
         <ol class="pasos">
           @for (uno of pasos; track uno.estado; let i = $index) {
             <li [class.hecho]="i < avance()" [class.ahora]="i === avance()">
@@ -34,7 +97,12 @@
           <p class="ahora-texto">{{ paso[p.estado] }}</p>
 
           @if (p.estado === 'ENTREGADO' && p.enlaceObservaciones) {
-            <a class="boton-enlace" [href]="p.enlaceObservaciones" target="_blank" rel="noopener noreferrer">
+            <a
+              class="principal como-enlace"
+              [href]="p.enlaceObservaciones"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Abrir mis observaciones
             </a>
             <p class="tenue">
@@ -43,22 +111,73 @@
             </p>
           } @else {
             <p class="tenue">
-              Te avisamos por correo en cuanto estén listas. No hace falta que hagas nada ahora.
+              Te avisamos por correo en cuanto haya novedades. No hace falta que hagas nada ahora.
             </p>
           }
         </section>
 
-        <dl class="datos">
-          <dt>Lo que mandaste</dt>
-          <dd>{{ p.archivoNombre }}</dd>
-          <dt>Cuándo</dt>
-          <dd>{{ p.createdAt | date: 'd MMM y, HH:mm' }}</dd>
-          @if (p.entregadoAt) {
-            <dt>Entregado</dt>
-            <dd>{{ p.entregadoAt | date: 'd MMM y, HH:mm' }}</dd>
-          }
-        </dl>
+        <!-- ── Calificar ─────────────────────────────────────────────────── -->
+        @if (p.puedeResenar) {
+          <section class="caja calificar">
+            <h2>¿Cómo te fue con {{ p.asesor?.nombre?.split(' ')?.[0] }}?</h2>
+            <p class="tenue">
+              Tu opinión sale en su perfil y ayuda al siguiente tesista a elegir.
+            </p>
+
+            <div class="poner-estrellas" role="group" aria-label="Estrellas">
+              @for (n of [1, 2, 3, 4, 5]; track n) {
+                <button
+                  type="button"
+                  class="estrella"
+                  [class.puesta]="n <= estrellasPuestas()"
+                  [attr.aria-label]="n + ' de 5'"
+                  (click)="poner(n)"
+                >
+                  ★
+                </button>
+              }
+            </div>
+
+            <textarea
+              rows="3"
+              maxlength="1000"
+              placeholder="Qué te sirvió, qué esperabas y no encontraste…"
+              [value]="comentario()"
+              (input)="escribirComentario($event)"
+            ></textarea>
+
+            <button
+              type="button"
+              class="principal"
+              [disabled]="estrellasPuestas() < 1 || guardando()"
+              (click)="calificar()"
+            >
+              {{ guardando() ? 'Enviando…' : 'Enviar mi calificación' }}
+            </button>
+          </section>
+        } @else if (p.resena; as r) {
+          <section class="caja ya-califico">
+            <h2>Tu calificación</h2>
+            <p class="estrellas estrellas-grandes">{{ estrellas(r.estrellas) }}</p>
+            @if (r.comentario) {
+              <p class="motivo">«{{ r.comentario }}»</p>
+            }
+          </section>
+        }
       }
+
+      <dl class="datos">
+        <dt>Lo que mandaste</dt>
+        <dd>{{ p.archivoNombre }}</dd>
+        <dt>Tu tema</dt>
+        <dd>{{ p.tema }}</dd>
+        <dt>Cuándo</dt>
+        <dd>{{ p.createdAt | date: 'd MMM y, HH:mm' }}</dd>
+        @if (p.entregadoAt) {
+          <dt>Entregado</dt>
+          <dd>{{ p.entregadoAt | date: 'd MMM y, HH:mm' }}</dd>
+        }
+      </dl>
     } @else {
       <!-- Sin código en la URL, o con uno que no vale. -->
       <section class="caja caja-buscar">
@@ -75,7 +194,7 @@
             (input)="escribir($event)"
             (keyup.enter)="buscarEscrito()"
           />
-          <button type="button" class="boton-enlace" [disabled]="escrito().length < 6" (click)="buscarEscrito()">
+          <button type="button" class="principal" [disabled]="escrito().length < 6" (click)="buscarEscrito()">
             Buscar
           </button>
         </div>

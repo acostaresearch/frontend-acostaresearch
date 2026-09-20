@@ -192,6 +192,23 @@
         <dd>{{ a.anosExperiencia }} año{{ a.anosExperiencia === 1 ? '' : 's' }}</dd>
       </dl>
 
+      @if (a.estado === 'APROBADO' && a.enlacePanel) {
+        <h4>Su pantalla</h4>
+        <p class="tenue">
+          Mándale este enlace: es por donde ve sus encargos, los acepta y los entrega. No tiene
+          contraseña, así que es la llave: que no lo reparta.
+        </p>
+        <p class="enlace-asesor">{{ a.enlacePanel }}</p>
+        <p>
+          <button type="button" class="boton secundario" (click)="copiarEnlace(a)">
+            {{ enlaceCopiado() ? 'Copiado' : 'Copiar su enlace' }}
+          </button>
+          <span class="estado" [class.hecho]="a.visible">
+            {{ a.visible ? 'Sale en el directorio' : 'No acepta encargos' }}
+          </span>
+        </p>
+      }
+
       <h4>Lo que cuenta</h4>
       <p class="presentacion">{{ a.presentacion }}</p>
 

@@ -8,6 +8,7 @@ Disallow: /prueba/
 Disallow: /asesores/
 Disallow: /revision
 Disallow: /pedido
+Disallow: /asesor/
 Disallow: /api/
 
 Sitemap: https://acostaresearch.com/sitemap.xml

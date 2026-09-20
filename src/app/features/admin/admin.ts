@@ -2882,9 +2882,15 @@ export class Admin implements OnInit {
   private readonly pedidosApi = inject(PedidoService);
 
   readonly pedidos = signal<Pedido[]>([]);
-  /** Los que todavía no tienen asesor: son los que hay que mover hoy. */
-  readonly pedidosSinAsignar = computed(
-    () => this.pedidos().filter((p) => p.estado === 'RECIBIDO').length,
+  /**
+   * Los que esperan que su asesor conteste.
+   *
+   * No son trabajo tuyo —contestar es de él—, pero son los que pueden pudrirse:
+   * al otro lado hay un tesista mirando su seguimiento. El contador está para
+   * que se vea sin entrar, y para saber a quién hay que dar un toque.
+   */
+  readonly pedidosEsperando = computed(
+    () => this.pedidos().filter((p) => p.estado === 'ESPERANDO').length,
   );
 
   cargarPedidos(avisarSiFalla = true): void {

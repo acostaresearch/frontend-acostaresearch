@@ -329,3 +329,14 @@
   border: 1px solid var(--color-borde-fuerte);
   border-radius: var(--radio-sm);
 }
+
+/* Lo que lleva días esperando respuesta: lo único que pide una intervención. */
+.tardando {
+  font-weight: 600;
+  color: var(--color-aviso);
+}
+
+.estrellas {
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
