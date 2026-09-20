@@ -11,6 +11,7 @@ import {
   PedidoService,
   Seguimiento,
 } from '../../core/services/pedido.service';
+import { ConversacionDelEncargo } from '../../shared/conversacion/conversacion';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -41,7 +42,7 @@ const PASOS: { estado: EstadoDePedido; titulo: string }[] = [
  */
 @Component({
   selector: 'app-pedido',
-  imports: [DatePipe, SiteHeader, SiteFooter],
+  imports: [ConversacionDelEncargo, DatePipe, SiteHeader, SiteFooter],
   templateUrl: './pedido.html',
   styleUrl: './pedido.css',
 })
@@ -102,6 +103,12 @@ export class PedidoSeguimiento implements OnInit, OnDestroy {
     if (codigo.length < 6) return;
     void this.router.navigate(['/pedido', codigo]);
     this.buscar(codigo);
+  }
+
+  /** Llegaron mensajes: el estado y el contador de sin leer se vuelven a pedir. */
+  refrescar(): void {
+    const pedido = this.pedido();
+    if (pedido) this.buscar(pedido.codigo);
   }
 
   private buscar(codigo: string): void {

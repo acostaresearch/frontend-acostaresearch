@@ -40,6 +40,9 @@
                   {{ r.createdAt | date: 'd MMM y' }}
                 </p>
               </div>
+              @if (r.sinLeer > 0) {
+                <span class="estado sin-leer">{{ r.sinLeer }} sin leer</span>
+              }
               <span
                 class="estado"
                 [class.hecho]="r.estado === 'ENTREGADO'"

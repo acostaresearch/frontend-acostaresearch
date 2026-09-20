@@ -412,3 +412,9 @@ a.boton {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mensajes sin abrir: lo único de la lista que pide entrar ahora. */
+.estado.sin-leer {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+}

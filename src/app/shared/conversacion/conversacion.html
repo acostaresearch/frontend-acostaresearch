@@ -1,0 +1,103 @@
+<section class="conversacion">
+  <h3>
+    @if (conQuien()) {
+      Tu conversación con {{ conQuien() }}
+    } @else {
+      Conversación
+    }
+  </h3>
+
+  @if (cargando()) {
+    <p class="tenue">Abriendo la conversación…</p>
+  } @else if (!abierta()) {
+    <!-- Antes de aceptar no se habla: mientras decide no ve el documento ni al
+         tesista, y un canal abierto sería la puerta de atrás. -->
+    <p class="tenue">
+      Se abre en cuanto el asesor acepte el encargo. Entonces podréis escribiros aquí.
+    </p>
+  } @else {
+    @if (mensajes().length === 0) {
+      <p class="tenue">
+        Todavía no os habéis escrito. Lo que se diga aquí queda con su fecha, así que es mejor
+        sitio que el WhatsApp.
+      </p>
+    } @else {
+      <ol class="hilo">
+        @for (m of mensajes(); track m.id) {
+          <li [class.mio]="mio(m)">
+            <div class="burbuja">
+              <p class="quien">
+                {{ quien(m) }}
+                <span class="cuando">{{ m.createdAt | date: 'd MMM, HH:mm' }}</span>
+              </p>
+              <p class="texto">{{ m.texto }}</p>
+
+              @if (m.archivoNombre) {
+                <button
+                  type="button"
+                  class="adjunto"
+                  [disabled]="bajando() === m.id"
+                  (click)="bajar(m)"
+                >
+                  <span class="clip" aria-hidden="true">📎</span>
+                  <span class="adjunto-nombre">{{ m.archivoNombre }}</span>
+                  <span class="adjunto-peso">
+                    {{ bajando() === m.id ? 'bajando…' : peso(m.bytes) }}
+                  </span>
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    }
+
+    @if (error(); as e) {
+      <p class="mal">{{ e }}</p>
+    }
+
+    <div class="escribir">
+      <textarea
+        rows="3"
+        maxlength="2000"
+        placeholder="Escribe tu mensaje…"
+        [value]="texto()"
+        (input)="escribir($event)"
+      ></textarea>
+
+      <div class="escribir-pie">
+        <label class="clip-boton">
+          <input type="file" accept=".docx" (change)="elegirArchivo($event)" />
+          <span>📎 Adjuntar Word</span>
+        </label>
+
+        @if (archivo(); as f) {
+          <span class="elegido">
+            {{ f.name }}
+            <button type="button" class="quitar" aria-label="Quitar" (click)="quitarArchivo()">
+              ✕
+            </button>
+          </span>
+        }
+
+        <button
+          type="button"
+          class="enviar"
+          [disabled]="texto().trim().length === 0 || enviando()"
+          (click)="enviar()"
+        >
+          {{ enviando() ? 'Enviando…' : 'Enviar' }}
+        </button>
+      </div>
+
+      @if (errorArchivo(); as m) {
+        <small class="mal">{{ m }}</small>
+      }
+      @if (modo() === 'tesista') {
+        <small class="tenue">
+          Cuando corrijas, adjunta aquí tu versión: así tu asesor comprueba lo que quedó levantado.
+        </small>
+      }
+    </div>
+  }
+</section>

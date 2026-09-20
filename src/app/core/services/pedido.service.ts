@@ -104,9 +104,30 @@ export interface Seguimiento {
   enlaceObservaciones: string;
   resena: ResenaPublica | null;
   puedeResenar: boolean;
+  /** Mensajes de su asesor que todavía no ha abierto. */
+  sinLeer: number;
   createdAt: string;
   aceptadoAt: string | null;
   entregadoAt: string | null;
+}
+
+/** Un mensaje de la conversación de un encargo. */
+export interface Mensaje {
+  id: string;
+  de: 'TESISTA' | 'ASESOR';
+  texto: string;
+  /** Vacío = mensaje solo de texto, que es lo normal. */
+  archivoNombre: string;
+  bytes: number;
+  leidoAt: string | null;
+  createdAt: string;
+}
+
+/** La conversación entera, y si todavía admite mensajes. */
+export interface Conversacion {
+  /** Falso mientras el asesor no haya aceptado: entonces no se habla. */
+  abierta: boolean;
+  mensajes: Mensaje[];
 }
 
 /** Un encargo, como lo ve el asesor en su pantalla. */
@@ -128,6 +149,8 @@ export interface Encargo {
   tesista: { nombre: string; email: string; telefono: string } | null;
   enlaceObservaciones: string;
   resena: ResenaPublica | null;
+  /** Mensajes del tesista que todavía no ha abierto. */
+  sinLeer: number;
   createdAt: string;
   aceptadoAt: string | null;
   entregadoAt: string | null;
@@ -342,9 +365,12 @@ export class PedidoService {
       .pipe(map((res) => res.data));
   }
 
-  aceptar(token: string, id: string): Observable<Encargo> {
+  /** El saludo es opcional, pero es lo que convierte «aceptado» en alguien. */
+  aceptar(token: string, id: string, saludo = ''): Observable<Encargo> {
     return this.http
-      .post<ApiResponse<{ encargo: Encargo }>>(`${this.base}/asesor/${token}/${id}/aceptar`, {})
+      .post<ApiResponse<{ encargo: Encargo }>>(`${this.base}/asesor/${token}/${id}/aceptar`, {
+        saludo,
+      })
       .pipe(map((res) => res.data.encargo));
   }
 
@@ -373,6 +399,68 @@ export class PedidoService {
    */
   documentoDelEncargo(token: string, id: string): Observable<Blob> {
     return this.http.get(`${this.base}/asesor/${token}/${id}/documento`, { responseType: 'blob' });
+  }
+
+  // ── La conversación ────────────────────────────────────────────────────
+  //
+  // Dos juegos de llamadas porque son dos llaves distintas: el tesista tiene su
+  // código y el asesor su enlace. Ninguno de los dos puede leer la del otro, y
+  // eso lo comprueba el servidor.
+
+  mensajesDelTesista(codigo: string): Observable<Conversacion> {
+    return this.http
+      .get<ApiResponse<Conversacion>>(`${this.base}/${codigo}/mensajes`)
+      .pipe(map((res) => res.data));
+  }
+
+  mensajesDelAsesor(token: string, id: string): Observable<Conversacion> {
+    return this.http
+      .get<ApiResponse<Conversacion>>(`${this.base}/asesor/${token}/${id}/mensajes`)
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Escribir, con un Word opcional.
+   *
+   * El texto va en la query y el documento en el cuerpo, igual que el capítulo:
+   * el servidor lo espera así para no montar `multipart` por un archivo.
+   */
+  escribirComoTesista(codigo: string, texto: string, archivo: File | null): Observable<Mensaje> {
+    return this.escribir(`${this.base}/${codigo}/mensajes`, texto, archivo);
+  }
+
+  escribirComoAsesor(
+    token: string,
+    id: string,
+    texto: string,
+    archivo: File | null,
+  ): Observable<Mensaje> {
+    return this.escribir(`${this.base}/asesor/${token}/${id}/mensajes`, texto, archivo);
+  }
+
+  private escribir(url: string, texto: string, archivo: File | null): Observable<Mensaje> {
+    const params = new HttpParams().set('texto', texto);
+    const cabeceras: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
+    if (archivo) cabeceras['X-Nombre-Archivo'] = encodeURIComponent(archivo.name);
+
+    return this.http
+      .post<ApiResponse<{ mensaje: Mensaje }>>(url, archivo ?? new Blob(), {
+        params,
+        headers: cabeceras,
+      })
+      .pipe(map((res) => res.data.mensaje));
+  }
+
+  adjuntoDelTesista(codigo: string, mensajeId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${codigo}/mensajes/${mensajeId}/documento`, {
+      responseType: 'blob',
+    });
+  }
+
+  adjuntoDelAsesor(token: string, id: string, mensajeId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/asesor/${token}/${id}/mensajes/${mensajeId}/documento`, {
+      responseType: 'blob',
+    });
   }
 
   // ── La casa ────────────────────────────────────────────────────────────

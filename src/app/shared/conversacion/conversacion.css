@@ -1,0 +1,243 @@
+/* La conversación de un encargo. Burbujas a dos lados, como en cualquier chat:
+   no hay que aprender nada para saber quién dijo qué. */
+
+.conversacion {
+  margin-top: 20px;
+  padding: 20px;
+  text-align: left;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+}
+
+.conversacion h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.tenue {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+.mal {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
+/* ---------- El hilo ---------- */
+
+.hilo {
+  display: grid;
+  gap: 10px;
+  /* Alto acotado: una conversación larga no puede empujar tres pantallas
+     abajo lo que hay debajo. */
+  max-height: 420px;
+  overflow-y: auto;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.hilo li {
+  display: flex;
+}
+
+.hilo .mio {
+  justify-content: flex-end;
+}
+
+.burbuja {
+  max-width: min(100%, 460px);
+  padding: 11px 14px;
+  background: var(--color-fondo);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+}
+
+.mio .burbuja {
+  background: var(--color-primario-suave);
+  border-radius: 14px;
+  border-bottom-right-radius: 4px;
+}
+
+.quien {
+  margin: 0 0 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+}
+
+.cuando {
+  margin-left: 6px;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.texto {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: var(--color-texto);
+}
+
+/* ---------- El adjunto ---------- */
+
+.adjunto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.adjunto:hover:not(:disabled) {
+  border-color: var(--color-primario);
+}
+
+.adjunto:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.adjunto-nombre {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.adjunto-peso {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+/* ---------- Escribir ---------- */
+
+.escribir {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.escribir textarea {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-sobre-relleno);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+  resize: vertical;
+}
+
+.escribir textarea:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.escribir-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.clip-boton {
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.clip-boton:hover {
+  border-color: var(--color-primario);
+}
+
+/* El input nativo no se puede maquillar: se tapa y manda la etiqueta. */
+.clip-boton input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.elegido {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 7px 12px;
+  font-size: 13px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+  overflow-wrap: anywhere;
+}
+
+.quitar {
+  padding: 0 2px;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.enviar {
+  margin-left: auto;
+  padding: 10px 22px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.enviar:hover:not(:disabled) {
+  background: var(--color-boton-hover);
+}
+
+.enviar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .conversacion {
+    padding: 16px;
+  }
+
+  .enviar {
+    width: 100%;
+    margin-left: 0;
+  }
+}

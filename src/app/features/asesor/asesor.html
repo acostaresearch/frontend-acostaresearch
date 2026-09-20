@@ -105,6 +105,11 @@
                     {{ e.aceptadoAt | date: 'd MMM, HH:mm' }}
                   </p>
                 </div>
+                @if (e.sinLeer > 0) {
+                  <span class="estado sin-leer">
+                    {{ e.sinLeer }} sin leer
+                  </span>
+                }
                 <button
                   type="button"
                   class="secundario"
@@ -113,7 +118,7 @@
                 >
                   {{ bajando() === e.id ? 'Bajando…' : 'Bajar Word' }}
                 </button>
-                <button type="button" class="principal" (click)="abrir(e)">Entregar</button>
+                <button type="button" class="principal" (click)="abrir(e)">Abrir</button>
               </li>
             }
           </ul>
@@ -225,6 +230,19 @@
             </button>
           </div>
         } @else {
+          <h3>Un saludo al aceptar <span class="opcional">(opcional)</span></h3>
+          <p class="tenue">
+            Al otro lado hay alguien que acaba de entregarte su tesis y no sabe nada de ti. Dos
+            líneas cambian mucho la espera.
+          </p>
+          <textarea
+            rows="2"
+            maxlength="2000"
+            placeholder="Me lo quedo. Te devuelvo las observaciones el jueves."
+            [value]="saludo()"
+            (input)="escribir('saludo', $event)"
+          ></textarea>
+
           <div class="pie">
             <button type="button" class="secundario" (click)="rechazando.set(true)">
               No puedo tomarlo
@@ -273,6 +291,18 @@
         <div class="pie">
           <button type="button" class="secundario" (click)="cerrar()">Cerrar</button>
         </div>
+      }
+
+      <!-- La conversación con el tesista, desde que acepta. Después de entregar
+           sigue abierta: es cuando corrige y pregunta. -->
+      @if (e.estado === 'EN_REVISION' || e.estado === 'ENTREGADO') {
+        <app-conversacion
+          modo="asesor"
+          [token]="miToken"
+          [pedidoId]="e.id"
+          [conQuien]="e.tesista?.nombre ?? 'el tesista'"
+          (movimiento)="refrescar()"
+        />
       }
     </div>
   </div>

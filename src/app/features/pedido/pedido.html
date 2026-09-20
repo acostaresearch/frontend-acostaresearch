@@ -166,6 +166,18 @@
         }
       }
 
+      <!-- La conversación con su asesor. Desde que se lo manda: antes de que
+           acepte no se habla, pero saber que ahí va a haber un sitio para
+           hablar ya tranquiliza. -->
+      @if (p.asesor && p.estado !== 'RECHAZADO' && p.estado !== 'CANCELADO') {
+        <app-conversacion
+          modo="tesista"
+          [codigo]="p.codigo"
+          [conQuien]="p.asesor.nombre"
+          (movimiento)="refrescar()"
+        />
+      }
+
       <dl class="datos">
         <dt>Lo que mandaste</dt>
         <dd>{{ p.archivoNombre }}</dd>

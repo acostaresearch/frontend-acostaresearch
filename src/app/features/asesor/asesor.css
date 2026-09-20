@@ -439,3 +439,16 @@
     flex: 1 1 100%;
   }
 }
+
+/* Mensajes sin abrir: lo único de la lista que pide entrar ahora. */
+.estado.sin-leer {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+}
+
+.opcional {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-texto-tenue);
+}

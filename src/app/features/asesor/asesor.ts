@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import { Encargo, FichaDelAsesor, PedidoService } from '../../core/services/pedido.service';
+import { ConversacionDelEncargo } from '../../shared/conversacion/conversacion';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -30,7 +31,7 @@ import { SiteHeader } from '../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-asesor',
-  imports: [DatePipe, SiteHeader, SiteFooter],
+  imports: [ConversacionDelEncargo, DatePipe, SiteHeader, SiteFooter],
   templateUrl: './asesor.html',
   styleUrl: './asesor.css',
 })
@@ -52,6 +53,10 @@ export class PanelAsesor implements OnInit, OnDestroy {
   readonly rechazando = signal(false);
   readonly motivo = signal('');
   readonly enlace = signal('');
+  /** Lo que le escribe al aceptar. Opcional, pero cambia mucho la espera. */
+  readonly saludo = signal('');
+  /** Su propia llave, para pasársela a la conversación. */
+  readonly miToken = this.token;
 
   readonly esperando = computed(() => this.encargos().filter((e) => e.estado === 'ESPERANDO'));
   readonly enRevision = computed(() => this.encargos().filter((e) => e.estado === 'EN_REVISION'));
@@ -82,7 +87,7 @@ export class PanelAsesor implements OnInit, OnDestroy {
     });
   }
 
-  escribir(senal: 'motivo' | 'enlace', evento: Event): void {
+  escribir(senal: 'motivo' | 'enlace' | 'saludo', evento: Event): void {
     this[senal].set((evento.target as HTMLInputElement | HTMLTextAreaElement).value);
   }
 
@@ -109,10 +114,16 @@ export class PanelAsesor implements OnInit, OnDestroy {
     });
   }
 
+  /** Llegaron mensajes: los contadores de sin leer se vuelven a pedir. */
+  refrescar(): void {
+    this.cargar();
+  }
+
   abrir(encargo: Encargo): void {
     this.abierto.set(encargo);
     this.rechazando.set(false);
     this.motivo.set('');
+    this.saludo.set('');
     this.enlace.set(encargo.enlaceObservaciones);
     this.error.set(null);
   }
@@ -126,7 +137,7 @@ export class PanelAsesor implements OnInit, OnDestroy {
     if (!encargo || this.guardando()) return;
 
     this.guardando.set(true);
-    this.api.aceptar(this.token, encargo.id).subscribe({
+    this.api.aceptar(this.token, encargo.id, this.saludo().trim()).subscribe({
       next: (guardado) => {
         this.guardando.set(false);
         this.abierto.set(guardado);
