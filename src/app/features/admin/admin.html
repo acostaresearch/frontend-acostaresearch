@@ -61,18 +61,18 @@
       </button>
 
       <p class="lateral-grupo">Revisión de tesis</p>
-      <button type="button" [class.activa]="seccion() === 'pedidos'" (click)="ir('pedidos')">
+      <!-- <button type="button" [class.activa]="seccion() === 'pedidos'" (click)="ir('pedidos')">
         <span>Revisiones</span>
         @if (pedidosEsperando() > 0) {
           <span class="lateral-contador">{{ pedidosEsperando() }}</span>
         }
-      </button>
-      <button type="button" [class.activa]="seccion() === 'asesores'" (click)="ir('asesores')">
+      </button> -->
+      <!-- <button type="button" [class.activa]="seccion() === 'asesores'" (click)="ir('asesores')">
         <span>Asesores</span>
         @if (asesoresPendientes() > 0) {
           <span class="lateral-contador">{{ asesoresPendientes() }}</span>
         }
-      </button>
+      </button> -->
       <button type="button" [class.activa]="seccion() === 'admins'" (click)="ir('admins')">
         <span>Administradores</span>
       </button>
