@@ -18,7 +18,6 @@ import {
   ResultadoDeScopus,
   ResumenConIa,
   ScopusService,
-  TemaPropuesto,
 } from '../../core/services/scopus.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
 
@@ -374,25 +373,6 @@ export class MiScopusPanel implements OnInit {
 
   readonly pasosAbiertos = signal(false);
 
-  /**
-   * Los temas que el copiloto propone investigar, con sus variables.
-   *
-   * Quien escribe «algo de IA y universitarios» no tiene un tema: tiene una
-   * inquietud, y la búsqueda que sale de ahí trae de todo. Estas tarjetas le
-   * enseñan en qué se puede convertir eso —qué influye, sobre qué y en
-   * quiénes— y cada una busca SU literatura con un botón. No sustituyen a la
-   * búsqueda general, que ya se hizo: están encima de ella para afinarla.
-   */
-  readonly temasPropuestos = signal<TemaPropuesto[]>([]);
-
-  /** El tema por el que se está buscando ahora, para marcar su tarjeta. */
-  readonly temaElegido = signal<number | null>(null);
-
-  /** Por qué no se pudo ordenar por significado, mientras no se reintente. */
-  readonly fallaSignificado = signal<string | null>(null);
-
-  readonly temasAbiertos = signal(true);
-
   readonly pasosDelCopiloto = computed(() => {
     const generacion = this.ultimaGeneracion();
     if (!generacion) return [];
@@ -435,7 +415,7 @@ export class MiScopusPanel implements OnInit {
     this.notaIa.set(null);
 
     this.scopus.generarConsulta(tema).subscribe({
-      next: ({ conceptos, nota, temas }) => {
+      next: ({ conceptos, nota }) => {
         this.generando.set(false);
         this.campo.set('TITLE-ABS-KEY');
         this.texto.set(conceptos.map((c) => c.nombre).join(', '));
@@ -443,10 +423,6 @@ export class MiScopusPanel implements OnInit {
           Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
         );
         this.notaIa.set(nota);
-        // Los temas son de ESTA pregunta: los de la anterior ya no valen.
-        this.temasPropuestos.set(temas ?? []);
-        this.temaElegido.set(null);
-        this.temasAbiertos.set(true);
         this.ultimaGeneracion.set({
           tema,
           conceptos: conceptos.length,
@@ -467,63 +443,6 @@ export class MiScopusPanel implements OnInit {
         this.errorIa.set(toApiError(fallo).message);
       },
     });
-  }
-
-  /**
-   * Elegir uno de los temas propuestos: se busca ESE, no la inquietud entera.
-   *
-   * Hace lo mismo que acabar de preguntar —los conceptos al campo, sus
-   * sinónimos, orden por significado y el resumen con citas detrás—, pero con
-   * los del tema, y la pregunta del resumen pasa a ser su título, que es lo
-   * que ahora se está investigando. Cuenta como conversación nueva: se guarda
-   * por su cuenta y no pisa la del tema que se miró antes.
-   *
-   * Las tarjetas se quedan: casi nadie acierta a la primera, y lo normal es
-   * mirar un tema, volver y probar el siguiente.
-   */
-  elegirTema(tema: TemaPropuesto, indice: number): void {
-    if (this.buscando() || this.generando()) return;
-
-    this.campo.set('TITLE-ABS-KEY');
-    this.texto.set(tema.conceptos.map((c) => c.nombre).join(', '));
-    this.sinonimos.set(
-      Object.fromEntries(tema.conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
-    );
-    this.temaElegido.set(indice);
-    this.notaIa.set(null);
-    this.ultimaGeneracion.set({
-      tema: tema.titulo,
-      conceptos: tema.conceptos.length,
-      sinonimos: tema.conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
-      /**
-       * La relación del tema, dicha como lo que es.
-       *
-       * Iba cruda a la lista de pasos y salía de tercer punto, entre «añadí
-       * sinónimos» y «armé la búsqueda», leyéndose como una frase cortada: «si
-       * un mayor nivel de alfabetización digital mejora las perspectivas
-       * laborales». Con el encabezado se entiende qué hace ahí.
-       */
-      nota: tema.relacion ? `Me quedo solo con este tema: ${tema.relacion}.` : null,
-    });
-    this.pasosAbiertos.set(false);
-    this.conversacionId = null;
-    this.orden.set('significado');
-    this.buscar(1);
-  }
-
-  /** Las variables del tema, en la línea de su tarjeta. Sin las que no dijo. */
-  variablesDelTema(tema: TemaPropuesto): { etiqueta: string; valor: string }[] {
-    const filas = [
-      { etiqueta: 'Influye', valor: tema.independiente },
-      { etiqueta: 'Sobre', valor: tema.dependiente },
-      { etiqueta: 'En quiénes', valor: tema.poblacion },
-    ];
-    return filas.filter((f): f is { etiqueta: string; valor: string } => Boolean(f.valor));
-  }
-
-  /** Con qué se buscaría ese tema, para que se vea antes de pulsar. */
-  conceptosDelTema(tema: TemaPropuesto): string {
-    return tema.conceptos.map((c) => c.nombre).join(' · ');
   }
 
   // ── El resumen con citas ──────────────────────────────────────────────────
@@ -1758,11 +1677,6 @@ export class MiScopusPanel implements OnInit {
     this.temaIa.set(texto(e['temaIa']));
     this.iaAbierta.set(e['iaAbierta'] === true);
     this.ultimaGeneracion.set(objeto(e['ultimaGeneracion'], null));
-    // Los temas propuestos no se guardan: una búsqueda guardada se abre para
-    // ver SUS resultados, y enseñar debajo los temas de otra pregunta —o los
-    // de hace un mes— solo confunde. Se vuelven a pedir preguntando otra vez.
-    this.temasPropuestos.set([]);
-    this.temaElegido.set(null);
     const orden = texto(e['orden']);
     this.orden.set(
       (['citas', 'recientes', 'antiguos', 'relevancia', 'significado'].includes(orden) ? orden : 'citas') as OrdenDeScopus,
@@ -2035,7 +1949,6 @@ export class MiScopusPanel implements OnInit {
 
     this.buscando.set(true);
     this.error.set(null);
-    this.fallaSignificado.set(null);
     this.parte.set(null);
     this.marcados.set(new Set());
 
@@ -2055,18 +1968,14 @@ export class MiScopusPanel implements OnInit {
       error: (fallo: unknown) => {
         this.buscando.set(false);
         if (porSignificado) {
-          /**
-           * Si falla el orden por significado, se dice y se deja reintentar.
-           *
-           * Antes se buscaba solo otra vez, por más citados, y se enseñaba esa
-           * tabla. Era una segunda consulta a Scopus que nadie había pedido
-           * —contra la cuota semanal de la casa— y le ponía delante al tesista
-           * 2 920 artículos de un orden que no era el suyo, justo cuando
-           * estaba usando la IA para NO tener que mirar eso. El tope que suele
-           * hacerlo fallar es de segundos: reintentar lo arregla.
-           */
-          this.busqueda.set(null);
-          this.fallaSignificado.set(toApiError(fallo).message);
+          // Ordenar por significado es un extra: si falla, se busca igual,
+          // por citas, y se dice por qué el orden no es el pedido.
+          this.orden.set('citas');
+          // Primero la búsqueda, que al empezar borra el aviso anterior.
+          this.buscar(pagina);
+          this.mostrarError(
+            `No se pudo ordenar por significado (${toApiError(fallo).message}). Te los mostramos por más citados.`,
+          );
           return;
         }
         this.mostrarError(toApiError(fallo).message);
@@ -2076,11 +1985,6 @@ export class MiScopusPanel implements OnInit {
         this.cargar();
       },
     });
-  }
-
-  /** «Volver a intentar» tras un fallo del orden por significado: la misma búsqueda. */
-  reintentarSignificado(): void {
-    this.buscar(1);
   }
 
   /**
@@ -2127,8 +2031,6 @@ export class MiScopusPanel implements OnInit {
     this.sinonimos.set({});
     this.notaIa.set(null);
     this.ultimaGeneracion.set(null);
-    this.temasPropuestos.set([]);
-    this.temaElegido.set(null);
     this.temaIa.set('');
     this.hilo.set([]);
     this.errorResumen.set(null);

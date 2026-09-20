@@ -124,30 +124,11 @@ export interface BusquedaGuardada extends BusquedaGuardadaResumida {
   hilo: unknown[] | null;
 }
 
-/**
- * Un tema concreto que el copiloto propone investigar, con sus variables.
- *
- * `independiente` y `dependiente` van en nulo cuando el estudio no tiene esa
- * forma —un cualitativo, un descriptivo—, y entonces lo que se estudia lo
- * cuenta `relacion`. Los conceptos son los de ESTE tema: con ellos se busca
- * al elegirlo.
- */
-export interface TemaPropuesto {
-  titulo: string;
-  independiente: string | null;
-  dependiente: string | null;
-  relacion: string | null;
-  poblacion: string | null;
-  conceptos: { nombre: string; sinonimos: string[] }[];
-}
-
 /** Lo que propone el generador con IA: conceptos en inglés con sus sinónimos. */
 export interface ConsultaGenerada {
   conceptos: { nombre: string; sinonimos: string[] }[];
   /** Una frase para el tesista: qué se dejó fuera y por qué. */
   nota: string | null;
-  /** Temas investigables que salen de lo que describió. Puede venir vacío. */
-  temas: TemaPropuesto[];
 }
 
 /** Un artículo tal como viaja para el resumen: lo justo para citarlo. */

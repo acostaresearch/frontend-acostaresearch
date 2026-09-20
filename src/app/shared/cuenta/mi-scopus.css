@@ -1289,35 +1289,3 @@
     width: 100%;
   }
 }
-
-/* El orden por significado falló: el motivo y el botón en la misma caja, sin
-   tabla de repuesto debajo. */
-.sc-falla-significado {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sc-falla-significado p {
-  flex: 1 1 280px;
-  margin: 0;
-}
-
-.sc-reintentar {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  font: inherit;
-  font-weight: 600;
-  color: #fff;
-  background: var(--color-primario);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.sc-reintentar:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
