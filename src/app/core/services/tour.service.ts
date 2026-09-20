@@ -24,6 +24,12 @@ export interface PasoDelTour {
   titulo: string;
   texto: string;
   /**
+   * Si este paso cierra ofreciendo otra cosa, el texto de su botón. El de
+   * «Siguiente» pasa a ser ese, y quien lo pulsa acaba aquí y arranca lo
+   * ofrecido. Ver `RecorridoWeb`.
+   */
+  oferta?: { texto: string };
+  /**
    * Un selector que se pulsa ANTES de enseñar el paso, para que lo que se va a
    * señalar esté a la vista. Casi siempre, la pestaña que lo contiene: enseñar
    * el panel de Zotero sin abrir su pestaña sería iluminar un hueco vacío.
@@ -42,6 +48,14 @@ export interface PasoDelTour {
  * revisión es cambiar esta línea.
  */
 const SIEMPRE_AL_ADMINISTRADOR = false;
+
+/** Con qué se arranca un recorrido, además de sus pasos. */
+export interface OpcionesDelTour {
+  /** Otros recorridos que este da por vistos al acabar. */
+  tambien?: string[];
+  /** Qué hacer si se acepta la oferta de su último paso. */
+  alAceptar?: () => void;
+}
 
 /** Lo que se guarda en el navegador de quien ya lo vio. */
 const CLAVE = (nombre: string, usuario: string) => `acosta.tour.${nombre}.${usuario}`;
@@ -83,6 +97,9 @@ export class TourService {
    * persona no tenía panel, esos pasos no salieron y sigue debiéndoselos.
    */
   private tambien: string[] = [];
+
+  /** Qué hacer si quien mira acepta la oferta del último paso. */
+  private alAceptar: (() => void) | null = null;
 
   readonly activo = computed(() => this.pasos().length > 0);
   readonly paso = computed<PasoDelTour | null>(() => this.pasos()[this.indice()] ?? null);
@@ -138,7 +155,7 @@ export class TourService {
   private readonly sentido = signal<1 | -1>(1);
 
   /** Empieza ahora, lo haya visto o no. Es el botón de «verlo otra vez». */
-  empezar(nombre: string, pasos: PasoDelTour[], tambien: string[] = []): void {
+  empezar(nombre: string, pasos: PasoDelTour[], opciones: OpcionesDelTour = {}): void {
     // Un paso que señala algo que no está en la pantalla no se enseña: se cae
     // aquí, antes de empezar, y así el contador dice la verdad. Quien todavía
     // no tiene tesis abierta no tiene «Por dónde vas» que mirar, y en un
@@ -147,7 +164,8 @@ export class TourService {
     if (vivos.length === 0) return;
 
     this.nombre = nombre;
-    this.tambien = tambien;
+    this.tambien = opciones.tambien ?? [];
+    this.alAceptar = opciones.alAceptar ?? null;
     this.sentido.set(1);
     this.indice.set(0);
     this.pasos.set(vivos);
@@ -182,9 +200,24 @@ export class TourService {
   }
 
   /** Lo ofrece solo a quien no lo ha visto nunca. Ver la nota de la clase. */
-  ofrecer(nombre: string, pasos: PasoDelTour[], tambien: string[] = []): void {
+  ofrecer(nombre: string, pasos: PasoDelTour[], opciones: OpcionesDelTour = {}): void {
     if (this.activo() || !this.leToca(nombre)) return;
-    this.empezar(nombre, pasos, tambien);
+    this.empezar(nombre, pasos, opciones);
+  }
+
+  /** Lo que ofrece el paso de ahora, si ofrece algo. Lo pinta el globo. */
+  readonly oferta = computed(() => this.paso()?.oferta ?? null);
+
+  /**
+   * Acepta la oferta: se acaba este recorrido y arranca lo que ofrecía.
+   *
+   * En este orden, porque lo ofrecido casi siempre es otro recorrido y dos a la
+   * vez no caben: `empezar` no arranca nada si hay uno en marcha.
+   */
+  aceptar(): void {
+    const hacer = this.alAceptar;
+    this.terminar();
+    hacer?.();
   }
 
   /**
@@ -235,6 +268,7 @@ export class TourService {
     if (this.nombre) [this.nombre, ...this.tambien].forEach((n) => this.marcar(n));
     this.nombre = '';
     this.tambien = [];
+    this.alAceptar = null;
     this.pasos.set([]);
     this.indice.set(0);
   }

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
+import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { LineasNoche } from './lineas-noche';
 
 import { environment } from '../../../environments/environment';
@@ -22,13 +23,13 @@ interface Red {
   styleUrl: './site-footer.css',
 })
 export class SiteFooter {
-  private readonly router = inject(Router);
+  private readonly recorrido = inject(RecorridoWeb);
 
   readonly whatsappUrl = environment.whatsappUrl;
 
-  /** El recorrido de la web. Lo mismo que el botón de la cabecera. */
+  /** El recorrido guiado. Lo mismo que la brújula de la cabecera. */
   verElRecorrido(): void {
-    void this.router.navigate(['/'], { queryParams: { tour: 1 } });
+    this.recorrido.empezarAqui();
   }
   readonly anio = new Date().getFullYear();
 

@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { LicenseService } from '../../core/services/license.service';
+import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TourService } from '../../core/services/tour.service';
 import { TOUR_DEL_PANEL, TOUR_PANEL } from '../contenido/tour-del-panel';
 import { MiTesis } from './mi-tesis';
@@ -49,6 +50,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
 export class MiConector implements OnInit {
   private readonly licencias = inject(LicenseService);
   private readonly tour = inject(TourService);
+  private readonly recorrido = inject(RecorridoWeb);
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
@@ -85,9 +87,12 @@ export class MiConector implements OnInit {
 
   /**
    * El recorrido guiado, a mano. El de la primera vez lo ofrece `ngOnInit`.
+   *
+   * Empieza por esta pantalla —que es la que se está mirando— y al acabarla
+   * ofrece el resto del sitio. Ver `RecorridoWeb`.
    */
   verElRecorrido(): void {
-    this.tour.empezar(TOUR_PANEL, TOUR_DEL_PANEL);
+    this.recorrido.empezarAqui();
   }
 
   abrirMapa(): void {

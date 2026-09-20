@@ -1,15 +1,14 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { Plan } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
+import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TourService } from '../../core/services/tour.service';
-import { TOUR_PANEL } from '../../shared/contenido/tour-del-panel';
-import { TOUR_WEB, recorridoDeLaWeb } from '../../shared/contenido/tour-de-la-web';
+import { TOUR_WEB } from '../../shared/contenido/tour-de-la-web';
 import {
   CIFRAS,
   FASES_ARTICULO,
@@ -44,9 +43,7 @@ export class Home implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly licencias = inject(LicenseService);
   private readonly tour = inject(TourService);
-  private readonly router = inject(Router);
-  private readonly ruta = inject(ActivatedRoute);
-  private readonly destruccion = inject(DestroyRef);
+  private readonly recorrido = inject(RecorridoWeb);
   protected readonly auth = inject(AuthService);
 
   readonly cifras = CIFRAS;
@@ -173,7 +170,6 @@ export class Home implements OnInit {
     }
 
     this.ofrecerElRecorrido();
-    this.atenderAlBoton();
   }
 
   /**
@@ -190,45 +186,15 @@ export class Home implements OnInit {
   private ofrecerElRecorrido(): void {
     if (!this.tour.leToca(TOUR_WEB)) return;
 
-    setTimeout(() => this.tour.ofrecer(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 1200);
-  }
-
-  /**
-   * El recorrido pedido a mano, desde la cabecera o desde el pie.
-   *
-   * Los dos botones traen aquí con `?tour=1` en vez de arrancarlo ellos: el
-   * recorrido empieza siempre en la portada, y así hay UN solo sitio que sabe
-   * armarlo y esperar a que la página esté lista. La marca se quita de la
-   * dirección antes de empezar, para que recargar no lo vuelva a lanzar y para
-   * poder pedirlo otra vez estando ya aquí.
-   */
-  private atenderAlBoton(): void {
-    this.ruta.queryParamMap.pipe(takeUntilDestroyed(this.destruccion)).subscribe(async (params) => {
-      if (!params.has('tour')) return;
-
-      await this.router.navigate([], { queryParams: {}, replaceUrl: true });
-      setTimeout(() => this.tour.empezar(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 350);
-    });
-  }
-
-  /**
-   * Lo que este recorrido da por visto de paso.
-   *
-   * Si lleva los pasos del panel dentro, quien lo termine no tiene que volver a
-   * verlos al entrar en su perfil. A quien no tenía panel no se le da por
-   * visto: esos pasos no le salieron.
-   */
-  private yaVistos(): string[] {
-    return this.tieneConector() === true ? [TOUR_PANEL] : [];
-  }
-
-  /** El recorrido de quien está mirando. Ver `recorridoDeLaWeb`. */
-  private pasosDelRecorrido() {
-    return recorridoDeLaWeb({
-      conSesion: this.auth.isAuthenticated(),
-      esAdmin: this.auth.hasRole('ADMIN'),
-      tieneConector: this.tieneConector() === true,
-    });
+    setTimeout(
+      () =>
+        this.recorrido.ofrecerElCompleto({
+          conSesion: this.auth.isAuthenticated(),
+          esAdmin: this.auth.hasRole('ADMIN'),
+          tieneConector: this.tieneConector() === true,
+        }),
+      1200,
+    );
   }
 
   /**

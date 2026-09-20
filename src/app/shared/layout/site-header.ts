@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
+import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TemaService } from '../../core/services/tema.service';
 
 /**
@@ -22,6 +23,7 @@ import { TemaService } from '../../core/services/tema.service';
 })
 export class SiteHeader {
   private readonly router = inject(Router);
+  private readonly recorrido = inject(RecorridoWeb);
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
 
@@ -41,14 +43,14 @@ export class SiteHeader {
   }
 
   /**
-   * El recorrido de la web.
+   * El recorrido guiado, empezando por ESTA página. Ver `RecorridoWeb`.
    *
-   * No lo arranca aquí: lleva a la portada con la marca `?tour=1` y allí lo
-   * empieza el propio inicio, que es quien sabe armarlo —no es el mismo para
-   * un visitante que para el administrador— y cuándo la página está lista.
+   * Si el menú de móvil estaba desplegado, se cierra: tapa media pantalla, que
+   * es justo lo que el recorrido va a señalar.
    */
   verElRecorrido(): void {
-    void this.router.navigate(['/'], { queryParams: { tour: 1 } });
+    this.menuAbierto.set(false);
+    this.recorrido.empezarAqui();
   }
 
   alternarMenu(): void {

@@ -65,15 +65,23 @@
     <div class="pie">
       <!-- Saltar a la izquierda y separado: se sale cuando se quiere, sin
            buscarlo, pero no se pulsa por inercia al avanzar. -->
-      <button type="button" class="boton enlace saltar" (click)="tour.terminar()">Saltar</button>
+      <button type="button" class="boton enlace saltar" (click)="tour.terminar()">
+        {{ tour.oferta() ? 'No, gracias' : 'Saltar' }}
+      </button>
 
       <div class="avanzar">
         @if (!tour.esElPrimero()) {
           <button type="button" class="boton secundario" (click)="tour.anterior()">Atrás</button>
         }
-        <button #avanzar type="button" class="boton" (click)="tour.siguiente()">
-          {{ tour.esElUltimo() ? 'Listo' : 'Siguiente' }}
-        </button>
+        @if (tour.oferta(); as oferta) {
+          <button #avanzar type="button" class="boton" (click)="tour.aceptar()">
+            {{ oferta.texto }}
+          </button>
+        } @else {
+          <button #avanzar type="button" class="boton" (click)="tour.siguiente()">
+            {{ tour.esElUltimo() ? 'Listo' : 'Siguiente' }}
+          </button>
+        }
       </div>
     </div>
   </div>

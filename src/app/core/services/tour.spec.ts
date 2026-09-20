@@ -134,11 +134,27 @@ describe('Tour', () => {
   it('un recorrido puede dar por vistos otros: el de la web incluye el del panel', () => {
     const tour = servicio();
 
-    tour.empezar('web', PASOS, ['panel']);
+    tour.empezar('web', PASOS, { tambien: ['panel'] });
     tour.terminar();
 
     expect(tour.visto('web')).toBe(true);
     expect(tour.visto('panel')).toBe(true);
+  });
+
+  it('un paso puede ofrecer otro recorrido: aceptarlo acaba este y arranca aquel', () => {
+    const tour = servicio();
+    let arrancado = false;
+
+    tour.empezar('pagina', [{ titulo: 'Fin', texto: '.', oferta: { texto: 'Ver el sitio' } }], {
+      alAceptar: () => (arrancado = true),
+    });
+
+    expect(tour.oferta()?.texto).toBe('Ver el sitio');
+
+    tour.aceptar();
+    expect(arrancado).toBe(true);
+    expect(tour.activo()).toBe(false);
+    expect(tour.visto('pagina')).toBe(true);
   });
 
   it('el contador va por tandas: vuelve a empezar en cada página', () => {

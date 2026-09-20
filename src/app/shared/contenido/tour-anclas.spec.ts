@@ -51,6 +51,24 @@ describe('Anclas del recorrido', () => {
     expect(anclas.length).toBeGreaterThan(20);
   });
 
+  // Quien pulsa la brújula en una página ve LO DE ESA PÁGINA. Si alguna se
+  // quedara sin pasos propios, ahí el botón se iría a la portada sin avisar.
+  it.each([
+    '/',
+    '/metodo',
+    '/articulo',
+    '/en-accion',
+    '/quien-soy',
+    '/preguntas',
+    '/planes',
+    '/tutoriales',
+    '/guias-de-instalacion',
+    '/perfil',
+    '/admin',
+  ])('%s tiene pasos propios en el recorrido', (ruta) => {
+    expect(pasos.filter((paso) => paso.ruta === ruta).length).toBeGreaterThan(0);
+  });
+
   it.each(anclas)('%s está en alguna plantilla, y dentro de su etiqueta', (ancla) => {
     if (ancla.startsWith('#')) {
       expect(plantillas).toContain(`id="${ancla.slice(1)}"`);
