@@ -63,8 +63,39 @@
   width: auto;
 }
 
+.aspa {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--color-texto-tenue);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
+}
+
+.aspa:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+.aspa svg {
+  width: 16px;
+  height: 16px;
+}
+
 .cuenta {
   margin: 0;
+  /* Sitio para el aspa: el número es corto, pero el título de al lado no. */
+  padding-right: 26px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -74,6 +105,7 @@
 
 .globo h3 {
   margin: 6px 0 0;
+  padding-right: 26px;
   font-size: 1.05rem;
   line-height: 1.35;
   color: var(--color-texto);

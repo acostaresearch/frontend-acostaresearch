@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { Role, User } from '../models/user.model';
 import { AuthService } from './auth.service';
@@ -34,6 +35,7 @@ describe('Tour', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        provideRouter([]),
         {
           provide: AuthService,
           useValue: { user: usuario, hasRole: (r: Role) => rol() === r },
@@ -115,20 +117,44 @@ describe('Tour', () => {
     expect(tour.activo()).toBe(false);
   });
 
-  // Interruptor temporal, mientras se revisan los recorridos. Ver
-  // `SIEMPRE_AL_ADMINISTRADOR` en el servicio: cuando se apague, esta prueba
-  // se cae y hay que borrarla con él.
-  it('al administrador se le enseña siempre, lo haya visto o no', () => {
+  // El interruptor `SIEMPRE_AL_ADMINISTRADOR` está apagado: mientras estuvo
+  // encendido, al administrador se le enseñaba en cada entrada para poder
+  // revisarlo sin borrar el almacenamiento.
+  it('al administrador se le enseña una sola vez, como a todos', () => {
     rol.set('ADMIN');
     const tour = servicio();
 
     tour.ofrecer('panel', PASOS);
     tour.terminar();
 
-    expect(tour.visto('panel')).toBe(true);
-
     tour.ofrecer('panel', PASOS);
-    expect(tour.activo()).toBe(true);
+    expect(tour.activo()).toBe(false);
+  });
+
+  it('un recorrido puede dar por vistos otros: el de la web incluye el del panel', () => {
+    const tour = servicio();
+
+    tour.empezar('web', PASOS, ['panel']);
+    tour.terminar();
+
+    expect(tour.visto('web')).toBe(true);
+    expect(tour.visto('panel')).toBe(true);
+  });
+
+  it('un paso de otra página se guarda: desde aquí no se puede saber si está', () => {
+    const tour = servicio();
+    tour.empezar('web', [
+      { ancla: '[data-tour="no-existe"]', titulo: 'De esta página', texto: 'Se cae.' },
+      {
+        ruta: '/preguntas',
+        ancla: '[data-tour="no-existe"]',
+        titulo: 'De otra página',
+        texto: 'Se queda: ya se verá al llegar.',
+      },
+    ]);
+
+    expect(tour.total()).toBe(1);
+    expect(tour.paso()?.titulo).toBe('De otra página');
   });
 
   it('un paso que señala algo escondido se cae, salvo si él mismo lo abre', () => {

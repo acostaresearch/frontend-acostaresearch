@@ -1,8 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { TourService } from '../../core/services/tour.service';
-import { TOUR_DE_LA_PORTADA, TOUR_PORTADA } from '../contenido/tour-de-la-portada';
 import { LineasNoche } from './lineas-noche';
 
 import { environment } from '../../../environments/environment';
@@ -24,29 +22,13 @@ interface Red {
   styleUrl: './site-footer.css',
 })
 export class SiteFooter {
-  private readonly tour = inject(TourService);
   private readonly router = inject(Router);
 
   readonly whatsappUrl = environment.whatsappUrl;
 
-  /**
-   * El recorrido de la web, pedido a mano.
-   *
-   * Si no se está en la portada se va a ella primero: los pasos señalan cosas
-   * que solo existen ahí, y empezarlo en «Términos y Condiciones» sería un
-   * recorrido de un paso. La espera es la misma que hace la portada al
-   * llegar: media página la pinta el servidor.
-   */
-  async verElRecorrido(): Promise<void> {
-    const enLaPortada = this.router.url.split(/[?#]/)[0] === '/';
-
-    if (!enLaPortada) {
-      await this.router.navigate(['/']);
-      setTimeout(() => this.tour.empezar(TOUR_PORTADA, TOUR_DE_LA_PORTADA), 1200);
-      return;
-    }
-
-    this.tour.empezar(TOUR_PORTADA, TOUR_DE_LA_PORTADA);
+  /** El recorrido de la web. Lo mismo que el botón de la cabecera. */
+  verElRecorrido(): void {
+    void this.router.navigate(['/'], { queryParams: { tour: 1 } });
   }
   readonly anio = new Date().getFullYear();
 

@@ -29,6 +29,21 @@
     aria-labelledby="tour-titulo"
     aria-describedby="tour-texto"
   >
+    <!-- La aspa, arriba a la derecha: es donde se cierra cualquier cosa que se
+         abre encima, y quien quiere salir la busca ahí antes de leer nada. El
+         «Saltar» de abajo se queda para quien no la ve. -->
+    <button type="button" class="aspa" (click)="tour.terminar()" aria-label="Cerrar el recorrido">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M6 6l12 12M18 6L6 18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </button>
+
     <p class="cuenta">{{ tour.numero() }} de {{ tour.total() }}</p>
     <h3 id="tour-titulo">{{ paso.titulo }}</h3>
     <p id="tour-texto" class="texto">{{ paso.texto }}</p>

@@ -36,11 +36,17 @@ const BORDE = 16;
  * Un paso puede señalar algo que aparece un instante después: la pestaña que se
  * acaba de pulsar, un panel que estaba escondido, una tarjeta cuyo servidor
  * todavía no contestó. Pasado este tiempo se da por ausente y se sigue de largo.
+ *
+ * Recién llegado de otra página se espera mucho más: ahí no falta un instante,
+ * falta que el navegador descargue el trozo de esa página y que su servidor
+ * conteste.
  */
 const ESPERA = 700;
+const ESPERA_AL_LLEGAR = 3000;
 
 /** Cuánto se sigue midiendo tras cambiar de paso, mientras el desplazamiento llega. */
 const SEGUIMIENTO = 1100;
+const SEGUIMIENTO_AL_LLEGAR = 2200;
 
 /**
  * El recorrido guiado: el velo, el foco y el globo.
@@ -85,10 +91,15 @@ export class Tour implements OnDestroy {
   /** Un punto por paso en la barra de abajo. */
   readonly puntos = computed(() => Array.from({ length: this.tour.total() }, (_, i) => i + 1));
 
+  private readonly router = inject(Router);
+
   private cuadro = 0;
   private desde = 0;
   private desplazado = false;
   private enfocado = false;
+
+  /** Si al paso de ahora se llegó cambiando de página. Alarga las esperas. */
+  private recienLlegado = false;
 
   /**
    * Si se desplaza con animación. Se consulta cada vez y no una sola al nacer:
@@ -101,16 +112,19 @@ export class Tour implements OnDestroy {
   }
 
   constructor() {
-    // Al cambiar de página el recorrido se acaba. Sus pasos señalan cosas de
-    // ESTA pantalla, y dejarlo vivo haría que el globo fuera cayéndose paso a
-    // paso delante de quien ya se fue a otra cosa.
-    inject(Router)
-      .events.pipe(
+    // Al cambiar de página el recorrido se acaba: sus pasos señalan cosas de la
+    // pantalla que se deja, y dejarlo vivo haría que el globo fuera cayéndose
+    // paso a paso delante de quien ya se fue a otra cosa.
+    //
+    // Salvo cuando el que navega es él: el recorrido cruza el sitio entero, y
+    // cambiar de página es justo lo que hace entre un paso y el siguiente.
+    this.router.events
+      .pipe(
         filter((evento) => evento instanceof NavigationStart),
         takeUntilDestroyed(),
       )
       .subscribe(() => {
-        if (this.tour.activo()) this.tour.terminar();
+        if (this.tour.activo() && !this.tour.navegando()) this.tour.terminar();
       });
 
     effect(() => {
@@ -123,15 +137,57 @@ export class Tour implements OnDestroy {
         return;
       }
 
-      // Se pulsa la pestaña que contiene lo que se va a señalar. El panel no
-      // está pintado todavía; de eso se encarga el seguimiento de abajo.
-      if (paso.abrir) document.querySelector<HTMLElement>(paso.abrir)?.click();
+      // Si el paso vive en otra página, primero se va hasta ella. Lo demás
+      // —buscar el ancla, esperarla, medirla— es igual esté donde esté.
+      if (paso.ruta && !this.tour.enLaRuta(paso.ruta)) {
+        this.viajar(paso);
+        return;
+      }
 
-      this.desde = performance.now();
-      this.desplazado = false;
-      this.enfocado = false;
-      this.seguir(paso);
+      this.arrancarPaso(paso, false);
     });
+  }
+
+  /**
+   * Cambia de página y sigue el recorrido allí.
+   *
+   * `navegando` avisa de que ese cambio es suyo: sin eso, el propio recorrido
+   * dispararía el corte de arriba y se acabaría al dar el primer salto.
+   */
+  private viajar(paso: PasoDelTour): void {
+    // Se apaga el foco antes de salir: el de la página que se deja señalaría un
+    // sitio que ya no significa nada. El globo se queda, centrado, contando a
+    // dónde vamos mientras llega.
+    this.foco.set(null);
+    this.globo.set(null);
+
+    this.tour.navegando.set(true);
+
+    void this.router.navigateByUrl(paso.ruta!).then((llego) => {
+      this.tour.navegando.set(false);
+
+      // Una ruta protegida puede devolver a otra parte —el guardián de sesión,
+      // el de rol—. Si no se llegó, ese paso no se puede enseñar.
+      if (!llego || this.tour.paso() !== paso) {
+        this.tour.saltarPaso();
+        return;
+      }
+
+      this.arrancarPaso(paso, true);
+    });
+  }
+
+  /** Empieza a buscar, desplazar y medir lo del paso de ahora. */
+  private arrancarPaso(paso: PasoDelTour, trasViajar: boolean): void {
+    // Se pulsa la pestaña que contiene lo que se va a señalar. El panel no
+    // está pintado todavía; de eso se encarga el seguimiento.
+    if (paso.abrir) document.querySelector<HTMLElement>(paso.abrir)?.click();
+
+    this.recienLlegado = trasViajar;
+    this.desde = performance.now();
+    this.desplazado = false;
+    this.enfocado = false;
+    this.seguir(paso);
   }
 
   ngOnDestroy(): void {
@@ -173,7 +229,7 @@ export class Tour implements OnDestroy {
     const listo = el !== null && (el.offsetWidth > 0 || el.offsetHeight > 0);
 
     if (paso.ancla && !listo) {
-      if (transcurrido < ESPERA) {
+      if (transcurrido < (this.recienLlegado ? ESPERA_AL_LLEGAR : ESPERA)) {
         this.cuadro = requestAnimationFrame(() => this.seguir(paso));
         return;
       }
@@ -188,7 +244,7 @@ export class Tour implements OnDestroy {
 
     this.colocar(el);
 
-    if (transcurrido < SEGUIMIENTO) {
+    if (transcurrido < (this.recienLlegado ? SEGUIMIENTO_AL_LLEGAR : SEGUIMIENTO)) {
       this.cuadro = requestAnimationFrame(() => this.seguir(paso));
     }
   }

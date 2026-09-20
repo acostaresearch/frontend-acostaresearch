@@ -40,6 +40,17 @@ export class SiteHeader {
       .subscribe(() => this.menuAbierto.set(false));
   }
 
+  /**
+   * El recorrido de la web.
+   *
+   * No lo arranca aquí: lleva a la portada con la marca `?tour=1` y allí lo
+   * empieza el propio inicio, que es quien sabe armarlo —no es el mismo para
+   * un visitante que para el administrador— y cuándo la página está lista.
+   */
+  verElRecorrido(): void {
+    void this.router.navigate(['/'], { queryParams: { tour: 1 } });
+  }
+
   alternarMenu(): void {
     this.menuAbierto.update((abierto) => !abierto);
   }

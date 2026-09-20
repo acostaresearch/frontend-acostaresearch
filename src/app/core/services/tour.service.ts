@@ -1,9 +1,15 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { AuthService } from './auth.service';
 
 /** Un alto del recorrido: a qué se le hace foco y qué se cuenta de ello. */
 export interface PasoDelTour {
+  /**
+   * La página donde vive este paso. Si no se está en ella, el recorrido navega
+   * solo antes de enseñarlo. Sin ruta, el paso es de la página en la que se esté.
+   */
+  ruta?: string;
   /**
    * Selector del elemento que se ilumina. Sin ancla el globo va centrado y no
    * señala nada, que es lo que hace falta para abrir y para cerrar.
@@ -20,19 +26,16 @@ export interface PasoDelTour {
 }
 
 /*
- * ─────────────────────────────────────────────────────────────────────────
- * INTERRUPTOR TEMPORAL — quitar cuando se diga
+ * Interruptor de revisión: con `true`, al ADMINISTRADOR se le enseñan los
+ * recorridos SIEMPRE, lo haya visto ya mil veces o no, para poder mirarlos sin
+ * borrar el almacenamiento del navegador en cada vuelta.
  *
- * Mientras se revisan los recorridos, al ADMINISTRADOR se le enseñan SIEMPRE,
- * entre en la portada o en su panel, lo haya visto ya mil veces o no. Es para
- * poder mirarlos sin tener que borrar el almacenamiento del navegador en cada
- * vuelta.
- *
- * Para apagarlo: poner `false` aquí. No hace falta tocar nada más, y con eso
- * el administrador pasa a verlos una sola vez, como todo el mundo.
- * ─────────────────────────────────────────────────────────────────────────
+ * APAGADO a petición del 19 de septiembre de 2026: el administrador los ve una
+ * sola vez, como todo el mundo, y para repetirlos usa el botón de la cabecera
+ * como cualquiera. Se deja el interruptor porque volver a encenderlo para una
+ * revisión es cambiar esta línea.
  */
-const SIEMPRE_AL_ADMINISTRADOR = true;
+const SIEMPRE_AL_ADMINISTRADOR = false;
 
 /** Lo que se guarda en el navegador de quien ya lo vio. */
 const CLAVE = (nombre: string, usuario: string) => `acosta.tour.${nombre}.${usuario}`;
@@ -57,12 +60,23 @@ const CLAVE = (nombre: string, usuario: string) => `acosta.tour.${nombre}.${usua
 @Injectable({ providedIn: 'root' })
 export class TourService {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   private readonly pasos = signal<PasoDelTour[]>([]);
   private readonly indice = signal(0);
 
   /** El nombre del recorrido en curso, para saber qué marcar al terminarlo. */
   private nombre = '';
+
+  /**
+   * Otros recorridos que este da por vistos al acabar.
+   *
+   * El de la web entera incluye los pasos del panel: a quien lo hizo completo
+   * no hay que repetirle el del panel la próxima vez que entre en él. Se dice
+   * al empezar y no aquí porque depende de con qué pasos se armó: si esa
+   * persona no tenía panel, esos pasos no salieron y sigue debiéndoselos.
+   */
+  private tambien: string[] = [];
 
   readonly activo = computed(() => this.pasos().length > 0);
   readonly paso = computed<PasoDelTour | null>(() => this.pasos()[this.indice()] ?? null);
@@ -72,6 +86,20 @@ export class TourService {
   readonly esElUltimo = computed(() => this.indice() >= this.pasos().length - 1);
 
   /**
+   * Si el que está navegando es el propio recorrido.
+   *
+   * Lo mira el componente: un cambio de página acaba el recorrido —sus pasos
+   * son de la pantalla que se deja—, salvo cuando el cambio lo pidió él mismo
+   * para llegar al paso siguiente.
+   */
+  readonly navegando = signal(false);
+
+  /** Si la página de ahora es esa. Se compara sin parámetros ni anclas. */
+  enLaRuta(ruta: string): boolean {
+    return this.router.url.split(/[?#]/)[0] === ruta;
+  }
+
+  /**
    * Hacia dónde se iba. Lo usa el componente cuando un paso se cae porque su
    * ancla no está: hay que seguir en el mismo sentido en el que se venía, o
    * volver atrás dejaría al visitante rebotando entre dos pasos.
@@ -79,7 +107,7 @@ export class TourService {
   private readonly sentido = signal<1 | -1>(1);
 
   /** Empieza ahora, lo haya visto o no. Es el botón de «verlo otra vez». */
-  empezar(nombre: string, pasos: PasoDelTour[]): void {
+  empezar(nombre: string, pasos: PasoDelTour[], tambien: string[] = []): void {
     // Un paso que señala algo que no está en la pantalla no se enseña: se cae
     // aquí, antes de empezar, y así el contador dice la verdad. Quien todavía
     // no tiene tesis abierta no tiene «Por dónde vas» que mirar, y en un
@@ -88,6 +116,7 @@ export class TourService {
     if (vivos.length === 0) return;
 
     this.nombre = nombre;
+    this.tambien = tambien;
     this.sentido.set(1);
     this.indice.set(0);
     this.pasos.set(vivos);
@@ -106,6 +135,10 @@ export class TourService {
   private seVeYa(paso: PasoDelTour): boolean {
     if (!paso.ancla) return true;
 
+    // De otra página no se puede saber nada todavía: se le da por bueno y ya se
+    // verá al llegar. Es el precio de un recorrido que cruza el sitio entero.
+    if (paso.ruta && !this.enLaRuta(paso.ruta)) return true;
+
     const el = document.querySelector<HTMLElement>(paso.ancla);
     if (!el) return false;
     if (paso.abrir) return true;
@@ -118,9 +151,9 @@ export class TourService {
   }
 
   /** Lo ofrece solo a quien no lo ha visto nunca. Ver la nota de la clase. */
-  ofrecer(nombre: string, pasos: PasoDelTour[]): void {
+  ofrecer(nombre: string, pasos: PasoDelTour[], tambien: string[] = []): void {
     if (this.activo() || !this.leToca(nombre)) return;
-    this.empezar(nombre, pasos);
+    this.empezar(nombre, pasos, tambien);
   }
 
   /**
@@ -168,8 +201,9 @@ export class TourService {
 
   /** Se acabó, por el final o por «Saltar». En los dos casos queda visto. */
   terminar(): void {
-    if (this.nombre) this.marcar(this.nombre);
+    if (this.nombre) [this.nombre, ...this.tambien].forEach((n) => this.marcar(n));
     this.nombre = '';
+    this.tambien = [];
     this.pasos.set([]);
     this.indice.set(0);
   }

@@ -124,7 +124,8 @@
  *
  * Al final de la fila en escritorio, y junto a la hamburguesa en móvil: fuera
  * del desplegable, porque cambiar el modo no debería exigir abrir un menú. */
-.tema {
+.tema,
+.recorrido {
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -142,7 +143,8 @@
     background var(--transicion);
 }
 
-.tema:hover {
+.tema:hover,
+.recorrido:hover {
   color: var(--color-texto);
   background: var(--color-fondo);
 }

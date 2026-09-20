@@ -1,5 +1,6 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { Plan } from '../../core/models/rewrite.model';
@@ -7,7 +8,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
 import { TourService } from '../../core/services/tour.service';
-import { TOUR_DE_LA_PORTADA, TOUR_PORTADA } from '../../shared/contenido/tour-de-la-portada';
+import { TOUR_PANEL } from '../../shared/contenido/tour-del-panel';
+import { TOUR_WEB, recorridoDeLaWeb } from '../../shared/contenido/tour-de-la-web';
 import {
   CIFRAS,
   FASES_ARTICULO,
@@ -42,6 +44,9 @@ export class Home implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly licencias = inject(LicenseService);
   private readonly tour = inject(TourService);
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly destruccion = inject(DestroyRef);
   protected readonly auth = inject(AuthService);
 
   readonly cifras = CIFRAS;
@@ -168,25 +173,63 @@ export class Home implements OnInit {
     }
 
     this.ofrecerElRecorrido();
+    this.atenderAlBoton();
   }
 
   /**
-   * El recorrido de la portada, la primera vez que alguien llega.
+   * El recorrido de la web, la primera vez que alguien llega.
    *
-   * A cualquiera, haya entrado o no: la portada es lo que ve todo el mundo, y
-   * el paso que señala la banda de saludo se cae solo si no hay sesión.
+   * A cualquiera, haya entrado o no: la portada es por donde entra todo el
+   * mundo, y es de donde el recorrido arranca su vuelta por el sitio.
    *
-   * La espera es porque media página depende de lo que conteste el servidor
+   * La espera es porque media portada depende de lo que conteste el servidor
    * —los planes pintan las dos rutas, las licencias la banda de arriba— y los
    * pasos que señalan algo ausente se caen al empezar. Sin este respiro, el
-   * recorrido se quedaría en la mitad de sus pasos.
+   * recorrido empezaría cojo.
    */
   private ofrecerElRecorrido(): void {
-    if (!this.tour.leToca(TOUR_PORTADA)) return;
+    if (!this.tour.leToca(TOUR_WEB)) return;
 
-    setTimeout(() => this.tour.ofrecer(TOUR_PORTADA, TOUR_DE_LA_PORTADA), 1200);
+    setTimeout(() => this.tour.ofrecer(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 1200);
   }
 
+  /**
+   * El recorrido pedido a mano, desde la cabecera o desde el pie.
+   *
+   * Los dos botones traen aquí con `?tour=1` en vez de arrancarlo ellos: el
+   * recorrido empieza siempre en la portada, y así hay UN solo sitio que sabe
+   * armarlo y esperar a que la página esté lista. La marca se quita de la
+   * dirección antes de empezar, para que recargar no lo vuelva a lanzar y para
+   * poder pedirlo otra vez estando ya aquí.
+   */
+  private atenderAlBoton(): void {
+    this.ruta.queryParamMap.pipe(takeUntilDestroyed(this.destruccion)).subscribe(async (params) => {
+      if (!params.has('tour')) return;
+
+      await this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      setTimeout(() => this.tour.empezar(TOUR_WEB, this.pasosDelRecorrido(), this.yaVistos()), 900);
+    });
+  }
+
+  /**
+   * Lo que este recorrido da por visto de paso.
+   *
+   * Si lleva los pasos del panel dentro, quien lo termine no tiene que volver a
+   * verlos al entrar en su perfil. A quien no tenía panel no se le da por
+   * visto: esos pasos no le salieron.
+   */
+  private yaVistos(): string[] {
+    return this.tieneConector() === true ? [TOUR_PANEL] : [];
+  }
+
+  /** El recorrido de quien está mirando. Ver `recorridoDeLaWeb`. */
+  private pasosDelRecorrido() {
+    return recorridoDeLaWeb({
+      conSesion: this.auth.isAuthenticated(),
+      esAdmin: this.auth.hasRole('ADMIN'),
+      tieneConector: this.tieneConector() === true,
+    });
+  }
 
   /**
    * El acceso, en meses. En días («365 días de acceso») obligaba a dividir

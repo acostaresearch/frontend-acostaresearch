@@ -55,6 +55,35 @@
       </div>
     </div>
 
+    <!-- El recorrido guiado de la web. Fuera del menú, al lado del tema: sale
+         solo la primera vez, y quien lo saltó o quiere repetirlo tiene que
+         encontrarlo sin buscar. La brújula, y no un «?», porque esto enseña
+         dónde está cada cosa; el signo de interrogación promete respuestas y
+         lleva a las preguntas frecuentes. Ver `TourService`. -->
+    <button
+      type="button"
+      class="recorrido"
+      data-tour="recorrido"
+      aria-label="Ver el recorrido guiado de la web"
+      title="Ver el recorrido guiado"
+      (click)="verElRecorrido()"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1z" />
+      </svg>
+    </button>
+
     <!-- El icono enseña a dónde lleva, no dónde se está: la luna en claro, el
          sol en oscuro. Fuera del menú, para que en móvil no haya que abrirlo. -->
     <button
