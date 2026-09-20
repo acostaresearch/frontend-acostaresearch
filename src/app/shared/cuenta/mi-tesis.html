@@ -550,13 +550,12 @@
       } @else {
         <div class="caja-fila">
           <div>
-            <p class="caja-titulo">¿Ya tienes tu tesis o tu artículo escrito?</p>
+            <!-- Las palabras cambian con lo que se escribe: al tesista se le habla de
+                 su tesis, y a quien escribe un artículo o un informe, del suyo. -->
+            <p class="caja-titulo">{{ textos(p).subirTitulo }}</p>
             <p class="caja-texto">
-              Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca de
-              Scopus y en OpenAlex, y pone cada cita y la lista de referencias
-              <strong>dentro de tu mismo Word</strong>, en la norma que te pidan. También puede
-              humanizar su redacción párrafo a párrafo. Queda guardado en tu proyecto para seguir
-              otro día, y tus tablas, tus figuras, tu portada y tu formato no se tocan.
+              {{ textos(p).subirAntes }}
+              <strong>dentro de tu mismo Word</strong>{{ textos(p).subirDespues }}
             </p>
           </div>
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:

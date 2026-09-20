@@ -26,7 +26,10 @@ interface Columna {
   fases: EtapaDelProyecto[];
 }
 
-/** Lo que dice el recuadro de «varias tesis», que cambia con el género de la palabra. */
+/**
+ * Lo que dicen los recuadros que cambian con la palabra: «varias tesis» arriba y
+ * el de subir un documento ya escrito abajo.
+ */
 interface TextosDeVarias {
   titulo: string;
   explicacion: string;
@@ -38,6 +41,13 @@ interface TextosDeVarias {
   trabajara: string;
   deEsta: string;
   borrar: string;
+  /**
+   * El recuadro de «ya lo tengo escrito». Va partido en dos porque en medio de
+   * la frase el Word va en negrita, y una sola cadena no la llevaría.
+   */
+  subirTitulo: string;
+  subirAntes: string;
+  subirDespues: string;
 }
 
 const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
@@ -53,6 +63,14 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con ella',
     deEsta: 'de esta tesis. Tus otras tesis no se tocan.',
     borrar: 'Borrar esta tesis',
+    subirTitulo: '¿Ya tienes tu tesis escrita?',
+    subirAntes:
+      'Súbela tal cual. Claude la lee, busca las fuentes en tu Zotero, en la biblioteca ' +
+      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
+    subirDespues:
+      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
+      'Queda guardada en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
+      'tu portada y tu formato no se tocan.',
   },
   articulo: {
     titulo: 'Qué artículo usar',
@@ -66,6 +84,14 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con él',
     deEsta: 'de este artículo. Tus otros artículos no se tocan.',
     borrar: 'Borrar este artículo',
+    subirTitulo: '¿Ya tienes tu artículo escrito?',
+    subirAntes:
+      'Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca ' +
+      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
+    subirDespues:
+      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
+      'Queda guardado en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
+      'tu portada y tu formato no se tocan.',
   },
   informe: {
     titulo: 'Qué informe usar',
@@ -79,6 +105,14 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con él',
     deEsta: 'de este informe. Tus otros informes no se tocan.',
     borrar: 'Borrar este informe',
+    subirTitulo: '¿Ya tienes tu informe escrito?',
+    subirAntes:
+      'Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca ' +
+      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
+    subirDespues:
+      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
+      'Queda guardado en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
+      'tu portada y tu formato no se tocan.',
   },
 };
 

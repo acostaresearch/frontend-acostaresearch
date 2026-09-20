@@ -1,6 +1,4 @@
 import { Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
-
 import { PUBLICACIONES, REVISTAS_PUBLICADAS } from '../contenido/publicaciones';
 
 /**
@@ -13,7 +11,7 @@ import { PUBLICACIONES, REVISTAS_PUBLICADAS } from '../contenido/publicaciones';
  */
 @Component({
   selector: 'app-publicaciones-autor',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './publicaciones-autor.html',
   styleUrl: './publicaciones-autor.css',
 })
