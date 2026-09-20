@@ -452,3 +452,49 @@
   letter-spacing: 0;
   color: var(--color-texto-tenue);
 }
+
+/* Apagado: no sale en el directorio. Un interruptor gris no basta para
+   explicar por qué lleva días sin recibir nada; esto sí. */
+.apagado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  background: var(--color-aviso-suave);
+  border: 1px solid color-mix(in srgb, var(--color-aviso) 30%, transparent);
+  border-radius: 14px;
+}
+
+.apagado-datos {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.apagado-titulo {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-aviso);
+}
+
+.apagado-texto {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.apagado .principal {
+  flex: 0 0 auto;
+}
+
+/* El enlace que ya entregó, para poder volver a él. */
+.enlace-entregado {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--color-primario);
+  overflow-wrap: anywhere;
+}

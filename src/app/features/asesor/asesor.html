@@ -61,11 +61,39 @@
         <p class="mal">{{ e }}</p>
       }
 
+      <!-- ── Apagado: es la causa de que no le llegue nada ────────────────── -->
+      @if (!f.visible) {
+        <section class="apagado">
+          <div class="apagado-datos">
+            <p class="apagado-titulo">No sales en el directorio</p>
+            <p class="apagado-texto">
+              Mientras esté así, ningún tesista puede verte ni elegirte, y no te va a llegar
+              ningún encargo nuevo. Lo que ya tienes sigue igual.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="principal"
+            [disabled]="guardando()"
+            (click)="cambiarDisponibilidad()"
+          >
+            {{ guardando() ? 'Encendiendo…' : 'Volver al directorio' }}
+          </button>
+        </section>
+      }
+
       <!-- ── Esperando respuesta ─────────────────────────────────────────── -->
       <section class="bloque">
         <h2>Esperan tu respuesta</h2>
         @if (esperando().length === 0) {
-          <p class="vacio">Nada pendiente. Cuando alguien te elija, aparecerá aquí.</p>
+          @if (f.visible) {
+            <p class="vacio">Nada pendiente. Cuando alguien te elija, aparecerá aquí.</p>
+          } @else {
+            <p class="vacio">
+              Nada pendiente, y así no va a llegar nada: mientras no vuelvas al directorio
+              nadie puede elegirte.
+            </p>
+          }
         } @else {
           <p class="nota-bloque">
             Todavía no ves el documento: se abre cuando aceptas. Con el tema y lo que te cuenta el
@@ -129,6 +157,10 @@
       @if (cerrados().length > 0) {
         <section class="bloque">
           <h2>Cerrados</h2>
+          <p class="nota-bloque">
+            Un entregado no se acaba del todo: el tesista puede seguir escribiéndote mientras
+            corrige. Ábrelo para leerle y contestarle.
+          </p>
           <ul class="lista">
             @for (e of cerrados(); track e.id) {
               <li>
@@ -144,6 +176,9 @@
                     </p>
                   }
                 </div>
+                @if (e.sinLeer > 0) {
+                  <span class="estado sin-leer">{{ e.sinLeer }} sin leer</span>
+                }
                 <span
                   class="estado"
                   [class.hecho]="e.estado === 'ENTREGADO'"
@@ -151,6 +186,9 @@
                 >
                   {{ e.estado === 'ENTREGADO' ? 'Entregado' : 'Rechazado' }}
                 </span>
+                @if (e.estado === 'ENTREGADO') {
+                  <button type="button" class="principal" (click)="abrir(e)">Abrir</button>
+                }
               </li>
             }
           </ul>
@@ -286,6 +324,21 @@
           >
             {{ guardando() ? 'Entregando…' : 'Entregar al tesista' }}
           </button>
+        </div>
+      } @else if (e.estado === 'ENTREGADO') {
+        <h3>Lo que le entregaste</h3>
+        <a class="enlace-entregado" [href]="e.enlaceObservaciones" target="_blank" rel="noopener noreferrer">
+          {{ e.enlaceObservaciones }}
+        </a>
+        <p class="ayuda">
+          Entregado el {{ e.entregadoAt | date: 'd MMM y, HH:mm' }}. Si vuelve con la versión
+          corregida, la encontrarás aquí abajo.
+        </p>
+        <div class="pie">
+          <button type="button" class="secundario" [disabled]="bajando() === e.id" (click)="bajar(e)">
+            {{ bajando() === e.id ? 'Bajando…' : 'Bajar su Word' }}
+          </button>
+          <button type="button" class="secundario" (click)="cerrar()">Cerrar</button>
         </div>
       } @else {
         <div class="pie">
