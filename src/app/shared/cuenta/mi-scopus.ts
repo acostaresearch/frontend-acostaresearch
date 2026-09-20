@@ -492,7 +492,15 @@ export class MiScopusPanel implements OnInit {
       tema: tema.titulo,
       conceptos: tema.conceptos.length,
       sinonimos: tema.conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
-      nota: tema.relacion,
+      /**
+       * La relación del tema, dicha como lo que es.
+       *
+       * Iba cruda a la lista de pasos y salía de tercer punto, entre «añadí
+       * sinónimos» y «armé la búsqueda», leyéndose como una frase cortada: «si
+       * un mayor nivel de alfabetización digital mejora las perspectivas
+       * laborales». Con el encabezado se entiende qué hace ahí.
+       */
+      nota: tema.relacion ? `Me quedo solo con este tema: ${tema.relacion}.` : null,
     });
     this.pasosAbiertos.set(false);
     this.conversacionId = null;
