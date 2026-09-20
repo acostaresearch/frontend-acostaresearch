@@ -255,7 +255,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
 
     // ── Lo que hace falta DESPUÉS de comprar ───────────────────────────────
     {
-      seccion: 'Videos y guías',
+      seccion: 'Los videos',
       ruta: '/tutoriales',
       ancla: '[data-tour="videos"]',
       titulo: 'Los videos guía',
@@ -264,7 +264,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'compró y no sabe seguir.',
     },
     {
-      seccion: 'Videos y guías',
+      seccion: 'Los videos',
       ruta: '/tutoriales',
       ancla: '#fallas',
       titulo: 'Cuando algo no sale',
@@ -273,7 +273,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'que se rompió algo.',
     },
     {
-      seccion: 'Videos y guías',
+      seccion: 'Guías en PDF',
       ruta: '/guias-de-instalacion',
       ancla: '[data-tour="guias-pdf"]',
       titulo: 'Las guías en PDF',
@@ -314,6 +314,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
     // ── El cierre, de vuelta en la portada ─────────────────────────────────
     {
       seccion: 'Para terminar',
+      ruta: '/',
       ancla: '[data-tour="asistente"]',
       titulo: 'Y si algo no queda claro',
       texto:

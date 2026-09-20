@@ -151,7 +151,7 @@
     <app-aviso-flotante [(error)]="errorPromo" />
     <app-aviso-flotante [(error)]="errorComprobante" />
 
- <section data-tour="planes-lista" class="planes">
+ <section class="planes">
       @if (cargando()) {
         <p class="tenue">Cargando precios…</p>
       }
@@ -160,7 +160,7 @@
         @if (metodo().length === 1) {
           <h2 class="grupo">Método de tesis</h2>
         }
-        <div class="rejilla-planes" [class.varios]="metodo().length > 1">
+        <div data-tour="planes-lista" class="rejilla-planes" [class.varios]="metodo().length > 1">
           @for (plan of metodo(); track plan.code; let i = $index) {
             <!-- Tarjeta de venta, no factura.
                Antes esto era una lista «Producto / Incluye / Vigencia / Total»

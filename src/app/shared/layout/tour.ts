@@ -31,6 +31,9 @@ const MARGEN = 10;
 const AIRE = 12;
 const BORDE = 16;
 
+/** Lo que se come la cabecera fija de arriba. */
+const CABECERA = 69;
+
 /**
  * Cuánto se le espera a un ancla que todavía no está.
  *
@@ -90,6 +93,16 @@ export class Tour implements OnDestroy {
 
   /** Dónde se pinta el globo. Nulo mientras no se ha medido. */
   readonly globo = signal<{ top: number; left: number } | null>(null);
+
+  /**
+   * Si el globo se va a la esquina.
+   *
+   * Pasa con lo que ocupa la pantalla entera —una banda de precios, la sección
+   * de videos—: no cabe ni encima, ni debajo, ni al lado, y donde lo pongas
+   * tapa justo lo que está explicando. En la esquina, al menos, tapa lo de
+   * menos.
+   */
+  readonly esquina = signal(false);
 
   /**
    * En pantalla estrecha el globo se ancla abajo y no persigue al elemento: con
@@ -265,7 +278,12 @@ export class Tour implements OnDestroy {
 
     // Un elemento escondido mide cero: está en el árbol pero aún no se ve, así
     // que cuenta como ausente y se le sigue esperando.
-    const listo = el !== null && (el.offsetWidth > 0 || el.offsetHeight > 0);
+    //
+    // Las DOS medidas, no una: una lista todavía sin filas —las guías en PDF
+    // mientras las trae el servidor, o si no hay ninguna— ocupa todo el ancho y
+    // cero de alto. Dándola por buena, el foco iluminaba una raya y el globo
+    // señalaba un hueco vacío.
+    const listo = el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
 
     if (paso.ancla && !listo) {
       if (transcurrido < (this.recienLlegado ? ESPERA_AL_LLEGAR : ESPERA)) {
@@ -289,7 +307,7 @@ export class Tour implements OnDestroy {
       el &&
       (!this.desplazado || (this.recienLlegado && !this.reDesplazado && transcurrido > 250))
     ) {
-      el.scrollIntoView({ block: 'center', behavior: 'auto' });
+      this.desplazarHasta(el);
       this.reDesplazado = this.desplazado;
       this.desplazado = true;
     }
@@ -303,6 +321,26 @@ export class Tour implements OnDestroy {
     if (transcurrido < (this.recienLlegado ? SEGUIMIENTO_AL_LLEGAR : SEGUIMIENTO)) {
       this.cuadro = requestAnimationFrame(() => this.seguir(paso));
     }
+  }
+
+  /**
+   * Deja a la vista lo que se va a señalar.
+   *
+   * Centrado si cabe. Si es más alto que la ventana —una sección entera— se
+   * alinea su PRINCIPIO, porque ahí está su título, que es de lo que habla el
+   * paso; centrarlo dejaría a la vista su mitad, que no dice nada. Y siempre
+   * por debajo de la cabecera, que está fija y se come los primeros 69 px.
+   */
+  private desplazarHasta(el: HTMLElement): void {
+    const r = el.getBoundingClientRect();
+    const altoVentana = window.innerHeight;
+    const cabe = r.height + CABECERA + BORDE * 2 <= altoVentana;
+
+    const destino = cabe
+      ? window.scrollY + r.top + r.height / 2 - altoVentana / 2
+      : window.scrollY + r.top - CABECERA - BORDE;
+
+    window.scrollTo({ top: Math.max(0, destino), behavior: 'auto' });
   }
 
   private colocar(el: HTMLElement | null): void {
@@ -365,6 +403,7 @@ export class Tour implements OnDestroy {
     // el CSS, abajo o en el centro.
     if (anchoVentana <= 720 || !f) {
       this.abajo.set(anchoVentana <= 720);
+      this.enEsquina(false);
       this.globo.set(null);
       return;
     }
@@ -374,16 +413,50 @@ export class Tour implements OnDestroy {
     const ancho = globo.offsetWidth;
     const alto = globo.offsetHeight;
 
-    // Debajo de lo señalado si cabe; si no, encima; y si tampoco, al lado, sin
-    // salirse por ningún borde.
-    let top = f.top + f.alto + AIRE;
-    if (top + alto > altoVentana - BORDE) {
-      const encima = f.top - AIRE - alto;
-      top = encima >= BORDE ? encima : Math.max(BORDE, altoVentana - alto - BORDE);
+    // Debajo de lo señalado si cabe, que es lo que se lee más natural. Si no,
+    // encima. Si tampoco, a un lado —lo que pasa con lo alto y estrecho, como
+    // la columna del panel de administración—. Y si nada de eso cabe, a la
+    // esquina: ver la nota de `esquina`.
+    const debajo = f.top + f.alto + AIRE;
+    const encima = f.top - AIRE - alto;
+    const derecha = f.left + f.ancho + AIRE;
+    const izquierda = f.left - AIRE - ancho;
+
+    if (debajo + alto <= altoVentana - BORDE) {
+      this.enEsquina(false);
+      this.globo.set({ top: debajo, left: this.dentro(f.left, ancho, anchoVentana) });
+      return;
     }
 
-    const left = Math.max(BORDE, Math.min(f.left, anchoVentana - ancho - BORDE));
+    if (encima >= BORDE) {
+      this.enEsquina(false);
+      this.globo.set({ top: encima, left: this.dentro(f.left, ancho, anchoVentana) });
+      return;
+    }
 
-    this.globo.set({ top, left });
+    if (derecha + ancho <= anchoVentana - BORDE) {
+      this.enEsquina(false);
+      this.globo.set({ top: this.dentro(f.top, alto, altoVentana), left: derecha });
+      return;
+    }
+
+    if (izquierda >= BORDE) {
+      this.enEsquina(false);
+      this.globo.set({ top: this.dentro(f.top, alto, altoVentana), left: izquierda });
+      return;
+    }
+
+    this.enEsquina(true);
+  }
+
+  /** A la esquina lo manda el CSS, así que se le quita la posición medida. */
+  private enEsquina(si: boolean): void {
+    this.esquina.set(si);
+    if (si) this.globo.set(null);
+  }
+
+  /** Que no se salga por ningún borde. */
+  private dentro(donde: number, cuanto: number, disponible: number): number {
+    return Math.max(BORDE, Math.min(donde, disponible - cuanto - BORDE));
   }
 }

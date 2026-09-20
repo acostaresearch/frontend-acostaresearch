@@ -1,14 +1,14 @@
 @if (tour.paso(); as paso) {
   <!-- La capa que se come las pulsaciones. El agujero tampoco es interactivo:
        ver la nota de la clase. -->
-  <div class="capa" [class.sola]="!foco()"></div>
+  <div class="tour-capa" [class.tour-sola]="!foco()"></div>
 
   <!-- El foco. El velo que oscurece el resto sale de su propia sombra, que es
        lo que recorta el agujero: un fondo no se puede agujerear desde otro
        elemento. `100vmax` de extensión cubre cualquier pantalla. -->
   @if (foco(); as f) {
     <div
-      class="foco"
+      class="tour-foco"
       aria-hidden="true"
       [style.top.px]="f.top"
       [style.left.px]="f.left"
@@ -17,11 +17,15 @@
     ></div>
   }
 
+  <!-- TODAS las clases llevan `tour-`, por lo que ya pasó: `styles.css` tiene
+       reglas globales para `.pie` —el pie del sitio— y le metían 112 px de
+       relleno al globo y un filo en modo oscuro. Los nombres cortos chocan. -->
   <div
     #caja
-    class="globo"
-    [class.flotante]="globo()"
-    [class.abajo]="abajo()"
+    class="tour-globo"
+    [class.tour-flotante]="globo()"
+    [class.tour-abajo]="abajo()"
+    [class.tour-esquina]="esquina()"
     [style.top.px]="globo()?.top"
     [style.left.px]="globo()?.left"
     role="dialog"
@@ -32,7 +36,12 @@
     <!-- La aspa, arriba a la derecha: es donde se cierra cualquier cosa que se
          abre encima, y quien quiere salir la busca ahí antes de leer nada. El
          «Saltar» de abajo se queda para quien no la ve. -->
-    <button type="button" class="aspa" (click)="tour.terminar()" aria-label="Cerrar el recorrido">
+    <button
+      type="button"
+      class="tour-aspa"
+      (click)="tour.terminar()"
+      aria-label="Cerrar el recorrido"
+    >
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path
           d="M6 6l12 12M18 6L6 18"
@@ -46,30 +55,30 @@
 
     <!-- El contador va por tandas y vuelve a empezar en cada página: ver la
          nota de `recorridoDeLaWeb`. -->
-    <p class="cuenta">
+    <p class="tour-cuenta">
       @if (tour.seccion(); as seccion) {
-        <span class="cuenta-seccion">{{ seccion }}</span>
+        <span class="tour-seccion">{{ seccion }}</span>
         <span aria-hidden="true">·</span>
       }
       {{ tour.numeroEnTanda() }} de {{ tour.totalDeTanda() }}
     </p>
     <h3 id="tour-titulo">{{ paso.titulo }}</h3>
-    <p id="tour-texto" class="texto">{{ paso.texto }}</p>
+    <p id="tour-texto" class="tour-parrafo">{{ paso.texto }}</p>
 
-    <div class="barra" aria-hidden="true">
+    <div class="tour-barra" aria-hidden="true">
       @for (punto of puntos(); track punto) {
-        <span [class.hecho]="punto <= tour.numeroEnTanda()"></span>
+        <span [class.tour-hecho]="punto <= tour.numeroEnTanda()"></span>
       }
     </div>
 
-    <div class="pie">
+    <div class="tour-pie">
       <!-- Saltar a la izquierda y separado: se sale cuando se quiere, sin
            buscarlo, pero no se pulsa por inercia al avanzar. -->
-      <button type="button" class="boton enlace saltar" (click)="tour.terminar()">
+      <button type="button" class="boton enlace tour-saltar" (click)="tour.terminar()">
         {{ tour.oferta() ? 'No, gracias' : 'Saltar' }}
       </button>
 
-      <div class="avanzar">
+      <div class="tour-avanzar">
         @if (!tour.esElPrimero()) {
           <button type="button" class="boton secundario" (click)="tour.anterior()">Atrás</button>
         }

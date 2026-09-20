@@ -26,7 +26,7 @@
     </div>
   </header>
 
-<section data-tour="videos" class="seccion">
+<section class="seccion">
     @if (cargando()) {
       <p class="cargando">Cargando los videos…</p>
     } @else if (tutoriales().length === 0) {
@@ -34,7 +34,7 @@
         Todavía no hay videos publicados. Lo de más abajo te saca de casi cualquier atasco.
       </p>
     } @else {
-      <div class="sala">
+      <div data-tour="videos" class="sala">
         @if (seleccionado(); as video) {
           <div class="reproductor" #reproductor>
             <div class="pantalla" [class.en-marcha]="reproduciendo()">

@@ -69,6 +69,26 @@ describe('Anclas del recorrido', () => {
     expect(pasos.filter((paso) => paso.ruta === ruta).length).toBeGreaterThan(0);
   });
 
+  // El contador del globo cuenta por tandas y tiene que volver a empezar al
+  // cambiar de página. Si una tanda se repartiera entre dos, en la segunda
+  // seguiría contando desde donde iba y diría «3 de 3» nada más llegar.
+  it('cada tanda vive en una sola página', () => {
+    const web = recorridoDeLaWeb({ conSesion: true, esAdmin: true, tieneConector: true });
+    const tandas = new Map<string, Set<string>>();
+
+    for (const paso of web) {
+      const nombre = paso.seccion ?? '(sin nombre)';
+      if (!tandas.has(nombre)) tandas.set(nombre, new Set());
+      tandas.get(nombre)!.add(paso.ruta ?? '(la de ahora)');
+    }
+
+    // Comparado como texto para que, si falla, se lea cuál es la tanda y por
+    // qué páginas anda repartida.
+    for (const [nombre, rutas] of tandas) {
+      expect(`${nombre}: ${[...rutas].join(', ')}`).toBe(`${nombre}: ${[...rutas][0]}`);
+    }
+  });
+
   it.each(anclas)('%s está en alguna plantilla, y dentro de su etiqueta', (ancla) => {
     if (ancla.startsWith('#')) {
       expect(plantillas).toContain(`id="${ancla.slice(1)}"`);
