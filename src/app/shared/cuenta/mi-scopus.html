@@ -184,8 +184,9 @@
                 <div>
                   <p class="sc-copiloto-titulo">Copiloto de búsqueda</p>
                   <p class="sc-copiloto-sub">
-                    Pregunta en español. Te propongo los conceptos en inglés y, al buscar, te resumo
-                    lo que dicen los artículos con sus citas.
+                    Pregunta en español, aunque todavía no tengas el tema. Te propongo los conceptos
+                    en inglés y temas concretos con sus variables, y al buscar te resumo lo que dicen
+                    los artículos con sus citas.
                   </p>
                 </div>
               </div>
@@ -253,6 +254,69 @@
                         Volver a buscar
                       </button>
                     </p>
+                  }
+                </div>
+              }
+
+              <!-- ── Temas para investigar ──────────────────────────────────
+                   Lo que casi todos traen es una inquietud, no un tema, y de
+                   ahí sale una búsqueda con de todo dentro. Aquí se ve en qué
+                   se puede convertir —qué influye, sobre qué y en quiénes— y
+                   cada tarjeta busca SU literatura. Salen de lo que escribió,
+                   no de los artículos: los artículos de Elsevier no salen de
+                   aquí. -->
+              @if (temasPropuestos().length > 0 && !generando()) {
+                <div class="sc-temas">
+                  <div class="sc-temas-cabecera">
+                    <p class="sc-temas-titulo">Y esto podrías investigar</p>
+                    <button
+                      type="button"
+                      class="sc-pasos-boton"
+                      [attr.aria-expanded]="temasAbiertos()"
+                      (click)="temasAbiertos.set(!temasAbiertos())"
+                    >
+                      {{ temasAbiertos() ? 'Ocultar' : 'Ver los ' + temasPropuestos().length }}
+                      <span class="sc-orden-flecha" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                  @if (temasAbiertos()) {
+                    <p class="sc-temas-sub">
+                      Temas concretos con sus variables, sacados de lo que escribiste. Elige uno y
+                      busco solo esa literatura.
+                    </p>
+                    <ul class="sc-temas-lista">
+                      @for (tema of temasPropuestos(); track tema.titulo; let i = $index) {
+                        <li class="sc-tema" [class.sc-tema-elegido]="temaElegido() === i">
+                          <p class="sc-tema-titulo">{{ tema.titulo }}</p>
+                          @if (tema.relacion) {
+                            <p class="sc-tema-relacion">{{ tema.relacion }}</p>
+                          }
+                          @if (variablesDelTema(tema).length > 0) {
+                            <dl class="sc-tema-variables">
+                              @for (fila of variablesDelTema(tema); track fila.etiqueta) {
+                                <div>
+                                  <dt>{{ fila.etiqueta }}</dt>
+                                  <dd>{{ fila.valor }}</dd>
+                                </div>
+                              }
+                            </dl>
+                          }
+                          <div class="sc-tema-pie">
+                            <span class="sc-tema-conceptos" [title]="conceptosDelTema(tema)">
+                              {{ conceptosDelTema(tema) }}
+                            </span>
+                            <button
+                              type="button"
+                              class="sc-tema-boton"
+                              [disabled]="buscando() || generando()"
+                              (click)="elegirTema(tema, i)"
+                            >
+                              {{ temaElegido() === i ? 'Este es el que ves' : 'Buscar este tema' }}
+                            </button>
+                          </div>
+                        </li>
+                      }
+                    </ul>
                   }
                 </div>
               }

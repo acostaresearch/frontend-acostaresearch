@@ -18,6 +18,7 @@ import {
   ResultadoDeScopus,
   ResumenConIa,
   ScopusService,
+  TemaPropuesto,
 } from '../../core/services/scopus.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
 
@@ -373,6 +374,22 @@ export class MiScopusPanel implements OnInit {
 
   readonly pasosAbiertos = signal(false);
 
+  /**
+   * Los temas que el copiloto propone investigar, con sus variables.
+   *
+   * Quien escribe «algo de IA y universitarios» no tiene un tema: tiene una
+   * inquietud, y la búsqueda que sale de ahí trae de todo. Estas tarjetas le
+   * enseñan en qué se puede convertir eso —qué influye, sobre qué y en
+   * quiénes— y cada una busca SU literatura con un botón. No sustituyen a la
+   * búsqueda general, que ya se hizo: están encima de ella para afinarla.
+   */
+  readonly temasPropuestos = signal<TemaPropuesto[]>([]);
+
+  /** El tema por el que se está buscando ahora, para marcar su tarjeta. */
+  readonly temaElegido = signal<number | null>(null);
+
+  readonly temasAbiertos = signal(true);
+
   readonly pasosDelCopiloto = computed(() => {
     const generacion = this.ultimaGeneracion();
     if (!generacion) return [];
@@ -415,7 +432,7 @@ export class MiScopusPanel implements OnInit {
     this.notaIa.set(null);
 
     this.scopus.generarConsulta(tema).subscribe({
-      next: ({ conceptos, nota }) => {
+      next: ({ conceptos, nota, temas }) => {
         this.generando.set(false);
         this.campo.set('TITLE-ABS-KEY');
         this.texto.set(conceptos.map((c) => c.nombre).join(', '));
@@ -423,6 +440,10 @@ export class MiScopusPanel implements OnInit {
           Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
         );
         this.notaIa.set(nota);
+        // Los temas son de ESTA pregunta: los de la anterior ya no valen.
+        this.temasPropuestos.set(temas ?? []);
+        this.temaElegido.set(null);
+        this.temasAbiertos.set(true);
         this.ultimaGeneracion.set({
           tema,
           conceptos: conceptos.length,
@@ -443,6 +464,55 @@ export class MiScopusPanel implements OnInit {
         this.errorIa.set(toApiError(fallo).message);
       },
     });
+  }
+
+  /**
+   * Elegir uno de los temas propuestos: se busca ESE, no la inquietud entera.
+   *
+   * Hace lo mismo que acabar de preguntar —los conceptos al campo, sus
+   * sinónimos, orden por significado y el resumen con citas detrás—, pero con
+   * los del tema, y la pregunta del resumen pasa a ser su título, que es lo
+   * que ahora se está investigando. Cuenta como conversación nueva: se guarda
+   * por su cuenta y no pisa la del tema que se miró antes.
+   *
+   * Las tarjetas se quedan: casi nadie acierta a la primera, y lo normal es
+   * mirar un tema, volver y probar el siguiente.
+   */
+  elegirTema(tema: TemaPropuesto, indice: number): void {
+    if (this.buscando() || this.generando()) return;
+
+    this.campo.set('TITLE-ABS-KEY');
+    this.texto.set(tema.conceptos.map((c) => c.nombre).join(', '));
+    this.sinonimos.set(
+      Object.fromEntries(tema.conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
+    );
+    this.temaElegido.set(indice);
+    this.notaIa.set(null);
+    this.ultimaGeneracion.set({
+      tema: tema.titulo,
+      conceptos: tema.conceptos.length,
+      sinonimos: tema.conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
+      nota: tema.relacion,
+    });
+    this.pasosAbiertos.set(false);
+    this.conversacionId = null;
+    this.orden.set('significado');
+    this.buscar(1);
+  }
+
+  /** Las variables del tema, en la línea de su tarjeta. Sin las que no dijo. */
+  variablesDelTema(tema: TemaPropuesto): { etiqueta: string; valor: string }[] {
+    const filas = [
+      { etiqueta: 'Influye', valor: tema.independiente },
+      { etiqueta: 'Sobre', valor: tema.dependiente },
+      { etiqueta: 'En quiénes', valor: tema.poblacion },
+    ];
+    return filas.filter((f): f is { etiqueta: string; valor: string } => Boolean(f.valor));
+  }
+
+  /** Con qué se buscaría ese tema, para que se vea antes de pulsar. */
+  conceptosDelTema(tema: TemaPropuesto): string {
+    return tema.conceptos.map((c) => c.nombre).join(' · ');
   }
 
   // ── El resumen con citas ──────────────────────────────────────────────────
@@ -1677,6 +1747,11 @@ export class MiScopusPanel implements OnInit {
     this.temaIa.set(texto(e['temaIa']));
     this.iaAbierta.set(e['iaAbierta'] === true);
     this.ultimaGeneracion.set(objeto(e['ultimaGeneracion'], null));
+    // Los temas propuestos no se guardan: una búsqueda guardada se abre para
+    // ver SUS resultados, y enseñar debajo los temas de otra pregunta —o los
+    // de hace un mes— solo confunde. Se vuelven a pedir preguntando otra vez.
+    this.temasPropuestos.set([]);
+    this.temaElegido.set(null);
     const orden = texto(e['orden']);
     this.orden.set(
       (['citas', 'recientes', 'antiguos', 'relevancia', 'significado'].includes(orden) ? orden : 'citas') as OrdenDeScopus,
@@ -2031,6 +2106,8 @@ export class MiScopusPanel implements OnInit {
     this.sinonimos.set({});
     this.notaIa.set(null);
     this.ultimaGeneracion.set(null);
+    this.temasPropuestos.set([]);
+    this.temaElegido.set(null);
     this.temaIa.set('');
     this.hilo.set([]);
     this.errorResumen.set(null);
