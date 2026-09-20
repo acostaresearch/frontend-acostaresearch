@@ -1,0 +1,260 @@
+/* El seguimiento: tres pasos, qué pasa ahora y, al final, el enlace a las
+   observaciones. Se mira desde el móvil, casi siempre. */
+
+.pagina {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--banda) var(--lado);
+}
+
+.seguimiento {
+  width: min(100% - 32px, 620px);
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+
+.cargando {
+  padding: 60px 0;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+/* ---------- Encabezado ---------- */
+
+.cabeza {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.antetitulo {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.cabeza h1 {
+  margin: 0 0 10px;
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-texto);
+}
+
+.entradilla {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.codigo {
+  margin: 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--color-texto-tenue);
+  user-select: all;
+}
+
+/* ---------- Los tres pasos ---------- */
+
+.pasos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.pasos li {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 16px 6px;
+  text-align: center;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.bolita {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo);
+  border-radius: 999px;
+}
+
+.paso-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+}
+
+.pasos .hecho {
+  border-color: color-mix(in srgb, var(--color-exito) 30%, var(--color-borde));
+}
+
+.pasos .hecho .bolita {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.pasos .hecho .paso-titulo {
+  color: var(--color-texto-suave);
+}
+
+/* El paso que toca es el único que se lee de un vistazo. */
+.pasos .ahora {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.pasos .ahora .bolita {
+  color: var(--color-primario);
+  background: #fff;
+}
+
+.pasos .ahora .paso-titulo {
+  color: var(--color-sobre-boton);
+}
+
+/* ---------- Caja principal ---------- */
+
+.caja {
+  padding: 24px 22px;
+  text-align: center;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+}
+
+.caja-parada {
+  border-color: color-mix(in srgb, var(--color-error) 28%, var(--color-borde));
+  background: color-mix(in srgb, var(--color-error-suave) 50%, var(--color-superficie));
+}
+
+.caja h1,
+.caja h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.caja p {
+  margin: 0 0 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.ahora-texto {
+  font-size: 16.5px !important;
+  font-weight: 600;
+  color: var(--color-texto) !important;
+}
+
+.boton-enlace {
+  display: inline-block;
+  padding: 12px 24px;
+  margin: 8px 0 4px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-sobre-boton);
+  text-decoration: none;
+  background: var(--color-boton);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.boton-enlace:hover:not(:disabled) {
+  background: var(--color-boton-hover);
+}
+
+.boton-enlace:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tenue {
+  margin: 10px 0 0 !important;
+  font-size: 13.5px !important;
+  color: var(--color-texto-tenue) !important;
+}
+
+.mal {
+  margin: 12px 0 0 !important;
+  font-size: 13.5px !important;
+  color: var(--color-error) !important;
+}
+
+/* ---------- Buscador por código ---------- */
+
+.buscador {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.buscador input {
+  flex: 1 1 200px;
+  max-width: 260px;
+  padding: 12px 14px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: var(--color-texto);
+  background: var(--color-sobre-relleno);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+}
+
+.buscador input:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+/* ---------- Datos ---------- */
+
+.datos {
+  display: grid;
+  grid-template-columns: minmax(110px, 160px) minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 22px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.datos dt {
+  color: var(--color-texto-tenue);
+}
+
+.datos dd {
+  margin: 0;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .datos {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .datos dd {
+    margin-bottom: 8px;
+  }
+}

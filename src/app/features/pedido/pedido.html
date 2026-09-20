@@ -1,0 +1,91 @@
+<app-site-header />
+
+<main class="pagina">
+  <article class="seguimiento">
+    @if (cargando()) {
+      <p class="cargando">Buscando tu pedido…</p>
+    } @else if (pedido(); as p) {
+      <header class="cabeza">
+        <p class="antetitulo">Tu revisión</p>
+        <h1>{{ p.capitulo }}</h1>
+        <p class="entradilla">
+          {{ p.nombre }} · {{ p.universidad }} · {{ p.nivel }}
+        </p>
+        <p class="codigo">Código {{ p.codigo }}</p>
+      </header>
+
+      @if (avance() < 0) {
+        <section class="caja caja-parada">
+          <h2>Este pedido se canceló</h2>
+          <p>Si crees que es un error, escríbenos con tu código.</p>
+        </section>
+      } @else {
+        <!-- Los tres pasos. El que toca, marcado; los pasados, hechos. -->
+        <ol class="pasos">
+          @for (uno of pasos; track uno.estado; let i = $index) {
+            <li [class.hecho]="i < avance()" [class.ahora]="i === avance()">
+              <span class="bolita">{{ i < avance() ? '✓' : i + 1 }}</span>
+              <span class="paso-titulo">{{ uno.titulo }}</span>
+            </li>
+          }
+        </ol>
+
+        <section class="caja">
+          <p class="ahora-texto">{{ paso[p.estado] }}</p>
+
+          @if (p.estado === 'ENTREGADO' && p.enlaceObservaciones) {
+            <a class="boton-enlace" [href]="p.enlaceObservaciones" target="_blank" rel="noopener noreferrer">
+              Abrir mis observaciones
+            </a>
+            <p class="tenue">
+              Están numeradas. Ve corrigiendo una por una: cuando termines, mándanos tu versión
+              corregida y verificamos cuáles quedaron levantadas.
+            </p>
+          } @else {
+            <p class="tenue">
+              Te avisamos por correo en cuanto estén listas. No hace falta que hagas nada ahora.
+            </p>
+          }
+        </section>
+
+        <dl class="datos">
+          <dt>Lo que mandaste</dt>
+          <dd>{{ p.archivoNombre }}</dd>
+          <dt>Cuándo</dt>
+          <dd>{{ p.createdAt | date: 'd MMM y, HH:mm' }}</dd>
+          @if (p.entregadoAt) {
+            <dt>Entregado</dt>
+            <dd>{{ p.entregadoAt | date: 'd MMM y, HH:mm' }}</dd>
+          }
+        </dl>
+      }
+    } @else {
+      <!-- Sin código en la URL, o con uno que no vale. -->
+      <section class="caja caja-buscar">
+        <h1>Consulta tu revisión</h1>
+        <p>Escribe el código que te dimos al enviar tu trabajo.</p>
+
+        <div class="buscador">
+          <input
+            type="text"
+            maxlength="16"
+            placeholder="abc23xyz"
+            autocapitalize="off"
+            spellcheck="false"
+            (input)="escribir($event)"
+            (keyup.enter)="buscarEscrito()"
+          />
+          <button type="button" class="boton-enlace" [disabled]="escrito().length < 6" (click)="buscarEscrito()">
+            Buscar
+          </button>
+        </div>
+
+        @if (error(); as e) {
+          <p class="mal">{{ e }}</p>
+        }
+      </section>
+    }
+  </article>
+</main>
+
+<app-site-footer />

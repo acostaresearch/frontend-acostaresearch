@@ -1,0 +1,251 @@
+<app-aviso-flotante [(error)]="error" />
+
+<!-- ══ LA PUERTA ════════════════════════════════════════════════════════════ -->
+<section class="tarjeta">
+  <h2>Enlace del formulario</h2>
+  <p class="nota">
+    Lo que se le manda al tesista por WhatsApp. <strong>Abierto</strong> dice si admite trabajos;
+    <strong>Público</strong>, si se llega sin el enlace. Con Público apagado, el formulario existe y
+    funciona pero no lo encuentra nadie: así arranca el piloto.
+  </p>
+
+  <div class="crear">
+    <div class="campo">
+      <label for="revision-nombre">Nombre, para reconocerlo</label>
+      <input
+        id="revision-nombre"
+        type="text"
+        maxlength="120"
+        placeholder="Piloto de revisión, setiembre"
+        [value]="nombreNuevo()"
+        (input)="escribir('nombreNuevo', $event)"
+      />
+    </div>
+    <div class="campo">
+      <label for="revision-intro">Lo que leerá el tesista al abrirlo (opcional)</label>
+      <textarea
+        id="revision-intro"
+        rows="2"
+        maxlength="600"
+        [value]="introNueva()"
+        (input)="escribir('introNueva', $event)"
+      ></textarea>
+    </div>
+    <button
+      type="button"
+      class="boton"
+      [disabled]="nombreNuevo().trim().length < 3 || creando()"
+      (click)="crear()"
+    >
+      {{ creando() ? 'Creando…' : 'Crear enlace' }}
+    </button>
+  </div>
+
+  @if (convocatorias().length === 0) {
+    <p class="vacio">Todavía no hay ninguno. Crea uno para tener el enlace que vas a repartir.</p>
+  } @else {
+    <ul class="lista">
+      @for (c of convocatorias(); track c.id) {
+        <li>
+          <div class="datos">
+            <p class="titulo">{{ c.nombre }}</p>
+            <p class="enlace">{{ c.url }}</p>
+          </div>
+
+          <span class="estado" [class.hecho]="c.abierta">
+            {{ c.abierta ? 'Abierto' : 'Cerrado' }}
+          </span>
+          <span class="estado" [class.publica]="c.publica">
+            {{ c.publica ? 'Público' : 'Solo con enlace' }}
+          </span>
+
+          <div class="acciones">
+            <button type="button" class="boton secundario" (click)="copiar(c)">
+              {{ copiada() === c.id ? 'Copiado' : 'Copiar enlace' }}
+            </button>
+            <button type="button" class="boton secundario" (click)="cerrarOAbrir(c)">
+              {{ c.abierta ? 'Cerrar' : 'Abrir' }}
+            </button>
+            <button type="button" class="boton secundario" (click)="publicarOEsconder(c)">
+              {{ c.publica ? 'Quitar del público' : 'Abrir al público' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<!-- ══ LOS PEDIDOS ══════════════════════════════════════════════════════════ -->
+<section class="tarjeta">
+  <h2>Capítulos por revisar</h2>
+  <p class="nota">
+    Bájate el Word, pásale tu revisión de máquina, mándaselo al asesor y, cuando te devuelva sus
+    observaciones, pega aquí el enlace del documento y dale por entregado. El tesista ve el cambio
+    en su seguimiento en cuanto lo marcas.
+  </p>
+
+  <div class="filtros">
+    @for (uno of filtros; track uno.codigo) {
+      <button
+        type="button"
+        class="filtro"
+        [class.activo]="filtro() === uno.codigo"
+        (click)="filtro.set(uno.codigo)"
+      >
+        {{ uno.nombre }}
+        <span class="filtro-cuenta">{{ cuantos(uno.codigo) }}</span>
+      </button>
+    }
+  </div>
+
+  @if (visibles().length === 0) {
+    <p class="vacio">No hay pedidos aquí.</p>
+  } @else {
+    <ul class="lista">
+      @for (p of visibles(); track p.id) {
+        <li>
+          <div class="datos">
+            <p class="titulo">
+              <span class="codigo">{{ p.codigo }}</span>
+              {{ p.capituloNombre }}
+            </p>
+            <p class="tenue">
+              {{ p.nombre }} · {{ p.universidad }} · {{ p.nivelNombre }} · {{ p.areaNombre }}
+            </p>
+            <p class="tenue">
+              {{ p.createdAt | date: 'd MMM y, HH:mm' }}
+              @if (p.asesor) {
+                · con {{ p.asesor.nombre }}
+              }
+            </p>
+          </div>
+          <span
+            class="estado"
+            [class.hecho]="p.estado === 'ENTREGADO'"
+            [class.no]="p.estado === 'CANCELADO'"
+            [class.curso]="p.estado === 'EN_REVISION'"
+          >
+            {{ nombreDelEstado[p.estado] }}
+          </span>
+          <button type="button" class="boton secundario" (click)="abrir(p)">Abrir</button>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (abierto(); as p) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-pedido">
+      <div class="ventana-cabecera">
+        <div>
+          <h3 id="titulo-pedido">{{ p.capituloNombre }}</h3>
+          <p class="tenue">
+            Código {{ p.codigo }} · {{ p.createdAt | date: 'd MMM y, HH:mm' }} ·
+            {{ nombreDelEstado[p.estado] }}
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrar()">✕</button>
+      </div>
+
+      <h4>Quién lo manda</h4>
+      <dl>
+        <dt>Nombre</dt>
+        <dd>{{ p.nombre }}</dd>
+        <dt>Correo</dt>
+        <dd>{{ p.email }}</dd>
+        @if (p.telefono) {
+          <dt>WhatsApp</dt>
+          <dd>{{ p.telefono }}</dd>
+        }
+        <dt>Universidad</dt>
+        <dd>{{ p.universidad }} · {{ p.nivelNombre }}</dd>
+      </dl>
+
+      <h4>Qué manda</h4>
+      <dl>
+        <dt>Tema</dt>
+        <dd>{{ p.tema }}</dd>
+        <dt>Área y enfoque</dt>
+        <dd>{{ p.areaNombre }} · {{ p.metodoNombre }}</dd>
+        <dt>Documento</dt>
+        <dd>{{ p.archivoNombre }}</dd>
+      </dl>
+
+      @if (p.mensaje) {
+        <h4>Qué le preocupa</h4>
+        <p class="mensaje">{{ p.mensaje }}</p>
+      }
+
+      <div class="bajar">
+        <button type="button" class="boton secundario" [disabled]="bajando()" (click)="bajarDocumento(p)">
+          {{ bajando() ? 'Bajando…' : 'Bajar su Word' }}
+        </button>
+      </div>
+
+      <h4>Qué se hace con él</h4>
+
+      <div class="campo">
+        <label for="pedido-asesor">Asesor</label>
+        <select id="pedido-asesor" [value]="asesorElegido()" (change)="elegirAsesor($event)">
+          <option value="">— sin asignar —</option>
+          @for (a of asignables(); track a.id) {
+            <option [value]="a.id">{{ a.nombre }} · {{ a.areas.join(', ') }}</option>
+          }
+        </select>
+        @if (asignables().length === 0) {
+          <span class="ayuda">
+            No hay asesores aprobados todavía. Apruébalos en la sección Asesores.
+          </span>
+        } @else {
+          <span class="ayuda">Solo salen los aprobados. Asignar lo pone en revisión.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="pedido-enlace">Enlace del documento de observaciones</label>
+        <input
+          id="pedido-enlace"
+          type="url"
+          maxlength="500"
+          placeholder="https://docs.google.com/document/d/…"
+          [value]="enlace()"
+          (input)="escribir('enlace', $event)"
+        />
+        <span class="ayuda">
+          Es lo único que el tesista ve al final, y hace falta para poder entregar.
+        </span>
+      </div>
+
+      <div class="campo">
+        <label for="pedido-notas">Notas internas</label>
+        <textarea
+          id="pedido-notas"
+          rows="3"
+          maxlength="2000"
+          [value]="notas()"
+          (input)="escribir('notas', $event)"
+        ></textarea>
+        <span class="ayuda">Solo las ves tú. No se le enseñan.</span>
+      </div>
+
+      <div class="pie">
+        <button type="button" class="boton secundario" (click)="cerrar()">Cancelar</button>
+        @if (p.estado !== 'CANCELADO') {
+          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="marcar('CANCELADO')">
+            Cancelar pedido
+          </button>
+        }
+        <button type="button" class="boton secundario" [disabled]="guardando()" (click)="guardar()">
+          Guardar
+        </button>
+        @if (p.estado !== 'ENTREGADO') {
+          <button type="button" class="boton" [disabled]="guardando()" (click)="marcar('ENTREGADO')">
+            {{ guardando() ? 'Guardando…' : 'Entregar al tesista' }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

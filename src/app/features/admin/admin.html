@@ -60,7 +60,13 @@
         }
       </button>
 
-      <p class="lateral-grupo">Equipo</p>
+      <p class="lateral-grupo">Revisión de tesis</p>
+      <button type="button" [class.activa]="seccion() === 'pedidos'" (click)="ir('pedidos')">
+        <span>Revisiones</span>
+        @if (pedidosSinAsignar() > 0) {
+          <span class="lateral-contador">{{ pedidosSinAsignar() }}</span>
+        }
+      </button>
       <button type="button" [class.activa]="seccion() === 'asesores'" (click)="ir('asesores')">
         <span>Asesores</span>
         @if (asesoresPendientes() > 0) {
@@ -2401,6 +2407,17 @@
        mismo que el libro. -->
     @if (seccion() === 'asesores') {
       <app-asesores-admin [asesores]="asesores()" (cambiado)="asesorCambiado($event)" />
+    }
+
+    <!-- ══ REVISIONES ═════════════════════════════════════════════════════════
+       Los capítulos que mandan los tesistas y el enlace por el que llegan. En
+       su propio componente, como los asesores. -->
+    @if (seccion() === 'pedidos') {
+      <app-pedidos-admin
+        [pedidos]="pedidos()"
+        [asesores]="asesores()"
+        (cambiado)="pedidoCambiado($event)"
+      />
     }
 
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════

@@ -60,6 +60,8 @@ import { PieLista } from './pie-lista';
 import { ReclamosAdmin } from './reclamos';
 import { AsesoresAdmin } from './asesores';
 import { Asesor, AsesorService } from '../../core/services/asesor.service';
+import { PedidosAdmin } from './pedidos';
+import { Pedido, PedidoService } from '../../core/services/pedido.service';
 
 type Seccion =
   | 'accesos'
@@ -70,6 +72,7 @@ type Seccion =
   | 'alertas'
   | 'reclamos'
   | 'asesores'
+  | 'pedidos'
   | 'corpus'
   | 'tutoriales'
   | 'admins'
@@ -120,6 +123,13 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota:
       'Las hojas que llegan desde la web. Hay que responder cada una en 15 días hábiles: el plazo ' +
       'es improrrogable y no responder es sancionable.',
+  },
+  pedidos: {
+    titulo: 'Revisiones',
+    nota:
+      'Los capítulos que mandan los tesistas. Bájate el Word, asígnalo a un asesor aprobado y, ' +
+      'cuando vuelva con sus observaciones, pega el enlace del documento y dale por entregado: ' +
+      'el tesista lo ve al momento en su seguimiento. Durante el piloto no se cobra aquí.',
   },
   asesores: {
     titulo: 'Asesores',
@@ -292,6 +302,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     MiConector,
     ReclamosAdmin,
     AsesoresAdmin,
+    PedidosAdmin,
     AvisoFlotante,
   ],
   templateUrl: './admin.html',
@@ -1054,6 +1065,10 @@ export class Admin implements OnInit {
     // Las fichas de asesor, por lo mismo: el contador lateral es lo que avisa de
     // que hay alguien esperando respuesta sin tener que abrir la sección.
     this.cargarAsesores(false);
+
+    // Y los pedidos, por lo mismo: un capítulo esperando sin asignar es alguien
+    // mirando su seguimiento sin que se mueva nada.
+    this.cargarPedidos(false);
 
     // La ficha de «Datos de la cuenta» sale de la sesión, y la sesión se llenó al
     // entrar: el último acceso o la verificación pueden haber cambiado desde
@@ -2081,6 +2096,10 @@ export class Admin implements OnInit {
       case 'asesores':
         this.cargarAsesores();
         break;
+      case 'pedidos':
+        this.cargarPedidos();
+        this.cargarAsesores();
+        break;
       case 'admins':
       case 'usuarios':
         this.cargarUsuarios();
@@ -2466,6 +2485,13 @@ export class Admin implements OnInit {
     // Lo mismo con las fichas de asesor: el enlace está repartido y llegan solas.
     if (seccion === 'asesores') this.cargarAsesores();
 
+    // Y con los pedidos, que llegan a cualquier hora. Los asesores hacen falta
+    // aquí para poder asignar sin cambiar de sección.
+    if (seccion === 'pedidos') {
+      this.cargarPedidos();
+      this.cargarAsesores();
+    }
+
     // Las pruebas se miran de vez en cuando —antes y después de un taller—, no
     // a diario: tampoco se piden al entrar. Se vuelven a pedir cada vez que se
     // abre la sección, porque los cupos se van llenando mientras tanto.
@@ -2846,6 +2872,33 @@ export class Admin implements OnInit {
   asesorCambiado(mensaje: string): void {
     this.aviso.set(mensaje);
     this.cargarAsesores();
+  }
+
+  // ── Revisiones ───────────────────────────────────────────────────────────
+  //
+  // La lista y el contador viven aquí; el tablero y la ventana, en
+  // `PedidosAdmin`.
+
+  private readonly pedidosApi = inject(PedidoService);
+
+  readonly pedidos = signal<Pedido[]>([]);
+  /** Los que todavía no tienen asesor: son los que hay que mover hoy. */
+  readonly pedidosSinAsignar = computed(
+    () => this.pedidos().filter((p) => p.estado === 'RECIBIDO').length,
+  );
+
+  cargarPedidos(avisarSiFalla = true): void {
+    this.pedidosApi.listar().subscribe({
+      next: (lista) => this.pedidos.set(lista),
+      error: (e: unknown) => {
+        if (avisarSiFalla) this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  pedidoCambiado(mensaje: string): void {
+    this.aviso.set(mensaje);
+    this.cargarPedidos();
   }
 
   // ── Tutoriales ───────────────────────────────────────────────────────────

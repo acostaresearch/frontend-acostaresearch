@@ -183,6 +183,36 @@ export const routes: Routes = [
     title: 'Revisa tesis con nosotros · Acosta Research',
     loadComponent: () => import('./features/asesores/asesores').then((m) => m.Asesores),
   },
+  /*
+   * El otro lado del piloto: el tesista que manda su capítulo a revisar.
+   *
+   * Misma puerta que la de los asesores —con slug se llega, sin slug solo si
+   * hay una convocatoria pública— y mismo motivo para que sea así. Y el
+   * seguimiento, /pedido/<codigo>, que es donde vuelve a mirar en qué va: el
+   * código es la llave, sin cuenta, como los enlaces que reparte el conector.
+   */
+  {
+    path: 'revision',
+    pathMatch: 'full',
+    title: 'Revisa tu tesis · Acosta Research',
+    loadComponent: () => import('./features/revision/revision').then((m) => m.Revision),
+  },
+  {
+    path: 'revision/:slug',
+    title: 'Revisa tu tesis · Acosta Research',
+    loadComponent: () => import('./features/revision/revision').then((m) => m.Revision),
+  },
+  {
+    path: 'pedido',
+    pathMatch: 'full',
+    title: 'Mi revisión · Acosta Research',
+    loadComponent: () => import('./features/pedido/pedido').then((m) => m.PedidoSeguimiento),
+  },
+  {
+    path: 'pedido/:codigo',
+    title: 'Mi revisión · Acosta Research',
+    loadComponent: () => import('./features/pedido/pedido').then((m) => m.PedidoSeguimiento),
+  },
   // El enlace de prueba que el administrador reparte a un grupo. Sin sesión a
   // propósito: quien lo recibe no se registra, solo recoge su conector.
   {

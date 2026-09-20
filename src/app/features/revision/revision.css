@@ -1,0 +1,315 @@
+/* El formulario del tesista. Una columna, el documento primero —es lo que ha
+   venido a hacer— y los datos de contacto después. */
+
+.pagina {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--banda) var(--lado);
+}
+
+.revision-pagina {
+  width: min(100% - 32px, 740px);
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+
+.cargando {
+  padding: 60px 0;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+/* ---------- Encabezado ---------- */
+
+.cabeza {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.antetitulo {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.cabeza h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--color-texto);
+}
+
+.entradilla {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Cajas de estado ---------- */
+
+.aviso-caja,
+.acuse {
+  padding: 30px 26px;
+  text-align: center;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+}
+
+.acuse {
+  border-color: color-mix(in srgb, var(--color-exito) 32%, var(--color-borde));
+  background: color-mix(in srgb, var(--color-exito-suave) 60%, var(--color-superficie));
+}
+
+.aviso-caja h1,
+.aviso-caja h2,
+.acuse h1 {
+  margin: 0 0 10px;
+  font-size: 23px;
+  font-weight: 750;
+  color: var(--color-texto);
+}
+
+.aviso-caja p,
+.acuse p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--color-texto-suave);
+}
+
+/* El código es lo único que se lleva: se lee de lejos y se copia sin error. */
+.codigo {
+  margin: 14px 0 18px !important;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: clamp(30px, 8vw, 40px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-texto) !important;
+  user-select: all;
+}
+
+.boton-enlace {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-sobre-boton);
+  text-decoration: none;
+  background: var(--color-boton);
+  border-radius: 999px;
+}
+
+.boton-enlace:hover {
+  background: var(--color-boton-hover);
+}
+
+.tenue {
+  margin: 14px 0 0;
+  color: var(--color-texto-tenue);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* ---------- Cómo funciona ---------- */
+
+.como {
+  margin: 0 0 26px;
+  padding: 22px 24px;
+  background: color-mix(in srgb, var(--color-primario) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primario) 16%, var(--color-borde));
+  border-radius: 14px;
+}
+
+.como h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.como ol {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.como li {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.como strong {
+  color: var(--color-texto);
+}
+
+/* ---------- Formulario ---------- */
+
+.formulario {
+  display: grid;
+  gap: 22px;
+}
+
+fieldset {
+  margin: 0;
+  padding: 22px 22px 24px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+legend {
+  padding: 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.campo {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.campo:last-child {
+  margin-bottom: 0;
+}
+
+.etiqueta {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.etiqueta em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+input[type='text'],
+input[type='email'],
+input[type='tel'],
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--color-texto);
+  background: var(--color-sobre-relleno);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+  border-color: var(--color-foco);
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mal {
+  font-size: 12.5px;
+  color: var(--color-error);
+}
+
+/* ---------- El archivo ---------- */
+
+.soltar {
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--color-primario) 4%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--color-primario) 32%, var(--color-borde));
+  border-radius: 12px;
+}
+
+.soltar:hover {
+  border-color: var(--color-primario);
+}
+
+.soltar-mal {
+  border-color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+/* El input nativo no se puede maquillar: se tapa y manda la caja. */
+.soltar input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.archivo-nombre {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-primario);
+  overflow-wrap: anywhere;
+}
+
+.archivo-peso {
+  font-size: 13px;
+  color: var(--color-texto-tenue);
+}
+
+/* ---------- Envío ---------- */
+
+.enviar {
+  justify-self: start;
+  padding: 13px 26px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.enviar:hover:not(:disabled) {
+  background: var(--color-boton-hover);
+}
+
+.enviar:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.pie-nota {
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .fila {
+    grid-template-columns: 1fr;
+  }
+
+  fieldset {
+    padding: 18px 16px 20px;
+  }
+}

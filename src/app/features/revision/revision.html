@@ -1,0 +1,200 @@
+<app-site-header />
+
+<main class="pagina">
+  <article class="revision-pagina">
+    @if (cargando()) {
+      <p class="cargando">Abriendo el formulario…</p>
+    } @else if (error() && !convocatoria()) {
+      <section class="aviso-caja">
+        <h1>Este enlace no está disponible</h1>
+        <p>{{ error() }}</p>
+        <p class="tenue">Si te lo pasó un compañero, pídenos el enlace vigente.</p>
+      </section>
+    } @else if (convocatoria(); as c) {
+      @if (codigo(); as cod) {
+        <!-- El acuse. Lo único que se lleva es el código, así que la página
+             entera se dedica a que no lo pierda. -->
+        <section class="acuse">
+          <h1>Recibimos tu trabajo</h1>
+          <p>Este es tu código. Guárdalo: con él consultas cómo va tu revisión.</p>
+          <p class="codigo">{{ cod }}</p>
+          <a class="boton-enlace" [routerLink]="['/pedido', cod]">Ver cómo va mi revisión</a>
+          <p class="tenue">
+            También te escribimos al correo cuando tus observaciones estén listas. Si cierras esta
+            página, el enlace es
+            <strong>acostaresearch.com/pedido/{{ cod }}</strong>
+          </p>
+        </section>
+      } @else {
+        <header class="cabeza">
+          <p class="antetitulo">Revisión de tesis</p>
+          <h1>{{ c.nombre }}</h1>
+          @if (c.intro) {
+            <p class="entradilla">{{ c.intro }}</p>
+          } @else {
+            <p class="entradilla">
+              Sube el capítulo que estás trabajando y un asesor te devuelve observaciones concretas:
+              qué está mal, por qué y qué se espera en su lugar. Tú haces las correcciones.
+            </p>
+          }
+        </header>
+
+        @if (!c.abierta) {
+          <section class="aviso-caja">
+            <h2>Ahora mismo no estamos recibiendo</h2>
+            <p>Este enlace sigue vivo, pero ya no admite trabajos nuevos. Escríbenos y te avisamos.</p>
+          </section>
+        } @else {
+          <section class="como">
+            <h2>Cómo funciona</h2>
+            <ol>
+              <li>Subes tu capítulo en Word y nos cuentas qué te preocupa.</li>
+              <li>Un asesor lo revisa y te devuelve una lista de observaciones numeradas.</li>
+              <li>
+                <strong>Tú corriges.</strong> No escribimos tu tesis por ti: te decimos qué hay que
+                arreglar para que la defiendas tú.
+              </li>
+            </ol>
+            <p class="tenue">
+              Tu documento es tuyo y no se comparte con nadie más que con el asesor que lo revisa.
+            </p>
+          </section>
+
+          <app-aviso-flotante [error]="error()" />
+
+          <form class="formulario" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+            <fieldset>
+              <legend>Tu trabajo</legend>
+
+              <div class="campo">
+                <span class="etiqueta">El documento en Word (.docx)</span>
+                <label class="soltar" [class.soltar-mal]="errorArchivo()">
+                  <input type="file" accept=".docx" (change)="elegirArchivo($event)" />
+                  @if (archivo(); as a) {
+                    <span class="archivo-nombre">{{ a.name }}</span>
+                    <span class="archivo-peso">{{ peso(a) }} · toca para cambiarlo</span>
+                  } @else {
+                    <span class="archivo-nombre">Elegir mi documento</span>
+                    <span class="archivo-peso">Word .docx, hasta 25 MB</span>
+                  }
+                </label>
+                @if (errorArchivo(); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </div>
+
+              <div class="fila">
+                <label class="campo">
+                  <span class="etiqueta">Qué parte nos mandas</span>
+                  <select formControlName="capitulo">
+                    @for (opcion of c.catalogos.capitulos; track opcion.codigo) {
+                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                    }
+                  </select>
+                </label>
+
+                <label class="campo">
+                  <span class="etiqueta">Nivel</span>
+                  <select formControlName="nivel">
+                    @for (opcion of c.catalogos.niveles; track opcion.codigo) {
+                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+
+              <div class="fila">
+                <label class="campo">
+                  <span class="etiqueta">Área</span>
+                  <select formControlName="area">
+                    @for (opcion of c.catalogos.areas; track opcion.codigo) {
+                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                    }
+                  </select>
+                </label>
+
+                <label class="campo">
+                  <span class="etiqueta">Enfoque de tu tesis</span>
+                  <select formControlName="metodo">
+                    @for (opcion of c.catalogos.metodos; track opcion.codigo) {
+                      <option [value]="opcion.codigo">{{ opcion.nombre }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+
+              <label class="campo">
+                <span class="etiqueta">Tu tema</span>
+                <input
+                  type="text"
+                  formControlName="tema"
+                  placeholder="Liderazgo directivo y clima escolar en instituciones públicas"
+                />
+                @if (mensaje('tema'); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </label>
+
+              <label class="campo">
+                <span class="etiqueta">¿Qué quieres que miremos con más cuidado? <em>(opcional)</em></span>
+                <textarea
+                  formControlName="mensaje"
+                  rows="3"
+                  placeholder="Mi asesor dice que la muestra no se justifica y no sé cómo arreglarlo."
+                ></textarea>
+              </label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Cómo te contactamos</legend>
+
+              <label class="campo">
+                <span class="etiqueta">Tu nombre completo</span>
+                <input type="text" formControlName="nombre" autocomplete="name" />
+                @if (mensaje('nombre'); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </label>
+
+              <div class="fila">
+                <label class="campo">
+                  <span class="etiqueta">Correo</span>
+                  <input type="email" formControlName="email" autocomplete="email" />
+                  @if (mensaje('email'); as m) {
+                    <small class="mal">{{ m }}</small>
+                  }
+                </label>
+
+                <label class="campo">
+                  <span class="etiqueta">WhatsApp <em>(opcional)</em></span>
+                  <input type="tel" formControlName="telefono" autocomplete="tel" />
+                  @if (mensaje('telefono'); as m) {
+                    <small class="mal">{{ m }}</small>
+                  }
+                </label>
+              </div>
+
+              <label class="campo">
+                <span class="etiqueta">Tu universidad</span>
+                <input type="text" formControlName="universidad" />
+                @if (mensaje('universidad'); as m) {
+                  <small class="mal">{{ m }}</small>
+                }
+              </label>
+            </fieldset>
+
+            <button type="submit" class="enviar" [disabled]="enviando()">
+              {{ enviando() ? 'Subiendo tu documento…' : 'Enviar mi trabajo' }}
+            </button>
+
+            <p class="tenue pie-nota">
+              Durante esta prueba no se cobra nada. No te pedimos DNI ni ningún dato de pago.
+            </p>
+          </form>
+        }
+      }
+    }
+  </article>
+</main>
+
+<app-site-footer />
