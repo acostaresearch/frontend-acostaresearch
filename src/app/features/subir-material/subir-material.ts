@@ -10,11 +10,14 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
 /**
- * Subir el material del curso —consigna, rúbrica o índice— desde el enlace que
- * da Claude en el informe estudiantil.
+ * Subir el material del encargo —la consigna, la rúbrica o el índice en un
+ * informe de curso; los términos de referencia en uno de empresa— desde el
+ * enlace que da Claude.
  *
  * Misma forma que `subir-formato`: el estudiante sube el archivo y vuelve a la
- * conversación, donde Claude lo lee. No toca el formato del Word.
+ * conversación, donde Claude lo lee. No toca el formato del Word. Se aceptan
+ * Word, PDF, Excel y texto: lo único que no se lee aquí es una foto o un PDF
+ * escaneado, que van adjuntos en el chat.
  */
 @Component({
   selector: 'app-subir-material',
@@ -84,8 +87,8 @@ export class SubirMaterial implements OnInit {
         this.paso.set('subido');
       },
       error: (e: unknown) => {
-        // Los mensajes del servidor están escritos para el estudiante: «es un PDF,
-        // adjúntalo en el chat de tu asistente».
+        // Los mensajes del servidor están escritos para el estudiante: «es una
+        // imagen, adjúntala en el chat de tu asistente».
         this.error.set(mensajeDeError(e));
         this.paso.set('elegir');
       },

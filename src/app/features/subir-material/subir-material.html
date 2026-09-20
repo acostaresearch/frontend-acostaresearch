@@ -43,7 +43,7 @@
           Subir otro archivo
           <input
             type="file"
-            accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            accept=".docx,.pdf,.xlsx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
             (change)="elegir($event)"
           />
         </label>
@@ -51,17 +51,18 @@
 
       @default {
         @if (deEmpresa()) {
-          <h1>Sube el material del encargo</h1>
+          <h1>Sube los requerimientos del encargo</h1>
           <p>
             Sube los términos de referencia, el correo del pedido o la plantilla de informes de la
-            empresa. Tu asistente lo lee para armar tu informe con el alcance y las secciones que te piden.
-            Sube solo lo necesario: sin datos personales que el informe no use.
+            empresa, en Word, PDF, Excel o texto. Tu asistente los lee para armar tu informe con el
+            alcance y las secciones que te piden. Sube solo lo necesario: sin datos personales que el
+            informe no use.
           </p>
         } @else {
           <h1>Sube el material de tu curso</h1>
           <p>
-            Sube la consigna, la rúbrica o el índice que te dio tu docente. Tu asistente lo lee para armar
-            tu informe con la estructura y los criterios que te piden.
+            Sube la consigna, la rúbrica o el índice que te dio tu docente, en Word, PDF, Excel o texto.
+            Tu asistente lo lee para armar tu informe con la estructura y los criterios que te piden.
           </p>
         }
 
@@ -84,7 +85,7 @@
         >
           <input
             type="file"
-            accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            accept=".docx,.pdf,.xlsx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
             [disabled]="paso() === 'subiendo'"
             (change)="elegir($event)"
           />
@@ -92,16 +93,17 @@
             <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
           } @else {
             <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
-            <span class="nota">Word (.docx) o texto (.txt) · hasta 5 MB · hasta 5 archivos</span>
+            <span class="nota"
+              >Word, PDF, Excel o texto (.docx, .pdf, .xlsx, .txt) · hasta 10 MB · hasta 5 archivos</span
+            >
           }
         </label>
 
         <app-aviso-flotante [(error)]="error" />
 
         <p class="nota">
-          ¿Lo tienes en PDF o en foto? Adjúntalo directamente en el chat de tu asistente, con el clip:
-          ahí lo lee sin subirlo aquí. Si prefieres guardarlo, ábrelo en Word y guárdalo como
-          «Documento de Word (.docx)».
+          ¿Solo lo tienes en foto, o en un PDF escaneado? Eso aquí no se puede leer: adjúntalo
+          directamente en el chat de tu asistente, con el clip, que ahí sí lo lee.
         </p>
       }
     }
