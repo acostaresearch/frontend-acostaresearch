@@ -395,7 +395,14 @@
                     [attr.aria-expanded]="estaAbierto(e.code)"
                   >
                     <span class="icono" aria-hidden="true"></span>
-                    <span class="nombre">{{ e.displayName }}</span>
+                    <span class="nombre"
+                      >{{ e.displayName }}
+                      <!-- Lo que se trabaja aquí no siempre es un capítulo. Sin
+                           decirlo, el panel y el chat parecen contradecirse. -->
+                      @if (e.enDocumento === false) {
+                        <span class="fuera-del-word">no va dentro del Word</span>
+                      }
+                    </span>
                     <span class="estado">{{ etiqueta(e.estado) }}@if (e.palabras > 0) { · {{ e.palabras }} palabras }</span>
                     <span class="flecha" aria-hidden="true">{{ estaAbierto(e.code) ? '▴' : '▾' }}</span>
                   </button>
@@ -411,7 +418,12 @@
                 } @else {
                   <div class="fila">
                     <span class="icono" aria-hidden="true"></span>
-                    <span class="nombre">{{ e.displayName }}</span>
+                    <span class="nombre"
+                      >{{ e.displayName }}
+                      @if (e.enDocumento === false && e.estado !== 'PENDIENTE') {
+                        <span class="fuera-del-word">no va dentro del Word</span>
+                      }
+                    </span>
                     <!-- «Sin empezar» no se escribe: con el círculo vacío ya se
                          dice, y repetido en cada fila era ruido. -->
                     @if (e.estado !== 'PENDIENTE') {

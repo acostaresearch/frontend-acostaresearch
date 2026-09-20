@@ -466,6 +466,16 @@
   color: var(--color-texto);
 }
 
+/* Las fases que se trabajan pero no se imprimen. En la misma línea del nombre
+   y en gris: es un dato, no un aviso, y no debe competir con el estado. */
+.fuera-del-word {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+  white-space: nowrap;
+}
+
 .estado {
   flex-shrink: 0;
   font-size: 12px;

@@ -16,6 +16,13 @@ export interface EtapaDelProyecto {
    * el panel y no cuenta en el avance: se usa cuando hace falta, no en orden.
    */
   apoyo: boolean;
+  /**
+   * Falso = se trabaja en esta fase, pero su texto NO sale en el Word: la
+   * propuesta de tema, el cuestionario y la bitácora del trabajo de campo. Se
+   * dice en el panel porque si no, «413 palabras» aquí y «no hay ningún
+   * capítulo» en el chat se leen como un fallo del servidor.
+   */
+  enDocumento: boolean;
   estado: EstadoDeEtapa;
   /** Qué quedó decidido, en dos o tres frases. Nulo si no se guardó nada. */
   resumen: string | null;
