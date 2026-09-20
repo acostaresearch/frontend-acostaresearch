@@ -8,6 +8,7 @@ import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TourService } from '../../core/services/tour.service';
 import { TOUR_DEL_PANEL, TOUR_PANEL } from '../contenido/tour-del-panel';
 import { MiTesis } from './mi-tesis';
+import { MiRevision } from './mi-revision';
 import { MiMapaVosviewer } from './mi-mapa-vosviewer';
 import { MiScopusPanel } from './mi-scopus';
 import { MisFuentesPanel } from './mis-fuentes';
@@ -37,6 +38,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
     MiAtlasTi,
     RouterLink,
     MiTesis,
+    MiRevision,
     MisFuentesPanel,
     MiScopusPanel,
     MiZoteroPanel,

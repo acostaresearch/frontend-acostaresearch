@@ -1,0 +1,255 @@
+<!-- Quien no está en la prueba no ve nada, ni un hueco. Ver la nota del
+     componente: para él esto todavía no existe. -->
+@if (enLaPrueba()) {
+  <section class="tarjeta tramo-6 revision">
+    <div class="revision-cabecera">
+      <div>
+        <h2>Revisión con un asesor</h2>
+        <p class="nota">
+          Un asesor verificado lee tu capítulo y te devuelve observaciones concretas: qué está mal,
+          por qué y qué se espera. Tú haces las correcciones.
+        </p>
+      </div>
+      <span class="etiqueta-prueba">En pruebas</span>
+    </div>
+
+    @if (aviso(); as a) {
+      <p class="bien">{{ a }}</p>
+    }
+    @if (error(); as e) {
+      <p class="mal">{{ e }}</p>
+    }
+
+    @if (paso() === 'lista') {
+      <!-- ── Lo suyo ──────────────────────────────────────────────────────── -->
+      @if (revisiones().length === 0) {
+        <p class="vacio">
+          Todavía no has mandado ningún capítulo. Elige a quién quieres que lo lea.
+        </p>
+      } @else {
+        <ul class="lista">
+          @for (r of revisiones(); track r.codigo) {
+            <li>
+              <div class="datos">
+                <p class="titulo">{{ r.capitulo }}</p>
+                <p class="tenue">{{ frase[r.estado] }}</p>
+                <p class="tenue">
+                  @if (r.asesor) {
+                    Con {{ r.asesor.nombre }} ·
+                  }
+                  {{ r.createdAt | date: 'd MMM y' }}
+                </p>
+              </div>
+              <span
+                class="estado"
+                [class.hecho]="r.estado === 'ENTREGADO'"
+                [class.no]="r.estado === 'RECHAZADO'"
+                [class.curso]="r.estado === 'EN_REVISION'"
+              >
+                {{ nombreDelEstado[r.estado] }}
+              </span>
+              <a class="boton secundario" [routerLink]="['/pedido', r.codigo]">
+                {{ r.estado === 'ENTREGADO' ? 'Ver observaciones' : 'Ver cómo va' }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
+      <button type="button" class="boton" (click)="buscarAsesor()">Buscar un asesor</button>
+    } @else if (paso() === 'directorio') {
+      <!-- ── Elegir ───────────────────────────────────────────────────────── -->
+      <div class="filtros">
+        <label class="filtro">
+          <span>Área</span>
+          <select [value]="fArea()" (change)="filtrar('fArea', $event)">
+            <option value="">Todas</option>
+            @for (o of catalogos()?.areas ?? []; track o.codigo) {
+              <option [value]="o.codigo">{{ o.nombre }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="filtro">
+          <span>Grado</span>
+          <select [value]="fGrado()" (change)="filtrar('fGrado', $event)">
+            <option value="">Cualquiera</option>
+            <option value="DOCTOR">Doctor</option>
+            <option value="MAGISTER">Magíster</option>
+            <option value="BACHILLER">Bachiller</option>
+          </select>
+        </label>
+
+        <label class="filtro">
+          <span>Enfoque</span>
+          <select [value]="fMetodo()" (change)="filtrar('fMetodo', $event)">
+            <option value="">Cualquiera</option>
+            @for (o of catalogos()?.metodos ?? []; track o.codigo) {
+              <option [value]="o.codigo">{{ o.nombre }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="filtro filtro-ancho">
+          <span>Universidad</span>
+          <input
+            type="text"
+            placeholder="UCV, UNT, USS…"
+            [value]="fUniversidad()"
+            (input)="filtrar('fUniversidad', $event)"
+          />
+        </label>
+      </div>
+
+      @if (visibles().length === 0) {
+        <p class="vacio">Ninguno encaja con eso. Prueba a quitar algún filtro.</p>
+      } @else {
+        <ul class="tarjetas">
+          @for (a of visibles(); track a.id) {
+            <li class="tarjeta-asesor">
+              <div class="tarjeta-cabeza">
+                <span class="avatar" aria-hidden="true">{{ a.iniciales }}</span>
+                <div>
+                  <p class="nombre">{{ a.nombre }}</p>
+                  <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+                </div>
+              </div>
+
+              <p class="etiquetas">
+                @for (area of a.areas; track area) {
+                  <span class="pastilla">{{ area }}</span>
+                }
+                @for (metodo of a.metodos; track metodo) {
+                  <span class="pastilla pastilla-suave">{{ metodo }}</span>
+                }
+              </p>
+
+              @if (a.universidades) {
+                <p class="tenue">Conoce: {{ a.universidades }}</p>
+              }
+
+              <p class="tenue">
+                {{ a.anosExperiencia }} {{ a.anosExperiencia === 1 ? 'año' : 'años' }} ·
+                {{ a.tesisRevisadas }} revisadas
+                @if (a.nota !== null) {
+                  · <span class="estrellas">{{ estrellas(a.nota) }}</span> {{ nota(a.nota) }}
+                }
+              </p>
+
+              <p class="presentacion">{{ a.presentacion }}</p>
+
+              <button type="button" class="boton" (click)="elegir(a)">Elegirlo</button>
+            </li>
+          }
+        </ul>
+      }
+
+      <button type="button" class="boton secundario" (click)="alPrincipio()">Volver</button>
+    } @else if (elegido(); as a) {
+      <!-- ── Mandar ───────────────────────────────────────────────────────── -->
+      <div class="elegido">
+        <span class="avatar" aria-hidden="true">{{ a.iniciales }}</span>
+        <div class="elegido-datos">
+          <p class="titulo">Le mandas tu trabajo a {{ a.nombre }}</p>
+          <p class="cargo">{{ a.gradoNombre }} · {{ a.especialidad }}</p>
+        </div>
+        <button type="button" class="boton secundario" (click)="volver()">Cambiar</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+        <div class="campo">
+          <span class="etiqueta-campo">El documento en Word (.docx)</span>
+          <label class="soltar" [class.soltar-mal]="errorArchivo()">
+            <input type="file" accept=".docx" (change)="elegirArchivo($event)" />
+            @if (archivo(); as f) {
+              <span class="archivo-nombre">{{ f.name }}</span>
+              <span class="archivo-peso">{{ peso(f) }} · toca para cambiarlo</span>
+            } @else {
+              <span class="archivo-nombre">Elegir mi documento</span>
+              <span class="archivo-peso">Word .docx, hasta 25 MB</span>
+            }
+          </label>
+          @if (errorArchivo(); as m) {
+            <small class="mal-campo">{{ m }}</small>
+          }
+          <span class="ayuda">No lo abre hasta que acepta el encargo. Nadie más lo ve.</span>
+        </div>
+
+        <div class="rejilla">
+          <label class="campo">
+            <span class="etiqueta-campo">Qué parte le mandas</span>
+            <select formControlName="capitulo">
+              @for (o of catalogos()?.capitulos ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="campo">
+            <span class="etiqueta-campo">Nivel</span>
+            <select formControlName="nivel">
+              @for (o of catalogos()?.niveles ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="campo">
+            <span class="etiqueta-campo">Área</span>
+            <select formControlName="area">
+              @for (o of catalogos()?.areas ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="campo">
+            <span class="etiqueta-campo">Enfoque</span>
+            <select formControlName="metodo">
+              @for (o of catalogos()?.metodos ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="campo campo-ancho">
+            <span class="etiqueta-campo">Tu universidad</span>
+            <input type="text" formControlName="universidad" />
+          </label>
+
+          <label class="campo campo-ancho">
+            <span class="etiqueta-campo">Tu tema</span>
+            <input
+              type="text"
+              formControlName="tema"
+              placeholder="Liderazgo directivo y clima escolar en instituciones públicas"
+            />
+          </label>
+
+          <label class="campo campo-ancho">
+            <span class="etiqueta-campo">
+              ¿Qué quieres que mire con más cuidado? <em>(opcional)</em>
+            </span>
+            <textarea
+              formControlName="mensaje"
+              rows="3"
+              placeholder="Mi asesor dice que la muestra no se justifica y no sé cómo arreglarlo."
+            ></textarea>
+            <span class="ayuda">Esto sí lo lee antes de decidir si puede tomarlo.</span>
+          </label>
+        </div>
+
+        @if (form.invalid && form.touched) {
+          <p class="mal-campo">Revisa los campos antes de enviar.</p>
+        }
+
+        <div class="pie">
+          <button type="button" class="boton secundario" (click)="volver()">Volver</button>
+          <button type="submit" class="boton" [disabled]="enviando()">
+            {{ enviando() ? 'Subiendo tu documento…' : 'Mandárselo' }}
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+}

@@ -280,6 +280,54 @@ export class PedidoService {
       .pipe(map((res) => res.data.pedido));
   }
 
+  // ── Desde su panel, con su cuenta ──────────────────────────────────────
+
+  /**
+   * Si lo ve y, si lo ve, sus revisiones.
+   *
+   * `beta` en falso no es un error: es que para ese correo esto todavía no
+   * existe, y su panel no pinta nada.
+   */
+  misRevisiones(): Observable<{
+    beta: boolean;
+    pedidos: Seguimiento[];
+    catalogos: CatalogosDePedido | null;
+  }> {
+    return this.http
+      .get<
+        ApiResponse<{
+          beta: boolean;
+          pedidos: Seguimiento[];
+          catalogos: CatalogosDePedido | null;
+        }>
+      >(`${this.base}/mis-revisiones`)
+      .pipe(map((res) => res.data));
+  }
+
+  /** El directorio sin enlace de convocatoria: ya entró con su cuenta. */
+  directorioDelPanel(): Observable<AsesorPublico[]> {
+    return this.http
+      .get<ApiResponse<{ asesores: AsesorPublico[] }>>(`${this.base}/mis-revisiones/asesores`)
+      .pipe(map((res) => res.data.asesores));
+  }
+
+  enviarDesdeSuPanel(datos: DatosDelPedido, archivo: File): Observable<string> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(datos)) {
+      params = params.set(clave, String(valor));
+    }
+
+    return this.http
+      .post<ApiResponse<{ codigo: string }>>(`${this.base}/mis-revisiones`, archivo, {
+        params,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'X-Nombre-Archivo': encodeURIComponent(archivo.name),
+        },
+      })
+      .pipe(map((res) => res.data.codigo));
+  }
+
   // ── El asesor, por su enlace privado ───────────────────────────────────
 
   panelDelAsesor(token: string): Observable<PanelDelAsesor> {

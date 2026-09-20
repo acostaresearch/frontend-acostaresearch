@@ -12,6 +12,11 @@
      llegar. -->
 <app-mi-tesis class="tramo-6" [licencias]="misLicencias()" />
 
+<!-- Revisión con un asesor. Solo lo ve quien está en la prueba: el propio
+     componente pregunta al servidor y, si no le toca, no pinta ni un hueco.
+     Ver la nota de `MiRevision`. -->
+<app-mi-revision class="tramo-6" />
+
 @if (misLicencias().length > 0) {
   <!-- Aquí había una ficha por licencia, con su gasto y su botón de URL nueva.
        Ya no: cada acceso vive en la pestaña de su producto, dentro de «Por

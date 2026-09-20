@@ -1,0 +1,414 @@
+/* El apartado de revisión dentro del panel. Las clases globales —tarjeta,
+   nota, boton— vienen de styles.css; lo de aquí es lo suyo. */
+
+.revision-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.revision h2 {
+  margin: 0 0 4px;
+}
+
+/* Que se vea que está a medio hacer: quien lo prueba tiene que saberlo. */
+.etiqueta-prueba {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.bien,
+.mal {
+  margin: 12px 0;
+  padding: 11px 15px;
+  font-size: 14px;
+  line-height: 1.55;
+  border-radius: 10px;
+}
+
+.bien {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.mal {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.vacio,
+.tenue {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-texto-tenue);
+}
+
+.vacio {
+  margin: 14px 0;
+}
+
+/* ---------- Sus revisiones ---------- */
+
+.lista {
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.datos {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-texto);
+}
+
+.estado {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: 999px;
+}
+
+.estado.curso {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.estado.hecho {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.estado.no {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.lista .boton,
+.pie .boton {
+  width: auto;
+}
+
+a.boton {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.revision > .boton {
+  width: auto;
+}
+
+/* ---------- Filtros ---------- */
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 16px 0 14px;
+  padding: 14px 16px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.filtro {
+  display: grid;
+  gap: 5px;
+  flex: 1 1 150px;
+}
+
+.filtro-ancho {
+  flex: 2 1 220px;
+}
+
+.filtro > span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+/* ---------- Tarjetas del directorio ---------- */
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjeta-asesor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.tarjeta-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.nombre {
+  margin: 0 0 2px;
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-texto);
+}
+
+.cargo {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.pastilla {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.pastilla-suave {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+}
+
+.presentacion {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+  /* Tres líneas: la tarjeta es una vitrina, no el perfil entero. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.estrellas {
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.tarjeta-asesor .boton {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ---------- A quién le manda ---------- */
+
+.elegido {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--color-primario) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primario) 20%, var(--color-borde));
+  border-radius: 12px;
+}
+
+.elegido-datos {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.elegido .boton {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* ---------- Formulario ---------- */
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.campo {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.rejilla .campo {
+  margin-bottom: 0;
+}
+
+.campo-ancho {
+  grid-column: 1 / -1;
+}
+
+.etiqueta-campo {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.etiqueta-campo em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.campo input[type='text'],
+.campo select,
+.campo textarea,
+.filtro input,
+.filtro select {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--color-texto);
+  background: var(--color-sobre-relleno);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+}
+
+.campo textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.ayuda {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+.mal-campo {
+  font-size: 12.5px;
+  color: var(--color-error);
+}
+
+/* ---------- El archivo ---------- */
+
+.soltar {
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  padding: 22px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--color-primario) 4%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--color-primario) 32%, var(--color-borde));
+  border-radius: 12px;
+}
+
+.soltar:hover {
+  border-color: var(--color-primario);
+}
+
+.soltar-mal {
+  border-color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.soltar input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.archivo-nombre {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--color-primario);
+  overflow-wrap: anywhere;
+}
+
+.archivo-peso {
+  font-size: 13px;
+  color: var(--color-texto-tenue);
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 620px) {
+  .rejilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filtro,
+  .filtro-ancho {
+    flex: 1 1 100%;
+  }
+
+  .tarjetas {
+    grid-template-columns: 1fr;
+  }
+}
