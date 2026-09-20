@@ -388,6 +388,9 @@ export class MiScopusPanel implements OnInit {
   /** El tema por el que se está buscando ahora, para marcar su tarjeta. */
   readonly temaElegido = signal<number | null>(null);
 
+  /** Por qué no se pudo ordenar por significado, mientras no se reintente. */
+  readonly fallaSignificado = signal<string | null>(null);
+
   readonly temasAbiertos = signal(true);
 
   readonly pasosDelCopiloto = computed(() => {
@@ -2032,6 +2035,7 @@ export class MiScopusPanel implements OnInit {
 
     this.buscando.set(true);
     this.error.set(null);
+    this.fallaSignificado.set(null);
     this.parte.set(null);
     this.marcados.set(new Set());
 
@@ -2051,14 +2055,18 @@ export class MiScopusPanel implements OnInit {
       error: (fallo: unknown) => {
         this.buscando.set(false);
         if (porSignificado) {
-          // Ordenar por significado es un extra: si falla, se busca igual,
-          // por citas, y se dice por qué el orden no es el pedido.
-          this.orden.set('citas');
-          // Primero la búsqueda, que al empezar borra el aviso anterior.
-          this.buscar(pagina);
-          this.mostrarError(
-            `No se pudo ordenar por significado (${toApiError(fallo).message}). Te los mostramos por más citados.`,
-          );
+          /**
+           * Si falla el orden por significado, se dice y se deja reintentar.
+           *
+           * Antes se buscaba solo otra vez, por más citados, y se enseñaba esa
+           * tabla. Era una segunda consulta a Scopus que nadie había pedido
+           * —contra la cuota semanal de la casa— y le ponía delante al tesista
+           * 2 920 artículos de un orden que no era el suyo, justo cuando
+           * estaba usando la IA para NO tener que mirar eso. El tope que suele
+           * hacerlo fallar es de segundos: reintentar lo arregla.
+           */
+          this.busqueda.set(null);
+          this.fallaSignificado.set(toApiError(fallo).message);
           return;
         }
         this.mostrarError(toApiError(fallo).message);
@@ -2068,6 +2076,11 @@ export class MiScopusPanel implements OnInit {
         this.cargar();
       },
     });
+  }
+
+  /** «Volver a intentar» tras un fallo del orden por significado: la misma búsqueda. */
+  reintentarSignificado(): void {
+    this.buscar(1);
   }
 
   /**

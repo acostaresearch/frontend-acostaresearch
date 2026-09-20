@@ -783,7 +783,22 @@
         }
 
         <div class="sc-resultados">
-          @if (!busqueda() && !iaAbierta()) {
+          <!-- Si el orden por significado falla, se dice y se deja reintentar.
+               Nada de una segunda búsqueda por citas que nadie pidió. -->
+          @if (fallaSignificado(); as motivo) {
+            <div class="scopus-aviso sc-falla-significado" role="alert">
+              <p>No se pudo ordenar por significado. {{ motivo }}</p>
+              <button
+                type="button"
+                class="sc-reintentar"
+                [disabled]="buscando()"
+                (click)="reintentarSignificado()"
+              >
+                {{ buscando() ? 'Buscando…' : 'Volver a intentar' }}
+              </button>
+            </div>
+          }
+          @if (!busqueda() && !iaAbierta() && !fallaSignificado()) {
             <!-- Lo que hace falta para escribir una búsqueda DE SU TEMA, no
                  cómo funciona esto por dentro. -->
             <div class="scopus-ayuda">
