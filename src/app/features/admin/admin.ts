@@ -58,6 +58,8 @@ import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
 import { ReclamosAdmin } from './reclamos';
+import { AsesoresAdmin } from './asesores';
+import { Asesor, AsesorService } from '../../core/services/asesor.service';
 
 type Seccion =
   | 'accesos'
@@ -67,6 +69,7 @@ type Seccion =
   | 'licencias'
   | 'alertas'
   | 'reclamos'
+  | 'asesores'
   | 'corpus'
   | 'tutoriales'
   | 'admins'
@@ -117,6 +120,13 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota:
       'Las hojas que llegan desde la web. Hay que responder cada una en 15 días hábiles: el plazo ' +
       'es improrrogable y no responder es sancionable.',
+  },
+  asesores: {
+    titulo: 'Asesores',
+    nota:
+      'Quién se ofrece a revisar tesis. El enlace de la convocatoria se reparte a mano: mientras ' +
+      'no la marques como pública, el formulario funciona pero no lo encuentra nadie. Ninguna ' +
+      'ficha se publica sola: se aprueba aquí, después de comprobar el grado en SUNEDU.',
   },
   corpus: {
     titulo: 'Bibliografía',
@@ -281,6 +291,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     AjustesDeCuenta,
     MiConector,
     ReclamosAdmin,
+    AsesoresAdmin,
     AvisoFlotante,
   ],
   templateUrl: './admin.html',
@@ -1039,6 +1050,10 @@ export class Admin implements OnInit {
     // tutoriales: tienen un plazo legal, y el contador de la barra lateral es lo
     // que avisa de que hay una esperando sin tener que abrir la sección.
     this.cargarReclamos(false);
+
+    // Las fichas de asesor, por lo mismo: el contador lateral es lo que avisa de
+    // que hay alguien esperando respuesta sin tener que abrir la sección.
+    this.cargarAsesores(false);
 
     // La ficha de «Datos de la cuenta» sale de la sesión, y la sesión se llenó al
     // entrar: el último acceso o la verificación pueden haber cambiado desde
@@ -2063,6 +2078,9 @@ export class Admin implements OnInit {
       case 'reclamos':
         this.cargarReclamos();
         break;
+      case 'asesores':
+        this.cargarAsesores();
+        break;
       case 'admins':
       case 'usuarios':
         this.cargarUsuarios();
@@ -2445,6 +2463,9 @@ export class Admin implements OnInit {
     // Cada vez: una hoja nueva puede haber llegado mientras se miraba otra cosa.
     if (seccion === 'reclamos') this.cargarReclamos();
 
+    // Lo mismo con las fichas de asesor: el enlace está repartido y llegan solas.
+    if (seccion === 'asesores') this.cargarAsesores();
+
     // Las pruebas se miran de vez en cuando —antes y después de un taller—, no
     // a diario: tampoco se piden al entrar. Se vuelven a pedir cada vez que se
     // abre la sección, porque los cupos se van llenando mientras tanto.
@@ -2798,6 +2819,33 @@ export class Admin implements OnInit {
   reclamoRespondido(mensaje: string): void {
     this.aviso.set(mensaje);
     this.cargarReclamos();
+  }
+
+  // ── Asesores ─────────────────────────────────────────────────────────────
+  //
+  // La lista y el contador viven aquí; las convocatorias, la ventana y las
+  // decisiones, en `AsesoresAdmin`.
+
+  private readonly asesoresApi = inject(AsesorService);
+
+  readonly asesores = signal<Asesor[]>([]);
+  readonly asesoresPendientes = computed(
+    () => this.asesores().filter((a) => a.estado === 'PENDIENTE').length,
+  );
+
+  /** `avisarSiFalla` en false al entrar, como el libro: ahí es solo el contador. */
+  cargarAsesores(avisarSiFalla = true): void {
+    this.asesoresApi.listar().subscribe({
+      next: (lista) => this.asesores.set(lista),
+      error: (e: unknown) => {
+        if (avisarSiFalla) this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  asesorCambiado(mensaje: string): void {
+    this.aviso.set(mensaje);
+    this.cargarAsesores();
   }
 
   // ── Tutoriales ───────────────────────────────────────────────────────────

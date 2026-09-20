@@ -5,6 +5,7 @@ Disallow: /perfil
 Disallow: /subir-datos/
 Disallow: /auth/
 Disallow: /prueba/
+Disallow: /asesores/
 Disallow: /api/
 
 Sitemap: https://acostaresearch.com/sitemap.xml

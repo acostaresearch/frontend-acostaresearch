@@ -1,0 +1,227 @@
+<app-aviso-flotante [(error)]="error" />
+
+<!-- ══ LA PUERTA ════════════════════════════════════════════════════════════
+     El enlace se reparte a mano. Mientras «Pública» esté apagada, el registro
+     está desplegado y funcionando pero no existe para quien no fue invitado. -->
+<section class="tarjeta">
+  <h2>Convocatorias</h2>
+  <p class="nota">
+    Cada convocatoria es un enlace que repartes tú. <strong>Abierta</strong> dice si admite fichas;
+    <strong>Pública</strong>, si se llega sin el enlace. Con Pública apagada, el formulario existe y
+    funciona pero no lo encuentra nadie: es así como arranca el piloto.
+  </p>
+
+  <div class="crear">
+    <div class="campo">
+      <label for="convocatoria-nombre">Nombre, para reconocerla</label>
+      <input
+        id="convocatoria-nombre"
+        type="text"
+        maxlength="120"
+        placeholder="Piloto de revisión, setiembre"
+        [value]="nombreNuevo()"
+        (input)="escribir('nombreNuevo', $event)"
+      />
+    </div>
+    <div class="campo">
+      <label for="convocatoria-intro">Lo que leerá el candidato al abrirla (opcional)</label>
+      <textarea
+        id="convocatoria-intro"
+        rows="2"
+        maxlength="600"
+        [value]="introNueva()"
+        (input)="escribir('introNueva', $event)"
+      ></textarea>
+    </div>
+    <button
+      type="button"
+      class="boton"
+      [disabled]="nombreNuevo().trim().length < 3 || creando()"
+      (click)="crear()"
+    >
+      {{ creando() ? 'Creando…' : 'Crear convocatoria' }}
+    </button>
+  </div>
+
+  @if (convocatorias().length === 0) {
+    <p class="vacio">Todavía no hay ninguna. Crea una para tener el enlace que vas a repartir.</p>
+  } @else {
+    <ul class="lista">
+      @for (c of convocatorias(); track c.id) {
+        <li>
+          <div class="datos">
+            <p class="titulo">{{ c.nombre }}</p>
+            <p class="enlace">{{ c.url }}</p>
+            <p class="tenue">
+              {{ c.fichas }} ficha{{ c.fichas === 1 ? '' : 's' }}
+              @if (c.pendientes > 0) {
+                · {{ c.pendientes }} sin revisar
+              }
+            </p>
+          </div>
+
+          <span class="estado" [class.hecho]="c.abierta">
+            {{ c.abierta ? 'Abierta' : 'Cerrada' }}
+          </span>
+          <span class="estado" [class.publica]="c.publica">
+            {{ c.publica ? 'Pública' : 'Solo con enlace' }}
+          </span>
+
+          <div class="acciones">
+            <button type="button" class="boton secundario" (click)="copiar(c)">
+              {{ copiada() === c.id ? 'Copiado' : 'Copiar enlace' }}
+            </button>
+            <button type="button" class="boton secundario" (click)="cerrarOAbrir(c)">
+              {{ c.abierta ? 'Cerrar' : 'Abrir' }}
+            </button>
+            <button type="button" class="boton secundario" (click)="publicarOEsconder(c)">
+              {{ c.publica ? 'Quitar del público' : 'Abrir al público' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<!-- ══ LAS FICHAS ═══════════════════════════════════════════════════════════ -->
+<section class="tarjeta">
+  <h2>Fichas recibidas</h2>
+  <p class="nota">
+    Ninguna se publica sola: todas llegan pendientes. Antes de aprobar, comprueba el grado en
+    SUNEDU. Lo que escribas en las notas no le llega al candidato.
+  </p>
+
+  <div class="filtros">
+    @for (uno of filtros; track uno.codigo) {
+      <button
+        type="button"
+        class="filtro"
+        [class.activo]="filtro() === uno.codigo"
+        (click)="filtro.set(uno.codigo)"
+      >
+        {{ uno.nombre }}
+        <span class="filtro-cuenta">{{ cuantas(uno.codigo) }}</span>
+      </button>
+    }
+  </div>
+
+  @if (visibles().length === 0) {
+    <p class="vacio">No hay fichas aquí.</p>
+  } @else {
+    <ul class="lista">
+      @for (a of visibles(); track a.id) {
+        <li>
+          <div class="datos">
+            <p class="titulo">{{ a.nombre }}</p>
+            <p class="tenue">
+              {{ a.gradoNombre }} · {{ a.especialidad }} · {{ a.areas.join(', ') }}
+            </p>
+            <p class="tenue">{{ a.createdAt | date: 'd MMM y, HH:mm' }}</p>
+          </div>
+          <span class="estado" [class.hecho]="a.estado === 'APROBADO'" [class.no]="a.estado === 'RECHAZADO'">
+            {{ nombreDelEstado[a.estado] }}
+          </span>
+          <button type="button" class="boton secundario" (click)="abrir(a)">Ver ficha</button>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (abierta(); as a) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-asesor">
+      <div class="ventana-cabecera">
+        <div>
+          <h3 id="titulo-asesor">{{ a.nombre }}</h3>
+          <p class="tenue">
+            {{ a.createdAt | date: 'd MMM y, HH:mm' }} · {{ nombreDelEstado[a.estado] }}
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrar()">✕</button>
+      </div>
+
+      <h4>Quién es</h4>
+      <dl>
+        <dt>{{ a.documentoNombre }}</dt>
+        <dd>{{ a.numeroDocumento }}</dd>
+        <dt>Correo</dt>
+        <dd>{{ a.email }}</dd>
+        <dt>Teléfono</dt>
+        <dd>{{ a.telefono }}</dd>
+      </dl>
+
+      <h4>Qué acredita</h4>
+      <dl>
+        <dt>Grado</dt>
+        <dd>
+          {{ a.gradoNombre }} · {{ a.gradoUniversidad }}
+          @if (a.gradoAnio) {
+            · {{ a.gradoAnio }}
+          }
+        </dd>
+        @if (a.registroSunedu) {
+          <dt>Registro</dt>
+          <dd>{{ a.registroSunedu }}</dd>
+        }
+        @if (a.enlaceCv) {
+          <dt>CV</dt>
+          <dd><a [href]="a.enlaceCv" target="_blank" rel="noopener noreferrer">{{ a.enlaceCv }}</a></dd>
+        }
+      </dl>
+      <p class="comprobar">
+        <a [href]="buscarEnSunedu(a)" target="_blank" rel="noopener noreferrer">
+          Buscar su grado en SUNEDU ↗
+        </a>
+      </p>
+
+      <h4>Qué puede revisar</h4>
+      <dl>
+        <dt>Áreas</dt>
+        <dd>{{ a.areas.join(', ') }}</dd>
+        <dt>Enfoques</dt>
+        <dd>{{ a.metodos.join(', ') }}</dd>
+        <dt>Especialidad</dt>
+        <dd>{{ a.especialidad }}</dd>
+        @if (a.universidades) {
+          <dt>Universidades</dt>
+          <dd>{{ a.universidades }}</dd>
+        }
+        <dt>Experiencia</dt>
+        <dd>{{ a.anosExperiencia }} año{{ a.anosExperiencia === 1 ? '' : 's' }}</dd>
+      </dl>
+
+      <h4>Lo que cuenta</h4>
+      <p class="presentacion">{{ a.presentacion }}</p>
+
+      <div class="campo">
+        <label for="notas-asesor">Notas internas</label>
+        <textarea
+          id="notas-asesor"
+          rows="3"
+          maxlength="2000"
+          placeholder="Grado comprobado en SUNEDU el 20-sep. Falta pedirle el número de cuenta."
+          [value]="notas()"
+          (input)="escribir('notas', $event)"
+        ></textarea>
+        <span class="ayuda">Solo las ves tú. No se le envían.</span>
+      </div>
+
+      <div class="pie">
+        <button type="button" class="boton secundario" (click)="cerrar()">Cancelar</button>
+        @if (a.estado !== 'PENDIENTE') {
+          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('PENDIENTE')">
+            Devolver a pendiente
+          </button>
+        }
+        <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('RECHAZADO')">
+          Rechazar
+        </button>
+        <button type="button" class="boton" [disabled]="guardando()" (click)="decidir('APROBADO')">
+          {{ guardando() ? 'Guardando…' : 'Aprobar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

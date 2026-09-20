@@ -160,6 +160,29 @@ export const routes: Routes = [
     title: 'Precios · Acosta Research',
     loadComponent: () => import('./features/checkout/checkout').then((m) => m.Checkout),
   },
+  /*
+   * El registro de asesores, para el piloto de revisión de tesis.
+   *
+   * Dos rutas para la misma página. Con slug es el enlace que el administrador
+   * reparte a mano: está desplegado y funciona, pero no se anuncia en ninguna
+   * parte y no lo encuentra quien no fue invitado. Sin slug pregunta si hay
+   * alguna convocatoria marcada como pública y, mientras no la haya, lleva a la
+   * portada —o sea, se comporta como si la página no existiera—. Abrirlo al
+   * público es marcar esa casilla en el panel, sin volver a desplegar.
+   *
+   * Sin sesión, como el de prueba: quien postula todavía no tiene cuenta.
+   */
+  {
+    path: 'asesores',
+    pathMatch: 'full',
+    title: 'Revisa tesis con nosotros · Acosta Research',
+    loadComponent: () => import('./features/asesores/asesores').then((m) => m.Asesores),
+  },
+  {
+    path: 'asesores/:slug',
+    title: 'Revisa tesis con nosotros · Acosta Research',
+    loadComponent: () => import('./features/asesores/asesores').then((m) => m.Asesores),
+  },
   // El enlace de prueba que el administrador reparte a un grupo. Sin sesión a
   // propósito: quien lo recibe no se registra, solo recoge su conector.
   {

@@ -61,6 +61,12 @@
       </button>
 
       <p class="lateral-grupo">Equipo</p>
+      <button type="button" [class.activa]="seccion() === 'asesores'" (click)="ir('asesores')">
+        <span>Asesores</span>
+        @if (asesoresPendientes() > 0) {
+          <span class="lateral-contador">{{ asesoresPendientes() }}</span>
+        }
+      </button>
       <button type="button" [class.activa]="seccion() === 'admins'" (click)="ir('admins')">
         <span>Administradores</span>
       </button>
@@ -2387,6 +2393,14 @@
        En su propio componente: ver la nota de `ReclamosAdmin`. -->
     @if (seccion() === 'reclamos') {
       <app-reclamos-admin [reclamos]="reclamos()" (respondido)="reclamoRespondido($event)" />
+    }
+
+    <!-- ══ ASESORES ═══════════════════════════════════════════════════════════
+       El registro de quien se ofrece a revisar tesis: la convocatoria con su
+       enlace, y las fichas que llegan por él. En su propio componente, por lo
+       mismo que el libro. -->
+    @if (seccion() === 'asesores') {
+      <app-asesores-admin [asesores]="asesores()" (cambiado)="asesorCambiado($event)" />
     }
 
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════
