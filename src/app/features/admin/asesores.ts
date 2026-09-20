@@ -1,13 +1,17 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import {
   Asesor,
   AsesorService,
+  CatalogosDeAsesor,
   Convocatoria,
   EstadoDeFicha,
+  GradoDeAsesor,
   NOMBRE_DEL_ESTADO,
+  TipoDeDocumento,
 } from '../../core/services/asesor.service';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
@@ -18,18 +22,18 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
  * `ReclamosAdmin`: aquella hoja de estilos ya roza el tope que permite la
  * compilación, y esto trae su propia ventana.
  *
- * DOS COSAS QUE HACER AQUÍ
- * ------------------------
- * Arriba, la convocatoria: crear una, copiar su enlace para repartirlo y los
- * dos interruptores que deciden quién llega. `Pública` es el que abre el
- * registro al mundo, así que se pregunta antes de tocarlo.
+ * DE DÓNDE SALEN LOS ASESORES
+ * ---------------------------
+ * De dos sitios. Los del piloto **se dan de alta a mano**: no se postularon, se
+ * les llamó, así que nacen aprobados y con su enlace —lo único que hay que
+ * mandarles—. Y está la convocatoria, que es el formulario público por si algún
+ * día se abre a candidatos; mientras esté cerrada no recibe nada y no estorba.
  *
- * Abajo, las fichas: leerlas, comprobar el grado en SUNEDU y aprobar o
- * rechazar. Lo que se escriba en las notas no le llega al candidato: es para
- * acordarse de por qué se decidió lo que se decidió.
+ * Lo que se escriba en las notas no le llega a nadie: es para acordarse de por
+ * qué se decidió lo que se decidió.
  */
 @Component({
-  imports: [AvisoFlotante, DatePipe],
+  imports: [AvisoFlotante, DatePipe, ReactiveFormsModule],
   selector: 'app-asesores-admin',
   templateUrl: './asesores.html',
   styleUrl: './asesores.css',
@@ -50,6 +54,45 @@ export class AsesoresAdmin implements OnInit {
   readonly filtro = signal<EstadoDeFicha | 'TODAS'>('PENDIENTE');
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
+
+  private readonly fb = inject(FormBuilder);
+
+  readonly catalogos = signal<CatalogosDeAsesor | null>(null);
+
+  /**
+   * El formulario de la ficha.
+   *
+   * Nulo = cerrado. Con `'nuevo'` = dando de alta a alguien; con un asesor
+   * dentro = corrigiendo el suyo. Es el mismo formulario porque son los mismos
+   * campos: lo que se escribe aquí es lo que el tesista lee en su tarjeta, y un
+   * asesor dado de alta con media ficha sale con media tarjeta.
+   */
+  readonly editando = signal<Asesor | 'nuevo' | null>(null);
+  readonly areas = signal<string[]>([]);
+  readonly metodos = signal<string[]>([]);
+  readonly faltaArea = signal(false);
+  readonly faltaMetodo = signal(false);
+
+  readonly ficha = this.fb.nonNullable.group({
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
+    tipoDocumento: ['DNI' as TipoDeDocumento, [Validators.required]],
+    numeroDocumento: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{6,15}$/)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+    telefono: ['', [Validators.required, Validators.pattern(/^[+\d\s()-]{6,20}$/)]],
+    grado: ['MAGISTER' as GradoDeAsesor, [Validators.required]],
+    gradoUniversidad: [
+      '',
+      [Validators.required, Validators.minLength(3), Validators.maxLength(160)],
+    ],
+    gradoAnio: ['', [Validators.pattern(/^$|^(19|20)\d{2}$/)]],
+    registroSunedu: ['', [Validators.maxLength(255)]],
+    enlaceCv: ['', [Validators.pattern(/^$|^https?:\/\/\S+$/i)]],
+    especialidad: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
+    universidades: ['', [Validators.maxLength(500)]],
+    anosExperiencia: [0, [Validators.required, Validators.min(0), Validators.max(60)]],
+    presentacion: ['', [Validators.required, Validators.minLength(40), Validators.maxLength(2000)]],
+    aceptaReglas: [false, [Validators.requiredTrue]],
+  });
 
   /** Crear una convocatoria: el formulario de arriba. */
   readonly nombreNuevo = signal('');
@@ -78,6 +121,150 @@ export class AsesoresAdmin implements OnInit {
 
   ngOnInit(): void {
     this.cargarConvocatorias();
+    this.api.catalogos().subscribe({
+      next: (catalogos) => this.catalogos.set(catalogos),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  // ── El alta a mano ───────────────────────────────────────────────────────
+
+  abrirAlta(): void {
+    this.ficha.reset({
+      tipoDocumento: 'DNI',
+      grado: 'MAGISTER',
+      anosExperiencia: 0,
+      aceptaReglas: false,
+    });
+    this.areas.set([]);
+    this.metodos.set([]);
+    this.faltaArea.set(false);
+    this.faltaMetodo.set(false);
+    this.error.set(null);
+    this.editando.set('nuevo');
+  }
+
+  abrirEdicion(asesor: Asesor): void {
+    this.ficha.reset({
+      nombre: asesor.nombre,
+      tipoDocumento: asesor.tipoDocumento,
+      numeroDocumento: asesor.numeroDocumento,
+      email: asesor.email,
+      telefono: asesor.telefono,
+      grado: asesor.grado,
+      gradoUniversidad: asesor.gradoUniversidad,
+      gradoAnio: asesor.gradoAnio === null ? '' : String(asesor.gradoAnio),
+      registroSunedu: asesor.registroSunedu,
+      enlaceCv: asesor.enlaceCv,
+      especialidad: asesor.especialidad,
+      universidades: asesor.universidades,
+      anosExperiencia: asesor.anosExperiencia,
+      presentacion: asesor.presentacion,
+      aceptaReglas: asesor.aceptaReglas,
+    });
+    this.areas.set(this.codigosDe(asesor.areas, this.catalogos()?.areas ?? []));
+    this.metodos.set(this.codigosDe(asesor.metodos, this.catalogos()?.metodos ?? []));
+    this.faltaArea.set(false);
+    this.faltaMetodo.set(false);
+    this.error.set(null);
+    this.abierta.set(null);
+    this.editando.set(asesor);
+  }
+
+  /**
+   * Las áreas vuelven traducidas del servidor —«Educación», no «EDUCACION»—,
+   * que es lo que hace falta para leerlas. Para volver a marcarlas en el
+   * formulario hay que deshacer esa traducción con el catálogo.
+   */
+  private codigosDe(nombres: string[], lista: { codigo: string; nombre: string }[]): string[] {
+    return lista.filter((opcion) => nombres.includes(opcion.nombre)).map((opcion) => opcion.codigo);
+  }
+
+  cerrarFormulario(): void {
+    this.editando.set(null);
+  }
+
+  marcada(lista: 'areas' | 'metodos', codigo: string): boolean {
+    return this[lista]().includes(codigo);
+  }
+
+  alternar(lista: 'areas' | 'metodos', codigo: string): void {
+    const actual = this[lista]();
+    const nueva = actual.includes(codigo)
+      ? actual.filter((uno) => uno !== codigo)
+      : [...actual, codigo];
+    this[lista].set(nueva);
+    if (lista === 'areas') this.faltaArea.set(nueva.length === 0);
+    else this.faltaMetodo.set(nueva.length === 0);
+  }
+
+  guardarFicha(): void {
+    const quien = this.editando();
+    if (!quien || this.guardando()) return;
+
+    // Las listas no son campos del formulario, así que se comprueban aparte.
+    this.faltaArea.set(this.areas().length === 0);
+    this.faltaMetodo.set(this.metodos().length === 0);
+    if (this.ficha.invalid || this.faltaArea() || this.faltaMetodo()) {
+      this.ficha.markAllAsTouched();
+      return;
+    }
+
+    const valores = this.ficha.getRawValue();
+    const datos = {
+      ...valores,
+      gradoAnio: valores.gradoAnio === '' ? null : valores.gradoAnio,
+      areas: this.areas(),
+      metodos: this.metodos(),
+    };
+
+    this.guardando.set(true);
+    this.error.set(null);
+
+    const peticion =
+      quien === 'nuevo' ? this.api.darDeAlta(datos) : this.api.editarFicha(quien.id, datos);
+
+    peticion.subscribe({
+      next: ({ mensaje }) => {
+        this.guardando.set(false);
+        this.cerrarFormulario();
+        this.cambiado.emit(mensaje);
+      },
+      error: (e: unknown) => {
+        this.guardando.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  /** Su enlace es su llave: esto lo apaga y hace otro. */
+  rehacerEnlace(asesor: Asesor): void {
+    const pregunta =
+      '¿Hacerle un enlace nuevo? El que tiene ahora dejará de funcionar y habrá que volver a mandárselo.';
+    if (!confirm(pregunta)) return;
+
+    this.api.rehacerEnlace(asesor.id).subscribe({
+      next: ({ mensaje }) => {
+        this.cerrar();
+        this.cambiado.emit(mensaje);
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  /** Sacarlo del directorio sin rechazarlo: está lleno, no está mal. */
+  cambiarVisibilidad(asesor: Asesor): void {
+    this.api.revisar(asesor.id, 'APROBADO', this.notas().trim(), !asesor.visible).subscribe({
+      next: () => {
+        this.cerrar();
+        this.cambiado.emit(
+          asesor.visible
+            ? `${asesor.nombre} ya no sale en el directorio.`
+            : `${asesor.nombre} vuelve al directorio.`,
+        );
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
   }
 
   cargarConvocatorias(): void {

@@ -162,19 +162,53 @@ export class AsesorService {
 
   // ── Administrador ──────────────────────────────────────────────────────
 
+  /** Las listas con las que se pinta el formulario de alta del panel. */
+  catalogos(): Observable<CatalogosDeAsesor> {
+    return this.http
+      .get<ApiResponse<{ catalogos: CatalogosDeAsesor }>>(`${this.base}/catalogos`)
+      .pipe(map((res) => res.data.catalogos));
+  }
+
   listar(): Observable<Asesor[]> {
     return this.http
       .get<ApiResponse<{ asesores: Asesor[] }>>(this.base)
       .pipe(map((res) => res.data.asesores));
   }
 
+  /**
+   * Dar de alta a un asesor a mano.
+   *
+   * Los del piloto no se postulan: se les llama. Nace aprobado y con su enlace,
+   * así que lo único que queda después es mandárselo.
+   */
+  darDeAlta(ficha: FichaDeAsesor): Observable<{ asesor: Asesor; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ asesor: Asesor }>>(this.base, ficha)
+      .pipe(map((res) => ({ asesor: res.data.asesor, mensaje: res.message ?? '' })));
+  }
+
+  /** Corregir sus datos. Lo que sale en su tarjeta se escribe aquí. */
+  editarFicha(id: string, ficha: FichaDeAsesor): Observable<{ asesor: Asesor; mensaje: string }> {
+    return this.http
+      .patch<ApiResponse<{ asesor: Asesor }>>(`${this.base}/${id}/ficha`, ficha)
+      .pipe(map((res) => ({ asesor: res.data.asesor, mensaje: res.message ?? '' })));
+  }
+
+  /** Si su enlace se le escapa: hace otro y apaga el anterior. */
+  rehacerEnlace(id: string): Observable<{ asesor: Asesor; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ asesor: Asesor }>>(`${this.base}/${id}/enlace`, {})
+      .pipe(map((res) => ({ asesor: res.data.asesor, mensaje: res.message ?? '' })));
+  }
+
   revisar(
     id: string,
     estado: EstadoDeFicha,
     notas: string,
+    visible?: boolean,
   ): Observable<{ asesor: Asesor; mensaje: string }> {
     return this.http
-      .patch<ApiResponse<{ asesor: Asesor }>>(`${this.base}/${id}`, { estado, notas })
+      .patch<ApiResponse<{ asesor: Asesor }>>(`${this.base}/${id}`, { estado, notas, visible })
       .pipe(map((res) => ({ asesor: res.data.asesor, mensaje: res.message ?? '' })));
   }
 

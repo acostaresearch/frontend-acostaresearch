@@ -86,10 +86,15 @@
 
 <!-- ══ LAS FICHAS ═══════════════════════════════════════════════════════════ -->
 <section class="tarjeta">
-  <h2>Fichas recibidas</h2>
+  <div class="tarjeta-cabecera">
+    <h2>Asesores</h2>
+    <button type="button" class="boton" (click)="abrirAlta()">Dar de alta un asesor</button>
+  </div>
   <p class="nota">
-    Ninguna se publica sola: todas llegan pendientes. Antes de aprobar, comprueba el grado en
-    SUNEDU. Lo que escribas en las notas no le llega al candidato.
+    Los del piloto se dan de alta aquí: no se postulan, los llamas tú, así que nacen aprobados y
+    con su enlace —lo único que hay que mandarles—. Las que llegan por la convocatoria sí caen
+    pendientes: antes de aprobar, comprueba el grado en SUNEDU. Lo que escribas en las notas no le
+    llega a nadie.
   </p>
 
   <div class="filtros">
@@ -226,19 +231,210 @@
       </div>
 
       <div class="pie">
-        <button type="button" class="boton secundario" (click)="cerrar()">Cancelar</button>
-        @if (a.estado !== 'PENDIENTE') {
-          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('PENDIENTE')">
-            Devolver a pendiente
+        <button type="button" class="boton secundario" (click)="cerrar()">Cerrar</button>
+        <button type="button" class="boton secundario" (click)="abrirEdicion(a)">
+          Editar sus datos
+        </button>
+
+        @if (a.estado === 'APROBADO') {
+          <!-- Lo que se hace con quien ya está dentro: apagarlo cuando está
+               lleno, o rehacerle la llave si se le escapó. -->
+          <button type="button" class="boton secundario" (click)="cambiarVisibilidad(a)">
+            {{ a.visible ? 'Sacar del directorio' : 'Devolver al directorio' }}
+          </button>
+          <button type="button" class="boton secundario" (click)="rehacerEnlace(a)">
+            Rehacer su enlace
+          </button>
+          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('RECHAZADO')">
+            Darlo de baja
+          </button>
+        } @else {
+          @if (a.estado !== 'PENDIENTE') {
+            <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('PENDIENTE')">
+              Devolver a pendiente
+            </button>
+          }
+          <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('RECHAZADO')">
+            Rechazar
+          </button>
+          <button type="button" class="boton" [disabled]="guardando()" (click)="decidir('APROBADO')">
+            {{ guardando() ? 'Guardando…' : 'Aprobar' }}
           </button>
         }
-        <button type="button" class="boton secundario" [disabled]="guardando()" (click)="decidir('RECHAZADO')">
-          Rechazar
-        </button>
-        <button type="button" class="boton" [disabled]="guardando()" (click)="decidir('APROBADO')">
-          {{ guardando() ? 'Guardando…' : 'Aprobar' }}
-        </button>
       </div>
+    </div>
+  </div>
+}
+
+<!-- ══ EL ALTA Y LA EDICIÓN ═════════════════════════════════════════════════
+     El mismo formulario para los dos: son los mismos campos, y lo que se
+     escribe aquí es lo que el tesista lee en la tarjeta del directorio. -->
+@if (editando(); as quien) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-alta">
+      <div class="ventana-cabecera">
+        <div>
+          <h3 id="titulo-alta">
+            {{ quien === 'nuevo' ? 'Dar de alta un asesor' : 'Editar sus datos' }}
+          </h3>
+          <p class="tenue">
+            @if (quien === 'nuevo') {
+              Entra aprobado y con su enlace. Después solo hay que mandárselo.
+            } @else {
+              Esto es lo que el tesista ve en su tarjeta.
+            }
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarFormulario()">✕</button>
+      </div>
+
+      <form [formGroup]="ficha" (ngSubmit)="guardarFicha()" novalidate>
+        <h4>Quién es</h4>
+        <div class="rejilla">
+          <div class="campo campo-ancho">
+            <label for="alta-nombre">Nombre completo</label>
+            <input id="alta-nombre" type="text" formControlName="nombre" />
+          </div>
+          <div class="campo">
+            <label for="alta-tipo-doc">Documento</label>
+            <select id="alta-tipo-doc" formControlName="tipoDocumento">
+              @for (o of catalogos()?.documentos ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="campo">
+            <label for="alta-doc">Número</label>
+            <input id="alta-doc" type="text" formControlName="numeroDocumento" />
+          </div>
+          <div class="campo">
+            <label for="alta-email">Correo</label>
+            <input id="alta-email" type="email" formControlName="email" />
+          </div>
+          <div class="campo">
+            <label for="alta-tel">Teléfono</label>
+            <input id="alta-tel" type="tel" formControlName="telefono" />
+          </div>
+        </div>
+
+        <h4>Qué acredita</h4>
+        <div class="rejilla">
+          <div class="campo">
+            <label for="alta-grado">Grado</label>
+            <select id="alta-grado" formControlName="grado">
+              @for (o of catalogos()?.grados ?? []; track o.codigo) {
+                <option [value]="o.codigo">{{ o.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="campo">
+            <label for="alta-anio">Año (opcional)</label>
+            <input id="alta-anio" type="text" formControlName="gradoAnio" placeholder="2019" />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="alta-univ-grado">Universidad que le otorgó el grado</label>
+            <input id="alta-univ-grado" type="text" formControlName="gradoUniversidad" />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="alta-sunedu">Código o enlace en SUNEDU (opcional)</label>
+            <input id="alta-sunedu" type="text" formControlName="registroSunedu" />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="alta-cv">CV, LinkedIn u ORCID (opcional)</label>
+            <input id="alta-cv" type="url" formControlName="enlaceCv" placeholder="https://" />
+          </div>
+        </div>
+
+        <h4>Qué revisa</h4>
+        <div class="grupo" [class.grupo-mal]="faltaArea()">
+          <p class="grupo-titulo">Áreas</p>
+          <div class="casillas">
+            @for (o of catalogos()?.areas ?? []; track o.codigo) {
+              <label class="casilla">
+                <input
+                  type="checkbox"
+                  [checked]="marcada('areas', o.codigo)"
+                  (change)="alternar('areas', o.codigo)"
+                />
+                <span>{{ o.nombre }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="grupo" [class.grupo-mal]="faltaMetodo()">
+          <p class="grupo-titulo">Enfoques</p>
+          <div class="casillas">
+            @for (o of catalogos()?.metodos ?? []; track o.codigo) {
+              <label class="casilla">
+                <input
+                  type="checkbox"
+                  [checked]="marcada('metodos', o.codigo)"
+                  (change)="alternar('metodos', o.codigo)"
+                />
+                <span>{{ o.nombre }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="rejilla">
+          <div class="campo campo-ancho">
+            <label for="alta-especialidad">Especialidad</label>
+            <input
+              id="alta-especialidad"
+              type="text"
+              formControlName="especialidad"
+              placeholder="Gestión educativa"
+            />
+          </div>
+          <div class="campo">
+            <label for="alta-anios">Años asesorando</label>
+            <input id="alta-anios" type="number" formControlName="anosExperiencia" min="0" max="60" />
+          </div>
+          <div class="campo campo-ancho">
+            <label for="alta-universidades">Universidades cuyo reglamento conoce</label>
+            <input
+              id="alta-universidades"
+              type="text"
+              formControlName="universidades"
+              placeholder="UCV, UNT, USS"
+            />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="alta-presentacion">Presentación</label>
+          <textarea
+            id="alta-presentacion"
+            rows="4"
+            formControlName="presentacion"
+            placeholder="A cuántos tesistas ha asesorado, en qué programas y en qué parte de la tesis es más fuerte."
+          ></textarea>
+          <span class="ayuda">Esto es lo que se lee en su perfil. Mínimo unas líneas.</span>
+        </div>
+
+        <label class="acepto">
+          <input type="checkbox" formControlName="aceptaReglas" />
+          <span>
+            Confirmo que aceptó las tres reglas: observa y no redacta, usa la plantilla de
+            observaciones y acepta las auditorías.
+          </span>
+        </label>
+
+        @if (ficha.invalid && ficha.touched) {
+          <p class="mal">Revisa los campos marcados antes de guardar.</p>
+        }
+
+        <div class="pie">
+          <button type="button" class="boton secundario" (click)="cerrarFormulario()">
+            Cancelar
+          </button>
+          <button type="submit" class="boton" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando…' : quien === 'nuevo' ? 'Dar de alta' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 }
