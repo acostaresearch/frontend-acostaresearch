@@ -18,14 +18,24 @@
       @case ('subido') {
         @if (resultado(); as r) {
           <h1>Tus datos ya están listos</h1>
-          <p>
-            Se leyeron <strong>{{ r.filas }} filas</strong> y
-            <strong>{{ r.columnas.length }} columnas</strong>
-            @if (nombre()) {
-              de «{{ nombre() }}»
-            }
-            .
-          </p>
+          @if (r.tipo === 'bibliografia') {
+            <p>
+              Se leyeron <strong>{{ r.filas }} documentos</strong>
+              @if (nombre()) {
+                de «{{ nombre() }}»
+              }
+              , listos para el mapeo bibliométrico.
+            </p>
+          } @else {
+            <p>
+              Se leyeron <strong>{{ r.filas }} filas</strong> y
+              <strong>{{ r.columnas.length }} columnas</strong>
+              @if (nombre()) {
+                de «{{ nombre() }}»
+              }
+              .
+            </p>
+          }
 
           <div class="siguiente">
             <strong>Ahora vuelve a tu conversación</strong> y dile «ya subí mis datos».
@@ -50,7 +60,7 @@
           </p>
           <label class="boton secundario otro">
             Subir otro archivo
-            <input type="file" accept=".csv,.xlsx,.xls,.txt,.sav" (change)="elegir($event)" />
+            <input type="file" accept=".csv,.xlsx,.xls,.txt,.sav,.bib" (change)="elegir($event)" />
           </label>
         }
       }
@@ -60,6 +70,10 @@
         <p>
           Tu asistente va a hacer el análisis contigo. Solo le falta tu archivo: el Excel, el CSV o el
           SPSS con las respuestas de tu instrumento, una fila por persona.
+        </p>
+        <p class="nota">
+          ¿Es un mapeo bibliométrico? Sube aquí el exporte de Scopus (CSV, BibTeX o texto plano), de
+          Web of Science o de PubMed.
         </p>
 
         <label
@@ -72,7 +86,7 @@
         >
           <input
             type="file"
-            accept=".csv,.xlsx,.xls,.txt,.sav"
+            accept=".csv,.xlsx,.xls,.txt,.sav,.bib"
             [disabled]="paso() === 'subiendo'"
             (change)="elegir($event)"
           />
@@ -80,7 +94,9 @@
             <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
           } @else {
             <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
-            <span class="nota">Excel (.xlsx), CSV o SPSS (.sav) · hasta 5 MB</span>
+            <span class="nota">
+              Excel (.xlsx), CSV o SPSS (.sav) · hasta 5 MB · exportes bibliográficos, hasta 25 MB
+            </span>
           }
         </label>
 

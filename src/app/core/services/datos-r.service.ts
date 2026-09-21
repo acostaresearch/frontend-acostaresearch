@@ -15,6 +15,8 @@ export interface EnlaceDeSubida {
 /** Lo que R leyó del archivo. Solo la forma: ningún valor de ninguna persona. */
 export interface DatosSubidos {
   leido: boolean;
+  /** «bibliografia» si subió el exporte de Scopus, WoS o PubMed: cada fila es un documento. */
+  tipo?: 'matriz' | 'bibliografia';
   filas: number | null;
   columnas: string[];
   /** Cómo estaba escrito el archivo, si tuvo algo que decir (punto y coma, codificación). */
