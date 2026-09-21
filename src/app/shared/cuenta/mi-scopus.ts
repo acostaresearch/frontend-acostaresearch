@@ -365,6 +365,8 @@ export class MiScopusPanel implements OnInit {
   readonly generando = signal(false);
   readonly errorIa = signal<string | null>(null);
   readonly notaIa = signal<string | null>(null);
+  /** Cuando el tema era demasiado general: lo que falta y temas para elegir. */
+  readonly temasSugeridos = signal<{ nota: string | null; temas: string[] } | null>(null);
 
   /**
    * Lo que hizo el copiloto la última vez, para enseñar sus pasos como Scopus
@@ -419,10 +421,17 @@ export class MiScopusPanel implements OnInit {
     this.generando.set(true);
     this.errorIa.set(null);
     this.notaIa.set(null);
+    this.temasSugeridos.set(null);
 
     this.scopus.generarConsulta(tema).subscribe({
-      next: ({ conceptos, nota }) => {
+      next: ({ conceptos, nota, sugerencias }) => {
         this.generando.set(false);
+        // Demasiado general: no hay nada que buscar todavía, solo temas para
+        // elegir. Uno de ellos vuelve a pasar por aquí.
+        if (conceptos.length === 0) {
+          this.temasSugeridos.set({ nota, temas: sugerencias ?? [] });
+          return;
+        }
         this.campo.set('TITLE-ABS-KEY');
         this.texto.set(conceptos.map((c) => c.nombre).join(', '));
         this.sinonimos.set(
@@ -449,6 +458,12 @@ export class MiScopusPanel implements OnInit {
         this.errorIa.set(toApiError(fallo).message);
       },
     });
+  }
+
+  /** Elegir uno de los temas propuestos: se escribe y se manda. */
+  elegirTemaSugerido(tema: string): void {
+    this.temaIa.set(tema);
+    this.generarConIa();
   }
 
   // ── El resumen con citas ──────────────────────────────────────────────────

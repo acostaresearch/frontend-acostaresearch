@@ -129,6 +129,11 @@ export interface ConsultaGenerada {
   conceptos: { nombre: string; sinonimos: string[] }[];
   /** Una frase para el tesista: qué se dejó fuera y por qué. */
   nota: string | null;
+  /**
+   * Si el tema era demasiado general («marketing»): temas concretos para
+   * elegir. Llega con `conceptos` vacío.
+   */
+  sugerencias?: string[];
 }
 
 /** Un artículo tal como viaja para el resumen: lo justo para citarlo. */

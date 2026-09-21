@@ -216,6 +216,29 @@
                 </button>
               </div>
 
+              <!-- Tema demasiado general: qué le falta y temas concretos para
+                   elegir. Cada uno se manda al copiloto como si lo hubiera
+                   escrito. -->
+              @if (!generando() && temasSugeridos(); as sugeridos) {
+                <div class="sc-temas-sugeridos">
+                  <p class="sc-temas-sugeridos-nota">
+                    {{ sugeridos.nota || 'Ese tema es muy general para buscar.' }}
+                    @if (sugeridos.temas.length > 0) {
+                      Elige uno de estos o escribe el tuyo:
+                    }
+                  </p>
+                  @if (sugeridos.temas.length > 0) {
+                    <div class="sc-temas-sugeridos-lista">
+                      @for (tema of sugeridos.temas; track tema) {
+                        <button type="button" class="sc-tema-sugerido" (click)="elegirTemaSugerido(tema)">
+                          {{ tema }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
               <!-- Mientras trabaja se dice qué está haciendo; después, lo que
                    hizo queda plegado detrás de un enlace. Quien pregunta al
                    copiloto viene a por la respuesta, que sale abajo. -->

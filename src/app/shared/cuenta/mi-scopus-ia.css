@@ -147,6 +147,46 @@
   color: var(--color-texto-suave);
 }
 
+/* Tema demasiado general: temas concretos para elegir. */
+.sc-temas-sugeridos {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.sc-temas-sugeridos-nota {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-texto);
+}
+
+.sc-temas-sugeridos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sc-tema-sugerido {
+  max-width: 100%;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color var(--transicion);
+}
+
+.sc-tema-sugerido:hover,
+.sc-tema-sugerido:focus-visible {
+  border-color: var(--color-primario);
+}
+
 .sc-copiloto-respuesta {
   display: grid;
   gap: 10px;
