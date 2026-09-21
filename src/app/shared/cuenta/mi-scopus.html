@@ -969,7 +969,15 @@
                 <p class="sc-total">
                   Se encontraron <strong>{{ lista.total | number }}</strong>
                   {{ lista.total === 1 ? 'documento' : 'documentos' }}.
-                  @if (lista.semantica) {
+                  @if (lista.semantica && lista.porRelevancia) {
+                    <!-- Gemini no dio los vectores: la lista no se comparó con su
+                         pregunta, así que no se dice que sea «la más cercana». -->
+                    <small class="sc-total-semantica">
+                      No se pudo ordenar por significado en este momento: estos son los
+                      {{ lista.resultados.length }} más relevantes para los términos de tu búsqueda.
+                      Vuelve a ordenarlos por significado en un minuto.
+                    </small>
+                  } @else if (lista.semantica) {
                     <small class="sc-total-semantica">
                       Por significado: los {{ lista.resultados.length }} más cercanos a tu pregunta de
                       entre los {{ lista.candidatos }} más relevantes.

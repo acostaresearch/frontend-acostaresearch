@@ -165,6 +165,11 @@ export interface BusquedaDeScopus {
   /** Por significado: de cuántos candidatos se eligieron estos. */
   semantica?: boolean;
   candidatos?: number;
+  /**
+   * Por significado pedido, pero Gemini no dio los vectores: los mismos
+   * candidatos, en el orden de relevancia de Scopus. Sin afinidad.
+   */
+  porRelevancia?: boolean;
   conResumenes: boolean;
   resultados: ResultadoDeScopus[];
 }
