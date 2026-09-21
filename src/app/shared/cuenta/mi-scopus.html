@@ -1094,8 +1094,12 @@
                       }
                     </button>
                     <small class="sc-mapeo-nota">
-                      Se usan hasta 2.000, los más citados, con sus datos completos del catálogo abierto
-                      OpenAlex. Luego lo analizas con Claude.
+                      Va la búsqueda de estos resultados
+                      @if (ecuacionDeLosResultados(); as ecuacion) {
+                        (<code class="sc-mapeo-ecuacion">{{ ecuacion }}</code>)
+                      }
+                      : hasta 2.000, los más citados, con sus datos completos del catálogo abierto
+                      OpenAlex. Reemplaza lo que haya en tu sesión de R. Luego lo analizas con Claude.
                     </small>
                   }
                 </div>

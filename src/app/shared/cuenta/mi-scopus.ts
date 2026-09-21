@@ -125,6 +125,12 @@ export class MiScopusPanel implements OnInit {
   readonly mapeando = signal(false);
   readonly destinosDelMapeo = signal<DestinoDelMapeo[] | null>(null);
   readonly mapeo = signal<MapeoDeScopus | null>(null);
+  /**
+   * La ecuación de los resultados que están en pantalla. El mapeo va con ESTA,
+   * no con lo que haya en la caja: si la editó sin volver a buscar, mapearía
+   * otra búsqueda que no está viendo.
+   */
+  readonly ecuacionDeLosResultados = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
   readonly busqueda = signal<BusquedaDeScopus | null>(null);
@@ -1983,6 +1989,7 @@ export class MiScopusPanel implements OnInit {
     peticion.subscribe({
       next: (resultado) => {
         this.busqueda.set(resultado);
+        this.ecuacionDeLosResultados.set(ecuacion);
         this.buscando.set(false);
         if (pagina === 1) this.anotarEnHistorial(ecuacion, resultado.total);
         if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
@@ -2112,7 +2119,7 @@ export class MiScopusPanel implements OnInit {
    * una por proyecto, y adivinar cuál sería meter el mapeo donde no toca.
    */
   mapear(productCode?: string): void {
-    const ecuacion = this.ecuacionCompleta();
+    const ecuacion = this.ecuacionDeLosResultados();
     if (!ecuacion || this.mapeando()) return;
     this.error.set(null);
 

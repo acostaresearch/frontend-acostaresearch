@@ -1346,3 +1346,8 @@
     width: 100%;
   }
 }
+
+.sc-mapeo-ecuacion {
+  font-size: 0.85em;
+  word-break: break-word;
+}
