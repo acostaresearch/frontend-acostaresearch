@@ -13,7 +13,9 @@ import {
   EnlaceAbierto,
   EstadoDeScopus,
   FuenteParaResumir,
+  DestinoDelMapeo,
   ImportacionDeScopus,
+  MapeoDeScopus,
   OrdenDeScopus,
   ResultadoDeScopus,
   ResumenConIa,
@@ -119,6 +121,10 @@ export class MiScopusPanel implements OnInit {
   readonly conectando = signal(false);
   readonly buscando = signal(false);
   readonly importando = signal(false);
+  /** El mapeo bibliométrico de la búsqueda: en marcha, a qué proyecto y cómo quedó. */
+  readonly mapeando = signal(false);
+  readonly destinosDelMapeo = signal<DestinoDelMapeo[] | null>(null);
+  readonly mapeo = signal<MapeoDeScopus | null>(null);
   readonly error = signal<string | null>(null);
 
   readonly busqueda = signal<BusquedaDeScopus | null>(null);
@@ -1951,6 +1957,9 @@ export class MiScopusPanel implements OnInit {
     this.error.set(null);
     this.parte.set(null);
     this.marcados.set(new Set());
+    // Un mapeo hecho con la búsqueda anterior no es el de esta.
+    this.mapeo.set(null);
+    this.destinosDelMapeo.set(null);
 
     const peticion = porSignificado
       ? this.scopus.semantica(ecuacion, pregunta)
@@ -2078,6 +2087,53 @@ export class MiScopusPanel implements OnInit {
 
   importar(): void {
     this.importarEids([...this.marcados()]);
+  }
+
+  /**
+   * Manda la búsqueda entera a su sesión de R para el mapeo bibliométrico.
+   *
+   * Sin proyecto elegido, pregunta antes a cuáles puede ir: con uno solo va
+   * directo, con varios le enseña los botones para elegir. La sesión de R es
+   * una por proyecto, y adivinar cuál sería meter el mapeo donde no toca.
+   */
+  mapear(productCode?: string): void {
+    const ecuacion = this.ecuacionCompleta();
+    if (!ecuacion || this.mapeando()) return;
+    this.error.set(null);
+
+    if (!productCode) {
+      this.mapeando.set(true);
+      this.scopus.destinosDelMapeo().subscribe({
+        next: (destinos) => {
+          this.mapeando.set(false);
+          if (destinos.length === 0) {
+            this.mostrarError('Ninguna de tus licencias vigentes trae el mapeo bibliométrico.');
+          } else if (destinos.length === 1) {
+            this.mapear(destinos[0].productCode);
+          } else {
+            this.destinosDelMapeo.set(destinos);
+          }
+        },
+        error: (fallo: unknown) => {
+          this.mapeando.set(false);
+          this.mostrarError(toApiError(fallo).message);
+        },
+      });
+      return;
+    }
+
+    this.destinosDelMapeo.set(null);
+    this.mapeando.set(true);
+    this.scopus.mapear(ecuacion, productCode).subscribe({
+      next: (resultado) => {
+        this.mapeando.set(false);
+        this.mapeo.set(resultado);
+      },
+      error: (fallo: unknown) => {
+        this.mapeando.set(false);
+        this.mostrarError(toApiError(fallo).message);
+      },
+    });
   }
 
   /**

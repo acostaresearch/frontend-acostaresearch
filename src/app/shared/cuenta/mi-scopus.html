@@ -1033,6 +1033,51 @@
                 </button>
               </div>
 
+              <!-- Mapeo bibliométrico: la búsqueda entera a su sesión de R. De
+                   Scopus solo salen los DOI; lo demás, de OpenAlex. -->
+              @if (lista.total > 0) {
+                <div class="sc-mapeo" aria-live="polite">
+                  @if (mapeo(); as m) {
+                    <p class="sc-mapeo-listo">
+                      <strong>✓ {{ m.mensaje }}</strong>
+                      <span>
+                        Vuelve a tu conversación con Claude y dile «ya cargué mis resultados de
+                        Scopus para el mapeo bibliométrico».
+                      </span>
+                    </p>
+                  } @else if (destinosDelMapeo(); as destinos) {
+                    <p class="sc-mapeo-pregunta">¿A qué proyecto va el mapeo?</p>
+                    <div class="sc-mapeo-destinos">
+                      @for (d of destinos; track d.productCode) {
+                        <button type="button" class="boton secundario" (click)="mapear(d.productCode)">
+                          {{ d.nombre }}
+                        </button>
+                      }
+                      <button type="button" class="sc-mapeo-cancelar" (click)="destinosDelMapeo.set(null)">
+                        Cancelar
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="boton secundario sc-mapeo-boton"
+                      [disabled]="mapeando() || buscando()"
+                      (click)="mapear()"
+                    >
+                      @if (mapeando()) {
+                        Preparando el mapeo… puede tardar un minuto
+                      } @else {
+                        Hacer un mapeo bibliométrico con estos resultados
+                      }
+                    </button>
+                    <small class="sc-mapeo-nota">
+                      Se usan hasta 2.000, los más citados, con sus datos completos del catálogo abierto
+                      OpenAlex. Luego lo analizas con Claude.
+                    </small>
+                  }
+                </div>
+              }
+
               <div class="sc-tabla-envoltura">
                 <table class="sc-tabla">
                   <thead>

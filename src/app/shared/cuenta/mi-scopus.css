@@ -605,6 +605,63 @@
   width: auto;
 }
 
+/* Mapeo bibliométrico de la búsqueda entera. */
+.sc-mapeo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--color-superficie);
+}
+
+.sc-mapeo-boton {
+  width: auto;
+}
+
+.sc-mapeo-nota {
+  flex: 1 1 260px;
+  color: var(--color-texto-suave);
+}
+
+.sc-mapeo-listo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-texto);
+}
+
+.sc-mapeo-listo strong {
+  color: var(--color-exito);
+}
+
+.sc-mapeo-pregunta {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sc-mapeo-destinos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sc-mapeo-destinos .boton {
+  width: auto;
+}
+
+.sc-mapeo-cancelar {
+  border: 0;
+  background: none;
+  color: var(--color-texto-suave);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .sc-tabla-envoltura {
   overflow-x: auto;
 }

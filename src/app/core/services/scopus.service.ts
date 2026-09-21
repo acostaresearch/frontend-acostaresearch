@@ -174,6 +174,24 @@ export interface BusquedaDeScopus {
   resultados: ResultadoDeScopus[];
 }
 
+/** Un proyecto al que puede ir el mapeo bibliométrico. */
+export interface DestinoDelMapeo {
+  productCode: string;
+  nombre: string;
+}
+
+/** Lo que quedó en su sesión de R tras mandar la búsqueda al mapeo. */
+export interface MapeoDeScopus {
+  total: number;
+  recorridos: number;
+  documentos: number;
+  tope: number;
+  leido: boolean;
+  proyecto: string;
+  /** El resumen en una frase, del servidor. */
+  mensaje: string;
+}
+
 export interface ImportacionDeScopus {
   pedidas: number;
   guardadas: number;
@@ -337,6 +355,23 @@ export class ScopusService {
     return this.http
       .delete<ApiResponse<{ ok: boolean }>>(`${this.base}/guardadas/${id}`)
       .pipe(map((res) => res.data));
+  }
+
+  /** A qué proyectos (sus licencias vigentes con mapeo bibliométrico) puede ir un mapeo. */
+  destinosDelMapeo(): Observable<DestinoDelMapeo[]> {
+    return this.http
+      .get<ApiResponse<{ destinos: DestinoDelMapeo[] }>>(`${this.base}/mapeo/destinos`)
+      .pipe(map((res) => res.data.destinos));
+  }
+
+  /**
+   * La búsqueda, a su sesión de R para el mapeo bibliométrico. Recorre hasta
+   * dos mil resultados y los completa con OpenAlex: puede tardar un minuto.
+   */
+  mapear(ecuacion: string, productCode: string): Observable<MapeoDeScopus> {
+    return this.http
+      .post<ApiResponse<MapeoDeScopus>>(`${this.base}/mapeo`, { ecuacion, productCode })
+      .pipe(map((res) => ({ ...res.data, mensaje: res.message ?? '' })));
   }
 
   importar(eids: string[]): Observable<ImportacionDeScopus> {
