@@ -235,6 +235,7 @@ export interface Payment {
  */
 export const MEDIOS_PAGO: Record<string, string> = {
   PAYPAL: 'PayPal',
+  CULQI: 'Tarjeta o Yape',
   YAPE: 'Yape',
   PLIN: 'Plin',
   TRANSFERENCIA: 'Transferencia',

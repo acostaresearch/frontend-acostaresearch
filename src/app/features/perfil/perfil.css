@@ -386,6 +386,30 @@
   font-weight: 650;
 }
 
+/* Debajo del estado «Pagado»: un enlace discreto, no un botón más en la fila. */
+.compras .constancia {
+  display: block;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primario);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.compras .constancia:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.compras .constancia:disabled {
+  color: var(--color-texto-tenue);
+  cursor: progress;
+}
+
 .compras td .tenue {
   display: block;
   font-size: 12px;

@@ -109,6 +109,9 @@ export class Perfil implements OnInit {
   // ── Compras ──────────────────────────────────────────────────────────────
   readonly compras = signal<Payment[]>([]);
   readonly cargandoCompras = signal(true);
+  /** El pago cuya constancia se está descargando, para no pedirla dos veces. */
+  readonly bajandoConstancia = signal<string | null>(null);
+  readonly errorConstancia = signal<string | null>(null);
 
   // ── Sesión ───────────────────────────────────────────────────────────────
   readonly cerrando = signal(false);
@@ -162,6 +165,40 @@ export class Perfil implements OnInit {
   /** El medio de pago, con el nombre que el cliente reconoce. */
   medioPago(pago: Payment): string {
     return MEDIOS_PAGO[pago.provider] ?? pago.provider;
+  }
+
+  /** Solo los pagos cobrados de verdad tienen constancia; una cortesía a 0, no. */
+  tieneConstancia(pago: Payment): boolean {
+    return pago.status === 'PAID' && pago.amountCents > 0 && Boolean(pago.paidAt);
+  }
+
+  /**
+   * Descarga la constancia en PDF. La ruta pide sesión, así que no basta un
+   * enlace: se baja con el token y se guarda desde aquí.
+   */
+  descargarConstancia(pago: Payment): void {
+    if (this.bajandoConstancia()) return;
+    this.bajandoConstancia.set(pago.id);
+    this.errorConstancia.set(null);
+
+    this.pagos.constancia(pago.id).subscribe({
+      next: (respuesta) => {
+        const disposicion = respuesta.headers.get('Content-Disposition') ?? '';
+        const nombre = /filename="([^"]+)"/.exec(disposicion)?.[1] ?? 'constancia-de-pago.pdf';
+        const url = URL.createObjectURL(respuesta.body as Blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombre;
+        enlace.click();
+        // Se suelta después: algunos navegadores aún no empezaron a guardar.
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        this.bajandoConstancia.set(null);
+      },
+      error: () => {
+        this.errorConstancia.set('No pudimos descargar la constancia. Inténtalo de nuevo.');
+        this.bajandoConstancia.set(null);
+      },
+    });
   }
 
   /** Porcentaje consumido de una bolsa, para la barra de progreso. */

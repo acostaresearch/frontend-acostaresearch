@@ -201,12 +201,23 @@
                       >
                         {{ estadoPago(pago) }}
                       </span>
+                      @if (tieneConstancia(pago)) {
+                        <button
+                          type="button"
+                          class="constancia"
+                          [disabled]="bajandoConstancia() === pago.id"
+                          (click)="descargarConstancia(pago)"
+                        >
+                          {{ bajandoConstancia() === pago.id ? 'Descargando…' : 'Constancia (PDF)' }}
+                        </button>
+                      }
                     </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
+          <app-aviso-flotante [(error)]="errorConstancia" />
         } @else {
           <p class="nota">
             Todavía no has comprado nada. <a routerLink="/planes">Mira los precios</a> cuando

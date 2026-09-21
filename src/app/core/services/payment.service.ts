@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -111,6 +111,17 @@ export class PaymentService {
     return this.http
       .get<ApiResponse<{ payments: PagoRevisado[] }>>(`${this.base}/manual/history`)
       .pipe(map((res) => res.data.payments));
+  }
+
+  /**
+   * Constancia de pago en PDF de un pago confirmado. Se pide la respuesta entera
+   * para leer el nombre del archivo, que lleva el número de la constancia.
+   */
+  constancia(paymentId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.base}/${paymentId}/constancia`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
   }
 
   /** URL de la imagen del comprobante. La ruta exige sesión de administrador. */
