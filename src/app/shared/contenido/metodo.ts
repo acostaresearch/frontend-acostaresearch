@@ -291,10 +291,11 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
   'articulo-fase3b-mapeo-bibliometrico': {
     descripcion:
       'Para artículos de revisión. Mapea tu campo con bibliometría: reúne cientos de registros ' +
-      'de Scopus, Web of Science u OpenAlex, aplica los criterios de inclusión con su diagrama ' +
-      'PRISMA y entrega las figuras —producción anual, revistas, coautoría y mapa temático— con ' +
-      'su interpretación escrita. El código de R va listo para pegar: tú lo ejecutas y la Skill ' +
-      'lee las salidas.',
+      'del exporte de Scopus o Web of Science de tu universidad —o, sin ese acceso, de una ' +
+      'búsqueda en Scopus desde tu perfil con metadatos abiertos de OpenAlex—, aplica los ' +
+      'criterios de inclusión con su diagrama PRISMA y entrega las figuras —producción anual, ' +
+      'revistas, coautoría y mapa temático— con su interpretación escrita. R corre en el ' +
+      'servidor: no instalas nada.',
     entregable: 'Cuerpo de la revisión, con diagrama PRISMA y figuras',
   },
   'articulo-fase4-metodos': {
