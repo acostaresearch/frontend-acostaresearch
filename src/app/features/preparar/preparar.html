@@ -228,19 +228,23 @@
             <section class="tarjeta documentos">
               <header class="cabecera cabecera-lista">
                 <h2>Tus documentos</h2>
-                @if (trabajos().length > 0) {
-                  <span class="total">{{ trabajos().length }} en total</span>
+                @if (trabajosDelServicio().length > 0) {
+                  <span class="total">{{ trabajosDelServicio().length }} en total</span>
                 }
               </header>
 
-              @if (trabajos().length === 0) {
+              @if (trabajosDelServicio().length === 0) {
                 <p class="lista-vacia">
-                  Aquí irán apareciendo los documentos que mandes, con su estado y el enlace para
-                  descargarlos.
+                  @if (enLaOtra() > 0) {
+                    Aquí no hay nada todavía: lo que has mandado está en la otra pestaña.
+                  } @else {
+                    Aquí irán apareciendo los documentos que mandes, con su estado y el enlace para
+                    descargarlos.
+                  }
                 </p>
               } @else {
                 <ul class="lista">
-                  @for (t of trabajos(); track t.id) {
+                  @for (t of visibles(); track t.id) {
                     <li class="fila">
                       <span class="fila-icono" aria-hidden="true">
                         <svg viewBox="0 0 20 20">
@@ -338,6 +342,18 @@
                     </li>
                   }
                 </ul>
+
+                <!-- Los cinco primeros y un botón: el historial crece diez al
+                     mes y la columna no puede ser un rollo de papel. -->
+                @if (ocultos() > 0) {
+                  <button type="button" class="mas" (click)="verTodos.set(true)">
+                    Ver los {{ ocultos() }} restantes
+                  </button>
+                } @else if (verTodos() && trabajosDelServicio().length > tope) {
+                  <button type="button" class="mas" (click)="verTodos.set(false)">
+                    Ver solo los últimos {{ tope }}
+                  </button>
+                }
               }
             </section>
           </div>

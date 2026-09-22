@@ -411,6 +411,26 @@
   padding: 14px 22px;
 }
 
+/* Desplegar el resto. A todo lo ancho y con su línea encima: se lee como el
+   final de la lista, no como un botón suelto dentro de la tarjeta. */
+.mas {
+  display: block;
+  width: 100%;
+  padding: 12px 22px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--color-borde);
+}
+
+.mas:hover {
+  background: var(--color-fondo);
+}
+
 .fila + .fila {
   border-top: 1px solid var(--color-borde);
 }
@@ -638,7 +658,8 @@
   .pestanas,
   .panel,
   .fila,
-  .lista-vacia {
+  .lista-vacia,
+  .mas {
     padding-right: 16px;
     padding-left: 16px;
   }

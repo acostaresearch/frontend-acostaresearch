@@ -67,6 +67,20 @@ const PESTANAS: readonly Pestana[] = [
 /** Cada cuánto se pregunta por los trabajos que están en marcha. */
 const CADA_MS = 5000;
 
+/** Cuántos documentos se enseñan de entrada. El resto, pulsando «ver más». */
+const TOPE = 5;
+
+/**
+ * Los servicios que hoy tienen pestaña.
+ *
+ * Sirve para lo que NO está aquí: un trabajo de un servicio retirado —los
+ * resúmenes, que se quitaron el 22-sep-2026— no es de ninguna de las dos
+ * pestañas, y filtrando a secas desaparecería de la pantalla para siempre.
+ * Esos se enseñan en la lista mire lo que mire: son pocos, no se crean más y
+ * el cliente tiene que poder descargarlos.
+ */
+const CON_PESTANA: readonly string[] = PESTANAS.map((p) => p.id);
+
 /** A dónde escribe quien tuvo un problema. Es el mismo correo del pie del sitio. */
 const CORREO = 'asesoriaprofesional599@gmail.com';
 
@@ -97,6 +111,7 @@ export class Preparar implements OnInit, OnDestroy {
   private readonly api = inject(PrepararService);
 
   readonly pestanas = PESTANAS;
+  readonly tope = TOPE;
 
   readonly panel = signal<PanelPreparar | null>(null);
   readonly cargando = signal(true);
@@ -107,6 +122,8 @@ export class Preparar implements OnInit, OnDestroy {
   readonly idioma = signal<IdiomaPreparar>('en');
   readonly subiendo = signal(false);
   readonly encima = signal(false);
+  /** Si la lista de la derecha está desplegada. Se recoge al cambiar de pestaña. */
+  readonly verTodos = signal(false);
 
   /**
    * El campo de archivo, escondido.
@@ -128,6 +145,32 @@ export class Preparar implements OnInit, OnDestroy {
   });
 
   readonly trabajos = computed(() => this.panel()?.trabajos ?? []);
+
+  /**
+   * Los de la pestaña que está mirando.
+   *
+   * La lista de la derecha es del servicio elegido y no de todo lo que ha
+   * mandado nunca: quien viene a traducir no tiene por qué revolver entre sus
+   * ediciones de inglés para encontrar lo suyo. El sondeo, en cambio, sigue
+   * mirando `trabajos` entero: un documento en marcha en la otra pestaña tiene
+   * que seguir refrescándose igual.
+   */
+  readonly trabajosDelServicio = computed(() =>
+    this.trabajos().filter(
+      (t) => t.servicio === this.elegida() || !CON_PESTANA.includes(t.servicio),
+    ),
+  );
+
+  /** Los cinco primeros, o todos si ha pulsado «ver más». */
+  readonly visibles = computed(() => {
+    const lista = this.trabajosDelServicio();
+    return this.verTodos() ? lista : lista.slice(0, TOPE);
+  });
+
+  readonly ocultos = computed(() => this.trabajosDelServicio().length - this.visibles().length);
+
+  /** Cuántos hay en la otra pestaña: un «aquí no hay nada» a secas despista. */
+  readonly enLaOtra = computed(() => this.trabajos().length - this.trabajosDelServicio().length);
 
   readonly enMarcha = computed(() =>
     this.trabajos().filter((t) => t.estado === 'EN_COLA' || t.estado === 'EN_CURSO'),
@@ -185,6 +228,7 @@ export class Preparar implements OnInit, OnDestroy {
 
   elegir(servicio: ServicioPreparar): void {
     this.elegida.set(servicio);
+    this.verTodos.set(false);
     this.aviso.set(null);
     this.error.set(null);
   }
