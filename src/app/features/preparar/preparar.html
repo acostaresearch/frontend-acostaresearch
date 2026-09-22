@@ -22,7 +22,7 @@
 
                   @if (datos.cupo && datos.membresia?.vigente) {
                     <p class="cabecera-nota">
-                      {{ datos.membresia?.plan?.name }} · vence el
+                      {{ nombreDelPlan(datos.membresia?.plan?.name) }} · vence el
                       {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }} ·
                       <a routerLink="/planes">Renovar</a>
                       @if (datos.cupo.restantes === 0) {

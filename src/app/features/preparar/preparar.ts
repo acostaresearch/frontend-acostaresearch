@@ -313,6 +313,20 @@ export class Preparar implements OnInit, OnDestroy {
 
   // ── Textos ───────────────────────────────────────────────────────────────
 
+  /**
+   * El plan, sin repetir el título de la pantalla.
+   *
+   * Los dos planes se llaman «Preparar documento · mensual» y «Preparar
+   * documento · trimestral», que es como tienen que aparecer en /planes y en
+   * el comprobante. Aquí dentro, debajo de un título que ya dice «Preparar
+   * documento», se queda en «Mensual» o «Trimestral».
+   */
+  nombreDelPlan(nombre: string | null | undefined): string {
+    if (!nombre) return '';
+    const corto = nombre.replace(/^preparar documento\s*[·:—-]?\s*/i, '');
+    return corto.charAt(0).toUpperCase() + corto.slice(1);
+  }
+
   nombreDelIdioma(codigo: string | null): string {
     return this.panel()?.idiomas.find((i) => i.codigo === codigo)?.nombre ?? 'idioma elegido';
   }

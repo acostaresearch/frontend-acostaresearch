@@ -22,17 +22,20 @@
   padding: 34px 0 64px;
 }
 
+/* Todo el ancho de la banda, sin tope propio: la columna central de `.seccion`
+   ya lo limita a --centro y deja los mismos lados que el resto del sitio, así
+   que las dos tarjetas quedan alineadas con el menú de arriba y con el pie.
+   Tenía un tope de 1200 px y en una pantalla ancha sobraban tres dedos a cada
+   lado que ninguna otra página deja. */
 .preparar-pagina {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* La de la derecha no se estira: es una lista, y una tarjeta vacía de alto de
    pantalla al lado del formulario se lee como un hueco. */
 .columnas {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
   gap: 22px;
   align-items: start;
 }
@@ -186,11 +189,15 @@
 
 /* ── Las pestañas: texto subrayado, no tarjetas ─────────────────────────── */
 
+/* Sin `overflow`: la fila llevaba `overflow-x: auto` y eso hace que el eje
+   vertical pase a `auto` por su cuenta, así que un píxel de más del icono
+   sacaba una barra de desplazamiento con sus flechitas en el canto derecho de
+   la fila. Si no caben, las pestañas bajan de línea. */
 .pestanas {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 0 24px;
   padding: 0 22px;
-  overflow-x: auto;
   border-bottom: 1px solid var(--color-borde);
 }
 
@@ -661,6 +668,6 @@
   }
 
   .pestanas {
-    gap: 18px;
+    gap: 0 18px;
   }
 }

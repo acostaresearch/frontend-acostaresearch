@@ -1,6 +1,9 @@
+import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import localeEsPe from '@angular/common/locales/es-PE';
 import {
   ApplicationConfig,
+  LOCALE_ID,
   inject,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
@@ -49,8 +52,21 @@ function restaurarSesion() {
   );
 }
 
+/*
+ * Las fechas, en español del Perú.
+ *
+ * Sin esto Angular formatea con en-US, y en un sitio entero en español salía
+ * «vence el 21 de December» y «22 Sep, 18:34». Se elige es-PE y no es-ES por
+ * los números: en el Perú los miles van con coma y los decimales con punto,
+ * igual que estaban saliendo hasta ahora («1,693 palabras»), mientras que en
+ * España es al revés. El mes corto queda «set.» y no «sept.», que también es
+ * lo de aquí.
+ */
+registerLocaleData(localeEsPe);
+
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'es-PE' },
     provideBrowserGlobalErrorListeners(),
     // El de mantenimiento, primero: así ve el error que queda después del
     // intento de refresh del de sesión.
