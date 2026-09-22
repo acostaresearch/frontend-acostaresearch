@@ -173,7 +173,7 @@ async function servirLaWeb(request, env) {
  * sin verlas. Lo demás es el cinturón para el día que aparezca un XSS.
  *
  * La lista sale de lo que la web usa de verdad: la tipografía de Google, el
- * botón de Google para entrar, el SDK de PayPal en el checkout, los videos de
+ * botón de Google para entrar, el SDK de PayPal y el de Culqi en el checkout, los videos de
  * YouTube sin cookies y sus miniaturas. El script en línea del tema (index.html)
  * va por su hash: si se toca ese script, hay que recalcularlo o la página se
  * queda en el tema claro.
@@ -190,15 +190,18 @@ const CSP = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com",
+  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com",
   // Angular inyecta los estilos de cada componente como <style> en la página.
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  // cdnjs: la hoja de animaciones que carga la verificación 3DS de Culqi.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   // gstatic: los iconos que mete el botón de Google. Los videos van SOLO por
   // youtube-nocookie (ver `tutoriales` y `demos`); youtube.com es solo enlace.
-  "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com",
-  "connect-src 'self' https://accounts.google.com https://*.paypal.com",
-  "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com",
+  "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com",
+  // Culqi: su API y la verificación del banco (3-D Secure), que hace Cardinal
+  // Commerce. Los dominios salen de los propios scripts de Culqi (21-sep-2026).
+  "connect-src 'self' https://accounts.google.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
+  "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
   // El visor de VOSviewer calcula la disposición y los clústeres en un Worker
   // que crea desde un `blob:`. Sin esto, con la CSP activa el mapa no se pinta.
   "worker-src 'self' blob:",

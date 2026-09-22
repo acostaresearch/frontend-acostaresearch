@@ -455,6 +455,27 @@ export const INCLUYE: Record<string, string[]> = {
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],
+  //
+  // «Preparar documento». Las dos membresías llevan la MISMA lista salvo la
+  // duración, que `loQueIncluye` mete sola desde el plan: son el mismo
+  // producto con distinto plazo, y escribir dos listas parecidas acabaría con
+  // una diciendo algo que la otra no.
+  PREPARAR_MENSUAL: [
+    'Hasta 10 documentos al mes, del tamaño que sean',
+    'Los tres servicios: edición de inglés académico, traducción y resúmenes',
+    'Traducción a español, inglés, portugués y chino',
+    'La edición llega con control de cambios: aceptas o rechazas una por una',
+    'Te devolvemos tu mismo Word, con sus tablas, figuras y bibliografía intactas',
+    'Entrega automática, sin esperar a nadie',
+  ],
+  PREPARAR_TRIMESTRAL: [
+    'Hasta 10 documentos cada mes, del tamaño que sean',
+    'Los tres servicios: edición de inglés académico, traducción y resúmenes',
+    'Traducción a español, inglés, portugués y chino',
+    'La edición llega con control de cambios: aceptas o rechazas una por una',
+    'Te devolvemos tu mismo Word, con sus tablas, figuras y bibliografía intactas',
+    'Entrega automática, sin esperar a nadie',
+  ],
 };
 
 export const FAQ: Pregunta[] = [

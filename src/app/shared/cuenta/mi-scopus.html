@@ -1054,6 +1054,44 @@
                     Añadir seleccionadas a mis fuentes
                   }
                 </button>
+
+                <!-- Exportar: llevarse estos resultados a otra parte —Excel, el
+                     gestor de referencias, el correo al asesor—, que no es lo
+                     mismo que añadirlos a sus fuentes. Se arma en el navegador
+                     con lo que ya está en pantalla, sin volver a Elsevier: por
+                     eso el botón dice exactamente qué va dentro. Ver
+                     `scopus-exportar`. -->
+                <div class="sc-orden sc-exportar">
+                  <button
+                    type="button"
+                    class="sc-orden-boton"
+                    aria-haspopup="listbox"
+                    [attr.aria-expanded]="menuExportar()"
+                    [disabled]="aExportar().length === 0"
+                    (click)="menuExportar.set(!menuExportar())"
+                  >
+                    @if (cuantosMarcados() > 0) {
+                      Exportar {{ cuantosMarcados() }} seleccionadas
+                    } @else {
+                      Exportar esta página ({{ aExportar().length }})
+                    }
+                    <span class="sc-orden-flecha" aria-hidden="true"></span>
+                  </button>
+                  @if (menuExportar()) {
+                    <div class="sc-orden-capa" (click)="menuExportar.set(false)"></div>
+                    <ul class="sc-orden-lista" role="listbox" aria-label="Formato de exportación">
+                      @for (formato of formatos; track formato.valor) {
+                        <li>
+                          <button type="button" role="option" (click)="exportar(formato.valor)">
+                            <span class="sc-orden-marca" aria-hidden="true"></span>
+                            {{ formato.texto }}
+                            <small class="sc-exportar-para">{{ formato.detalle }}</small>
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
               </div>
 
               <!-- Mapeo bibliométrico: la búsqueda entera a su sesión de R. De
@@ -1070,6 +1108,14 @@
                     </p>
                   } @else if (destinosDelMapeo(); as destinos) {
                     <p class="sc-mapeo-pregunta">¿A qué proyecto va el mapeo?</p>
+                    <!-- El criterio, aquí también: en este punto la nota de
+                         abajo ya no está en pantalla, y es justo cuando hay
+                         que saber qué se está mandando. -->
+                    <small class="sc-mapeo-criterio">
+                      Van <strong>solo los artículos y las revisiones</strong> de esta búsqueda; las
+                      ponencias, los capítulos, los libros, las editoriales, las cartas y las erratas
+                      se quedan fuera.
+                    </small>
                     <div class="sc-mapeo-destinos">
                       @for (d of destinos; track d.productCode) {
                         <button type="button" class="boton secundario" (click)="mapear(d.productCode)">
@@ -1093,15 +1139,30 @@
                         Hacer un mapeo bibliométrico con estos resultados
                       }
                     </button>
+                    @if (mapeoDejaFuera()) {
+                      <!-- La lista de arriba enseña ponencias y capítulos que el
+                           mapeo no se lleva. Decirlo y, sobre todo, dejar
+                           arreglarlo de un clic: si no, hay que saber que el
+                           mapeo filtra, encontrar «Tipo de documento» y acertar
+                           cuáles de los doce tipos son. -->
+                      <p class="sc-mapeo-aviso">
+                        En la lista hay tipos de documento que el mapeo no toma.
+                        <button type="button" class="sc-mapeo-solo" (click)="soloArticulosDelMapeo()">
+                          Dejar solo artículos y revisiones
+                        </button>
+                      </p>
+                    }
                     <small class="sc-mapeo-nota">
                       Va la búsqueda de estos resultados
                       @if (ecuacionDeLosResultados(); as ecuacion) {
                         (<code class="sc-mapeo-ecuacion">{{ ecuacion }}</code>)
                       }
-                      : hasta 2.000, los más citados. Scopus elige los documentos y sus datos (autores,
-                      países, palabras clave, referencias) vienen del catálogo abierto OpenAlex; en tus
-                      Métodos se declara «búsqueda en Scopus; metadatos de OpenAlex». Reemplaza lo que
-                      haya en tu sesión de R. Luego lo analizas con Claude.
+                      , y de ella <strong>solo los artículos y las revisiones</strong> (fuera ponencias,
+                      capítulos, editoriales, cartas y erratas), hasta 2.000, los más citados. Por eso el
+                      mapeo puede salir con menos documentos de los que ves en la lista. Scopus elige los
+                      documentos y sus datos (autores, países, palabras clave, referencias) vienen del
+                      catálogo abierto OpenAlex; en tus Métodos se declara «búsqueda en Scopus; metadatos
+                      de OpenAlex». Reemplaza lo que haya en tu sesión de R. Luego lo analizas con Claude.
                     </small>
                   }
                 </div>
@@ -1217,6 +1278,27 @@
                               >
                             }
                           </span>
+                          <!-- El DOI, entero y a la vista. Antes solo estaba
+                               detrás de «Ver en la editorial», y el DOI no es
+                               un enlace que se pulsa: es el dato que se pega en
+                               la matriz de antecedentes, en el correo al asesor
+                               o en otra base. Con el botón se copia de un clic,
+                               sin seleccionar a mano una cadena que se corta
+                               mal. -->
+                          @if (resultado.doi; as doi) {
+                            <span class="sc-doi">
+                              <span class="sc-doi-etiqueta">DOI</span>
+                              <code class="sc-doi-valor">{{ doi }}</code>
+                              <button
+                                type="button"
+                                class="sc-doi-copiar"
+                                [attr.aria-label]="'Copiar el DOI ' + doi"
+                                (click)="copiarDoi(doi)"
+                              >
+                                {{ doiCopiado() === doi ? '✓ Copiado' : 'Copiar' }}
+                              </button>
+                            </span>
+                          }
                           @if (resumenesAbiertos().has(resultado.eid)) {
                             <span class="sc-abstract">
                               @if (cargandoResumenes()) {

@@ -161,6 +161,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/checkout/checkout').then((m) => m.Checkout),
   },
   /*
+   * «Preparar documento»: edición de inglés académico, traducción y resúmenes.
+   *
+   * Con sesión, al contrario que las subidas que reparte el conector: aquí no
+   * hay enlace firmado que valga como llave, porque la membresía cuelga de la
+   * cuenta y hay que saber de quién es el cupo del mes.
+   */
+  {
+    path: 'preparar-documento',
+    canActivate: [authGuard],
+    title: 'Preparar documento · Acosta Research',
+    loadComponent: () => import('./features/preparar/preparar').then((m) => m.Preparar),
+  },
+  /*
    * El registro de asesores, para el piloto de revisión de tesis.
    *
    * Dos rutas para la misma página. Con slug es el enlace que el administrador

@@ -65,6 +65,21 @@
         <a class="boton secundario" routerLink="/" fragment="mi-panel">Ir a mi panel</a>
       </div>
     </section>
+  } @else if (membresiaComprada(); as membresia) {
+    <!-- ── Membresía de «Preparar documento» ───────────────────────────────── -->
+    <!-- Sin ninguna llave que enseñar, al contrario que la licencia: la
+         membresía cuelga de la cuenta y solo hay que ir a la pantalla. -->
+    <section class="panel confirmacion">
+      <h1>¡Listo! Ya puedes preparar documentos</h1>
+      <p>
+        Tienes <strong>{{ membresia.docsPorMes }} documentos al mes</strong> con
+        {{ membresia.plan.name }}, hasta el {{ membresia.expiresAt | date: 'd MMM y' }}. Del
+        tamaño que sean, en los tres servicios.
+      </p>
+      <div class="botones">
+        <a class="boton" routerLink="/preparar-documento">Preparar mi primer documento</a>
+      </div>
+    </section>
   } @else if (bolsaComprada(); as pack) {
     <!-- ── Bolsa comprada ──────────────────────────────────────────────────── -->
     <section class="panel confirmacion">
@@ -150,6 +165,7 @@
     <app-aviso-flotante [(error)]="errorCanje" />
     <app-aviso-flotante [(error)]="errorPromo" />
     <app-aviso-flotante [(error)]="errorComprobante" />
+    <app-aviso-flotante [(error)]="errorCulqi" />
 
  <section class="planes">
       @if (cargando()) {
@@ -246,6 +262,79 @@
                    Con las siete iguales, «se instala en tu cuenta» pesaba lo
                    mismo que los nueve capítulos. De una frase larga solo va en
                    negrita el arranque (ver `partirVentaja`). -->
+              <ul class="tarjeta-lista">
+                @for (item of loQueIncluye(plan); track item; let j = $index) {
+                  <li>
+                    @if (j < clavesDe(plan)) {
+                      @let partes = partirVentaja(item);
+                      <strong>{{ partes[0] }}</strong>{{ partes[1] }}
+                    } @else {
+                      {{ item }}
+                    }
+                  </li>
+                }
+              </ul>
+            </article>
+          }
+        </div>
+      }
+
+      <!-- ── «Preparar documento»: las dos membresías ───────────────────── -->
+      <!-- Bloque aparte del método a propósito: es otro producto, y quien
+           viene a por el conector de tesis no está eligiendo entre eso y una
+           traducción. Ver `membresias` en el componente. -->
+      @if (membresias().length > 0) {
+        <h2 class="grupo">Preparar documento</h2>
+        <p class="grupo-entrada">
+          Subes tu Word y te lo devolvemos: corregido en inglés académico, traducido o con su
+          resumen y su abstract. Lo hace una IA y hay que revisarlo, como todo lo que sale de
+          aquí.
+        </p>
+        <div class="rejilla-planes" [class.varios]="membresias().length > 1">
+          @for (plan of membresias(); track plan.code; let i = $index) {
+            <article
+              class="tarjeta-plan"
+              [class]="acento(i + metodo().length)"
+              [class.elegido]="seleccionado()?.code === plan.code"
+            >
+              <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
+              @if (plan.description) {
+                <p class="tarjeta-lema">{{ plan.description }}</p>
+              }
+
+              <p class="tarjeta-precio">
+                <span class="importe">{{ precioTarjeta(plan) }}</span>
+                @if (precioTachado(plan); as antes) {
+                  <span class="antes">{{ antes }}</span>
+                }
+              </p>
+              <p class="tarjeta-vigencia">por {{ vigencia(plan) }} · se renueva a mano</p>
+
+              @if (ahorro(plan); as rebaja) {
+                <p class="tarjeta-oferta">
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5.2l3 1.8" />
+                  </svg>
+                  <span>Te ahorras {{ rebaja }} frente a pagarlo mes a mes</span>
+                </p>
+              }
+
+              <button
+                type="button"
+                class="boton grande bloque"
+                [class.secundario]="membresias().length > 1 && i > 0"
+                (click)="elegir(plan)"
+                [attr.aria-pressed]="seleccionado()?.code === plan.code"
+              >
+                @if (seleccionado()?.code === plan.code) {
+                  Elige abajo cómo pagar ↓
+                } @else {
+                  Comprar por {{ precioTarjeta(plan) }}
+                }
+              </button>
+
+              <p class="tarjeta-rotulo">Qué incluye</p>
               <ul class="tarjeta-lista">
                 @for (item of loQueIncluye(plan); track item; let j = $index) {
                   <li>
@@ -517,6 +606,35 @@
               <p class="pago-rotulo">¿Cómo prefieres pagar?</p>
 
               <div class="medios">
+                <!-- Culqi va primero cuando está activo: cobra en soles y activa el
+                     acceso al momento, sin esperar a que se revise una captura. -->
+                @if (pagoConCulqi()) {
+                  <button
+                    type="button"
+                    class="medio"
+                    [class.activo]="metodoPago() === 'culqi'"
+                    [attr.aria-pressed]="metodoPago() === 'culqi'"
+                    (click)="metodoPago.set('culqi')"
+                  >
+                    <span class="medio-fila">
+                      <span class="medio-icono culqi">
+                        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                          <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+                          <path d="M2.5 10h19" />
+                          <path d="M6.5 15h4" />
+                        </svg>
+                      </span>
+                      <span class="medio-marca" aria-hidden="true">
+                        <svg class="icono" viewBox="0 0 24 24">
+                          <path d="m6 12.5 4 4 8-8.5" />
+                        </svg>
+                      </span>
+                    </span>
+                    <span class="medio-nombre">Tarjeta o Yape</span>
+                    <span class="medio-detalle">Al instante, en soles</span>
+                  </button>
+                }
+
                 <button
                   type="button"
                   class="medio"
@@ -607,6 +725,48 @@
                     mano.
                   </p>
                 }
+              }
+
+              <!-- ── Pago con Culqi ─────────────────────────────────────────────
+                 El formulario de Culqi se abre encima de la página: la tarjeta o
+                 el código de Yape se escriben ahí y nunca pasan por esta web. -->
+              @if (metodoPago() === 'culqi') {
+                <section class="pasarela">
+                  <div class="pasarela-cabecera">
+                    <div>
+                      <h3 class="pasarela-titulo">Pagar con tarjeta o Yape</h3>
+                      <p class="pasarela-nota">
+                        Tarjeta de débito o crédito, o Yape con el código de aprobación de tu app.
+                        El acceso se activa en cuanto se confirma el pago.
+                      </p>
+                    </div>
+                    <p class="pasarela-total">
+                      <span class="pasarela-total-rotulo">Total</span>
+                      <strong>{{ precioFinal(plan) }}</strong>
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="boton bloque"
+                    [disabled]="abriendoCulqi() || procesando()"
+                    (click)="pagarConCulqi()"
+                  >
+                    @if (abriendoCulqi()) {
+                      Abriendo el pago…
+                    } @else if (procesando()) {
+                      Confirmando el pago…
+                    } @else {
+                      Pagar {{ precioFinal(plan) }}
+                    }
+                  </button>
+
+                  @if (procesando()) {
+                    <p class="tenue">Procesando el pago… no cierres esta ventana.</p>
+                  }
+
+                  <p class="pasarela-pie">Procesado por Culqi · Pago seguro</p>
+                </section>
               }
 
               <!-- ── Pago por Yape ──────────────────────────────────────────────

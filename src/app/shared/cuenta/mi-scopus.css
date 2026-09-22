@@ -605,6 +605,20 @@
   width: auto;
 }
 
+/* Exportar: reaprovecha el desplegable del orden, pero sin su `margin-left:
+   auto` —con dos en la misma fila, el hueco libre se repartía entre los dos y
+   el orden se despegaba del total—. */
+.sc-exportar {
+  margin-left: 0;
+}
+
+.sc-exportar-para {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 11px;
+  color: var(--color-texto-tenue);
+}
+
 /* Mapeo bibliométrico de la búsqueda entera. */
 .sc-mapeo {
   display: flex;
@@ -642,6 +656,37 @@
 .sc-mapeo-pregunta {
   margin: 0;
   font-weight: 600;
+}
+
+/* Qué entra en el mapeo, junto a la pregunta del proyecto. Ocupa la fila
+   entera para no partir la frase entre los botones de destino. */
+.sc-mapeo-criterio {
+  flex: 1 1 100%;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+/* La lista trae tipos que el mapeo no se lleva. Fila entera, encima de la
+   nota, porque es lo que hay que leer antes de pulsar. */
+.sc-mapeo-aviso {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-aviso);
+}
+
+.sc-mapeo-solo {
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .sc-mapeo-destinos {
@@ -784,6 +829,44 @@
   font-size: 12px;
   color: var(--color-primario);
   text-underline-offset: 2px;
+}
+
+/* ── El DOI de la fila ─────────────────────────────────────────────────── */
+.sc-doi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.sc-doi-etiqueta {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Monoespaciada y seleccionable: es un identificador, y se lee carácter a
+   carácter cuando alguien lo compara con el de su lista. */
+.sc-doi-valor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.sc-doi-copiar {
+  padding: 0;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--color-primario);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .sc-col-autores {

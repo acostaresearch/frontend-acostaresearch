@@ -48,8 +48,11 @@ export interface Balance {
   packs: WordPack[];
 }
 
-/** Qué entrega un plan: palabras para el humanizador o licencia del conector. */
-export type PlanKind = 'WORDS' | 'LICENSE';
+/**
+ * Qué entrega un plan: palabras para el humanizador, licencia del conector o
+ * membresía de «Preparar documento».
+ */
+export type PlanKind = 'WORDS' | 'LICENSE' | 'DOCUMENTO';
 
 export interface Plan {
   id: string;
@@ -60,6 +63,8 @@ export interface Plan {
   /** Solo en planes de licencia: qué producto se licencia. */
   productCode: string | null;
   words: number;
+  /** Solo en las membresías de documentos: cuántos entrega al mes. */
+  docsPorMes: number;
   priceCents: number;
   currency: string;
   /** Precio para las pasarelas que cobran en dólares. Nulo = solo pago manual. */

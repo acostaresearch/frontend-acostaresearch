@@ -6,6 +6,25 @@ export interface PaymentProvider {
   label: string;
   /** Moneda en la que cobra esta pasarela. PayPal no admite soles: cobra en USD. */
   currency: string;
+  /** Solo Culqi: la llave pública con la que se abre su formulario. */
+  publicKey?: string | null;
+}
+
+/** Lo que devuelve la verificación del banco (Culqi3DS) para el segundo cobro. */
+export interface Parametros3DS {
+  eci?: string;
+  xid?: string;
+  cavv?: string;
+  protocolVersion?: string;
+  directoryServerTransactionId?: string;
+}
+
+/** Lo que se manda al confirmar un cobro de Culqi. PayPal no manda nada. */
+export interface DatosDelCobro {
+  token?: string;
+  email?: string;
+  deviceFingerprint?: string;
+  authentication3DS?: Parametros3DS;
 }
 
 /** Descuento ya resuelto por el servidor para un plan concreto. */
@@ -74,6 +93,15 @@ export interface License {
    * acceso. Retirar un plan es dejar de venderlo, no quitarle lo pagado a nadie.
    */
   retirado?: boolean;
+  /**
+   * Si este producto trae las herramientas del panel: Scopus, Zotero,
+   * Mendeley, R y el cualitativo (ATLAS.ti), con el mapa detrás.
+   *
+   * Lo dice el servidor, que es donde vive la regla. Ausente se entiende que sí:
+   * un panel servido por una versión anterior del backend no debe esconderle
+   * sus herramientas a quien las compró.
+   */
+  herramientas?: boolean;
   tokenHint: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'REVOKED';
   callsTotal: number;
@@ -96,12 +124,33 @@ export interface License {
 export interface PaymentResult {
   /** true si el pago ya estaba confirmado: un reintento no entrega dos veces. */
   alreadyProcessed: boolean;
+  /**
+   * Solo Culqi: el banco pide su verificación (3-D Secure). No se cobró nada;
+   * hay que pasarla y volver a confirmar con sus parámetros.
+   */
+  requiresAuthentication?: boolean;
   /** Presente si se compró un plan de palabras. */
   pack?: WordPack | null;
   /** Presentes si se compró una licencia. La URL solo llega una vez. */
   license?: License | null;
   connectorUrl?: string | null;
-  balance: Balance;
+  /**
+   * Presente si se compró o renovó la membresía de «Preparar documento».
+   *
+   * No trae ninguna llave que enseñar —al contrario que la licencia, cuya URL
+   * solo llega una vez—: la membresía cuelga de la cuenta y basta con ir a
+   * /preparar-documento.
+   */
+  membresia?: MembresiaComprada | null;
+  balance?: Balance;
+}
+
+/** La membresía de documentos recién comprada, para confirmar qué se llevó. */
+export interface MembresiaComprada {
+  id: string;
+  docsPorMes: number;
+  expiresAt: string;
+  plan: { code: string; name: string };
 }
 
 /** Datos del Yape que la web enseña junto al QR. Vacíos = solo el QR. */

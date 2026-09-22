@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   Component,
@@ -17,14 +18,19 @@ import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
 import {
   ComprobanteEnviado,
+  DatosDelCobro,
   DatosYape,
   Descuento,
   License,
+  MembresiaComprada,
+  PaymentOrder,
   PaymentProvider,
+  PaymentResult,
 } from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService, Promo } from '../../core/services/billing.service';
+import { CulqiSdkService, ResultadoCheckout } from '../../core/services/culqi-sdk.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -90,6 +96,7 @@ export class Checkout implements OnInit {
   private readonly fondo = inject(FondoService);
   private readonly payments = inject(PaymentService);
   private readonly paypal = inject(PaypalSdkService);
+  private readonly culqi = inject(CulqiSdkService);
   private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly licencias = inject(LicenseService);
@@ -107,7 +114,7 @@ export class Checkout implements OnInit {
    * formulario de captura— y la página se convertía en una lista interminable.
    * Ahora se elige uno y solo se despliega ese.
    */
-  readonly metodoPago = signal<'yape' | 'paypal' | null>(null);
+  readonly metodoPago = signal<'yape' | 'paypal' | 'culqi' | null>(null);
 
   readonly planes = signal<Plan[]>([]);
 
@@ -173,6 +180,7 @@ export class Checkout implements OnInit {
   /** Resultado de una compra recién confirmada. */
   readonly bolsaComprada = signal<WordPack | null>(null);
   readonly licenciaComprada = signal<License | null>(null);
+  readonly membresiaComprada = signal<MembresiaComprada | null>(null);
   readonly urlConector = signal<string | null>(null);
   readonly copiada = signal(false);
 
@@ -190,14 +198,39 @@ export class Checkout implements OnInit {
 
   readonly metodo = computed(() => this.planes().filter((p) => p.kind === 'LICENSE'));
   readonly bolsas = computed(() => this.planes().filter((p) => p.kind === 'WORDS'));
+  /**
+   * Las membresías de «Preparar documento».
+   *
+   * En su propio bloque y no mezcladas con el método: son otro producto. Quien
+   * viene a por el conector de tesis no está eligiendo entre eso y una
+   * traducción, y ponerlas en la misma fila convertiría la página en una lista
+   * de cinco cosas que hay que comparar.
+   */
+  readonly membresias = computed(() => this.planes().filter((p) => p.kind === 'DOCUMENTO'));
   readonly esLicencia = computed(() => this.seleccionado()?.kind === 'LICENSE');
   readonly comprado = computed(
-    () => this.bolsaComprada() !== null || this.licenciaComprada() !== null,
+    () =>
+      this.bolsaComprada() !== null ||
+      this.licenciaComprada() !== null ||
+      this.membresiaComprada() !== null,
   );
 
   readonly pasarelaPaypal = computed(
     () => this.pasarelas().find((p) => p.code === 'PAYPAL') ?? null,
   );
+
+  /** Culqi solo se ofrece si el servidor lo anuncia con su llave pública. */
+  readonly pasarelaCulqi = computed(
+    () => this.pasarelas().find((p) => p.code === 'CULQI' && p.publicKey) ?? null,
+  );
+
+  readonly pagoConCulqi = computed(
+    () => Boolean(this.pasarelaCulqi()) && this.auth.isAuthenticated(),
+  );
+
+  // ── Pago con Culqi (tarjeta o Yape) ───────────────────────────────────
+  readonly abriendoCulqi = signal(false);
+  readonly errorCulqi = signal<string | null>(null);
 
   /** El botón necesita las tres cosas: pasarela, client id y sesión. */
   readonly pagoEnLinea = computed(
@@ -306,6 +339,7 @@ export class Checkout implements OnInit {
     this.quitarCaptura();
     this.comprobanteEnviado.set(null);
     this.errorComprobante.set(null);
+    this.errorCulqi.set(null);
     this.error.set(null);
   }
 
@@ -778,6 +812,115 @@ export class Checkout implements OnInit {
     }
   }
 
+  /**
+   * Abre el formulario de Culqi.
+   *
+   * La orden se abre en NUESTRO servidor primero: ahí se fija el importe, con
+   * el descuento si lo hay, y ese es el que se cobra. El formulario solo
+   * enseña la cifra; el navegador nunca decide cuánto se paga.
+   */
+  async pagarConCulqi(): Promise<void> {
+    const plan = this.seleccionado();
+    const clave = this.pasarelaCulqi()?.publicKey;
+    if (!plan || !clave || this.abriendoCulqi() || this.procesando()) return;
+
+    this.error.set(null);
+    this.errorCulqi.set(null);
+    this.abriendoCulqi.set(true);
+
+    try {
+      await this.culqi.preparar();
+      const orden = await firstValueFrom(
+        this.payments.createOrder(plan.code, this.descuento()?.code, 'CULQI'),
+      );
+      this.culqi.abrir(
+        clave,
+        { amountCents: orden.amountCents, email: this.auth.user()?.email ?? null },
+        (resultado) => void this.alResultadoCulqi(resultado, clave, orden),
+      );
+    } catch (error: unknown) {
+      this.errorCulqi.set(
+        error instanceof HttpErrorResponse
+          ? toApiError(error).message
+          : 'No pudimos abrir el pago con tarjeta o Yape. Inténtalo de nuevo o paga con Yape y tu captura.',
+      );
+    } finally {
+      this.abriendoCulqi.set(false);
+    }
+  }
+
+  /**
+   * El formulario devolvió el token: se cobra en el servidor. Si el banco pide
+   * su verificación (3-D Secure), se pasa y se vuelve a confirmar con los
+   * mismos datos más los del banco, como pide Culqi.
+   */
+  private async alResultadoCulqi(
+    resultado: ResultadoCheckout,
+    clave: string,
+    orden: PaymentOrder,
+  ): Promise<void> {
+    if (resultado.tipo === 'error') {
+      this.errorCulqi.set(resultado.mensaje);
+      return;
+    }
+
+    this.procesando.set(true);
+    this.errorCulqi.set(null);
+
+    try {
+      const huella = await this.culqi.huella(clave);
+      const correo = resultado.email && resultado.email.length <= 50 ? resultado.email : null;
+      const datos: DatosDelCobro = {
+        token: resultado.token,
+        ...(huella ? { deviceFingerprint: huella } : {}),
+        ...(correo ? { email: correo } : {}),
+      };
+
+      let cobro = await firstValueFrom(this.payments.capture(orden.orderId, 'CULQI', datos));
+
+      if (cobro.requiresAuthentication) {
+        let parametros;
+        try {
+          parametros = await this.culqi.verificar(clave, {
+            token: resultado.token,
+            amountCents: orden.amountCents,
+            email: correo ?? this.auth.user()?.email ?? '',
+          });
+        } catch {
+          this.errorCulqi.set(
+            'Tu banco no confirmó la compra. No se te cobró nada: vuelve a intentarlo o usa otra tarjeta.',
+          );
+          return;
+        }
+        cobro = await firstValueFrom(
+          this.payments.capture(orden.orderId, 'CULQI', { ...datos, authentication3DS: parametros }),
+        );
+      }
+
+      this.mostrarCompra(cobro);
+    } catch (error: unknown) {
+      this.errorCulqi.set(toApiError(error).message);
+    } finally {
+      this.procesando.set(false);
+    }
+  }
+
+  /** Enseña lo comprado, igual que tras un pago con PayPal. */
+  private mostrarCompra(resultado: PaymentResult): void {
+    if (resultado.balance) this.saldo.set(resultado.balance);
+    this.bolsaComprada.set(resultado.pack ?? null);
+    this.licenciaComprada.set(resultado.license ?? null);
+    this.membresiaComprada.set(resultado.membresia ?? null);
+    this.urlConector.set(resultado.connectorUrl ?? null);
+
+    if (resultado.alreadyProcessed && !resultado.connectorUrl) {
+      this.error.set(
+        'Este pago ya estaba confirmado. Si compraste el método y perdiste tu URL, ' +
+          'genera una nueva desde tu panel.',
+      );
+    }
+  }
+
   private async montarBoton(contenedor: HTMLElement): Promise<void> {
     try {
       const sdk = await this.paypal.load(this.pasarelaPaypal()?.currency ?? 'USD');
@@ -804,9 +947,10 @@ export class Checkout implements OnInit {
           onApprove: async (data) => {
             try {
               const resultado = await firstValueFrom(this.payments.capture(data.orderID));
-              this.saldo.set(resultado.balance);
+              this.saldo.set(resultado.balance ?? null);
               this.bolsaComprada.set(resultado.pack ?? null);
               this.licenciaComprada.set(resultado.license ?? null);
+              this.membresiaComprada.set(resultado.membresia ?? null);
               this.urlConector.set(resultado.connectorUrl ?? null);
 
               if (resultado.alreadyProcessed && !resultado.connectorUrl) {

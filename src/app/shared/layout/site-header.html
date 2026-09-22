@@ -30,6 +30,13 @@
       <nav class="navegacion" data-tour="menu">
         <a routerLink="/metodo" routerLinkActive="activo">Las 11 Skills</a>
         <a routerLink="/articulo" routerLinkActive="activo">Artículos</a>
+        <!-- «Preparar documento» solo para quien ya entró: la pantalla pide
+             sesión —la membresía cuelga de la cuenta—, y enseñarle el enlace a
+             un visitante sería mandarlo al formulario de acceso desde el menú.
+             A él se le vende desde /planes, que es pública. -->
+        <!-- @if (auth.isAuthenticated()) {
+          <a routerLink="/preparar-documento" routerLinkActive="activo">Preparar documento</a>
+        } -->
         <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
         <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
         <a routerLink="/planes" routerLinkActive="activo" data-tour="comprar">Comprar</a>

@@ -59,6 +59,10 @@ export const ERROR_CODE = {
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   /** El asistente no contesta. Propio para NO encender la pantalla de mantenimiento. */
   ASSISTANT_UNAVAILABLE: 'ASSISTANT_UNAVAILABLE',
+  /** «Preparar documento» está apagado en el servidor. Tampoco tapa la web. */
+  PREPARAR_UNAVAILABLE: 'PREPARAR_UNAVAILABLE',
+  /** Sin membresía, caducada o sin documentos este mes. Ver `preparar.membresia`. */
+  NO_DOCUMENTOS: 'NO_DOCUMENTOS',
   /** Solo del cliente: el servidor no respondió. */
   NETWORK_ERROR: 'NETWORK_ERROR',
 } as const;

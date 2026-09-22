@@ -7,6 +7,7 @@ import { ApiResponse } from '../models/api.model';
 import {
   AprobacionManual,
   ComprobanteEnviado,
+  DatosDelCobro,
   DatosYape,
   PagoPorRevisar,
   PagoRevisado,
@@ -47,11 +48,11 @@ export class PaymentService {
   }
 
   /** Cobra la orden aprobada y devuelve el saldo ya actualizado. */
-  capture(orderId: string, provider = 'PAYPAL'): Observable<PaymentResult> {
+  capture(orderId: string, provider = 'PAYPAL', datos: DatosDelCobro = {}): Observable<PaymentResult> {
     return this.http
       .post<ApiResponse<PaymentResult>>(
         `${this.base}/orders/${orderId}/capture?provider=${provider}`,
-        {},
+        datos,
       )
       .pipe(map((res) => res.data));
   }

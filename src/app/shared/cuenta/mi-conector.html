@@ -32,14 +32,18 @@
        empujaban la ayuda tres pantallas abajo.
 
        Solo con acceso vigente: sin conector que las lea, traer fuentes o pedir
-       un análisis no serviría de nada.
+       un análisis no serviría de nada. Y solo si su producto las trae: quien
+       compró SOLO el Humanizador académico no está investigando, trae un texto
+       ya escrito, y cinco pestañas que no le sirven le venderían la idea de que
+       compró algo más de lo que compró. Lo decide el servidor, licencia a
+       licencia (`herramientas`).
 
        Las pestañas se pintan siempre —menos la del mapa, ver su nota— y se
        ESCONDEN, no se destruyen: así
        una búsqueda de Scopus a medias sigue ahí al volver de mirar Zotero, y
        la vuelta de autorizar Zotero (`?zotero=…`) la lee su panel aunque no
        sea la pestaña que se ve. -->
-  @if (tieneAccesoVigente()) {
+  @if (tieneHerramientas()) {
     <h2 class="herramientas-titulo tramo-6">Tus herramientas</h2>
 
     <section class="tarjeta tramo-6 herramientas">

@@ -131,8 +131,27 @@ export class MiConector implements OnInit {
    * le ofrece la guía de instalación. Lo que necesita es renovar o escribirnos,
    * no un manual para conectar algo que ya no le va a responder.
    */
-  readonly tieneAccesoVigente = computed(() =>
-    this.misLicencias().some(
+  readonly tieneAccesoVigente = computed(() => this.vigentes().length > 0);
+
+  /**
+   * ¿Alguna de sus licencias vigentes trae las herramientas del panel?
+   *
+   * Scopus, Zotero, Mendeley, R y el cualitativo son de quien está haciendo una
+   * investigación. Quien compró SOLO el Humanizador académico trae un texto ya
+   * escrito y se lo devolvemos sin patrones de IA: cinco pestañas que no le
+   * sirven le venden la idea de que compró algo más de lo que compró.
+   *
+   * Lo decide el servidor —ver `productos/producto.perfil`— y aquí solo se
+   * mira. Con dos licencias, basta una con herramientas: quien tiene el método
+   * y además el humanizador las tiene por el método.
+   */
+  readonly tieneHerramientas = computed(() =>
+    this.vigentes().some((licencia) => licencia.herramientas !== false),
+  );
+
+  /** Las licencias que valen hoy. Ver la nota de `tieneAccesoVigente`. */
+  private readonly vigentes = computed(() =>
+    this.misLicencias().filter(
       (licencia) =>
         licencia.status === 'ACTIVE' &&
         (licencia.expiresAt === null || new Date(licencia.expiresAt) > new Date()),

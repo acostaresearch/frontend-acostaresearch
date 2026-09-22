@@ -1,0 +1,215 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+<app-site-header />
+
+<main class="pagina preparar-fondo">
+  <section class="seccion">
+    <div class="preparar-pagina">
+      <header class="presentacion">
+        <p class="marca">
+          <svg viewBox="0 0 14 14" aria-hidden="true">
+            <path
+              d="M2 1h7l3.5 3.5V13H2z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
+            <path d="M4.5 7.5h5M4.5 10h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          Preparar documento
+        </p>
+        <h1>Sube tu Word y te lo devolvemos listo</h1>
+        <p class="entrada">
+          Corregimos tu inglés académico, lo traducimos a cuatro idiomas o te escribimos el
+          resumen y el abstract. Tus tablas, tus figuras y tu bibliografía salen intactas.
+        </p>
+      </header>
+
+      <!-- El aviso de la IA va arriba del todo y no en la letra pequeña: es lo
+           que el cliente tiene que saber ANTES de decidir, no después. -->
+      <p class="aviso-ia">
+        <strong>Lo hace una inteligencia artificial y nadie lo revisa después.</strong>
+        Léelo antes de entregarlo o de mandarlo a una revista. Lo que firmes, lo firmas tú.
+      </p>
+
+      @if (cargando()) {
+        <p class="vacio">Cargando tu membresía…</p>
+      } @else if (panel(); as datos) {
+        @if (!datos.disponible) {
+          <p class="vacio">
+            El servicio está apagado ahora mismo. Vuelve en un rato o
+            <a routerLink="/planes">escríbenos</a> si te corre prisa.
+          </p>
+        } @else {
+          <!-- ── La membresía y el cupo del mes ─────────────────────────── -->
+          @if (datos.cupo && datos.membresia?.vigente) {
+            <div class="cupo" [class.agotado]="datos.cupo.restantes === 0">
+              <div class="cupo-cifra">
+                <strong>{{ datos.cupo.restantes }}</strong>
+                <span>de {{ datos.cupo.total }}</span>
+              </div>
+              <div class="cupo-texto">
+                <p class="cupo-titulo">
+                  {{ datos.cupo.restantes === 1 ? 'documento' : 'documentos' }} este mes
+                </p>
+                <p class="cupo-nota">
+                  {{ datos.membresia?.plan?.name }} ·
+                  @if (datos.cupo.ventanas > 1) {
+                    mes {{ datos.cupo.ventana }} de {{ datos.cupo.ventanas }} ·
+                  }
+                  vuelves a tener {{ datos.cupo.total }} el
+                  {{ datos.cupo.renuevaEl | date: 'd MMM' }} · tu membresía vale hasta el
+                  {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }}
+                </p>
+              </div>
+              <a class="cupo-accion" routerLink="/planes">Renovar</a>
+            </div>
+          } @else {
+            <div class="sin-membresia">
+              <p class="sin-membresia-motivo">{{ datos.motivo }}</p>
+              <p class="sin-membresia-texto">
+                La membresía da hasta 10 documentos al mes, del tamaño que sean, en los tres
+                servicios.
+              </p>
+              <a class="boton-principal" routerLink="/planes">Ver las membresías</a>
+            </div>
+          }
+
+          <!-- ── Las tres pestañas ──────────────────────────────────────── -->
+          <div class="pestanas" role="tablist" aria-label="Qué quieres que hagamos">
+            @for (p of pestanas; track p.id) {
+              <button
+                type="button"
+                role="tab"
+                class="pestana"
+                [class.activa]="elegida() === p.id"
+                [attr.aria-selected]="elegida() === p.id"
+                (click)="elegir(p.id)"
+              >
+                {{ p.titulo }}
+              </button>
+            }
+          </div>
+
+          <div class="panel" role="tabpanel">
+            <p class="panel-resumen">{{ pestana().resumen }}</p>
+
+            <ul class="detalle">
+              @for (linea of pestana().detalle; track linea) {
+                <li>{{ linea }}</li>
+              }
+            </ul>
+
+            <p class="requisito">{{ pestana().requisito }}</p>
+
+            <!-- El idioma, solo donde significa algo. -->
+            @if (elegida() === 'TRADUCCION') {
+              <div class="idiomas">
+                <span class="idiomas-rotulo">Traducir a</span>
+                @for (i of datos.idiomas; track i.codigo) {
+                  <button
+                    type="button"
+                    class="idioma"
+                    [class.activo]="idioma() === i.codigo"
+                    (click)="elegirIdioma(i.codigo)"
+                  >
+                    {{ i.nombre }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- ── Subir ───────────────────────────────────────────────── -->
+            <div
+              class="soltar"
+              [class.encima]="encima()"
+              [class.apagado]="!puede() || subiendo()"
+              (dragover)="arrastrar($event, true)"
+              (dragleave)="arrastrar($event, false)"
+              (drop)="soltar($event)"
+            >
+              @if (subiendo()) {
+                <p class="soltar-texto">Subiendo tu documento…</p>
+              } @else if (!puede()) {
+                <p class="soltar-texto">{{ datos.motivo }}</p>
+              } @else {
+                <svg class="soltar-icono" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 16V5m0 0L8 9m4-4 4 4M4 19h16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <p class="soltar-texto">Arrastra aquí tu .docx</p>
+                <label class="boton-principal">
+                  Elegir el archivo
+                  <input type="file" accept=".docx" hidden (change)="desdeElBoton($event)" />
+                </label>
+                <p class="soltar-nota">
+                  Hasta {{ datos.maxPalabras | number: '1.0-0' }} palabras de cuerpo. La
+                  bibliografía y las tablas no cuentan, porque no se tocan.
+                </p>
+              }
+            </div>
+          </div>
+
+          <!-- ── Lo que ya mandó ────────────────────────────────────────── -->
+          @if (trabajos().length > 0) {
+            <h2 class="titulo-lista">Tus documentos</h2>
+            <ul class="lista">
+              @for (t of trabajos(); track t.id) {
+                <li class="fila" [class.fallida]="t.estado === 'FALLIDO'">
+                  <div class="datos">
+                    <h3>{{ t.nombre }}</h3>
+                    <p class="meta">
+                      {{ tituloDe(t) }} · {{ t.palabras | number: '1.0-0' }} palabras ·
+                      {{ t.createdAt | date: "d MMM, HH:mm" }}
+                    </p>
+
+                    @if (t.estado === 'EN_COLA' || t.estado === 'EN_CURSO') {
+                      <p class="estado esperando">
+                        <span class="rueda" aria-hidden="true"></span>
+                        {{ t.estado === 'EN_COLA' ? 'En cola' : 'Preparándolo' }}… tarda unos
+                        minutos. Puedes cerrar esta página: te avisamos por correo.
+                      </p>
+                    } @else if (t.estado === 'LISTO') {
+                      <p class="estado listo">{{ resultadoDe(t) }}</p>
+                    } @else {
+                      <p class="estado fallo">
+                        {{ t.error }}
+                        <span class="sin-cobro">No te descontó ningún documento.</span>
+                      </p>
+                    }
+                  </div>
+
+                  @if (t.estado === 'LISTO') {
+                    <button type="button" class="descargar" (click)="descargar(t)">
+                      Descargar
+                      <span class="descargar-icono" aria-hidden="true">
+                        <svg viewBox="0 0 16 16">
+                          <path
+                            d="M8 2.5v7.5m0 0L5 7m3 3 3-3M3 12.5h10"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    </div>
+  </section>
+</main>
+
+<app-site-footer />

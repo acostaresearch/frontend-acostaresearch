@@ -299,6 +299,17 @@ h1 {
   margin-top: 18px;
 }
 
+/* Una línea debajo del rótulo de grupo, para los productos que no se explican
+ * solos con el nombre. El método no la necesita —toda la página habla de él—;
+ * «Preparar documento», sí. */
+.grupo-entrada {
+  max-width: 62ch;
+  margin: 2px 0 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
 .plan.destacado {
   border-color: var(--color-primario-suave);
   background: linear-gradient(var(--color-primario-suave), var(--color-superficie) 70%);
@@ -1352,6 +1363,11 @@ h1 {
 .medio-icono.yape {
   color: #7b2fa0;
   background: color-mix(in srgb, #7b2fa0 12%, transparent);
+}
+
+.medio-icono.culqi {
+  color: #00857f;
+  background: color-mix(in srgb, #00857f 12%, transparent);
 }
 
 .medio-icono.paypal {
