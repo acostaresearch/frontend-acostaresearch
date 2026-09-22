@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f8fb"/><stop offset="1" stop-color="#e4e8f0"/></linearGradient>
+<filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>
+<linearGradient id="brillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="1200" height="750" fill="url(#bg)"/>
+<ellipse cx="616" cy="609" rx="250" ry="22" fill="#0A1128" opacity=".28" filter="url(#bl)"/>
+<polygon points="470.0,140.0 470.0,610.0 408.0,584.0 408.0,114.0" fill="#0d1f33"/>
+<polygon points="470.0,140.0 470.0,610.0 408.0,584.0 408.0,114.0" fill="#000" opacity=".35"/>
+<g transform="translate(439.0 362.0) rotate(-90) skewX(0)"><text x="0" y="6" text-anchor="middle" font-family="Poppins" font-weight="600" font-size="15" fill="#FFE9B8" letter-spacing="1">Humanizador Académico</text></g>
+<polygon points="470.0,140.0 782.8,124.7 720.8,98.7 408.0,114.0" fill="#1f3d5e"/>
+<polygon points="470.0,140.0 782.8,124.7 720.8,98.7 408.0,114.0" fill="#fff" opacity=".12"/>
+<g transform="matrix(0.92 -0.045 0 1 470 140)"><defs><radialGradient id="cf" cx="15%" cy="10%" r="120%"><stop offset="0" stop-color="#1f3d5e"/><stop offset="1" stop-color="#0d1f33"/></radialGradient></defs>
+<rect width="340" height="470" fill="url(#cf)"/>
+<text x="30" y="44" font-family="Poppins" font-weight="700" font-size="14" fill="#fff" letter-spacing="1">ACOSTA <tspan fill="#E0B973">|</tspan> <tspan fill="#FFE9B8" font-weight="500">IA &amp; RESEARCH</tspan></text>
+<rect x="30" y="58" width="44" height="3" fill="#E0B973"/>
+<g transform="translate(78 140)"><rect x="-44" y="-36" width="38" height="72" rx="3" fill="none" stroke="#A8B4D4" stroke-width="3.5"/><rect x="6" y="-36" width="38" height="72" rx="3" fill="none" stroke="#E0B973" stroke-width="4"/><path d="M-36 -20h22M-36 -8h22M-36 4h22M-36 16h14" stroke="#A8B4D4" stroke-width="3" stroke-linecap="round"/><path d="M14 -20h22M14 -8h22M14 4h22M14 16h14" stroke="#E0B973" stroke-width="3" stroke-linecap="round"/></g>
+<text x="30" y="250" font-family="Poppins" font-weight="700" font-size="36" fill="#fff">Humanizador</text><text x="30" y="293.2" font-family="Poppins" font-weight="700" font-size="36" fill="#fff">Académico</text><text x="30" y="342.4" font-family="Poppins" font-size="15" fill="#A8B4D4">Redacción más natural,</text><text x="30" y="364.4" font-family="Poppins" font-size="15" fill="#A8B4D4">clara y coherente</text>
+<rect x="0" y="408" width="340" height="62" fill="#E0B973"/>
+<text x="30" y="446" font-family="Poppins" font-weight="700" font-size="18" fill="#0A1128">3 meses</text>
+<text x="310" y="446" text-anchor="end" font-family="Poppins" font-size="13" fill="#0A1128">Skills para Claude</text><rect width="340" height="470" fill="url(#brillo)"/></g>
+<polyline points="470.0,140.0 470.0,610.0" stroke="#fff" stroke-opacity=".25" stroke-width="1.2" fill="none"/>
+</svg>

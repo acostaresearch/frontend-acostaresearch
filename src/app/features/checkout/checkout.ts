@@ -605,48 +605,40 @@ export class Checkout implements OnInit {
   }
 
   /**
-   * Qué se dibuja en la cabecera de la tarjeta.
+   * La caja del producto que va en la cabecera de la tarjeta.
    *
-   * POR QUÉ UNA ILUSTRACIÓN Y NO UN ICONO
-   * -------------------------------------
+   * POR QUÉ UNA IMAGEN Y NO UN ICONO
+   * --------------------------------
    * Tres tarjetas de texto seguidas se leen como tres párrafos y hay que
-   * leerlas enteras para saber cuál es cuál. Un dibujo arriba las separa de un
-   * vistazo y, sobre todo, dice qué SALE de cada producto: un documento con sus
-   * capítulos, un artículo con sus gráficos, un texto que entra y sale
-   * cambiado. Es la misma promesa que la lista de «Qué incluye», dicha sin
-   * palabras.
+   * leerlas enteras para saber cuál es cuál. La caja arriba las separa de un
+   * vistazo y, además, repite en su portada lo que la tarjeta cuenta debajo:
+   * el nombre, lo que incluye y la duración. Es la misma promesa que la lista
+   * de «Qué incluye», dicha sin palabras.
    *
    * POR PREFIJO DEL CÓDIGO, no por una lista de códigos exactos: igual que
    * `producto.perfil.js` en el servidor. Un grupo que se cree mañana desde el
-   * panel con un código que empiece por ARTICULO nace con su dibujo, sin tocar
-   * esto. El que no encaje en ninguno recibe el genérico, que es un documento
-   * a secas: no promete nada que no sepamos.
+   * panel con un código que empiece por ARTICULO nace con su caja, sin tocar
+   * esto.
+   *
+   * Devuelve `null` —y no una caja cualquiera— cuando el código no encaja en
+   * ninguno: la tarjeta cae entonces en el dibujo genérico de la plantilla,
+   * que es un documento a secas. Enseñar la caja de «Artículos Científicos»
+   * sobre un producto que no lo es sería una promesa escrita en la portada.
    */
-  ilustracionDe(plan: Plan): string {
-    // Las membresías de documentos se distinguen entre sí por la duración: una
-    // hoja para el mes, tres apiladas para el trimestre.
+  imagenDe(plan: Plan): string | null {
+    // Las membresías de documentos se distinguen entre sí por la duración, que
+    // va rotulada en la propia caja: «1 mes» y «3 meses».
     if (plan.kind === 'DOCUMENTO') {
-      return plan.durationDays > 30 ? 'documentos-varios' : 'documentos';
+      return plan.durationDays > 30
+        ? '/productos/05-preparar-documento-trimestral-caja.svg'
+        : '/productos/04-preparar-documento-mensual-caja.svg';
     }
 
     const codigo = plan.code.toUpperCase();
-    if (codigo.startsWith('ARTICULO')) return 'articulo';
-    if (codigo.startsWith('HUMANIZ')) return 'humanizador';
-    if (codigo.startsWith('METODO')) return 'tesis';
-    return 'generico';
-  }
-
-  /**
-   * El número de la medalla del método: «9 capítulos».
-   *
-   * Sale del NOMBRE del plan y solo si dice exactamente eso, con un patrón
-   * estrecho a propósito. La tentación era coger el primer número que
-   * apareciera, y con eso un plan llamado «Método de tesis 2026» habría
-   * anunciado 2026 capítulos. Si el nombre cambia y deja de decirlo, la medalla
-   * desaparece: no enseñar nada es correcto, enseñar un número inventado no.
-   */
-  capitulosDe(plan: Plan): string | null {
-    return (plan.name.match(/(\d{1,2})\s*cap[ií]tulos/i) || [])[1] ?? null;
+    if (codigo.startsWith('ARTICULO')) return '/productos/02-articulos-cientificos-caja.svg';
+    if (codigo.startsWith('HUMANIZ')) return '/productos/03-humanizador-academico-caja.svg';
+    if (codigo.startsWith('METODO')) return '/productos/01-metodo-de-tesis-caja.svg';
+    return null;
   }
 
   /**

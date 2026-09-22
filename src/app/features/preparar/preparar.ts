@@ -18,48 +18,115 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 interface Pestana {
   id: ServicioPreparar;
   titulo: string;
+  /** La línea de debajo del título en la tarjeta: qué se lleva, en tres palabras. */
+  gancho: string;
+  /** Cuál de los tres dibujos lleva la tarjeta. El `<svg>` vive en la plantilla. */
+  icono: 'edicion' | 'traduccion' | 'resumen';
   resumen: string;
-  /** Lo que de verdad hace, en frases cortas. Se enseña dentro de la pestaña. */
-  detalle: string[];
+  /**
+   * Lo que de verdad hace, en frases cortas. Va partido en dos porque el
+   * principio se lee en negrita: quien pasa la vista por la lista sin leerla
+   * entera se lleva de todas formas las cuatro promesas.
+   */
+  detalle: { fuerte: string; resto: string }[];
+  /** El trato en dos pasos: qué sube y qué recibe. */
+  flujo: { sube: string; subeNota: string; recibe: string; recibeNota: string };
   /** Qué tiene que traer el cliente para que esto tenga sentido. */
   requisito: string;
+  /** Si el requisito acaba mandándole a otra pestaña, el enlace que lo lleva. */
+  requisitoEnlace?: { texto: string; va: ServicioPreparar };
 }
 
 const PESTANAS: readonly Pestana[] = [
   {
     id: 'EDICION',
     titulo: 'Edición de inglés académico',
+    gancho: 'Tu manuscrito corregido',
+    icono: 'edicion',
     resumen: 'Corregimos tu manuscrito en inglés y te lo devolvemos con control de cambios.',
     detalle: [
-      'Gramática, artículos, preposiciones y colocaciones: los errores por los que una revista devuelve un manuscrito por el idioma.',
-      'Con control de cambios: aceptas o rechazas cada corrección desde tu Word, una por una.',
-      'No reescribimos lo que ya está bien. Cada cambio de más es un cambio que tienes que revisar.',
-      'Tus tablas, figuras, citas y bibliografía salen exactamente como entraron.',
+      {
+        fuerte: 'Gramática, artículos, preposiciones y colocaciones:',
+        resto: 'los errores por los que una revista devuelve un manuscrito por el idioma.',
+      },
+      {
+        fuerte: 'Con control de cambios:',
+        resto: 'aceptas o rechazas cada corrección desde tu Word, una por una.',
+      },
+      {
+        fuerte: 'No reescribimos lo que ya está bien.',
+        resto: 'Cada cambio de más es un cambio que tienes que revisar.',
+      },
+      {
+        fuerte: 'Tus tablas, figuras, citas y bibliografía',
+        resto: 'salen exactamente como entraron.',
+      },
     ],
-    requisito: 'Tu documento tiene que estar ya escrito en inglés. Si está en español, usa Traducción.',
+    flujo: {
+      sube: 'Tu manuscrito',
+      subeNota: 'en inglés, en Word',
+      recibe: 'Tu mismo Word',
+      recibeNota: 'con control de cambios',
+    },
+    requisito: 'Tu documento tiene que estar ya escrito en inglés. Si está en español, usa',
+    requisitoEnlace: { texto: 'Traducción', va: 'TRADUCCION' },
   },
   {
     id: 'TRADUCCION',
     titulo: 'Traducción',
+    gancho: 'A cuatro idiomas',
+    icono: 'traduccion',
     resumen: 'A español, inglés, portugués o chino, con registro de revista indexada.',
     detalle: [
-      'Terminología del área, no traducción palabra por palabra.',
-      'Las citas, los apellidos, las siglas y las cifras se quedan como están.',
-      'La bibliografía no se traduce: un título traducido es un título que nadie puede buscar.',
-      'Te devolvemos tu mismo documento, con su formato, sus tablas y sus figuras.',
+      { fuerte: 'Terminología del área,', resto: 'no traducción palabra por palabra.' },
+      {
+        fuerte: 'Las citas, los apellidos, las siglas y las cifras',
+        resto: 'se quedan como están.',
+      },
+      {
+        fuerte: 'La bibliografía no se traduce:',
+        resto: 'un título traducido es un título que nadie puede buscar.',
+      },
+      {
+        fuerte: 'Te devolvemos tu mismo documento,',
+        resto: 'con su formato, sus tablas y sus figuras.',
+      },
     ],
+    flujo: {
+      sube: 'Tu documento',
+      subeNota: 'en su idioma original',
+      recibe: 'Tu mismo documento',
+      recibeNota: 'traducido, con su formato',
+    },
     requisito: 'Elige el idioma al que quieres llegar.',
   },
   {
     id: 'RESUMEN',
     titulo: 'Resúmenes',
+    gancho: 'Resumen, abstract y palabras clave',
+    icono: 'resumen',
     resumen: 'El resumen, el abstract y las palabras clave, sacados de tu propio trabajo.',
     detalle: [
-      'Resumen en español y abstract en inglés, de 200 a 250 palabras, en estructura IMRyD.',
-      'De 4 a 6 palabras clave y sus keywords, en el mismo orden.',
-      'Las cifras salen de tu texto. Lo que tu trabajo no diga, no se inventa.',
-      'Se entrega en un documento aparte, para que lo pegues donde te pida tu reglamento.',
+      {
+        fuerte: 'Resumen en español y abstract en inglés,',
+        resto: 'de 200 a 250 palabras, en estructura IMRyD.',
+      },
+      { fuerte: 'De 4 a 6 palabras clave', resto: 'y sus keywords, en el mismo orden.' },
+      {
+        fuerte: 'Las cifras salen de tu texto.',
+        resto: 'Lo que tu trabajo no diga, no se inventa.',
+      },
+      {
+        fuerte: 'Se entrega en un documento aparte,',
+        resto: 'para que lo pegues donde te pida tu reglamento.',
+      },
     ],
+    flujo: {
+      sube: 'Tu trabajo completo',
+      subeNota: 'en Word',
+      recibe: 'Un documento aparte',
+      recibeNota: 'resumen, abstract y palabras clave',
+    },
     requisito: 'Sube el trabajo completo: leemos el principio y el final para escribirlo.',
   },
 ];
@@ -107,9 +174,7 @@ export class Preparar implements OnInit, OnDestroy {
 
   private reloj: ReturnType<typeof setInterval> | null = null;
 
-  readonly pestana = computed(
-    () => PESTANAS.find((p) => p.id === this.elegida()) ?? PESTANAS[0],
-  );
+  readonly pestana = computed(() => PESTANAS.find((p) => p.id === this.elegida()) ?? PESTANAS[0]);
 
   /** Puede mandar un documento: hay membresía con cupo y el servicio está en pie. */
   readonly puede = computed(() => {
@@ -289,12 +354,23 @@ export class Preparar implements OnInit, OnDestroy {
 
     const tocados = `${trabajo.tocados} párrafo${trabajo.tocados === 1 ? '' : 's'}`;
     const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : 'traducidos';
-    if (trabajo.intactos === 0) return `${tocados} ${hecho}.`;
+
+    // El índice no se traduce: es un campo que Word rehace solo con los títulos
+    // que ya están traducidos. Sin decirlo, el cliente abre el archivo, ve el
+    // índice en español y cree que quedó a medias.
+    const indice =
+      trabajo.servicio === 'TRADUCCION'
+        ? ' Si tu documento lleva índice, ábrelo en Word y actualízalo (clic derecho sobre el ' +
+          'índice → «Actualizar campos») para que recoja los títulos traducidos.'
+        : '';
+
+    if (trabajo.intactos === 0) return `${tocados} ${hecho}.${indice}`;
 
     return (
-      `${tocados} ${hecho}. Otros ${trabajo.intactos} quedaron intactos porque llevaban algo ` +
-      'que no se puede rehacer sin romperlo: una cita de Zotero, una nota al pie, una ecuación ' +
-      'o una imagen.'
+      `${tocados} ${hecho}. Otros ${trabajo.intactos} quedaron como estaban: llevaban dentro ` +
+      'una nota al pie, una ecuación o una imagen, y rehacerlos habría roto esa pieza. Tus citas ' +
+      'de Zotero no son un problema: esas viajan enteras.' +
+      indice
     );
   }
 }

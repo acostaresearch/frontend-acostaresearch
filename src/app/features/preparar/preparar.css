@@ -1,49 +1,37 @@
 /* «Preparar documento»: la presentación, el cupo del mes, las tres pestañas y
- * lo que ya mandó. Misma columna centrada que las guías, para que el sitio no
- * cambie de forma de una página a otra. */
+ * lo que ya mandó.
+ *
+ * LA FORMA DE LA PÁGINA
+ * ---------------------
+ * Tres tarjetas arriba —una por servicio— y debajo un solo panel que cambia de
+ * contenido. Dentro del panel, el reparto es el que importa: a la izquierda lo
+ * que hacemos, a la derecha el trato en dos pasos («subes esto, recibes esto»),
+ * y cruzando el panel de lado a lado la condición de entrada, que es lo que
+ * hace que alguien suba el documento equivocado. La subida va la última, porque
+ * es lo que se hace después de haber leído todo lo demás. */
 
 .preparar-fondo {
   background: var(--color-fondo);
 }
 
 .seccion {
-  padding: 52px 0 72px;
+  padding: 44px 0 72px;
 }
 
 .preparar-pagina {
   width: 100%;
-  max-width: 760px;
+  max-width: 940px;
   margin: 0 auto;
 }
 
 /* ── Presentación ───────────────────────────────────────────────────────── */
 
 .presentacion {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.marca {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  padding: 4px 10px;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border: 1px solid color-mix(in srgb, var(--color-primario) 25%, transparent);
-  border-radius: 999px;
-}
-
-.marca svg {
-  width: 12px;
-  height: 12px;
+  margin-bottom: 20px;
 }
 
 .presentacion h1 {
-  margin: 16px 0 10px;
+  margin: 0 0 8px;
   font-size: clamp(28px, 4.5vw, 38px);
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -56,16 +44,34 @@
   color: var(--color-texto-suave);
 }
 
-/* El aviso de la IA. En amarillo y arriba: se lee antes de decidir, no después. */
+/* El aviso de la IA. Arriba y en una sola línea: se lee antes de decidir, y va
+   en blanco con el canto ámbar para no competir con la barra de la membresía,
+   que sí está rellena. Dos bloques de color seguidos no se leen: se saltan. */
 .aviso-ia {
-  padding: 12px 16px;
-  margin: 0 0 24px;
-  font-size: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  margin: 18px 0 20px;
+  font-size: 13px;
   line-height: 1.55;
-  color: var(--color-aviso);
-  background: var(--color-aviso-suave);
-  border: 1px solid color-mix(in srgb, var(--color-aviso) 25%, transparent);
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-left: 3px solid var(--color-aviso);
   border-radius: 10px;
+}
+
+.aviso-ia strong {
+  color: var(--color-texto);
+}
+
+.aviso-ia-icono {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--color-aviso);
 }
 
 .vacio {
@@ -74,17 +80,62 @@
   color: var(--color-texto-suave);
 }
 
-/* ── El cupo del mes ────────────────────────────────────────────────────── */
+/* ── La barra de arriba: el cupo o la falta de membresía ────────────────── */
 
-.cupo {
+.barra {
   display: flex;
   gap: 16px;
   align-items: center;
-  padding: 16px 18px;
-  margin-bottom: 20px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  border-radius: 12px;
+}
+
+.barra-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.barra-titulo {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.barra-nota {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+/* Sin membresía: ámbar, con el candado que dice de un vistazo que falta algo. */
+.sin-membresia {
+  background: var(--color-aviso-suave);
+  border: 1px solid color-mix(in srgb, var(--color-aviso) 28%, transparent);
+}
+
+.barra-icono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--color-aviso);
+  background: color-mix(in srgb, var(--color-aviso) 16%, transparent);
+  border-radius: 50%;
+}
+
+.barra-icono svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* Con membresía: blanco, con la cifra de lo que queda. */
+.cupo {
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: 12px;
 }
 
 .cupo.agotado {
@@ -95,7 +146,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 68px;
+  min-width: 66px;
   padding: 8px 10px;
   background: var(--color-primario-suave);
   border-radius: 10px;
@@ -121,136 +172,294 @@
   color: var(--color-texto-suave);
 }
 
-.cupo-texto {
-  flex: 1;
-  min-width: 0;
-}
+/* ── Los botones ────────────────────────────────────────────────────────── */
 
-.cupo-titulo {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.cupo-nota {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.cupo-accion {
+.boton-principal {
+  display: inline-block;
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-sobre-boton);
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--color-boton);
+  border: none;
+  border-radius: 9px;
+}
+
+.boton-principal:hover {
+  background: var(--color-boton-hover);
+}
+
+.boton-suave {
+  flex-shrink: 0;
+  padding: 9px 15px;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-primario);
   text-decoration: none;
+  background: var(--color-superficie);
   border: 1px solid var(--color-borde-fuerte);
-  border-radius: 8px;
+  border-radius: 9px;
 }
 
-.cupo-accion:hover {
+.boton-suave:hover {
   border-color: var(--color-primario);
 }
 
-/* ── Sin membresía ──────────────────────────────────────────────────────── */
+/* ── Las tres pestañas, en tarjetas ─────────────────────────────────────── */
 
-.sin-membresia {
-  padding: 24px;
-  margin-bottom: 20px;
-  text-align: center;
+.pestanas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pestana {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 15px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
   background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
+  border: 1.5px solid var(--color-borde);
   border-radius: 12px;
 }
 
-.sin-membresia-motivo {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: 600;
+.pestana:hover {
+  border-color: var(--color-borde-fuerte);
 }
 
-.sin-membresia-texto {
-  margin: 0 0 16px;
+.pestana.activa {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primario) 12%, transparent);
+}
+
+.pestana-icono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 9px;
+}
+
+.pestana.activa .pestana-icono {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+}
+
+.pestana-icono svg {
+  width: 19px;
+  height: 19px;
+}
+
+.pestana-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pestana-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-texto);
+}
+
+.pestana-gancho {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--color-texto-suave);
+}
+
+/* ── El panel del servicio elegido ──────────────────────────────────────── */
+
+.panel {
+  margin-bottom: 30px;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.panel-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+.panel-que {
+  padding: 24px;
+}
+
+.panel-resumen {
+  max-width: 34ch;
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.detalle {
+  display: grid;
+  gap: 11px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.detalle li {
+  display: flex;
+  gap: 10px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--color-texto-suave);
 }
 
-/* ── Las pestañas ───────────────────────────────────────────────────────── */
-
-.pestanas {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 12px 12px 0 0;
-  border-bottom: none;
+.detalle strong {
+  font-weight: 600;
+  color: var(--color-texto);
 }
 
-.pestana {
-  flex: 1;
-  padding: 10px 8px;
-  font-family: inherit;
+.tic {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.tic svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ── «Cómo funciona»: el trato, en dos pasos ────────────────────────────── */
+
+.panel-flujo {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 22px;
+  background: var(--color-fondo);
+  border-left: 1px solid var(--color-borde);
+}
+
+.flujo-titulo {
+  margin: 0 0 12px;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-texto-suave);
+}
+
+.flujo-paso {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.flujo-icono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 8px;
+}
+
+.flujo-icono svg {
+  width: 16px;
+  height: 16px;
+}
+
+.flujo-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.flujo-texto strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.flujo-nota {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--color-texto-suave);
+}
+
+.flujo-flecha {
+  display: block;
+  margin: 6px auto;
+  color: var(--color-texto-tenue);
+}
+
+.flujo-flecha svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+
+/* ── La condición de entrada ────────────────────────────────────────────── */
+
+.requisito {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 12px 24px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  border-top: 1px solid color-mix(in srgb, var(--color-primario) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primario) 14%, transparent);
+}
+
+.requisito-icono {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--color-primario);
+}
+
+/* Manda a otra pestaña, no a otra página: es un botón que se lee como enlace. */
+.enlace {
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: underline;
   cursor: pointer;
   background: none;
   border: none;
-  border-radius: 8px;
 }
 
-.pestana:hover {
-  color: var(--color-texto);
-  background: var(--color-fondo);
-}
+/* ── El idioma y la subida ──────────────────────────────────────────────── */
 
-.pestana.activa {
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
+.panel-pie {
+  padding: 20px 24px 24px;
 }
-
-.panel {
-  padding: 22px;
-  margin-bottom: 28px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 0 0 12px 12px;
-}
-
-.panel-resumen {
-  margin: 0 0 14px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.detalle {
-  padding-left: 18px;
-  margin: 0 0 14px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--color-texto-suave);
-}
-
-.detalle li + li {
-  margin-top: 5px;
-}
-
-.requisito {
-  padding: 9px 12px;
-  margin: 0 0 18px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-texto);
-  background: var(--color-fondo);
-  border-radius: 8px;
-}
-
-/* ── Los idiomas ────────────────────────────────────────────────────────── */
 
 .idiomas {
   display: flex;
@@ -267,7 +476,7 @@
 }
 
 .idioma {
-  padding: 7px 14px;
+  padding: 7px 16px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -288,16 +497,13 @@
   border-color: var(--color-boton);
 }
 
-/* ── La zona de subida ──────────────────────────────────────────────────── */
-
 .soltar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
   align-items: center;
-  padding: 30px 20px;
+  padding: 32px 20px;
   text-align: center;
-  background: var(--color-fondo);
   border: 2px dashed var(--color-borde-fuerte);
   border-radius: 12px;
 }
@@ -308,13 +514,33 @@
 }
 
 .soltar.apagado {
-  opacity: 0.75;
+  background: color-mix(in srgb, var(--color-fondo) 60%, transparent);
 }
 
 .soltar-icono {
-  width: 30px;
-  height: 30px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.soltar.apagado .soltar-icono {
   color: var(--color-texto-tenue);
+  background: color-mix(in srgb, var(--color-borde-fuerte) 45%, transparent);
+}
+
+.soltar-icono svg {
+  width: 21px;
+  height: 21px;
+}
+
+.soltar-icono .rueda {
+  width: 20px;
+  height: 20px;
+  margin: 0;
 }
 
 .soltar-texto {
@@ -323,29 +549,24 @@
   font-weight: 600;
 }
 
-.soltar-nota {
-  max-width: 420px;
-  margin: 4px 0 0;
-  font-size: 12px;
+/* Por qué no se puede subir todavía. Va pegado al «aquí subirás», en redonda:
+   el motivo lo escribe el servidor y cambia según el caso —sin membresía, la
+   membresía caducada, el cupo del mes agotado—, así que no se puede fijar. */
+.soltar-motivo {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1.5;
   color: var(--color-texto-suave);
 }
 
-.boton-principal {
-  display: inline-block;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-sobre-boton);
-  text-decoration: none;
-  cursor: pointer;
-  background: var(--color-boton);
-  border: none;
-  border-radius: 8px;
-}
-
-.boton-principal:hover {
-  background: var(--color-boton-hover);
+.soltar-nota {
+  max-width: 440px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
 }
 
 /* ── Lo que ya mandó ────────────────────────────────────────────────────── */
@@ -361,7 +582,7 @@
   list-style: none;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .fila {
@@ -475,21 +696,60 @@
 
 /* ── Pantallas estrechas ────────────────────────────────────────────────── */
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .pestanas {
-    flex-direction: column;
-    border-radius: 12px 12px 0 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .cupo,
+  /* El «cómo funciona» pasa debajo, no al lado: en una columna estrecha los dos
+     pasos se leen igual de bien y el texto de la izquierda deja de estrujarse. */
+  .panel-cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel-flujo {
+    border-top: 1px solid var(--color-borde);
+    border-left: none;
+  }
+
+  .panel-resumen {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .pestanas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .barra,
   .fila {
     flex-wrap: wrap;
   }
 
-  .cupo-accion,
+  .boton-principal,
+  .boton-suave,
   .descargar {
     width: 100%;
     text-align: center;
     justify-content: center;
+  }
+
+  .soltar .boton-principal {
+    width: auto;
+  }
+
+  .panel-que,
+  .panel-pie {
+    padding: 20px 16px;
+  }
+
+  .requisito {
+    align-items: flex-start;
+    padding: 12px 16px;
+  }
+
+  .requisito-icono {
+    margin-top: 2px;
   }
 }
