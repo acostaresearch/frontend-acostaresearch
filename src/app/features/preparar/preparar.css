@@ -111,6 +111,54 @@
   color: var(--color-texto-tenue);
 }
 
+/* El título de la lista y su cuenta van en la misma línea, y el filtro al
+   otro lado. Si no cabe —tarjeta estrecha—, el filtro baja entero. */
+.cabecera-lista {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+.cabecera-lista .cabecera-texto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  align-items: baseline;
+}
+
+/* ── Ver solo los listos o solo los que no salieron ─────────────────────── */
+
+.filtros {
+  display: flex;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 3px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.filtro {
+  padding: 4px 11px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 999px;
+}
+
+.filtro:hover {
+  color: var(--color-texto);
+}
+
+.filtro.activo {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+}
+
 /* ── El cupo del mes ────────────────────────────────────────────────────── */
 
 .cupo {

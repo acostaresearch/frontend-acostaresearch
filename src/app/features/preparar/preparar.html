@@ -227,15 +227,39 @@
             <!-- ═══ Derecha: lo que ya mandó ══════════════════════════════ -->
             <section class="tarjeta documentos">
               <header class="cabecera cabecera-lista">
-                <h2>Tus documentos</h2>
-                @if (trabajosDelServicio().length > 0) {
-                  <span class="total">{{ trabajosDelServicio().length }} en total</span>
+                <div class="cabecera-texto">
+                  <h2>Tus documentos</h2>
+                  @if (trabajosDelServicio().length > 0) {
+                    <span class="total">{{ trabajosDelServicio().length }} en total</span>
+                  }
+                </div>
+
+                <!-- El filtro solo aparece cuando hay algo que filtrar: con dos
+                     documentos, tres botones son más ruido que ayuda. -->
+                @if (trabajosDelServicio().length > 1) {
+                  <div class="filtros" role="group" aria-label="Qué documentos ver">
+                    @for (f of filtros; track f.id) {
+                      <button
+                        type="button"
+                        class="filtro"
+                        [class.activo]="filtro() === f.id"
+                        [attr.aria-pressed]="filtro() === f.id"
+                        (click)="elegirFiltro(f.id)"
+                      >
+                        {{ f.texto }}
+                      </button>
+                    }
+                  </div>
                 }
               </header>
 
-              @if (trabajosDelServicio().length === 0) {
+              @if (trabajosFiltrados().length === 0) {
                 <p class="lista-vacia">
-                  @if (enLaOtra() > 0) {
+                  @if (filtro() === 'LISTO') {
+                    Aquí no hay ninguno terminado todavía.
+                  } @else if (filtro() === 'FALLIDO') {
+                    Ninguno se quedó a medias. Mejor así.
+                  } @else if (enLaOtra() > 0) {
                     Aquí no hay nada todavía: lo que has mandado está en la otra pestaña.
                   } @else {
                     Aquí irán apareciendo los documentos que mandes, con su estado y el enlace para
@@ -349,7 +373,7 @@
                   <button type="button" class="mas" (click)="verTodos.set(true)">
                     Ver los {{ ocultos() }} restantes
                   </button>
-                } @else if (verTodos() && trabajosDelServicio().length > tope) {
+                } @else if (verTodos() && trabajosFiltrados().length > tope) {
                   <button type="button" class="mas" (click)="verTodos.set(false)">
                     Ver solo los últimos {{ tope }}
                   </button>

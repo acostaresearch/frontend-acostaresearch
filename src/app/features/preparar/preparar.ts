@@ -64,6 +64,22 @@ const PESTANAS: readonly Pestana[] = [
   },
 ];
 
+/** Por qué estado se puede filtrar la lista de la derecha. */
+type Filtro = 'TODOS' | 'LISTO' | 'FALLIDO';
+
+/**
+ * Los tres botones del filtro.
+ *
+ * No hay uno de «en marcha» a propósito: lo que está preparándose se va solo
+ * en unos minutos, y un filtro que casi siempre sale vacío es un botón que
+ * estorba. Con «Todos» se ven igual.
+ */
+const FILTROS: readonly { id: Filtro; texto: string }[] = [
+  { id: 'TODOS', texto: 'Todos' },
+  { id: 'LISTO', texto: 'Listos' },
+  { id: 'FALLIDO', texto: 'Sin completar' },
+];
+
 /** Cada cuánto se pregunta por los trabajos que están en marcha. */
 const CADA_MS = 5000;
 
@@ -111,6 +127,7 @@ export class Preparar implements OnInit, OnDestroy {
   private readonly api = inject(PrepararService);
 
   readonly pestanas = PESTANAS;
+  readonly filtros = FILTROS;
   readonly tope = TOPE;
 
   readonly panel = signal<PanelPreparar | null>(null);
@@ -124,6 +141,7 @@ export class Preparar implements OnInit, OnDestroy {
   readonly encima = signal(false);
   /** Si la lista de la derecha está desplegada. Se recoge al cambiar de pestaña. */
   readonly verTodos = signal(false);
+  readonly filtro = signal<Filtro>('TODOS');
 
   /**
    * El campo de archivo, escondido.
@@ -161,13 +179,20 @@ export class Preparar implements OnInit, OnDestroy {
     ),
   );
 
+  /** Los de la pestaña que además pasan el filtro de estado. */
+  readonly trabajosFiltrados = computed(() => {
+    const filtro = this.filtro();
+    const lista = this.trabajosDelServicio();
+    return filtro === 'TODOS' ? lista : lista.filter((t) => t.estado === filtro);
+  });
+
   /** Los tres primeros, o todos si ha pulsado «ver más». */
   readonly visibles = computed(() => {
-    const lista = this.trabajosDelServicio();
+    const lista = this.trabajosFiltrados();
     return this.verTodos() ? lista : lista.slice(0, TOPE);
   });
 
-  readonly ocultos = computed(() => this.trabajosDelServicio().length - this.visibles().length);
+  readonly ocultos = computed(() => this.trabajosFiltrados().length - this.visibles().length);
 
   /** Cuántos hay en la otra pestaña: un «aquí no hay nada» a secas despista. */
   readonly enLaOtra = computed(() => this.trabajos().length - this.trabajosDelServicio().length);
@@ -235,6 +260,11 @@ export class Preparar implements OnInit, OnDestroy {
 
   elegirIdioma(codigo: string): void {
     this.idioma.set(codigo as IdiomaPreparar);
+  }
+
+  elegirFiltro(filtro: Filtro): void {
+    this.filtro.set(filtro);
+    this.verTodos.set(false);
   }
 
   // ── Subir ────────────────────────────────────────────────────────────────
