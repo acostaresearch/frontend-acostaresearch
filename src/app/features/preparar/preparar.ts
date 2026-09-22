@@ -1,5 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
@@ -19,100 +28,55 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 interface Pestana {
   id: ServicioPreparar;
   titulo: string;
-  /** La línea de debajo del título en la tarjeta: qué se lleva, en tres palabras. */
-  gancho: string;
-  /** Cuál de los tres dibujos lleva la tarjeta. El `<svg>` vive en la plantilla. */
+  /** Cuál de los dos dibujos lleva la pestaña. El `<svg>` vive en la plantilla. */
   icono: 'edicion' | 'traduccion';
-  resumen: string;
   /**
-   * Lo que de verdad hace, en frases cortas. Va partido en dos porque el
-   * principio se lee en negrita: quien pasa la vista por la lista sin leerla
-   * entera se lleva de todas formas las cuatro promesas.
+   * Qué es y qué hace falta para usarlo, en dos o tres frases.
+   *
+   * Es TODO lo que se cuenta del servicio. La pantalla llevaba antes cuatro
+   * promesas en lista y un «cómo funciona» de dos pasos al lado, y entre las
+   * dos cosas el recuadro de subir quedaba por debajo del pliegue. Lo que hace
+   * falta para no equivocarse de pestaña —«esto es para textos ya en inglés»—
+   * cabe en una línea; lo demás se vende en /planes, no aquí dentro.
    */
-  detalle: { fuerte: string; resto: string }[];
-  /** El trato en dos pasos: qué sube y qué recibe. */
-  flujo: { sube: string; subeNota: string; recibe: string; recibeNota: string };
-  /** Qué tiene que traer el cliente para que esto tenga sentido. */
-  requisito: string;
-  /** Si el requisito acaba mandándole a otra pestaña, el enlace que lo lleva. */
-  requisitoEnlace?: { texto: string; va: ServicioPreparar };
+  descripcion: string;
+  /** Si la descripción acaba mandándole a la otra pestaña, el enlace que lo lleva. */
+  enlace?: { texto: string; va: ServicioPreparar };
 }
 
 const PESTANAS: readonly Pestana[] = [
   {
     id: 'EDICION',
     titulo: 'Edición de inglés académico',
-    gancho: 'Tu manuscrito corregido',
     icono: 'edicion',
-    resumen: 'Corregimos tu manuscrito en inglés y te lo devolvemos con control de cambios.',
-    detalle: [
-      {
-        fuerte: 'Gramática, artículos, preposiciones y colocaciones:',
-        resto: 'los errores por los que una revista devuelve un manuscrito por el idioma.',
-      },
-      {
-        fuerte: 'Con control de cambios:',
-        resto: 'aceptas o rechazas cada corrección desde tu Word, una por una.',
-      },
-      {
-        fuerte: 'No reescribimos lo que ya está bien.',
-        resto: 'Cada cambio de más es un cambio que tienes que revisar.',
-      },
-      {
-        fuerte: 'Tus tablas, figuras, citas y bibliografía',
-        resto: 'salen exactamente como entraron.',
-      },
-    ],
-    flujo: {
-      sube: 'Tu manuscrito',
-      subeNota: 'en inglés, en Word',
-      recibe: 'Tu mismo Word',
-      recibeNota: 'con control de cambios',
-    },
-    requisito: 'Tu documento tiene que estar ya escrito en inglés. Si está en español, usa',
-    requisitoEnlace: { texto: 'Traducción', va: 'TRADUCCION' },
+    descripcion:
+      'Para textos ya escritos en inglés. Te lo devolvemos con control de cambios. Si está en ' +
+      'español, usa',
+    enlace: { texto: 'Traducción', va: 'TRADUCCION' },
   },
   {
     id: 'TRADUCCION',
     titulo: 'Traducción',
-    gancho: 'A cuatro idiomas',
     icono: 'traduccion',
-    resumen: 'A español, inglés, portugués o chino, con registro de revista indexada.',
-    detalle: [
-      { fuerte: 'Terminología del área,', resto: 'no traducción palabra por palabra.' },
-      {
-        fuerte: 'Las citas, los apellidos, las siglas y las cifras',
-        resto: 'se quedan como están.',
-      },
-      {
-        fuerte: 'La bibliografía no se traduce:',
-        resto: 'un título traducido es un título que nadie puede buscar.',
-      },
-      {
-        fuerte: 'Te devolvemos tu mismo documento,',
-        resto: 'con su formato, sus tablas y sus figuras.',
-      },
-    ],
-    flujo: {
-      sube: 'Tu documento',
-      subeNota: 'en su idioma original',
-      recibe: 'Tu mismo documento',
-      recibeNota: 'traducido, con su formato',
-    },
-    requisito: 'Elige el idioma al que quieres llegar.',
+    descripcion:
+      'A español, inglés, portugués o chino, con el registro de una revista indexada. Las citas, ' +
+      'las siglas y la bibliografía se quedan como están.',
   },
 ];
 
 /** Cada cuánto se pregunta por los trabajos que están en marcha. */
 const CADA_MS = 5000;
 
+/** A dónde escribe quien tuvo un problema. Es el mismo correo del pie del sitio. */
+const CORREO = 'asesoriaprofesional599@gmail.com';
+
 /**
  * «Preparar documento»: edición de inglés académico y traducción.
  *
- * TRES PESTAÑAS Y UNA SOLA MEMBRESÍA
- * ----------------------------------
- * Las tres hacen lo mismo de cara al cliente —subir un .docx y recibir otro— y
- * gastan del mismo cupo. Por eso la barra de «te quedan N documentos» vive
+ * DOS PESTAÑAS Y UNA SOLA MEMBRESÍA
+ * ---------------------------------
+ * Las dos hacen lo mismo de cara al cliente —subir un .docx y recibir otro— y
+ * gastan del mismo cupo. Por eso el cupo vive en la cabecera de la tarjeta,
  * fuera de las pestañas: es de la membresía, no del servicio.
  *
  * POR QUÉ SE PREGUNTA CADA CINCO SEGUNDOS
@@ -144,6 +108,15 @@ export class Preparar implements OnInit, OnDestroy {
   readonly subiendo = signal(false);
   readonly encima = signal(false);
 
+  /**
+   * El campo de archivo, escondido.
+   *
+   * Está una sola vez y se abre desde dos sitios: «elige el archivo» del
+   * recuadro y «volver a mandarlo» de un trabajo que falló. Antes era un
+   * `<label>` que lo envolvía, que solo sirve para el primero.
+   */
+  private readonly selector = viewChild<ElementRef<HTMLInputElement>>('selector');
+
   private reloj: ReturnType<typeof setInterval> | null = null;
 
   readonly pestana = computed(() => PESTANAS.find((p) => p.id === this.elegida()) ?? PESTANAS[0]);
@@ -159,6 +132,13 @@ export class Preparar implements OnInit, OnDestroy {
   readonly enMarcha = computed(() =>
     this.trabajos().filter((t) => t.estado === 'EN_COLA' || t.estado === 'EN_CURSO'),
   );
+
+  /** Cuánto queda del mes, para la barra de la cabecera. */
+  readonly restantePorciento = computed(() => {
+    const cupo = this.panel()?.cupo;
+    if (!cupo || cupo.total === 0) return 0;
+    return Math.round((cupo.restantes / cupo.total) * 100);
+  });
 
   ngOnInit(): void {
     this.cargar(true);
@@ -215,6 +195,34 @@ export class Preparar implements OnInit, OnDestroy {
 
   // ── Subir ────────────────────────────────────────────────────────────────
 
+  abrirSelector(): void {
+    this.selector()?.nativeElement.click();
+  }
+
+  /**
+   * Volver a mandar uno que falló.
+   *
+   * No se reenvía lo que hay en el servidor: se deja la pantalla puesta en el
+   * mismo servicio y el mismo idioma y se abre el archivo. El navegador no
+   * guarda el .docx de antes —ni puede—, así que lo honesto es pedirlo otra
+   * vez ya con todo lo demás elegido. Un fallo no descuenta cupo, así que
+   * repetirlo no cuesta nada.
+   */
+  volverAMandar(trabajo: Preparacion): void {
+    this.elegir(trabajo.servicio);
+    if (trabajo.servicio === 'TRADUCCION' && trabajo.idioma) this.idioma.set(trabajo.idioma);
+    // En el turno siguiente: la pestaña acaba de cambiar y el campo puede estar
+    // recién pintado.
+    setTimeout(() => this.abrirSelector());
+  }
+
+  /** El correo de «escribirnos», ya con el documento y la referencia dentro. */
+  correoDe(trabajo: Preparacion): string {
+    const asunto = `Preparar documento: ${trabajo.nombre}`;
+    const cuerpo = `Referencia del trabajo: ${trabajo.id}\n\n`;
+    return `mailto:${CORREO}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+  }
+
   desdeElBoton(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
     const archivo = entrada.files?.[0];
@@ -257,16 +265,15 @@ export class Preparar implements OnInit, OnDestroy {
       next: () => {
         this.subiendo.set(false);
         this.aviso.set(
-          'Lo tenemos. Te avisamos por correo cuando esté, y aquí abajo lo verás cambiar solo.',
+          'Lo tenemos. Te avisamos por correo cuando esté, y aquí al lado lo verás cambiar solo.',
         );
         this.cargar();
       },
       error: (e: unknown) => {
         this.subiendo.set(false);
         this.error.set(mensajeDeError(e));
-        // Puede ser un «se te acabó el cupo»: se recarga para que la barra de
-        // arriba diga la verdad en vez de seguir anunciando documentos que ya
-        // no hay.
+        // Puede ser un «se te acabó el cupo»: se recarga para que la cabecera
+        // diga la verdad en vez de seguir anunciando documentos que ya no hay.
         this.cargar();
       },
     });

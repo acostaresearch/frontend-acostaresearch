@@ -1,175 +1,151 @@
-/* «Preparar documento»: la presentación, el cupo del mes, las tres pestañas y
- * lo que ya mandó.
+/* «Preparar documento»: la membresía, el servicio, la subida y lo que ya mandó.
  *
  * LA FORMA DE LA PÁGINA
  * ---------------------
- * Tres tarjetas arriba —una por servicio— y debajo un solo panel que cambia de
- * contenido. Dentro del panel, el reparto es el que importa: a la izquierda lo
- * que hacemos, a la derecha el trato en dos pasos («subes esto, recibes esto»),
- * y cruzando el panel de lado a lado la condición de entrada, que es lo que
- * hace que alguien suba el documento equivocado. La subida va la última, porque
- * es lo que se hace después de haber leído todo lo demás. */
+ * Dos tarjetas, lado a lado. A la izquierda lo único que se hace aquí —elegir
+ * servicio y soltar el .docx—, y a la derecha lo que ya mandó. Antes iba todo
+ * en una columna: presentación, aviso, barra de cupo, tres tarjetas de
+ * servicio, un panel con cuatro promesas y un «cómo funciona» al lado, y solo
+ * después el recuadro de subir, que es a lo que viene quien entra. Ahora el
+ * recuadro se ve sin bajar, y el historial —que es lo segundo que se mira, para
+ * descargar o para ver si ya está— deja de estar al final del todo.
+ *
+ * El cupo vive en la cabecera de la tarjeta de la izquierda, junto al título,
+ * porque es de la membresía y no del servicio: las dos pestañas gastan del
+ * mismo. */
 
 .preparar-fondo {
   background: var(--color-fondo);
 }
 
 .seccion {
-  padding: 44px 0 72px;
+  padding: 34px 0 64px;
 }
 
 .preparar-pagina {
   width: 100%;
-  max-width: 940px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-/* ── Presentación ───────────────────────────────────────────────────────── */
-
-.presentacion {
-  margin-bottom: 20px;
+/* La de la derecha no se estira: es una lista, y una tarjeta vacía de alto de
+   pantalla al lado del formulario se lee como un hueco. */
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+  gap: 22px;
+  align-items: start;
 }
 
-.presentacion h1 {
-  margin: 0 0 8px;
-  font-size: clamp(28px, 4.5vw, 38px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.entrada {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-}
-
-/* El aviso de la IA. Arriba y en una sola línea: se lee antes de decidir, y va
-   en blanco con el canto ámbar para no competir con la barra de la membresía,
-   que sí está rellena. Dos bloques de color seguidos no se leen: se saltan. */
-.aviso-ia {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 11px 14px;
-  margin: 18px 0 20px;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
+.tarjeta {
+  overflow: hidden;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-left: 3px solid var(--color-aviso);
-  border-radius: 10px;
-}
-
-.aviso-ia strong {
-  color: var(--color-texto);
-}
-
-.aviso-ia-icono {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  margin-top: 1px;
-  color: var(--color-aviso);
+  border-radius: 14px;
 }
 
 .vacio {
-  padding: 32px 0;
+  padding: 48px 0;
   text-align: center;
   color: var(--color-texto-suave);
 }
 
-/* ── La barra de arriba: el cupo o la falta de membresía ────────────────── */
+/* ── La cabecera de cada tarjeta ────────────────────────────────────────── */
 
-.barra {
+.cabecera {
   display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 18px;
-  margin-bottom: 22px;
-  border-radius: 12px;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--color-borde);
 }
 
-.barra-texto {
-  flex: 1;
+.cabecera h1 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.cabecera h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.cabecera-texto {
   min-width: 0;
 }
 
-.barra-titulo {
-  margin: 0 0 3px;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.barra-nota {
-  margin: 0;
+.cabecera-nota {
+  margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-texto-suave);
 }
 
-/* Sin membresía: ámbar, con el candado que dice de un vistazo que falta algo. */
-.sin-membresia {
-  background: var(--color-aviso-suave);
-  border: 1px solid color-mix(in srgb, var(--color-aviso) 28%, transparent);
-}
-
-.barra-icono {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  color: var(--color-aviso);
-  background: color-mix(in srgb, var(--color-aviso) 16%, transparent);
-  border-radius: 50%;
-}
-
-.barra-icono svg {
-  width: 19px;
-  height: 19px;
-}
-
-/* Con membresía: blanco, con la cifra de lo que queda. */
-.cupo {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-}
-
-.cupo.agotado {
-  border-color: color-mix(in srgb, var(--color-aviso) 40%, transparent);
-}
-
-.cupo-cifra {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 66px;
-  padding: 8px 10px;
-  background: var(--color-primario-suave);
-  border-radius: 10px;
-}
-
-.cupo.agotado .cupo-cifra {
-  background: var(--color-aviso-suave);
-}
-
-.cupo-cifra strong {
-  font-size: 26px;
-  line-height: 1;
+.cabecera-nota a {
+  font-weight: 600;
   color: var(--color-primario);
+  text-decoration: none;
 }
 
-.cupo.agotado .cupo-cifra strong {
-  color: var(--color-aviso);
+.cabecera-nota a:hover {
+  text-decoration: underline;
 }
 
-.cupo-cifra span {
+/* Cuándo vuelve a haber documentos. Solo aparece con el cupo agotado: mientras
+   quedan, es un dato más que estorba. */
+.cabecera-repone {
+  display: block;
   margin-top: 2px;
-  font-size: 11px;
+}
+
+.total {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+/* ── El cupo del mes ────────────────────────────────────────────────────── */
+
+.cupo {
+  flex-shrink: 0;
+  width: 128px;
+  padding-top: 5px;
+}
+
+.cupo-barra {
+  height: 6px;
+  overflow: hidden;
+  background: var(--color-borde);
+  border-radius: 999px;
+}
+
+.cupo-barra span {
+  display: block;
+  height: 100%;
+  background: var(--color-boton);
+  border-radius: 999px;
+  transition: width var(--transicion);
+}
+
+.cupo.agotado .cupo-barra span {
+  background: var(--color-aviso);
+}
+
+.cupo-texto {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
   color: var(--color-texto-suave);
+  text-align: right;
+}
+
+.cupo-texto strong {
+  font-size: 14px;
+  color: var(--color-texto);
 }
 
 /* ── Los botones ────────────────────────────────────────────────────────── */
@@ -177,7 +153,8 @@
 .boton-principal {
   display: inline-block;
   flex-shrink: 0;
-  padding: 10px 18px;
+  padding: 9px 16px;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-sobre-boton);
@@ -192,273 +169,75 @@
   background: var(--color-boton-hover);
 }
 
-.boton-suave {
-  flex-shrink: 0;
-  padding: 9px 15px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primario);
-  text-decoration: none;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde-fuerte);
-  border-radius: 9px;
-}
-
-.boton-suave:hover {
-  border-color: var(--color-primario);
-}
-
-/* ── Las tres pestañas, en tarjetas ─────────────────────────────────────── */
-
-.pestanas {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.pestana {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 13px 15px;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  background: var(--color-superficie);
-  border: 1.5px solid var(--color-borde);
-  border-radius: 12px;
-}
-
-.pestana:hover {
-  border-color: var(--color-borde-fuerte);
-}
-
-.pestana.activa {
-  border-color: var(--color-primario);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primario) 12%, transparent);
-}
-
-.pestana-icono {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 9px;
-}
-
-.pestana.activa .pestana-icono {
-  color: var(--color-sobre-boton);
-  background: var(--color-boton);
-}
-
-.pestana-icono svg {
-  width: 19px;
-  height: 19px;
-}
-
-.pestana-texto {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.pestana-titulo {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--color-texto);
-}
-
-.pestana-gancho {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--color-texto-suave);
-}
-
-/* ── El panel del servicio elegido ──────────────────────────────────────── */
-
-.panel {
-  margin-bottom: 30px;
-  overflow: hidden;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
-}
-
-.panel-cuerpo {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-}
-
-.panel-que {
-  padding: 24px;
-}
-
-.panel-resumen {
-  max-width: 34ch;
-  margin: 0 0 18px;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-}
-
-.detalle {
-  display: grid;
-  gap: 11px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.detalle li {
-  display: flex;
-  gap: 10px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--color-texto-suave);
-}
-
-.detalle strong {
-  font-weight: 600;
-  color: var(--color-texto);
-}
-
-.tic {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 50%;
-}
-
-.tic svg {
-  width: 11px;
-  height: 11px;
-}
-
-/* ── «Cómo funciona»: el trato, en dos pasos ────────────────────────────── */
-
-.panel-flujo {
-  display: flex;
-  flex-direction: column;
-  padding: 24px 22px;
-  background: var(--color-fondo);
-  border-left: 1px solid var(--color-borde);
-}
-
-.flujo-titulo {
-  margin: 0 0 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-texto-suave);
-}
-
-.flujo-paso {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 10px;
-}
-
-.flujo-icono {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 8px;
-}
-
-.flujo-icono svg {
-  width: 16px;
-  height: 16px;
-}
-
-.flujo-texto {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.flujo-texto strong {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.flujo-nota {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--color-texto-suave);
-}
-
-.flujo-flecha {
-  display: block;
-  margin: 6px auto;
-  color: var(--color-texto-tenue);
-}
-
-.flujo-flecha svg {
-  display: block;
-  width: 15px;
-  height: 15px;
-}
-
-/* ── La condición de entrada ────────────────────────────────────────────── */
-
-.requisito {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  padding: 12px 24px;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-texto);
-  background: var(--color-primario-suave);
-  border-top: 1px solid color-mix(in srgb, var(--color-primario) 14%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-primario) 14%, transparent);
-}
-
-.requisito-icono {
-  flex-shrink: 0;
-  width: 15px;
-  height: 15px;
-  color: var(--color-primario);
-}
-
-/* Manda a otra pestaña, no a otra página: es un botón que se lee como enlace. */
+/* Un botón que se lee como enlace: manda a otra pestaña o abre el archivo, no
+   navega a ningún sitio. */
 .enlace {
   padding: 0;
   font: inherit;
-  font-weight: 600;
   color: var(--color-primario);
-  text-decoration: underline;
   cursor: pointer;
   background: none;
   border: none;
 }
 
-/* ── El idioma y la subida ──────────────────────────────────────────────── */
+.enlace:hover {
+  text-decoration: underline;
+}
 
-.panel-pie {
-  padding: 20px 24px 24px;
+/* ── Las pestañas: texto subrayado, no tarjetas ─────────────────────────── */
+
+.pestanas {
+  display: flex;
+  gap: 24px;
+  padding: 0 22px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pestana {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+  padding: 11px 0;
+  margin-bottom: -1px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+}
+
+.pestana:hover {
+  color: var(--color-texto);
+}
+
+.pestana.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+
+.pestana-icono svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+}
+
+/* ── El servicio elegido ────────────────────────────────────────────────── */
+
+.panel {
+  padding: 18px 22px 22px;
+}
+
+.resumen {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
 }
 
 .idiomas {
@@ -466,7 +245,7 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .idiomas-rotulo {
@@ -476,7 +255,7 @@
 }
 
 .idioma {
-  padding: 7px 16px;
+  padding: 6px 15px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -497,14 +276,16 @@
   border-color: var(--color-boton);
 }
 
+/* ── El recuadro de soltar ──────────────────────────────────────────────── */
+
 .soltar {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 10px;
   align-items: center;
-  padding: 32px 20px;
+  padding: 34px 20px;
   text-align: center;
-  border: 2px dashed var(--color-borde-fuerte);
+  border: 1.5px dashed var(--color-borde-fuerte);
   border-radius: 12px;
 }
 
@@ -517,19 +298,25 @@
   background: color-mix(in srgb, var(--color-fondo) 60%, transparent);
 }
 
+/* El círculo va en contorno y no relleno de azul: lo que tiene que resaltar en
+   esta tarjeta es el enlace que abre el archivo, no el dibujo. */
 .soltar-icono {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
+  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde-fuerte);
   border-radius: 50%;
+}
+
+.soltar.encima .soltar-icono {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
 }
 
 .soltar.apagado .soltar-icono {
   color: var(--color-texto-tenue);
-  background: color-mix(in srgb, var(--color-borde-fuerte) 45%, transparent);
 }
 
 .soltar-icono svg {
@@ -562,38 +349,80 @@
 }
 
 .soltar-nota {
-  max-width: 440px;
-  margin: 2px 0 0;
-  font-size: 12px;
+  max-width: 460px;
+  margin: 0;
+  font-size: 12.5px;
   line-height: 1.5;
   color: var(--color-texto-suave);
 }
 
+/* ── El aviso de la IA ──────────────────────────────────────────────────── */
+
+.aviso-ia {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.aviso-ia strong {
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.aviso-ia-icono {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  color: var(--color-aviso);
+}
+
 /* ── Lo que ya mandó ────────────────────────────────────────────────────── */
 
-.titulo-lista {
-  margin: 0 0 12px;
-  font-size: 18px;
+.lista-vacia {
+  padding: 26px 22px 30px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
 }
 
 .lista {
   padding: 0;
   margin: 0;
   list-style: none;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
 }
 
 .fila {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
-  padding: 16px 18px;
+  padding: 14px 22px;
 }
 
 .fila + .fila {
   border-top: 1px solid var(--color-borde);
+}
+
+.fila-icono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+}
+
+.fila-icono svg {
+  width: 18px;
+  height: 18px;
 }
 
 .datos {
@@ -601,53 +430,94 @@
   min-width: 0;
 }
 
-.datos h3 {
-  margin: 0 0 3px;
-  overflow: hidden;
-  font-size: 15px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.fila-arriba {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* El nombre puede partirse por donde sea: son nombres de archivo, y uno largo
+   sin espacios empujaba la etiqueta de estado fuera de la tarjeta. */
+.fila-arriba h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14.5px;
+  line-height: 1.4;
 }
 
 .meta {
-  margin: 0;
-  font-size: 12px;
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--color-texto-suave);
+}
+
+/* ── La etiqueta de estado ──────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.chip .punto {
+  width: 6px;
+  height: 6px;
+  background: currentcolor;
+  border-radius: 50%;
+}
+
+.chip.listo {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.chip.fallo {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.chip.curso {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.chip .rueda {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  border-width: 1.5px;
 }
 
 .estado {
-  margin: 7px 0 0;
+  margin: 6px 0 0;
   font-size: 13px;
   line-height: 1.55;
-}
-
-.estado.esperando {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
   color: var(--color-texto-suave);
 }
 
-.estado.listo {
-  color: var(--color-exito);
-}
-
-.estado.fallo {
-  color: var(--color-error);
-}
-
+/* Lo que le importa de un fallo: que no le costó un documento del mes. El rojo
+   ya lo pone la etiqueta de arriba; repetirlo aquí convierte la tarjeta en un
+   bloque rojo. */
 .sin-cobro {
   display: block;
   margin-top: 2px;
   font-weight: 600;
-  color: var(--color-texto-suave);
+  color: var(--color-texto);
 }
 
-/* Qué quedó sin tocar y por qué. En gris y no en rojo: el documento SÍ salió,
- * esto es la letra pequeña de lo que el cliente tiene que mirar en su Word. */
+/* Qué quedó sin tocar y por qué: la letra pequeña de lo que el cliente tiene
+ * que mirar en su Word. */
 .sin-tocar {
-  margin: 5px 0 0;
   padding-left: 17px;
+  margin: 5px 0 0;
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--color-texto-suave);
@@ -667,37 +537,37 @@
   white-space: nowrap;
 }
 
-/* La rueda de «se está trabajando». Se para sola si alguien pidió menos
- * movimiento en su sistema: es decoración, no información. */
-.rueda {
-  flex-shrink: 0;
-  width: 13px;
-  height: 13px;
-  margin-top: 3px;
-  border: 2px solid var(--color-borde-fuerte);
-  border-top-color: var(--color-primario);
-  border-radius: 50%;
-  animation: girar 0.8s linear infinite;
+/* ── Lo que se puede hacer con cada documento ───────────────────────────── */
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin-top: 9px;
 }
 
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
+.accion {
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .rueda {
-    animation: none;
-  }
+.accion:hover {
+  text-decoration: underline;
 }
 
 .descargar {
   display: inline-flex;
-  flex-shrink: 0;
   gap: 7px;
   align-items: center;
-  padding: 8px 14px;
+  padding: 7px 13px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -718,62 +588,79 @@
   height: 14px;
 }
 
+/* La rueda de «se está trabajando». Se para sola si alguien pidió menos
+ * movimiento en su sistema: es decoración, no información. */
+.rueda {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-borde-fuerte);
+  border-top-color: var(--color-primario);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rueda {
+    animation: none;
+  }
+}
+
 /* ── Pantallas estrechas ────────────────────────────────────────────────── */
 
-@media (max-width: 900px) {
-  .pestanas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* El «cómo funciona» pasa debajo, no al lado: en una columna estrecha los dos
-     pasos se leen igual de bien y el texto de la izquierda deja de estrujarse. */
-  .panel-cuerpo {
+@media (max-width: 1040px) {
+  /* Una columna: la lista pasa debajo. Sigue por delante del pie, que es donde
+     se la busca después de subir algo. */
+  .columnas {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .panel-flujo {
-    border-top: 1px solid var(--color-borde);
-    border-left: none;
-  }
-
-  .panel-resumen {
-    max-width: none;
   }
 }
 
 @media (max-width: 640px) {
-  .pestanas {
-    grid-template-columns: minmax(0, 1fr);
+  .seccion {
+    padding: 24px 0 48px;
   }
 
-  .barra,
-  .fila {
+  .cabecera,
+  .pestanas,
+  .panel,
+  .fila,
+  .lista-vacia {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  /* El cupo baja a su propia línea y se alinea a la izquierda: a 320 px, el
+     título y una barra de 128 px no caben en la misma fila. */
+  .cabecera {
     flex-wrap: wrap;
   }
 
-  .boton-principal,
-  .boton-suave,
-  .descargar {
+  .cupo {
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .cupo-texto {
+    text-align: left;
+  }
+
+  .boton-principal {
     width: 100%;
     text-align: center;
-    justify-content: center;
   }
 
   .soltar .boton-principal {
     width: auto;
   }
 
-  .panel-que,
-  .panel-pie {
-    padding: 20px 16px;
-  }
-
-  .requisito {
-    align-items: flex-start;
-    padding: 12px 16px;
-  }
-
-  .requisito-icono {
-    margin-top: 2px;
+  .pestanas {
+    gap: 18px;
   }
 }
