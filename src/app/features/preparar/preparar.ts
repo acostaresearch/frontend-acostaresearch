@@ -68,7 +68,7 @@ const PESTANAS: readonly Pestana[] = [
 const CADA_MS = 5000;
 
 /** Cuántos documentos se enseñan de entrada. El resto, pulsando «ver más». */
-const TOPE = 5;
+const TOPE = 3;
 
 /**
  * Los servicios que hoy tienen pestaña.
@@ -161,7 +161,7 @@ export class Preparar implements OnInit, OnDestroy {
     ),
   );
 
-  /** Los cinco primeros, o todos si ha pulsado «ver más». */
+  /** Los tres primeros, o todos si ha pulsado «ver más». */
   readonly visibles = computed(() => {
     const lista = this.trabajosDelServicio();
     return this.verTodos() ? lista : lista.slice(0, TOPE);
