@@ -1,13 +1,19 @@
 /**
- * «Preparar documento»: edición de inglés académico, traducción y resúmenes.
+ * «Preparar documento»: edición de inglés académico y traducción.
  *
- * Los tres servicios trabajan sobre el .docx que sube el cliente y le devuelven
+ * Los dos servicios trabajan sobre el .docx que sube el cliente y le devuelven
  * otro .docx. Se paga por membresía —hasta diez documentos al mes, del tamaño
  * que sean— y no por documento.
  */
 
-/** Los tres servicios. Mismo nombre que el enum del servidor. */
-export type ServicioPreparar = 'EDICION' | 'TRADUCCION' | 'RESUMEN';
+/**
+ * Los servicios que se ofrecen. Mismo nombre que el enum del servidor.
+ *
+ * `RESUMEN` se retiró el 22-sep-2026 y por eso no está aquí, pero sigue en el
+ * enum de la base: hay trabajos entregados con ese servicio y tienen que poder
+ * leerse en el historial.
+ */
+export type ServicioPreparar = 'EDICION' | 'TRADUCCION';
 
 /** Los cuatro idiomas de la traducción. */
 export type IdiomaPreparar = 'es' | 'en' | 'pt' | 'zh';

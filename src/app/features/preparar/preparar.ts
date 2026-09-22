@@ -22,7 +22,7 @@ interface Pestana {
   /** La línea de debajo del título en la tarjeta: qué se lleva, en tres palabras. */
   gancho: string;
   /** Cuál de los tres dibujos lleva la tarjeta. El `<svg>` vive en la plantilla. */
-  icono: 'edicion' | 'traduccion' | 'resumen';
+  icono: 'edicion' | 'traduccion';
   resumen: string;
   /**
    * Lo que de verdad hace, en frases cortas. Va partido en dos porque el
@@ -101,42 +101,13 @@ const PESTANAS: readonly Pestana[] = [
     },
     requisito: 'Elige el idioma al que quieres llegar.',
   },
-  {
-    id: 'RESUMEN',
-    titulo: 'Resúmenes',
-    gancho: 'Resumen, abstract y palabras clave',
-    icono: 'resumen',
-    resumen: 'El resumen, el abstract y las palabras clave, sacados de tu propio trabajo.',
-    detalle: [
-      {
-        fuerte: 'Resumen en español y abstract en inglés,',
-        resto: 'de 200 a 250 palabras, en estructura IMRyD.',
-      },
-      { fuerte: 'De 4 a 6 palabras clave', resto: 'y sus keywords, en el mismo orden.' },
-      {
-        fuerte: 'Las cifras salen de tu texto.',
-        resto: 'Lo que tu trabajo no diga, no se inventa.',
-      },
-      {
-        fuerte: 'Se entrega en un documento aparte,',
-        resto: 'para que lo pegues donde te pida tu reglamento.',
-      },
-    ],
-    flujo: {
-      sube: 'Tu trabajo completo',
-      subeNota: 'en Word',
-      recibe: 'Un documento aparte',
-      recibeNota: 'resumen, abstract y palabras clave',
-    },
-    requisito: 'Sube el trabajo completo: leemos el principio y el final para escribirlo.',
-  },
 ];
 
 /** Cada cuánto se pregunta por los trabajos que están en marcha. */
 const CADA_MS = 5000;
 
 /**
- * «Preparar documento»: edición de inglés académico, traducción y resúmenes.
+ * «Preparar documento»: edición de inglés académico y traducción.
  *
  * TRES PESTAÑAS Y UNA SOLA MEMBRESÍA
  * ----------------------------------
@@ -320,7 +291,6 @@ export class Preparar implements OnInit, OnDestroy {
    */
   private nombreDeDescarga(trabajo: Preparacion): string {
     const base = trabajo.nombre.replace(/\.docx$/i, '');
-    if (trabajo.servicio === 'RESUMEN') return `${base} (resumen y abstract).docx`;
     if (trabajo.servicio === 'EDICION') return `${base} (inglés corregido).docx`;
     return `${base} (traducido al ${this.nombreDelIdioma(trabajo.idioma)}).docx`;
   }
@@ -351,7 +321,6 @@ export class Preparar implements OnInit, OnDestroy {
   /** Qué se le dice de un trabajo terminado, incluida la letra pequeña. */
   resultadoDe(trabajo: Preparacion): string | null {
     if (trabajo.estado !== 'LISTO') return null;
-    if (trabajo.servicio === 'RESUMEN') return 'Resumen, abstract y palabras clave.';
 
     const tocados = `${trabajo.tocados} párrafo${trabajo.tocados === 1 ? '' : 's'}`;
     const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : 'traducidos';

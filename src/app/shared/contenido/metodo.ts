@@ -462,7 +462,7 @@ export const INCLUYE: Record<string, string[]> = {
   // una diciendo algo que la otra no.
   PREPARAR_MENSUAL: [
     'Hasta 10 documentos al mes, del tamaño que sean',
-    'Los tres servicios: edición de inglés académico, traducción y resúmenes',
+    'Los dos servicios: edición de inglés académico y traducción',
     'Traducción a español, inglés, portugués y chino',
     'La edición llega con control de cambios: aceptas o rechazas una por una',
     'Te devolvemos tu mismo Word, con sus tablas, figuras y bibliografía intactas',
@@ -470,7 +470,7 @@ export const INCLUYE: Record<string, string[]> = {
   ],
   PREPARAR_TRIMESTRAL: [
     'Hasta 10 documentos cada mes, del tamaño que sean',
-    'Los tres servicios: edición de inglés académico, traducción y resúmenes',
+    'Los dos servicios: edición de inglés académico y traducción',
     'Traducción a español, inglés, portugués y chino',
     'La edición llega con control de cambios: aceptas o rechazas una por una',
     'Te devolvemos tu mismo Word, con sus tablas, figuras y bibliografía intactas',

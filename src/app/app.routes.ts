@@ -161,7 +161,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/checkout/checkout').then((m) => m.Checkout),
   },
   /*
-   * «Preparar documento»: edición de inglés académico, traducción y resúmenes.
+   * «Preparar documento»: edición de inglés académico y traducción.
    *
    * Con sesión, al contrario que las subidas que reparte el conector: aquí no
    * hay enlace firmado que valga como llave, porque la membresía cuelga de la
