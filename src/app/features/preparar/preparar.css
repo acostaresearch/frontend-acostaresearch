@@ -643,6 +643,30 @@
   color: var(--color-texto-suave);
 }
 
+/* Qué quedó sin tocar y por qué. En gris y no en rojo: el documento SÍ salió,
+ * esto es la letra pequeña de lo que el cliente tiene que mirar en su Word. */
+.sin-tocar {
+  margin: 5px 0 0;
+  padding-left: 17px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.sin-tocar li + li {
+  margin-top: 4px;
+}
+
+/* El principio del párrafo, para encontrarlo en el Word. En una sola línea:
+ * son noventa caracteres y la tarjeta no puede crecer por cada aviso. */
+.sin-tocar .ejemplo {
+  display: block;
+  overflow: hidden;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* La rueda de «se está trabajando». Se para sola si alguien pidió menos
  * movimiento en su sistema: es decoración, no información. */
 .rueda {

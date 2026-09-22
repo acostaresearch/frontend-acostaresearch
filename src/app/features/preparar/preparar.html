@@ -362,6 +362,20 @@
                       </p>
                     } @else if (t.estado === 'LISTO') {
                       <p class="estado listo">{{ resultadoDe(t) }}</p>
+
+                      @if (avisosDe(t).length) {
+                        <ul class="sin-tocar">
+                          @for (aviso of avisosDe(t); track aviso.donde + aviso.motivo) {
+                            <li>
+                              <strong>{{ aviso.cuantos }}</strong> en {{ aviso.donde }}, porque
+                              {{ aviso.motivo }}.
+                              @if (aviso.ejemplo) {
+                                <span class="ejemplo">«{{ aviso.ejemplo }}»</span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
                     } @else {
                       <p class="estado fallo">
                         {{ t.error }}

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import {
+  AvisoPreparacion,
   IdiomaPreparar,
   PanelPreparar,
   Preparacion,
@@ -366,11 +367,23 @@ export class Preparar implements OnInit, OnDestroy {
 
     if (trabajo.intactos === 0) return `${tocados} ${hecho}.${indice}`;
 
-    return (
-      `${tocados} ${hecho}. Otros ${trabajo.intactos} quedaron como estaban: llevaban dentro ` +
-      'una nota al pie, una ecuación o una imagen, y rehacerlos habría roto esa pieza. Tus citas ' +
-      'de Zotero no son un problema: esas viajan enteras.' +
-      indice
-    );
+    // El porqué NO se escribe aquí: lo manda el servidor en `avisos`, uno por
+    // motivo, y se enseña debajo. Esta frase decía «llevaban dentro una nota al
+    // pie, una ecuación o una imagen» pasara lo que pasara, y salía igual en
+    // documentos que no tienen ni una sola nota al pie.
+    const otros = `${tocados} ${hecho}. Otros ${trabajo.intactos} quedaron como estaban`;
+
+    return trabajo.avisos?.length ? `${otros}:${indice}` : `${otros}.${indice}`;
+  }
+
+  /**
+   * Por qué quedó cada grupo sin tocar, para enseñarlo en lista.
+   *
+   * Vacío en los trabajos entregados antes de que el servidor guardara el
+   * motivo: de aquellos no hay de dónde sacarlo, y preferimos no decir nada a
+   * decir algo que no sabemos.
+   */
+  avisosDe(trabajo: Preparacion): AvisoPreparacion[] {
+    return trabajo.estado === 'LISTO' ? (trabajo.avisos ?? []) : [];
   }
 }

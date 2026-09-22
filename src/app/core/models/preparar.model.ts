@@ -21,6 +21,17 @@ export type IdiomaPreparar = 'es' | 'en' | 'pt' | 'zh';
  */
 export type EstadoPreparacion = 'EN_COLA' | 'EN_CURSO' | 'LISTO' | 'FALLIDO';
 
+/** Un grupo de párrafos que quedó sin tocar, con su motivo. */
+export interface AvisoPreparacion {
+  /** «el cuerpo del documento», «las notas al pie», «el pie de página». */
+  donde: string;
+  /** Qué pasó, en las palabras del servidor: se enseña tal cual. */
+  motivo: string;
+  cuantos: number;
+  /** El principio de uno de ellos, para que lo encuentre en su Word. */
+  ejemplo: string;
+}
+
 export interface Preparacion {
   id: string;
   servicio: ServicioPreparar;
@@ -32,8 +43,17 @@ export interface Preparacion {
   error: string | null;
   /** Párrafos corregidos o traducidos. */
   tocados: number;
-  /** Los que se quedaron como estaban porque llevaban algo que no se puede rehacer. */
+  /** Los que se quedaron como estaban. El porqué de cada uno va en `avisos`. */
   intactos: number;
+  /**
+   * Por qué quedaron así, agrupado por motivo y por parte del documento.
+   *
+   * Lo escribe el servidor mirando lo que pasó de verdad. Antes esto no
+   * existía y la web se inventaba el motivo: decía «llevaban una nota al pie,
+   * una ecuación o una imagen» hasta en documentos sin una sola nota al pie.
+   * Viene vacío en los trabajos entregados antes de que esto existiera.
+   */
+  avisos: AvisoPreparacion[];
   createdAt: string;
   entregadoAt: string | null;
 }
