@@ -996,6 +996,117 @@ h1 {
   border-color: var(--color-primario);
 }
 
+/* ── La ilustración de la cabecera ─────────────────────────────────────────
+ *
+ * Se sale de la tarjeta por los tres lados de arriba con márgenes negativos,
+ * en vez de mover el relleno a un envoltorio interior: así lo que ya estaba
+ * dentro de la tarjeta no se toca, y el día que se quite la ilustración no
+ * queda un div vacío sosteniendo la maquetación.
+ *
+ * El dibujo NO lleva medidas fijas: el `viewBox` manda y el alto sale de la
+ * proporción, así que en una columna estrecha encoge con la tarjeta en lugar
+ * de recortarse.
+ */
+.tarjeta-figura {
+  margin: -30px -26px 22px;
+  overflow: hidden;
+  background: var(--acento-suave);
+  border-bottom: 1px solid var(--color-borde);
+  /* Uno menos que el de la tarjeta: por dentro del borde, el radio es más
+     cerrado, y con el mismo asoma una uña de fondo en la esquina. */
+  border-radius: 13px 13px 0 0;
+}
+
+.figura {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/*
+ * Los colores salen de los tokens del sitio, no de valores fijos. El papel es
+ * la superficie de la tarjeta: en el tema oscuro, una hoja blanca sobre un
+ * azul noche sería un foco en mitad de la página.
+ */
+.figura .papel {
+  fill: var(--color-superficie);
+  stroke: color-mix(in srgb, var(--acento) 30%, transparent);
+  stroke-width: 1.5;
+}
+
+/* Las hojas de debajo del montón: el mismo papel, apagado. */
+.figura .papel-atras {
+  fill: var(--color-superficie);
+  stroke: color-mix(in srgb, var(--acento) 30%, transparent);
+  stroke-width: 1.5;
+  opacity: 0.5;
+}
+
+.figura .banda {
+  fill: var(--acento);
+}
+
+.figura .linea {
+  fill: color-mix(in srgb, var(--acento) 26%, transparent);
+}
+
+.figura .linea-suave {
+  fill: color-mix(in srgb, var(--acento) 14%, transparent);
+}
+
+/* El texto de antes y el de después, en el humanizador y en la edición. */
+.figura .linea-rojo {
+  fill: color-mix(in srgb, var(--color-error) 42%, transparent);
+}
+
+.figura .linea-azul {
+  fill: color-mix(in srgb, var(--acento) 62%, transparent);
+}
+
+.figura .tachon {
+  fill: none;
+  stroke: var(--color-error);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.figura .barra {
+  fill: color-mix(in srgb, var(--acento) 52%, transparent);
+}
+
+.figura .barra-dorada,
+.figura .dorado,
+.figura .disco {
+  fill: var(--dorado);
+}
+
+.figura .flecha {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* La medalla: el número que resume el producto —capítulos, documentos al mes—
+   sin tener que leer la tarjeta. */
+.figura .medalla {
+  fill: var(--acento);
+}
+
+.figura .medalla-cifra {
+  font-size: 27px;
+  font-weight: 700;
+  fill: #fff;
+}
+
+.figura .medalla-pie {
+  font-size: 10.5px;
+  font-weight: 600;
+  fill: #fff;
+  opacity: 0.85;
+}
+
 /* ── La cinta de «El más elegido» ───────────────────────────────
  *
  * Montada sobre el borde de arriba, a la izquierda. Fuera del flujo para que

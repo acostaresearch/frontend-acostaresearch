@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   ElementRef,
@@ -84,6 +84,7 @@ function soles(cents: number): string {
     ReactiveFormsModule,
     DecimalPipe,
     DatePipe,
+    NgTemplateOutlet,
     CuentaAtras,
     SiteHeader,
     SiteFooter,
@@ -249,8 +250,17 @@ export class Checkout implements OnInit {
   readonly codigoCanje = new FormControl('', { nonNullable: true });
   readonly errorCanje = signal<string | null>(null);
   readonly canjeando = signal(false);
-  /** Lo canjeado: a qué producto da acceso y su URL, que no se vuelve a enseñar. */
-  readonly canjeado = signal<{ producto: string; url: string } | null>(null);
+  /**
+   * Lo canjeado: a qué producto da acceso y, si es una licencia, su URL, que no
+   * se vuelve a enseñar.
+   *
+   * Sin URL cuando lo vendido es una membresía de «Preparar documento»: ahí no
+   * hay nada que pegar en Claude, y lo que hace falta es el enlace a la
+   * herramienta.
+   */
+  readonly canjeado = signal<{ producto: string; url: string | null; renovada: boolean } | null>(
+    null,
+  );
   readonly urlCopiada = signal(false);
 
   constructor() {
@@ -595,6 +605,51 @@ export class Checkout implements OnInit {
   }
 
   /**
+   * Qué se dibuja en la cabecera de la tarjeta.
+   *
+   * POR QUÉ UNA ILUSTRACIÓN Y NO UN ICONO
+   * -------------------------------------
+   * Tres tarjetas de texto seguidas se leen como tres párrafos y hay que
+   * leerlas enteras para saber cuál es cuál. Un dibujo arriba las separa de un
+   * vistazo y, sobre todo, dice qué SALE de cada producto: un documento con sus
+   * capítulos, un artículo con sus gráficos, un texto que entra y sale
+   * cambiado. Es la misma promesa que la lista de «Qué incluye», dicha sin
+   * palabras.
+   *
+   * POR PREFIJO DEL CÓDIGO, no por una lista de códigos exactos: igual que
+   * `producto.perfil.js` en el servidor. Un grupo que se cree mañana desde el
+   * panel con un código que empiece por ARTICULO nace con su dibujo, sin tocar
+   * esto. El que no encaje en ninguno recibe el genérico, que es un documento
+   * a secas: no promete nada que no sepamos.
+   */
+  ilustracionDe(plan: Plan): string {
+    // Las membresías de documentos se distinguen entre sí por la duración: una
+    // hoja para el mes, tres apiladas para el trimestre.
+    if (plan.kind === 'DOCUMENTO') {
+      return plan.durationDays > 30 ? 'documentos-varios' : 'documentos';
+    }
+
+    const codigo = plan.code.toUpperCase();
+    if (codigo.startsWith('ARTICULO')) return 'articulo';
+    if (codigo.startsWith('HUMANIZ')) return 'humanizador';
+    if (codigo.startsWith('METODO')) return 'tesis';
+    return 'generico';
+  }
+
+  /**
+   * El número de la medalla del método: «9 capítulos».
+   *
+   * Sale del NOMBRE del plan y solo si dice exactamente eso, con un patrón
+   * estrecho a propósito. La tentación era coger el primer número que
+   * apareciera, y con eso un plan llamado «Método de tesis 2026» habría
+   * anunciado 2026 capítulos. Si el nombre cambia y deja de decirlo, la medalla
+   * desaparece: no enseñar nada es correcto, enseñar un número inventado no.
+   */
+  capitulosDe(plan: Plan): string | null {
+    return (plan.name.match(/(\d{1,2})\s*cap[ií]tulos/i) || [])[1] ?? null;
+  }
+
+  /**
    * Cuántas viñetas van destacadas: las tres primeras de la lista escrita.
    *
    * Son las que deciden la compra —las Skills, el panel y la duración— y en
@@ -651,13 +706,20 @@ export class Checkout implements OnInit {
 
     this.canjeando.set(true);
     this.licencias.redeem(codigo).subscribe({
-      next: ({ license, connectorUrl }) => {
+      next: ({ license, connectorUrl, membresia, renovada }) => {
         this.canjeando.set(false);
         this.codigoCanje.reset();
-        this.canjeado.set({
-          producto: license.productName ?? license.productCode,
-          url: connectorUrl,
-        });
+        // Una membresía de documentos o una licencia del conector: el código
+        // puede vender las dos cosas, y solo llega una.
+        this.canjeado.set(
+          membresia
+            ? { producto: membresia.plan.name, url: null, renovada: Boolean(renovada) }
+            : {
+                producto: license?.productName ?? license?.productCode ?? 'tu acceso',
+                url: connectorUrl ?? null,
+                renovada: false,
+              },
+        );
         // Quita el código de la dirección: ya está gastado, y recargar la
         // página no debe volver a ponerlo en el campo.
         void this.router.navigate([], {

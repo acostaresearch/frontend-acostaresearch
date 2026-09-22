@@ -810,12 +810,22 @@ export class Admin implements OnInit {
     this.listaCorreos().correos.filter((r) => r.problema),
   );
 
+  /** Las membresías de «Preparar documento»: documentos al mes, sin conector. */
+  readonly planesDocumentos = computed(() =>
+    this.planes().filter((p) => p.kind === 'DOCUMENTO' && p.priceCents > 0),
+  );
+
   /**
    * Los productos que se pueden regalar o vender con código.
    *
    * Los públicos y, detrás, los que están en prueba: esos no salen en la web,
    * así que un código es la única manera de dárselos a alguien que no es
    * administrador. Los retirados no, porque no tienen topes que copiar.
+   *
+   * Van también las membresías de «Preparar documento», que se venden igual por
+   * WhatsApp. No licencian nada, así que no tienen `productCode` y se
+   * identifican por el `code` de su plan; el servidor lo reconoce al canjear y
+   * entrega documentos al mes en vez de una URL de conector.
    */
   readonly productosCodigos = computed(() => {
     const lista = this.planesLicencia().map((plan) => ({
@@ -824,6 +834,13 @@ export class Admin implements OnInit {
       priceCents: plan.priceCents,
     }));
     const vistos = new Set(lista.map((p) => p.productCode));
+
+    for (const plan of this.planesDocumentos()) {
+      const codigo = plan.productCode ?? plan.code;
+      if (vistos.has(codigo)) continue;
+      vistos.add(codigo);
+      lista.push({ productCode: codigo, nombre: plan.name, priceCents: plan.priceCents });
+    }
 
     for (const grupo of this.grupos()) {
       const codigo = grupo.productCode ?? grupo.code;

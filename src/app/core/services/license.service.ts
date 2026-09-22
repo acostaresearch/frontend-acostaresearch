@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
-import { License, ProgresoDeArranque } from '../models/payment.model';
+import { CanjeHecho, License, ProgresoDeArranque } from '../models/payment.model';
 
 @Injectable({ providedIn: 'root' })
 export class LicenseService {
@@ -26,11 +26,17 @@ export class LicenseService {
   }
 
   /** Canjea un código de activación comprado fuera de la web. */
-  redeem(code: string): Observable<{ license: License; connectorUrl: string }> {
+  /**
+   * Canjea un código de activación.
+   *
+   * Lo que vuelve depende de lo que se vendió: una licencia con su URL del
+   * conector, o una membresía de «Preparar documento», que no tiene ninguna URL
+   * que pegar en Claude. Por eso los dos campos son opcionales, y quien lo usa
+   * mira cuál llegó.
+   */
+  redeem(code: string): Observable<CanjeHecho> {
     return this.http
-      .post<ApiResponse<{ license: License; connectorUrl: string }>>(`${this.base}/redeem`, {
-        code,
-      })
+      .post<ApiResponse<CanjeHecho>>(`${this.base}/redeem`, { code })
       .pipe(map((res) => res.data));
   }
 

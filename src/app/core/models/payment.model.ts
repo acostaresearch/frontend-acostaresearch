@@ -145,6 +145,21 @@ export interface PaymentResult {
   balance?: Balance;
 }
 
+/**
+ * Lo que entrega un código de activación al canjearlo.
+ *
+ * O una licencia con su URL del conector —que solo viaja en este momento,
+ * porque del token solo se guarda el hash— o una membresía de «Preparar
+ * documento», que no tiene ninguna URL que pegar en Claude. Nunca las dos.
+ */
+export interface CanjeHecho {
+  license?: License | null;
+  connectorUrl?: string | null;
+  membresia?: MembresiaComprada | null;
+  /** Solo en la membresía: alargó la que ya tenía en vez de abrir una nueva. */
+  renovada?: boolean;
+}
+
 /** La membresía de documentos recién comprada, para confirmar qué se llevó. */
 export interface MembresiaComprada {
   id: string;

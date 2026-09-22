@@ -130,6 +130,20 @@ export class MiScopusPanel implements OnInit {
   /** El mapeo bibliométrico de la búsqueda: en marcha, a qué proyecto y cómo quedó. */
   readonly mapeando = signal(false);
   readonly destinosDelMapeo = signal<DestinoDelMapeo[] | null>(null);
+  /**
+   * A qué proyectos PODRÍA ir el mapeo, preguntado una sola vez.
+   *
+   * Existe para no enseñar un botón que no lleva a ninguna parte. El mapeo
+   * bibliométrico es de la ruta del artículo —ver `producto.perfil` en el
+   * servidor—, así que a quien solo tiene el método de tesis el botón le
+   * contestaba «ninguna de tus licencias vigentes trae el mapeo», que es
+   * enterarse tarde y por un error.
+   *
+   * Nulo mientras no se ha preguntado; se pregunta con los primeros resultados
+   * y no al abrir la pestaña, para no gastar una consulta por quien entra a
+   * mirar y no busca nada.
+   */
+  readonly destinosPosibles = signal<DestinoDelMapeo[] | null>(null);
   readonly mapeo = signal<MapeoDeScopus | null>(null);
   /**
    * La ecuación de los resultados que están en pantalla. El mapeo va con ESTA,
@@ -2002,6 +2016,7 @@ export class MiScopusPanel implements OnInit {
         if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
         else if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
         this.cargarCuentas();
+        if (resultado.total > 0) this.cargarDestinosDelMapeo();
       },
       error: (fallo: unknown) => {
         this.buscando.set(false);
@@ -2162,16 +2177,41 @@ export class MiScopusPanel implements OnInit {
    * directo, con varios le enseña los botones para elegir. La sesión de R es
    * una por proyecto, y adivinar cuál sería meter el mapeo donde no toca.
    */
+  /**
+   * Trae los destinos posibles, una vez por pestaña abierta.
+   *
+   * Si falla, se guarda una lista vacía y el bloque del mapeo no se pinta: un
+   * botón que no sabemos si lleva a algún sitio es peor que ninguno, y quien lo
+   * necesite lo tiene al recargar.
+   */
+  private cargarDestinosDelMapeo(): void {
+    if (this.destinosPosibles() !== null) return;
+    this.scopus.destinosDelMapeo().subscribe({
+      next: (destinos) => this.destinosPosibles.set(destinos),
+      error: () => this.destinosPosibles.set([]),
+    });
+  }
+
   mapear(productCode?: string): void {
     const ecuacion = this.ecuacionDeLosResultados();
     if (!ecuacion || this.mapeando()) return;
     this.error.set(null);
 
     if (!productCode) {
+      // Ya se preguntaron al llegar los resultados: con uno solo se va directo
+      // y con varios se elige, sin una segunda vuelta al servidor.
+      const posibles = this.destinosPosibles();
+      if (posibles && posibles.length > 0) {
+        if (posibles.length === 1) this.mapear(posibles[0].productCode);
+        else this.destinosDelMapeo.set(posibles);
+        return;
+      }
+
       this.mapeando.set(true);
       this.scopus.destinosDelMapeo().subscribe({
         next: (destinos) => {
           this.mapeando.set(false);
+          this.destinosPosibles.set(destinos);
           if (destinos.length === 0) {
             this.mostrarError('Ninguna de tus licencias vigentes trae el mapeo bibliométrico.');
           } else if (destinos.length === 1) {

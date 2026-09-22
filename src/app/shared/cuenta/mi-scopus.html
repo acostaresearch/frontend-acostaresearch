@@ -1095,8 +1095,14 @@
               </div>
 
               <!-- Mapeo bibliométrico: la búsqueda entera a su sesión de R. De
-                   Scopus solo salen los DOI; lo demás, de OpenAlex. -->
-              @if (lista.total > 0) {
+                   Scopus solo salen los DOI; lo demás, de OpenAlex.
+
+                   Solo a quien puede mandarlo a alguna parte. El mapeo es de la
+                   ruta del artículo, así que a quien tiene solo el método de
+                   tesis ni se le enseña: antes le salía el botón y, al pulsarlo,
+                   un error. Mientras no se sabe (null) tampoco se pinta, para
+                   que no aparezca y desaparezca. -->
+              @if (lista.total > 0 && destinosPosibles()?.length) {
                 <div class="sc-mapeo" aria-live="polite">
                   @if (mapeo(); as m) {
                     <p class="sc-mapeo-listo">
