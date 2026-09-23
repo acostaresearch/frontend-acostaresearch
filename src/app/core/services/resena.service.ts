@@ -36,6 +36,14 @@ export interface ResenaPublica {
    * hay que enseñar es la grabación.
    */
   video: boolean;
+  /**
+   * La elegimos para la portada, y /resenas la marca.
+   *
+   * Es lo único de la moderación que se asoma fuera, y no es ningún secreto:
+   * son justo las que cualquiera ve en la portada. El estado y el motivo de un
+   * rechazo no salen de la cuenta de su autor.
+   */
+  destacada: boolean;
 }
 
 /** La suya, con en qué punto está. */
@@ -43,7 +51,6 @@ export interface MiResena extends ResenaPublica {
   estado: EstadoDeResena;
   /** Por qué no se publicó. Vacío mientras no se haya rechazado. */
   motivo: string;
-  destacada: boolean;
   /**
    * La publicamos nosotros a su nombre.
    *

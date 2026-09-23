@@ -3,31 +3,62 @@
 <main class="pagina resenas-fondo">
   <section class="seccion">
     <div class="resenas-pagina">
+      <!-- La cabecera, en dos columnas: a la izquierda de qué va esto y de
+           dónde salen las reseñas; a la derecha, la invitación a escribir la
+           suya. Antes iba al final de la página: quien llega dispuesto a contar
+           lo suyo no tiene por qué bajarse cincuenta testimonios para encontrar
+           el botón. -->
       <header class="presentacion">
-        <p class="marca">
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              d="M8 1.5 9.9 5.6l4.5.6-3.3 3.1.8 4.4L8 11.6 4.1 13.7l.8-4.4L1.6 6.2l4.5-.6z"
-              fill="currentColor"
-            />
-          </svg>
-          Reseñas
-        </p>
-        <h1>Lo que dicen quienes ya lo usaron</h1>
-
-        @if (hayResumen()) {
-          <p class="resumen">
-            <span class="resumen-estrellas" aria-hidden="true">{{ estrellas(media()!) }}</span>
-            <b>{{ nota(media()!) }} de 5</b>
-            <span class="tenue">sobre {{ total() }} reseñas</span>
+        <div class="presentacion-texto">
+          <p class="marca">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M8 1.5 9.9 5.6l4.5.6-3.3 3.1.8 4.4L8 11.6 4.1 13.7l.8-4.4L1.6 6.2l4.5-.6z"
+                fill="currentColor"
+              />
+            </svg>
+            Reseñas
           </p>
-        }
+          <h1>Lo que dicen quienes ya lo usaron</h1>
 
-        <p class="entrada">
-          Las escriben clientes con cuenta y las leemos una por una antes de publicarlas. No
-          pagamos por ninguna ni las editamos.
-        </p>
+          @if (hayResumen()) {
+            <p class="resumen">
+              <span class="resumen-estrellas" aria-hidden="true"
+                >{{ llenas(media()!) }}<span class="apagadas">{{ vacias(media()!) }}</span></span
+              >
+              <b>{{ nota(media()!) }} de 5</b>
+              <span class="tenue">sobre {{ total() }} reseñas</span>
+            </p>
+          }
+
+          <p class="entrada">
+            Las escriben clientes con cuenta y las leemos una por una antes de publicarlas. No
+            pagamos por ninguna ni las editamos.
+          </p>
+        </div>
+
+        <!-- A quien no tiene cuenta no se le pide que se registre para opinar de
+             algo que no ha usado: se le lleva a ver el método trabajando. -->
+        <aside class="invitacion">
+          @if (auth.isAuthenticated()) {
+            <p><b>¿Ya usaste el método?</b> Cuenta cómo te fue.</p>
+            <button type="button" class="boton" (click)="escribir()">
+              {{ escribiendo() ? 'Cerrar' : 'Escribir mi reseña' }}
+            </button>
+          } @else {
+            <p><b>¿Quieres ver de qué va antes de creerte esto?</b></p>
+            <a class="boton" routerLink="/en-accion">Míralo en acción</a>
+          }
+        </aside>
       </header>
+
+      <!-- El formulario aquí mismo, no en el perfil: mandarlo a otra pantalla a
+           buscarlo perdía por el camino a casi todos. -->
+      @if (escribiendo()) {
+        <div class="escribir" id="escribir-mi-resena">
+          <app-mi-resena />
+        </div>
+      }
 
       @if (cargando()) {
         <p class="nota centrado">Cargando…</p>
@@ -47,55 +78,98 @@
           </div>
         </div>
       } @else {
-        <ul class="lista">
-          @for (r of resenas(); track r.id) {
-            <li class="resena">
-              <p class="resena-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
-                <span aria-hidden="true">{{ estrellas(r.estrellas) }}</span>
-              </p>
-              @if (r.video) {
-                <video
-                  class="resena-video"
-                  controls
-                  preload="metadata"
-                  playsinline
-                  [src]="api.urlDelVideo(r.id)"
-                ></video>
+        <div class="barra">
+          @if (hayDeLasDos()) {
+            <div class="filtros" role="group" aria-label="Filtrar las reseñas">
+              @for (f of filtros; track f.clave) {
+                <button
+                  type="button"
+                  class="filtro"
+                  [class.activo]="filtro() === f.clave"
+                  [attr.aria-pressed]="filtro() === f.clave"
+                  (click)="filtrar(f.clave)"
+                >
+                  {{ f.nombre }}
+                </button>
               }
+            </div>
+          }
+          <p class="orden tenue">Más recientes primero</p>
+        </div>
+
+        <ul class="rejilla">
+          @for (r of visibles(); track r.id; let i = $index) {
+            <li class="tarjeta" [class.grande]="esGrande(r, i)">
+              <div class="tarjeta-alto">
+                <p class="estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
+                  <span aria-hidden="true"
+                    >{{ llenas(r.estrellas) }}<span class="apagadas">{{
+                      vacias(r.estrellas)
+                    }}</span></span
+                  >
+                </p>
+                @if (r.destacada) {
+                  <span class="destacada">Destacada</span>
+                }
+              </div>
+
+              <!-- El video no empieza a bajar hasta que alguien le da: hasta
+                   entonces se ve el primer fotograma y cuánto dura. Con nueve
+                   grabaciones de móvil en pantalla, precargarlas todas son
+                   cientos de megas antes de leer el primer testimonio. -->
+              @if (r.video) {
+                <div class="video">
+                  <video
+                    #reproductor
+                    preload="metadata"
+                    playsinline
+                    [src]="api.urlDelVideo(r.id)"
+                    [controls]="sonando() === r.id"
+                    (loadedmetadata)="apuntarDuracion(r.id, reproductor)"
+                  ></video>
+                  @if (sonando() !== r.id) {
+                    <button
+                      type="button"
+                      class="play"
+                      [attr.aria-label]="'Ver el video de ' + r.autor"
+                      (click)="reproducir(r.id, reproductor)"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 6.5v11l9-5.5z" fill="currentColor" />
+                      </svg>
+                    </button>
+                    @if (duraciones()[r.id]; as duracion) {
+                      <span class="duracion">{{ duracion }}</span>
+                    }
+                  }
+                </div>
+              }
+
               @if (r.comentario) {
                 <blockquote>{{ r.comentario }}</blockquote>
               }
+
               <footer>
-                <b>{{ r.autor }}</b>
-                @if (r.oficio) {
-                  <span class="tenue">· {{ r.oficio }}</span>
-                }
-                <span class="tenue resena-fecha">{{ cuando(r.createdAt) }}</span>
+                <span class="firma">
+                  <b>{{ r.autor }}</b>
+                  @if (r.oficio) {
+                    <span class="tenue">· {{ r.oficio }}</span>
+                  }
+                </span>
+                <span class="tenue fecha">{{ cuando(r.createdAt) }}</span>
               </footer>
             </li>
           }
         </ul>
-      }
 
-      <!-- La invitación a escribir, al final: se la lee quien acaba de pasar
-           por todas y sigue ahí. A quien no tiene cuenta no se le pide que se
-           registre para opinar de algo que no ha usado; se le lleva a ver el
-           método. -->
-      <div class="invitacion">
-        @if (auth.isAuthenticated()) {
-          <p><b>¿Ya usaste el método?</b> Cuenta cómo te fue.</p>
-          <!-- El formulario aquí mismo, no en el perfil: mandarlo a otra
-               pantalla a buscarlo perdía por el camino a casi todos. -->
-          @if (escribiendo()) {
-            <app-mi-resena />
-          } @else {
-            <button type="button" class="boton" (click)="escribir()">Escribir mi reseña</button>
-          }
-        } @else {
-          <p><b>¿Quieres ver de qué va antes de creerte esto?</b></p>
-          <a class="boton" routerLink="/en-accion">Míralo en acción</a>
+        @if (hayMas()) {
+          <div class="mas">
+            <button type="button" class="boton secundario" (click)="verMas()">
+              Ver más reseñas
+            </button>
+          </div>
         }
-      </div>
+      }
     </div>
   </section>
 </main>

@@ -1,5 +1,5 @@
-/* Una columna estrecha sobre el gris del sitio, como /guias: son textos para
- * leer seguidos, y a todo el ancho la vista se pierde de renglón en renglón. */
+/* Rejilla ancha sobre el gris del sitio. Un testimonio no se lee como un
+ * artículo: se ojea, y lo que hay que ver de un vistazo es que hay muchos. */
 .resenas-fondo {
   background: var(--color-fondo);
 }
@@ -10,15 +10,35 @@
 
 .resenas-pagina {
   width: 100%;
-  max-width: 700px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 16px;
 }
 
-/* ── Presentación ───────────────────────────────────────────────────────── */
-.presentacion {
-  margin-bottom: 32px;
+.tenue {
+  color: var(--color-texto-tenue);
+}
+
+.centrado {
   text-align: center;
+}
+
+/* ── Presentación ───────────────────────────────────────────────────────── */
+/* Dos columnas: de qué va esto, y la invitación a escribir la suya. La segunda
+   no baja al final de la página porque quien viene a contar lo suyo no tiene
+   por qué recorrerse los testimonios de los demás para encontrar el botón. */
+.presentacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.presentacion-texto {
+  flex: 1 1 420px;
+  max-width: 620px;
 }
 
 .marca {
@@ -49,7 +69,6 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
-  justify-content: center;
   margin: 10px 0;
   font-size: 17px;
 }
@@ -61,74 +80,254 @@
 }
 
 .entrada {
-  max-width: 52ch;
-  margin: 10px auto 0;
+  margin: 10px 0 0;
   color: var(--color-texto-suave);
 }
 
-.tenue {
-  color: var(--color-texto-tenue);
-}
-
-.centrado {
-  text-align: center;
-}
-
-/* ── Las reseñas ────────────────────────────────────────────────────────── */
-.lista {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.resena {
+/* La tarjeta de la derecha. Estrecha a propósito: es una invitación, no otra
+   sección de la página. */
+.invitacion {
+  flex: 0 1 300px;
   padding: 20px 22px;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
   border-radius: 14px;
 }
 
-.resena-estrellas {
-  margin: 0 0 8px;
-  font-size: 18px;
+.invitacion p {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.invitacion .boton {
+  width: 100%;
+}
+
+.escribir {
+  margin-bottom: 28px;
+}
+
+/* ── La barra de arriba: qué se está mirando y en qué orden ─────────────── */
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtro {
+  padding: 7px 16px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+}
+
+.filtro:hover {
+  color: var(--color-texto);
+}
+
+/* El activo, en negativo. Con el color del texto y no con el azul de marca: así
+   se invierte solo en el tema oscuro y sigue leyéndose. */
+.filtro.activo {
+  font-weight: 600;
+  color: var(--color-pagina);
+  background: var(--color-texto);
+  border-color: transparent;
+}
+
+.orden {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ── La rejilla ─────────────────────────────────────────────────────────── */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 18px;
+  align-items: start;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 20px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+/* La primera con video ocupa cuatro huecos: una grabación es el testimonio más
+   difícil de fingir, y en miniatura no se le ve la cara a nadie. */
+.tarjeta.grande {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.tarjeta-alto {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.estrellas {
+  margin: 0;
+  font-size: 16px;
   color: #e0a800;
   letter-spacing: -0.5px;
 }
 
-.resena blockquote {
-  margin: 0 0 12px;
-  font-size: 15.5px;
+/* Las estrellas que faltan, sin color: un cuatro sobre cinco tiene que verse
+   como un cuatro, no como cinco de otro tono. */
+.apagadas {
+  color: var(--color-borde-fuerte);
+}
+
+.destacada {
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  white-space: nowrap;
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+/* ── El video ───────────────────────────────────────────────────────────── */
+/* Con fondo oscuro y la imagen entera dentro: la mitad se graban con el móvil
+   en vertical, y recortarlas para que llenen la tarjeta le corta la cabeza a
+   quien está hablando. */
+.video {
+  position: relative;
+  margin-bottom: 12px;
+  overflow: hidden;
+  background: #0b1220;
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+}
+
+.tarjeta.grande .video {
+  aspect-ratio: 16 / 10;
+}
+
+.video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.play svg {
+  width: 30px;
+  height: 30px;
+  padding: 12px;
+  color: var(--color-primario);
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+  transition: transform 0.15s ease;
+}
+
+.play:hover svg {
+  transform: scale(1.06);
+}
+
+/* Cuánto dura, que es lo que pregunta quien duda si darle: no es lo mismo un
+   minuto que ocho. */
+.duracion {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  pointer-events: none;
+  background: rgb(0 0 0 / 65%);
+  border-radius: 6px;
+}
+
+/* ── El texto y la firma ────────────────────────────────────────────────── */
+.tarjeta blockquote {
+  margin: 0 0 14px;
+  font-size: 15px;
   line-height: 1.65;
   color: var(--color-texto);
 }
 
-.resena blockquote::before {
+.tarjeta.grande blockquote {
+  font-size: 16px;
+}
+
+.tarjeta blockquote::before {
   content: '«';
 }
 
-.resena blockquote::after {
+.tarjeta blockquote::after {
   content: '»';
 }
 
-.resena footer {
+/* La firma, pegada abajo: así todas las tarjetas de una fila la enseñan a la
+   misma altura aunque lo de arriba mida cosas distintas. */
+.tarjeta footer {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px 10px;
   align-items: baseline;
-  font-size: 13.5px;
+  justify-content: space-between;
+  margin-top: auto;
+  font-size: 13px;
 }
 
-/* La fecha empujada al otro extremo: es lo menos importante de la firma. */
-.resena-fecha {
-  margin-left: auto;
+.firma {
+  min-width: 0;
 }
 
-/* ── Sin ninguna, y la invitación del final ─────────────────────────────── */
-.vacio,
-.invitacion {
+.fecha {
+  white-space: nowrap;
+}
+
+/* ── Ver más ────────────────────────────────────────────────────────────── */
+.mas {
+  display: flex;
+  justify-content: center;
+  margin-top: 26px;
+}
+
+/* ── Sin ninguna todavía ────────────────────────────────────────────────── */
+.vacio {
   padding: 28px 24px;
   text-align: center;
   background: var(--color-superficie);
@@ -136,14 +335,7 @@
   border-radius: 14px;
 }
 
-.invitacion {
-  margin-top: 28px;
-  background: none;
-  border-style: dashed;
-}
-
-.vacio p,
-.invitacion p {
+.vacio p {
   margin: 0 0 12px;
 }
 
@@ -154,18 +346,28 @@
   justify-content: center;
 }
 
-@media (max-width: 620px) {
-  .resena-fecha {
-    margin-left: 0;
+@media (max-width: 900px) {
+  .rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Sigue ocupando el ancho, pero ya no dos filas: con dos columnas, el hueco
+     que dejaba al lado se quedaba vacío. */
+  .tarjeta.grande {
+    grid-row: span 1;
   }
 }
 
-/* El video del testimonio. A todo el ancho de la reseña, que la columna ya es
-   estrecha, y con fondo negro mientras carga. */
-.resena-video {
-  width: 100%;
-  max-height: 420px;
-  margin-bottom: 12px;
-  background: #000;
-  border-radius: 12px;
+@media (max-width: 620px) {
+  .rejilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tarjeta.grande {
+    grid-column: span 1;
+  }
+
+  .invitacion {
+    flex: 1 1 100%;
+  }
 }
