@@ -38,6 +38,27 @@
         </label>
       }
 
+      @case ('quitado') {
+        <h1>{{ textos().quitado }}</h1>
+        @if (mensaje()) {
+          <p>{{ mensaje() }}</p>
+        }
+
+        <div class="siguiente">
+          <strong>Ahora vuelve a tu conversación</strong> {{ textos().trasQuitar }}
+        </div>
+
+        <p class="nota">¿Te arrepentiste? Puedes volver a subir un formato aquí mismo.</p>
+        <label class="boton secundario otro">
+          Subir un formato
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            (change)="elegir($event)"
+          />
+        </label>
+      }
+
       @default {
         <h1>{{ textos().titulo }}</h1>
         <p>{{ textos().explicacion }}</p>
@@ -50,6 +71,40 @@
             }
             desde el {{ puesto.desde | date: 'd MMM y' }}. Si subes otro, lo reemplaza.
           </p>
+
+          <!-- Quitarlo es lo único que no se puede hacer desde el perfil, así que
+               va aquí: quien quiere volver al formato por defecto llega por este
+               mismo enlace. -->
+          <div class="quitar">
+            @if (confirmandoQuitar()) {
+              <p class="nota">
+                ¿Seguro? Tu Word volverá al formato por defecto y, si te arrepientes, tendrás que
+                subir el documento otra vez.
+              </p>
+              <div class="quitar-acciones">
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="paso() === 'quitando'"
+                  (click)="quitar()"
+                >
+                  {{ paso() === 'quitando' ? 'Quitando…' : 'Sí, quítalo' }}
+                </button>
+                <button
+                  type="button"
+                  class="boton enlace"
+                  [disabled]="paso() === 'quitando'"
+                  (click)="confirmandoQuitar.set(false)"
+                >
+                  Mejor no
+                </button>
+              </div>
+            } @else {
+              <button type="button" class="boton enlace" (click)="confirmandoQuitar.set(true)">
+                {{ textos().quitar }}
+              </button>
+            }
+          </div>
         }
 
         <label

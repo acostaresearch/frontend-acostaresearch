@@ -1,0 +1,18 @@
+/* Quitar el formato puesto, dentro de la página del enlace de Claude.
+
+   Va discreto y con confirmación: subir otro es lo normal, quitarlo del todo
+   es lo raro, y borra el que había. Lo demás de la página lo viste
+   `subir-datos.css`, que es el mismo tipo de pantalla. */
+.quitar {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin-top: -4px;
+}
+
+.quitar-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}

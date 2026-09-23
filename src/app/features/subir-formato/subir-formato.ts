@@ -7,7 +7,7 @@ import { FormatoPuesto, FormatoService } from '../../core/services/formato.servi
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
-type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
+type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'quitando' | 'quitado' | 'enlace-no-vale';
 
 /**
  * Subir el formato de la universidad, desde el enlace que da Claude.
@@ -16,12 +16,16 @@ type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
  * universidad le dio un formato y, si lo hay, le da el enlace a esta página: el
  * tesista sube el .docx y vuelve a la conversación. Copia la forma de
  * `subir-datos`, que es la misma idea para la matriz de R.
+ *
+ * También se quita desde aquí: el perfil no tiene dónde tocar el formato, así
+ * que este enlace es el único sitio de la web donde volver al formato por
+ * defecto sin pasar por Claude.
  */
 @Component({
   selector: 'app-subir-formato',
   imports: [AvisoFlotante, SiteHeader, DatePipe],
   templateUrl: './subir-formato.html',
-  styleUrl: '../subir-datos/subir-datos.css',
+  styleUrls: ['../subir-datos/subir-datos.css', './subir-formato.css'],
 })
 export class SubirFormato implements OnInit {
   private readonly api = inject(FormatoService);
@@ -40,6 +44,8 @@ export class SubirFormato implements OnInit {
   readonly deEmpresa = signal(false);
   /** Un artículo: la plantilla suele ser la de la revista. */
   readonly esArticulo = signal(false);
+  /** Pulsó «quitar» y se le está preguntando si va en serio: quitarlo borra el que subió. */
+  readonly confirmandoQuitar = signal(false);
 
   /** Los textos que cambian entre un informe de empresa, uno de curso y una tesis. */
   readonly textos = () =>
@@ -53,6 +59,10 @@ export class SubirFormato implements OnInit {
             'portada, que llenamos con los datos del informe.',
           hecho: 'La plantilla ya está puesta',
           siguiente: 'y dile «ya subí la plantilla». Tu próximo informe en Word saldrá con ella.',
+          quitado: 'La plantilla ya no se usa',
+          trasQuitar:
+            'y dile «ya quité la plantilla». Tu próximo informe en Word saldrá con el formato por defecto.',
+          quitar: 'Quitar la plantilla de la empresa',
         }
       : this.esArticulo()
       ? {
@@ -64,6 +74,10 @@ export class SubirFormato implements OnInit {
             'su pie de página.',
           hecho: 'Tu plantilla ya está puesta',
           siguiente: 'y di «ya subí la plantilla». Tu próximo Word del artículo saldrá con ella.',
+          quitado: 'Tu plantilla ya no se usa',
+          trasQuitar:
+            'y di «ya quité la plantilla». Tu próximo Word del artículo saldrá con el formato por defecto.',
+          quitar: 'Quitar la plantilla',
         }
       : this.esInforme()
       ? {
@@ -75,6 +89,10 @@ export class SubirFormato implements OnInit {
             'y su portada, que llenamos con tus datos.',
           hecho: 'Tu formato ya está puesto',
           siguiente: 'y dile «ya subí el formato». Tu próximo informe en Word saldrá con él.',
+          quitado: 'Tu formato ya no se usa',
+          trasQuitar:
+            'y dile «ya quité el formato». Tu próximo informe en Word saldrá con el formato por defecto.',
+          quitar: 'Quitar el formato del curso',
         }
       : {
           antetitulo: 'El formato de tu universidad · desde tu conversación',
@@ -85,6 +103,10 @@ export class SubirFormato implements OnInit {
             'portada, que llenamos con tus datos.',
           hecho: 'Tu formato ya está puesto',
           siguiente: 'y dile «ya subí mi formato». Tu próximo Word saldrá con él.',
+          quitado: 'Tu formato ya no se usa',
+          trasQuitar:
+            'y dile «ya quité mi formato». Tu próximo Word saldrá con el formato por defecto.',
+          quitar: 'Quitar el formato de mi universidad',
         };
 
   ngOnInit(): void {
@@ -141,6 +163,33 @@ export class SubirFormato implements OnInit {
       error: (e: unknown) => {
         // Los mensajes del servidor están escritos para el tesista: «eso es un
         // .doc antiguo, guárdalo como .docx».
+        this.error.set(mensajeDeError(e));
+        this.paso.set('elegir');
+      },
+    });
+  }
+
+  /**
+   * Quita el formato puesto y deja el Word en el de por defecto.
+   *
+   * Se pregunta antes porque no hay vuelta atrás: el documento que subió no se
+   * guarda entero, así que recuperarlo es volver a subirlo.
+   */
+  quitar(): void {
+    if (this.paso() === 'quitando') return;
+
+    this.confirmandoQuitar.set(false);
+    this.error.set(null);
+    this.mensaje.set(null);
+    this.paso.set('quitando');
+
+    this.api.quitar(this.token).subscribe({
+      next: (mensaje) => {
+        this.mensaje.set(mensaje);
+        this.anterior.set(null);
+        this.paso.set('quitado');
+      },
+      error: (e: unknown) => {
         this.error.set(mensajeDeError(e));
         this.paso.set('elegir');
       },

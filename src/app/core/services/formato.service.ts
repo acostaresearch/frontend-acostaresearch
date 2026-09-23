@@ -53,6 +53,18 @@ export class FormatoService {
       .pipe(map((res) => res.data));
   }
 
+  /**
+   * Quita el formato puesto: el Word vuelve al de por defecto.
+   *
+   * Va aquí y no en el perfil porque el perfil no tiene dónde tocar el formato:
+   * quien quiere quitarlo llega por este mismo enlace.
+   */
+  quitar(token: string): Observable<string> {
+    return this.http
+      .delete<ApiResponse<{ quitada: boolean }>>(`${this.base}/${encodeURIComponent(token)}`)
+      .pipe(map((res) => res.message ?? 'Formato quitado.'));
+  }
+
   /** El .docx va tal cual, como bytes; el nombre por cabecera, solo para enseñarlo luego. */
   subir(token: string, archivo: File): Observable<FormatoSubido> {
     return this.http
