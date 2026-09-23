@@ -52,8 +52,12 @@
                     >
                       <span [style.width.%]="restantePorciento()"></span>
                     </div>
+                    <!-- «7 de 10» al lado de una barra se lee como «has gastado 7».
+                         Es al revés: son los que QUEDAN. Se dice con el verbo
+                         delante para que no haya que adivinarlo. -->
                     <p class="cupo-texto">
-                      <strong>{{ datos.cupo.restantes }}</strong> de {{ datos.cupo.total }} este mes
+                      Te quedan <strong>{{ datos.cupo.restantes }}</strong> de
+                      {{ datos.cupo.total }} este mes
                     </p>
                   </div>
                 } @else {
