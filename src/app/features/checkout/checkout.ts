@@ -208,6 +208,24 @@ export class Checkout implements OnInit {
    * de cinco cosas que hay que comparar.
    */
   readonly membresias = computed(() => this.planes().filter((p) => p.kind === 'DOCUMENTO'));
+
+  /**
+   * Si «Preparar documento» se vende o no.
+   *
+   * APAGADO EL 22-SEP-2026, a propósito y de forma temporal. La clave de Gemini
+   * está en el plan gratuito y se agota: un manuscrito de doce mil palabras no
+   * cabe en veinte peticiones al día, y los clientes de esta tarde recibieron
+   * «no lo terminamos» uno detrás de otro. Vender una membresía que no se puede
+   * cumplir es cobrar por algo que no se entrega.
+   *
+   * PARA VOLVER A VENDERLO: activar la facturación de la clave en Google AI
+   * Studio y poner esto en `true`. No hay nada más que deshacer; el producto
+   * entero sigue en pie y quien ya tiene membresía lo sigue usando.
+   *
+   * No se comenta el bloque de la plantilla porque dentro lleva comentarios
+   * HTML, y anidarlos deja la página rota sin avisar.
+   */
+  readonly seVendePreparar = false;
   readonly esLicencia = computed(() => this.seleccionado()?.kind === 'LICENSE');
   readonly comprado = computed(
     () =>

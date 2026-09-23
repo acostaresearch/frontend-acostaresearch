@@ -345,12 +345,11 @@
       <!-- Bloque aparte del método a propósito: es otro producto, y quien
            viene a por el conector de tesis no está eligiendo entre eso y una
            traducción. Ver `membresias` en el componente. -->
-      @if (membresias().length > 0) {
+      @if (seVendePreparar && membresias().length > 0) {
         <h2 class="grupo">Preparar documento</h2>
         <p class="grupo-entrada">
-          Subes tu Word y te lo devolvemos: corregido en inglés académico, traducido o con su
-          resumen y su abstract. Lo hace una IA y hay que revisarlo, como todo lo que sale de
-          aquí.
+          Subes tu Word y te lo devolvemos: corregido en inglés académico o traducido a cuatro
+          idiomas. Lo hace una IA y hay que revisarlo, como todo lo que sale de aquí.
         </p>
         <div class="rejilla-planes" [class.varios]="membresias().length > 1">
           @for (plan of membresias(); track plan.code; let i = $index) {
