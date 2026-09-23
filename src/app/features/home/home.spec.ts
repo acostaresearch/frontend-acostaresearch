@@ -44,7 +44,17 @@ describe('Home · banda de saludo', () => {
         data: { plans: [] },
       });
 
+    // Las reseñas destacadas de la banda de «Lo que dicen», por lo mismo.
+    responderResenas([]);
+
     return fixture.componentInstance;
+  }
+
+  /** Las reseñas de la portada. Vacías salvo que una prueba diga otra cosa. */
+  function responderResenas(resenas: unknown[], total = resenas.length, nota: number | null = null) {
+    http
+      .expectOne((peticion) => peticion.url.includes('/resenas'))
+      .flush({ success: true, data: { resenas, total, nota } });
   }
 
   /** La consulta de licencias, que solo se hace para quien no es administrador. */
@@ -100,5 +110,76 @@ describe('Home · banda de saludo', () => {
       .flush(null, { status: 500, statusText: 'Server Error' });
 
     expect(home.saludo()).toBe('cliente');
+  });
+});
+
+/**
+ * La banda de «Lo que dicen».
+ *
+ * Lo que se prueba son las dos reglas que la hacen creíble: que no se pinte
+ * con las manos vacías, y que el «4,8 de 5» no se anuncie con dos reseñas
+ * detrás, donde eso no es una media sino una coincidencia.
+ */
+describe('Home · reseñas de la portada', () => {
+  let http: HttpTestingController;
+
+  /** Monta la portada y contesta a las dos consultas que hace siempre. */
+  function montarCon(resenas: unknown[], total: number, nota: number | null): Home {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+
+    http
+      .expectOne((peticion) => peticion.url.endsWith('/billing/plans'))
+      .flush({ success: true, data: { plans: [] } });
+    http
+      .expectOne((peticion) => peticion.url.includes('/resenas'))
+      .flush({ success: true, data: { resenas, total, nota } });
+
+    return fixture.componentInstance;
+  }
+
+  const resena = (id: string) => ({
+    id,
+    estrellas: 5,
+    comentario: 'Terminé el capítulo IV en una semana.',
+    nombre: 'Ana Q.',
+    oficio: '',
+    createdAt: '2026-09-01T00:00:00.000Z',
+  });
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [Home],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(AuthService).setUser(null);
+  });
+
+  afterEach(() => http.verify());
+
+  it('sin ninguna destacada no hay banda que pintar', () => {
+    const home = montarCon([], 0, null);
+    expect(home.resenas().length).toBe(0);
+    expect(home.resumenDeResenas()).toBeNull();
+  });
+
+  it('no anuncia una media con dos reseñas detrás', () => {
+    const home = montarCon([resena('r1'), resena('r2')], 2, 5);
+    expect(home.resenas().length).toBe(2);
+    expect(home.resumenDeResenas()).toBeNull();
+  });
+
+  it('a partir de cinco sí la anuncia, y es la de todas las aprobadas', () => {
+    // Tres destacadas en la banda, pero la media sale de las doce aprobadas.
+    const home = montarCon([resena('r1'), resena('r2'), resena('r3')], 12, 4.8);
+    expect(home.resumenDeResenas()).toEqual({ media: 4.8, total: 12 });
+  });
+
+  it('la portada enseña tres como mucho, vengan las que vengan', () => {
+    const cinco = ['r1', 'r2', 'r3', 'r4', 'r5'].map(resena);
+    const home = montarCon(cinco, 20, 4.9);
+    expect(home.resenas().length).toBe(3);
   });
 });

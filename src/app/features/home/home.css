@@ -923,3 +923,101 @@
 :host-context([data-tema='oscuro']) .camino-tapa-noche {
   background: linear-gradient(180deg, #1a2540, #172038);
 }
+
+/* ── Lo que dicen ──────────────────────────────────────────────────────────
+   Tres tarjetas pegadas al hero, antes del precio. En móvil caen a una
+   columna: a dos, el texto de una reseña se parte cada cuatro palabras.
+
+   LA BANDA VA EN BLANCO, así que las tarjetas se invierten: rellenas de gris
+   y sin borde, al revés que las del resto del sitio. Blancas sobre blanco solo
+   se distingue el borde, y tres cajas de línea fina seguidas no se leen como
+   testimonios, se leen como una tabla. El gris tampoco podía ir en la banda:
+   justo debajo está «Elige tu plan», que ya es gris, y los dos juntos se ven
+   como un único bloque sin principio ni final. */
+
+.resenas-banda .cab {
+  text-align: center;
+}
+
+.resenas-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: center;
+  margin: 12px 0 0;
+  font-size: 16px;
+}
+
+.resenas-estrellas {
+  font-size: 20px;
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.resenas-tenue {
+  color: var(--color-texto-tenue);
+}
+
+.resenas-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 1080px;
+  padding: 0;
+  margin: 28px auto 0;
+  list-style: none;
+}
+
+.resena-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 24px;
+  background: var(--color-fondo);
+  border-radius: 14px;
+}
+
+.resena-tarjeta-estrellas {
+  margin: 0;
+  font-size: 17px;
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.resena-tarjeta blockquote {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--color-texto);
+}
+
+.resena-tarjeta blockquote::before {
+  content: '«';
+}
+
+.resena-tarjeta blockquote::after {
+  content: '»';
+}
+
+/* La firma en dos renglones: el nombre pesa y el oficio acompaña. En una sola
+   línea, un «Tesista de maestría · Educación» largo empujaba al nombre. */
+.resena-tarjeta footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+}
+
+.resenas-pie {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .resenas-tarjetas {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+  }
+}

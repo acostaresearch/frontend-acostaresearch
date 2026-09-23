@@ -1,0 +1,139 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+
+@if (!cargando()) {
+  <!-- ── Lo que ya dejó ──────────────────────────────────────────────────────
+       Con su estado a la vista. Quien envía cinco estrellas y no las ve salir
+       en la web da por hecho que se perdieron: aquí se le dice en qué punto
+       está, y si se rechazó, por qué. -->
+  @if (mia(); as r) {
+    @if (!editando()) {
+      <div class="resena-mia">
+        <p class="resena-estrellas">{{ estrellas(r.estrellas) }}</p>
+        <p class="resena-texto">«{{ r.comentario }}»</p>
+        <p class="nota">
+          Firmada como <b>{{ r.nombre }}</b
+          >@if (r.oficio) { <span>, {{ r.oficio }}</span> }
+        </p>
+
+        <p class="resena-estado" [class]="'estado-' + r.estado.toLowerCase()">
+          {{ nombreDelEstado[r.estado] }}
+          @if (r.destacada) {
+            <span class="resena-portada">Sale en la portada</span>
+          }
+        </p>
+
+        @switch (r.estado) {
+          @case ('PENDIENTE') {
+            <p class="nota">
+              La leemos antes de publicarla. Mientras tanto no se ve en ningún sitio de la web.
+            </p>
+          }
+          @case ('RECHAZADA') {
+            <p class="nota">
+              No la publicamos.
+              @if (r.motivo) {
+                <span class="resena-motivo">{{ r.motivo }}</span>
+              }
+              Puedes cambiarla y volver a enviarla.
+            </p>
+          }
+        }
+
+        <button type="button" class="boton secundario" (click)="editar()">
+          Cambiar mi reseña
+        </button>
+      </div>
+    }
+  }
+
+  <!-- ── Escribirla ────────────────────────────────────────────────────────── -->
+  @if (editando()) {
+    <div class="resena-formulario">
+      @if (!mia()) {
+        <p class="nota">
+          Cuenta cómo te fue de verdad: para qué lo usaste, qué te sirvió y qué esperabas y no
+          encontraste. Lo que ayuda al siguiente tesista es lo concreto.
+        </p>
+      }
+
+      <div class="poner-estrellas" role="group" aria-label="Estrellas">
+        @for (n of [1, 2, 3, 4, 5]; track n) {
+          <button
+            type="button"
+            class="estrella"
+            [class.puesta]="n <= puestas()"
+            [attr.aria-label]="n + ' de 5'"
+            [attr.aria-pressed]="n === puestas()"
+            (click)="poner(n)"
+          >
+            ★
+          </button>
+        }
+      </div>
+
+      <label class="resena-campo">
+        <span>Tu reseña</span>
+        <textarea
+          rows="5"
+          [attr.maxlength]="maximo"
+          placeholder="Llegué sin saber qué investigar y en tres semanas tenía el marco teórico con mis propias fuentes…"
+          [value]="comentario()"
+          (input)="escribir($event, 'comentario')"
+        ></textarea>
+        <!-- Cuántas faltan, no cuántas van: lo que bloquea el botón es el
+             mínimo, así que es el mínimo lo que hay que enseñar. -->
+        <small class="resena-cuenta">
+          @if (faltan() > 0) {
+            Escribe {{ faltan() }} caracteres más.
+          } @else {
+            {{ comentario().trim().length }} de {{ maximo }}
+          }
+        </small>
+      </label>
+
+      <div class="resena-firma">
+        <label class="resena-campo">
+          <span>Con qué nombre sale</span>
+          <input
+            type="text"
+            maxlength="120"
+            autocomplete="off"
+            [value]="nombre()"
+            (input)="escribir($event, 'nombre')"
+          />
+          <small>Puedes poner solo tu nombre y la inicial. Tu correo no sale nunca.</small>
+        </label>
+
+        <label class="resena-campo">
+          <span>Qué haces <i>(opcional)</i></span>
+          <input
+            type="text"
+            maxlength="120"
+            autocomplete="off"
+            placeholder="Tesista de maestría · Educación"
+            [value]="oficio()"
+            (input)="escribir($event, 'oficio')"
+          />
+          <small>Ayuda a quien lee a saber si se parece a su caso.</small>
+        </label>
+      </div>
+
+      <div class="resena-acciones">
+        <button type="button" class="boton" [disabled]="!puedeEnviar()" (click)="enviar()">
+          {{ guardando() ? 'Enviando…' : mia() ? 'Guardar los cambios' : 'Enviar mi reseña' }}
+        </button>
+        @if (mia()) {
+          <button type="button" class="boton secundario" (click)="cancelar()">Cancelar</button>
+        }
+      </div>
+
+      <p class="nota resena-pie">
+        @if (mia()) {
+          Al cambiarla vuelve a pasar por revisión, así que dejará de verse hasta que la aprobemos.
+        } @else {
+          La revisamos antes de publicarla. No se ve en la web hasta entonces.
+        }
+      </p>
+    </div>
+  }
+}

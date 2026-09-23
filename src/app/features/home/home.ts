@@ -7,6 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
+import {
+  ResenaPublica,
+  ResenaService,
+  estrellas,
+  nota,
+} from '../../core/services/resena.service';
 import { TourService } from '../../core/services/tour.service';
 import { TOUR_WEB } from '../../shared/contenido/tour-de-la-web';
 import {
@@ -42,6 +48,7 @@ import { HeroNetwork } from './hero-network/hero-network';
 export class Home implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly licencias = inject(LicenseService);
+  private readonly resenasApi = inject(ResenaService);
   private readonly tour = inject(TourService);
   private readonly recorrido = inject(RecorridoWeb);
   protected readonly auth = inject(AuthService);
@@ -53,6 +60,36 @@ export class Home implements OnInit {
 
   readonly nombre = this.auth.fullName;
   readonly planes = signal<Plan[]>([]);
+
+  readonly estrellas = estrellas;
+  readonly nota = nota;
+
+  /**
+   * Las reseñas destacadas, con su resumen.
+   *
+   * Solo las que se eligen a mano desde el panel: la portada tiene sitio para
+   * tres o cuatro, no para todas. Las demás están en /resenas, que es lo que
+   * hace que estas se puedan creer.
+   *
+   * Sin ninguna destacada, la banda entera no se pinta. Un apartado de
+   * testimonios vacío —o con una sola reseña— dice justo lo contrario de lo
+   * que va a decir.
+   */
+  readonly resenas = signal<ResenaPublica[]>([]);
+  private readonly totalResenas = signal(0);
+  private readonly mediaResenas = signal<number | null>(null);
+
+  /**
+   * El «4,8 de 5», solo con unas cuantas detrás.
+   *
+   * Con dos reseñas eso no es una media, es una coincidencia con aspecto de
+   * dato. Mismo criterio que la nota de los asesores.
+   */
+  readonly resumenDeResenas = computed(() => {
+    const media = this.mediaResenas();
+    if (media === null || this.totalResenas() < 5) return null;
+    return { media, total: this.totalResenas() };
+  });
 
   /**
    * Si quien mira tiene conector. Nulo mientras no ha contestado el servidor.
@@ -112,11 +149,11 @@ export class Home implements OnInit {
         subtitulo: 'Si tienes que sustentar · pregrado, maestría o doctorado',
         destacado: 'El más elegido',
         texto:
-          'De «no sé qué investigar» al abstract, capítulo por capítulo, con tus fuentes.',
+          'De "no sé qué investigar" al abstract, capítulo por capítulo, con tus fuentes.',
         fases: FASES_TESIS,
         incluye: [
           'Tu tesis en un solo Word, en la norma que te pidan',
-          'Con tus fuentes: Scopus, PDF o Zotero',
+          'Con tus fuentes: Scopus, PDF, Zotero y más',
           'Análisis en R',
           'Videos guía',
         ],
@@ -156,6 +193,16 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
+
+    // Si falla, la banda no se pinta y la portada sigue entera: son opiniones,
+    // no el precio.
+    this.resenasApi.publicas(true).subscribe({
+      next: ({ resenas, total, nota }) => {
+        this.resenas.set(resenas.slice(0, 3));
+        this.totalResenas.set(total);
+        this.mediaResenas.set(nota);
+      },
+    });
 
     if (this.auth.isAuthenticated() && !this.auth.hasRole('ADMIN')) {
       this.licencias.mine().subscribe({

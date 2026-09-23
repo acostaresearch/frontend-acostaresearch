@@ -1,0 +1,180 @@
+<section class="tarjeta">
+  <h2>Reseñas del servicio</h2>
+  <p class="nota">
+    Las escriben clientes con cuenta desde su perfil. <strong>Ninguna se publica sola</strong>:
+    aquí se aprueban. Aprobar la deja leer en <strong>/resenas</strong>; destacar la sube además a
+    la portada, donde hay sitio para tres.
+    @if (destacadas() > 0) {
+      Ahora mismo hay <strong>{{ destacadas() }}</strong> en la portada.
+    }
+  </p>
+
+  <div class="filtros" role="group" aria-label="Filtrar reseñas">
+    @for (f of filtros; track f.clave) {
+      <button
+        type="button"
+        class="filtro"
+        [class.activo]="filtro() === f.clave"
+        (click)="filtro.set(f.clave)"
+      >
+        {{ f.nombre }}
+        <span class="filtro-cuenta">{{ cuantas()[f.clave] }}</span>
+      </button>
+    }
+  </div>
+
+  @if (visibles().length === 0) {
+    <p class="vacio">
+      @if (filtro() === 'PENDIENTE') {
+        No hay ninguna esperando.
+      } @else {
+        No hay ninguna aquí.
+      }
+    </p>
+  } @else {
+    <ul class="lista">
+      @for (r of visibles(); track r.id) {
+        <li>
+          <div class="datos">
+            <p class="titulo">
+              <span class="estrellas">{{ estrellas(r.estrellas) }}</span>
+              {{ r.nombre }}
+              @if (r.destacada) {
+                <span class="marca-portada">En portada</span>
+              }
+            </p>
+            <p class="tenue">
+              {{ fecha(r.createdAt) }} · {{ r.user.firstName }} {{ r.user.lastName }} ·
+              {{ r.user.email }}
+            </p>
+            <p class="adelanto">{{ r.comentario }}</p>
+          </div>
+
+          <span class="estado" [class]="'estado-' + r.estado.toLowerCase()">
+            {{ nombreDelEstado[r.estado] }}
+          </span>
+
+          <button type="button" class="boton secundario" (click)="abrir(r)">Leerla</button>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (abierta(); as r) {
+  <div class="fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-resena">
+      <div class="ventana-cabecera">
+        <div>
+          <h3 id="titulo-resena">{{ r.nombre }}</h3>
+          <p class="tenue">
+            {{ r.user.firstName }} {{ r.user.lastName }} · {{ r.user.email }} ·
+            {{ fecha(r.createdAt) }}
+            @if (r.revisadaAt) {
+              · revisada el {{ fecha(r.revisadaAt) }}
+            }
+          </p>
+        </div>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrar()">✕</button>
+      </div>
+
+      <p class="estrellas estrellas-grandes">{{ estrellas(r.estrellas) }}</p>
+      <blockquote class="texto-resena">{{ r.comentario }}</blockquote>
+
+      <dl>
+        <dt>Sale firmada como</dt>
+        <dd>
+          {{ r.nombre }}
+          @if (r.oficio) {
+            · {{ r.oficio }}
+          } @else {
+            <span class="tenue">(sin oficio)</span>
+          }
+        </dd>
+        <dt>Estado</dt>
+        <dd>
+          {{ nombreDelEstado[r.estado] }}
+          @if (r.destacada) {
+            · en la portada
+          }
+        </dd>
+      </dl>
+
+      <!-- El motivo, arriba de los botones: es lo que va a leer quien la
+           escribió, y tiene que estar escrito ANTES de pulsar «No publicar». -->
+      <label class="campo-motivo">
+        <span>Si no la publicas, dile por qué</span>
+        <textarea
+          rows="3"
+          maxlength="500"
+          placeholder="Cuenta algo concreto de tu experiencia: para qué lo usaste y qué te sirvió."
+          [value]="motivo()"
+          (input)="escribirMotivo($event)"
+        ></textarea>
+        <small>Lo lee en su perfil, tal cual. Puede cambiar su reseña y volver a enviarla.</small>
+      </label>
+
+      <app-aviso-flotante [(error)]="error" />
+
+      <div class="acciones-resena">
+        @if (r.estado !== 'APROBADA') {
+          <button
+            type="button"
+            class="boton"
+            [disabled]="guardando()"
+            (click)="aprobar(r, false)"
+          >
+            Publicar
+          </button>
+          <button
+            type="button"
+            class="boton secundario"
+            [disabled]="guardando()"
+            (click)="aprobar(r, true)"
+          >
+            Publicar y destacar
+          </button>
+        } @else {
+          @if (r.destacada) {
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="guardando()"
+              (click)="destacar(r, false)"
+            >
+              Quitar de la portada
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="boton"
+              [disabled]="guardando()"
+              (click)="destacar(r, true)"
+            >
+              Subir a la portada
+            </button>
+          }
+          <button
+            type="button"
+            class="boton secundario"
+            [disabled]="guardando()"
+            (click)="retirar(r)"
+          >
+            Retirar de la web
+          </button>
+        }
+
+        @if (r.estado !== 'RECHAZADA') {
+          <button
+            type="button"
+            class="boton peligro"
+            [disabled]="guardando()"
+            (click)="rechazar(r)"
+          >
+            No publicar
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

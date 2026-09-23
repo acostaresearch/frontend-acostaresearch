@@ -58,6 +58,8 @@ import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
 import { ReclamosAdmin } from './reclamos';
+import { ResenasAdmin } from './resenas';
+import { ResenaDelPanel, ResenaService } from '../../core/services/resena.service';
 import { AsesoresAdmin } from './asesores';
 import { Asesor, AsesorService } from '../../core/services/asesor.service';
 import { PedidosAdmin } from './pedidos';
@@ -71,6 +73,7 @@ type Seccion =
   | 'licencias'
   | 'alertas'
   | 'reclamos'
+  | 'resenas'
   | 'asesores'
   | 'pedidos'
   | 'corpus'
@@ -123,6 +126,12 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota:
       'Las hojas que llegan desde la web. Hay que responder cada una en 15 días hábiles: el plazo ' +
       'es improrrogable y no responder es sancionable.',
+  },
+  resenas: {
+    titulo: 'Reseñas',
+    nota:
+      'Lo que opinan los clientes del método, escrito desde su perfil. Ninguna se publica sola: ' +
+      'aprobarla la deja leer en /resenas, y destacarla la sube además a la portada.',
   },
   pedidos: {
     titulo: 'Revisiones',
@@ -301,6 +310,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     AjustesDeCuenta,
     MiConector,
     ReclamosAdmin,
+    ResenasAdmin,
     AsesoresAdmin,
     PedidosAdmin,
     AvisoFlotante,
@@ -1082,6 +1092,10 @@ export class Admin implements OnInit {
     // Las fichas de asesor, por lo mismo: el contador lateral es lo que avisa de
     // que hay alguien esperando respuesta sin tener que abrir la sección.
     this.cargarAsesores(false);
+
+    // Y las reseñas: no tienen plazo legal, pero mientras no se apruebe una no
+    // se ve en ninguna parte, y quien la escribió está esperándola.
+    this.cargarResenas(false);
 
     // Y los pedidos, por lo mismo: un capítulo esperando sin asignar es alguien
     // mirando su seguimiento sin que se mueva nada.
@@ -2110,6 +2124,9 @@ export class Admin implements OnInit {
       case 'reclamos':
         this.cargarReclamos();
         break;
+      case 'resenas':
+        this.cargarResenas();
+        break;
       case 'asesores':
         this.cargarAsesores();
         break;
@@ -2499,6 +2516,8 @@ export class Admin implements OnInit {
     // Cada vez: una hoja nueva puede haber llegado mientras se miraba otra cosa.
     if (seccion === 'reclamos') this.cargarReclamos();
 
+    if (seccion === 'resenas') this.cargarResenas();
+
     // Lo mismo con las fichas de asesor: el enlace está repartido y llegan solas.
     if (seccion === 'asesores') this.cargarAsesores();
 
@@ -2862,6 +2881,34 @@ export class Admin implements OnInit {
   reclamoRespondido(mensaje: string): void {
     this.aviso.set(mensaje);
     this.cargarReclamos();
+  }
+
+  // ── Reseñas del servicio ─────────────────────────────────────────────────
+  //
+  // La lista y el contador viven aquí; pintarla, filtrarla y decidir, en
+  // `ResenasAdmin`. La lista llega entera y allí se filtra: son pocas y así las
+  // pestañas cambian sin un viaje al servidor por cada clic.
+
+  private readonly resenasApi = inject(ResenaService);
+
+  readonly resenas = signal<ResenaDelPanel[]>([]);
+  readonly resenasPendientes = computed(
+    () => this.resenas().filter((r) => r.estado === 'PENDIENTE').length,
+  );
+
+  /** `avisarSiFalla` en false al entrar, igual que las hojas del libro. */
+  cargarResenas(avisarSiFalla = true): void {
+    this.resenasApi.listar('TODAS').subscribe({
+      next: ({ resenas }) => this.resenas.set(resenas),
+      error: (e: unknown) => {
+        if (avisarSiFalla) this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
+  resenaCambiada(mensaje: string): void {
+    this.aviso.set(mensaje);
+    this.cargarResenas();
   }
 
   // ── Asesores ─────────────────────────────────────────────────────────────

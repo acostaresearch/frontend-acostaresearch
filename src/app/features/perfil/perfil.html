@@ -245,6 +245,20 @@
         <app-ajustes-de-cuenta panel="datos" />
       </section>
 
+      <!-- Su reseña del servicio. Al final y no arriba: quien entra al perfil
+           viene a ver su conector o a cambiar su contraseña, y lo que se le
+           pide de favor no puede ocupar el sitio de lo que vino a hacer. -->
+      <!-- El id es el destino de «Escribir mi reseña» desde /resenas: sin él,
+           ese enlace dejaba al cliente arriba del perfil buscando dónde. -->
+      <section id="mi-resena" class="tarjeta tramo-3">
+        <h2>Tu reseña</h2>
+        <p class="nota">
+          Cuenta cómo te fue con el método. Lo que escribas puede salir en la web, con el nombre
+          que tú elijas y sin tu correo.
+        </p>
+        <app-mi-resena />
+      </section>
+
       <section class="tarjeta tramo-3">
         <h2>Contraseña</h2>
         <p class="nota">

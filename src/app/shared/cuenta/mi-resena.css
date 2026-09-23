@@ -1,0 +1,174 @@
+/* ── Las estrellas ──────────────────────────────────────────────────────────
+   Las mismas que en el seguimiento de una revisión, a propósito: el gesto de
+   poner una nota es el mismo en los dos sitios y no tiene por qué verse de dos
+   formas distintas. */
+
+.poner-estrellas {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 16px;
+}
+
+.estrella {
+  padding: 2px 4px;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--color-borde-fuerte);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.estrella.puesta,
+.estrella:hover {
+  color: #e0a800;
+}
+
+/* ── La que ya dejó ─────────────────────────────────────────────────────── */
+
+.resena-mia {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.resena-estrellas {
+  margin: 0;
+  font-size: 24px;
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.resena-texto {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-texto);
+}
+
+/* El estado, con su color. Es lo primero que se busca al volver aquí. */
+.resena-estado {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin: 2px 0;
+  padding: 4px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.estado-pendiente {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.estado-aprobada {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.estado-rechazada {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.resena-portada {
+  padding-left: 8px;
+  font-weight: 500;
+  border-left: 1px solid currentcolor;
+}
+
+/* Lo que escribió el administrador al rechazarla. Entrecomillado para que se
+   lea como lo que es: alguien contestando, no un error del sistema. */
+.resena-motivo {
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  color: var(--color-texto);
+}
+
+.resena-motivo::before {
+  content: '«';
+}
+
+.resena-motivo::after {
+  content: '»';
+}
+
+/* ── El formulario ──────────────────────────────────────────────────────── */
+
+.resena-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resena-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.resena-campo > span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.resena-campo > span i {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
+.resena-campo small {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.resena-campo textarea,
+.resena-campo input {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-sobre-relleno);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+}
+
+.resena-campo textarea {
+  resize: vertical;
+}
+
+.resena-cuenta {
+  align-self: flex-end;
+}
+
+/* Dos columnas en escritorio, una en móvil: son dos campos cortos y en una
+   sola columna estiraban el formulario media pantalla de más. */
+.resena-firma {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.resena-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.resena-pie {
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .resena-firma {
+    grid-template-columns: 1fr;
+  }
+}

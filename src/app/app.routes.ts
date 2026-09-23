@@ -50,6 +50,14 @@ export const routes: Routes = [
     title: 'Guías en PDF · Acosta Research',
     loadComponent: () => import('./features/guias/guias').then((m) => m.Guias),
   },
+  // Todas las reseñas aprobadas. Aparte de la portada a propósito: allí salen
+  // tres o cuatro elegidas a mano, y esta página es la que hace que aquellas se
+  // puedan creer. Pública, como todo lo que se enseña antes de comprar.
+  {
+    path: 'resenas',
+    title: 'Reseñas de quienes ya lo usaron · Acosta Research',
+    loadComponent: () => import('./features/resenas/resenas').then((m) => m.Resenas),
+  },
   {
     path: 'quien-soy',
     title: 'Quién te acompaña · Acosta Research',

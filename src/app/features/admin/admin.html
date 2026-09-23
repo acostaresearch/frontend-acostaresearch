@@ -59,6 +59,12 @@
           <span class="lateral-contador">{{ reclamosPendientes() }}</span>
         }
       </button>
+      <button type="button" [class.activa]="seccion() === 'resenas'" (click)="ir('resenas')">
+        <span>Reseñas</span>
+        @if (resenasPendientes() > 0) {
+          <span class="lateral-contador">{{ resenasPendientes() }}</span>
+        }
+      </button>
 
       <p class="lateral-grupo">User</p>
       <!-- <button type="button" [class.activa]="seccion() === 'pedidos'" (click)="ir('pedidos')">
@@ -2399,6 +2405,13 @@
        En su propio componente: ver la nota de `ReclamosAdmin`. -->
     @if (seccion() === 'reclamos') {
       <app-reclamos-admin [reclamos]="reclamos()" (respondido)="reclamoRespondido($event)" />
+    }
+
+    <!-- ══ RESEÑAS DEL SERVICIO ═══════════════════════════════════════════════
+       Lo que opinan los clientes del método. Ninguna se ve en la web hasta que
+       se aprueba aquí. En su propio componente: ver la nota de `ResenasAdmin`. -->
+    @if (seccion() === 'resenas') {
+      <app-resenas-admin [resenas]="resenas()" (cambiada)="resenaCambiada($event)" />
     }
 
     <!-- ══ ASESORES ═══════════════════════════════════════════════════════════

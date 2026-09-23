@@ -1,0 +1,161 @@
+/* Una columna estrecha sobre el gris del sitio, como /guias: son textos para
+ * leer seguidos, y a todo el ancho la vista se pierde de renglón en renglón. */
+.resenas-fondo {
+  background: var(--color-fondo);
+}
+
+.seccion {
+  padding: 52px 0 72px;
+}
+
+.resenas-pagina {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── Presentación ───────────────────────────────────────────────────────── */
+.presentacion {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.marca {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #96590d;
+  background: var(--color-aviso-suave);
+  border: 1px solid color-mix(in srgb, #e0a800 35%, transparent);
+  border-radius: 999px;
+}
+
+.marca svg {
+  width: 12px;
+  height: 12px;
+}
+
+.presentacion h1 {
+  margin: 14px 0 6px;
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: center;
+  margin: 10px 0;
+  font-size: 17px;
+}
+
+.resumen-estrellas {
+  font-size: 22px;
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.entrada {
+  max-width: 52ch;
+  margin: 10px auto 0;
+  color: var(--color-texto-suave);
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+}
+
+.centrado {
+  text-align: center;
+}
+
+/* ── Las reseñas ────────────────────────────────────────────────────────── */
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.resena {
+  padding: 20px 22px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.resena-estrellas {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #e0a800;
+  letter-spacing: -0.5px;
+}
+
+.resena blockquote {
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--color-texto);
+}
+
+.resena blockquote::before {
+  content: '«';
+}
+
+.resena blockquote::after {
+  content: '»';
+}
+
+.resena footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 13.5px;
+}
+
+/* La fecha empujada al otro extremo: es lo menos importante de la firma. */
+.resena-fecha {
+  margin-left: auto;
+}
+
+/* ── Sin ninguna, y la invitación del final ─────────────────────────────── */
+.vacio,
+.invitacion {
+  padding: 28px 24px;
+  text-align: center;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.invitacion {
+  margin-top: 28px;
+  background: none;
+  border-style: dashed;
+}
+
+.vacio p,
+.invitacion p {
+  margin: 0 0 12px;
+}
+
+.vacio-salidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+@media (max-width: 620px) {
+  .resena-fecha {
+    margin-left: 0;
+  }
+}

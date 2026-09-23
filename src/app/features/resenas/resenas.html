@@ -1,0 +1,86 @@
+<app-site-header />
+
+<main class="pagina resenas-fondo">
+  <section class="seccion">
+    <div class="resenas-pagina">
+      <header class="presentacion">
+        <p class="marca">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M8 1.5 9.9 5.6l4.5.6-3.3 3.1.8 4.4L8 11.6 4.1 13.7l.8-4.4L1.6 6.2l4.5-.6z"
+              fill="currentColor"
+            />
+          </svg>
+          Reseñas
+        </p>
+        <h1>Lo que dicen quienes ya lo usaron</h1>
+
+        @if (hayResumen()) {
+          <p class="resumen">
+            <span class="resumen-estrellas" aria-hidden="true">{{ estrellas(media()!) }}</span>
+            <b>{{ nota(media()!) }} de 5</b>
+            <span class="tenue">sobre {{ total() }} reseñas</span>
+          </p>
+        }
+
+        <p class="entrada">
+          Las escriben clientes con cuenta y las leemos una por una antes de publicarlas. No
+          pagamos por ninguna ni las editamos.
+        </p>
+      </header>
+
+      @if (cargando()) {
+        <p class="nota centrado">Cargando…</p>
+      } @else if (resenas().length === 0) {
+        <!-- Sin ninguna todavía, la página no finge. Y no deja a nadie en un
+             callejón: las demostraciones son lo que venía a ver quien entró
+             aquí buscando pruebas. -->
+        <div class="vacio">
+          <p><b>Todavía no hay reseñas publicadas.</b></p>
+          <p class="nota">
+            Las primeras están al caer. Mientras tanto, puedes ver el método trabajando de verdad,
+            sin cortes.
+          </p>
+          <div class="vacio-salidas">
+            <a class="boton" routerLink="/en-accion">Míralo en acción</a>
+            <a class="boton secundario" routerLink="/metodo">Ver las 11 Skills</a>
+          </div>
+        </div>
+      } @else {
+        <ul class="lista">
+          @for (r of resenas(); track r.id) {
+            <li class="resena">
+              <p class="resena-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
+                <span aria-hidden="true">{{ estrellas(r.estrellas) }}</span>
+              </p>
+              <blockquote>{{ r.comentario }}</blockquote>
+              <footer>
+                <b>{{ r.nombre }}</b>
+                @if (r.oficio) {
+                  <span class="tenue">· {{ r.oficio }}</span>
+                }
+                <span class="tenue resena-fecha">{{ cuando(r.createdAt) }}</span>
+              </footer>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- La invitación a escribir, al final: se la lee quien acaba de pasar
+           por todas y sigue ahí. A quien no tiene cuenta no se le pide que se
+           registre para opinar de algo que no ha usado; se le lleva a ver el
+           método. -->
+      <div class="invitacion">
+        @if (auth.isAuthenticated()) {
+          <p><b>¿Ya usaste el método?</b> Cuenta cómo te fue.</p>
+          <a class="boton" routerLink="/perfil" fragment="mi-resena">Escribir mi reseña</a>
+        } @else {
+          <p><b>¿Quieres ver de qué va antes de creerte esto?</b></p>
+          <a class="boton" routerLink="/en-accion">Míralo en acción</a>
+        }
+      </div>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />

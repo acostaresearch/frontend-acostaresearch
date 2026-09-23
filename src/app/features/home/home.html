@@ -73,7 +73,7 @@
         </div>
 
         <p class="hero-nota">
-          Se instalan en tu cuenta de Claude.ai · Funcionan también con el plan gratuito
+          Compatibles con tu cuenta de agente.ai. ¡Incluso con el plan gratuito!
         </p>
       </div>
 
@@ -103,7 +103,58 @@
     </ul>
   </section>
 
-  <!-- Las dos rutas, lo primero después del hero. Antes la portada hablaba solo
+  <!-- ── Lo que dicen ─────────────────────────────────────────────────────
+       PEGADA AL HERO Y ANTES DEL PRECIO. Quien llega no conoce de nada a
+       quien le está vendiendo, así que lo primero que lee tras el titular es
+       gente que ya pasó por aquí. Estuvo abajo del todo, justo antes del
+       cierre, y ahí la leía solo quien ya se había convencido.
+
+       Va en BLANCO y no en gris, al revés que casi todas las bandas: la de
+       debajo —«Elige tu plan»— ya es gris, y dos grises seguidos se leen como
+       un solo bloque. Las tarjetas se invierten para compensar: gris sobre
+       blanco en lugar de blanco con borde (ver home.css).
+
+       Si no hay destacadas, la banda entera no existe. Un apartado de
+       testimonios con un hueco —o con una sola reseña— dice justo lo contrario
+       de lo que pretende decir. -->
+  @if (resenas().length > 0) {
+    <section class="seccion resenas-banda">
+      <div class="cab">
+        <p class="seccion-marca">Lo que dicen</p>
+        <h2 class="titulo-seccion">Tesistas que ya pasaron por aquí</h2>
+        @if (resumenDeResenas(); as resumen) {
+          <p class="resenas-resumen">
+            <span class="resenas-estrellas" aria-hidden="true">{{ estrellas(resumen.media) }}</span>
+            <b>{{ nota(resumen.media) }} de 5</b>
+            <span class="resenas-tenue">sobre {{ resumen.total }} reseñas</span>
+          </p>
+        }
+      </div>
+
+      <ul class="resenas-tarjetas">
+        @for (r of resenas(); track r.id) {
+          <li class="resena-tarjeta">
+            <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
+              <span aria-hidden="true">{{ estrellas(r.estrellas) }}</span>
+            </p>
+            <blockquote>{{ r.comentario }}</blockquote>
+            <footer>
+              <b>{{ r.nombre }}</b>
+              @if (r.oficio) {
+                <span class="resenas-tenue">{{ r.oficio }}</span>
+              }
+            </footer>
+          </li>
+        }
+      </ul>
+
+      <p class="resenas-pie">
+        <a routerLink="/resenas">Ver todas las reseñas</a>
+      </p>
+    </section>
+  }
+
+  <!-- Las dos rutas, después de las reseñas. Antes la portada hablaba solo
        de tesis y quien venía a publicar un artículo se iba creyendo que aquí no
        había nada para él. Cada ficha enseña de un vistazo por dónde pasa la
        ruta —sus fases numeradas— y con qué se sale; el precio sale de la API,
@@ -116,8 +167,7 @@
           <h2 class="titulo-seccion">Elige tu plan</h2>
         </div>
         <p class="cab-nota">
-          Las dos se instalan en Claude.ai, funcionan con el plan gratuito y terminan en un Word
-          con tus fuentes.
+          Se instalan en tu IA favorita (Claude, ChatGPT y más), funcionan con el plan gratuito y terminan en un Word con tus fuentes.
         </p>
       </div>
 
@@ -199,9 +249,9 @@
   <section class="seccion">
     <div class="cab-fila">
       <div class="cab">
-        <p class="seccion-marca">Qué lo hace distinto</p>
+        <p class="seccion-marca">Qué nos hace distinto</p>
         <h2 class="titulo-seccion ancho">
-          Tus fuentes, tu norma y tu propio Word. Y cada decisión la tomas tú.
+          Con tus fuentes, bajo tu norma y en tu Word: tú decides cada palabra.
         </h2>
       </div>
       <p class="cab-nota">
