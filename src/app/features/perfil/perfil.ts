@@ -22,7 +22,6 @@ import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { MiConector } from '../../shared/cuenta/mi-conector';
-import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
@@ -64,7 +63,6 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
     DecimalPipe,
     AjustesDeCuenta,
     MiConector,
-    MiResenaDelServicio,
     SiteHeader,
   ],
   templateUrl: './perfil.html',

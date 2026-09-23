@@ -159,3 +159,13 @@
     margin-left: 0;
   }
 }
+
+/* El video del testimonio. A todo el ancho de la reseña, que la columna ya es
+   estrecha, y con fondo negro mientras carga. */
+.resena-video {
+  width: 100%;
+  max-height: 420px;
+  margin-bottom: 12px;
+  background: #000;
+  border-radius: 12px;
+}

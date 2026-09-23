@@ -172,3 +172,67 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Con qué sale firmada. Ocupa el hueco del campo del nombre que había aquí:
+   ya no se pregunta, se informa. */
+.resena-como-sale {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.resena-como-sale b {
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+
+.resena-como-sale small {
+  color: var(--color-texto-tenue);
+}
+
+/* ── El video del testimonio ─────────────────────────────────────────────── */
+.resena-video {
+  width: 100%;
+  max-height: 340px;
+  margin: 12px 0;
+  background: #000;
+  border-radius: 12px;
+}
+
+/* El file input de verdad, escondido detrás de una etiqueta con pinta de
+   botón: el de serie no se puede peinar y rompe la fila de acciones. */
+.resena-subir {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.resena-subir input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.resena-video-nota {
+  color: var(--color-texto-suave);
+}
+
+/* Quitar el video no es un botón: es la salida menos frecuente de las tres y
+   con la pinta de las otras dos competiría con ellas. */
+.quitar-video {
+  padding: 0;
+  font-size: 14px;
+  color: var(--color-texto-tenue);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.quitar-video:hover {
+  color: var(--color-error);
+}

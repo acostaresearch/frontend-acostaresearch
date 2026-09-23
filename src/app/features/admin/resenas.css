@@ -288,3 +288,85 @@
     margin-left: 0;
   }
 }
+
+/* ── Dar de alta una a mano ──────────────────────────────────────────────── */
+.alta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.alta-formulario {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  padding: 18px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.alta-formulario .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.alta-formulario .campo-corto {
+  max-width: 140px;
+}
+
+.alta-formulario small {
+  color: var(--color-texto-tenue);
+}
+
+.alta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ── El video ────────────────────────────────────────────────────────────── */
+.marca-video {
+  padding: 2px 8px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.video-resena {
+  width: 100%;
+  max-height: 360px;
+  margin: 12px 0;
+  background: #000;
+  border-radius: 12px;
+}
+
+.subir-video {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 0;
+}
+
+/* El file input de serie no se puede peinar: va escondido detrás de la etiqueta. */
+.subir-video-boton {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.subir-video-boton input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}

@@ -11,7 +11,7 @@
         <p class="resena-estrellas">{{ estrellas(r.estrellas) }}</p>
         <p class="resena-texto">«{{ r.comentario }}»</p>
         <p class="nota">
-          Firmada como <b>{{ r.nombre }}</b
+          Firmada como <b>{{ r.autor }}</b
           >@if (r.oficio) { <span>, {{ r.oficio }}</span> }
         </p>
 
@@ -39,9 +39,31 @@
           }
         }
 
-        <button type="button" class="boton secundario" (click)="editar()">
-          Cambiar mi reseña
-        </button>
+        @if (r.video && videoLocal(); as fuente) {
+          <video class="resena-video" controls preload="metadata" [src]="fuente"></video>
+        }
+
+        <div class="resena-acciones">
+          <button type="button" class="boton secundario" (click)="editar()">
+            Cambiar mi reseña
+          </button>
+
+          <!-- El video se cambia sin tocar el texto: son dos cosas, y volver a
+               escribir la reseña para cambiar la grabación no tiene sentido. -->
+          <label class="boton secundario resena-subir">
+            {{ subiendoVideo() ? 'Subiendo…' : r.video ? 'Cambiar el video' : 'Añadir un video' }}
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              [disabled]="subiendoVideo()"
+              (change)="elegirVideo($event)"
+            />
+          </label>
+
+          @if (r.video) {
+            <button type="button" class="quitar-video" (click)="quitarVideo()">Quitar el video</button>
+          }
+        </div>
       </div>
     }
   }
@@ -83,7 +105,9 @@
         <!-- Cuántas faltan, no cuántas van: lo que bloquea el botón es el
              mínimo, así que es el mínimo lo que hay que enseñar. -->
         <small class="resena-cuenta">
-          @if (faltan() > 0) {
+          @if (mia()?.video) {
+            Con el video no hace falta texto. Escribe si quieres añadir algo.
+          } @else if (faltan() > 0) {
             Escribe {{ faltan() }} caracteres más.
           } @else {
             {{ comentario().trim().length }} de {{ maximo }}
@@ -92,17 +116,13 @@
       </label>
 
       <div class="resena-firma">
-        <label class="resena-campo">
-          <span>Con qué nombre sale</span>
-          <input
-            type="text"
-            maxlength="120"
-            autocomplete="off"
-            [value]="nombre()"
-            (input)="escribir($event, 'nombre')"
-          />
-          <small>Puedes poner solo tu nombre y la inicial. Tu correo no sale nunca.</small>
-        </label>
+        <!-- No se pregunta con qué nombre sale: sale con el correo de la cuenta
+             tapado, y se enseña aquí para que lo sepa antes de escribir. -->
+        <p class="resena-como-sale">
+          <span>Sale firmada como</span>
+          <b>{{ firma() }}</b>
+          <small>Tu correo completo no se publica nunca, ni tu nombre.</small>
+        </p>
 
         <label class="resena-campo">
           <span>Qué haces <i>(opcional)</i></span>
@@ -126,6 +146,11 @@
           <button type="button" class="boton secundario" (click)="cancelar()">Cancelar</button>
         }
       </div>
+
+      <p class="nota resena-pie resena-video-nota">
+        ¿Prefieres contarlo en video? Envía la reseña y podrás añadir uno de hasta
+        {{ maximoMb }} MB. Si lo haces, el texto ya no hace falta.
+      </p>
 
       <p class="nota resena-pie">
         @if (mia()) {

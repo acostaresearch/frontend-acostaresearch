@@ -117,7 +117,7 @@
        Si no hay ninguna aprobada, la banda entera no existe. Un apartado de
        testimonios con un hueco dice justo lo contrario de lo que pretende
        decir. -->
-  @if (resenas().length > 0) {
+  @if (resenas().length > 0 || auth.isAuthenticated()) {
     <section class="seccion resenas-banda">
       <div class="cab">
         <p class="seccion-marca">Lo que dicen</p>
@@ -158,33 +158,75 @@
         </p>
       </div>
 
-      <ul
-        class="resenas-tarjetas"
-        [class.una]="resenas().length === 1"
-        [class.dos]="resenas().length === 2"
-      >
-        @for (r of resenas(); track r.id) {
-          <li class="resena-tarjeta">
-            <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
-              <span aria-hidden="true"
-                >{{ llenas(r.estrellas) }}<span class="apagadas">{{ vacias(r.estrellas) }}</span></span
-              >
-            </p>
-            <blockquote>{{ r.comentario }}</blockquote>
-            <footer>
-              <span class="resena-inicial" aria-hidden="true">{{ inicial(r.nombre) }}</span>
-              <span class="resena-firma">
-                <b>{{ r.nombre }}</b>
-                <span class="resenas-tenue">{{ pieDeFirma(r) }}</span>
-              </span>
-            </footer>
-          </li>
-        }
-      </ul>
+      @if (resenas().length > 0) {
+        <ul
+          class="resenas-tarjetas"
+          [class.una]="resenas().length === 1"
+          [class.dos]="resenas().length === 2"
+        >
+          @for (r of resenas(); track r.id) {
+            <li class="resena-tarjeta">
+              <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
+                <span aria-hidden="true"
+                  >{{ llenas(r.estrellas)
+                  }}<span class="apagadas">{{ vacias(r.estrellas) }}</span></span
+                >
+              </p>
+              <!-- Con video, la grabación es el testimonio. El texto sigue
+                   saliendo si además lo escribió. Sin precargar nada más que la
+                   primera imagen: tres videos cargándose enteros en la portada
+                   son veinte megas antes de leer el primer precio. -->
+              @if (r.video) {
+                <video
+                  class="resena-video"
+                  controls
+                  preload="metadata"
+                  playsinline
+                  [src]="api.urlDelVideo(r.id)"
+                ></video>
+              }
+              @if (r.comentario) {
+                <blockquote>{{ r.comentario }}</blockquote>
+              }
+              <footer>
+                <span class="resena-inicial" aria-hidden="true">{{ inicial(r.autor) }}</span>
+                <span class="resena-firma">
+                  <b>{{ r.autor }}</b>
+                  <span class="resenas-tenue">{{ pieDeFirma(r) }}</span>
+                </span>
+              </footer>
+            </li>
+          }
+        </ul>
+      } @else {
+        <!-- Sin ninguna publicada, esto solo lo ve quien ha entrado: a un
+             visitante no se le enseña un apartado de opiniones vacío. -->
+        <p class="resenas-vacio">
+          Todavía no hay ninguna publicada. Si ya usaste el método, la primera puede ser la tuya.
+        </p>
+      }
 
-      <p class="resenas-pie">
-        <a class="boton secundario" routerLink="/resenas">Ver todas las reseñas</a>
-      </p>
+      <!-- Escribirla se hace AQUÍ, no en el perfil. Quien acaba de leer tres
+           reseñas es quien está en disposición de dejar la suya, y mandarlo a
+           otra pantalla a buscar el formulario perdía por el camino a casi
+           todos. El formulario es el mismo de siempre y se abre debajo. -->
+      <div class="resenas-pie">
+        @if (resenas().length > 0) {
+          <a class="boton secundario" routerLink="/resenas">Ver todas las reseñas</a>
+        }
+
+        @if (auth.isAuthenticated()) {
+          <button type="button" class="boton" (click)="escribir()">
+            {{ escribiendo() ? 'Cerrar' : 'Escribir mi reseña' }}
+          </button>
+        }
+      </div>
+
+      @if (escribiendo()) {
+        <div class="resena-escribir" id="escribir-mi-resena">
+          <app-mi-resena />
+        </div>
+      }
     </section>
   }
 

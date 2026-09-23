@@ -19,6 +19,7 @@ import {
 import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
 import { Contador } from './contador';
 import { HeroNetwork } from './hero-network/hero-network';
 
@@ -36,14 +37,23 @@ import { HeroNetwork } from './hero-network/hero-network';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, SiteHeader, SiteFooter, HeroNetwork, Contador, LineasNoche],
+  imports: [
+    RouterLink,
+    SiteHeader,
+    SiteFooter,
+    HeroNetwork,
+    Contador,
+    LineasNoche,
+    MiResenaDelServicio,
+  ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly licencias = inject(LicenseService);
-  private readonly resenasApi = inject(ResenaService);
+  /** Pública: la plantilla le pide la dirección del video de cada reseña. */
+  protected readonly api = inject(ResenaService);
   private readonly tour = inject(TourService);
   private readonly recorrido = inject(RecorridoWeb);
   protected readonly auth = inject(AuthService);
@@ -70,6 +80,15 @@ export class Home implements OnInit {
    * que va a decir.
    */
   readonly resenas = signal<ResenaPublica[]>([]);
+
+  /**
+   * Si tiene abierto el formulario de su reseña, aquí mismo.
+   *
+   * Escribirla estaba en el perfil, tres clics más allá, y quien acababa de
+   * leer las de los demás —que es justo cuando apetece dejar la propia— no
+   * encontraba por dónde. El formulario es el mismo componente de siempre.
+   */
+  readonly escribiendo = signal(false);
   private readonly totalResenas = signal(0);
   private readonly mediaResenas = signal<number | null>(null);
 
@@ -190,7 +209,7 @@ export class Home implements OnInit {
 
     // Si falla, la banda no se pinta y la portada sigue entera: son opiniones,
     // no el precio.
-    this.resenasApi.publicas(true).subscribe({
+    this.api.publicas(true).subscribe({
       next: ({ resenas, total, nota }) => {
         this.resenas.set(resenas.slice(0, 3));
         this.totalResenas.set(total);
@@ -238,6 +257,11 @@ export class Home implements OnInit {
     );
   }
 
+  /** Abre o cierra el formulario de su reseña, debajo de las tarjetas. */
+  escribir(): void {
+    this.escribiendo.update((abierto) => !abierto);
+  }
+
   /**
    * Las cinco estrellas, en dos trozos: las que cuentan y las que faltan.
    *
@@ -258,13 +282,13 @@ export class Home implements OnInit {
   }
 
   /**
-   * La inicial del redondel de la firma.
+   * La inicial del redondel de la firma, sacada del correo tapado.
    *
    * No es una foto: no tenemos ninguna y poner una cara de banco de imágenes
    * en un testimonio real es la forma más rápida de que deje de parecerlo.
    */
-  inicial(nombre: string): string {
-    return (nombre.trim()[0] ?? '·').toUpperCase();
+  inicial(autor: string): string {
+    return (autor.trim()[0] ?? '·').toUpperCase();
   }
 
   /**

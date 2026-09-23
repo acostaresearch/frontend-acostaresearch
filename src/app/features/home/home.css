@@ -1117,9 +1117,34 @@
   min-width: 0;
 }
 
+/* Los dos botones del pie: leerlas todas y escribir la propia. En fila y
+   centrados, que es donde acaba la vista después de las tarjetas. */
 .resenas-pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
   margin: 28px 0 0;
+}
+
+/* Sin ninguna publicada. Solo lo ve quien ha entrado (ver home.html). */
+.resenas-vacio {
+  max-width: 44ch;
+  margin: 28px auto 0;
+  color: var(--color-texto-suave);
   text-align: center;
+}
+
+/* El formulario, cuando lo abre. En su propia caja blanca y con el ancho de
+   una columna de escritura: a 1080 px, un textarea es un campo de fútbol. */
+.resena-escribir {
+  max-width: 640px;
+  padding: 26px;
+  margin: 24px auto 0;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  box-shadow: var(--sombra);
 }
 
 /* En oscuro el velo azul se va al negro: el mismo 4 % sobre una superficie
@@ -1140,4 +1165,13 @@
     grid-template-columns: 1fr;
     max-width: 560px;
   }
+}
+
+/* El video del testimonio, dentro de la tarjeta. Fondo negro para que no
+   parpadee en blanco mientras carga el primer fotograma. */
+.resena-tarjeta .resena-video {
+  width: 100%;
+  max-height: 260px;
+  background: #000;
+  border-radius: 12px;
 }

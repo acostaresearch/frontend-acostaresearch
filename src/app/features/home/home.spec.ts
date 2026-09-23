@@ -142,9 +142,10 @@ describe('Home · reseñas de la portada', () => {
     id,
     estrellas: 5,
     comentario: 'Terminé el capítulo IV en una semana.',
-    nombre: 'Ana Q.',
+    autor: 'anaq***@gmail.com',
     oficio: '',
     createdAt: '2026-09-01T00:00:00.000Z',
+    video: false,
   });
 
   beforeEach(() => {
@@ -203,9 +204,9 @@ describe('Home · reseñas de la portada', () => {
     );
   });
 
-  it('el redondel de la firma lleva la inicial del nombre', () => {
+  it('el redondel de la firma lleva la inicial del correo tapado', () => {
     const home = montarCon([resena('r1')], 1, 5);
-    expect(home.inicial('ana quispe')).toBe('A');
+    expect(home.inicial('anaq***@gmail.com')).toBe('A');
     expect(home.inicial('   ')).toBe('·');
   });
 });

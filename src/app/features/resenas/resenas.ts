@@ -8,6 +8,7 @@ import {
   estrellas,
   nota,
 } from '../../core/services/resena.service';
+import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -28,16 +29,23 @@ import { SiteHeader } from '../../shared/layout/site-header';
  */
 @Component({
   selector: 'app-resenas',
-  imports: [RouterLink, SiteHeader, SiteFooter],
+  imports: [RouterLink, SiteHeader, SiteFooter, MiResenaDelServicio],
   templateUrl: './resenas.html',
   styleUrl: './resenas.css',
 })
 export class Resenas implements OnInit {
-  private readonly api = inject(ResenaService);
+  protected readonly api = inject(ResenaService);
   protected readonly auth = inject(AuthService);
 
   readonly estrellas = estrellas;
   readonly nota = nota;
+
+  /** Si tiene abierto el formulario de la suya, al pie de la página. */
+  readonly escribiendo = signal(false);
+
+  escribir(): void {
+    this.escribiendo.set(true);
+  }
 
   readonly cargando = signal(true);
   readonly resenas = signal<ResenaPublica[]>([]);

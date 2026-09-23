@@ -9,6 +9,80 @@
     }
   </p>
 
+  <!-- Dar de alta una a mano. Los testimonios llegan por WhatsApp: quien graba
+       un video contando cómo le fue no vuelve a la web a escribirlo. -->
+  <div class="alta">
+    @if (!dandoDeAlta()) {
+      <button type="button" class="boton secundario" (click)="dandoDeAlta.set(true)">
+        Añadir una reseña a mano
+      </button>
+      <span class="nota">Para las que llegan por WhatsApp o por correo, con o sin video.</span>
+    } @else {
+      <div class="alta-formulario">
+        <label class="campo">
+          <span>Correo del cliente</span>
+          <input
+            type="email"
+            autocomplete="off"
+            placeholder="elcorreo@conelquecompro.com"
+            [value]="nuevaEmail()"
+            (input)="escribirNueva($event, 'nuevaEmail')"
+          />
+          <small>
+            Tiene que ser el de su cuenta: de ahí sale la firma que se ve en la web. Si no compró,
+            no se crea nada.
+          </small>
+        </label>
+
+        <label class="campo campo-corto">
+          <span>Estrellas</span>
+          <select
+            [value]="nuevaEstrellas()"
+            (change)="nuevaEstrellas.set(+$any($event.target).value)"
+          >
+            @for (n of [5, 4, 3, 2, 1]; track n) {
+              <option [value]="n">{{ n }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="campo">
+          <span>Qué dijo <i>(se puede dejar vacío si va a ser solo video)</i></span>
+          <textarea
+            rows="3"
+            maxlength="1500"
+            placeholder="Tal cual te lo mandó, sin arreglarlo."
+            [value]="nuevaComentario()"
+            (input)="escribirNueva($event, 'nuevaComentario')"
+          ></textarea>
+        </label>
+
+        <label class="campo">
+          <span>Qué hace <i>(opcional)</i></span>
+          <input
+            type="text"
+            maxlength="120"
+            placeholder="Tesis de Ing. Civil"
+            [value]="nuevaOficio()"
+            (input)="escribirNueva($event, 'nuevaOficio')"
+          />
+        </label>
+
+        <div class="alta-acciones">
+          <button type="button" class="boton" [disabled]="!puedeDarDeAlta()" (click)="darDeAlta()">
+            {{ guardando() ? 'Guardando…' : 'Guardar y publicar' }}
+          </button>
+          <button type="button" class="boton secundario" (click)="dandoDeAlta.set(false)">
+            Cancelar
+          </button>
+        </div>
+        <p class="nota">
+          Se publica al guardar. El video se le añade después, abriéndola con «Leerla».
+        </p>
+      </div>
+    }
+  </div>
+
   <div class="filtros" role="group" aria-label="Filtrar reseñas">
     @for (f of filtros; track f.clave) {
       <button
@@ -41,6 +115,9 @@
               {{ r.nombre }}
               @if (r.destacada) {
                 <span class="marca-portada">En portada</span>
+              }
+              @if (r.video) {
+                <span class="marca-video">Con video</span>
               }
             </p>
             <p class="tenue">
@@ -79,12 +156,43 @@
       </div>
 
       <p class="estrellas estrellas-grandes">{{ estrellas(r.estrellas) }}</p>
-      <blockquote class="texto-resena">{{ r.comentario }}</blockquote>
+
+      <!-- El video, antes del texto y ANTES de decidir: aprobar una grabación
+           sin haberla visto es publicar lo que sea. Se baja con la sesión
+           puesta, que la ruta pública solo sirve las ya aprobadas. -->
+      @if (r.video) {
+        @if (videoLocal(); as fuente) {
+          <video class="video-resena" controls preload="metadata" [src]="fuente"></video>
+        } @else {
+          <p class="nota">Cargando el video…</p>
+        }
+      }
+
+      @if (r.comentario) {
+        <blockquote class="texto-resena">{{ r.comentario }}</blockquote>
+      } @else {
+        <p class="nota">Sin texto: lo que se enseña es el video.</p>
+      }
+
+      <p class="subir-video">
+        <label class="boton secundario subir-video-boton">
+          {{ subiendoVideo() ? 'Subiendo…' : r.video ? 'Cambiar el video' : 'Subir un video' }}
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime,video/*"
+            [disabled]="subiendoVideo()"
+            (change)="elegirVideo($event, r)"
+          />
+        </label>
+        <span class="nota">Hasta {{ maximoMb }} MB. No la devuelve a pendiente.</span>
+      </p>
 
       <dl>
+        <!-- Lo que se ve en la web NO es su nombre: es su correo tapado. Aquí
+             se enseña tal cual saldrá, para revisar con eso a la vista. -->
         <dt>Sale firmada como</dt>
         <dd>
-          {{ r.nombre }}
+          <b>{{ r.autor }}</b>
           @if (r.oficio) {
             · {{ r.oficio }}
           } @else {

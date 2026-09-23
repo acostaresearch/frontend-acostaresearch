@@ -3,6 +3,7 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { mensajeDeError } from '../../core/http/api-error';
 import {
   EstadoDeResena,
+  MAXIMO_VIDEO_BYTES,
   NOMBRE_DEL_ESTADO,
   ResenaDelPanel,
   ResenaService,
@@ -30,6 +31,14 @@ const FILTROS: { clave: EstadoDeResena | 'TODAS'; nombre: string }[] = [
  * Aprobar quiere decir «se puede leer en /resenas». Destacar, «además sale en
  * la portada», donde hay sitio para tres o cuatro. Por eso son dos botones y
  * no una casilla: se aprueban muchas y se destacan pocas.
+ *
+ * AQUÍ TAMBIÉN SE DAN DE ALTA
+ * ---------------------------
+ * Los testimonios llegan por WhatsApp y por correo, no por el formulario: quien
+ * graba un video contando cómo le fue no vuelve luego a la web a escribirlo.
+ * Se apunta el correo del cliente y la reseña nace publicada, porque la escribe
+ * quien la aprobaría. El correo TIENE que ser el de una cuenta: de ahí sale la
+ * firma pública, y sin cuenta detrás el servidor no crea nada.
  *
  * EL MOTIVO DE UN RECHAZO LO LEE SU AUTOR
  * ---------------------------------------
@@ -61,6 +70,22 @@ export class ResenasAdmin {
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
 
+  /** El video de la que se está mirando, bajado con la sesión puesta. */
+  readonly videoLocal = signal<string | null>(null);
+  readonly subiendoVideo = signal(false);
+  readonly maximoMb = Math.round(MAXIMO_VIDEO_BYTES / (1024 * 1024));
+
+  /** El alta a mano: el formulario de arriba, cerrado hasta que se pide. */
+  readonly dandoDeAlta = signal(false);
+  readonly nuevaEmail = signal('');
+  readonly nuevaEstrellas = signal(5);
+  readonly nuevaComentario = signal('');
+  readonly nuevaOficio = signal('');
+
+  readonly puedeDarDeAlta = computed(
+    () => this.nuevaEmail().trim().includes('@') && !this.guardando(),
+  );
+
   /** Lo que se está mirando. El filtrado es aquí: la lista viene entera. */
   readonly visibles = computed(() => {
     const filtro = this.filtro();
@@ -84,10 +109,91 @@ export class ResenasAdmin {
     this.abierta.set(resena);
     this.motivo.set(resena.motivo);
     this.error.set(null);
+    this.soltarElVideo();
+    // El video se baja con la sesión: hay que poder verlo ANTES de aprobarlo, y
+    // la ruta pública solo sirve las que ya están aprobadas.
+    if (resena.video) {
+      this.api.videoPorRevisar(resena.id).subscribe({
+        next: (blob) => this.videoLocal.set(URL.createObjectURL(blob)),
+        error: () => this.videoLocal.set(null),
+      });
+    }
   }
 
   cerrar(): void {
     this.abierta.set(null);
+    this.soltarElVideo();
+  }
+
+  private soltarElVideo(): void {
+    const url = this.videoLocal();
+    if (url) URL.revokeObjectURL(url);
+    this.videoLocal.set(null);
+  }
+
+  escribirNueva(evento: Event, donde: 'nuevaEmail' | 'nuevaComentario' | 'nuevaOficio'): void {
+    this[donde].set((evento.target as HTMLInputElement | HTMLTextAreaElement).value);
+  }
+
+  /**
+   * Da de alta la reseña de un cliente, con su correo.
+   *
+   * Sin texto también vale: es lo que se hace cuando lo que hay es un video y
+   * se sube justo después, desde la ficha de la reseña.
+   */
+  darDeAlta(): void {
+    if (!this.puedeDarDeAlta()) return;
+
+    this.guardando.set(true);
+    this.error.set(null);
+
+    this.api
+      .crearDesdeElPanel({
+        email: this.nuevaEmail().trim(),
+        estrellas: this.nuevaEstrellas(),
+        comentario: this.nuevaComentario().trim(),
+        oficio: this.nuevaOficio().trim(),
+      })
+      .subscribe({
+        next: (resena) => {
+          this.guardando.set(false);
+          this.dandoDeAlta.set(false);
+          this.nuevaEmail.set('');
+          this.nuevaComentario.set('');
+          this.nuevaOficio.set('');
+          this.cambiada.emit(`Reseña de ${resena.autor} guardada y publicada.`);
+        },
+        error: (e: unknown) => {
+          this.guardando.set(false);
+          this.error.set(mensajeDeError(e));
+        },
+      });
+  }
+
+  /** Sube o cambia el video de la reseña abierta, sin devolverla a pendiente. */
+  elegirVideo(evento: Event, resena: ResenaDelPanel): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo) return;
+
+    if (archivo.size > MAXIMO_VIDEO_BYTES) {
+      this.error.set(`Ese video pesa demasiado. El tope son ${this.maximoMb} MB.`);
+      return;
+    }
+
+    this.subiendoVideo.set(true);
+    this.error.set(null);
+    this.api.subirVideoDelPanel(resena.id, archivo).subscribe({
+      next: () => {
+        this.subiendoVideo.set(false);
+        this.cambiada.emit('Video subido.');
+      },
+      error: (e: unknown) => {
+        this.subiendoVideo.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
   }
 
   escribirMotivo(evento: Event): void {

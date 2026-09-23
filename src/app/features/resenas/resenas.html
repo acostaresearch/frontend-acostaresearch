@@ -53,9 +53,20 @@
               <p class="resena-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
                 <span aria-hidden="true">{{ estrellas(r.estrellas) }}</span>
               </p>
-              <blockquote>{{ r.comentario }}</blockquote>
+              @if (r.video) {
+                <video
+                  class="resena-video"
+                  controls
+                  preload="metadata"
+                  playsinline
+                  [src]="api.urlDelVideo(r.id)"
+                ></video>
+              }
+              @if (r.comentario) {
+                <blockquote>{{ r.comentario }}</blockquote>
+              }
               <footer>
-                <b>{{ r.nombre }}</b>
+                <b>{{ r.autor }}</b>
                 @if (r.oficio) {
                   <span class="tenue">· {{ r.oficio }}</span>
                 }
@@ -73,7 +84,13 @@
       <div class="invitacion">
         @if (auth.isAuthenticated()) {
           <p><b>¿Ya usaste el método?</b> Cuenta cómo te fue.</p>
-          <a class="boton" routerLink="/perfil" fragment="mi-resena">Escribir mi reseña</a>
+          <!-- El formulario aquí mismo, no en el perfil: mandarlo a otra
+               pantalla a buscarlo perdía por el camino a casi todos. -->
+          @if (escribiendo()) {
+            <app-mi-resena />
+          } @else {
+            <button type="button" class="boton" (click)="escribir()">Escribir mi reseña</button>
+          }
         } @else {
           <p><b>¿Quieres ver de qué va antes de creerte esto?</b></p>
           <a class="boton" routerLink="/en-accion">Míralo en acción</a>
