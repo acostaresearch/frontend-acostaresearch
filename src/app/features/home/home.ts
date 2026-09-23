@@ -7,12 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { LicenseService } from '../../core/services/license.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
-import {
-  ResenaPublica,
-  ResenaService,
-  estrellas,
-  nota,
-} from '../../core/services/resena.service';
+import { ResenaPublica, ResenaService, nota } from '../../core/services/resena.service';
 import { TourService } from '../../core/services/tour.service';
 import { TOUR_WEB } from '../../shared/contenido/tour-de-la-web';
 import {
@@ -61,7 +56,6 @@ export class Home implements OnInit {
   readonly nombre = this.auth.fullName;
   readonly planes = signal<Plan[]>([]);
 
-  readonly estrellas = estrellas;
   readonly nota = nota;
 
   /**
@@ -242,6 +236,59 @@ export class Home implements OnInit {
         }),
       1200,
     );
+  }
+
+  /**
+   * Las cinco estrellas, en dos trozos: las que cuentan y las que faltan.
+   *
+   * Todas del mismo dorado —que es como venían— se leen de un vistazo como
+   * cinco: la diferencia entre ★ y ☆ es un detalle de dos píxeles. Las que
+   * faltan se pintan apagadas y la nota se ve sin contar nada.
+   */
+  llenas(nota: number): string {
+    return '★'.repeat(this.redondeada(nota));
+  }
+
+  vacias(nota: number): string {
+    return '☆'.repeat(5 - this.redondeada(nota));
+  }
+
+  private redondeada(nota: number): number {
+    return Math.min(5, Math.max(0, Math.round(nota)));
+  }
+
+  /**
+   * La inicial del redondel de la firma.
+   *
+   * No es una foto: no tenemos ninguna y poner una cara de banco de imágenes
+   * en un testimonio real es la forma más rápida de que deje de parecerlo.
+   */
+  inicial(nombre: string): string {
+    return (nombre.trim()[0] ?? '·').toUpperCase();
+  }
+
+  /**
+   * «Tesista de maestría · septiembre de 2026».
+   *
+   * La fecha va aquí y no suelta porque una opinión sin cuándo se escribió no
+   * se sabe si es de este año o de hace tres. El punto solo aparece cuando hay
+   * las dos cosas: no todo el mundo dice a qué se dedica.
+   */
+  pieDeFirma(r: ResenaPublica): string {
+    return [r.oficio, this.cuando(r.createdAt)].filter(Boolean).join(' · ');
+  }
+
+  /** «septiembre de 2026». El día exacto de una opinión no le importa a nadie. */
+  private cuando(iso: string): string {
+    try {
+      return new Date(iso).toLocaleDateString('es-PE', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'America/Lima',
+      });
+    } catch {
+      return '';
+    }
   }
 
   /**

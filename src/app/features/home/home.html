@@ -109,47 +109,81 @@
        gente que ya pasó por aquí. Estuvo abajo del todo, justo antes del
        cierre, y ahí la leía solo quien ya se había convencido.
 
-       Va en BLANCO y no en gris, al revés que casi todas las bandas: la de
-       debajo —«Elige tu plan»— ya es gris, y dos grises seguidos se leen como
-       un solo bloque. Las tarjetas se invierten para compensar: gris sobre
-       blanco en lugar de blanco con borde (ver home.css).
+       Tiene fondo propio —un azul muy lavado— y no el blanco de antes ni el
+       gris: debajo está «Elige tu plan», que ya es gris, y dos bandas del
+       mismo tono seguidas se leen como un solo bloque. Aquí el tono es lo que
+       separa «esto lo digo yo» de «esto lo dicen ellos».
 
-       Si no hay destacadas, la banda entera no existe. Un apartado de
-       testimonios con un hueco —o con una sola reseña— dice justo lo contrario
-       de lo que pretende decir. -->
+       Si no hay ninguna aprobada, la banda entera no existe. Un apartado de
+       testimonios con un hueco dice justo lo contrario de lo que pretende
+       decir. -->
   @if (resenas().length > 0) {
     <section class="seccion resenas-banda">
       <div class="cab">
         <p class="seccion-marca">Lo que dicen</p>
         <h2 class="titulo-seccion">Tesistas que ya pasaron por aquí</h2>
+
         @if (resumenDeResenas(); as resumen) {
           <p class="resenas-resumen">
-            <span class="resenas-estrellas" aria-hidden="true">{{ estrellas(resumen.media) }}</span>
+            <span class="resenas-estrellas" aria-hidden="true"
+              >{{ llenas(resumen.media) }}<span class="apagadas">{{ vacias(resumen.media) }}</span></span
+            >
             <b>{{ nota(resumen.media) }} de 5</b>
             <span class="resenas-tenue">sobre {{ resumen.total }} reseñas</span>
           </p>
         }
+
+        <!-- La única línea de la banda que escribimos nosotros, y dice cómo se
+             consiguen: quien no se fía de un testimonio se fía de saber de
+             dónde sale. -->
+        <p class="resenas-sello">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M8 1.2 13.6 3.4v4.2c0 3.2-2.3 6.1-5.6 7.2-3.3-1.1-5.6-4-5.6-7.2V3.4z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linejoin="round"
+            />
+            <path
+              d="m5.6 8 1.7 1.8 3.3-3.6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Las escriben clientes con cuenta. Las leemos una por una y no las editamos.
+        </p>
       </div>
 
-      <ul class="resenas-tarjetas">
+      <ul
+        class="resenas-tarjetas"
+        [class.una]="resenas().length === 1"
+        [class.dos]="resenas().length === 2"
+      >
         @for (r of resenas(); track r.id) {
           <li class="resena-tarjeta">
             <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
-              <span aria-hidden="true">{{ estrellas(r.estrellas) }}</span>
+              <span aria-hidden="true"
+                >{{ llenas(r.estrellas) }}<span class="apagadas">{{ vacias(r.estrellas) }}</span></span
+              >
             </p>
             <blockquote>{{ r.comentario }}</blockquote>
             <footer>
-              <b>{{ r.nombre }}</b>
-              @if (r.oficio) {
-                <span class="resenas-tenue">{{ r.oficio }}</span>
-              }
+              <span class="resena-inicial" aria-hidden="true">{{ inicial(r.nombre) }}</span>
+              <span class="resena-firma">
+                <b>{{ r.nombre }}</b>
+                <span class="resenas-tenue">{{ pieDeFirma(r) }}</span>
+              </span>
             </footer>
           </li>
         }
       </ul>
 
       <p class="resenas-pie">
-        <a routerLink="/resenas">Ver todas las reseñas</a>
+        <a class="boton secundario" routerLink="/resenas">Ver todas las reseñas</a>
       </p>
     </section>
   }

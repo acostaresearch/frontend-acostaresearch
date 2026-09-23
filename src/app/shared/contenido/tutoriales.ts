@@ -110,9 +110,9 @@ export const TUTORIALES: Tutorial[] = [
  */
 export const TROPIEZOS = [
   {
-    problema: 'Claude no ve el conector, o dice que no tiene herramientas.',
+    problema: 'Mi agente.ia no ve el conector, o dice que no tiene herramientas.',
     solucion:
-      'Abre una conversación nueva. Claude guarda la lista de herramientas de la conversación ' +
+      'Abre una conversación nueva. El sistema guarda la lista de herramientas de la conversación ' +
       'en la que estás, así que si lo conectaste con el chat ya abierto, ahí no aparece.',
   },
   {
@@ -126,7 +126,7 @@ export const TROPIEZOS = [
     solucion:
       'Entra a tu perfil y genera una nueva. Solo guardamos su huella, no la URL, así que no ' +
       'podemos volver a enseñarte la anterior. Al generar una, la vieja deja de funcionar: ' +
-      'acuérdate de cambiarla también en Claude.',
+      'acuérdate de cambiarla.',
   },
   {
     problema: 'Me dice que se acabó el cupo.',
@@ -138,6 +138,6 @@ export const TROPIEZOS = [
     problema: 'Me responde en general y no con el método.',
     solucion:
       'Pídeselo por su nombre: «trabaja el capítulo I con el método». Si le hablas sin ' +
-      'mencionarlo, Claude contesta por su cuenta y no llama a la Skill.',
+      'mencionarlo, es porque contesta por su cuenta y no llama a la Skill.',
   },
 ];

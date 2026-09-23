@@ -55,22 +55,22 @@ export const GARANTIAS_DEL_ARTICULO = [
     icono: 'buscar',
     titulo: 'Con tus propias fuentes',
     texto:
-      'Tu export de Scopus, Web of Science, SciELO o PubMed, tus PDF, y lo que Claude encuentra ' +
+      'Scopus integrado, tu export de Web of Science, SciELO o PubMed, tus PDF, y lo que tu agente encuentra ' +
       'en la literatura publicada. Siempre con DOI real: aquí no aparecen autores que no existen.',
   },
   {
     icono: 'marcador',
-    titulo: 'Zotero integrado',
+    titulo: 'Zotero y Mendeley integrado',
     texto:
-      'Conectas tu Zotero y tus citas y referencias se gestionan solas. Ahorras horas de ' +
+      'Tus citas y referencias se gestionan solas. Ahorras horas de ' +
       'trabajo, y ninguna cita queda huérfana.',
   },
   {
     icono: 'documento',
     titulo: 'Tu manuscrito, citado',
     texto:
-      '¿Ya lo escribiste? Sube tu Word y Claude pone cada cita y la lista de referencias dentro ' +
-      'de tu mismo documento, con fuentes de tu Zotero, Scopus y OpenAlex. Su formato no se toca.',
+      '¿Ya lo escribiste? Sube tu Word y el sistema pone cada cita y la lista de referencias dentro ' +
+      'de tu mismo documento, con fuentes de tu Zotero, Mendeley, Scopus y OpenAlex. Su formato no se toca.',
   },
   {
     icono: 'lineas',
@@ -90,7 +90,7 @@ export const GARANTIAS_DEL_ARTICULO = [
     icono: 'check',
     titulo: 'Un repaso antes de enviar',
     texto:
-      'Claude coteja tu manuscrito consigo mismo: objetivos sin conclusión, citas rotas y ' +
+      'La IA coteja tu manuscrito consigo mismo: objetivos sin conclusión, citas rotas y ' +
       'afirmaciones sin fuente, antes de que los encuentre el revisor.',
   },
 ];

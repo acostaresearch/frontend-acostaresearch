@@ -368,13 +368,13 @@ export const PASOS = [
   {
     titulo: 'Recibes todo el paquete',
     texto:
-      'Tu conector con las 12 Skills, tu panel y los videos guía. Conectarlo a Claude.ai toma ' +
+      'Tu conector con las 12 Skills, tu panel y los videos guía. Conectarlo a tu agente.ia favortio toma ' +
       'dos minutos, funciona con el plan gratuito y no necesitas saber nada de tecnología.',
   },
   {
     titulo: 'Traes lo tuyo',
     texto:
-      'Tus fuentes de Scopus o tus PDF, o conectas tu Zotero. Se hace una vez, y Claude las usa ' +
+      'Tus fuentes de Scopus, tus PDF, tu Zotero o Mendeley. Se hace una vez, y nuestro sistema las usa ' +
       'en todos tus capítulos.',
   },
   {

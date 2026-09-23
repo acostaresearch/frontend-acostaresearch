@@ -159,7 +159,7 @@ describe('Home · reseñas de la portada', () => {
 
   afterEach(() => http.verify());
 
-  it('sin ninguna destacada no hay banda que pintar', () => {
+  it('sin ninguna aprobada no hay banda que pintar', () => {
     const home = montarCon([], 0, null);
     expect(home.resenas().length).toBe(0);
     expect(home.resumenDeResenas()).toBeNull();
@@ -172,7 +172,7 @@ describe('Home · reseñas de la portada', () => {
   });
 
   it('a partir de cinco sí la anuncia, y es la de todas las aprobadas', () => {
-    // Tres destacadas en la banda, pero la media sale de las doce aprobadas.
+    // Tres en la banda, pero la media sale de las doce aprobadas.
     const home = montarCon([resena('r1'), resena('r2'), resena('r3')], 12, 4.8);
     expect(home.resumenDeResenas()).toEqual({ media: 4.8, total: 12 });
   });
@@ -181,5 +181,31 @@ describe('Home · reseñas de la portada', () => {
     const cinco = ['r1', 'r2', 'r3', 'r4', 'r5'].map(resena);
     const home = montarCon(cinco, 20, 4.9);
     expect(home.resenas().length).toBe(3);
+  });
+
+  it('las estrellas se parten en llenas y vacías, y siempre suman cinco', () => {
+    const home = montarCon([resena('r1')], 1, 5);
+    expect(home.llenas(4) + home.vacias(4)).toBe('★★★★☆');
+    // Una nota imposible no pinta seis estrellas ni repite un número negativo.
+    expect(home.llenas(9) + home.vacias(9)).toBe('★★★★★');
+    expect(home.llenas(-2) + home.vacias(-2)).toBe('☆☆☆☆☆');
+  });
+
+  it('la firma junta oficio y fecha, y calla el punto cuando falta el oficio', () => {
+    const home = montarCon([resena('r1')], 1, 5);
+    // A mediodía UTC: a medianoche, la hora de Lima la echaría al mes anterior.
+    const r = { ...resena('r1'), createdAt: '2026-09-15T12:00:00.000Z' };
+    // «setiembre», sin p: es como escribe el mes el español de Perú, que es la
+    // región con la que se formatea.
+    expect(home.pieDeFirma(r)).toBe('setiembre de 2026');
+    expect(home.pieDeFirma({ ...r, oficio: 'Tesista de maestría' })).toBe(
+      'Tesista de maestría · setiembre de 2026',
+    );
+  });
+
+  it('el redondel de la firma lleva la inicial del nombre', () => {
+    const home = montarCon([resena('r1')], 1, 5);
+    expect(home.inicial('ana quispe')).toBe('A');
+    expect(home.inicial('   ')).toBe('·');
   });
 });

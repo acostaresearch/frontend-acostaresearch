@@ -928,68 +928,152 @@
    Tres tarjetas pegadas al hero, antes del precio. En móvil caen a una
    columna: a dos, el texto de una reseña se parte cada cuatro palabras.
 
-   LA BANDA VA EN BLANCO, así que las tarjetas se invierten: rellenas de gris
-   y sin borde, al revés que las del resto del sitio. Blancas sobre blanco solo
-   se distingue el borde, y tres cajas de línea fina seguidas no se leen como
-   testimonios, se leen como una tabla. El gris tampoco podía ir en la banda:
-   justo debajo está «Elige tu plan», que ya es gris, y los dos juntos se ven
-   como un único bloque sin principio ni final. */
+   LA BANDA TIENE TONO PROPIO —el azul de marca rebajado a un velo— en vez del
+   blanco que tenía. Entre el hero blanco y el gris de «Elige tu plan», una
+   tercera banda blanca no se veía como sección: las reseñas quedaban colgando
+   del titular. El velo las encierra y, de paso, deja que las tarjetas vuelvan
+   a ser blancas con borde, como las del resto del sitio. */
+
+.resenas-banda {
+  background:
+    radial-gradient(
+      1100px 380px at 50% -10%,
+      color-mix(in srgb, var(--color-primario) 12%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--color-primario) 4%, var(--color-superficie));
+  border-top: 1px solid var(--color-borde);
+  border-bottom: 1px solid var(--color-borde);
+}
 
 .resenas-banda .cab {
+  margin-inline: auto;
   text-align: center;
 }
 
 .resenas-resumen {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   align-items: baseline;
   justify-content: center;
-  margin: 12px 0 0;
+  padding: 8px 18px;
+  margin: 14px auto 0;
+  width: fit-content;
   font-size: 16px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  box-shadow: var(--sombra);
 }
 
 .resenas-estrellas {
-  font-size: 20px;
+  font-size: 21px;
   color: #e0a800;
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
+}
+
+/* Las que faltan, sin gritar: el dorado es para lo que sí puntuaron. */
+.apagadas {
+  color: var(--color-borde-fuerte);
 }
 
 .resenas-tenue {
   color: var(--color-texto-tenue);
 }
 
+/* De dónde salen las reseñas. Va en verde de «esto está comprobado» y no en
+   gris de letra pequeña: es la frase que sostiene a las tres tarjetas. */
+.resenas-sello {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0 0;
+  font-size: 13.5px;
+  color: var(--color-exito);
+}
+
+.resenas-sello svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
 .resenas-tarjetas {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 18px;
   max-width: 1080px;
   padding: 0;
-  margin: 28px auto 0;
+  margin: 32px auto 0;
   list-style: none;
 }
 
+/* Con una o dos aprobadas, tres columnas dejaban el hueco de las que faltan y
+   la banda parecía a medio cargar. */
+.resenas-tarjetas.dos {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 740px;
+}
+
+.resenas-tarjetas.una {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+}
+
 .resena-tarjeta {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 22px 24px;
-  background: var(--color-fondo);
-  border-radius: 14px;
+  gap: 12px;
+  padding: 26px 26px 22px;
+  overflow: hidden;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  box-shadow: var(--sombra);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+/* Las comillas grandes de fondo, no de adorno: marcan que lo de dentro es voz
+   de otro. Detrás del texto y muy lavadas para no disputarle la lectura. */
+.resena-tarjeta::before {
+  position: absolute;
+  top: -28px;
+  right: 6px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 120px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-primario) 10%, transparent);
+  pointer-events: none;
+  content: '”';
+}
+
+.resena-tarjeta:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 2px 4px rgba(16, 24, 40, 0.05),
+    0 16px 34px rgba(16, 24, 40, 0.1);
 }
 
 .resena-tarjeta-estrellas {
+  position: relative;
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   color: #e0a800;
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
 }
 
 .resena-tarjeta blockquote {
+  position: relative;
   flex: 1;
   margin: 0;
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 15.5px;
+  line-height: 1.7;
   color: var(--color-texto);
 }
 
@@ -1001,22 +1085,58 @@
   content: '»';
 }
 
-/* La firma en dos renglones: el nombre pesa y el oficio acompaña. En una sola
-   línea, un «Tesista de maestría · Educación» largo empujaba al nombre. */
+/* La firma: el redondel con la inicial, y al lado el nombre sobre el oficio y
+   la fecha. En una sola línea, un «Tesista de maestría · Educación» largo
+   empujaba al nombre fuera de la tarjeta. */
 .resena-tarjeta footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 16px;
+  font-size: 13.5px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.resena-inicial {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.resena-firma {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 13.5px;
+  min-width: 0;
 }
 
 .resenas-pie {
-  margin: 22px 0 0;
+  margin: 28px 0 0;
   text-align: center;
 }
 
+/* En oscuro el velo azul se va al negro: el mismo 4 % sobre una superficie
+   clara es un tono y sobre una oscura es barro. */
+:host-context([data-tema='oscuro']) .resenas-banda {
+  background:
+    radial-gradient(
+      1100px 380px at 50% -10%,
+      color-mix(in srgb, var(--color-primario) 16%, transparent),
+      transparent 70%
+    ),
+    var(--color-pagina);
+}
+
 @media (max-width: 900px) {
-  .resenas-tarjetas {
+  .resenas-tarjetas,
+  .resenas-tarjetas.dos {
     grid-template-columns: 1fr;
     max-width: 560px;
   }
