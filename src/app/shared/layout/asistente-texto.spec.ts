@@ -44,13 +44,13 @@ describe('Asistente · texto de la respuesta', () => {
   });
 
   it('las viñetas seguidas forman una lista y una línea en blanco separa párrafos', () => {
-    const bloques = trocear('Incluye:\n- Las 11 Skills\n* Asesoría\n\n¿Te ayudo con algo más?');
+    const bloques = trocear('Incluye:\n- Las 12 Skills\n* Asesoría\n\n¿Te ayudo con algo más?');
     expect(bloques.map((b) => [b.tipo, b.lineas.length])).toEqual([
       ['parrafo', 1],
       ['lista', 2],
       ['parrafo', 1],
     ]);
-    expect(bloques[1].lineas[0]).toEqual([{ tipo: 'texto', texto: 'Las 11 Skills' }]);
+    expect(bloques[1].lineas[0]).toEqual([{ tipo: 'texto', texto: 'Las 12 Skills' }]);
   });
 
   it('un título sale en negrita, sin almohadillas', () => {

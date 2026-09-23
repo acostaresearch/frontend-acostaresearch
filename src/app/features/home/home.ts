@@ -163,7 +163,7 @@ export class Home implements OnInit {
         meses: this.meses(tesis),
         comprar: 'Empezar la ruta de tesis',
         enlace: '/metodo',
-        verbo: 'Ver las 11 Skills',
+        verbo: 'Ver las 12 Skills',
       },
       articulo && {
         icono: 'documento',

@@ -162,7 +162,7 @@ describe('Tour', () => {
     tour.empezar('web', [
       { seccion: 'La portada', titulo: 'Uno', texto: '.' },
       { seccion: 'La portada', titulo: 'Dos', texto: '.' },
-      { seccion: 'Las 11 Skills', titulo: 'Tres', texto: '.' },
+      { seccion: 'Las 12 Skills', titulo: 'Tres', texto: '.' },
     ]);
 
     expect(tour.seccion()).toBe('La portada');
@@ -174,7 +174,7 @@ describe('Tour', () => {
 
     // Nueva página, contador a cero.
     tour.siguiente();
-    expect(tour.seccion()).toBe('Las 11 Skills');
+    expect(tour.seccion()).toBe('Las 12 Skills');
     expect(tour.numeroEnTanda()).toBe(1);
     expect(tour.totalDeTanda()).toBe(1);
   });

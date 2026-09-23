@@ -92,9 +92,9 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'con el plan gratuito.',
     },
 
-    // ── Las 11 Skills ──────────────────────────────────────────────────────
+    // ── Las 12 Skills ──────────────────────────────────────────────────────
     {
-      seccion: 'Las 11 Skills',
+      seccion: 'Las 12 Skills',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-cifras"]',
       titulo: 'La ruta de la tesis, en cifras',
@@ -103,7 +103,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'cualquier momento. Esto es lo que compras.',
     },
     {
-      seccion: 'Las 11 Skills',
+      seccion: 'Las 12 Skills',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-skills"]',
       titulo: 'Una skill por fase, en orden',
@@ -112,7 +112,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'qué capítulo de tu Word queda.',
     },
     {
-      seccion: 'Las 11 Skills',
+      seccion: 'Las 12 Skills',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-panel"]',
       titulo: 'Y lo que viene además',
@@ -121,7 +121,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'análisis en R y tu documento en Word.',
     },
     {
-      seccion: 'Las 11 Skills',
+      seccion: 'Las 12 Skills',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-libros"]',
       titulo: 'De dónde sale el método',
@@ -130,7 +130,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'se evalúa una tesis de verdad.',
     },
     {
-      seccion: 'Las 11 Skills',
+      seccion: 'Las 12 Skills',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-precio"]',
       titulo: 'Y cuánto cuesta',

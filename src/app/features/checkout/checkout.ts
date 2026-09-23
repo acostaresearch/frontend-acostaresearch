@@ -607,7 +607,7 @@ export class Checkout implements OnInit {
   /**
    * Qué trozo de una ventaja destacada va en negrita: [negrita, resto].
    *
-   * «Las 11 Skills: las 9 fases…» se lee por su arranque, hasta los dos
+   * «Las 12 Skills: las 9 fases…» se lee por su arranque, hasta los dos
    * puntos; una frase larga sin ellos, hasta la primera coma. Las cortas —«12
    * meses de acceso, renovables»— van enteras: partidas, la negrita se queda
    * en dos palabras sueltas.

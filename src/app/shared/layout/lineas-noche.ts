@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 /**
  * El fondo de líneas de los bloques en azul noche.
  *
- * Estaba escrito a mano dentro del encabezado de «Las 11 Skills» y era el
+ * Estaba escrito a mano dentro del encabezado de «Las 12 Skills» y era el
  * único bloque que lo llevaba, así que la franja de cifras, las bandas de
  * cierre, los cinco pasos y el pie —del mismo azul— se veían planos al lado.
  * Ahora es un componente y todos piden el mismo.

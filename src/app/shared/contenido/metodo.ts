@@ -368,7 +368,7 @@ export const PASOS = [
   {
     titulo: 'Recibes todo el paquete',
     texto:
-      'Tu conector con las 11 Skills, tu panel y los videos guía. Conectarlo a Claude.ai toma ' +
+      'Tu conector con las 12 Skills, tu panel y los videos guía. Conectarlo a Claude.ai toma ' +
       'dos minutos, funciona con el plan gratuito y no necesitas saber nada de tecnología.',
   },
   {
@@ -441,7 +441,7 @@ export const OBJECIONES = [
  */
 export const INCLUYE: Record<string, string[]> = {
   METODO_DE_TESIS_HUMANIZADOR: [
-    'Las 11 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
+    'Las 12 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
     'Tu tesis en un solo Word en 15 normas de citas, o tu propio Word ya escrito con sus citas puestas',
     'Videos guía para conectarlo y usarlo',

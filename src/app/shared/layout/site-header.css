@@ -241,7 +241,7 @@
   }
 
   /* Cada enlace ocupa toda la fila: el objetivo del dedo es la línea entera,
-     no las once letras de «Las 11 Skills». */
+     no las once letras de «Las 12 Skills». */
   .navegacion a {
     padding: 13px 0;
     font-size: 15px;

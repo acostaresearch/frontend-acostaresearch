@@ -1,5 +1,5 @@
 /**
- * La ficha de cada Skill del método, tal como se lee en «Las 11 Skills».
+ * La ficha de cada Skill del método, tal como se lee en «Las 12 Skills».
  *
  * No duplica a `DESCRIPCIONES`, que es el texto largo de venta y lo siguen
  * usando la ruta del artículo y el detalle de cada capítulo. Aquí el texto es
@@ -173,21 +173,21 @@ export const PANEL_DEL_METODO = [
     icono: 'pulso',
     titulo: 'Por dónde vas',
     texto:
-      'Claude anota lo que vas decidiendo y tu panel te muestra qué fases están terminadas. En ' +
+      'Nuestro sistema anota lo que vas decidiendo y tu panel te muestra qué fases están terminadas. En ' +
       'una conversación nueva no tienes que volver a explicarle tu tema.',
   },
   {
     icono: 'archivo',
-    titulo: 'Tus fuentes y tu Zotero',
+    titulo: 'Tus fuentes',
     texto:
-      'Sube tu export de Scopus, Web of Science, SciELO o PubMed, o tus PDF. Si usas Zotero, ' +
-      'conéctalo y tus referencias se mantienen al día solas.',
+      'Usa Scopus en la plataforma, importa de Web of Science, SciELO o PubMed, o tus PDF. Si usas Zotero o ' +
+      'Mendeley, conéctalo y tus referencias se mantienen al día solas.',
   },
   {
     icono: 'barras',
     titulo: 'Analiza tus datos en R',
     texto:
-      'Claude corre el análisis en R contigo, en la misma conversación y sin instalar nada. Te ' +
+      'Puedes correr el análisis en R, dentro de la misma conversación y sin instalar nada. Te ' +
       'entrega el informe en Word, y las cifras del Capítulo IV salen de ahí.',
   },
   {

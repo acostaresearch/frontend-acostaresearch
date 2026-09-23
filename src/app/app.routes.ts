@@ -23,7 +23,7 @@ export const routes: Routes = [
   },
   {
     path: 'metodo',
-    title: 'Las 11 Skills · Acosta Research',
+    title: 'Las 12 Skills · Acosta Research',
     loadComponent: () => import('./features/metodo/metodo').then((m) => m.Metodo),
   },
   {
