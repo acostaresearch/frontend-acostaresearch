@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 
 import { mensajeDeError } from '../../core/http/api-error';
+import { DialogoService } from '../../core/services/dialogo.service';
 import {
   EstadoDeResena,
   MAXIMO_VIDEO_BYTES,
@@ -54,6 +55,7 @@ const FILTROS: { clave: EstadoDeResena | 'TODAS'; nombre: string }[] = [
 })
 export class ResenasAdmin {
   private readonly api = inject(ResenaService);
+  private readonly dialogos = inject(DialogoService);
 
   readonly resenas = input.required<ResenaDelPanel[]>();
   /** Se cambió algo. Lleva el mensaje para el aviso del panel, que recarga. */
@@ -305,15 +307,26 @@ export class ResenasAdmin {
    * las que se dieron de alta con el correo equivocado—: ahí no hay a quién
    * responder, y rechazarlas solo las escondía sin sacarlas del panel.
    *
-   * Pregunta antes, con el nombre delante, que no se deshace.
+   * Pregunta antes con la ventana del sitio, con el nombre delante y en tono de
+   * peligro, y recuerda ahí mismo cuál es la otra salida: rechazarla.
    */
-  borrar(resena: ResenaDelPanel): void {
+  async borrar(resena: ResenaDelPanel): Promise<void> {
     if (this.guardando()) return;
 
     const quien = resena.nombre || resena.autor;
-    if (!confirm(`¿Borrar la reseña de ${quien}? Se va con su video y no se puede deshacer.`)) {
-      return;
-    }
+    const seguro = await this.dialogos.confirmar({
+      titulo: `Borrar la reseña de ${quien}`,
+      mensaje: resena.video
+        ? 'Se va con su video, y no se puede deshacer.'
+        : 'No se puede deshacer.',
+      nota:
+        'Para las de prueba o las que se dieron de alta con el correo equivocado. Si la escribió ' +
+        'un cliente y solo quieres que deje de verse, cancela y usa «No publicar»: así se queda ' +
+        'con el motivo que le escribas y puede volver a enviarla.',
+      confirmar: 'Borrar la reseña',
+      tono: 'peligro',
+    });
+    if (!seguro || this.guardando()) return;
 
     this.guardando.set(true);
     this.error.set(null);
