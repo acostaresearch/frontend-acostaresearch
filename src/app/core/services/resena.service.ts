@@ -44,6 +44,14 @@ export interface ResenaPublica {
    * rechazo no salen de la cuenta de su autor.
    */
   destacada: boolean;
+  /**
+   * Detrás de la firma hay una cuenta de verdad.
+   *
+   * Falso en las que se apuntaron a mano desde el panel a nombre de quien
+   * compró por otra vía: su testimonio puede ser igual de real, pero la firma
+   * no se puede comprobar y la web no las enseña como si sí.
+   */
+  conCuenta: boolean;
 }
 
 /** La suya, con en qué punto está. */

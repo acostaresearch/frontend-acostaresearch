@@ -118,31 +118,7 @@
                    grabaciones de móvil en pantalla, precargarlas todas son
                    cientos de megas antes de leer el primer testimonio. -->
               @if (r.video) {
-                <div class="video">
-                  <video
-                    #reproductor
-                    preload="metadata"
-                    playsinline
-                    [src]="api.urlDelVideo(r.id)"
-                    [controls]="sonando() === r.id"
-                    (loadedmetadata)="apuntarDuracion(r.id, reproductor)"
-                  ></video>
-                  @if (sonando() !== r.id) {
-                    <button
-                      type="button"
-                      class="play"
-                      [attr.aria-label]="'Ver el video de ' + r.autor"
-                      (click)="reproducir(r.id, reproductor)"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M9 6.5v11l9-5.5z" fill="currentColor" />
-                      </svg>
-                    </button>
-                    @if (duraciones()[r.id]; as duracion) {
-                      <span class="duracion">{{ duracion }}</span>
-                    }
-                  }
-                </div>
+                <app-video-resena [src]="api.urlDelVideo(r.id)" [autor]="r.autor" />
               }
 
               @if (r.comentario) {

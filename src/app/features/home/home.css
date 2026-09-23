@@ -951,6 +951,33 @@
   text-align: center;
 }
 
+/* El rótulo, entre dos rayas y en versales: a esa distancia del titular, una
+   línea suelta de texto azul se leía como el arranque de la frase. */
+.resenas-marca {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.resenas-marca::before,
+.resenas-marca::after {
+  width: 26px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  opacity: 0.55;
+  content: '';
+}
+
+/* La segunda mitad del titular, en azul: lo que se quiere que quede es
+   «pasaron por aquí», no «tesistas», que eso ya lo son todos los que leen. */
+.resenas-azul {
+  color: var(--color-primario);
+}
+
 .resenas-resumen {
   display: flex;
   flex-wrap: wrap;
@@ -990,9 +1017,13 @@
   gap: 8px;
   align-items: center;
   justify-content: center;
+  padding: 7px 16px;
   margin: 16px 0 0;
   font-size: 13.5px;
   color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border: 1px solid color-mix(in srgb, var(--color-exito) 25%, transparent);
+  border-radius: 999px;
 }
 
 .resenas-sello svg {
@@ -1039,18 +1070,38 @@
     box-shadow 0.18s ease;
 }
 
-/* Las comillas grandes de fondo, no de adorno: marcan que lo de dentro es voz
-   de otro. Detrás del texto y muy lavadas para no disputarle la lectura. */
-.resena-tarjeta::before {
-  position: absolute;
-  top: -28px;
-  right: 6px;
+/* La comilla de apertura, encima del texto: marca que lo de dentro es voz de
+   otro sin tener que encerrarlo entre comillas pequeñas, que a este cuerpo de
+   letra se pierden. En gris de mobiliario, no en color de marca: es señal de
+   dónde empieza la cita, no un adorno que compita con las estrellas. */
+.resena-tarjeta blockquote::before {
+  display: block;
+  margin-bottom: -14px;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 120px;
+  font-size: 46px;
   line-height: 1;
-  color: color-mix(in srgb, var(--color-primario) 10%, transparent);
-  pointer-events: none;
-  content: '”';
+  color: var(--color-borde-fuerte);
+  content: '“';
+}
+
+/* La clase de testimonio, arriba a la derecha: de un vistazo se ve cuántos de
+   los tres son grabaciones, que es lo que más cuesta conseguir. */
+.resena-tarjeta-alto {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resena-clase {
+  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  white-space: nowrap;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
 }
 
 .resena-tarjeta:hover {
@@ -1077,12 +1128,30 @@
   color: var(--color-texto);
 }
 
-.resena-tarjeta blockquote::before {
-  content: '«';
+/* Recortado a seis renglones mientras no se abra: las tres tarjetas de la
+   portada tienen que medir lo mismo. */
+.resena-tarjeta blockquote:not(.entera) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
 }
 
-.resena-tarjeta blockquote::after {
-  content: '»';
+.leer-entera {
+  padding: 0;
+  margin-top: -4px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.leer-entera:hover {
+  text-decoration: underline;
 }
 
 /* La firma: el redondel con la inicial, y al lado el nombre sobre el oficio y
@@ -1092,6 +1161,10 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  /* Pegada abajo: sin texto que la empuje —una reseña que es solo video— se
+     quedaba a media tarjeta y las tres firmas dejaban de estar a la misma
+     altura. */
+  margin-top: auto;
   padding-top: 16px;
   font-size: 13.5px;
   border-top: 1px solid var(--color-borde);
@@ -1103,11 +1176,31 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
+  color: var(--color-sobre-relleno);
+  background: var(--color-boton);
   border-radius: 50%;
+}
+
+/* Al otro extremo de la firma, en verde de comprobado: dice que detrás de ese
+   correo tapado hay una cuenta, que es lo que separa un testimonio de una
+   frase escrita por cualquiera. */
+.con-cuenta {
+  display: inline-flex;
+  flex: none;
+  gap: 5px;
+  align-items: center;
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-exito);
+}
+
+.con-cuenta svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
 }
 
 .resena-firma {
@@ -1167,11 +1260,10 @@
   }
 }
 
-/* El video del testimonio, dentro de la tarjeta. Fondo negro para que no
-   parpadee en blanco mientras carga el primer fotograma. */
-.resena-tarjeta .resena-video {
-  width: 100%;
-  max-height: 260px;
-  background: #000;
-  border-radius: 12px;
+/* El video del testimonio, de borde a borde de la tarjeta y pegado arriba: es
+   la portada del testimonio, no una figura dentro de un texto. La miniatura, el
+   triángulo y la duración los pone `app-video-resena`. */
+.resena-tarjeta app-video-resena {
+  margin: -26px -26px 2px;
+  border-radius: 16px 16px 0 0;
 }

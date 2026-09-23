@@ -147,6 +147,7 @@ describe('Home · reseñas de la portada', () => {
     createdAt: '2026-09-01T00:00:00.000Z',
     video: false,
     destacada: false,
+    conCuenta: true,
   });
 
   beforeEach(() => {

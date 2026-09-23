@@ -120,8 +120,10 @@
   @if (resenas().length > 0 || auth.isAuthenticated()) {
     <section class="seccion resenas-banda">
       <div class="cab">
-        <p class="seccion-marca">Lo que dicen</p>
-        <h2 class="titulo-seccion">Tesistas que ya pasaron por aquí</h2>
+        <p class="seccion-marca resenas-marca">Lo que dicen</p>
+        <h2 class="titulo-seccion">
+          Tesistas que ya <span class="resenas-azul">pasaron por aquí</span>
+        </h2>
 
         @if (resumenDeResenas(); as resumen) {
           <p class="resenas-resumen">
@@ -166,34 +168,63 @@
         >
           @for (r of resenas(); track r.id) {
             <li class="resena-tarjeta">
-              <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
-                <span aria-hidden="true"
-                  >{{ llenas(r.estrellas)
-                  }}<span class="apagadas">{{ vacias(r.estrellas) }}</span></span
-                >
-              </p>
-              <!-- Con video, la grabación es el testimonio. El texto sigue
-                   saliendo si además lo escribió. Sin precargar nada más que la
-                   primera imagen: tres videos cargándose enteros en la portada
-                   son veinte megas antes de leer el primer precio. -->
+              <!-- Con video, la grabación es el testimonio, y va arriba: es lo
+                   primero que mira quien pasa. No se carga sola —se ve el primer
+                   fotograma y cuánto dura—, que tres videos bajándose enteros en
+                   la portada son veinte megas antes de leer el primer precio. -->
               @if (r.video) {
-                <video
-                  class="resena-video"
-                  controls
-                  preload="metadata"
-                  playsinline
-                  [src]="api.urlDelVideo(r.id)"
-                ></video>
+                <app-video-resena [src]="api.urlDelVideo(r.id)" [autor]="r.autor" />
               }
+
+              <div class="resena-tarjeta-alto">
+                <p class="resena-tarjeta-estrellas" [attr.aria-label]="r.estrellas + ' de 5'">
+                  <span aria-hidden="true"
+                    >{{ llenas(r.estrellas)
+                    }}<span class="apagadas">{{ vacias(r.estrellas) }}</span></span
+                  >
+                </p>
+                <span class="resena-clase">{{ r.video ? 'En video' : 'Escrita' }}</span>
+              </div>
+
               @if (r.comentario) {
-                <blockquote>{{ r.comentario }}</blockquote>
+                <blockquote [class.entera]="abierta() === r.id">{{ r.comentario }}</blockquote>
+
+                <!-- Las tres tarjetas miden lo mismo pase lo que pase: la que se
+                     enrolla se recorta y se abre aquí, sin sacar a nadie de la
+                     portada. Solo sale cuando de verdad hay más que leer. -->
+                @if (esLarga(r)) {
+                  <button type="button" class="leer-entera" (click)="abrirResena(r.id)">
+                    {{ abierta() === r.id ? 'Ver menos' : 'Leer reseña completa' }}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                }
               }
+
               <footer>
                 <span class="resena-inicial" aria-hidden="true">{{ inicial(r.autor) }}</span>
                 <span class="resena-firma">
                   <b>{{ r.autor }}</b>
                   <span class="resenas-tenue">{{ pieDeFirma(r) }}</span>
                 </span>
+
+                <!-- Lo que sostiene a la firma: detrás de ese correo tapado hay
+                     una cuenta de verdad. Las que llegaron por WhatsApp y se
+                     apuntaron a mano no lo llevan, y así no se confunden. -->
+                @if (r.conCuenta) {
+                  <span class="con-cuenta">
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="m3.5 8.4 3 3 6-6.4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    Con cuenta
+                  </span>
+                }
               </footer>
             </li>
           }
@@ -212,7 +243,9 @@
            todos. El formulario es el mismo de siempre y se abre debajo. -->
       <div class="resenas-pie">
         @if (resenas().length > 0) {
-          <a class="boton secundario" routerLink="/resenas">Ver todas las reseñas</a>
+          <a class="boton secundario" routerLink="/resenas"
+            >Ver todas las reseñas <span aria-hidden="true">→</span></a
+          >
         }
 
         @if (auth.isAuthenticated()) {

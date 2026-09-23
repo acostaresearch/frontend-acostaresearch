@@ -6,6 +6,7 @@ import { ResenaPublica, ResenaService, nota } from '../../core/services/resena.s
 import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { VideoDeResena } from '../../shared/resenas/video-resena';
 
 /** Qué se está mirando. */
 type Filtro = 'TODAS' | 'VIDEO' | 'ESCRITAS';
@@ -40,8 +41,8 @@ const PASO = 9;
  * LOS VIDEOS NO SE CARGAN SOLOS
  * -----------------------------
  * Cada tarjeta enseña el primer fotograma y su duración, y el archivo no empieza
- * a bajar hasta que alguien le da al triángulo. Nueve testimonios grabados con
- * el móvil cargándose a la vez son cientos de megas en la primera pantalla.
+ * a bajar hasta que alguien le da al triángulo; de eso se encarga
+ * `app-video-resena`, que es el mismo que usa la portada.
  *
  * Si no hay ninguna todavía, la página no finge: lo dice y ofrece las dos
  * salidas que sí existen —las demostraciones y el método—, que es lo que
@@ -49,7 +50,7 @@ const PASO = 9;
  */
 @Component({
   selector: 'app-resenas',
-  imports: [RouterLink, SiteHeader, SiteFooter, MiResenaDelServicio],
+  imports: [RouterLink, SiteHeader, SiteFooter, MiResenaDelServicio, VideoDeResena],
   templateUrl: './resenas.html',
   styleUrl: './resenas.css',
 })
@@ -134,35 +135,6 @@ export class Resenas implements OnInit {
    */
   esGrande(resena: ResenaPublica, i: number): boolean {
     return i === 0 && resena.video && this.visibles().length >= 3;
-  }
-
-  // ── Los videos ────────────────────────────────────────────────────────────
-
-  /** El que se está reproduciendo. Solo uno: dos a la vez no los oye nadie. */
-  readonly sonando = signal<string | null>(null);
-  /** «1:11» por reseña, leído del propio archivo cuando el navegador lo sabe. */
-  readonly duraciones = signal<Record<string, string>>({});
-
-  reproducir(id: string, video: HTMLVideoElement): void {
-    this.sonando.set(id);
-    void video.play().catch(() => {
-      // Si el navegador se niega a reproducir, al menos que queden los mandos.
-    });
-  }
-
-  /**
-   * Apunta la duración en cuanto el navegador la sabe.
-   *
-   * Sale en la esquina de la miniatura porque es la pregunta de quien duda si
-   * darle: no es lo mismo un minuto que ocho.
-   */
-  apuntarDuracion(id: string, video: HTMLVideoElement): void {
-    const segundos = Math.round(video.duration);
-    if (!Number.isFinite(segundos) || segundos <= 0) return;
-
-    const minutos = Math.floor(segundos / 60);
-    const resto = String(segundos % 60).padStart(2, '0');
-    this.duraciones.update((d) => ({ ...d, [id]: `${minutos}:${resto}` }));
   }
 
   // ── Detalles de cómo se pinta ─────────────────────────────────────────────

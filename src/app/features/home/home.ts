@@ -20,6 +20,7 @@ import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
+import { VideoDeResena } from '../../shared/resenas/video-resena';
 import { Contador } from './contador';
 import { HeroNetwork } from './hero-network/hero-network';
 
@@ -45,6 +46,7 @@ import { HeroNetwork } from './hero-network/hero-network';
     Contador,
     LineasNoche,
     MiResenaDelServicio,
+    VideoDeResena,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -260,6 +262,32 @@ export class Home implements OnInit {
   /** Abre o cierra el formulario de su reseña, debajo de las tarjetas. */
   escribir(): void {
     this.escribiendo.update((abierto) => !abierto);
+  }
+
+  /**
+   * Cuál se está leyendo entera, si alguna.
+   *
+   * Las tarjetas de la portada miden lo mismo: tres columnas donde una crece el
+   * doble que las otras dos se lee como un desajuste. La que se enrolla se
+   * recorta y se abre aquí mismo, que sacar a alguien de la portada para leer
+   * un párrafo es perderlo justo antes de los precios.
+   */
+  readonly abierta = signal<string | null>(null);
+
+  abrirResena(id: string): void {
+    this.abierta.update((actual) => (actual === id ? null : id));
+  }
+
+  /**
+   * Si hay más texto del que cabe recortado.
+   *
+   * El corte son seis renglones de tarjeta, que a este ancho y este cuerpo de
+   * letra caen cerca de los doscientos caracteres. Por debajo no se enseña el
+   * «Leer reseña completa»: un botón que abre lo que ya se veía entero es un
+   * botón que estorba.
+   */
+  esLarga(resena: ResenaPublica): boolean {
+    return resena.comentario.length > 200;
   }
 
   /**
