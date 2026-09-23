@@ -44,15 +44,27 @@ export interface MiResena extends ResenaPublica {
   /** Por qué no se publicó. Vacío mientras no se haya rechazado. */
   motivo: string;
   destacada: boolean;
+  /**
+   * La publicamos nosotros a su nombre.
+   *
+   * No la escribió él, así que no la puede cambiar, ni tocarle el video, ni
+   * quitárselo. Verla sí, y escribir la suya también: es otra reseña.
+   */
+  delPanel: boolean;
   updatedAt: string;
 }
 
-/** La misma, como la ve el panel: añade de quién es. */
+/** La misma, como la ve el panel: añade de quién es y el correo entero. */
 export interface ResenaDelPanel extends MiResena {
   /** El nombre de la cuenta. Solo se ve aquí: en la web sale `autor`. */
   nombre: string;
+  /** El correo entero, para saber a quién escribir. Fuera sale tapado. */
+  correo: string;
   revisadaAt: string | null;
-  user: { id: string; email: string; firstName: string; lastName: string };
+  /** Nulo cuando se dio de alta a nombre de alguien que no tiene cuenta. */
+  user: { id: string; email: string; firstName: string; lastName: string } | null;
+  /** Ese correo no tiene cuenta: la firma no se puede comprobar. */
+  sinCuenta: boolean;
 }
 
 /** Lo que se escribe al dejar una. Sin nombre: la firma sale del correo. */
@@ -121,17 +133,24 @@ export class ResenaService {
     return this.http.get<ApiResponse<Resenas>>(url).pipe(map((res) => res.data));
   }
 
-  /** La suya. Null si todavía no ha escrito ninguna. */
-  mia(): Observable<MiResena | null> {
+  /** Las suyas, las últimas primero. Vacío si todavía no ha escrito ninguna. */
+  mias(): Observable<MiResena[]> {
     return this.http
-      .get<ApiResponse<{ resena: MiResena | null }>>(`${this.base}/mia`)
-      .pipe(map((res) => res.data.resena));
+      .get<ApiResponse<{ resenas: MiResena[] }>>(`${this.base}/mias`)
+      .pipe(map((res) => res.data.resenas));
   }
 
-  /** Deja la suya, o reescribe la que tenía. Vuelve a quedar pendiente. */
+  /** Escribe una nueva. Puede tener varias: cada vuelta cuenta otra cosa. */
   guardar(datos: ResenaEnvio): Observable<MiResena> {
     return this.http
       .post<ApiResponse<{ resena: MiResena }>>(this.base, datos)
+      .pipe(map((res) => res.data.resena));
+  }
+
+  /** Cambia una de las suyas. Vuelve a quedar pendiente. */
+  cambiar(id: string, datos: ResenaEnvio): Observable<MiResena> {
+    return this.http
+      .put<ApiResponse<{ resena: MiResena }>>(`${this.base}/mias/${id}`, datos)
       .pipe(map((res) => res.data.resena));
   }
 
@@ -148,17 +167,17 @@ export class ResenaService {
     return `${this.base}/${id}/video`;
   }
 
-  /** Sube el video de la suya, o cambia el que tenía. */
-  subirMiVideo(archivo: File): Observable<MiResena> {
+  /** Sube el video de una suya, o cambia el que tenía. */
+  subirMiVideo(id: string, archivo: File): Observable<MiResena> {
     return this.http
-      .put<ApiResponse<{ resena: MiResena }>>(`${this.base}/mia/video`, archivo)
+      .put<ApiResponse<{ resena: MiResena }>>(`${this.base}/mias/${id}/video`, archivo)
       .pipe(map((res) => res.data.resena));
   }
 
   /** Lo quita y deja el texto. */
-  quitarMiVideo(): Observable<MiResena> {
+  quitarMiVideo(id: string): Observable<MiResena> {
     return this.http
-      .delete<ApiResponse<{ resena: MiResena }>>(`${this.base}/mia/video`)
+      .delete<ApiResponse<{ resena: MiResena }>>(`${this.base}/mias/${id}/video`)
       .pipe(map((res) => res.data.resena));
   }
 
@@ -170,8 +189,9 @@ export class ResenaService {
    * justo el que hay que mirar antes de aprobarlo— no se puede pedir de otra
    * forma.
    */
-  videoPorRevisar(id?: string): Observable<Blob> {
-    const url = id ? `${this.base}/panel/${id}/video` : `${this.base}/mia/video`;
+  videoPorRevisar(id: string, dondeEstoy: 'mias' | 'panel' = 'mias'): Observable<Blob> {
+    const url =
+      dondeEstoy === 'panel' ? `${this.base}/panel/${id}/video` : `${this.base}/mias/${id}/video`;
     return this.http.get(url, { responseType: 'blob' });
   }
 
@@ -198,6 +218,20 @@ export class ResenaService {
         ApiResponse<{ resenas: ResenaDelPanel[]; pendientes: number }>
       >(`${this.base}/panel?estado=${estado}`)
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Panel: la borra del todo, con su video. No se puede deshacer.
+   *
+   * No es rechazarla: rechazar la retira de la web y deja la fila con su
+   * motivo, para quien la escribió. Esto es para lo que nunca fue una reseña
+   * —las de prueba, las del correo equivocado, las que quedaron en blanco—,
+   * donde no hay a quién responder ni nada que conservar.
+   */
+  borrar(id: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<{ id: string }>>(`${this.base}/panel/${id}`)
+      .pipe(map(() => undefined));
   }
 
   /** Panel: aprobar, rechazar o destacar. */

@@ -161,10 +161,17 @@
               @if (r.video) {
                 <span class="marca-video">Con video</span>
               }
+              @if (r.sinCuenta) {
+                <span class="marca-sin-cuenta">Sin cuenta</span>
+              }
             </p>
             <p class="tenue">
-              {{ fecha(r.createdAt) }} · {{ r.user.firstName }} {{ r.user.lastName }} ·
-              {{ r.user.email }}
+              {{ fecha(r.createdAt) }} ·
+              @if (r.user; as u) {
+                {{ u.firstName }} {{ u.lastName }} · {{ u.email }}
+              } @else {
+                {{ r.correo }}
+              }
             </p>
             <p class="adelanto">{{ r.comentario }}</p>
           </div>
@@ -187,8 +194,12 @@
         <div>
           <h3 id="titulo-resena">{{ r.nombre }}</h3>
           <p class="tenue">
-            {{ r.user.firstName }} {{ r.user.lastName }} · {{ r.user.email }} ·
-            {{ fecha(r.createdAt) }}
+            @if (r.user; as u) {
+              {{ u.firstName }} {{ u.lastName }} · {{ u.email }}
+            } @else {
+              {{ r.correo }}
+            }
+            · {{ fecha(r.createdAt) }}
             @if (r.revisadaAt) {
               · revisada el {{ fecha(r.revisadaAt) }}
             }
@@ -241,6 +252,17 @@
             <span class="tenue">(sin oficio)</span>
           }
         </dd>
+        @if (r.sinCuenta) {
+          <dt>Ojo</dt>
+          <dd class="sin-cuenta-aviso">
+            No hay ninguna cuenta con <b>{{ r.correo }}</b>. La reseña se firma igual con ese
+            correo, pero nadie ha comprado con él: no se puede comprobar quién la escribió.
+          </dd>
+        }
+        @if (r.delPanel) {
+          <dt>Quién la escribió</dt>
+          <dd>La diste de alta tú desde aquí. Su titular no la puede cambiar ni quitar.</dd>
+        }
         <dt>Estado</dt>
         <dd>
           {{ nombreDelEstado[r.estado] }}
@@ -325,6 +347,20 @@
           </button>
         }
       </div>
+
+      <!-- Borrar va aparte de los botones de revisar, y en texto: no es una
+           decisión más sobre una reseña —publicarla, retirarla, no publicarla—,
+           es tirar lo que nunca fue una. Quien revisa no se lo encuentra en la
+           misma fila de lo que va a pulsar. -->
+      <p class="borrar-del-todo">
+        <button type="button" [disabled]="guardando()" (click)="borrar(r)">
+          Borrar esta reseña
+        </button>
+        <span class="nota">
+          Se va con su video y no se puede deshacer. Para las de prueba o las que se dieron de alta
+          con el correo equivocado; si la escribió un cliente, mejor «No publicar».
+        </span>
+      </p>
     </div>
   </div>
 }

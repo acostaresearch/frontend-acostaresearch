@@ -236,3 +236,34 @@
 .quitar-video:hover {
   color: var(--color-error);
 }
+
+/* ── Varias por cuenta ───────────────────────────────────────────────────── */
+/* Cuándo la escribió, al lado de las estrellas: con varias en la misma
+   pantalla, sin fecha no se sabe cuál es cuál. */
+.resena-cuando {
+  margin-left: 8px;
+  font-size: 13px;
+  color: var(--color-texto-tenue);
+}
+
+/* Separar una reseña de la siguiente: son cajas distintas, no una lista. */
+.resena-mia + .resena-mia {
+  padding-top: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.otra {
+  width: auto;
+  margin-top: 16px;
+}
+
+/* Las que publicamos nosotros a su nombre. En ámbar, no en rojo: no es un
+   error, es que esa no la escribió él. */
+.resena-nuestra {
+  padding: 10px 12px;
+  margin-top: 10px;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: var(--radio-sm);
+}

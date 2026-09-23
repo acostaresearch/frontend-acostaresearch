@@ -1,17 +1,27 @@
 <app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
 
 @if (!cargando()) {
-  <!-- ── Lo que ya dejó ──────────────────────────────────────────────────────
+  <!-- ── Las que ya dejó ─────────────────────────────────────────────────────
        Con su estado a la vista. Quien envía cinco estrellas y no las ve salir
        en la web da por hecho que se perdieron: aquí se le dice en qué punto
-       está, y si se rechazó, por qué. -->
-  @if (mia(); as r) {
-    @if (!editando()) {
+       está cada una, y si se rechazó, por qué. -->
+  @for (r of mias(); track r.id) {
+    @if (editando() !== r.id) {
       <div class="resena-mia">
-        <p class="resena-estrellas">{{ estrellas(r.estrellas) }}</p>
-        <p class="resena-texto">«{{ r.comentario }}»</p>
+        <p class="resena-estrellas">
+          {{ estrellas(r.estrellas) }}
+          <span class="resena-cuando">{{ cuando(r.createdAt) }}</span>
+        </p>
+
+        @if (videos()[r.id]; as fuente) {
+          <video class="resena-video" controls preload="metadata" [src]="fuente"></video>
+        }
+        @if (r.comentario) {
+          <p class="resena-texto">«{{ r.comentario }}»</p>
+        }
+
         <p class="nota">
-          Firmada como <b>{{ r.autor }}</b
+          Firmada como <b>{{ firma() }}</b
           >@if (r.oficio) { <span>, {{ r.oficio }}</span> }
         </p>
 
@@ -39,39 +49,62 @@
           }
         }
 
-        @if (r.video && videoLocal(); as fuente) {
-          <video class="resena-video" controls preload="metadata" [src]="fuente"></video>
+        <!-- Las que publicamos nosotros a su nombre se ven, pero no se tocan:
+             no las escribió él. Se le dice, y se le da la salida real. -->
+        @if (r.delPanel) {
+          <p class="nota resena-nuestra">
+            Esta la publicamos nosotros con lo que nos contaste. Si quieres cambiarla o quitarla,
+            escríbenos y lo hacemos.
+          </p>
+        } @else {
+          <div class="resena-acciones">
+            <button type="button" class="boton secundario" (click)="editar(r)">Cambiarla</button>
+
+            <!-- El video se cambia sin tocar el texto: son dos cosas, y volver a
+                 escribir la reseña para cambiar la grabación no tiene sentido. -->
+            <label class="boton secundario resena-subir">
+              {{
+                subiendoVideo() === r.id
+                  ? 'Subiendo…'
+                  : r.video
+                    ? 'Cambiar el video'
+                    : 'Añadir un video'
+              }}
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/*"
+                [disabled]="subiendoVideo() !== null"
+                (change)="elegirVideo($event, r)"
+              />
+            </label>
+
+            @if (r.video) {
+              <button type="button" class="quitar-video" (click)="quitarVideo(r)">
+                Quitar el video
+              </button>
+            }
+          </div>
         }
-
-        <div class="resena-acciones">
-          <button type="button" class="boton secundario" (click)="editar()">
-            Cambiar mi reseña
-          </button>
-
-          <!-- El video se cambia sin tocar el texto: son dos cosas, y volver a
-               escribir la reseña para cambiar la grabación no tiene sentido. -->
-          <label class="boton secundario resena-subir">
-            {{ subiendoVideo() ? 'Subiendo…' : r.video ? 'Cambiar el video' : 'Añadir un video' }}
-            <input
-              type="file"
-              accept="video/mp4,video/webm,video/quicktime,video/*"
-              [disabled]="subiendoVideo()"
-              (change)="elegirVideo($event)"
-            />
-          </label>
-
-          @if (r.video) {
-            <button type="button" class="quitar-video" (click)="quitarVideo()">Quitar el video</button>
-          }
-        </div>
       </div>
     }
   }
 
-  <!-- ── Escribirla ────────────────────────────────────────────────────────── -->
-  @if (editando()) {
+  <!-- ── Escribir otra ─────────────────────────────────────────────────────
+       Puede dejar varias: quien vuelve a los seis meses con otra fase
+       terminada tiene algo distinto que contar. -->
+  @if (editando() === null) {
+    <button type="button" class="boton otra" (click)="escribirOtra()">
+      @if (mias().length > 0) {
+        Escribir otra reseña
+      } @else {
+        Escribir mi reseña
+      }
+    </button>
+  }
+
+  @if (editando(); as cual) {
     <div class="resena-formulario">
-      @if (!mia()) {
+      @if (cual === 'nueva') {
         <p class="nota">
           Cuenta cómo te fue de verdad: para qué lo usaste, qué te sirvió y qué esperabas y no
           encontraste. Lo que ayuda al siguiente tesista es lo concreto.
@@ -105,7 +138,7 @@
         <!-- Cuántas faltan, no cuántas van: lo que bloquea el botón es el
              mínimo, así que es el mínimo lo que hay que enseñar. -->
         <small class="resena-cuenta">
-          @if (mia()?.video) {
+          @if (enCurso()?.video) {
             Con el video no hace falta texto. Escribe si quieres añadir algo.
           } @else if (faltan() > 0) {
             Escribe {{ faltan() }} caracteres más.
@@ -140,20 +173,20 @@
 
       <div class="resena-acciones">
         <button type="button" class="boton" [disabled]="!puedeEnviar()" (click)="enviar()">
-          {{ guardando() ? 'Enviando…' : mia() ? 'Guardar los cambios' : 'Enviar mi reseña' }}
+          {{ guardando() ? 'Enviando…' : cual === 'nueva' ? 'Enviar mi reseña' : 'Guardar los cambios' }}
         </button>
-        @if (mia()) {
+        @if (cual !== 'nueva' || mias().length > 0) {
           <button type="button" class="boton secundario" (click)="cancelar()">Cancelar</button>
         }
       </div>
 
       <p class="nota resena-pie resena-video-nota">
-        ¿Prefieres contarlo en video? Envía la reseña y podrás añadir uno de hasta
-        {{ maximoMb }} MB. Si lo haces, el texto ya no hace falta.
+        ¿Prefieres contarlo en video? Envíala y podrás añadir uno de hasta {{ maximoMb }} MB. Si lo
+        haces, el texto ya no hace falta.
       </p>
 
       <p class="nota resena-pie">
-        @if (mia()) {
+        @if (cual !== 'nueva') {
           Al cambiarla vuelve a pasar por revisión, así que dejará de verse hasta que la aprobemos.
         } @else {
           La revisamos antes de publicarla. No se ve en la web hasta entonces.

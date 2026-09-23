@@ -131,7 +131,7 @@ export class ResenasAdmin {
     // El video se baja con la sesión: hay que poder verlo ANTES de aprobarlo, y
     // la ruta pública solo sirve las que ya están aprobadas.
     if (resena.video) {
-      this.api.videoPorRevisar(resena.id).subscribe({
+      this.api.videoPorRevisar(resena.id, 'panel').subscribe({
         next: (blob) => this.videoLocal.set(URL.createObjectURL(blob)),
         error: () => this.videoLocal.set(null),
       });
@@ -193,10 +193,10 @@ export class ResenasAdmin {
       .subscribe({
         next: (resena) => {
           const video = this.nuevaVideo();
-          if (!video) return this.altaTerminada(resena.autor);
+          if (!video) return this.altaTerminada(resena.autor, resena.sinCuenta);
 
           this.api.subirVideoDelPanel(resena.id, video).subscribe({
-            next: () => this.altaTerminada(resena.autor),
+            next: () => this.altaTerminada(resena.autor, resena.sinCuenta),
             error: (e: unknown) => {
               this.guardando.set(false);
               this.error.set(
@@ -212,14 +212,22 @@ export class ResenasAdmin {
       });
   }
 
-  private altaTerminada(autor: string): void {
+  private altaTerminada(autor: string, sinCuenta = false): void {
     this.guardando.set(false);
     this.dandoDeAlta.set(false);
-    this.nuevaEmail.set('');
     this.nuevaComentario.set('');
     this.nuevaOficio.set('');
+    const correo = this.nuevaEmail().trim();
     this.nuevaVideo.set(null);
-    this.cambiada.emit(`Reseña de ${autor} guardada y publicada.`);
+    // Si ese correo no tiene cuenta se guarda igual —hay quien compró por otra
+    // vía— pero se dice en el mismo aviso: una firma sin cuenta detrás no se
+    // puede comprobar, y eso hay que saberlo ahora, no descubrirlo después.
+    this.cambiada.emit(
+      sinCuenta
+        ? `Guardada y publicada, pero OJO: no hay ninguna cuenta con ${correo}. Se firma igual con ese correo, aunque nadie ha comprado con él.`
+        : `Reseña de ${autor} guardada y publicada.`,
+    );
+    this.nuevaEmail.set('');
   }
 
   /** Sube o cambia el video de la reseña abierta, sin devolverla a pendiente. */
@@ -286,6 +294,41 @@ export class ResenasAdmin {
       { estado: 'PENDIENTE' },
       (r) => `La reseña de ${r.nombre} ya no se ve en la web.`,
     );
+  }
+
+  /**
+   * La borra del todo: la fila y su video.
+   *
+   * Es otra cosa que «No publicar». Rechazar retira de la web y deja la reseña
+   * donde está, con su motivo, porque detrás hay alguien que escribió algo y
+   * puede corregirlo. Esto es para lo que nunca fue una reseña —las de prueba,
+   * las que se dieron de alta con el correo equivocado—: ahí no hay a quién
+   * responder, y rechazarlas solo las escondía sin sacarlas del panel.
+   *
+   * Pregunta antes, con el nombre delante, que no se deshace.
+   */
+  borrar(resena: ResenaDelPanel): void {
+    if (this.guardando()) return;
+
+    const quien = resena.nombre || resena.autor;
+    if (!confirm(`¿Borrar la reseña de ${quien}? Se va con su video y no se puede deshacer.`)) {
+      return;
+    }
+
+    this.guardando.set(true);
+    this.error.set(null);
+
+    this.api.borrar(resena.id).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrar();
+        this.cambiada.emit(`Borrada la reseña de ${quien}.`);
+      },
+      error: (e: unknown) => {
+        this.guardando.set(false);
+        this.error.set(mensajeDeError(e));
+      },
+    });
   }
 
   private aplicar(
