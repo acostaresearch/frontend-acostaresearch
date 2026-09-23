@@ -577,3 +577,13 @@
   width: auto;
 }
 
+
+/* El destino de `/perfil#mi-resena`.
+ *
+ * La cabecera es pegajosa y mide 69 px, así que sin este margen el salto deja
+ * el título «Tu reseña» justo debajo de ella, tapado: se llegaba al sitio y
+ * parecía que se había llegado al de más abajo. Los 16 de más son aire, para
+ * que la tarjeta no nazca pegada a la barra. */
+#mi-resena {
+  scroll-margin-top: 85px;
+}

@@ -106,15 +106,15 @@ export const RAZONES = [
     titulo: 'Solo con fuentes que existen',
     icono: 'buscar',
     texto:
-      'Se escribe con lo que tú traes —tu export de Scopus, Web of Science, SciELO o PubMed, ' +
-      'tus PDF o tu Zotero— y con lo que Claude encuentra en la literatura publicada, incluidas ' +
+      'Se escribe con lo que tú decidas de Scopus, Web of Science, SciELO o PubMed, ' +
+      'tus PDF, tu Zotero, incluso Mendeley y con lo que tu IA encuentra en la literatura publicada, incluidas ' +
       'SciELO y Redalyc, siempre con su DOI real. Aquí no aparecen autores que no existen.',
   },
   {
-    titulo: 'Tu Zotero, conectado',
+    titulo: 'Tu Zotero y Mendeley, conectados',
     icono: 'marcador',
     texto:
-      'Eliges una colección y sus referencias quedan listas para citar, al día cada noche. La ' +
+      'Eliges una colección y sus referencias quedan listas para citar. La ' +
       'lista de referencias se arma sola con lo que citaste: horas de trabajo menos y ninguna ' +
       'cita huérfana.',
   },
@@ -122,8 +122,8 @@ export const RAZONES = [
     titulo: '¿Ya la escribiste? Te la citamos',
     icono: 'documento',
     texto:
-      'Sube tu Word tal cual, aunque no tenga una sola referencia. Claude lo lee, busca las ' +
-      'fuentes en tu Zotero, en Scopus y en OpenAlex, y pone cada cita y la lista de referencias ' +
+      'Sube tu Word tal cual, aunque no tenga una sola referencia. Tu agente.ia lo lee, busca las ' +
+      'fuentes en tu Zotero, Mendeley, en Scopus y en OpenAlex, y pone cada cita y la lista de referencias ' +
       'dentro de tu mismo documento. Tu formato, tus tablas y tus figuras no se tocan.',
   },
   {
@@ -131,14 +131,14 @@ export const RAZONES = [
     icono: 'lista',
     texto:
       'APA 7, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
-      'o Chile, o en inglés. Claude te pregunta cuál te piden, y si tu asesor luego pide otra, ' +
+      'o Chile, o en inglés. Tu agente.ia te pregunta cuál te piden, y si tu asesor luego pide otra, ' +
       'se lo dices y sale en la nueva sin reescribir nada.',
   },
   {
     titulo: 'Un repaso antes de entregar',
     icono: 'revisar',
     texto:
-      'Antes de llevarla a tu asesor, Claude revisa tu tesis completa: variables que no están ' +
+      'Antes de llevarla a tu asesor, tu agente.ia revisa tu tesis completa: variables que no están ' +
       'en ningún objetivo, objetivos sin conclusión, citas rotas y afirmaciones sin fuente.',
   },
   {

@@ -8,7 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
 import { MEDIOS_PAGO, Payment } from '../../core/models/payment.model';
@@ -77,6 +77,7 @@ export class Perfil implements OnInit {
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
   protected readonly auth = inject(AuthService);
 
   readonly usuario = this.auth.user;
@@ -144,6 +145,9 @@ export class Perfil implements OnInit {
     // el correo desde otro dispositivo, aquí se ve al día.
     this.usuarios.me().subscribe({ next: (usuario) => this.auth.setUser(usuario) });
 
+    const ancla = this.ruta.snapshot.fragment;
+    if (ancla) this.irAlAncla(ancla);
+
     this.billing.balance().subscribe({
       next: (balance) => this.saldo.set(balance),
       error: () => this.saldo.set(null),
@@ -159,6 +163,49 @@ export class Perfil implements OnInit {
         this.cargandoCompras.set(false);
       },
     });
+  }
+
+  /**
+   * Lleva a la sección que pide el `#ancla` de la dirección.
+   *
+   * Angular sabe hacer esto solo —`anchorScrolling` está encendido en
+   * `app.config`— pero lo intenta UNA vez, al terminar de navegar, y en ese
+   * momento la página mide la mitad de lo que va a medir. Encima del ancla
+   * están el conector y la tabla de compras, y los dos nacen vacíos y se
+   * rellenan cuando contesta el servidor: el salto acierta, y medio segundo
+   * después lo que se buscaba está dos pantallas más abajo. Por eso se
+   * reintenta durante unos segundos en vez de una sola vez.
+   *
+   * (El `scroll-margin-top` del ancla lo pone `perfil.css`: la cabecera es
+   * pegajosa y sin él el título queda tapado justo debajo.)
+   *
+   * Se corta en cuanto la persona toca la rueda, la pantalla o una tecla. Si
+   * ya está leyendo otra cosa, moverle la página de debajo es peor que no
+   * haber saltado nunca.
+   */
+  private irAlAncla(id: string): void {
+    const hasta = Date.now() + 3000;
+    let parado = false;
+
+    const parar = () => {
+      parado = true;
+    };
+    const eventos = ['wheel', 'touchstart', 'keydown'] as const;
+    for (const evento of eventos) {
+      window.addEventListener(evento, parar, { passive: true, once: true });
+    }
+
+    const intentar = () => {
+      if (parado || Date.now() > hasta) {
+        for (const evento of eventos) window.removeEventListener(evento, parar);
+        return;
+      }
+
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+      setTimeout(intentar, 150);
+    };
+
+    setTimeout(intentar, 0);
   }
 
   // ── Presentación ─────────────────────────────────────────────────────────
