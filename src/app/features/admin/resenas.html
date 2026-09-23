@@ -1,7 +1,8 @@
 <section class="tarjeta">
   <h2>Reseñas del servicio</h2>
   <p class="nota">
-    Las escriben clientes con cuenta desde su perfil. <strong>Ninguna se publica sola</strong>:
+    Las escriben clientes con cuenta desde la portada o desde /resenas, y salen firmadas con su
+    correo tapado. <strong>Ninguna se publica sola</strong>:
     aquí se aprueban. Aprobar la deja leer en <strong>/resenas</strong>; destacar la sube además a
     la portada, donde hay sitio para tres.
     @if (destacadas() > 0) {
@@ -10,44 +11,58 @@
   </p>
 
   <!-- Dar de alta una a mano. Los testimonios llegan por WhatsApp: quien graba
-       un video contando cómo le fue no vuelve a la web a escribirlo. -->
+       un video contando cómo le fue no vuelve a la web a escribirlo. El video se
+       elige AQUÍ y se sube en cuanto la reseña existe, en vez de obligar a
+       guardar primero y abrirla después. -->
   <div class="alta">
     @if (!dandoDeAlta()) {
-      <button type="button" class="boton secundario" (click)="dandoDeAlta.set(true)">
-        Añadir una reseña a mano
+      <button type="button" class="boton secundario alta-abrir" (click)="dandoDeAlta.set(true)">
+        + Añadir una reseña a mano
       </button>
       <span class="nota">Para las que llegan por WhatsApp o por correo, con o sin video.</span>
     } @else {
       <div class="alta-formulario">
-        <label class="campo">
-          <span>Correo del cliente</span>
-          <input
-            type="email"
-            autocomplete="off"
-            placeholder="elcorreo@conelquecompro.com"
-            [value]="nuevaEmail()"
-            (input)="escribirNueva($event, 'nuevaEmail')"
-          />
-          <small>
-            Tiene que ser el de su cuenta: de ahí sale la firma que se ve en la web. Si no compró,
-            no se crea nada.
-          </small>
-        </label>
+        <div class="alta-cab">
+          <h3>Añadir una reseña a mano</h3>
+          <button type="button" class="cerrar" aria-label="Cerrar" (click)="dandoDeAlta.set(false)">
+            ✕
+          </button>
+        </div>
 
-        <label class="campo campo-corto">
-          <span>Estrellas</span>
-          <select
-            [value]="nuevaEstrellas()"
-            (change)="nuevaEstrellas.set(+$any($event.target).value)"
-          >
-            @for (n of [5, 4, 3, 2, 1]; track n) {
-              <option [value]="n">{{ n }}</option>
-            }
-          </select>
-        </label>
+        <div class="alta-fila">
+          <label class="alta-campo">
+            <span>Correo del cliente</span>
+            <input
+              type="email"
+              autocomplete="off"
+              placeholder="elcorreo@conelquecompro.com"
+              [value]="nuevaEmail()"
+              (input)="escribirNueva($event, 'nuevaEmail')"
+            />
+            <small>De aquí sale la firma que se ve en la web. Si no tiene cuenta, no se crea.</small>
+          </label>
 
-        <label class="campo">
-          <span>Qué dijo <i>(se puede dejar vacío si va a ser solo video)</i></span>
+          <div class="alta-campo alta-estrellas">
+            <span>Estrellas</span>
+            <div class="poner-estrellas" role="group" aria-label="Estrellas">
+              @for (n of [1, 2, 3, 4, 5]; track n) {
+                <button
+                  type="button"
+                  class="estrella"
+                  [class.puesta]="n <= nuevaEstrellas()"
+                  [attr.aria-label]="n + ' de 5'"
+                  [attr.aria-pressed]="n === nuevaEstrellas()"
+                  (click)="nuevaEstrellas.set(n)"
+                >
+                  ★
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <label class="alta-campo">
+          <span>Qué dijo <i>(puede ir vacío si la reseña es el video)</i></span>
           <textarea
             rows="3"
             maxlength="1500"
@@ -57,16 +72,45 @@
           ></textarea>
         </label>
 
-        <label class="campo">
-          <span>Qué hace <i>(opcional)</i></span>
-          <input
-            type="text"
-            maxlength="120"
-            placeholder="Tesis de Ing. Civil"
-            [value]="nuevaOficio()"
-            (input)="escribirNueva($event, 'nuevaOficio')"
-          />
-        </label>
+        <div class="alta-fila">
+          <label class="alta-campo">
+            <span>Qué hace <i>(opcional)</i></span>
+            <input
+              type="text"
+              maxlength="120"
+              placeholder="Tesis de Ing. Civil"
+              [value]="nuevaOficio()"
+              (input)="escribirNueva($event, 'nuevaOficio')"
+            />
+          </label>
+
+          <div class="alta-campo">
+            <span>Video <i>(opcional)</i></span>
+            <div class="alta-video">
+              <label class="boton secundario subir-video-boton">
+                {{ nuevaVideo() ? 'Cambiar' : 'Elegir archivo' }}
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/*"
+                  (change)="elegirVideoNuevo($event)"
+                />
+              </label>
+
+              @if (nuevaVideo(); as v) {
+                <span class="alta-video-nombre" [title]="v.name">
+                  {{ v.name }} · {{ pesoDelNuevoVideo() }}
+                </span>
+                <button type="button" class="quitar-elegido" (click)="nuevaVideo.set(null)">
+                  Quitar
+                </button>
+              } @else {
+                <small>MP4, MOV o WebM. Hasta {{ maximoMb }} MB.</small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <app-aviso-flotante [(error)]="error" />
 
         <div class="alta-acciones">
           <button type="button" class="boton" [disabled]="!puedeDarDeAlta()" (click)="darDeAlta()">
@@ -75,10 +119,8 @@
           <button type="button" class="boton secundario" (click)="dandoDeAlta.set(false)">
             Cancelar
           </button>
+          <span class="nota">Se publica al guardar: la escribes tú, que eres quien aprueba.</span>
         </div>
-        <p class="nota">
-          Se publica al guardar. El video se le añade después, abriéndola con «Leerla».
-        </p>
       </div>
     }
   </div>

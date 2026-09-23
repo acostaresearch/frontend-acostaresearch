@@ -81,10 +81,28 @@ export class ResenasAdmin {
   readonly nuevaEstrellas = signal(5);
   readonly nuevaComentario = signal('');
   readonly nuevaOficio = signal('');
+  /** El video, elegido antes de guardar: se sube en cuanto existe la reseña. */
+  readonly nuevaVideo = signal<File | null>(null);
 
+  /**
+   * Hace falta el correo y ALGO que enseñar: el texto o el video.
+   *
+   * Sin ninguna de las dos cosas quedaría una reseña en blanco, que no sale en
+   * la web pero sí cuenta para la media. Con video basta: hay testimonios que
+   * son solo la grabación.
+   */
   readonly puedeDarDeAlta = computed(
-    () => this.nuevaEmail().trim().includes('@') && !this.guardando(),
+    () =>
+      this.nuevaEmail().trim().includes('@') &&
+      (this.nuevaComentario().trim().length >= 20 || this.nuevaVideo() !== null) &&
+      !this.guardando(),
   );
+
+  /** «12,4 MB», para que se vea qué se va a subir antes de subirlo. */
+  readonly pesoDelNuevoVideo = computed(() => {
+    const archivo = this.nuevaVideo();
+    return archivo ? `${(archivo.size / (1024 * 1024)).toFixed(1)} MB` : '';
+  });
 
   /** Lo que se está mirando. El filtrado es aquí: la lista viene entera. */
   readonly visibles = computed(() => {
@@ -135,11 +153,29 @@ export class ResenasAdmin {
     this[donde].set((evento.target as HTMLInputElement | HTMLTextAreaElement).value);
   }
 
+  /** Elige el video que se subirá con el alta. Todavía no sube nada. */
+  elegirVideoNuevo(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo) return;
+
+    if (archivo.size > MAXIMO_VIDEO_BYTES) {
+      this.error.set(`Ese video pesa demasiado. El tope son ${this.maximoMb} MB.`);
+      return;
+    }
+
+    this.error.set(null);
+    this.nuevaVideo.set(archivo);
+  }
+
   /**
-   * Da de alta la reseña de un cliente, con su correo.
+   * Da de alta la reseña de un cliente, con su correo, y le cuelga el video.
    *
-   * Sin texto también vale: es lo que se hace cuando lo que hay es un video y
-   * se sube justo después, desde la ficha de la reseña.
+   * Dos pasos y no uno: el video se sube a una reseña que ya existe, porque
+   * hasta entonces no hay a qué colgarlo. Si el alta falla no se ha subido
+   * nada; si falla el video, la reseña queda guardada y se dice, que es mejor
+   * que perder el texto por un archivo.
    */
   darDeAlta(): void {
     if (!this.puedeDarDeAlta()) return;
@@ -156,18 +192,34 @@ export class ResenasAdmin {
       })
       .subscribe({
         next: (resena) => {
-          this.guardando.set(false);
-          this.dandoDeAlta.set(false);
-          this.nuevaEmail.set('');
-          this.nuevaComentario.set('');
-          this.nuevaOficio.set('');
-          this.cambiada.emit(`Reseña de ${resena.autor} guardada y publicada.`);
+          const video = this.nuevaVideo();
+          if (!video) return this.altaTerminada(resena.autor);
+
+          this.api.subirVideoDelPanel(resena.id, video).subscribe({
+            next: () => this.altaTerminada(resena.autor),
+            error: (e: unknown) => {
+              this.guardando.set(false);
+              this.error.set(
+                `La reseña se guardó, pero el video no subió: ${mensajeDeError(e)} Ábrela con «Leerla» para volver a intentarlo.`,
+              );
+            },
+          });
         },
         error: (e: unknown) => {
           this.guardando.set(false);
           this.error.set(mensajeDeError(e));
         },
       });
+  }
+
+  private altaTerminada(autor: string): void {
+    this.guardando.set(false);
+    this.dandoDeAlta.set(false);
+    this.nuevaEmail.set('');
+    this.nuevaComentario.set('');
+    this.nuevaOficio.set('');
+    this.nuevaVideo.set(null);
+    this.cambiada.emit(`Reseña de ${autor} guardada y publicada.`);
   }
 
   /** Sube o cambia el video de la reseña abierta, sin devolverla a pendiente. */
