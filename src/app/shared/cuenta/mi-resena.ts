@@ -99,6 +99,15 @@ export class MiResenaDelServicio implements OnInit {
   readonly subiendoVideo = signal<string | null>(null);
   readonly videos = signal<Record<string, string>>({});
 
+  /**
+   * El video elegido en el propio formulario, antes de enviarla.
+   *
+   * Se sube justo después de guardar el texto, en la misma pulsación de
+   * «Enviar»: así se deja la reseña con su video de una vez, sin tener que
+   * volver a buscar el botón en la lista.
+   */
+  readonly videoElegido = signal<File | null>(null);
+
   /** Con qué va a salir: el correo de su cuenta, tapado. */
   readonly firma = computed(() => firmaDe(this.auth.user()?.email ?? ''));
 
@@ -117,7 +126,7 @@ export class MiResenaDelServicio implements OnInit {
   readonly puedeEnviar = computed(
     () =>
       this.puestas() >= 1 &&
-      (this.faltan() <= 0 || this.enCurso()?.video === true) &&
+      (this.faltan() <= 0 || this.enCurso()?.video === true || this.videoElegido() !== null) &&
       this.comentario().trim().length <= MAXIMO_COMENTARIO &&
       !this.guardando(),
   );
@@ -143,6 +152,7 @@ export class MiResenaDelServicio implements OnInit {
 
   /** Abre el formulario en blanco. */
   escribirOtra(): void {
+    this.videoElegido.set(null);
     this.puestas.set(0);
     this.comentario.set('');
     this.oficio.set('');
@@ -153,6 +163,7 @@ export class MiResenaDelServicio implements OnInit {
 
   /** Vuelve a abrir una suya para cambiarla. */
   editar(resena: MiResena): void {
+    this.videoElegido.set(null);
     this.puestas.set(resena.estrellas);
     this.comentario.set(resena.comentario);
     this.oficio.set(resena.oficio);
@@ -162,6 +173,7 @@ export class MiResenaDelServicio implements OnInit {
   }
 
   cancelar(): void {
+    this.videoElegido.set(null);
     this.editando.set(null);
     this.error.set(null);
   }
@@ -180,10 +192,12 @@ export class MiResenaDelServicio implements OnInit {
 
     const cual = this.editando();
     const cambiando = cual !== null && cual !== 'nueva';
+    const video = this.videoElegido();
     const datos = {
       estrellas: this.puestas(),
       comentario: this.comentario().trim(),
       oficio: this.oficio().trim(),
+      conVideo: video !== null,
     };
 
     this.guardando.set(true);
@@ -196,6 +210,12 @@ export class MiResenaDelServicio implements OnInit {
         this.guardando.set(false);
         this.guardarEnLaLista(resena);
         this.editando.set(null);
+        this.videoElegido.set(null);
+        if (video) {
+          this.aviso.set('Reseña guardada. Subiendo tu video: no cierres esta ventana…');
+          this.subirVideo(resena, video);
+          return;
+        }
         this.aviso.set(
           cambiando
             ? 'Guardamos los cambios. Vuelve a pasar por revisión antes de publicarse.'
@@ -217,16 +237,38 @@ export class MiResenaDelServicio implements OnInit {
    * móvil de alguien.
    */
   elegirVideo(evento: Event, resena: MiResena): void {
+    const archivo = this.leerVideo(evento);
+    if (archivo) this.subirVideo(resena, archivo);
+  }
+
+  /** El video del formulario: se guarda aquí y sube al pulsar «Enviar». */
+  elegirVideoDelFormulario(evento: Event): void {
+    const archivo = this.leerVideo(evento);
+    if (archivo) this.videoElegido.set(archivo);
+  }
+
+  /** «video.mp4 · 12,4 MB», para que vea que eligió el que quería. */
+  describirVideo(archivo: File): string {
+    const mb = (archivo.size / (1024 * 1024)).toLocaleString('es-PE', { maximumFractionDigits: 1 });
+    return `${archivo.name} · ${mb} MB`;
+  }
+
+  /** Saca el archivo del campo y mira el peso antes de mandar nada. */
+  private leerVideo(evento: Event): File | null {
     const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
+    const archivo = entrada.files?.[0] ?? null;
     entrada.value = '';
-    if (!archivo) return;
+    if (!archivo) return null;
 
     if (archivo.size > MAXIMO_VIDEO_BYTES) {
       this.error.set(`Ese video pesa demasiado. El tope son ${this.maximoMb} MB.`);
-      return;
+      return null;
     }
+    this.error.set(null);
+    return archivo;
+  }
 
+  private subirVideo(resena: MiResena, archivo: File): void {
     this.subiendoVideo.set(resena.id);
     this.error.set(null);
     this.api.subirMiVideo(resena.id, archivo).subscribe({
@@ -235,11 +277,13 @@ export class MiResenaDelServicio implements OnInit {
         this.guardarEnLaLista(guardada);
         this.soltarElVideo(guardada.id);
         this.traerVideo(guardada.id);
-        this.aviso.set('Video subido. Lo vemos antes de publicarlo.');
+        this.aviso.set('¡Gracias! Recibimos tu reseña con su video. La vemos antes de publicarla.');
       },
       error: (e: unknown) => {
         this.subiendoVideo.set(null);
-        this.error.set(mensajeDeError(e));
+        this.error.set(
+          `${mensajeDeError(e)} Tu reseña quedó guardada: vuelve a intentarlo con «Añadir un video».`,
+        );
       },
     });
   }

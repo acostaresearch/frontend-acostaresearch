@@ -87,6 +87,8 @@ export interface ResenaEnvio {
   estrellas: number;
   comentario: string;
   oficio: string;
+  /** El video va detrás, en la petición siguiente: puede nacer sin texto. */
+  conVideo?: boolean;
 }
 
 /** Lo que apunta el panel para dar de alta la reseña de un cliente. */

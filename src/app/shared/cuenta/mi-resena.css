@@ -221,6 +221,40 @@
   color: var(--color-texto-suave);
 }
 
+/* El video del formulario: título, el botón o el archivo elegido, y el tope. */
+.resena-video-campo {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.resena-video-titulo {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.resena-video-titulo i {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
+.resena-video-campo small {
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.resena-video-elegido {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
 /* Quitar el video no es un botón: es la salida menos frecuente de las tres y
    con la pinta de las otras dos competiría con ellas. */
 .quitar-video {

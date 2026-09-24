@@ -138,7 +138,7 @@
         <!-- Cuántas faltan, no cuántas van: lo que bloquea el botón es el
              mínimo, así que es el mínimo lo que hay que enseñar. -->
         <small class="resena-cuenta">
-          @if (enCurso()?.video) {
+          @if (enCurso()?.video || videoElegido()) {
             Con el video no hace falta texto. Escribe si quieres añadir algo.
           } @else if (faltan() > 0) {
             Escribe {{ faltan() }} caracteres más.
@@ -171,6 +171,30 @@
         </label>
       </div>
 
+      <!-- El video, aquí mismo y antes de enviar: se sube en la misma
+           pulsación de «Enviar», justo después del texto. -->
+      <div class="resena-video-campo">
+        <span class="resena-video-titulo">Tu video <i>(opcional)</i></span>
+        @if (videoElegido(); as archivo) {
+          <p class="resena-video-elegido">
+            <span aria-hidden="true">🎬</span> {{ describirVideo(archivo) }}
+            <button type="button" class="quitar-video" (click)="videoElegido.set(null)">
+              Quitar
+            </button>
+          </p>
+        } @else {
+          <label class="boton secundario resena-subir">
+            {{ enCurso()?.video ? 'Cambiar el video' : 'Subir un video' }}
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              (change)="elegirVideoDelFormulario($event)"
+            />
+          </label>
+        }
+        <small>MP4, MOV o WebM, hasta {{ maximoMb }} MB. Con video, el texto ya no hace falta.</small>
+      </div>
+
       <div class="resena-acciones">
         <button type="button" class="boton" [disabled]="!puedeEnviar()" (click)="enviar()">
           {{ guardando() ? 'Enviando…' : cual === 'nueva' ? 'Enviar mi reseña' : 'Guardar los cambios' }}
@@ -179,11 +203,6 @@
           <button type="button" class="boton secundario" (click)="cancelar()">Cancelar</button>
         }
       </div>
-
-      <p class="nota resena-pie resena-video-nota">
-        ¿Prefieres contarlo en video? Envíala y podrás añadir uno de hasta {{ maximoMb }} MB. Si lo
-        haces, el texto ya no hace falta.
-      </p>
 
       <p class="nota resena-pie">
         @if (cual !== 'nueva') {
