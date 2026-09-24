@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -142,6 +143,30 @@ export class Preparar implements OnInit, OnDestroy {
   /** Si la lista de la derecha está desplegada. Se recoge al cambiar de pestaña. */
   readonly verTodos = signal(false);
   readonly filtro = signal<Filtro>('TODOS');
+
+  /**
+   * El trabajo cuyo resumen está abierto en el emergente, o null.
+   *
+   * El resumen —cuántos párrafos se hicieron, la nota del índice y qué quedó
+   * sin tocar con su motivo— iba escrito dentro de la fila, y con doce avisos
+   * la lista se volvía un rollo que tapaba los demás documentos (24-sep-2026).
+   * Ahora la fila solo lleva «Descargar» y «Resumen», y esto se abre aparte.
+   */
+  readonly resumen = signal<Preparacion | null>(null);
+
+  abrirResumen(trabajo: Preparacion): void {
+    this.resumen.set(trabajo);
+  }
+
+  cerrarResumen(): void {
+    this.resumen.set(null);
+  }
+
+  /** Escape cierra el emergente, como cualquier ventana. */
+  @HostListener('document:keydown.escape')
+  alPulsarEscape(): void {
+    if (this.resumen()) this.cerrarResumen();
+  }
 
   /**
    * El campo de archivo, escondido.

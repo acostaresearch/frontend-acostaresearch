@@ -322,22 +322,6 @@
                             Tarda unos minutos. Puedes cerrar esta página: te avisamos por correo.
                           </p>
                         } @else if (t.estado === 'LISTO') {
-                          <p class="estado">{{ resultadoDe(t) }}</p>
-
-                          @if (avisosDe(t).length) {
-                            <ul class="sin-tocar">
-                              @for (aviso of avisosDe(t); track aviso.donde + aviso.motivo) {
-                                <li>
-                                  <strong>{{ aviso.cuantos }}</strong> en {{ aviso.donde }}, porque
-                                  {{ aviso.motivo }}.
-                                  @if (aviso.ejemplo) {
-                                    <span class="ejemplo">«{{ aviso.ejemplo }}»</span>
-                                  }
-                                </li>
-                              }
-                            </ul>
-                          }
-
                           <div class="acciones">
                             <button type="button" class="descargar" (click)="descargar(t)">
                               <span class="descargar-icono" aria-hidden="true">
@@ -353,6 +337,12 @@
                                 </svg>
                               </span>
                               Descargar
+                            </button>
+                            <button type="button" class="resumen" (click)="abrirResumen(t)">
+                              Resumen
+                              @if (t.intactos > 0) {
+                                <span class="resumen-cuenta">{{ t.intactos }} sin tocar</span>
+                              }
                             </button>
                           </div>
                         } @else {
@@ -394,5 +384,52 @@
     </div>
   </section>
 </main>
+
+<!-- El resumen de un trabajo, aparte: con doce avisos no cabe en la fila. -->
+@if (resumen(); as t) {
+  <div class="resumen-fondo" (click)="cerrarResumen()"></div>
+  <div
+    class="resumen-ventana"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="resumen-titulo"
+  >
+    <header class="resumen-cabecera">
+      <div>
+        <h2 id="resumen-titulo">Resumen</h2>
+        <p class="resumen-nombre">{{ t.nombre }}</p>
+        <p class="meta">
+          {{ tituloDe(t) }} · {{ t.palabras | number: '1.0-0' }} palabras ·
+          {{ t.createdAt | date: 'd MMM, HH:mm' }}
+        </p>
+      </div>
+      <button type="button" class="resumen-x" aria-label="Cerrar" (click)="cerrarResumen()">✕</button>
+    </header>
+
+    <div class="resumen-cuerpo">
+      <p class="resumen-texto">{{ resultadoDe(t) }}</p>
+
+      @if (avisosDe(t).length) {
+        <h3>Lo que quedó como estaba</h3>
+        <ul class="resumen-avisos">
+          @for (aviso of avisosDe(t); track aviso.donde + aviso.motivo + aviso.ejemplo) {
+            <li>
+              <strong>{{ aviso.cuantos }}</strong> en {{ aviso.donde }}, porque
+              {{ aviso.motivo }}.
+              @if (aviso.ejemplo) {
+                <span class="ejemplo">«{{ aviso.ejemplo }}»</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <footer class="resumen-pie">
+      <button type="button" class="accion" (click)="cerrarResumen()">Cerrar</button>
+      <button type="button" class="descargar" (click)="descargar(t)">Descargar</button>
+    </footer>
+  </div>
+}
 
 <app-site-footer />
