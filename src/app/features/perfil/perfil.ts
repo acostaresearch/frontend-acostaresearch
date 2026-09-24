@@ -21,6 +21,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
+import { InvitarResena } from '../../shared/cuenta/invitar-resena';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
@@ -62,6 +63,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
     DatePipe,
     DecimalPipe,
     AjustesDeCuenta,
+    InvitarResena,
     MiConector,
     SiteHeader,
   ],
@@ -118,6 +120,8 @@ export class Perfil implements OnInit {
   // ── Compras ──────────────────────────────────────────────────────────────
   readonly compras = signal<Payment[]>([]);
   readonly cargandoCompras = signal(true);
+  /** Con algo pagado ya tiene de qué opinar: lo usa el mensajito de la reseña. */
+  readonly haComprado = computed(() => this.compras().some((pago) => pago.status === 'PAID'));
   /** El pago cuya constancia se está descargando, para no pedirla dos veces. */
   readonly bajandoConstancia = signal<string | null>(null);
   readonly errorConstancia = signal<string | null>(null);

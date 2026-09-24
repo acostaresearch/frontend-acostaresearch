@@ -1,0 +1,94 @@
+/* Abajo a la izquierda: a la derecha está el asistente (z-index 60), y la
+   ventana de confirmar (80) y el recorrido (84+) tienen que poder taparlo. */
+.invitar {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: grid;
+  gap: 6px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 16px 18px;
+  color: var(--color-texto);
+  background: var(--color-superficie-alta);
+  border: 1px solid var(--color-borde);
+  border-left: 4px solid var(--color-primario);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(10, 17, 40, 0.28);
+  animation: entrar 0.35s ease-out;
+}
+
+.estrellas {
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: #f5a623;
+}
+
+strong {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.acciones .boton {
+  padding: 8px 14px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.cerrar {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-texto-tenue);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+/* En el móvil, a lo ancho y por encima del botón del asistente. */
+@media (max-width: 520px) {
+  .invitar {
+    left: 16px;
+    right: 16px;
+    bottom: 84px;
+    width: auto;
+  }
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invitar {
+    animation: none;
+  }
+}

@@ -93,6 +93,13 @@ button.recurso {
   color: var(--color-primario);
 }
 
+/* La de la reseña, con su estrella dorada para que no se lea como otra ayuda. */
+.recurso.resena .recurso-icono {
+  font-size: 15px;
+  color: #fff;
+  background: #f5a623;
+}
+
 @media (max-width: 520px) {
   /* En pantalla estrecha, la acción debajo del texto en vez de comprimirlo. */
   .recurso {

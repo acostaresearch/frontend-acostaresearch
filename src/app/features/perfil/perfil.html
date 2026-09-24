@@ -255,6 +255,9 @@
     </main>
   </div>
 
+  <!-- El mensajito que invita a dejar una reseña. Decide él solo si sale. -->
+  <app-invitar-resena [haComprado]="haComprado()" />
+
   <!-- ── Ventana de borrar la cuenta ────────────────────────────────────────
        Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide el
        clic sin querer, y el correo impide equivocarse de cuenta cuando alguien
