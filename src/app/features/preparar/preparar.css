@@ -644,6 +644,19 @@
   background: var(--color-boton-hover);
 }
 
+/* «Volver a mandarlo»: la misma forma que «Descargar» pero no el mismo botón.
+ * En ámbar, el color de aviso del sitio, para que no se confunda con bajar un
+ * documento listo ni grite como el rojo de «No se completó». */
+.descargar.reenviar {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-color: color-mix(in srgb, var(--color-aviso) 35%, transparent);
+}
+
+.descargar.reenviar:hover {
+  background: color-mix(in srgb, var(--color-aviso) 14%, var(--color-aviso-suave));
+}
+
 .descargar-icono svg {
   display: block;
   width: 14px;
