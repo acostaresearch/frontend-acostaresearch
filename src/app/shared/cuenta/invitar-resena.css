@@ -1,42 +1,52 @@
-/* ── La banda ──────────────────────────────────────────────────────────────
-   El mismo azul lavado que el saludo de la portada. Vive dentro de la barra
-   pegajosa del perfil y sale a sangre: los márgenes negativos deshacen el
-   relleno de la barra (`--barra-lado`, que pone `perfil.css`). */
-.banda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  align-items: center;
-  margin: 8px calc(-1 * var(--barra-lado, 38px)) -8px;
-  padding: 12px var(--barra-lado, 38px);
+/* ── El emergente ──────────────────────────────────────────────────────────
+   Fijo arriba a la derecha, justo debajo de la cabecera, así que se queda a la
+   vista al desplazarse. A la derecha, porque a la izquierda está el botón de
+   «Tu cuenta». Por encima de la barra del perfil y por debajo de las ventanas
+   (70+). */
+.emergente {
+  position: fixed;
+  top: calc(var(--alto-cabecera, 68px) + 14px);
+  right: 20px;
+  z-index: 60;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  box-sizing: border-box;
+  width: 330px;
+  max-width: calc(100vw - 32px);
+  padding: 16px 18px;
+  color: var(--color-texto);
+  background: var(--color-superficie-alta);
+  border: 1px solid var(--color-borde);
+  border-left: 4px solid var(--color-primario);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(10, 17, 40, 0.28);
+  animation: entrar 0.35s ease-out;
+}
+
+.emergente strong {
+  padding-right: 24px;
   font-size: 15px;
-  background: var(--color-primario-suave);
-  border-top: 1px solid var(--color-borde);
+  font-weight: 650;
 }
 
-.banda p {
-  flex: 1;
-  min-width: 0;
+.emergente p {
   margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
 }
 
-.estrella {
-  margin-right: 6px;
-  color: #f5a623;
+.emergente .boton {
+  margin-top: 6px;
+  padding: 8px 16px;
+  font-size: 13.5px;
 }
 
-.enlace {
-  padding: 0;
-  font: inherit;
-  font-weight: 700;
-  color: var(--color-primario);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.enlace:hover {
-  text-decoration: underline;
+.emergente .cerrar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .cerrar {
@@ -54,7 +64,7 @@
 
 .cerrar:hover {
   color: var(--color-texto);
-  background: color-mix(in srgb, var(--color-primario) 12%, transparent);
+  background: var(--color-fondo);
 }
 
 /* ── La ventana con el formulario ──────────────────────────────────────────
@@ -113,7 +123,24 @@
   }
 }
 
+/* En el móvil, a lo ancho. */
+@media (max-width: 520px) {
+  .emergente {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .emergente,
   .ventana,
   .ventana-fondo {
     animation: none;

@@ -33,11 +33,6 @@
           <small>{{ nombre() }}</small>
         </span>
       </button>
-
-      <!-- La invitación a la reseña, en una banda de texto como el saludo de
-           la portada. Va DENTRO de esta barra para bajar pegada con ella y con
-           la cabecera al desplazarse. Decide ella sola si sale. -->
-      <app-invitar-resena />
     </div>
 
     @if (cuentaAbierta()) {
@@ -260,8 +255,10 @@
     </main>
   </div>
 
-  <!-- La ventana del formulario de la reseña. Fuera de la barra pegajosa: dentro,
-       su z-index quedaría preso del de la barra y la cabecera le pasaría por encima. -->
+  <!-- La reseña: el emergente que la ofrece al entrar (decide él solo si sale)
+       y la ventana con el formulario. Los dos fijos en pantalla, así que van
+       fuera de la barra pegajosa: dentro, su z-index quedaría preso del de ella. -->
+  <app-invitar-resena />
   <app-ventana-resena />
 
 

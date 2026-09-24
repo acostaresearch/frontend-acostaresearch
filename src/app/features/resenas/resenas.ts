@@ -3,7 +3,8 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ResenaPublica, ResenaService, nota } from '../../core/services/resena.service';
-import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
+import { VentanaResena } from '../../shared/cuenta/invitar-resena';
+import { ResenaEmergenteService } from '../../core/services/resena-emergente.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { VideoDeResena } from '../../shared/resenas/video-resena';
@@ -50,7 +51,7 @@ const PASO = 9;
  */
 @Component({
   selector: 'app-resenas',
-  imports: [RouterLink, SiteHeader, SiteFooter, MiResenaDelServicio, VideoDeResena],
+  imports: [RouterLink, SiteHeader, SiteFooter, VentanaResena, VideoDeResena],
   templateUrl: './resenas.html',
   styleUrl: './resenas.css',
 })
@@ -61,11 +62,11 @@ export class Resenas implements OnInit {
   readonly nota = nota;
   readonly filtros = FILTROS;
 
-  /** Si tiene abierto el formulario de la suya, debajo de la cabecera. */
-  readonly escribiendo = signal(false);
+  private readonly resenaEmergente = inject(ResenaEmergenteService);
 
+  /** Abre la ventana emergente con el formulario de la suya. */
   escribir(): void {
-    this.escribiendo.update((abierto) => !abierto);
+    this.resenaEmergente.abrir();
   }
 
   readonly cargando = signal(true);

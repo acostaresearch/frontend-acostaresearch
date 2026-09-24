@@ -42,9 +42,7 @@
         <aside class="invitacion">
           @if (auth.isAuthenticated()) {
             <p><b>¿Ya usaste el método?</b> Cuenta cómo te fue.</p>
-            <button type="button" class="boton" (click)="escribir()">
-              {{ escribiendo() ? 'Cerrar' : 'Escribir mi reseña' }}
-            </button>
+            <button type="button" class="boton" (click)="escribir()">Escribir mi reseña</button>
           } @else {
             <p><b>¿Quieres ver de qué va antes de creerte esto?</b></p>
             <a class="boton" routerLink="/en-accion">Míralo en acción</a>
@@ -52,13 +50,8 @@
         </aside>
       </header>
 
-      <!-- El formulario aquí mismo, no en el perfil: mandarlo a otra pantalla a
-           buscarlo perdía por el camino a casi todos. -->
-      @if (escribiendo()) {
-        <div class="escribir" id="escribir-mi-resena">
-          <app-mi-resena />
-        </div>
-      }
+      <!-- El formulario en una ventana emergente, aquí mismo y no en el perfil:
+           mandarlo a otra pantalla a buscarlo perdía por el camino a casi todos. -->
 
       @if (cargando()) {
         <p class="nota centrado">Cargando…</p>
@@ -151,3 +144,7 @@
 </main>
 
 <app-site-footer />
+
+<!-- La ventana emergente de «Escribir mi reseña», fuera de toda sección para
+     que ningún estilo de una la encierre. -->
+<app-ventana-resena />

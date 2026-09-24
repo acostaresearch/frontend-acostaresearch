@@ -19,7 +19,8 @@ import {
 import { LineasNoche } from '../../shared/layout/lineas-noche';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
-import { MiResenaDelServicio } from '../../shared/cuenta/mi-resena';
+import { VentanaResena } from '../../shared/cuenta/invitar-resena';
+import { ResenaEmergenteService } from '../../core/services/resena-emergente.service';
 import { VideoDeResena } from '../../shared/resenas/video-resena';
 import { Contador } from './contador';
 import { HeroNetwork } from './hero-network/hero-network';
@@ -45,7 +46,7 @@ import { HeroNetwork } from './hero-network/hero-network';
     HeroNetwork,
     Contador,
     LineasNoche,
-    MiResenaDelServicio,
+    VentanaResena,
     VideoDeResena,
   ],
   templateUrl: './home.html',
@@ -84,13 +85,13 @@ export class Home implements OnInit {
   readonly resenas = signal<ResenaPublica[]>([]);
 
   /**
-   * Si tiene abierto el formulario de su reseña, aquí mismo.
+   * El formulario de su reseña, en una ventana emergente aquí mismo.
    *
    * Escribirla estaba en el perfil, tres clics más allá, y quien acababa de
    * leer las de los demás —que es justo cuando apetece dejar la propia— no
-   * encontraba por dónde. El formulario es el mismo componente de siempre.
+   * encontraba por dónde. La ventana es la misma del perfil.
    */
-  readonly escribiendo = signal(false);
+  private readonly resenaEmergente = inject(ResenaEmergenteService);
   private readonly totalResenas = signal(0);
   private readonly mediaResenas = signal<number | null>(null);
 
@@ -259,9 +260,9 @@ export class Home implements OnInit {
     );
   }
 
-  /** Abre o cierra el formulario de su reseña, debajo de las tarjetas. */
+  /** Abre la ventana emergente con el formulario de su reseña. */
   escribir(): void {
-    this.escribiendo.update((abierto) => !abierto);
+    this.resenaEmergente.abrir();
   }
 
   /**

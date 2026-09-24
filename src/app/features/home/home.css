@@ -1228,18 +1228,6 @@
   text-align: center;
 }
 
-/* El formulario, cuando lo abre. En su propia caja blanca y con el ancho de
-   una columna de escritura: a 1080 px, un textarea es un campo de fútbol. */
-.resena-escribir {
-  max-width: 640px;
-  padding: 26px;
-  margin: 24px auto 0;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 16px;
-  box-shadow: var(--sombra);
-}
-
 /* En oscuro el velo azul se va al negro: el mismo 4 % sobre una superficie
    clara es un tono y sobre una oscura es barro. */
 :host-context([data-tema='oscuro']) .resenas-banda {

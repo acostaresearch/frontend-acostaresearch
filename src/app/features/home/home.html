@@ -240,7 +240,7 @@
       <!-- Escribirla se hace AQUÍ, no en el perfil. Quien acaba de leer tres
            reseñas es quien está en disposición de dejar la suya, y mandarlo a
            otra pantalla a buscar el formulario perdía por el camino a casi
-           todos. El formulario es el mismo de siempre y se abre debajo. -->
+           todos. El formulario se abre en una ventana emergente, la misma del perfil. -->
       <div class="resenas-pie">
         @if (resenas().length > 0) {
           <a class="boton secundario" routerLink="/resenas"
@@ -249,17 +249,10 @@
         }
 
         @if (auth.isAuthenticated()) {
-          <button type="button" class="boton" (click)="escribir()">
-            {{ escribiendo() ? 'Cerrar' : 'Escribir mi reseña' }}
-          </button>
+          <button type="button" class="boton" (click)="escribir()">Escribir mi reseña</button>
         }
       </div>
 
-      @if (escribiendo()) {
-        <div class="resena-escribir" id="escribir-mi-resena">
-          <app-mi-resena />
-        </div>
-      }
     </section>
   }
 
@@ -559,3 +552,7 @@
 </main>
 
 <app-site-footer />
+
+<!-- La ventana emergente de «Escribir mi reseña», fuera de toda sección para
+     que ningún estilo de una la encierre. -->
+<app-ventana-resena />

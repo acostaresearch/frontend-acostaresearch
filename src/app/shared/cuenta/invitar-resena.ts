@@ -14,41 +14,34 @@ import { ResenaEmergenteService } from '../../core/services/resena-emergente.ser
 import { ResenaService } from '../../core/services/resena.service';
 import { MiResenaDelServicio } from './mi-resena';
 
-/** Hasta cuándo no se vuelve a ofrecer, en milisegundos desde 1970. */
-const CLAVE_APLAZADA = 'acosta.resena.aplazada';
-/** La × la aparta un mes: ni cada vez que entra ni nunca más. */
-const APLAZAR_MS = 30 * 24 * 60 * 60 * 1000;
-
 /**
- * La banda que invita a dejar una reseña, arriba del perfil.
+ * El emergente que invita a dejar una reseña, al entrar al perfil.
  *
- * Una línea de texto como el saludo de la portada, dentro de la barra pegajosa
- * del perfil para que baje con la cabecera al desplazarse. Sale a quien todavía
- * no ha escrito ninguna reseña; la × la quita un mes en este navegador (en una
- * ventana privada, para la visita). «Dejar mi reseña» abre `app-ventana-resena`
- * sin salir del panel.
+ * Una tarjeta flotante fija arriba a la derecha, debajo de la cabecera: se
+ * queda a la vista al desplazarse. Sale a quien todavía no ha escrito ninguna
+ * reseña. La × la quita solo para esta vista: al recargar vuelve a salir, a
+ * pedido del dueño. «Dejar mi reseña» abre `app-ventana-resena` sin salir
+ * del panel.
  */
 @Component({
   selector: 'app-invitar-resena',
   template: `
     @if (visible()) {
-      <div class="banda" role="note">
-        <p>
-          <span class="estrella" aria-hidden="true">★</span>
-          <b>¿Te gusta nuestro servicio?</b> Déjanos una buena reseña: ayuda a otros tesistas a
-          decidirse.
-        </p>
-        <button type="button" class="enlace" (click)="escribir()">Dejar mi reseña</button>
+      <aside class="emergente" role="dialog" aria-labelledby="invitar-resena-titulo">
         <button
           type="button"
           class="cerrar"
           title="Quitar este aviso"
           aria-label="Quitar este aviso"
-          (click)="aplazar()"
+          (click)="cerrada.set(true)"
         >
           ×
         </button>
-      </div>
+        <span class="estrellas" aria-hidden="true">★★★★★</span>
+        <strong id="invitar-resena-titulo">¿Te gusta nuestro servicio?</strong>
+        <p>Déjanos una buena reseña: ayuda a otros tesistas a decidirse.</p>
+        <button type="button" class="boton" (click)="escribir()">Dejar mi reseña</button>
+      </aside>
     }
   `,
   styleUrl: './invitar-resena.css',
@@ -58,13 +51,11 @@ export class InvitarResena implements OnInit {
   private readonly emergente = inject(ResenaEmergenteService);
 
   private readonly toca = signal(false);
-  private readonly cerrada = signal(false);
+  readonly cerrada = signal(false);
 
   readonly visible = computed(() => this.toca() && !this.cerrada());
 
   ngOnInit(): void {
-    if (aplazadaHasta() > Date.now()) return;
-
     this.resenas.mias().subscribe({
       next: (mias) => this.toca.set(mias.length === 0),
       // Sin saber si ya escribió una, mejor no molestar.
@@ -72,19 +63,10 @@ export class InvitarResena implements OnInit {
     });
   }
 
-  /** Abre el formulario; la banda se va y, si no la termina, vuelve otro día. */
+  /** Abre el formulario; el emergente se va hasta la próxima vez que entre. */
   escribir(): void {
     this.cerrada.set(true);
     this.emergente.abrir();
-  }
-
-  aplazar(): void {
-    this.cerrada.set(true);
-    try {
-      localStorage.setItem(CLAVE_APLAZADA, String(Date.now() + APLAZAR_MS));
-    } catch {
-      // Almacenamiento bloqueado: vale para esta visita.
-    }
   }
 }
 
@@ -130,13 +112,5 @@ export class VentanaResena implements OnDestroy {
   @HostListener('document:keydown.escape')
   cerrar(): void {
     this.emergente.cerrar();
-  }
-}
-
-function aplazadaHasta(): number {
-  try {
-    return Number(localStorage.getItem(CLAVE_APLAZADA)) || 0;
-  } catch {
-    return 0;
   }
 }
