@@ -420,13 +420,13 @@ export class Preparar implements OnInit, OnDestroy {
     const tocados = `${trabajo.tocados} párrafo${trabajo.tocados === 1 ? '' : 's'}`;
     const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : 'traducidos';
 
-    // El índice no se traduce: es un campo que Word rehace solo con los títulos
-    // que ya están traducidos. Sin decirlo, el cliente abre el archivo, ve el
-    // índice en español y cree que quedó a medias.
+    // El índice sale traducido desde el servidor, copiado de los títulos (ver
+    // `preparar.indice` en el backend). Lo que Word sigue teniendo que rehacer
+    // son los números de página, porque el texto traducido no ocupa lo mismo.
     const indice =
       trabajo.servicio === 'TRADUCCION'
-        ? ' Si tu documento lleva índice, ábrelo en Word y actualízalo (clic derecho sobre el ' +
-          'índice → «Actualizar campos») para que recoja los títulos traducidos.'
+        ? ' El índice va traducido; si quieres los números de página al día, ábrelo en Word y ' +
+          'actualiza el campo (clic derecho sobre el índice → «Actualizar campos»).'
         : '';
 
     if (trabajo.intactos === 0) return `${tocados} ${hecho}.${indice}`;
