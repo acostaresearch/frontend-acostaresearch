@@ -20,7 +20,9 @@
                 <div class="cabecera-texto">
                   <h1>Preparar documento</h1>
 
-                  @if (datos.cupo && datos.membresia?.vigente) {
+                  @if (datos.ilimitado) {
+                    <p class="cabecera-nota">Acceso ilimitado · usuario beta</p>
+                  } @else if (datos.cupo && datos.membresia?.vigente) {
                     <p class="cabecera-nota">
                       {{ nombreDelPlan(datos.membresia?.plan?.name) }} · vence el
                       {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }} ·
@@ -37,7 +39,9 @@
                   }
                 </div>
 
-                @if (datos.cupo && datos.membresia?.vigente) {
+                @if (datos.ilimitado) {
+                  <p class="cupo-texto">Sin tope de documentos</p>
+                } @else if (datos.cupo && datos.membresia?.vigente) {
                   <div class="cupo" [class.agotado]="datos.cupo.restantes === 0">
                     <div
                       class="cupo-barra"

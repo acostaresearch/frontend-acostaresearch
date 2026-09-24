@@ -89,6 +89,8 @@ export interface MembresiaPreparar {
 export interface PanelPreparar {
   /** Falso = el servicio está apagado en el servidor. No se enseña el formulario. */
   disponible: boolean;
+  /** Usuario beta: prepara sin tope y sin membresía. Ver `PREPARAR_ILIMITADO_EMAILS`. */
+  ilimitado?: boolean;
   membresia: MembresiaPreparar | null;
   cupo: CupoPreparar | null;
   /** Por qué no puede mandar un documento ahora mismo. Null = sí puede. */
@@ -101,5 +103,6 @@ export interface PanelPreparar {
 /** Lo que devuelve el servidor al aceptar un encargo. */
 export interface EncargoAceptado {
   preparacion: Preparacion;
-  cupo: CupoPreparar;
+  /** Null para el usuario beta, que no tiene cupo. */
+  cupo: CupoPreparar | null;
 }
