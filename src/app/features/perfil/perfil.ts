@@ -120,8 +120,6 @@ export class Perfil implements OnInit {
   // ── Compras ──────────────────────────────────────────────────────────────
   readonly compras = signal<Payment[]>([]);
   readonly cargandoCompras = signal(true);
-  /** Con algo pagado ya tiene de qué opinar: lo usa el mensajito de la reseña. */
-  readonly haComprado = computed(() => this.compras().some((pago) => pago.status === 'PAID'));
   /** El pago cuya constancia se está descargando, para no pedirla dos veces. */
   readonly bajandoConstancia = signal<string | null>(null);
   readonly errorConstancia = signal<string | null>(null);

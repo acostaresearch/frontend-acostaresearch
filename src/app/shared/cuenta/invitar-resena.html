@@ -1,0 +1,28 @@
+@if (visible()) {
+  <aside class="invitar" role="dialog" aria-labelledby="invitar-resena-titulo">
+    <button type="button" class="cerrar" aria-label="Cerrar" (click)="aplazar()">×</button>
+    <span class="estrellas" aria-hidden="true">★★★★★</span>
+    <strong id="invitar-resena-titulo">¿Te gusta nuestro servicio?</strong>
+    <p>Danos una buena reseña: ayuda a otros tesistas a decidirse, y la leemos una por una.</p>
+    <div class="acciones">
+      <button type="button" class="boton" (click)="escribir()">Dejar mi reseña</button>
+      <button type="button" class="boton secundario" (click)="aplazar()">Ahora no</button>
+    </div>
+  </aside>
+}
+
+@if (emergente.abierta()) {
+  <div class="ventana-fondo" aria-hidden="true" (click)="emergente.cerrar()"></div>
+  <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="ventana-resena-titulo">
+    <div class="ventana-cabecera">
+      <div>
+        <span class="estrellas" aria-hidden="true">★★★★★</span>
+        <h2 id="ventana-resena-titulo">Tu reseña del servicio</h2>
+      </div>
+      <button type="button" class="cerrar" aria-label="Cerrar" (click)="emergente.cerrar()">
+        ×
+      </button>
+    </div>
+    <app-mi-resena />
+  </div>
+}

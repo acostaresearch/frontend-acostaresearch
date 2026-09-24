@@ -277,14 +277,14 @@
          pasa por aquí, y es el mejor momento para pedírsela. Solo al
          comprador; el panel del administrador no se reseña a sí mismo. -->
     @if (modo() === 'comprador') {
-      <a class="recurso resena" routerLink="/resenas" fragment="escribir-mi-resena">
+      <button type="button" class="recurso resena" (click)="resenaEmergente.abrir()">
         <span class="recurso-icono" aria-hidden="true">★</span>
         <span class="recurso-texto">
           <strong>¿Te gusta nuestro servicio?</strong>
           <span>Déjanos una buena reseña: ayuda a otros tesistas a decidirse.</span>
         </span>
         <span class="recurso-accion">Dejar reseña</span>
-      </a>
+      </button>
     }
 
     <!-- Una persona al otro lado, no una página de ayuda más. Quien llega aquí
