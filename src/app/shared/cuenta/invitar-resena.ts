@@ -39,7 +39,13 @@ const APLAZAR_MS = 30 * 24 * 60 * 60 * 1000;
           decidirse.
         </p>
         <button type="button" class="enlace" (click)="escribir()">Dejar mi reseña</button>
-        <button type="button" class="cerrar" aria-label="Quitar este aviso" (click)="aplazar()">
+        <button
+          type="button"
+          class="cerrar"
+          title="Quitar este aviso"
+          aria-label="Quitar este aviso"
+          (click)="aplazar()"
+        >
           ×
         </button>
       </div>
