@@ -338,7 +338,7 @@
                               </span>
                               Descargar
                             </button>
-                            <button type="button" class="resumen" (click)="abrirResumen(t)">
+                            <button type="button" class="ver-resumen" (click)="abrirResumen(t)">
                               Resumen
                               @if (t.intactos > 0) {
                                 <span class="resumen-cuenta">{{ t.intactos }} sin tocar</span>
@@ -346,18 +346,29 @@
                             </button>
                           </div>
                         } @else {
-                          <p class="estado">
-                            {{ t.error }}
-                            <span class="sin-cobro">No se descontó de tu membresía.</span>
-                          </p>
-
+                          <!-- El motivo del fallo va en el resumen, como los avisos
+                               de los que salieron: la fila solo lleva qué hacer. -->
                           <div class="acciones">
                             @if (puede()) {
-                              <button type="button" class="accion" (click)="volverAMandar(t)">
+                              <button type="button" class="descargar" (click)="volverAMandar(t)">
+                                <span class="descargar-icono" aria-hidden="true">
+                                  <svg viewBox="0 0 16 16">
+                                    <path
+                                      d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.5"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                    />
+                                  </svg>
+                                </span>
                                 Volver a mandarlo
                               </button>
                             }
-                            <a class="accion" [href]="correoDe(t)">Escribirnos</a>
+                            <button type="button" class="ver-resumen" (click)="abrirResumen(t)">
+                              Resumen
+                            </button>
                           </div>
                         }
                       </div>
@@ -407,7 +418,14 @@
     </header>
 
     <div class="resumen-cuerpo">
-      <p class="resumen-texto">{{ resultadoDe(t) }}</p>
+      @if (t.estado === 'FALLIDO') {
+        <p class="resumen-texto">
+          {{ t.error }}
+          <span class="sin-cobro">No se descontó de tu membresía.</span>
+        </p>
+      } @else {
+        <p class="resumen-texto">{{ resultadoDe(t) }}</p>
+      }
 
       @if (avisosDe(t).length) {
         <h3>Lo que quedó como estaba</h3>
@@ -427,7 +445,11 @@
 
     <footer class="resumen-pie">
       <button type="button" class="accion" (click)="cerrarResumen()">Cerrar</button>
-      <button type="button" class="descargar" (click)="descargar(t)">Descargar</button>
+      @if (t.estado === 'FALLIDO') {
+        <a class="descargar" [href]="correoDe(t)">Escribirnos</a>
+      } @else {
+        <button type="button" class="descargar" (click)="descargar(t)">Descargar</button>
+      }
     </footer>
   </div>
 }
