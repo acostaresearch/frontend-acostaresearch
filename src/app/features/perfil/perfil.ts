@@ -21,7 +21,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
-import { InvitarResena } from '../../shared/cuenta/invitar-resena';
+import { InvitarResena, VentanaResena } from '../../shared/cuenta/invitar-resena';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
@@ -64,6 +64,7 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
     DecimalPipe,
     AjustesDeCuenta,
     InvitarResena,
+    VentanaResena,
     MiConector,
     SiteHeader,
   ],

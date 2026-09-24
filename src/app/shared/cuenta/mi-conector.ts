@@ -14,7 +14,6 @@ import { MiScopusPanel } from './mi-scopus';
 import { MisFuentesPanel } from './mis-fuentes';
 import { MiAnalisisR } from './mi-analisis-r';
 import { MiAtlasTi } from './mi-atlas-ti';
-import { ResenaEmergenteService } from '../../core/services/resena-emergente.service';
 import { MiZoteroPanel } from './mi-zotero';
 import { MiMendeleyPanel } from './mi-mendeley';
 import { PasosDeArranque } from './pasos-de-arranque';
@@ -53,8 +52,6 @@ import { PasosDeArranque } from './pasos-de-arranque';
 export class MiConector implements OnInit {
   private readonly licencias = inject(LicenseService);
   private readonly tour = inject(TourService);
-  /** La ventana de la reseña, que pinta `app-invitar-resena` en el perfil. */
-  protected readonly resenaEmergente = inject(ResenaEmergenteService);
   private readonly recorrido = inject(RecorridoWeb);
 
   /** Quién lo está mirando. Ver la nota de la clase. */

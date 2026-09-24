@@ -1,81 +1,65 @@
-/* Abajo a la izquierda: a la derecha está el asistente (z-index 60), y la
-   ventana de confirmar (80) y el recorrido (84+) tienen que poder taparlo. */
-.invitar {
-  position: fixed;
-  left: 20px;
-  bottom: 20px;
-  z-index: 60;
-  display: grid;
-  gap: 6px;
-  width: 320px;
-  max-width: calc(100vw - 32px);
-  padding: 16px 18px;
-  color: var(--color-texto);
-  background: var(--color-superficie-alta);
-  border: 1px solid var(--color-borde);
-  border-left: 4px solid var(--color-primario);
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(10, 17, 40, 0.28);
-  animation: entrar 0.35s ease-out;
+/* ── La banda ──────────────────────────────────────────────────────────────
+   El mismo azul lavado que el saludo de la portada. Vive dentro de la barra
+   pegajosa del perfil y sale a sangre: los márgenes negativos deshacen el
+   relleno de la barra (`--barra-lado`, que pone `perfil.css`). */
+.banda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+  margin: 8px calc(-1 * var(--barra-lado, 38px)) -8px;
+  padding: 12px var(--barra-lado, 38px);
+  font-size: 15px;
+  background: var(--color-primario-suave);
+  border-top: 1px solid var(--color-borde);
 }
 
-.estrellas {
-  font-size: 15px;
-  letter-spacing: 2px;
+.banda p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.estrella {
+  margin-right: 6px;
   color: #f5a623;
 }
 
-.invitar strong {
-  font-size: 15px;
-  font-weight: 650;
+.enlace {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
-.invitar p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.acciones .boton {
-  padding: 8px 14px;
-  font-size: 13px;
-  text-decoration: none;
+.enlace:hover {
+  text-decoration: underline;
 }
 
 .cerrar {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
-  color: var(--color-texto-tenue);
+  color: var(--color-texto-suave);
   background: none;
   border: 0;
   border-radius: 50%;
   cursor: pointer;
 }
 
-.invitar .cerrar {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-}
-
 .cerrar:hover {
   color: var(--color-texto);
-  background: var(--color-fondo);
+  background: color-mix(in srgb, var(--color-primario) 12%, transparent);
 }
 
 /* ── La ventana con el formulario ──────────────────────────────────────────
-   Por encima del asistente (60) y por debajo de la ventana de confirmar (80). */
+   Por encima de la cabecera (20) y del asistente (60), por debajo de la
+   ventana de confirmar (80). */
 .ventana-fondo {
   position: fixed;
   inset: 0;
@@ -117,31 +101,19 @@
   font-size: 20px;
 }
 
+.estrellas {
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: #f5a623;
+}
+
 @keyframes aparecer {
   from {
     opacity: 0;
   }
 }
 
-/* En el móvil, a lo ancho y por encima del botón del asistente. */
-@media (max-width: 520px) {
-  .invitar {
-    left: 16px;
-    right: 16px;
-    bottom: 84px;
-    width: auto;
-  }
-}
-
-@keyframes entrar {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .invitar,
   .ventana,
   .ventana-fondo {
     animation: none;

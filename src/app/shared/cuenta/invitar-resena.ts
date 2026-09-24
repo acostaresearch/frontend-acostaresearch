@@ -12,76 +12,61 @@ import {
 import { FondoService } from '../../core/services/fondo.service';
 import { ResenaEmergenteService } from '../../core/services/resena-emergente.service';
 import { ResenaService } from '../../core/services/resena.service';
-import { TourService } from '../../core/services/tour.service';
 import { MiResenaDelServicio } from './mi-resena';
 
 /** Hasta cuándo no se vuelve a ofrecer, en milisegundos desde 1970. */
 const CLAVE_APLAZADA = 'acosta.resena.aplazada';
-/** «Ahora no» la aparta un mes: ni cada vez que entra ni nunca más. */
+/** La × la aparta un mes: ni cada vez que entra ni nunca más. */
 const APLAZAR_MS = 30 * 24 * 60 * 60 * 1000;
-/** Que primero vea su panel; el mensaje llega después, no encima de la carga. */
-const ESPERA_MS = 2500;
 
 /**
- * La reseña dentro del perfil: el mensajito que la ofrece al entrar y la
- * ventana emergente con el formulario.
+ * La banda que invita a dejar una reseña, arriba del perfil.
  *
- * El mensajito sale abajo a la IZQUIERDA —abajo a la derecha vive el
- * asistente— a quien todavía no ha escrito ninguna. No sale durante el
- * recorrido guiado ni durante un mes después de «Ahora no» (en este
- * navegador; en una ventana privada vale para la visita).
- *
- * La ventana es el mismo `app-mi-resena` de /resenas, sin salir del panel:
- * mandarlo a otra página a buscar el formulario perdía gente por el camino.
- * También la abre el acceso de la tarjeta «¿Necesitas ayuda?».
+ * Una línea de texto como el saludo de la portada, dentro de la barra pegajosa
+ * del perfil para que baje con la cabecera al desplazarse. Sale a quien todavía
+ * no ha escrito ninguna reseña; la × la quita un mes en este navegador (en una
+ * ventana privada, para la visita). «Dejar mi reseña» abre `app-ventana-resena`
+ * sin salir del panel.
  */
 @Component({
   selector: 'app-invitar-resena',
-  imports: [MiResenaDelServicio],
-  templateUrl: './invitar-resena.html',
+  template: `
+    @if (visible()) {
+      <div class="banda" role="note">
+        <p>
+          <span class="estrella" aria-hidden="true">★</span>
+          <b>¿Te gusta nuestro servicio?</b> Déjanos una buena reseña: ayuda a otros tesistas a
+          decidirse.
+        </p>
+        <button type="button" class="enlace" (click)="escribir()">Dejar mi reseña</button>
+        <button type="button" class="cerrar" aria-label="Quitar este aviso" (click)="aplazar()">
+          ×
+        </button>
+      </div>
+    }
+  `,
   styleUrl: './invitar-resena.css',
 })
-export class InvitarResena implements OnInit, OnDestroy {
+export class InvitarResena implements OnInit {
   private readonly resenas = inject(ResenaService);
-  private readonly tour = inject(TourService);
-  private readonly fondo = inject(FondoService);
-  readonly emergente = inject(ResenaEmergenteService);
+  private readonly emergente = inject(ResenaEmergenteService);
 
   private readonly toca = signal(false);
   private readonly cerrada = signal(false);
-  private temporizador: ReturnType<typeof setTimeout> | null = null;
 
-  readonly visible = computed(
-    () => this.toca() && !this.cerrada() && !this.tour.activo() && !this.emergente.abierta(),
-  );
-
-  constructor() {
-    // Con la ventana delante, la página de debajo no se mueve.
-    effect(() => this.fondo.fijar('resena', this.emergente.abierta()));
-  }
+  readonly visible = computed(() => this.toca() && !this.cerrada());
 
   ngOnInit(): void {
     if (aplazadaHasta() > Date.now()) return;
 
-    this.temporizador = setTimeout(() => {
-      this.resenas.mias().subscribe({
-        next: (mias) => this.toca.set(mias.length === 0),
-        // Sin saber si ya escribió una, mejor no molestar.
-        error: () => this.toca.set(false),
-      });
-    }, ESPERA_MS);
+    this.resenas.mias().subscribe({
+      next: (mias) => this.toca.set(mias.length === 0),
+      // Sin saber si ya escribió una, mejor no molestar.
+      error: () => this.toca.set(false),
+    });
   }
 
-  ngOnDestroy(): void {
-    if (this.temporizador) clearTimeout(this.temporizador);
-    this.emergente.cerrar();
-  }
-
-  @HostListener('document:keydown.escape')
-  cerrarVentana(): void {
-    this.emergente.cerrar();
-  }
-
+  /** Abre el formulario; la banda se va y, si no la termina, vuelve otro día. */
   escribir(): void {
     this.cerrada.set(true);
     this.emergente.abrir();
@@ -94,6 +79,51 @@ export class InvitarResena implements OnInit, OnDestroy {
     } catch {
       // Almacenamiento bloqueado: vale para esta visita.
     }
+  }
+}
+
+/**
+ * La ventana emergente con el formulario: el mismo `app-mi-resena` de
+ * /resenas, sin salir del panel. Se cierra con la ×, con Escape o fuera.
+ */
+@Component({
+  selector: 'app-ventana-resena',
+  imports: [MiResenaDelServicio],
+  template: `
+    @if (emergente.abierta()) {
+      <div class="ventana-fondo" aria-hidden="true" (click)="emergente.cerrar()"></div>
+      <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="ventana-resena-titulo">
+        <div class="ventana-cabecera">
+          <div>
+            <span class="estrellas" aria-hidden="true">★★★★★</span>
+            <h2 id="ventana-resena-titulo">Tu reseña del servicio</h2>
+          </div>
+          <button type="button" class="cerrar" aria-label="Cerrar" (click)="emergente.cerrar()">
+            ×
+          </button>
+        </div>
+        <app-mi-resena />
+      </div>
+    }
+  `,
+  styleUrl: './invitar-resena.css',
+})
+export class VentanaResena implements OnDestroy {
+  private readonly fondo = inject(FondoService);
+  readonly emergente = inject(ResenaEmergenteService);
+
+  constructor() {
+    // Con la ventana delante, la página de debajo no se mueve.
+    effect(() => this.fondo.fijar('resena', this.emergente.abierta()));
+  }
+
+  ngOnDestroy(): void {
+    this.emergente.cerrar();
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrar(): void {
+    this.emergente.cerrar();
   }
 }
 

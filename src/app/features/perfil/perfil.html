@@ -33,6 +33,11 @@
           <small>{{ nombre() }}</small>
         </span>
       </button>
+
+      <!-- La invitación a la reseña, en una banda de texto como el saludo de
+           la portada. Va DENTRO de esta barra para bajar pegada con ella y con
+           la cabecera al desplazarse. Decide ella sola si sale. -->
+      <app-invitar-resena />
     </div>
 
     @if (cuentaAbierta()) {
@@ -255,9 +260,10 @@
     </main>
   </div>
 
-  <!-- El mensajito que invita a dejar una reseña y la ventana con el
-       formulario. El mensajito decide él solo si sale. -->
-  <app-invitar-resena />
+  <!-- La ventana del formulario de la reseña. Fuera de la barra pegajosa: dentro,
+       su z-index quedaría preso del de la barra y la cabecera le pasaría por encima. -->
+  <app-ventana-resena />
+
 
   <!-- ── Ventana de borrar la cuenta ────────────────────────────────────────
        Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide el

@@ -18,6 +18,8 @@
 /* Pegada bajo la cabecera del sitio, para poder abrir la cuenta sin volver
    arriba del todo. */
 .barra-cuenta {
+  /* Lo que mide el lado: la banda de la reseña lo usa para ir a sangre. */
+  --barra-lado: 38px;
   position: sticky;
   top: var(--alto-cabecera);
   z-index: 10;
@@ -139,6 +141,7 @@
 
 @media (max-width: 1000px) {
   .barra-cuenta {
+    --barra-lado: 20px;
     padding: 8px 20px;
   }
 
