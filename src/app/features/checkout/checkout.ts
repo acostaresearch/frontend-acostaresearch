@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
+import { ERROR_CODE } from '../../core/models/api.model';
 import {
   ComprobanteEnviado,
   DatosDelCobro,
@@ -1016,7 +1017,7 @@ export class Checkout implements OnInit {
             }
           },
 
-          onApprove: async (data) => {
+          onApprove: async (data, actions) => {
             try {
               const resultado = await firstValueFrom(this.payments.capture(data.orderID));
               this.saldo.set(resultado.balance ?? null);
@@ -1032,7 +1033,18 @@ export class Checkout implements OnInit {
                 );
               }
             } catch (error: unknown) {
-              this.error.set(toApiError(error).message);
+              const apiError = toApiError(error);
+              this.error.set(apiError.message);
+              // El banco rechazó esa tarjeta pero la orden sigue abierta: PayPal
+              // pide reabrir su ventana para que elija otro medio de pago.
+              if (apiError.code === ERROR_CODE.PAYMENT_DECLINED) {
+                try {
+                  await actions.restart();
+                  return;
+                } catch {
+                  // Si no se puede reabrir, queda el mensaje y el botón de nuevo.
+                }
+              }
             } finally {
               this.procesando.set(false);
             }

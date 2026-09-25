@@ -7,7 +7,15 @@ export interface PaypalButtonsConfig {
   style?: Record<string, string | number>;
   /** Devuelve el `orderID` que abrió nuestro servidor. */
   createOrder: () => Promise<string>;
-  onApprove: (data: { orderID: string }) => Promise<void> | void;
+  /**
+   * `actions.restart()` vuelve a abrir la ventana de PayPal sobre la misma
+   * orden para que el comprador elija otra tarjeta cuando el banco rechaza la
+   * primera (INSTRUMENT_DECLINED).
+   */
+  onApprove: (
+    data: { orderID: string },
+    actions: { restart: () => Promise<void> | void },
+  ) => Promise<void> | void;
   onCancel?: (data: { orderID?: string }) => void;
   onError?: (error: unknown) => void;
 }

@@ -196,6 +196,16 @@ function dePasarela(pago: PagoAdmin): Acceso {
 }
 
 /**
+ * Una orden de pasarela que nunca llegó a cobrarse no es un acceso: abrir la
+ * ventana de PayPal y cerrarla sin pagar dejaba una fila «Cancelado» que
+ * parecía una venta perdida. Las abiertas sin pagar (PENDING) tampoco cuentan.
+ * Siguen en el historial de cobros; aquí solo se quitan de la lista.
+ */
+function seCobro(pago: PagoAdmin): boolean {
+  return pago.status !== 'CANCELLED' && pago.status !== 'PENDING';
+}
+
+/**
  * Junta las cuatro fuentes en una sola lista, de la más reciente a la más
  * antigua.
  *
@@ -225,7 +235,9 @@ export function unirAccesos(
     ...codigos.map(deCodigo),
     ...porRevisar.map(dePendiente),
     ...comprobantes.filter(noEsCanje).map(deComprobante),
-    ...pagos.filter((pago) => pago.provider !== 'YAPE' && noEsCanje(pago)).map(dePasarela),
+    ...pagos
+      .filter((pago) => pago.provider !== 'YAPE' && noEsCanje(pago) && seCobro(pago))
+      .map(dePasarela),
     // Fechas ISO en UTC: se comparan como cadenas y salen en orden. La más
     // reciente primero, que es por donde se empieza a mirar.
   ].sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));

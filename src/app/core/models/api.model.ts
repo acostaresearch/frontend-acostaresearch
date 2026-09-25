@@ -53,6 +53,8 @@ export const ERROR_CODE = {
   PAYMENT_UNAVAILABLE: 'PAYMENT_UNAVAILABLE',
   PLAN_NOT_PURCHASABLE: 'PLAN_NOT_PURCHASABLE',
   PAYMENT_FAILED: 'PAYMENT_FAILED',
+  /** El banco rechazó la tarjeta; la orden sigue abierta para probar otra. */
+  PAYMENT_DECLINED: 'PAYMENT_DECLINED',
   DISCOUNT_INVALID: 'DISCOUNT_INVALID',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** La base de datos no responde: lo recoge la pantalla de mantenimiento. */
