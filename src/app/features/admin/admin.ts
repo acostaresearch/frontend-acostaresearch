@@ -551,9 +551,8 @@ export class Admin implements OnInit {
   // ── Gráficos ─────────────────────────────────────────────────────────────
   //
   // Se calculan sobre lo que el panel YA tiene cargado: ni una petición más.
-  // Eso pone un límite honesto que conviene tener presente —`/payments/recent`
-  // devuelve los últimos 50 cobros—, y por eso el pie de cada gráfico dice
-  // sobre qué está hecho en lugar de dejar creer que es todo el histórico.
+  // `/payments/recent` y `/licenses/codes` devuelven TODOS los pagos y códigos
+  // (hasta el 26-sep eran los últimos 50 y 100, y los ingresos salían cortos).
 
   /**
    * Lo que se dice al pasar por encima de una barra.
