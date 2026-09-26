@@ -13,6 +13,7 @@ import {
   MetodoDeCobro,
   PackAdmin,
   PagoAdmin,
+  VentasMensuales,
 } from '../../core/models/admin.model';
 import {
   Descuento,
@@ -27,7 +28,8 @@ import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
-import { duracionDeAcceso,
+import {
+  duracionDeAcceso,
   EnlacePrueba,
   InvitadoPrueba,
   PruebaService,
@@ -35,11 +37,7 @@ import { duracionDeAcceso,
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
 import { Guia, GuiaEnvio, GuiaService } from '../../core/services/guia.service';
 import { Reclamo, ReclamoService } from '../../core/services/reclamo.service';
-import {
-  EstadoCorpus,
-  Referencia,
-  ReferenceService,
-} from '../../core/services/reference.service';
+import { EstadoCorpus, Referencia, ReferenceService } from '../../core/services/reference.service';
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
@@ -53,7 +51,7 @@ import {
   revisarCorreo,
 } from '../../shared/validators/correo';
 import { Acceso, unirAccesos } from './accesos';
-import { columnas, lunes, porCategoria, porSemana } from './graficos';
+import { columnas, lunes, porCategoria, porMes, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
@@ -196,6 +194,8 @@ interface EnCola {
  * un negocio que vende por trimestres.
  */
 const SEMANAS = 8;
+/** Meses del gráfico de ingresos: un año, el mes en curso incluido. */
+const MESES = 12;
 
 /** Importes cortos para los ejes: S/ 1,2k en vez de S/ 1.200. */
 const MILES = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 0 });
@@ -629,13 +629,17 @@ export class Admin implements OnInit {
     return entradas;
   });
 
-  readonly ingresosPorSemana = computed(() =>
+  /**
+   * Ingresos por mes natural. Cada mes terminado tiene además su cierre en PDF
+   * en «Ventas mensuales», calculado con la misma regla en el servidor.
+   */
+  readonly ingresosPorMes = computed(() =>
     columnas(
-      porSemana(
+      porMes(
         this.entradasDeDinero(),
         (entrada) => entrada.fecha,
         (entrada) => entrada.cents,
-        SEMANAS,
+        MESES,
       ).map((punto) => ({
         ...punto,
         detalle: `${punto.detalle}: ${soles(punto.valor)}`,
@@ -2389,6 +2393,82 @@ export class Admin implements OnInit {
     return nombres[accion] ?? accion;
   }
 
+  // ── Ventas mensuales ─────────────────────────────────────────────────────
+  //
+  // Cada mes terminado queda cerrado en el servidor con su PDF (una foto que ya
+  // no cambia). Es lo que se le pasa al contador y, más adelante, lo que se
+  // enviará a SUNAT. El mes en curso se descarga como borrador.
+
+  readonly ventasAbierto = signal(false);
+  readonly ventasMensuales = signal<VentasMensuales | null>(null);
+  readonly cargandoVentas = signal(false);
+  readonly errorVentas = signal<string | null>(null);
+  /** El mes cuyo PDF se está bajando (`2026-9`), para no pedirlo dos veces. */
+  readonly bajandoMes = signal<string | null>(null);
+
+  abrirVentas(): void {
+    this.ventasAbierto.set(true);
+    this.errorVentas.set(null);
+    this.cargandoVentas.set(true);
+    this.admin.ventasMensuales().subscribe({
+      next: (ventas) => {
+        this.ventasMensuales.set(ventas);
+        this.cargandoVentas.set(false);
+      },
+      error: (error: unknown) => {
+        this.errorVentas.set(mensajeDeError(error));
+        this.cargandoVentas.set(false);
+      },
+    });
+  }
+
+  cerrarVentas(): void {
+    this.ventasAbierto.set(false);
+  }
+
+  /** «Septiembre 2026». */
+  nombreDeMes(anio: number, mes: number): string {
+    const texto = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' }).format(
+      new Date(anio, mes - 1, 1),
+    );
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  /** Lo cobrado en cada moneda, en una línea: «S/ 1,500.00 · US$ 998.00». */
+  porMoneda(totales: Record<string, number>): string {
+    return Object.entries(totales)
+      .map(([moneda, cents]) =>
+        moneda === 'USD' ? `US$ ${(cents / 100).toFixed(2)}` : soles(cents),
+      )
+      .join(' · ');
+  }
+
+  descargarMes(anio: number, mes: number): void {
+    const clave = `${anio}-${mes}`;
+    if (this.bajandoMes()) return;
+    this.bajandoMes.set(clave);
+    this.errorVentas.set(null);
+
+    this.admin.pdfDelMes(anio, mes).subscribe({
+      next: (respuesta) => {
+        const disposicion = respuesta.headers.get('Content-Disposition') ?? '';
+        const nombre = /filename="([^"]+)"/.exec(disposicion)?.[1] ?? `ventas-${clave}.pdf`;
+        const url = URL.createObjectURL(respuesta.body as Blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombre;
+        enlace.click();
+        // Se suelta después: algunos navegadores aún no empezaron a guardar.
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        this.bajandoMes.set(null);
+      },
+      error: () => {
+        this.errorVentas.set('No pudimos descargar el PDF de ese mes. Inténtalo de nuevo.');
+        this.bajandoMes.set(null);
+      },
+    });
+  }
+
   // ── Descuentos ───────────────────────────────────────────────────────────
 
   abrirFormularioDescuento(): void {
@@ -2740,9 +2820,7 @@ export class Admin implements OnInit {
 
   // Al salir del panel el temporizador tiene que morir con él: si no, sigue
   // pidiendo el estado desde una pantalla que ya no existe.
-  private readonly alDestruir = inject(DestroyRef).onDestroy(() =>
-    this.pararVigilanteDelCorpus(),
-  );
+  private readonly alDestruir = inject(DestroyRef).onDestroy(() => this.pararVigilanteDelCorpus());
 
   readonly sincronizando = computed(() => this.corpus()?.trabajo?.activo === true);
 

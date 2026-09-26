@@ -1678,6 +1678,83 @@ td.acciones {
   font-weight: 600;
 }
 
+.grafico-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.grafico-cabecera .boton-ventas {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* ── Ventas mensuales (ventana emergente) ── */
+.ventas-subtitulo {
+  margin: 4px 0 0;
+}
+
+.meses-ventas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mes-venta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background: var(--color-superficie);
+}
+
+.mes-venta.en-curso {
+  background: var(--color-fondo);
+}
+
+.mes-datos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mes-nombre {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mes-detalle {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.mes-total {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .mes-venta {
+    flex-wrap: wrap;
+  }
+
+  .mes-venta .boton {
+    width: 100%;
+  }
+}
+
 /* La cifra grande va con las figuras proporcionales de la fuente: `tabular-nums`
    iguala el ancho de cada dígito y a este tamaño deja los números sueltos. */
 .grafico-cifra {

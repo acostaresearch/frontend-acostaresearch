@@ -86,7 +86,13 @@ export interface PagoAdmin {
   errorCode: string | null;
   createdAt: string;
   paidAt: string | null;
-  plan: { code: string; productCode: string | null; name: string; words: number; durationDays: number };
+  plan: {
+    code: string;
+    productCode: string | null;
+    name: string;
+    words: number;
+    durationDays: number;
+  };
   user: Comprador;
 }
 
@@ -143,4 +149,26 @@ export interface ActivarBolsa {
   paymentMethod: string;
   paymentRef?: string;
   note?: string;
+}
+
+/** Resumen de las ventas de un mes (hora de Lima). `mes` va de 1 a 12. */
+export interface ResumenDeMes {
+  anio: number;
+  mes: number;
+  ventas: number;
+  /** Total en céntimos de sol; los dólares, al tipo de referencia. */
+  totalSolesCents: number;
+  /** Lo cobrado en cada moneda, sin convertir: `{ PEN: 15000, USD: 4990 }`. */
+  totalesPorMoneda: Record<string, number>;
+}
+
+/** Un mes ya cerrado: su PDF quedó guardado y no cambia. */
+export interface CierreMensual extends ResumenDeMes {
+  id: string;
+  creadoEn: string;
+}
+
+export interface VentasMensuales {
+  enCurso: ResumenDeMes;
+  cierres: CierreMensual[];
 }

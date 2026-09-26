@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -14,6 +14,7 @@ import {
   MetodoDeCobro,
   PackAdmin,
   PagoAdmin,
+  VentasMensuales,
 } from '../models/admin.model';
 import { ApiResponse } from '../models/api.model';
 import { RevisionDeCorreo } from '../../shared/validators/correo';
@@ -43,6 +44,7 @@ export class AdminService {
   private readonly licencias = `${environment.apiUrl}/licenses`;
   private readonly facturacion = `${environment.apiUrl}/billing`;
   private readonly pagos = `${environment.apiUrl}/payments`;
+  private readonly ventas = `${environment.apiUrl}/ventas`;
 
   // ── Códigos de activación ──────────────────────────────────────────────
 
@@ -66,9 +68,10 @@ export class AdminService {
    */
   revisarCorreos(emails: string[]): Observable<RevisionDeCorreo[]> {
     return this.http
-      .post<
-        ApiResponse<{ revisiones: RevisionDeCorreo[] }>
-      >(`${this.licencias}/codes/check-emails`, { emails })
+      .post<ApiResponse<{ revisiones: RevisionDeCorreo[] }>>(
+        `${this.licencias}/codes/check-emails`,
+        { emails },
+      )
       .pipe(map((res) => res.data.revisiones));
   }
 
@@ -150,7 +153,10 @@ export class AdminService {
    * sigue siendo la misma. Lo que cambia es qué capítulos le devuelve, y eso es
    * inmediato.
    */
-  cambiarProducto(id: string, productCode: string): Observable<{ license: LicenciaAdmin; mensaje: string }> {
+  cambiarProducto(
+    id: string,
+    productCode: string,
+  ): Observable<{ license: LicenciaAdmin; mensaje: string }> {
     return this.http
       .post<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}/product`, {
         productCode,
@@ -176,13 +182,19 @@ export class AdminService {
   }
 
   /** Enciende o apaga que esa licencia pueda abrir varias tesis. */
-  cambiarVariasTesis(id: string, activar: boolean): Observable<{ activa: boolean; mensaje: string }> {
+  cambiarVariasTesis(
+    id: string,
+    activar: boolean,
+  ): Observable<{ activa: boolean; mensaje: string }> {
     return this.http
       .post<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}/varias-tesis`, {
         activar,
       })
       .pipe(
-        map((res) => ({ activa: res.data.license.variasTesis === true, mensaje: res.message ?? '' })),
+        map((res) => ({
+          activa: res.data.license.variasTesis === true,
+          mensaje: res.message ?? '',
+        })),
       );
   }
 
@@ -251,5 +263,28 @@ export class AdminService {
     return this.http
       .get<ApiResponse<{ payments: PagoAdmin[] }>>(`${this.pagos}/recent`)
       .pipe(map((res) => res.data.payments));
+  }
+
+  // ── Ventas mensuales ───────────────────────────────────────────────────
+
+  /**
+   * Los meses cerrados y el mes en curso. Pedirla también cierra en el
+   * servidor cualquier mes terminado que aún no tuviera su PDF.
+   */
+  ventasMensuales(): Observable<VentasMensuales> {
+    return this.http
+      .get<ApiResponse<VentasMensuales>>(`${this.ventas}/meses`)
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * El PDF de un mes: el guardado al cerrarlo o, si es el mes en curso, un
+   * borrador. Entero, para leer el nombre del archivo de la cabecera.
+   */
+  pdfDelMes(anio: number, mes: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.ventas}/meses/${anio}/${mes}/pdf`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
   }
 }

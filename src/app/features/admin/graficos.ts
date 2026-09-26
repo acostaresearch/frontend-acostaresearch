@@ -193,6 +193,46 @@ export function porSemana<T>(
   }));
 }
 
+const MES_CORTO = new Intl.DateTimeFormat('es-PE', { month: 'short' });
+const MES_LARGO = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric' });
+
+/**
+ * Reparte lo que devuelva `valorDe` en los últimos `meses` meses naturales,
+ * el actual incluido. Como `porSemana`, los meses sin nada salen con un cero.
+ */
+export function porMes<T>(
+  filas: T[],
+  fechaDe: (fila: T) => Date | null,
+  valorDe: (fila: T) => number,
+  meses: number,
+  hoy: Date = new Date(),
+): { etiqueta: string; detalle: string; valor: number; inicio: Date }[] {
+  const cubos = Array.from({ length: meses }, (_, i) => ({
+    inicio: new Date(hoy.getFullYear(), hoy.getMonth() - (meses - 1 - i), 1),
+    valor: 0,
+  }));
+  const indice = new Map(
+    cubos.map((c, i) => [`${c.inicio.getFullYear()}-${c.inicio.getMonth()}`, i]),
+  );
+
+  for (const fila of filas) {
+    const fecha = fechaDe(fila);
+    if (!fecha) continue;
+    const i = indice.get(`${fecha.getFullYear()}-${fecha.getMonth()}`);
+    if (i !== undefined) cubos[i].valor += valorDe(fila);
+  }
+
+  return cubos.map(({ inicio, valor }) => {
+    const largo = MES_LARGO.format(inicio);
+    return {
+      inicio,
+      valor,
+      etiqueta: MES_CORTO.format(inicio).replace('.', ''),
+      detalle: largo.charAt(0).toUpperCase() + largo.slice(1),
+    };
+  });
+}
+
 /** Agrupa por una clave de texto y ordena de mayor a menor. */
 export function porCategoria<T>(
   filas: T[],
