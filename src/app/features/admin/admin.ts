@@ -649,6 +649,39 @@ export class Admin implements OnInit {
   );
 
   /**
+   * Ingresos por semana, de lunes a domingo, con la semana en curso al final.
+   *
+   * La semana se cierra el domingo a medianoche y el lunes arranca otra barra
+   * desde cero: es la misma regla de `lunes()` que usan los demás agrupados.
+   */
+  readonly ingresosPorSemana = computed(() =>
+    columnas(
+      porSemana(
+        this.entradasDeDinero(),
+        (entrada) => entrada.fecha,
+        (entrada) => entrada.cents,
+        SEMANAS,
+      ).map((punto) => ({
+        ...punto,
+        detalle: `${punto.detalle}: ${soles(punto.valor)}`,
+      })),
+      solesCorto,
+    ),
+  );
+
+  /** Lo que va de la semana en curso y lo que cerró la anterior, para la cifra grande. */
+  readonly semanaEnCurso = computed(() => {
+    const barras = this.ingresosPorSemana().barras;
+    const actual = barras[barras.length - 1];
+    const anterior = barras[barras.length - 2];
+    return {
+      valor: actual?.valor ?? 0,
+      desde: actual?.etiqueta ?? '',
+      anterior: anterior?.valor ?? 0,
+    };
+  });
+
+  /**
    * Por dónde entra el dinero.
    *
    * Categorías sin orden natural —PayPal, Yape, código de activación—, así que

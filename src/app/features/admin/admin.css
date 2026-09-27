@@ -1658,9 +1658,10 @@ td.acciones {
  * Las tres reglas que gobiernan esto: marcas finas, rejilla que no compite con
  * los datos, y ni un borde alrededor de las barras —lo que separa es el aire—.
  */
+/* Cuatro tarjetas: en 2×2 ninguna se queda sola en una fila. */
 .graficos {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }

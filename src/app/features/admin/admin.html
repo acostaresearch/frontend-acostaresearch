@@ -180,7 +180,7 @@
               <svg
                 [attr.viewBox]="'0 0 ' + ingresosPorMes().ancho + ' ' + ingresosPorMes().alto"
                 role="img"
-                aria-label="Ingresos cobrados por semana"
+                aria-label="Ingresos cobrados por mes"
               >
                 @for (guia of ingresosPorMes().guias; track guia.y) {
                   <line
@@ -232,6 +232,83 @@
             <p class="grafico-pie">
               Últimos 12 meses. Cobros confirmados por todas las vías; los de PayPal, pasados a
               soles. Cada mes cerrado tiene su PDF en «Ventas mensuales».
+            </p>
+          }
+        </article>
+
+        <!-- La semana va de lunes a domingo: el lunes arranca una barra nueva en cero. -->
+        <article class="grafico">
+          <h2>Ingresos por semana</h2>
+          <p class="grafico-cifra">{{ soles(semanaEnCurso().valor) }}</p>
+          <p class="grafico-subcifra">
+            esta semana, desde el lunes {{ semanaEnCurso().desde }} · la anterior cerró en
+            {{ soles(semanaEnCurso().anterior) }}
+          </p>
+
+          @if (ingresosPorSemana().total === 0) {
+            <p class="nota">Todavía no hay cobros confirmados en estas semanas.</p>
+          } @else {
+            <div class="lienzo">
+              @if (pistaDe('semanas'); as p) {
+                <span class="pista" [style.left.%]="p.centro">{{ p.texto }}</span>
+              }
+              <svg
+                [attr.viewBox]="'0 0 ' + ingresosPorSemana().ancho + ' ' + ingresosPorSemana().alto"
+                role="img"
+                aria-label="Ingresos cobrados por semana"
+              >
+                @for (guia of ingresosPorSemana().guias; track guia.y) {
+                  <line
+                    class="guia"
+                    [attr.x1]="ingresosPorSemana().canal"
+                    [attr.y1]="guia.y"
+                    [attr.x2]="ingresosPorSemana().ancho"
+                    [attr.y2]="guia.y"
+                  />
+                  <text
+                    class="marca"
+                    [attr.x]="ingresosPorSemana().canal - 6"
+                    [attr.y]="guia.y + 3"
+                  >
+                    {{ guia.texto }}
+                  </text>
+                }
+
+                @for (barra of ingresosPorSemana().barras; track barra.etiqueta) {
+                  <g
+                    tabindex="0"
+                    (mouseenter)="mostrarPista(barra, 'semanas')"
+                    (mouseleave)="ocultarPista()"
+                    (focus)="mostrarPista(barra, 'semanas')"
+                    (blur)="ocultarPista()"
+                  >
+                    <rect
+                      class="zona"
+                      [attr.x]="barra.x - 4"
+                      y="0"
+                      [attr.width]="barra.ancho + 8"
+                      [attr.height]="ingresosPorSemana().base"
+                    />
+                    @if (barra.forma) {
+                      <path class="barra" [attr.d]="barra.forma" />
+                    }
+                  </g>
+                }
+
+                @for (barra of ingresosPorSemana().barras; track barra.etiqueta) {
+                  <text
+                    class="eje"
+                    [attr.x]="barra.x + barra.ancho / 2"
+                    [attr.y]="ingresosPorSemana().alto - 5"
+                  >
+                    {{ barra.etiqueta }}
+                  </text>
+                }
+              </svg>
+            </div>
+            <p class="grafico-pie">
+              Últimas 8 semanas, de lunes a domingo; la última es la semana en curso. Cada lunes
+              empieza una barra nueva en cero.
             </p>
           }
         </article>
