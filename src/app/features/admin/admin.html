@@ -274,8 +274,14 @@
                   </text>
                 }
 
-                @for (barra of ingresosPorSemana().barras; track barra.etiqueta) {
+                <!-- Línea con área, no columnas: así no se confunde con el de meses. -->
+                <path class="semana-area" [attr.d]="ingresosPorSemana().area" />
+                <path class="semana-linea" [attr.d]="ingresosPorSemana().trazo" />
+
+                @for (barra of ingresosPorSemana().barras; track barra.etiqueta; let i = $index, ultimo = $last) {
                   <g
+                    class="semana-punto"
+                    [class.en-curso]="ultimo"
                     tabindex="0"
                     (mouseenter)="mostrarPista(barra, 'semanas')"
                     (mouseleave)="ocultarPista()"
@@ -289,9 +295,11 @@
                       [attr.width]="barra.ancho + 8"
                       [attr.height]="ingresosPorSemana().base"
                     />
-                    @if (barra.forma) {
-                      <path class="barra" [attr.d]="barra.forma" />
-                    }
+                    <circle
+                      [attr.cx]="ingresosPorSemana().puntos[i].cx"
+                      [attr.cy]="ingresosPorSemana().puntos[i].cy"
+                      [attr.r]="ultimo ? 4 : 3"
+                    />
                   </g>
                 }
 

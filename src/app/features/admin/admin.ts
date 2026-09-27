@@ -51,7 +51,7 @@ import {
   revisarCorreo,
 } from '../../shared/validators/correo';
 import { Acceso, unirAccesos } from './accesos';
-import { columnas, lunes, porCategoria, porMes, porSemana } from './graficos';
+import { columnas, linea, lunes, porCategoria, porMes, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
@@ -655,7 +655,7 @@ export class Admin implements OnInit {
    * desde cero: es la misma regla de `lunes()` que usan los demás agrupados.
    */
   readonly ingresosPorSemana = computed(() =>
-    columnas(
+    linea(
       porSemana(
         this.entradasDeDinero(),
         (entrada) => entrada.fecha,

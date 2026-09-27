@@ -1816,6 +1816,30 @@ td.acciones {
   outline: none;
 }
 
+/* Ingresos por semana: línea verde con área, para no confundirla con las
+   columnas azules de los meses. La semana en curso lleva el punto relleno. */
+.semana-area {
+  fill: color-mix(in srgb, var(--color-exito) 14%, transparent);
+}
+
+.semana-linea,
+.semana-punto circle {
+  fill: none;
+  stroke: var(--color-exito);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.semana-punto circle {
+  fill: var(--color-superficie);
+}
+
+.en-curso circle,
+.semana-punto:hover circle,
+.semana-punto:focus-visible circle {
+  fill: var(--color-exito);
+}
+
 .lienzo g:focus-visible .zona {
   fill: var(--color-primario-suave);
 }

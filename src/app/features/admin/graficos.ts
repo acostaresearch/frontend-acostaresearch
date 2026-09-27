@@ -135,6 +135,44 @@ export function columnas(
   return { barras, guias, total, maximo, ancho: ANCHO, alto: ALTO, base: BASE, canal: CANAL };
 }
 
+export interface Linea extends Columnas {
+  /** El trazo que une un punto con el siguiente. */
+  trazo: string;
+  /** El mismo trazo cerrado contra el eje, para el relleno de debajo. */
+  area: string;
+  /** Centro de cada punto, en el orden de `barras`. */
+  puntos: { cx: number; cy: number }[];
+}
+
+/**
+ * La misma serie que `columnas`, dibujada como línea con área.
+ *
+ * Usa la escala, el eje y las pistas de `columnas` —así se leen igual—, pero
+ * cambia la forma: al lado del gráfico por mes, dos filas de barras azules se
+ * confundían a primera vista.
+ */
+export function linea(
+  serie: { etiqueta: string; detalle: string; valor: number }[],
+  formatear: (valor: number) => string,
+): Linea {
+  const base = columnas(serie, formatear);
+  const util = BASE - TECHO;
+  const techo = techoLimpio(base.maximo);
+
+  const puntos = base.barras.map((barra) => ({
+    cx: barra.x + barra.ancho / 2,
+    cy: BASE - (barra.valor / techo) * util,
+  }));
+
+  const trazo = puntos.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.cx},${p.cy}`).join(' ');
+  const area =
+    puntos.length > 0
+      ? `${trazo} L${puntos[puntos.length - 1].cx},${BASE} L${puntos[0].cx},${BASE} Z`
+      : '';
+
+  return { ...base, trazo, area, puntos };
+}
+
 /** Lunes de la semana a la que pertenece una fecha. Base de los agrupados. */
 export function lunes(fecha: Date): Date {
   const d = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
