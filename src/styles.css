@@ -562,6 +562,10 @@ a:hover {
      y debajo se veia el gris del cuerpo, como si faltara algo. */
   min-height: calc(100vh - 69px);
   background: var(--color-pagina);
+  /* Nada de la página puede abrir el desplazamiento lateral: en el teléfono
+     un adorno que sobresalía corría la página entera y dejaba una franja gris
+     a la derecha. `clip` y no `hidden`, que rompería los `sticky` de dentro. */
+  overflow-x: clip;
 }
 
 /*

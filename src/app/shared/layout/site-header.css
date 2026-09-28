@@ -95,6 +95,7 @@
 
 .enlace-salir {
   padding: 0;
+  white-space: nowrap;
   font: inherit;
   font-size: 14px;
   color: var(--color-texto-suave);
@@ -199,7 +200,37 @@
   transform: translateY(-7px) rotate(-45deg);
 }
 
-@media (max-width: 720px) {
+/* Portátiles pequeños (un Mac de 13" con zoom ronda los 1100 px): la fila
+   entera pide unos 1200 px, y sin apretarla «Cerrar sesión» se partía en dos
+   renglones. Menos aire entre bloques y entre enlaces, mismo contenido. */
+@media (max-width: 1280px) {
+  .contenido {
+    gap: 20px;
+    padding: 0 32px;
+  }
+
+  .navegacion {
+    gap: 2px;
+  }
+
+  .navegacion a {
+    padding: 8px 9px;
+    font-size: 14.5px;
+  }
+
+  .acciones {
+    gap: 12px;
+  }
+
+  .tema,
+  .recorrido {
+    margin-left: -10px;
+  }
+}
+
+/* Por debajo ya no cabe en una fila aunque se apriete: menú desplegable.
+   Antes el corte era 720 y entre 720 y 1100 los enlaces se montaban. */
+@media (max-width: 1100px) {
   .contenido {
     gap: 14px;
     justify-content: space-between;

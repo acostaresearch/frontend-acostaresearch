@@ -10,7 +10,10 @@
   gap: 16px;
   align-items: center;
   justify-content: space-between;
-  padding: 16px var(--lado);
+  /* Alineado con la cabecera: el fondo va a sangre, pero el texto empieza y
+     acaba donde empiezan la marca y los botones. Con solo `--lado`, en un
+     monitor grande el saludo quedaba pegado al borde y la cabecera centrada. */
+  padding: 16px max(var(--lado), calc((100% - var(--centro)) / 2 + var(--lado)));
   font-size: 15.5px;
   background: var(--color-primario-suave);
 }
@@ -71,9 +74,15 @@
 /* 50 px menos de aire arriba que el resto de bandas: con el saludo encima, el
    titular y la foto empezaban demasiado abajo y las cifras quedaban fuera de
    la primera pantalla. Nunca menos de 24 px, que en el móvil la banda ya es
-   de 56 y se pegaría al saludo. */
+   de 56 y se pegaría al saludo.
+
+   `overflow-x: clip` porque la cuadrícula de la red sobresale 80 px a cada
+   lado a propósito: sin recortarla, en el teléfono ensanchaba la página, se
+   abría el desplazamiento lateral y todo quedaba corrido con una franja gris
+   a la derecha. `clip` y no `hidden` para no crear un contenedor de scroll. */
 .hero {
   padding-top: max(24px, calc(var(--banda) - 50px));
+  overflow-x: clip;
 }
 
 /*
@@ -86,23 +95,24 @@
  */
 .hero-columnas {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* Reparto fijo y no `auto` para la red: ella mide su columna y se escala a
+     ella (ver `medir()` en la red). Con `auto` la red imponía su ancho y el
+     titular se quedaba con lo que sobrara, que en un portátil pequeño eran
+     menos de 350 px. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 48px;
   align-items: center;
   max-width: 1280px;
   margin-inline: auto;
 }
 
-/* Debajo de 900 px no caben dos columnas sin que el titular se rompa en
-   pedazos: la red pasa a ir después del texto, centrada. */
-@media (max-width: 900px) {
+/* Hasta 1024 px (tabletas y portátiles con zoom) no caben dos columnas sin
+   que el titular se rompa en pedazos: la red pasa a ir después del texto. Se
+   estira a todo el ancho para poder medirlo; ella misma se centra. */
+@media (max-width: 1024px) {
   .hero-columnas {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
-  }
-
-  .hero-red {
-    justify-self: center;
   }
 }
 
@@ -148,7 +158,9 @@
 .hero-firma {
   display: block;
   margin-top: 6px;
-  font-size: clamp(38px, 4.1vw, 58px);
+  /* 3,6vw y no 4,1: con 4,1 «INVESTIGACIÓN» medía más que su columna entre
+     1025 y 1200 px y se metía debajo de la red. */
+  font-size: clamp(34px, 3.6vw, 58px);
   line-height: 1.02;
   color: var(--color-primario);
 }

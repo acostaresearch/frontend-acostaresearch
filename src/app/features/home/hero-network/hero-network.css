@@ -48,7 +48,9 @@
   }
 }
 
-@media (max-width: 900px) {
+/* Estos saltos son solo el primer pintado: en cuanto la red se monta,
+   `medir()` pone `--s` según el ancho que de verdad tiene. */
+@media (max-width: 1024px) {
   :host {
     --s: 0.62;
     --ancho: 600px;

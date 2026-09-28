@@ -181,7 +181,7 @@ export class HeroNetwork {
   readonly herramientas = HERRAMIENTAS;
   readonly desarrollo = isDevMode();
 
-  /** Debajo de 900 px la tarjeta de Word baja bajo la persona. */
+  /** Hasta 1024 px la tarjeta de Word baja bajo la persona. */
   readonly apilado = signal(false);
 
   readonly entrado = signal(false);
@@ -274,11 +274,12 @@ export class HeroNetwork {
 
     this.reducido = mm('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
-    const estrecho = mm('(max-width: 900px)');
+    const estrecho = mm('(max-width: 1024px)');
     if (estrecho) {
       this.apilado.set(estrecho.matches);
       const cambio = (e: MediaQueryListEvent) => {
         this.apilado.set(e.matches);
+        this.medir();
         // El punto de la salida a Word lleva el trazado copiado: se rehace.
         if (this.iniciado && !this.reducido) {
           this.limpiarPuntos();
@@ -297,6 +298,7 @@ export class HeroNetwork {
       .nativeElement.querySelectorAll<SVGPathElement>('.hn-cable')
       .forEach((p) => p.style.setProperty('--largo', String(Math.ceil(p.getTotalLength()))));
 
+    this.escalar();
     this.inclinacion();
 
     if (typeof IntersectionObserver === 'undefined') {
@@ -316,6 +318,33 @@ export class HeroNetwork {
     );
     observador.observe(this.host.nativeElement);
     this.destroyRef.onDestroy(() => observador.disconnect());
+  }
+
+  /**
+   * La escala sale del ancho que de verdad le toca a la red, no de saltos por
+   * anchura de ventana. Con saltos, en un portátil de 1000–1300 px la red se
+   * quedaba en 0,8 y apretaba el titular hasta partirlo en cuatro renglones;
+   * en un monitor grande quedaba aire de sobra. Los saltos del CSS siguen ahí
+   * solo para el primer pintado, antes de que esto mida.
+   */
+  private escalar(): void {
+    if (typeof ResizeObserver === 'undefined') return;
+    const observador = new ResizeObserver(() => this.medir());
+    observador.observe(this.host.nativeElement);
+    this.destroyRef.onDestroy(() => observador.disconnect());
+  }
+
+  private medir(): void {
+    const host = this.host.nativeElement;
+    const ancho = host.clientWidth;
+    if (!ancho) return;
+    // Apilada va a 600 de lienzo y con tope de 0,7: más grande, en una tableta
+    // la red sola ocuparía la pantalla entera.
+    const apilado = this.apilado();
+    const lienzo = apilado ? 600 : 690;
+    const tope = apilado ? 0.7 : 1;
+    const s = Math.max(0.4, Math.min(tope, ancho / lienzo));
+    host.style.setProperty('--s', s.toFixed(3));
   }
 
   private iniciar(): void {
