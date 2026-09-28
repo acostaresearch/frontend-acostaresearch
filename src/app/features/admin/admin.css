@@ -2330,3 +2330,38 @@ td.acciones {
 .acceso-fila select {
   flex: 0 0 auto;
 }
+
+/* ── Historial de una licencia ─────────────────────────────────────────── */
+.historial {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial li {
+  padding: 10px 14px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-left: 3px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.historial li[data-tipo='PAGO'],
+.historial li[data-tipo='REACTIVADA'] {
+  border-left-color: var(--color-exito);
+}
+
+.historial li[data-tipo='ALERTA'] {
+  border-left-color: var(--color-aviso);
+}
+
+.historial li[data-tipo='REVOCADA'] {
+  border-left-color: var(--color-error);
+}
+
+.historial-fecha {
+  display: block;
+  font-size: 0.8rem;
+}

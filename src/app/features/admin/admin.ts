@@ -11,6 +11,7 @@ import {
   ActivationCode,
   Alerta,
   CodigoDescuento,
+  EntradaHistorial,
   LicenciaAdmin,
   MetodoDeCobro,
   PackAdmin,
@@ -1318,6 +1319,7 @@ export class Admin implements OnInit {
         this.formularioDescuentoAbierto() ||
         this.formularioPruebaAbierto() ||
         this.viendoInvitados() !== null ||
+        this.viendoHistorial() !== null ||
         this.formularioAdminAbierto() ||
         this.viendoCapitulos() !== null ||
         this.editando() !== null ||
@@ -2995,6 +2997,9 @@ export class Admin implements OnInit {
   /** Qué enlace se acaba de copiar, para que su botón lo diga. */
   readonly pruebaCopiada = signal<string | null>(null);
   readonly viendoInvitados = signal<EnlacePrueba | null>(null);
+  /** La licencia cuyo historial está abierto, y lo que el servidor contó de ella. */
+  readonly viendoHistorial = signal<LicenciaAdmin | null>(null);
+  readonly historialLicencia = signal<EntradaHistorial[] | null>(null);
   readonly invitados = signal<InvitadoPrueba[] | null>(null);
 
   /** Un producto por grupo de licencia: varios planes pueden venderlo. */
@@ -4563,6 +4568,18 @@ export class Admin implements OnInit {
         this.aviso.set(`Licencia de ${licencia.user.email} reactivada.`);
       },
       error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
+  verHistorial(licencia: LicenciaAdmin): void {
+    this.viendoHistorial.set(licencia);
+    this.historialLicencia.set(null);
+    this.admin.historialDe(licencia.id).subscribe({
+      next: (entradas) => this.historialLicencia.set(entradas),
+      error: (e: unknown) => {
+        this.viendoHistorial.set(null);
+        this.error.set(mensajeDeError(e));
+      },
     });
   }
 

@@ -10,6 +10,7 @@ import {
   CodigoDescuento,
   CrearDescuento,
   GenerarCodigos,
+  EntradaHistorial,
   LicenciaAdmin,
   MetodoDeCobro,
   PackAdmin,
@@ -172,6 +173,13 @@ export class AdminService {
     return this.http
       .post<ApiResponse<{ email: string }>>(`${this.licencias}/${id}/email`, { email })
       .pipe(map((res) => ({ email: res.data.email, mensaje: res.message ?? '' })));
+  }
+
+  /** Emisión, cobros, alertas, revocaciones y reactivaciones, de la última a la primera. */
+  historialDe(id: string): Observable<EntradaHistorial[]> {
+    return this.http
+      .get<ApiResponse<{ historial: EntradaHistorial[] }>>(`${this.licencias}/${id}`)
+      .pipe(map((res) => res.data.historial ?? []));
   }
 
   /** Si esa licencia puede abrir varias tesis. Sale de su ficha. */

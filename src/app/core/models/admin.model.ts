@@ -43,6 +43,14 @@ export interface LicenciaAdmin extends License {
   user: Comprador;
 }
 
+/** Un momento de la vida de una licencia, tal como lo cuenta el servidor. */
+export interface EntradaHistorial {
+  fecha: string;
+  tipo: 'EMITIDA' | 'PAGO' | 'ALERTA' | 'REVOCADA' | 'REACTIVADA';
+  titulo: string;
+  detalle: string | null;
+}
+
 export type NivelAlerta = 'ALERTA' | 'SOSPECHA_ALTA';
 
 export interface Alerta {

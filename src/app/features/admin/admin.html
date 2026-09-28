@@ -2474,6 +2474,7 @@
                         </button>
                       }
                       <app-menu-fila>
+                        <button type="button" (click)="verHistorial(licencia)">Ver historial</button>
                         @if (licencia.status !== 'ACTIVE') {
                           <button type="button" (click)="verAccesosDe(licencia.user.email)">
                             Ver compras
@@ -2502,6 +2503,66 @@
           <app-pie-lista [lista]="listaLicencias" nombre="licencias" />
         }
       </section>
+
+      <!-- ── Historial de una licencia ─────────────────────────────────────── -->
+      @if (viendoHistorial(); as licencia) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-historial">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-historial">
+                Historial de {{ licencia.user.firstName }} {{ licencia.user.lastName }}
+              </h3>
+              <button
+                type="button"
+                class="cerrar"
+                aria-label="Cerrar"
+                (click)="viendoHistorial.set(null)"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="ventana-cuerpo">
+              <p class="tenue">
+                {{ licencia.user.email }} · {{ nombreDeProducto(licencia.productCode) }} ·
+                <span class="mono">…{{ licencia.tokenHint }}</span>
+              </p>
+              @if (historialLicencia(); as entradas) {
+                <ol class="historial">
+                  @for (entrada of entradas; track $index) {
+                    <li [attr.data-tipo]="entrada.tipo">
+                      <span class="tenue historial-fecha">
+                        {{ entrada.fecha | date: 'd MMM yyyy, HH:mm' }}
+                      </span>
+                      <strong>{{ entrada.titulo }}</strong>
+                      @if (entrada.detalle) {
+                        <span class="tenue bloque">{{ entrada.detalle }}</span>
+                      }
+                    </li>
+                  }
+                </ol>
+              } @else {
+                <p class="nota">Cargando…</p>
+              }
+            </div>
+
+            <div class="ventana-pie">
+              @if (licencia.status !== 'ACTIVE') {
+                <button
+                  type="button"
+                  class="boton"
+                  (click)="reactivar(licencia); viendoHistorial.set(null)"
+                >
+                  Reactivar
+                </button>
+              }
+              <button type="button" class="boton secundario" (click)="viendoHistorial.set(null)">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     }
 
     <!-- ══ ALERTAS ══════════════════════════════════════════════════════════ -->
