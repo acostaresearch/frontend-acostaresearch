@@ -87,9 +87,18 @@ export class Perfil implements OnInit {
   /** El cajón de la cuenta, que se abre con el botón ☰ en cualquier pantalla. */
   readonly cuentaAbierta = signal(false);
 
-  /** Escape cierra el cajón, como cierra cualquier cosa que se abre encima. */
+  /** Las ventanas del nombre (el lápiz) y de la contraseña, que salen del cajón. */
+  readonly editandoNombre = signal(false);
+  readonly cambiandoClave = signal(false);
+
+  /** Escape cierra lo que esté encima: primero una ventana, si no el cajón. */
   @HostListener('document:keydown.escape')
   cerrarCuenta(): void {
+    if (this.editandoNombre() || this.cambiandoClave()) {
+      this.editandoNombre.set(false);
+      this.cambiandoClave.set(false);
+      return;
+    }
     this.cuentaAbierta.set(false);
   }
 
@@ -130,7 +139,12 @@ export class Perfil implements OnInit {
 
   constructor() {
     // Con la ventana de borrar la cuenta delante, la página no se mueve.
-    effect(() => this.fondo.fijar('perfil', this.borrandoCuenta()));
+    effect(() =>
+      this.fondo.fijar(
+        'perfil',
+        this.borrandoCuenta() || this.editandoNombre() || this.cambiandoClave(),
+      ),
+    );
 
     // Los códigos ya no se canjean aquí sino en /planes. Quien llega con uno en
     // la dirección —un enlace o un marcador de cuando se canjeaba aquí— sigue

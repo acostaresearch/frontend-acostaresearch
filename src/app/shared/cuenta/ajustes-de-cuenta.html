@@ -68,57 +68,114 @@
     } @else if (paso() === 'esperando-codigo') {
       <p class="nota">Enviando el código a tu correo…</p>
     } @else {
-      <p class="nota">
-        @if (correoDelCodigo(); as correo) {
-          Mira en <b>{{ correo }}</b> y escribe aquí el código de 6 dígitos.
-        } @else {
-          Escribe el código de 6 dígitos que te enviamos.
-        }
-      </p>
+      <!-- Dónde mirar, en una franja propia: es lo primero que hay que hacer y
+           no debe leerse como una nota más. -->
+      <div class="enviado">
+        <span class="enviado-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              d="M4 6h16v12H4z M4 7l8 6 8-6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <p>
+          @if (correoDelCodigo(); as correo) {
+            Te enviamos un código a <b>{{ correo }}</b>.
+          } @else {
+            Te enviamos un código a tu correo.
+          }
+          @if (minutosDelCodigo(); as minutos) {
+            <span class="tenue">Caduca en {{ minutos }} minutos.</span>
+          }
+        </p>
+      </div>
 
       <form [formGroup]="formClave" (ngSubmit)="cambiarClave()" class="formulario">
-        <label class="campo codigo">
-          <span>Código del correo</span>
+        <div class="campo codigo">
+          <label for="codigo-clave">Código de 6 dígitos</label>
           <input
+            id="codigo-clave"
             type="text"
             formControlName="code"
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="6"
-            placeholder="000000"
+            placeholder="······"
           />
-          @if (formClave.controls.code.touched && formClave.controls.code.invalid) {
-            <small class="error">El código son 6 dígitos.</small>
-          }
-        </label>
-
-        <div class="pareja">
-          <label class="campo">
-            <span>Contraseña nueva</span>
-            <input type="password" formControlName="newPassword" autocomplete="new-password" />
-            <small class="tenue">
-              Al menos 10 caracteres, con una mayúscula, una minúscula y un número.
-            </small>
-          </label>
-
-          <label class="campo">
-            <span>Repítela</span>
-            <input type="password" formControlName="repetida" autocomplete="new-password" />
-            @if (noCoinciden()) {
-              <small class="error">Las dos contraseñas no son iguales.</small>
+          <small class="bajo-codigo">
+            @if (formClave.controls.code.touched && formClave.controls.code.invalid) {
+              <span class="error">El código son 6 dígitos.</span>
+            } @else {
+              <span class="tenue">¿No te llegó? Mira en spam o</span>
             }
-          </label>
+            <button
+              type="button"
+              class="enlace"
+              [disabled]="enviandoCodigo()"
+              (click)="pedirCodigo()"
+            >
+              {{ enviandoCodigo() ? 'enviando…' : 'pide otro' }}
+            </button>
+          </small>
         </div>
 
-        <p class="tenue">Al cambiarla se cierran tus sesiones en otros dispositivos. Esta no.</p>
+        <div class="campo">
+          <label for="clave-nueva">Contraseña nueva</label>
+          <div class="con-ojo">
+            <input
+              id="clave-nueva"
+              [type]="verClave() ? 'text' : 'password'"
+              formControlName="newPassword"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="ojo"
+              [attr.aria-pressed]="verClave()"
+              (click)="verClave.set(!verClave())"
+            >
+              {{ verClave() ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <!-- Los requisitos se tachan a medida que se cumplen: mejor que un
+               error al final que obliga a releer la regla entera. -->
+          <ul class="requisitos">
+            @for (r of requisitos(); track r.texto) {
+              <li [class.cumplido]="r.ok">
+                <span class="marca" aria-hidden="true">{{ r.ok ? '✓' : '' }}</span>
+                {{ r.texto }}
+              </li>
+            }
+          </ul>
+        </div>
 
-        <div class="acciones">
+        <div class="campo">
+          <label for="clave-repetida">Repítela</label>
+          <input
+            id="clave-repetida"
+            [type]="verClave() ? 'text' : 'password'"
+            formControlName="repetida"
+            autocomplete="new-password"
+          />
+          @if (noCoinciden()) {
+            <small class="error">Las dos contraseñas no son iguales.</small>
+          }
+        </div>
+
+        <p class="aviso-sesiones">
+          Al cambiarla se cierran tus sesiones en otros dispositivos. En este sigues dentro.
+        </p>
+
+        <div class="acciones pie">
+          <button type="button" class="boton secundario" (click)="cancelarCambio()">
+            Cancelar
+          </button>
           <button type="submit" class="boton" [disabled]="cambiando()">
             {{ cambiando() ? 'Cambiando…' : 'Cambiar la contraseña' }}
-          </button>
-          <button type="button" class="enlace" (click)="cancelarCambio()">Cancelar</button>
-          <button type="button" class="enlace" [disabled]="enviandoCodigo()" (click)="pedirCodigo()">
-            {{ enviandoCodigo() ? 'Enviando…' : 'Enviar otro código' }}
           </button>
         </div>
       </form>

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { mensajeDeError } from '../../core/http/api-error';
@@ -45,6 +45,20 @@ export class AjustesDeCuenta {
    */
   readonly panel = input<'datos' | 'clave'>('datos');
 
+  /**
+   * Avisa de que ya no hay nada más que hacer aquí: datos guardados, contraseña
+   * cambiada o cambio cancelado. El perfil lo usa para cerrar su ventana.
+   *
+   * Sale un instante después y no en el acto: el aviso de éxito se publica en
+   * un efecto, y si la ventana se cerrara en el mismo turno el componente
+   * moriría antes de mandarlo.
+   */
+  readonly terminado = output<void>();
+
+  private avisarTerminado(): void {
+    setTimeout(() => this.terminado.emit());
+  }
+
   readonly usuario = this.auth.user;
 
   // ── Datos ────────────────────────────────────────────────────────────────
@@ -65,6 +79,9 @@ export class AjustesDeCuenta {
   readonly avisoClave = signal<string | null>(null);
   /** A qué correo se mandó el código. Se enseña para que se sepa dónde mirar. */
   readonly correoDelCodigo = signal<string | null>(null);
+  readonly minutosDelCodigo = signal<number | null>(null);
+  /** Enseña las dos contraseñas en claro, para comprobar lo escrito. */
+  readonly verClave = signal(false);
 
   readonly formClave = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^[0-9]{6}$/)]],
@@ -82,6 +99,17 @@ export class AjustesDeCuenta {
   readonly noCoinciden = computed(() => {
     const v = this.valoresDeClave();
     return v.repetida.length > 0 && v.newPassword !== v.repetida;
+  });
+
+  /** La regla del servidor, punto por punto, para marcar lo que ya se cumple. */
+  readonly requisitos = computed(() => {
+    const clave = this.valoresDeClave().newPassword;
+    return [
+      { texto: 'Al menos 10 caracteres', ok: clave.length >= 10 },
+      { texto: 'Una mayúscula', ok: /[A-ZÁÉÍÓÚÑ]/.test(clave) },
+      { texto: 'Una minúscula', ok: /[a-záéíóúñ]/.test(clave) },
+      { texto: 'Un número', ok: /[0-9]/.test(clave) },
+    ];
   });
 
   /** Los valores del formulario como señal, para poder derivar de ellos. */
@@ -153,6 +181,7 @@ export class AjustesDeCuenta {
         this.formDatos.markAsPristine();
         this.guardandoDatos.set(false);
         this.datosGuardados.set(true);
+        this.avisarTerminado();
       },
       error: (e: unknown) => {
         this.errorDatos.set(mensajeDeError(e));
@@ -171,6 +200,7 @@ export class AjustesDeCuenta {
     this.usuarios.pedirCodigoDeClave().subscribe({
       next: ({ email, expiresInMinutes }) => {
         this.correoDelCodigo.set(email);
+        this.minutosDelCodigo.set(expiresInMinutes);
         this.avisoClave.set(`Código enviado a ${email}. Caduca en ${expiresInMinutes} minutos.`);
         this.enviandoCodigo.set(false);
         this.paso.set('con-codigo');
@@ -207,6 +237,7 @@ export class AjustesDeCuenta {
               } en otros dispositivos.`
             : 'Contraseña cambiada.',
         );
+        this.avisarTerminado();
       },
       error: (e: unknown) => {
         this.errorClave.set(mensajeDeError(e));
@@ -220,5 +251,6 @@ export class AjustesDeCuenta {
     this.errorClave.set(null);
     this.avisoClave.set(null);
     this.paso.set('cerrado');
+    this.terminado.emit();
   }
 }

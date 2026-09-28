@@ -1123,10 +1123,12 @@ h1 {
   padding-bottom: 4px;
   font-size: 14px;
   font-weight: 500;
-  color: var(--color-texto-tenue);
+  color: #be2222;
   text-decoration: line-through;
   text-decoration-thickness: 1.5px;
 }
+
+
 
 .tarjeta-vigencia {
   margin: 0 0 12px;

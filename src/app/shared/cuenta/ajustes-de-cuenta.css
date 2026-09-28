@@ -1,6 +1,6 @@
-/* Los ajustes de la cuenta viven en dos pantallas —el perfil y el panel— con
-   hojas de estilo muy distintas. Por eso aquí no se hereda nada: cada cosa que
-   se ve está escrita, para que se vea igual en los dos sitios. */
+/* Los ajustes de la cuenta viven en dos pantallas â€”el perfil y el panelâ€” con
+   hojas de estilo muy distintas. Por eso aquÃ­ no se hereda nada: cada cosa que
+   se ve estÃ¡ escrita, para que se vea igual en los dos sitios. */
 
 :host {
   display: block;
@@ -40,14 +40,18 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+/* `margin: 0` porque la hoja global le da 18 px abajo a todo `.campo`, y
+   sumado al hueco del formulario dejaba los campos flotando. */
 .campo {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  margin: 0;
 }
 
-.campo > span {
+.campo > span,
+.campo > label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-texto-suave);
@@ -80,14 +84,158 @@
   cursor: not-allowed;
 }
 
-/* El código se teclea mirando el correo: cifras grandes y separadas para poder
-   comprobar de un vistazo que se copió bien. */
+/* El cÃ³digo se teclea mirando el correo: cifras grandes y separadas para poder
+   comprobar de un vistazo que se copiÃ³ bien. */
 .campo.codigo input {
-  max-width: 220px;
-  font-size: 1.35rem;
+  padding: 12px;
+  font-size: 1.5rem;
   font-weight: 650;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.5em;
+  /* El espaciado aÃ±ade aire tambiÃ©n tras la Ãºltima cifra: se compensa para
+     que el bloque quede centrado de verdad. */
+  text-indent: 0.5em;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-fondo);
+}
+
+.campo.codigo input:focus {
+  background: var(--color-superficie);
+}
+
+.bajo-codigo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bajo-codigo .enlace {
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+/* La franja de Â«te enviamos un cÃ³digoÂ». */
+.enviado {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--color-primario-suave);
+  border-radius: var(--radio-sm);
+}
+
+.enviado p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-texto);
+  overflow-wrap: anywhere;
+}
+
+.enviado .tenue {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.enviado-icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border-radius: 999px;
+}
+
+/* ContraseÃ±a con su botÃ³n Â«MostrarÂ» dentro de la caja. */
+.con-ojo {
+  position: relative;
+}
+
+.con-ojo input {
+  padding-right: 84px;
+}
+
+.ojo {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ojo:hover {
+  background: var(--color-primario-suave);
+}
+
+.requisitos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 4px 12px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--color-texto-tenue);
+}
+
+.requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--transicion);
+}
+
+.requisitos .marca {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
+  font-weight: 700;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+}
+
+.requisitos li.cumplido {
+  color: var(--color-exito);
+}
+
+.requisitos li.cumplido .marca {
+  color: var(--color-superficie);
+  background: var(--color-exito);
+  border-color: var(--color-exito);
+}
+
+.aviso-sesiones {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+/* Cancelar a la izquierda, la acciÃ³n a la derecha, sobre una lÃ­nea. */
+.acciones.pie {
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
 }
 
 .campo small {
@@ -116,7 +264,9 @@ p.tenue {
   gap: 8px 16px;
 }
 
+/* `width: auto`: la hoja global estira todo `.boton` al ancho completo. */
 .boton {
+  width: auto;
   padding: 10px 18px;
   font: inherit;
   font-size: 0.9rem;

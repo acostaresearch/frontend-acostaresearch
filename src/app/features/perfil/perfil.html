@@ -54,7 +54,29 @@
         ×
       </button>
       <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
-      <h1>{{ nombre() }}</h1>
+      <!-- El lápiz abre la ventana del nombre. Antes era una tarjeta entera en
+           la rejilla para dos campos que casi nadie toca. -->
+      <div class="nombre-fila">
+        <h1>{{ nombre() }}</h1>
+        <button
+          type="button"
+          class="editar-nombre"
+          aria-label="Cambiar tu nombre"
+          title="Cambiar tu nombre"
+          (click)="editandoNombre.set(true)"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path
+              d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
       <p class="correo">{{ user.email }}</p>
 
       <p class="insignias">
@@ -111,16 +133,19 @@
           dispositivos.
         </p>
 
-        <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
+        <!-- <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
           Cerrar sesión
-        </button>
-        <button
+        </button> -->
+        <!-- <button
           type="button"
           class="boton peligro"
           [disabled]="cerrando()"
           (click)="salirDeTodos()"
         >
           Cerrar sesión en todos los dispositivos
+        </button> -->
+        <button type="button" class="boton secundario" (click)="cambiandoClave.set(true)">
+          Cambiar la contraseña
         </button>
         <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
           Eliminar cuenta
@@ -237,21 +262,9 @@
 
       <app-mi-conector />
 
-      <!-- El mismo componente que usa el panel del administrador: la mitad que
-           se le pida, con la caja que ponga cada pantalla. -->
-      <section class="tarjeta tramo-3">
-        <h2>Tus datos</h2>
-        <p class="nota">Así te llamamos en el sitio y en los correos que te enviamos.</p>
-        <app-ajustes-de-cuenta panel="datos" />
-      </section>
-
-      <section class="tarjeta tramo-3">
-        <h2>Contraseña</h2>
-        <p class="nota">
-          Para cambiarla te enviamos un código a tu correo. No hace falta que recuerdes la actual.
-        </p>
-        <app-ajustes-de-cuenta panel="clave" />
-      </section>
+      <!-- «Tus datos» y «Contraseña» ya no son tarjetas de aquí: se abren como
+           ventana desde el cajón de la cuenta (el lápiz junto al nombre y
+           «Cambiar la contraseña» en «Sesión y seguridad»). -->
     </main>
   </div>
 
@@ -261,6 +274,56 @@
   <app-invitar-resena />
   <app-ventana-resena />
 
+
+  <!-- ── Ventanas del nombre y de la contraseña ─────────────────────────────
+       El mismo componente que usa el panel del administrador, la mitad que se
+       pide. Él trae su propia nota, así que aquí solo va el título. Al guardar
+       o cancelar avisa con `terminado` y la ventana se cierra. -->
+  @if (editandoNombre()) {
+    <div class="ventana-fondo" (click)="editandoNombre.set(false)">
+      <div
+        class="ventana"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-tus-datos"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="ventana-cabecera">
+          <h3 id="titulo-tus-datos" class="neutro">Tus datos</h3>
+          <button
+            type="button"
+            class="cerrar-ventana"
+            aria-label="Cerrar"
+            (click)="editandoNombre.set(false)"
+          >
+            ×
+          </button>
+        </div>
+        <app-ajustes-de-cuenta panel="datos" (terminado)="editandoNombre.set(false)" />
+      </div>
+    </div>
+  }
+
+  @if (cambiandoClave()) {
+    <!-- Esta no se cierra al pulsar fuera: con el código a medio escribir, un
+         clic desviado lo perdería. -->
+    <div class="ventana-fondo">
+      <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-contrasena">
+        <div class="ventana-cabecera">
+          <h3 id="titulo-contrasena" class="neutro">Cambiar la contraseña</h3>
+          <button
+            type="button"
+            class="cerrar-ventana"
+            aria-label="Cerrar"
+            (click)="cambiandoClave.set(false)"
+          >
+            ×
+          </button>
+        </div>
+        <app-ajustes-de-cuenta panel="clave" (terminado)="cambiandoClave.set(false)" />
+      </div>
+    </div>
+  }
 
   <!-- ── Ventana de borrar la cuenta ────────────────────────────────────────
        Se piden dos cosas escritas a mano y ninguna sobra: la palabra impide el
