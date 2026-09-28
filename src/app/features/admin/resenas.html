@@ -1,26 +1,42 @@
-<section class="tarjeta">
-  <h2>Reseñas del servicio</h2>
-  <p class="nota">
-    Las escriben clientes con cuenta desde la portada o desde /resenas, y salen firmadas con su
-    correo tapado. <strong>Ninguna se publica sola</strong>:
-    aquí se aprueban. Aprobar la deja leer en <strong>/resenas</strong>; destacar la sube además a
-    la portada, donde hay sitio para tres.
-    @if (destacadas() > 0) {
-      Ahora mismo hay <strong>{{ destacadas() }}</strong> en la portada.
+<!-- Va dentro de la tarjeta de «Alertas, reseñas y reclamos», que pone el
+     panel con sus pestañas: aquí no hay caja ni título propios. Ninguna reseña
+     se publica sola: aprobarla la deja leer en /resenas y destacarla la sube
+     además a la portada, donde hay sitio para tres. -->
+<section>
+  <!-- Los filtros a la izquierda y el alta a mano a la derecha, en una fila. -->
+  <div class="barra-resenas">
+    <div class="filtros" role="group" aria-label="Filtrar reseñas">
+      @for (f of filtros; track f.clave) {
+        <button
+          type="button"
+          class="filtro"
+          [class.activo]="filtro() === f.clave"
+          (click)="filtro.set(f.clave)"
+        >
+          {{ f.nombre }}
+          <span class="filtro-cuenta">{{ cuantas()[f.clave] }}</span>
+        </button>
+      }
+    </div>
+
+    @if (!dandoDeAlta()) {
+      <button
+        type="button"
+        class="boton secundario alta-abrir"
+        title="Para las que llegan por WhatsApp o por correo, con o sin video"
+        (click)="dandoDeAlta.set(true)"
+      >
+        Añadir una reseña a mano
+      </button>
     }
-  </p>
+  </div>
 
   <!-- Dar de alta una a mano. Los testimonios llegan por WhatsApp: quien graba
        un video contando cómo le fue no vuelve a la web a escribirlo. El video se
        elige AQUÍ y se sube en cuanto la reseña existe, en vez de obligar a
        guardar primero y abrirla después. -->
   <div class="alta">
-    @if (!dandoDeAlta()) {
-      <button type="button" class="boton secundario alta-abrir" (click)="dandoDeAlta.set(true)">
-        + Añadir una reseña a mano
-      </button>
-      <span class="nota">Para las que llegan por WhatsApp o por correo, con o sin video.</span>
-    } @else {
+    @if (dandoDeAlta()) {
       <div class="alta-formulario">
         <div class="alta-cab">
           <h3>Añadir una reseña a mano</h3>
@@ -125,24 +141,12 @@
     }
   </div>
 
-  <div class="filtros" role="group" aria-label="Filtrar reseñas">
-    @for (f of filtros; track f.clave) {
-      <button
-        type="button"
-        class="filtro"
-        [class.activo]="filtro() === f.clave"
-        (click)="filtro.set(f.clave)"
-      >
-        {{ f.nombre }}
-        <span class="filtro-cuenta">{{ cuantas()[f.clave] }}</span>
-      </button>
-    }
-  </div>
-
   @if (visibles().length === 0) {
     <p class="vacio">
       @if (filtro() === 'PENDIENTE') {
-        No hay ninguna esperando.
+        No hay ninguna reseña esperando aprobación. Hay {{ cuantas().APROBADA }}
+        {{ cuantas().APROBADA === 1 ? 'publicada' : 'publicadas' }} y {{ destacadas() }} en
+        la portada.
       } @else {
         No hay ninguna aquí.
       }

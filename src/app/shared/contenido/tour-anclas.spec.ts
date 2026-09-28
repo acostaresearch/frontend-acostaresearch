@@ -64,7 +64,7 @@ describe('Anclas del recorrido', () => {
     '/tutoriales',
     '/guias-de-instalacion',
     '/perfil',
-    '/admin',
+    '/admin/resumen',
   ])('%s tiene pasos propios en el recorrido', (ruta) => {
     expect(pasos.filter((paso) => paso.ruta === ruta).length).toBeGreaterThan(0);
   });

@@ -253,11 +253,26 @@ export const routes: Routes = [
     title: 'Prueba el conector · Acosta Research',
     loadComponent: () => import('./features/prueba/prueba').then((m) => m.Prueba),
   },
+  /**
+   * El panel de administración, una dirección por sección: /admin/accesos,
+   * /admin/licencias… Así recargar deja en la misma sección y un enlace lleva
+   * directo a ella. /admin a secas va al resumen.
+   *
+   * Todas las secciones son el MISMO componente: al cambiar de una a otra solo
+   * cambia el parámetro y Angular lo reutiliza, sin volver a pedir los datos.
+   * Una sección que no existe la corrige el propio componente (ver `Admin`).
+   */
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard('ADMIN')],
-    title: 'Administración · Acosta Research',
-    loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'resumen' },
+      {
+        path: ':seccion',
+        title: 'Administración · Acosta Research',
+        loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];

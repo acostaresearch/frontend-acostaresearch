@@ -8,7 +8,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0 4px;
+}
+
+/* Los filtros y «Añadir una reseña a mano», en una fila. */
+.barra-resenas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .filtro {
@@ -94,10 +103,16 @@
 }
 
 .tenue,
+/* La lista vacía, en una caja de trazos: un hueco que espera, no un error. */
 .vacio {
   margin: 0;
-  font-size: 13px;
-  color: var(--color-texto-tenue);
+  padding: 22px 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--color-texto-suave);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio);
 }
 
 /* Las dos primeras líneas del texto, para decidir sin abrir la ventana las que
@@ -329,7 +344,10 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  margin: 18px 0 4px;
+}
+
+.alta:not(:empty) {
+  margin: 0 0 16px;
 }
 
 /* Los botones del sitio son de ancho completo (styles.css). Aquí no: este

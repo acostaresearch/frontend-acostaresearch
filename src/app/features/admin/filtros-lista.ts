@@ -33,18 +33,25 @@ import { ListadoFiltrable } from './listado';
         }
       </div>
 
-      <div class="pestanas" role="group" aria-label="Filtrar">
-        @for (opcion of lista().filtros; track opcion.valor) {
-          <button
-            type="button"
-            [class.activa]="lista().filtro() === opcion.valor"
-            (click)="lista().filtrar(opcion.valor)"
-          >
-            {{ opcion.etiqueta }}
-            <span class="cuenta">{{ lista().conteo()[opcion.valor] }}</span>
-          </button>
-        }
-      </div>
+      <!-- Con un solo filtro no hay nada que elegir: la barra de segmentos
+           sobra. -->
+      @if (lista().filtros.length > 1) {
+        <div class="pestanas" role="group" aria-label="Filtrar">
+          @for (opcion of lista().filtros; track opcion.valor) {
+            <button
+              type="button"
+              [class.activa]="lista().filtro() === opcion.valor"
+              (click)="lista().filtrar(opcion.valor)"
+            >
+              {{ opcion.etiqueta }}
+              <span class="cuenta">{{ lista().conteo()[opcion.valor] }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Lo que ponga quien la usa a la derecha: «Añadir video», por ejemplo. -->
+      <ng-content />
     </div>
   `,
   styles: `
@@ -69,8 +76,8 @@ import { ListadoFiltrable } from './listado';
       font: inherit;
       font-size: 13.5px;
       color: var(--color-texto);
-      background: var(--color-superficie);
-      border: 1px solid var(--color-borde-fuerte);
+      background: var(--color-fondo);
+      border: 1px solid var(--color-borde);
       border-radius: var(--radio-sm);
       transition:
         border-color var(--transicion),

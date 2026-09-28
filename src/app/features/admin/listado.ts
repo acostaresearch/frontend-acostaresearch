@@ -72,14 +72,21 @@ export class Listado<T> implements ListadoFiltrable, ListadoDesplegable {
       filtros: readonly OpcionFiltro[];
       /** Campos por los que se busca. Se juntan y se comparan en minúsculas. */
       texto: (item: T) => (string | null | undefined)[];
-      /** Si el elemento entra en un filtro. Al primero de la lista no se le pregunta. */
+      /** Si el elemento entra en un filtro. Al de «todos» no se le pregunta. */
       pasa?: (item: T, filtro: string) => boolean;
+      /**
+       * El filtro que deja pasar todo. Por defecto el primero; se dice aparte
+       * cuando «Todas» va al final de la barra, como en Alertas.
+       */
+      todos?: string;
+      /** Con qué filtro se abre. Por defecto el de «todos». */
+      inicial?: string;
     },
   ) {
     this.filtros = opciones.filtros;
-    this.filtro = signal(opciones.filtros[0]?.valor ?? 'todos');
 
-    const todos = this.filtros[0]?.valor ?? 'todos';
+    const todos = opciones.todos ?? this.filtros[0]?.valor ?? 'todos';
+    this.filtro = signal(opciones.inicial ?? todos);
     const pasa = (item: T, filtro: string) =>
       filtro === todos || (opciones.pasa?.(item, filtro) ?? true);
 

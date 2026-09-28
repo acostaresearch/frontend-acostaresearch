@@ -1,14 +1,13 @@
-<section class="tarjeta">
-  <h2>Hojas de reclamación</h2>
-  <p class="nota">
-    Llegan desde <strong>acostaresearch.com/libro-de-reclamaciones</strong>. Cada una se responde en
-    15 días hábiles como máximo. La respuesta sale al correo del consumidor y queda escrita en su
-    hoja: no se puede editar después, así que léela antes de enviarla.
-  </p>
-
-  //Para despliegue
+<!-- Va dentro de la tarjeta de «Alertas, reseñas y reclamos», que pone el
+     panel con sus pestañas: aquí no hay caja ni título propios. Lo que decía
+     la nota de arriba sale ahora en la lista vacía, que es cuando se lee. -->
+<section>
   @if (reclamos().length === 0) {
-    <p class="vacio">Todavía no ha llegado ninguna.</p>
+    <p class="vacio">
+      Todavía no ha llegado ninguna hoja. Llegan desde acostaresearch.com/libro-de-reclamaciones y
+      hay que responderlas en 15 días hábiles: la respuesta sale al correo del consumidor y no se
+      puede editar después.
+    </p>
   } @else {
     <ul class="lista">
       @for (r of reclamos(); track r.numero) {

@@ -1,6 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, catchError, firstValueFrom, forkJoin, map, of, switchMap, tap } from 'rxjs';
 
@@ -24,6 +26,7 @@ import {
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TemaService } from '../../core/services/tema.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
@@ -42,8 +45,6 @@ import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.s
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
-import { MiConector } from '../../shared/cuenta/mi-conector';
-import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 import {
   RevisionDeCorreo,
@@ -55,6 +56,7 @@ import { columnas, linea, lunes, porCategoria, porMes, porSemana } from './grafi
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
 import { PieLista } from './pie-lista';
+import { MenuFila } from './menu-fila';
 import { ReclamosAdmin } from './reclamos';
 import { ResenasAdmin } from './resenas';
 import { ResenaDelPanel, ResenaService } from '../../core/services/resena.service';
@@ -64,6 +66,7 @@ import { PedidosAdmin } from './pedidos';
 import { Pedido, PedidoService } from '../../core/services/pedido.service';
 
 type Seccion =
+  | 'resumen'
   | 'accesos'
   | 'grupos'
   | 'descuentos'
@@ -76,6 +79,7 @@ type Seccion =
   | 'pedidos'
   | 'corpus'
   | 'tutoriales'
+  | 'guias'
   | 'admins'
   | 'usuarios'
   | 'perfil';
@@ -88,6 +92,10 @@ type Seccion =
  * todos en una sola lista, que es donde se ve si uno desentona.
  */
 const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
+  resumen: {
+    titulo: 'Resumen',
+    nota: 'Cómo va el negocio: lo cobrado, lo que espera revisión y lo que está por vencer.',
+  },
   accesos: {
     titulo: 'Accesos',
     nota: 'Lo que entra, lo que falta revisar y todo lo emitido o cobrado.',
@@ -97,13 +105,13 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota: 'Códigos promocionales que rebajan el precio de un producto.',
   },
   pruebas: {
-    titulo: 'Pruebas del conector',
+    titulo: 'Enlaces de prueba',
     nota:
       'Un enlace para un grupo: cada persona que lo abre recibe su propio conector, sin ' +
       'registrarse ni pagar, hasta agotar los cupos. Apagarlo corta todos sus conectores a la vez.',
   },
   grupos: {
-    titulo: 'Grupos',
+    titulo: 'Productos',
     nota:
       'Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es ' +
       'uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia ' +
@@ -114,19 +122,19 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota: 'Quién tiene el conector encendido, con qué producto y cuánto lo está usando.',
   },
   alertas: {
-    titulo: 'Alertas',
+    titulo: 'Alertas, reseñas y reclamos',
     nota:
       'Sospechas de uso compartido. A la primera alta se avisa al comprador por correo; solo si ' +
       'vuelve a saltar pasadas 12 horas se revoca sola. Aquí puedes adelantarte o descartarla.',
   },
   reclamos: {
-    titulo: 'Libro de Reclamaciones',
+    titulo: 'Alertas, reseñas y reclamos',
     nota:
       'Las hojas que llegan desde la web. Hay que responder cada una en 15 días hábiles: el plazo ' +
       'es improrrogable y no responder es sancionable.',
   },
   resenas: {
-    titulo: 'Reseñas',
+    titulo: 'Alertas, reseñas y reclamos',
     nota:
       'Lo que opinan los clientes del método, escrito desde su perfil. Ninguna se publica sola: ' +
       'aprobarla la deja leer en /resenas, y destacarla la sube además a la portada.',
@@ -150,11 +158,19 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota: 'El corpus que citan las Skills. Se cura en Zotero; aquí solo se trae y se comprueba.',
   },
   tutoriales: {
-    titulo: 'Tutoriales',
-    nota: 'Los videos que se ven en acostaresearch.com/tutoriales.',
+    titulo: 'Tutoriales y guías',
+    nota:
+      'Los videos de acostaresearch.com/tutoriales y los PDF de ' +
+      'acostaresearch.com/guias-de-instalacion. Se publican al instante, sin desplegar.',
+  },
+  guias: {
+    titulo: 'Tutoriales y guías',
+    nota:
+      'Los videos de acostaresearch.com/tutoriales y los PDF de ' +
+      'acostaresearch.com/guias-de-instalacion. Se publican al instante, sin desplegar.',
   },
   admins: {
-    titulo: 'Administradores',
+    titulo: 'Usuarios',
     nota:
       'Da acceso al panel a otra persona. Solo se crean administradores: los usuarios normales ' +
       'se registran solos desde la web.',
@@ -168,6 +184,146 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota: 'Tus datos, tu contraseña y tu propio conector.',
   },
 };
+
+/**
+ * La dirección de cada sección: /admin/<esto>. Los nombres internos se quedan
+ * como estaban —«grupos», «corpus», «pruebas»— y hacia fuera se dicen como en
+ * la barra lateral. Cambiar uno de aquí rompe los enlaces guardados.
+ */
+const DIRECCIONES: Record<Seccion, string> = {
+  resumen: 'resumen',
+  accesos: 'accesos',
+  descuentos: 'descuentos',
+  pruebas: 'enlaces-de-prueba',
+  grupos: 'productos',
+  licencias: 'licencias',
+  corpus: 'bibliografia',
+  tutoriales: 'tutoriales',
+  guias: 'guias',
+  alertas: 'alertas',
+  resenas: 'resenas',
+  reclamos: 'reclamaciones',
+  usuarios: 'usuarios',
+  admins: 'administradores',
+  perfil: 'perfil',
+  pedidos: 'revisiones',
+  asesores: 'asesores',
+};
+
+/** Al revés: de la dirección a la sección. */
+const SECCION_DE = Object.fromEntries(
+  Object.entries(DIRECCIONES).map(([seccion, direccion]) => [direccion, seccion]),
+) as Record<string, Seccion>;
+
+/** Un destino de la barra lateral. */
+interface EntradaDelMenu {
+  seccion: Seccion;
+  texto: string;
+  /** Trazo SVG del icono, en una caja de 24×24. */
+  icono: string;
+  /** Las secciones que la encienden: las pestañas de una misma página. */
+  enciende: Seccion[];
+}
+
+/**
+ * La barra lateral, agrupada por lo que se viene a hacer. «Revisiones» y
+ * «Asesores» no salen —el piloto está parado—, pero sus direcciones siguen
+ * funcionando.
+ */
+const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
+  {
+    grupo: null,
+    entradas: [
+      {
+        seccion: 'resumen',
+        texto: 'Resumen',
+        icono: 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5',
+        enciende: ['resumen'],
+      },
+    ],
+  },
+  {
+    grupo: 'Ventas',
+    entradas: [
+      {
+        seccion: 'accesos',
+        texto: 'Accesos',
+        icono: 'M3 6h18v12H3z M3 10h18',
+        enciende: ['accesos'],
+      },
+      {
+        seccion: 'descuentos',
+        texto: 'Descuentos',
+        icono: 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z M7.5 7.5h.01',
+        enciende: ['descuentos'],
+      },
+      {
+        seccion: 'pruebas',
+        texto: 'Enlaces de prueba',
+        icono:
+          'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
+        enciende: ['pruebas'],
+      },
+    ],
+  },
+  {
+    grupo: 'Catálogo',
+    entradas: [
+      {
+        seccion: 'grupos',
+        texto: 'Productos',
+        icono: 'M21 8 12 3 3 8v8l9 5 9-5z M3 8l9 5 9-5 M12 13v8',
+        enciende: ['grupos'],
+      },
+      {
+        seccion: 'licencias',
+        texto: 'Licencias',
+        icono: 'M14.5 9.5 21 3 M18 6l3 3 M9 21a5 5 0 1 1 0-10 5 5 0 0 1 0 10z M12.5 12.5 14.5 9.5',
+        enciende: ['licencias'],
+      },
+    ],
+  },
+  {
+    grupo: 'Contenido',
+    entradas: [
+      {
+        seccion: 'corpus',
+        texto: 'Bibliografía',
+        icono: 'M5 4h13v16H5z M5 16h13 M9 4v12',
+        enciende: ['corpus'],
+      },
+      {
+        seccion: 'tutoriales',
+        texto: 'Tutoriales y guías',
+        icono: 'M8 5v14l11-7z',
+        enciende: ['tutoriales', 'guias'],
+      },
+    ],
+  },
+  {
+    grupo: 'Vigilancia',
+    entradas: [
+      {
+        seccion: 'alertas',
+        texto: 'Alertas, reseñas y reclamos',
+        icono: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z',
+        enciende: ['alertas', 'resenas', 'reclamos'],
+      },
+    ],
+  },
+  {
+    grupo: 'Cuenta',
+    entradas: [
+      {
+        seccion: 'usuarios',
+        texto: 'Usuarios',
+        icono:
+          'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',
+        enciende: ['usuarios', 'admins'],
+      },
+    ],
+  },
+];
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
 const DESCUENTO_MINIMO = 1000;
@@ -304,11 +460,11 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     ReactiveFormsModule,
     DatePipe,
     DecimalPipe,
-    SiteHeader,
+    RouterLink,
     FiltrosLista,
     PieLista,
+    MenuFila,
     AjustesDeCuenta,
-    MiConector,
     ReclamosAdmin,
     ResenasAdmin,
     AsesoresAdmin,
@@ -316,7 +472,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     AvisoFlotante,
   ],
   templateUrl: './admin.html',
-  styleUrls: ['./admin.css', './admin-acciones.css'],
+  styleUrls: ['./admin-armazon.css', './admin.css', './admin-acciones.css'],
 })
 export class Admin implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -332,7 +488,28 @@ export class Admin implements OnInit {
   readonly yo = this.auth.user;
 
   readonly metodos = METODOS;
-  readonly seccion = signal<Seccion>('accesos');
+  /**
+   * La sección abierta. La manda la dirección (/admin/<sección>, ver
+   * `DIRECCIONES`): se escribe solo al leer la ruta, y para cambiarla se navega
+   * con `ir()`. Así recargar deja donde se estaba.
+   */
+  readonly seccion = signal<Seccion>('resumen');
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly titulo = inject(Title);
+  private readonly destruir = inject(DestroyRef);
+  protected readonly tema = inject(TemaService);
+
+  /**
+   * Las pestañas de arriba de algunas secciones. Cada pestaña es su propia
+   * dirección —/admin/alertas, /admin/resenas…— y comparten título y entrada
+   * en la barra lateral.
+   */
+  readonly vigilancia = computed(() =>
+    ['alertas', 'resenas', 'reclamos'].includes(this.seccion()),
+  );
+  readonly enTutoriales = computed(() => ['tutoriales', 'guias'].includes(this.seccion()));
+  readonly enUsuarios = computed(() => ['usuarios', 'admins'].includes(this.seccion()));
 
   /** Título y descripción de la sección abierta, para la cabecera. */
   readonly pagina = computed(() => PAGINAS[this.seccion()]);
@@ -406,13 +583,17 @@ export class Admin implements OnInit {
           : l.status === 'REVOKED',
   });
 
+  // Se abre en «Sospecha alta», que es lo único que pide decidir algo, y
+  // «Todas» va al final: es la que menos se mira.
   readonly listaAlertas = new Listado(this.alertas, {
     filtros: [
-      { valor: 'todas', etiqueta: 'Todas' },
       { valor: 'graves', etiqueta: 'Sospecha alta' },
       { valor: 'avisos', etiqueta: 'Avisos' },
       { valor: 'sin-avisar', etiqueta: 'Sin avisar' },
+      { valor: 'todas', etiqueta: 'Todas' },
     ],
+    todos: 'todas',
+    inicial: 'graves',
     texto: (a) => [
       a.license.user.email,
       `${a.license.user.firstName} ${a.license.user.lastName}`,
@@ -680,6 +861,18 @@ export class Admin implements OnInit {
       anterior: anterior?.valor ?? 0,
     };
   });
+
+  /** Lo cobrado en el mes en curso, para la primera cifra del resumen. */
+  readonly mesEnCurso = computed(() => {
+    const barras = this.ingresosPorMes().barras;
+    const actual = barras[barras.length - 1];
+    return { valor: actual?.valor ?? 0, mes: (actual?.etiqueta ?? '').toLowerCase() };
+  });
+
+  /** Cuántos meses del gráfico tienen algún cobro, para su frase de pie. */
+  readonly mesesConCobros = computed(
+    () => this.ingresosPorMes().barras.filter((barra) => barra.valor > 0).length,
+  );
 
   /**
    * Por dónde entra el dinero.
@@ -956,6 +1149,24 @@ export class Admin implements OnInit {
   // Un grupo es un producto: sus capítulos, su precio y su duración. Se crean
   // aquí y luego cada .skill se cuelga de uno al subirlo.
   readonly grupos = signal<Grupo[]>([]);
+
+  /** Los productos con buscador y filtros, como las demás tablas. */
+  readonly listaGrupos = new Listado(this.grupos, {
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'venta', etiqueta: 'A la venta' },
+      { valor: 'prueba', etiqueta: 'En prueba' },
+      { valor: 'retirados', etiqueta: 'Retirados' },
+    ],
+    texto: (g: Grupo) => [g.name, g.code],
+    // «En prueba» es el que está activo pero solo lo ve quien se indica.
+    pasa: (g: Grupo, filtro: string) =>
+      filtro === 'venta'
+        ? g.active && !g.soloPara
+        : filtro === 'prueba'
+          ? g.active && !!g.soloPara
+          : !g.active,
+  });
   readonly editandoGrupo = signal<Grupo | null>(null);
 
   /**
@@ -1117,6 +1328,12 @@ export class Admin implements OnInit {
     });
   }
   ngOnInit(): void {
+    // La sección sale de la dirección, y se vuelve a leer cada vez que cambia:
+    // el componente es el mismo para todas y Angular lo reutiliza.
+    this.ruta.paramMap
+      .pipe(takeUntilDestroyed(this.destruir))
+      .subscribe((params) => this.leerSeccion(params.get('seccion')));
+
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
 
@@ -2604,8 +2821,102 @@ export class Admin implements OnInit {
     }
   }
 
+  readonly cerrandoSesion = signal(false);
+
+  /** «Cerrar sesión» del pie de la barra lateral. */
+  salir(): void {
+    if (this.cerrandoSesion()) return;
+    this.cerrandoSesion.set(true);
+    this.auth.logout().subscribe({
+      next: () => this.router.navigate(['/']),
+      error: () => this.router.navigate(['/']),
+    });
+  }
+
+  /**
+   * El número rojo de «Alertas, reseñas y reclamos»: lo que hay que decidir.
+   * Solo las alertas de sospecha alta —los avisos no piden nada—, más las
+   * hojas del libro por responder y las reseñas por aprobar.
+   */
+  readonly pendientesDeVigilancia = computed(
+    () =>
+      this.alertas().filter((a) => a.level === 'SOSPECHA_ALTA').length +
+      this.reclamosPendientes() +
+      this.resenasPendientes(),
+  );
+
+  readonly menu = MENU;
+
+  /** El número rojo de una entrada del menú, o 0 si no lleva. */
+  contador(seccion: Seccion): number {
+    if (seccion === 'accesos') return this.porRevisar().length;
+    if (seccion === 'alertas') return this.pendientesDeVigilancia();
+    return 0;
+  }
+
+  /** Si se ve el texto de ayuda de la sección, el que abre la «i» del título. */
+  readonly notaAbierta = signal(false);
+
+  /** La licencia de una alerta, con todo lo que pide `revocar`. */
+  licenciaDeAlerta(alerta: Alerta): LicenciaAdmin | null {
+    return this.licencias().find((l) => l.id === alerta.license.id) ?? null;
+  }
+
+  // ── Saltos entre secciones ───────────────────────────────────────────────
+  //
+  // Desde una fila se va a lo mismo en otra sección con el correo ya escrito
+  // en el buscador: de un acceso a su licencia, de una licencia a sus compras.
+
+  verLicenciasDe(correo: string): void {
+    this.listaLicencias.busca.set(correo);
+    this.listaLicencias.filtrar('todas');
+    this.ir('licencias');
+  }
+
+  verAccesosDe(correo: string): void {
+    this.listaAccesos.busca.set(correo);
+    this.listaAccesos.filtrar('todos');
+    this.ir('accesos');
+  }
+
+  /** Copia un texto suelto —un correo, un código— y lo dice arriba. */
+  async copiarTexto(texto: string, que = 'Copiado'): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(texto);
+      this.aviso.set(`${que}: ${texto}`);
+    } catch {
+      this.error.set('No pudimos copiar. Selecciónalo y cópialo a mano.');
+    }
+  }
+
+  /** Cambia de sección navegando: la dirección es la que manda. */
   ir(seccion: Seccion): void {
+    void this.router.navigate(['/admin', DIRECCIONES[seccion]]);
+  }
+
+  /** La dirección de una sección, para los `routerLink` de la barra lateral. */
+  direccion(seccion: Seccion): string {
+    return `/admin/${DIRECCIONES[seccion]}`;
+  }
+
+  /**
+   * Lee la sección de la dirección. Una que no existe —un enlace viejo o mal
+   * escrito— lleva al resumen sin dejar la mala en el historial.
+   */
+  private leerSeccion(direccion: string | null): void {
+    const seccion = direccion ? SECCION_DE[direccion] : undefined;
+    if (!seccion) {
+      void this.router.navigate(['/admin', 'resumen'], { replaceUrl: true });
+      return;
+    }
+    this.titulo.setTitle(`${PAGINAS[seccion].titulo} · Administración · Acosta Research`);
+    this.abrir(seccion);
+  }
+
+  /** Lo que pasa al entrar en una sección: pedir lo que aún no se tiene. */
+  private abrir(seccion: Seccion): void {
     this.seccion.set(seccion);
+    this.notaAbierta.set(false);
     this.error.set(null);
     this.aviso.set(null);
 
@@ -2622,8 +2933,8 @@ export class Admin implements OnInit {
     // mira quien viene a curar bibliografía, no quien entra a revisar cobros.
     if (seccion === 'corpus' && this.corpus() === null) this.cargarCorpus();
 
-    if (seccion === 'tutoriales' && this.tutoriales().length === 0) this.cargarTutoriales();
-    if (seccion === 'tutoriales' && this.guias().length === 0) this.cargarGuias();
+    if (this.enTutoriales() && this.tutoriales().length === 0) this.cargarTutoriales();
+    if (this.enTutoriales() && this.guias().length === 0) this.cargarGuias();
 
     // Cada vez: una hoja nueva puede haber llegado mientras se miraba otra cosa.
     if (seccion === 'reclamos') this.cargarReclamos();
@@ -2656,6 +2967,28 @@ export class Admin implements OnInit {
 
   /** `null` mientras no se ha abierto la sección ni una vez. */
   readonly pruebas = signal<EnlacePrueba[] | null>(null);
+
+  /** Los enlaces con su buscador y sus filtros, como las demás tablas. */
+  readonly listaPruebas = new Listado(
+    computed(() => this.pruebas() ?? []),
+    {
+      filtros: [
+        { valor: 'todos', etiqueta: 'Todos' },
+        { valor: 'activos', etiqueta: 'Activos' },
+        { valor: 'terminados', etiqueta: 'Terminados' },
+        { valor: 'apagados', etiqueta: 'Apagados' },
+      ],
+      texto: (e: EnlacePrueba) => [e.name, e.productName],
+      // Activo es el que todavía entrega o deja usar: abierto o ya lleno.
+      pasa: (e: EnlacePrueba, filtro: string) =>
+        filtro === 'activos'
+          ? e.estado === 'ABIERTO' || e.estado === 'LLENO'
+          : filtro === 'terminados'
+            ? e.estado === 'TERMINADO'
+            : e.estado === 'APAGADO',
+    },
+  );
+
   readonly formularioPruebaAbierto = signal(false);
   /** El enlace recién creado, para copiarlo nada más cerrarse la ventana. */
   readonly pruebaNueva = signal<EnlacePrueba | null>(null);
@@ -2844,6 +3177,26 @@ export class Admin implements OnInit {
   /** `null` mientras no se ha abierto la pestaña ni una vez. */
   readonly corpus = signal<EstadoCorpus | null>(null);
   readonly referencias = signal<Referencia[]>([]);
+
+  /**
+   * Las fuentes con los temas desplegados. Una lista de veinte palabras clave
+   * ocupaba tres líneas por fuente; se recorta a una con «ver N temas».
+   */
+  readonly temasAbiertos = signal<ReadonlySet<string>>(new Set());
+
+  /** Cuántos temas trae una fuente: van separados por comas. */
+  cuantosTemas(tags: string): number {
+    return tags.split(',').filter((t) => t.trim()).length;
+  }
+
+  alternarTemas(id: string): void {
+    this.temasAbiertos.update((abiertos) => {
+      const nuevos = new Set(abiertos);
+      if (nuevos.has(id)) nuevos.delete(id);
+      else nuevos.add(id);
+      return nuevos;
+    });
+  }
   readonly totalReferencias = signal(0);
   readonly paginaReferencias = signal(1);
   readonly buscadorCorpus = new FormControl<string>({ value: '', disabled: false });
@@ -3091,6 +3444,22 @@ export class Admin implements OnInit {
   private readonly tutorialesApi = inject(TutorialService);
 
   readonly tutoriales = signal<Tutorial[]>([]);
+
+  /**
+   * Videos y guías con su buscador, sin pestañas de estado: son pocos y los
+   * ocultos ya se ven marcados en la fila.
+   */
+  readonly listaTutoriales = new Listado(this.tutoriales, {
+    filtros: [{ valor: 'todos', etiqueta: 'Todos' }],
+    texto: (t: Tutorial) => [t.titulo, t.grupo, t.entrada],
+  });
+  readonly listaGuias = new Listado(
+    computed(() => this.guias()),
+    {
+      filtros: [{ valor: 'todas', etiqueta: 'Todas' }],
+      texto: (g: Guia) => [g.titulo, g.archivoNombre],
+    },
+  );
   readonly guardandoTutorial = signal(false);
 
   /**

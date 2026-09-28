@@ -294,7 +294,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ? [
           {
             seccion: 'Administración',
-            ruta: '/admin',
+            ruta: '/admin/resumen',
             ancla: '[data-tour="admin-menu"]',
             titulo: 'El panel de administración',
             texto:
@@ -303,7 +303,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
           },
           {
             seccion: 'Administración',
-            ruta: '/admin',
+            ruta: '/admin/resumen',
             ancla: '[data-tour="admin-cifras"]',
             titulo: 'Cómo va el negocio',
             texto: 'Lo vendido, lo cobrado y lo que está esperando revisión, de un vistazo.',
