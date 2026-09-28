@@ -11,12 +11,19 @@
          «Sesión y seguridad» vive aquí y no abajo del todo por lo mismo de
          siempre: cerrar la sesión en un ordenador ajeno es lo que se busca con
          prisa, y ahora se encuentra sin bajar la página. -->
-    <!-- ── La cuenta, en un cajón ────────────────────────────────────────────
-         Se abre con este botón y sale POR ENCIMA del contenido, sin empujarlo,
-         en escritorio y en móvil. Antes era una columna fija que le quitaba
-         300 px a la rejilla en escritorio, y en móvil se apilaba encima de todo
-         y había que bajar una pantalla para llegar a «Mis compras». -->
-    <div class="barra-cuenta">
+    <!-- ── La cuenta ────────────────────────────────────────────────────────
+         En escritorio, suelta dentro de la barra lateral (identidad arriba,
+         ficha y seguridad al pie). En un teléfono, un cajón que sale POR
+         ENCIMA del contenido con el botón «Tu cuenta». -->
+    <!-- ── Barra lateral (28-sep) ────────────────────────────────────────────
+         El perfil es un armazón: a la izquierda la cuenta y las secciones, a la
+         derecha solo la elegida (ver `VistaDelPerfil`). Antes era una página
+         larga con todo apilado. En un teléfono la barra se vuelve una fila de
+         pestañas pegada arriba.
+
+         Cada botón lleva un `data-tour` para que el recorrido guiado pueda
+         llevar a la sección de lo que va a señalar. -->
+    <nav class="navegacion" aria-label="Tu panel" [class.cuenta-abierta]="cuentaAbierta()">
       <button
         type="button"
         class="abrir-cuenta"
@@ -24,149 +31,188 @@
         [attr.aria-expanded]="cuentaAbierta()"
         (click)="cuentaAbierta.set(true)"
       >
-        <span class="icono-menu" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
         <span class="avatar mini" aria-hidden="true">{{ iniciales() }}</span>
         <span class="abrir-cuenta-texto">
           <b>Tu cuenta</b>
           <small>{{ nombre() }}</small>
         </span>
+        <span class="icono-menu" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
       </button>
-    </div>
 
-    @if (cuentaAbierta()) {
-      <div class="lateral-fondo" aria-hidden="true" (click)="cuentaAbierta.set(false)"></div>
-    }
+      @if (cuentaAbierta()) {
+        <div class="lateral-fondo" aria-hidden="true" (click)="cuentaAbierta.set(false)"></div>
+      }
 
-    <aside
-      id="lateral-cuenta"
-      class="lateral"
-      [class.abierta]="cuentaAbierta()"
-      aria-label="Tu cuenta"
-    >
-      <button
-        type="button"
-        class="cerrar-cuenta"
-        aria-label="Cerrar el menú de la cuenta"
-        (click)="cuentaAbierta.set(false)"
+      <aside
+        id="lateral-cuenta"
+        class="lateral"
+        [class.abierta]="cuentaAbierta()"
+        aria-label="Tu cuenta"
       >
-        ×
-      </button>
-      <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
-      <!-- El lápiz abre la ventana del nombre. Antes era una tarjeta entera en
-           la rejilla para dos campos que casi nadie toca. -->
-      <div class="nombre-fila">
-        <h1>{{ nombre() }}</h1>
         <button
           type="button"
-          class="editar-nombre"
-          aria-label="Cambiar tu nombre"
-          title="Cambiar tu nombre"
-          (click)="editandoNombre.set(true)"
+          class="cerrar-cuenta"
+          aria-label="Cerrar el menú de la cuenta"
+          (click)="cuentaAbierta.set(false)"
         >
-          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-            <path
-              d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          ×
         </button>
-      </div>
-      <p class="correo">{{ user.email }}</p>
+        <!-- En escritorio el cajón no existe: lo suyo va suelto en la barra
+             lateral (`display: contents`), la identidad arriba y la ficha con la
+             seguridad al pie, con las secciones en medio (`order`). En un
+             teléfono vuelve a ser el cajón que abre «Tu cuenta». -->
+        <div class="identidad">
+          <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
+          <!-- El lápiz abre la ventana del nombre. Antes era una tarjeta entera en
+               la rejilla para dos campos que casi nadie toca. -->
+          <div class="nombre-fila">
+            <h1>{{ nombre() }}</h1>
+            <button
+              type="button"
+              class="editar-nombre"
+              aria-label="Cambiar tu nombre"
+              title="Cambiar tu nombre"
+              (click)="editandoNombre.set(true)"
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                <path
+                  d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4Z M13.5 6.5l4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <p class="correo">{{ user.email }}</p>
 
-      <p class="insignias">
-        <span class="etiqueta">{{ rol() }}</span>
-        <span
-          class="etiqueta"
-          [class.buena]="user.status === 'ACTIVE'"
-          [class.mala]="user.status === 'SUSPENDED'"
-        >
-          {{ estado() }}
-        </span>
-        @if (user.emailVerifiedAt) {
-          <span class="etiqueta buena">Correo verificado</span>
-        } @else {
-          <span class="etiqueta mala">Correo sin verificar</span>
-        }
-      </p>
-
-      <dl class="ficha">
-        <div>
-          <dt>Miembro desde</dt>
-          <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
-        </div>
-        <div>
-          <dt>Verificación</dt>
-          <dd>
+          <p class="insignias">
+            <span class="etiqueta">{{ rol() }}</span>
+            <span
+              class="etiqueta"
+              [class.buena]="user.status === 'ACTIVE'"
+              [class.mala]="user.status === 'SUSPENDED'"
+            >
+              {{ estado() }}
+            </span>
             @if (user.emailVerifiedAt) {
-              {{ user.emailVerifiedAt | date: 'd MMM y' }}
+              <span class="etiqueta buena">Correo verificado</span>
             } @else {
-              Pendiente
+              <span class="etiqueta mala">Correo sin verificar</span>
             }
-          </dd>
+          </p>
         </div>
-        <div>
-          <dt>Último acceso</dt>
-          <dd>
-            @if (user.lastLoginAt) {
-              {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
-            } @else {
-              Este es tu primer acceso
-            }
-          </dd>
+
+        <div class="cuenta-pie">
+          <dl class="ficha">
+            <div>
+              <dt>Miembro desde</dt>
+              <dd>{{ user.createdAt | date: 'd MMM y' }}</dd>
+            </div>
+            <div>
+              <dt>Verificación</dt>
+              <dd>
+                @if (user.emailVerifiedAt) {
+                  {{ user.emailVerifiedAt | date: 'd MMM y' }}
+                } @else {
+                  Pendiente
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Último acceso</dt>
+              <dd>
+                @if (user.lastLoginAt) {
+                  {{ user.lastLoginAt | date: 'd MMM y, HH:mm' }}
+                } @else {
+                  Este es tu primer acceso
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <!-- Aquí estaba el enlace a la página de R (/analisis). Se quitó el 14 de
+               septiembre de 2026: el análisis lo hace Claude en la conversación y
+               el tesista solo sube su archivo desde el enlace que le da. -->
+
+          <div class="seguridad">
+            <h2>Sesión y seguridad</h2>
+            <p class="nota">
+              Si usaste la web en un ordenador que no es tuyo, cierra la sesión en todos los
+              dispositivos.
+            </p>
+
+            <!-- <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
+              Cerrar sesión
+            </button> -->
+            <!-- <button
+              type="button"
+              class="boton peligro"
+              [disabled]="cerrando()"
+              (click)="salirDeTodos()"
+            >
+              Cerrar sesión en todos los dispositivos
+            </button> -->
+            <button type="button" class="boton secundario" (click)="cambiandoClave.set(true)">
+              Cambiar la contraseña
+            </button>
+            <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
+              Eliminar cuenta
+            </button>
+          </div>
         </div>
-      </dl>
+      </aside>
 
-      <!-- Aquí estaba el enlace a la página de R (/analisis). Se quitó el 14 de
-           septiembre de 2026: el análisis lo hace Claude en la conversación y
-           el tesista solo sube su archivo desde el enlace que le da. -->
+      <ul class="secciones">
+        @for (s of secciones(); track s.id) {
+          <li>
+            <button
+              type="button"
+              class="seccion"
+              [class.activa]="vista.seccion() === s.id"
+              [attr.aria-current]="vista.seccion() === s.id ? 'page' : null"
+              [attr.data-tour]="'ir-' + s.id"
+              (click)="irA(s.id)"
+            >
+              <span class="seccion-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path
+                    [attr.d]="s.icono"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="seccion-texto">{{ s.texto }}</span>
+              @if (s.cuenta) {
+                <span class="seccion-cuenta">{{ s.cuenta }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
 
-      <div class="seguridad">
-        <h2>Sesión y seguridad</h2>
-        <p class="nota">
-          Si usaste la web en un ordenador que no es tuyo, cierra la sesión en todos los
-          dispositivos.
-        </p>
-
-        <!-- <button type="button" class="boton secundario" [disabled]="cerrando()" (click)="salir()">
-          Cerrar sesión
-        </button> -->
-        <!-- <button
-          type="button"
-          class="boton peligro"
-          [disabled]="cerrando()"
-          (click)="salirDeTodos()"
-        >
-          Cerrar sesión en todos los dispositivos
-        </button> -->
-        <button type="button" class="boton secundario" (click)="cambiandoClave.set(true)">
-          Cambiar la contraseña
-        </button>
-        <button type="button" class="boton peligro" (click)="abrirBorradoDeCuenta()">
-          Eliminar cuenta
-        </button>
-      </div>
-    </aside>
 
     <!-- ── Lo que tienes ──────────────────────────────────────────────────────
-         Todo a la vista, sin pestañas. Eran cinco, y para ver si un pago entró
-         y a la vez copiar la URL del conector había que ir y volver entre dos
-         de ellas. En una rejilla de seis columnas cabe todo sin que nada se
-         quede a medio ancho.
+         Solo la sección elegida en la barra lateral, a todo el ancho; las
+         demás se esconden con `.fuera` sin destruirse.
 
-         Las tarjetas del conector —los accesos, las fuentes y la ayuda— las
-         pinta `app-mi-conector`, y entran en ESTA rejilla: la regla global le
-         quita la caja al componente para que sus tarjetas sean casillas de
-         aquí.
+         Las tarjetas del conector —«Por dónde vas», las herramientas y la
+         ayuda— las pinta `app-mi-conector`, y entran en ESTA rejilla: la regla
+         global le quita la caja al componente para que sus tarjetas sean
+         casillas de aquí. «Mis compras» es del perfil.
 
-         «Mis compras» va primero, a media anchura y con la ayuda a su derecha. El canje de códigos vive solo en /planes; al pie de las compras
-         queda una salida hasta allí, para quien sigue buscándolo aquí por un
-         correo antiguo. -->
+         El canje de códigos vive solo en /planes; al pie de las compras queda
+         una salida hasta allí, para quien sigue buscándolo aquí por un correo
+         antiguo. -->
     <main class="contenido rejilla">
 
       <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
@@ -178,7 +224,11 @@
            vistazo. La ayuda la pinta el conector más abajo; las sube arriba
            `order` en la rejilla, no el orden del HTML. El medio de pago va debajo del importe y no en
            columna propia: a media anchura cinco columnas no caben. -->
-      <section class="tarjeta tramo-3 compras-tarjeta">
+      <!-- La sección «Mis compras» de la barra lateral, a todo el ancho. -->
+      <section
+        class="tarjeta tramo-6 compras-tarjeta"
+        [class.fuera]="vista.seccion() !== 'compras'"
+      >
         <div class="compras-cabecera">
           <h2>Mis compras</h2>
           @if (compras().length > 0) {

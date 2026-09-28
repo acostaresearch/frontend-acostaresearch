@@ -186,6 +186,38 @@
   color: var(--color-texto-tenue);
 }
 
+/* Portátiles de pantalla baja (un Mac de 13" deja unos 700 px útiles): texto
+   y red al lado tienen que caber de una vez con la cabecera y el saludo.
+   Con los tamaños de monitor se cortaban la nota de abajo y la línea
+   «Ahora: …» de la red. Menos aire y un titular algo menor, nada más. */
+@media (min-width: 1025px) and (max-height: 820px) {
+  .hero {
+    padding-top: 24px;
+  }
+
+  .hero h1 {
+    margin-bottom: 12px;
+    font-size: clamp(28px, 2.5vw, 36px);
+  }
+
+  .hero-firma {
+    font-size: clamp(32px, 3.2vw, 48px);
+  }
+
+  .hero .entrada {
+    margin-bottom: 22px;
+    font-size: 16px;
+  }
+
+  .hero-acciones {
+    margin-bottom: 10px;
+  }
+
+  .hero-pie {
+    margin-top: 24px;
+  }
+}
+
 /* Las cifras cierran el hero en su propia banda azul noche, redondeada: con la
    línea fina de antes se leían como un pie del titular, y son lo que lo
    respalda. A todo el ancho, aunque el bloque de arriba vaya recogido y

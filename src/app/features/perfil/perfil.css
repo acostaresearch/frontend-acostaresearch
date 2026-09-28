@@ -1,12 +1,15 @@
-/* ── Armazón ────────────────────────────────────────────────────────────────
-   El contenido a todo el ancho, y la cuenta en un cajón que se abre con el
-   botón ☰ y sale por la izquierda ENCIMA del contenido, sin empujarlo. Igual
-   en escritorio que en móvil: antes en escritorio la cuenta era una columna
-   fija de 300 px que le quitaba sitio a la rejilla, y en móvil se apilaba
-   encima de todo y había que bajar una pantalla para llegar a lo demás. */
+/* ── Armazón (28-sep) ───────────────────────────────────────────────────────
+   Barra lateral a la izquierda —la cuenta y las secciones— y a la derecha
+   solo la sección elegida (ver `VistaDelPerfil`). La cuenta completa sigue en
+   su cajón, que sale por la izquierda ENCIMA de todo con el botón de arriba.
+   En un teléfono la barra se vuelve una fila de pestañas pegada arriba. */
 .perfil {
   --alto-cabecera: 65px;
+  --ancho-navegacion: 272px;
 
+  display: grid;
+  grid-template-columns: var(--ancho-navegacion) minmax(0, 1fr);
+  align-items: start;
   min-height: calc(100vh - var(--alto-cabecera));
 }
 
@@ -15,15 +18,105 @@
   padding: 30px 38px 56px;
 }
 
-/* Pegada bajo la cabecera del sitio, para poder abrir la cuenta sin volver
-   arriba del todo. */
-.barra-cuenta {
+/* Pegada bajo la cabecera del sitio y a toda la altura: la barra no se va
+   al bajar por una tabla larga de Scopus. */
+.navegacion {
   position: sticky;
   top: var(--alto-cabecera);
   z-index: 10;
-  padding: 8px 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: calc(100vh - var(--alto-cabecera));
+  padding: 20px 14px;
+  overflow-y: auto;
   background: var(--color-superficie);
-  border-bottom: 1px solid var(--color-borde);
+  border-right: 1px solid var(--color-borde);
+}
+
+.navegacion .abrir-cuenta {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radio-sm);
+}
+
+.navegacion .abrir-cuenta .icono-menu {
+  margin-left: auto;
+  color: var(--color-texto-suave);
+}
+
+.secciones {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seccion {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--color-texto-suave);
+  text-align: left;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  transition:
+    background var(--transicion),
+    color var(--transicion);
+}
+
+.seccion:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+.seccion.activa {
+  font-weight: 650;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.seccion:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.seccion-icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.seccion-texto {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seccion-cuenta {
+  margin-left: auto;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+/* Las secciones que no se están mirando (ver `VistaDelPerfil`). */
+.fuera {
+  display: none !important;
 }
 
 .abrir-cuenta {
@@ -86,60 +179,146 @@
   text-overflow: ellipsis;
 }
 
-/* Por encima de la cabecera del sitio (z 20) y por debajo de la ventana de
-   borrar la cuenta (z 50), que puede abrirse desde dentro del cajón. */
-.lateral-fondo {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: rgba(16, 24, 40, 0.45);
+/* ── La cuenta ──────────────────────────────────────────────────────────────
+   En escritorio va suelta en la barra lateral: el cajón se disuelve con
+   `display: contents` y sus dos bloques se reparten con `order`, la identidad
+   arriba, las secciones en medio y la ficha con la seguridad al pie. El botón
+   «Tu cuenta» y la × sobran. */
+@media (min-width: 1001px) {
+  .navegacion .abrir-cuenta,
+  .cerrar-cuenta,
+  .lateral-fondo {
+    display: none;
+  }
+
+  .lateral {
+    display: contents;
+  }
+
+  .identidad {
+    order: 0;
+    padding: 0 6px;
+  }
+
+  .secciones {
+    order: 1;
+  }
+
+  .cuenta-pie {
+    order: 2;
+    margin-top: auto;
+    padding: 0 6px;
+  }
+
+  /* La primera raya la pone la ficha; aquí sobra su margen de arriba, que ya
+     separa `margin-top: auto`. */
+  .cuenta-pie .ficha {
+    margin-top: 0;
+  }
 }
 
-.lateral {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 41;
-  width: min(320px, 86vw);
-  padding: 22px 24px 24px;
-  overflow-y: auto;
-  background: var(--color-superficie);
-  box-shadow: var(--sombra);
-  transform: translateX(-105%);
-  visibility: hidden;
-  transition:
-    transform 0.22s ease,
-    visibility 0s linear 0.22s;
-}
-
-.lateral.abierta {
-  transform: none;
-  visibility: visible;
-  transition: transform 0.22s ease;
-}
-
-.cerrar-cuenta {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  font-size: 22px;
-  line-height: 1;
-  color: var(--color-texto-suave);
-  background: none;
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-sm);
-  cursor: pointer;
-}
-
+/* En un teléfono o una tableta, en cambio, no cabe: sigue siendo el cajón que
+   sale por la izquierda con el botón «Tu cuenta». */
 @media (max-width: 1000px) {
-  .barra-cuenta {
+  /* El cajón vive dentro de la barra, que es pegajosa y por eso encierra en
+     su z-index el de todo lo suyo. Con el cajón abierto se sube por encima de
+     la cabecera del sitio, para que el fondo y el cajón la tapen. */
+  .navegacion.cuenta-abierta {
+    z-index: 45;
+  }
+
+  /* Por encima de la cabecera del sitio (z 20) y por debajo de la ventana de
+     borrar la cuenta (z 50), que puede abrirse desde dentro del cajón. */
+  .lateral-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(16, 24, 40, 0.45);
+  }
+
+  .lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 41;
+    width: min(320px, 86vw);
+    padding: 22px 24px 24px;
+    overflow-y: auto;
+    background: var(--color-superficie);
+    box-shadow: var(--sombra);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition:
+      transform 0.22s ease,
+      visibility 0s linear 0.22s;
+  }
+
+  .lateral.abierta {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+  }
+
+  .cerrar-cuenta {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--color-texto-suave);
+    background: none;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+  }
+}
+
+/* En un teléfono o una tableta: la barra arriba, en una fila que se desliza
+   de lado, con la cuenta como primera casilla. */
+@media (max-width: 1000px) {
+  .perfil {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .navegacion {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: auto;
     padding: 8px 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-borde);
+    scrollbar-width: none;
+  }
+
+  .navegacion .abrir-cuenta {
+    flex: none;
+    width: auto;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+  }
+
+  .navegacion .abrir-cuenta-texto small,
+  .navegacion .abrir-cuenta .icono-menu {
+    display: none;
+  }
+
+  .secciones {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .seccion {
+    padding: 8px 12px;
+    font-size: 13.5px;
   }
 
   .contenido {

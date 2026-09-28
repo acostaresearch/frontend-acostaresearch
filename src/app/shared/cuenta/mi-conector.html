@@ -2,7 +2,7 @@
      el administrador no está arrancando nada, sus licencias se le emiten
      solas y ya tiene el panel entero delante. -->
 @if (modo() === 'comprador' && progreso(); as p) {
-  <app-pasos-de-arranque class="tramo-6" [progreso]="p" />
+  <app-pasos-de-arranque class="tramo-6" [class.fuera]="oculta('avance')" [progreso]="p" />
 }
 
 <!-- Por dónde va su tesis, justo después de la puesta en marcha y antes que
@@ -10,12 +10,15 @@
      mirar su URL: viene a ver dónde lo dejó. El componente no pinta nada
      mientras no haya avance guardado, así que no estorba a quien acaba de
      llegar. -->
-<app-mi-tesis class="tramo-6" [licencias]="misLicencias()" />
+<!-- En el perfil, esto es la sección «Por dónde vas» de la barra lateral (ver
+     `VistaDelPerfil`). Fuera de ella se esconde, no se destruye: al volver
+     sigue la pestaña que se estaba mirando. -->
+<app-mi-tesis class="tramo-6" [class.fuera]="oculta('avance')" [licencias]="misLicencias()" />
 
 <!-- Revisión con un asesor. Solo lo ve quien está en la prueba: el propio
      componente pregunta al servidor y, si no le toca, no pinta ni un hueco.
      Ver la nota de `MiRevision`. -->
-<app-mi-revision class="tramo-6" />
+<app-mi-revision class="tramo-6" [class.fuera]="oculta('avance')" />
 
 @if (misLicencias().length > 0) {
   <!-- Aquí había una ficha por licencia, con su gasto y su botón de URL nueva.
@@ -44,9 +47,19 @@
        la vuelta de autorizar Zotero (`?zotero=…`) la lee su panel aunque no
        sea la pestaña que se ve. -->
   @if (tieneHerramientas()) {
-    <h2 class="herramientas-titulo tramo-6">Tus herramientas</h2>
+    <!-- En el perfil son la sección «Tus herramientas» de la barra lateral
+         (28-sep). Se ESCONDEN, no se destruyen, como las pestañas: la búsqueda
+         de Scopus sigue ahí al volver. En el panel del administrador, en la
+         rejilla con todo lo demás. -->
+    <h2 class="herramientas-titulo tramo-6" [class.fuera]="oculta('herramientas')">
+      Tus herramientas
+    </h2>
 
-    <section class="tarjeta tramo-6 herramientas">
+    <section
+      id="vista-herramientas"
+      class="tarjeta tramo-6 herramientas"
+      [class.fuera]="oculta('herramientas')"
+    >
       <div
         class="herramientas-pestanas"
         data-tour="herramientas"
@@ -235,9 +248,15 @@
        vez de dar un error honesto— y solo con acceso vigente: a quien caducó lo
        que le hace falta es renovar, no un manual para conectar algo que ya no
        le va a responder. -->
-  <!-- En el perfil sube a la primera fila, a la derecha de «Mis compras»
-       (`arriba`). En el panel del administrador se queda en su sitio. -->
-  <section class="tarjeta tramo-3" data-tour="ayuda" [class.arriba]="modo() === 'comprador'">
+  <!-- En el perfil es la sección «¿Necesitas ayuda?» de la barra lateral, a
+       todo el ancho. En el panel del administrador, a media anchura. -->
+  <section
+    class="tarjeta"
+    data-tour="ayuda"
+    [class.tramo-3]="!porSecciones()"
+    [class.tramo-6]="porSecciones()"
+    [class.fuera]="oculta('ayuda')"
+  >
     <h2>¿Necesitas ayuda?</h2>
     <p class="nota">Todo lo que te sirve para conectar y usar tus skills.</p>
 
@@ -301,8 +320,9 @@
     </p>
   </section>
 } @else {
-  <!-- A media anchura y arriba: a su izquierda va «Mis compras» del perfil. -->
-  <section class="tarjeta tramo-3 arriba">
+  <!-- En la sección «Por dónde vas»: sin método no hay avance que enseñar, y
+       esto es lo que toca en su lugar. -->
+  <section class="tarjeta tramo-6" [class.fuera]="oculta('avance')">
     <h2>Conector de Claude</h2>
     <p class="nota">
       Todavía no tienes el método. Te acompaña capítulo por capítulo desde tu propio Claude, y

@@ -11,6 +11,10 @@ export const TOUR_PANEL = 'panel';
  * si algo no sale, escribirnos. Cada paso cabe en dos frases: un recorrido que
  * hay que leer se salta.
  *
+ * En el perfil cada parte es una sección de la barra lateral, así que cada
+ * paso pulsa antes la suya (`abrir: ir-…`). En el panel del administrador esos
+ * botones no existen, no se pulsa nada y todo está ya a la vista.
+ *
  * Las anclas son atributos `data-tour` puestos en el marcado de verdad. No se
  * usan clases: una clase se renombra el día que se retoca el CSS y el recorrido
  * se rompe en silencio, mientras que un `data-tour` solo está ahí para esto.
@@ -23,6 +27,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'verlo desde la tarjeta de ayuda.',
   },
   {
+    abrir: '[data-tour="ir-avance"]',
     ancla: '[data-tour="arranque"]',
     titulo: 'Por aquí se empieza',
     texto:
@@ -30,6 +35,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'completarlos, el recuadro desaparece.',
   },
   {
+    abrir: '[data-tour="ir-avance"]',
     ancla: '[data-tour="acceso"]',
     titulo: 'Tu acceso a Claude',
     texto:
@@ -37,6 +43,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'se pega una sola vez en Claude, en Configuración → Conectores.',
   },
   {
+    abrir: '[data-tour="ir-avance"]',
     ancla: '[data-tour="avance"]',
     titulo: 'Por dónde va tu tesis',
     texto:
@@ -44,6 +51,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'volver a explicarle tu tema en cada conversación.',
   },
   {
+    abrir: '[data-tour="ir-avance"]',
     ancla: '[data-tour="retomar"]',
     titulo: 'Sigue donde lo dejaste',
     texto:
@@ -51,6 +59,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'mismo y la respetará.',
   },
   {
+    abrir: '[data-tour="ir-herramientas"]',
     ancla: '[data-tour="herramientas"]',
     titulo: 'Tus herramientas',
     texto:
@@ -66,6 +75,7 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
       'pestañas funcionan igual.',
   },
   {
+    abrir: '[data-tour="ir-ayuda"]',
     ancla: '[data-tour="ayuda"]',
     titulo: 'Si algo se atasca',
     texto:

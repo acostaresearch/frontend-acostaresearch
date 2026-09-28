@@ -1,4 +1,13 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
@@ -7,6 +16,7 @@ import { LicenseService } from '../../core/services/license.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TourService } from '../../core/services/tour.service';
 import { TOUR_DEL_PANEL, TOUR_PANEL } from '../contenido/tour-del-panel';
+import { SeccionDelPerfil, VistaDelPerfil } from './vista-del-perfil';
 import { MiTesis } from './mi-tesis';
 import { MiRevision } from './mi-revision';
 import { MiMapaVosviewer } from './mi-mapa-vosviewer';
@@ -100,6 +110,51 @@ export class MiConector implements OnInit {
   abrirMapa(): void {
     this.herramienta.set('mapa');
     this.mapaVisto.set(true);
+  }
+
+  /**
+   * En el perfil cada parte es una sección de la barra lateral y solo se ve la
+   * elegida (ver `VistaDelPerfil`). En el panel del administrador todo sigue a
+   * la vista en la rejilla.
+   */
+  protected readonly vista = inject(VistaDelPerfil);
+  readonly porSecciones = computed(() => this.modo() === 'comprador');
+
+  /**
+   * Si esta sección está escondida ahora. Se esconde y no se destruye: la
+   * búsqueda de Scopus a medias o la pestaña de «Por dónde vas» siguen ahí al
+   * volver.
+   */
+  oculta(seccion: SeccionDelPerfil): boolean {
+    return this.porSecciones() && this.vista.seccion() !== seccion;
+  }
+
+  constructor() {
+    effect(() => this.vista.hayHerramientas.set(this.porSecciones() && this.tieneHerramientas()));
+
+    // Sin herramientas (licencia caducada, o solo el Humanizador) su sección
+    // se quedaría en blanco: se vuelve a «Por dónde vas». Solo cuando ya
+    // contestó el servidor, que hasta entonces no hay nada que saber.
+    effect(() => {
+      if (
+        this.porSecciones() &&
+        !this.cargando() &&
+        !this.tieneHerramientas() &&
+        this.vista.seccion() === 'herramientas'
+      ) {
+        this.vista.seccion.set('avance');
+      }
+    });
+
+    // Quien vuelve de autorizar Zotero o Mendeley viene a ver cómo fue: el
+    // aviso está en las herramientas, así que se le llevan ahí.
+    const params = this.ruta.snapshot.queryParamMap;
+    if (params.has('zotero') || params.has('mendeley')) this.vista.seccion.set('herramientas');
+
+    inject(DestroyRef).onDestroy(() => {
+      this.vista.hayHerramientas.set(false);
+      this.vista.seccion.set('avance');
+    });
   }
 
 

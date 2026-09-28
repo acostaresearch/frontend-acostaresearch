@@ -331,7 +331,14 @@ export class HeroNetwork {
     if (typeof ResizeObserver === 'undefined') return;
     const observador = new ResizeObserver(() => this.medir());
     observador.observe(this.host.nativeElement);
-    this.destroyRef.onDestroy(() => observador.disconnect());
+    // El alto de la ventana también cuenta y el observador no lo ve: cambiar
+    // solo el alto no cambia el ancho de la columna.
+    const alCambiar = () => this.medir();
+    window.addEventListener('resize', alCambiar);
+    this.destroyRef.onDestroy(() => {
+      observador.disconnect();
+      window.removeEventListener('resize', alCambiar);
+    });
   }
 
   private medir(): void {
@@ -340,9 +347,13 @@ export class HeroNetwork {
     if (!ancho) return;
     // Apilada va a 600 de lienzo y con tope de 0,7: más grande, en una tableta
     // la red sola ocuparía la pantalla entera.
+    // Al lado del texto, además, no puede ser más alta que la pantalla menos
+    // cabecera y saludo: en un portátil de 13" (unos 700 px útiles) la red a
+    // tamaño de ancho se salía por abajo y cortaba ATLAS.ti y ChatGPT.
     const apilado = this.apilado();
     const lienzo = apilado ? 600 : 690;
-    const tope = apilado ? 0.7 : 1;
+    const porAlto = Math.max(0.6, (window.innerHeight - 200) / 560);
+    const tope = apilado ? 0.7 : Math.min(1, porAlto);
     const s = Math.max(0.4, Math.min(tope, ancho / lienzo));
     host.style.setProperty('--s', s.toFixed(3));
   }

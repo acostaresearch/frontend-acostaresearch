@@ -21,6 +21,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
+import { SeccionDelPerfil, VistaDelPerfil } from '../../shared/cuenta/vista-del-perfil';
 import { InvitarResena, VentanaResena } from '../../shared/cuenta/invitar-resena';
 import { MiConector } from '../../shared/cuenta/mi-conector';
 import { SiteHeader } from '../../shared/layout/site-header';
@@ -91,6 +92,43 @@ export class Perfil implements OnInit {
   readonly editandoNombre = signal(false);
   readonly cambiandoClave = signal(false);
 
+  /** La sección que se mira. Ver `VistaDelPerfil`. */
+  protected readonly vista = inject(VistaDelPerfil);
+
+  /**
+   * Las secciones de la barra lateral, en el orden en que se usan: por dónde
+   * va, con qué trabaja, qué ha pagado y a quién escribir. Las herramientas,
+   * solo si alguna licencia vigente las trae.
+   */
+  readonly secciones = computed(() => {
+    const todas: { id: SeccionDelPerfil; texto: string; icono: string; cuenta?: number }[] = [
+      { id: 'avance', texto: 'Por dónde vas', icono: 'M4 19h16 M7 16V11 M12 16V6 M17 16v-3' },
+      {
+        id: 'herramientas',
+        texto: 'Tus herramientas',
+        icono: 'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
+      },
+      {
+        id: 'compras',
+        texto: 'Mis compras',
+        icono: 'M4 7h16v12H4z M4 11h16 M8 15h3',
+        cuenta: this.compras().length || undefined,
+      },
+      {
+        id: 'ayuda',
+        texto: '¿Necesitas ayuda?',
+        icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7 M12 17h.01',
+      },
+    ];
+    return todas.filter((s) => s.id !== 'herramientas' || this.vista.hayHerramientas());
+  });
+
+  /** Cambia de sección y vuelve arriba: la nueva empieza por su título. */
+  irA(seccion: SeccionDelPerfil): void {
+    this.vista.seccion.set(seccion);
+    window.scrollTo({ top: 0 });
+  }
+
   /** Escape cierra lo que esté encima: primero una ventana, si no el cajón. */
   @HostListener('document:keydown.escape')
   cerrarCuenta(): void {
@@ -142,7 +180,9 @@ export class Perfil implements OnInit {
     effect(() =>
       this.fondo.fijar(
         'perfil',
-        this.borrandoCuenta() || this.editandoNombre() || this.cambiandoClave(),
+        this.borrandoCuenta() ||
+          this.editandoNombre() ||
+          this.cambiandoClave(),
       ),
     );
 

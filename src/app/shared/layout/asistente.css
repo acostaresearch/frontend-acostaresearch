@@ -350,6 +350,34 @@
   text-decoration: underline;
 }
 
+/* ── Portátiles y pantallas bajas ─────────────────────────────────────────
+ * Plegado, en una pantalla de hasta 1280 de ancho o 820 de alto la barra de
+ * 290 px tapaba media esquina de la página (en la portada, ATLAS.ti y ChatGPT).
+ * Se queda en el círculo con la «A»; al abrirlo vuelve a ser la ventana entera.
+ * El nombre sigue en `aria-label` del botón para quien usa lector. */
+@media (max-width: 1280px), (max-height: 820px) {
+  .asis:not(.asis-abierto) {
+    width: auto;
+    border-radius: 999px;
+  }
+
+  .asis:not(.asis-abierto) .asis-cabecera {
+    padding: 7px;
+    border-bottom-width: 1px;
+  }
+
+  .asis:not(.asis-abierto) .asis-titulos,
+  .asis:not(.asis-abierto) .asis-flecha {
+    display: none;
+  }
+
+  .asis:not(.asis-abierto) .asis-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 19px;
+  }
+}
+
 /* ── Móvil ─────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .asis {

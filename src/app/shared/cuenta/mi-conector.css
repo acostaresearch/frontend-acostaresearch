@@ -117,6 +117,13 @@ button.recurso {
   overflow: hidden;
 }
 
+/* En el perfil, las secciones que no se están mirando (ver `VistaDelPerfil`). Se esconde y no se destruye, para no perder lo que
+   hubiera a medias. `!important` porque los componentes hijos se dan su
+   propio `display` en `:host`. */
+.fuera {
+  display: none !important;
+}
+
 .herramientas-pestanas {
   display: flex;
   gap: 4px;
@@ -265,9 +272,3 @@ button.recurso {
   color: var(--color-texto);
 }
 
-/* La primera fila del perfil: «Mis compras» (order -2) y esta, a su derecha.
-   Con `order` y no moviendo el HTML, porque la ayuda es de este componente y
-   las compras son del perfil. */
-.arriba {
-  order: -1;
-}
