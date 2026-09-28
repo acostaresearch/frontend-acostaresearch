@@ -4,7 +4,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: var(--alto-ventana-d);
 }
 
 .envoltorio {

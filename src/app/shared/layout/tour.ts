@@ -15,6 +15,7 @@ import { NavigationStart, Router, RouterPreloader } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { PasoDelTour, TourService } from '../../core/services/tour.service';
+import { escalaDePagina } from './escala';
 
 /** Las medidas del foco, en coordenadas de la ventana. */
 interface Recuadro {
@@ -371,12 +372,15 @@ export class Tour implements OnDestroy {
   private medir(el: HTMLElement | null): Recuadro | null {
     if (!el) return null;
 
+    // En píxeles de la página y no de pantalla: con el zoom de portátil, el
+    // foco se dibuja escalado y sin esto caía corrido (ver `escalaDePagina`).
     const r = el.getBoundingClientRect();
+    const e = escalaDePagina();
     return {
-      top: r.top - MARGEN,
-      left: r.left - MARGEN,
-      ancho: r.width + MARGEN * 2,
-      alto: r.height + MARGEN * 2,
+      top: r.top / e - MARGEN,
+      left: r.left / e - MARGEN,
+      ancho: r.width / e + MARGEN * 2,
+      alto: r.height / e + MARGEN * 2,
     };
   }
 
@@ -396,13 +400,15 @@ export class Tour implements OnDestroy {
     if (!globo) return;
 
     const f = this.foco();
-    const anchoVentana = window.innerWidth;
-    const altoVentana = window.innerHeight;
+    const e = escalaDePagina();
+    const anchoVentana = window.innerWidth / e;
+    const altoVentana = window.innerHeight / e;
+    const estrecho = window.innerWidth <= 720;
 
     // Estrecho, o sin nada que señalar: el globo no persigue a nadie. Lo coloca
     // el CSS, abajo o en el centro.
-    if (anchoVentana <= 720 || !f) {
-      this.abajo.set(anchoVentana <= 720);
+    if (estrecho || !f) {
+      this.abajo.set(estrecho);
       this.enEsquina(false);
       this.globo.set(null);
       return;

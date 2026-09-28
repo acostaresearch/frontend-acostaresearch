@@ -10,6 +10,8 @@ import {
   viewChild,
 } from '@angular/core';
 
+import { escalaDePagina } from '../../../shared/layout/escala';
+
 /**
  * La red del hero: la persona al centro, las herramientas alrededor y el Word
  * saliendo por la derecha.
@@ -352,7 +354,7 @@ export class HeroNetwork {
     // tamaño de ancho se salía por abajo y cortaba ATLAS.ti y ChatGPT.
     const apilado = this.apilado();
     const lienzo = apilado ? 600 : 690;
-    const porAlto = Math.max(0.6, (window.innerHeight - 200) / 560);
+    const porAlto = Math.max(0.6, (window.innerHeight / escalaDePagina() - 200) / 560);
     const tope = apilado ? 0.7 : Math.min(1, porAlto);
     const s = Math.max(0.4, Math.min(tope, ancho / lienzo));
     host.style.setProperty('--s', s.toFixed(3));

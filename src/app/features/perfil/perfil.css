@@ -10,7 +10,7 @@
   display: grid;
   grid-template-columns: var(--ancho-navegacion) minmax(0, 1fr);
   align-items: start;
-  min-height: calc(100vh - var(--alto-cabecera));
+  min-height: calc(var(--alto-ventana) - var(--alto-cabecera));
 }
 
 .contenido {
@@ -27,7 +27,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  height: calc(100vh - var(--alto-cabecera));
+  height: calc(var(--alto-ventana) - var(--alto-cabecera));
   padding: 20px 14px;
   overflow-y: auto;
   background: var(--color-superficie);

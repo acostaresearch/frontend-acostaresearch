@@ -1,6 +1,6 @@
 :host {
   display: block;
-  min-height: 100dvh;
+  min-height: var(--alto-ventana-d);
 }
 
 /* Solo existe para llevar `inert`: que no cambie nada del maquetado. */

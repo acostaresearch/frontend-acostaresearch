@@ -257,6 +257,45 @@ body {
   height: 100%;
 }
 
+/*
+ * Portátiles: todo el sitio un poco más compacto.
+ *
+ * Las medidas del sitio están pensadas para un monitor de 1920. En un portátil
+ * (un Mac de 13", un 1366×768, un Windows al 125 %) las letras, los botones y
+ * el panel salían grandes y la portada no cabía. `zoom` en <html> encoge TODO
+ * a la vez —inicio, panel, perfil, cada página— igual que el zoom del
+ * navegador, sin reescribir cada medida. En teléfonos y tabletas (≤1024) no se
+ * toca: ahí ya manda el diseño de móvil y encoger haría ilegible el texto.
+ *
+ * `--zoom` lo leen las alturas con `vh`, que dentro del zoom también encogen.
+ * Lo que mide la pantalla desde JS pasa por `escalaDePagina()`.
+ */
+:root {
+  --zoom: 1;
+  /* El alto de la ventana en píxeles de la página. Dentro del zoom, `100vh`
+     encoge con todo lo demás y el panel lateral de /admin o /perfil se quedaba
+     a un 85 % de la pantalla. Quien necesite la pantalla entera usa estas. */
+  --alto-ventana: calc(100vh / var(--zoom));
+  --alto-ventana-d: calc(100dvh / var(--zoom));
+}
+
+@media (min-width: 1025px) and (max-width: 1600px) {
+  :root {
+    --zoom: 0.9;
+  }
+}
+
+/* Portátil con pantalla baja (768–820 px de alto): un poco más. */
+@media (min-width: 1025px) and (max-width: 1600px) and (max-height: 820px) {
+  :root {
+    --zoom: 0.85;
+  }
+}
+
+html {
+  zoom: var(--zoom);
+}
+
 body {
   margin: 0;
   font-family: var(--fuente);
@@ -560,7 +599,7 @@ a:hover {
   /* Llega al pie de la ventana aunque la pagina sea corta. Sin esto, en
      «Quien soy» —que es media pantalla de texto— el pie quedaba a media altura
      y debajo se veia el gris del cuerpo, como si faltara algo. */
-  min-height: calc(100vh - 69px);
+  min-height: calc(100vh / var(--zoom) - 69px);
   background: var(--color-pagina);
   /* Nada de la página puede abrir el desplazamiento lateral: en el teléfono
      un adorno que sobresalía corría la página entera y dejaba una franja gris
