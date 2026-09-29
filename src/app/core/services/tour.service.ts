@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from './auth.service';
-import { rutaReal } from '../router/rutas-privadas';
+import { esDelPerfil, rutaReal } from '../router/rutas-privadas';
 
 /** Un alto del recorrido: a qué se le hace foco y qué se cuenta de ello. */
 export interface PasoDelTour {
@@ -148,6 +148,9 @@ export class TourService {
    * la dirección de esta sesión: los pasos dicen `/perfil`, la barra no.
    */
   enLaRuta(ruta: string): boolean {
+    // El perfil tiene una dirección por sección, y el recorrido cambia de una
+    // a otra sin salir de la página.
+    if (ruta === '/perfil') return esDelPerfil(this.router.url);
     return this.router.url.split(/[?#]/)[0] === rutaReal(ruta);
   }
 

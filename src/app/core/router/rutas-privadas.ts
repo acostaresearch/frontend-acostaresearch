@@ -5,9 +5,15 @@ import { UrlMatcher, UrlSegment } from '@angular/router';
  * Las direcciones de las páginas con sesión, cambiadas por cada ingreso.
  *
  * El perfil, «Preparar documento» y el panel de administración llevan detrás
- * de su nombre una clave que se sortea en cada ingreso —/perfil/fDvxinjld3Wv—,
- * y la de antes deja de llevar a ningún sitio. En el panel cada sección tiene
- * su propio código —/admin/Qa81LmZr0pXe—, sacado de la clave de esa sesión.
+ * de su nombre una clave que se sortea en cada ingreso, y la de antes deja de
+ * llevar a ningún sitio:
+ *
+ *   /perfil/herramientas/fDvxinjld3Wv   una sección del perfil
+ *   /preparar-documento/Qa81LmZr0pXe
+ *   /admin/Hs7Kq2LmZr0p                 una sección del panel
+ *
+ * En el perfil y en el panel cada sección tiene su propio código, sacado de la
+ * clave de esa página en esa sesión.
  *
  * Esto NO es la cerradura. Quien protege los datos sigue siendo el backend,
  * que mira la sesión y el rol en cada petición, y los guards de la web. Esto
@@ -101,26 +107,37 @@ const PUERTAS: Record<Privada, string> = {
   admin: '/admin',
 };
 
+/** Las secciones de la barra lateral del perfil, como van en la dirección. */
+export const SECCIONES_DEL_PERFIL = ['avance', 'herramientas', 'compras', 'ayuda'] as const;
+export type SeccionDelPerfil = (typeof SECCIONES_DEL_PERFIL)[number];
+
 /**
- * La dirección de una página privada en esta sesión: /perfil/fDvxinjld3Wv.
- * Sin claves —sin sesión— da la puerta, que manda a iniciar sesión. El panel
- * no tiene una sola dirección, sino una por sección: ver `rutaDeSeccion`.
+ * La dirección de una página privada en esta sesión. Sin claves —sin sesión—
+ * da la puerta, que manda a iniciar sesión. El perfil entra por «Por dónde
+ * vas», y el panel por su puerta, que lleva al resumen.
  */
 export function rutaPrivada(pagina: Privada): string {
   const c = claves();
   if (!c || pagina === 'admin') return PUERTAS[pagina];
+  if (pagina === 'perfil') return rutaDelPerfil('avance');
   return `${PUERTAS[pagina]}/${c[pagina]}`;
 }
 
+/** Una sección del perfil: /perfil/herramientas/<código>. */
+export function rutaDelPerfil(seccion: SeccionDelPerfil): string {
+  if (!claves()) return PUERTAS.perfil;
+  return `${PUERTAS.perfil}/${seccion}/${cifrar('perfil', seccion)}`;
+}
+
 /**
- * El código de una sección del panel en esta sesión: 12 caracteres sacados de
- * la clave del admin y del nombre, así que «pagos» no se lee en la barra y
- * cambia con cada ingreso. No hace falta guardarlo: sale siempre igual de la
- * misma clave (FNV-1a, sin pretensión criptográfica; lo que no se adivina es
- * la clave).
+ * El código de una sección en esta sesión: 12 caracteres sacados de la clave
+ * de la página y del nombre, así que cambia con cada ingreso y el de una
+ * sección no sirve para otra. No hace falta guardarlo: sale siempre igual de
+ * la misma clave (FNV-1a, sin pretensión criptográfica; lo que no se adivina
+ * es la clave).
  */
-export function cifrarSeccion(nombre: string): string {
-  const semilla = `${claves()?.admin ?? ''}:${nombre}`;
+function cifrar(pagina: Privada, nombre: string): string {
+  const semilla = `${claves()?.[pagina] ?? ''}:${nombre}`;
   let h = 0x811c9dc5;
   let tira = '';
   for (let vuelta = 0; tira.length < LARGO; vuelta++) {
@@ -133,24 +150,40 @@ export function cifrarSeccion(nombre: string): string {
   return tira;
 }
 
+/** El código de una sección del panel; en el panel no se lee el nombre. */
+export function cifrarSeccion(nombre: string): string {
+  return cifrar('admin', nombre);
+}
+
 /** La dirección de una sección del panel: /admin/<código>. */
 export function rutaDeSeccion(nombre: string): string {
   return `${PUERTAS.admin}/${cifrarSeccion(nombre)}`;
 }
 
 /**
- * Para las rutas: casa /<página>/<clave de esta sesión>, y nada más. Sin
- * sesión, o con una clave vieja, no casa y la dirección acaba en el comodín,
- * igual que una inventada.
+ * Para las rutas: casa la dirección de esta sesión, y nada más. Sin sesión, o
+ * con una clave vieja, no casa y la dirección acaba en el comodín, igual que
+ * una inventada.
  *
- * En el panel el segundo tramo es el código de la sección, que se entrega como
- * el parámetro `seccion`; el propio componente corrige uno que no existe.
+ * - Perfil: /perfil/<sección>/<su código>; la sección va en el parámetro
+ *   `seccion`.
+ * - Panel: /admin/<código>; el código va en `seccion` y el propio componente
+ *   corrige uno que no existe.
  */
 export function casaPrivada(pagina: Privada): UrlMatcher {
   const nombre = PUERTAS[pagina].slice(1);
   return (segmentos: UrlSegment[]) => {
     const c = claves();
-    if (!c || segmentos.length !== 2 || segmentos[0].path !== nombre) return null;
+    if (!c || segmentos[0]?.path !== nombre) return null;
+    if (pagina === 'perfil') {
+      const [, seccion, codigo] = segmentos;
+      const valida =
+        segmentos.length === 3 &&
+        (SECCIONES_DEL_PERFIL as readonly string[]).includes(seccion.path) &&
+        codigo.path === cifrar('perfil', seccion.path);
+      return valida ? { consumed: segmentos, posParams: { seccion } } : null;
+    }
+    if (segmentos.length !== 2) return null;
     const segundo = segmentos[1];
     if (pagina === 'admin') {
       return /^[A-Za-z0-9]{12}$/.test(segundo.path)
@@ -177,6 +210,16 @@ export function rutaLegible(url: string): string {
     if (`/${primero}` === puerta) return puerta === PUERTAS.admin ? puerta : puerta + cola;
   }
   return url;
+}
+
+/** Si la dirección es una sección del perfil, sea cual sea. */
+export function esDelPerfil(url: string): boolean {
+  const camino = url.split(/[?#]/)[0];
+  return casaPrivada('perfil')(
+    camino.split('/').filter(Boolean).map((tramo) => new UrlSegment(tramo, {})),
+    null as never,
+    null as never,
+  ) !== null;
 }
 
 /**

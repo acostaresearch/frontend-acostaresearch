@@ -3,9 +3,11 @@ import { UrlSegment } from '@angular/router';
 import {
   asegurarRutas,
   casaPrivada,
+  esDelPerfil,
   olvidarRutas,
   rotarRutas,
   rutaDeSeccion,
+  rutaDelPerfil,
   rutaLegible,
   rutaPrivada,
   rutaReal,
@@ -35,7 +37,9 @@ describe('Rutas privadas', () => {
     rotarRutas();
     const perfil = rutaPrivada('perfil');
     const pagos = rutaDeSeccion('pagos');
-    expect(perfil).toMatch(/^\/perfil\/[A-Za-z0-9]{12}$/);
+    expect(perfil).toMatch(/^\/perfil\/avance\/[A-Za-z0-9]{12}$/);
+    expect(rutaDelPerfil('herramientas')).toMatch(/^\/perfil\/herramientas\/[A-Za-z0-9]{12}$/);
+    expect(rutaDelPerfil('herramientas').split('/')[3]).not.toBe(perfil.split('/')[3]);
     expect(rutaPrivada('preparar')).toMatch(/^\/preparar-documento\/[A-Za-z0-9]{12}$/);
     expect(pagos).toMatch(/^\/admin\/[A-Za-z0-9]{12}$/);
     expect(pagos).not.toContain('pagos');
@@ -54,8 +58,18 @@ describe('Rutas privadas', () => {
     expect(casa('perfil', rutaPrivada('perfil'))).not.toBeNull();
     // La puerta a secas no es la página, y la clave de una no abre otra.
     expect(casa('perfil', '/perfil')).toBeNull();
-    const clave = rutaPrivada('perfil').split('/')[2];
+    const clave = rutaPrivada('perfil').split('/')[3];
     expect(casa('preparar', `/preparar-documento/${clave}`)).toBeNull();
+    // El código de una sección no abre otra.
+    expect(casa('perfil', `/perfil/compras/${clave}`)).toBeNull();
+  });
+
+  it('cada sección del perfil casa y entrega su nombre', () => {
+    rotarRutas();
+    const compras = rutaDelPerfil('compras');
+    expect(casa('perfil', compras)?.posParams?.['seccion'].path).toBe('compras');
+    expect(esDelPerfil(`${compras}?zotero=ok`)).toBe(true);
+    expect(esDelPerfil(rutaPrivada('preparar'))).toBe(false);
   });
 
   it('el panel entrega el código de la sección como parámetro', () => {
@@ -81,7 +95,7 @@ describe('Rutas privadas', () => {
 
   it('para volver tras iniciar sesión se usa la puerta', () => {
     rotarRutas();
-    const perfil = `${rutaPrivada('perfil')}?codigo=X1`;
+    const perfil = `${rutaDelPerfil('ayuda')}?codigo=X1`;
     const admin = rutaDeSeccion('licencias');
     olvidarRutas();
     expect(rutaLegible(perfil)).toBe('/perfil?codigo=X1');

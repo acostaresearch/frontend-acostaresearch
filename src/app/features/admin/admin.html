@@ -3579,7 +3579,18 @@
                     }
                   }
                   @if (comprobandoCorreos()) {
-                    <span class="ayuda">Comprobando que ese dominio recibe correos…</span>
+                    <span class="ayuda">Comprobando que esa cuenta de correo existe…</span>
+                  } @else if (revisionCorreo(); as r) {
+                    <!-- Un dígito cambiado pasa la forma y el dominio: solo el
+                       servidor de correo del comprador sabe si la cuenta existe. -->
+                    @if (!r.problema && r.buzon === true) {
+                      <span class="ayuda correo-bien">✓ La cuenta existe: su servidor de correo lo confirmó.</span>
+                    } @else if (!r.problema && r.buzon === null) {
+                      <span class="ayuda correo-dudoso">
+                        No se pudo comprobar que esa cuenta exista. Léesela letra por letra al
+                        comprador antes de generar.
+                      </span>
+                    }
                   }
                 </div>
               } @else {
@@ -3616,7 +3627,10 @@
                           una vez
                         }
                         @if (comprobandoCorreos()) {
-                          · comprobando que los dominios reciben correos…
+                          · comprobando que las cuentas existen…
+                        } @else if (correosSinComprobar() > 0) {
+                          · {{ correosSinComprobar() }} sin poder comprobar que la cuenta exista:
+                          revísalos a mano
                         }
                       </span>
                     } @else if (formCodigos.controls.buyerEmails.touched) {

@@ -1055,6 +1055,11 @@ export class Admin implements OnInit {
     this.listaCorreos().correos.filter((r) => r.problema),
   );
 
+  /** Los que el servidor miró pero cuyo servidor de correo no quiso contestar. */
+  readonly correosSinComprobar = computed(
+    () => this.listaCorreos().correos.filter((r) => !r.problema && r.buzon === null).length,
+  );
+
   /** Las membresías de «Preparar documento»: documentos al mes, sin conector. */
   readonly planesDocumentos = computed(() =>
     this.planes().filter((p) => p.kind === 'DOCUMENTO' && p.priceCents > 0),

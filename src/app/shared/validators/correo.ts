@@ -18,6 +18,12 @@ export interface RevisionDeCorreo {
   problema: string | null;
   /** El correo corregido, cuando se puede adivinar. */
   sugerencia: string | null;
+  /**
+   * Solo lo trae el servidor: true si el servidor de correo del dominio dijo
+   * que esa cuenta existe, false si dijo que no, null si no se pudo saber.
+   * Sin el campo es que el servidor aún no lo miró.
+   */
+  buzon?: boolean | null;
 }
 
 /** Dominios reales que se parecen a los grandes y no hay que «corregir». */

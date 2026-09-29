@@ -8,6 +8,7 @@ import {
   asegurarRutas,
   casaPrivada,
   rutaDeSeccion,
+  rutaDelPerfil,
   rutaPrivada,
 } from './core/router/rutas-privadas';
 import { AuthService } from './core/services/auth.service';
@@ -28,7 +29,11 @@ function puerta(pagina: Privada, legible: string): RedirectFunction {
       return router.createUrlTree(['/auth/login'], { queryParams: { returnUrl: vuelta } });
     }
     asegurarRutas();
-    return router.createUrlTree([rutaPrivada(pagina)], {
+    // Quien vuelve de autorizar Zotero o Mendeley viene a ver cómo fue, y el
+    // aviso está en las herramientas.
+    const deVuelta = pagina === 'perfil' && ('zotero' in queryParams || 'mendeley' in queryParams);
+    const destino = deVuelta ? rutaDelPerfil('herramientas') : rutaPrivada(pagina);
+    return router.createUrlTree([destino], {
       queryParams: queryParams as Params,
       fragment: fragment ?? undefined,
     });

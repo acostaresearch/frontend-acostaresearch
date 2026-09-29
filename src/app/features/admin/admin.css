@@ -1725,6 +1725,14 @@ td.acciones {
   color: var(--color-error);
 }
 
+.ayuda.correo-bien {
+  color: var(--color-exito);
+}
+
+.ayuda.correo-dudoso {
+  color: var(--color-aviso);
+}
+
 .enlace-sugerencia {
   padding: 0;
   margin-left: 4px;

@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   HostListener,
   OnInit,
   computed,
@@ -8,6 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -80,6 +82,7 @@ export class Perfil implements OnInit {
   private readonly usuarios = inject(UserService);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly destruir = inject(DestroyRef);
   protected readonly auth = inject(AuthService);
 
   readonly usuario = this.auth.user;
@@ -125,7 +128,7 @@ export class Perfil implements OnInit {
 
   /** Cambia de sección y vuelve arriba: la nueva empieza por su título. */
   irA(seccion: SeccionDelPerfil): void {
-    this.vista.seccion.set(seccion);
+    this.vista.ir(seccion);
     window.scrollTo({ top: 0 });
   }
 
@@ -199,6 +202,13 @@ export class Perfil implements OnInit {
     // El perfil se vuelve a pedir al servidor: si cambió el rol o se verificó
     // el correo desde otro dispositivo, aquí se ve al día.
     this.usuarios.me().subscribe({ next: (usuario) => this.auth.setUser(usuario) });
+
+    // La sección sale de la dirección, y se vuelve a leer cada vez que cambia:
+    // el componente es el mismo para todas y Angular lo reutiliza.
+    this.ruta.paramMap.pipe(takeUntilDestroyed(this.destruir)).subscribe((params) => {
+      const seccion = params.get('seccion') as SeccionDelPerfil | null;
+      if (seccion) this.vista.seccion.set(seccion);
+    });
 
     const ancla = this.ruta.snapshot.fragment;
     if (ancla) this.irAlAncla(ancla);

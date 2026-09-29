@@ -142,14 +142,14 @@ export class MiConector implements OnInit {
         !this.tieneHerramientas() &&
         this.vista.seccion() === 'herramientas'
       ) {
-        this.vista.seccion.set('avance');
+        this.vista.ir('avance', true);
       }
     });
 
     // Quien vuelve de autorizar Zotero o Mendeley viene a ver cómo fue: el
     // aviso está en las herramientas, así que se le llevan ahí.
     const params = this.ruta.snapshot.queryParamMap;
-    if (params.has('zotero') || params.has('mendeley')) this.vista.seccion.set('herramientas');
+    if (params.has('zotero') || params.has('mendeley')) this.vista.ir('herramientas', true);
 
     inject(DestroyRef).onDestroy(() => {
       this.vista.hayHerramientas.set(false);
