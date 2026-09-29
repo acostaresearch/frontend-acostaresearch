@@ -1,22 +1,25 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
 import { mensajeDeError } from '../../core/http/api-error';
-import { DocumentoEnlaceService } from '../../core/services/documento-enlace.service';
-import { DocumentoSubido } from '../../core/services/proyecto.service';
+import { DocumentoEnlaceService, EnlaceDeDocumento } from '../../core/services/documento-enlace.service';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 type Paso = 'comprobando' | 'elegir' | 'subiendo' | 'subido' | 'enlace-no-vale';
 
+const esPdf = (archivo: File) => /\.pdf$/i.test(archivo.name) || archivo.type === 'application/pdf';
+
 /**
  * Subir la tesis o el artículo escrito por su cuenta desde el enlace que da
- * Claude, para citarlo o humanizarlo.
+ * Claude, para citarlo o humanizarlo, y con él el reporte de IA de Turnitin.
  *
- * Misma forma que `subir-material`: sube el archivo y vuelve a la conversación.
- * Si ya había uno, se reemplaza, y el servidor conserva las citas y lo
- * humanizado de los párrafos que siguen igual.
+ * Misma forma que `subir-material`: sube los archivos y vuelve a la
+ * conversación. Si ya había un Word, se reemplaza, y el servidor conserva las
+ * citas y lo humanizado de los párrafos que siguen igual. El reporte (PDF) es
+ * lo que permite humanizar solo lo que Turnitin marcó.
  */
 @Component({
   selector: 'app-subir-documento',
@@ -30,10 +33,12 @@ export class SubirDocumento implements OnInit {
 
   readonly paso = signal<Paso>('comprobando');
   readonly error = signal<string | null>(null);
-  readonly actual = signal<DocumentoSubido | null>(null);
-  readonly mensaje = signal<string | null>(null);
-  readonly nombre = signal<string | null>(null);
+  readonly actual = signal<EnlaceDeDocumento['documento']>(null);
+  readonly mensajes = signal<string[]>([]);
+  readonly nombres = signal<string>('');
   readonly encima = signal(false);
+  /** Para recordarle el reporte si solo subió el Word. */
+  readonly subioReporte = signal(false);
 
   ngOnInit(): void {
     this.api.comprobar(this.token).subscribe({
@@ -50,10 +55,10 @@ export class SubirDocumento implements OnInit {
 
   elegir(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
+    const archivos = [...(entrada.files ?? [])];
     // Se vacía para que volver a elegir el mismo archivo, ya corregido, dispare el cambio.
     entrada.value = '';
-    if (archivo) this.subir(archivo);
+    this.subir(archivos);
   }
 
   arrastrar(evento: DragEvent, dentro: boolean): void {
@@ -64,28 +69,42 @@ export class SubirDocumento implements OnInit {
   soltar(evento: DragEvent): void {
     evento.preventDefault();
     this.encima.set(false);
-    const archivo = evento.dataTransfer?.files?.[0];
-    if (archivo) this.subir(archivo);
+    this.subir([...(evento.dataTransfer?.files ?? [])]);
   }
 
-  private subir(archivo: File): void {
-    if (this.paso() === 'subiendo') return;
+  /** El Word primero y el reporte después: así el mensaje del reporte ya dice cuántos párrafos marcó. */
+  private subir(archivos: File[]): void {
+    if (this.paso() === 'subiendo' || archivos.length === 0) return;
+    const enOrden = [...archivos.filter((a) => !esPdf(a)), ...archivos.filter(esPdf)].slice(0, 2);
 
     this.error.set(null);
-    this.mensaje.set(null);
-    this.nombre.set(archivo.name);
+    this.mensajes.set([]);
+    this.nombres.set(enOrden.map((a) => `«${a.name}»`).join(' y '));
     this.paso.set('subiendo');
 
-    this.api.subir(this.token, archivo).subscribe({
-      next: (subido) => {
-        this.mensaje.set(subido.mensaje);
+    // Cada archivo va por su cuenta: si el Word entra y el PDF no es el reporte,
+    // el Word ya está guardado y hay que decírselo.
+    from(enOrden)
+      .pipe(
+        concatMap((archivo) =>
+          this.api.subir(this.token, archivo).pipe(
+            map((s) => ({ archivo, ok: true, texto: s.mensaje })),
+            // Los mensajes del servidor están escritos para el tesista: «eso no es un .docx».
+            catchError((e: unknown) => of({ archivo, ok: false, texto: `«${archivo.name}» no se guardó: ${mensajeDeError(e)}` })),
+          ),
+        ),
+        toArray(),
+      )
+      .subscribe((resultados) => {
+        const bien = resultados.filter((r) => r.ok);
+        if (bien.length === 0) {
+          this.error.set(resultados.map((r) => r.texto).join(' '));
+          this.paso.set('elegir');
+          return;
+        }
+        this.mensajes.set(resultados.map((r) => r.texto).filter(Boolean));
+        this.subioReporte.update((antes) => antes || bien.some((r) => esPdf(r.archivo)) || Boolean(this.actual()?.reporteIa));
         this.paso.set('subido');
-      },
-      error: (e: unknown) => {
-        // Los mensajes del servidor están escritos para el tesista: «eso no es un .docx».
-        this.error.set(mensajeDeError(e));
-        this.paso.set('elegir');
-      },
-    });
+      });
   }
 }

@@ -16,9 +16,9 @@
       }
 
       @case ('subido') {
-        <h1>Tu documento ya está guardado</h1>
-        @if (mensaje()) {
-          <p>{{ mensaje() }}</p>
+        <h1>Ya está guardado</h1>
+        @for (mensaje of mensajes(); track $index) {
+          <p>{{ mensaje }}</p>
         }
 
         <div class="siguiente">
@@ -26,12 +26,20 @@
           leer para seguir con tu documento.
         </div>
 
-        <p class="nota">¿Te equivocaste de archivo? Sube el correcto aquí mismo.</p>
+        @if (!subioReporte()) {
+          <p class="nota">
+            ¿Lo quieres humanizar? Sube aquí también el reporte de IA de Turnitin en PDF: así se
+            reescribe solo lo que Turnitin marcó.
+          </p>
+        } @else {
+          <p class="nota">¿Te equivocaste de archivo? Sube el correcto aquí mismo.</p>
+        }
         <label class="boton secundario otro">
           Subir otro archivo
           <input
             type="file"
-            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            multiple
+            accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             (change)="elegir($event)"
           />
         </label>
@@ -44,6 +52,10 @@
           cambie se escribe dentro de tu mismo Word: tus tablas, tus figuras y tu formato no se
           tocan.
         </p>
+        <p>
+          <strong>Para humanizarlo</strong>, sube también el reporte de IA de Turnitin en PDF: se
+          reescribe solo lo que Turnitin marcó, de una vez. Puedes elegir los dos archivos juntos.
+        </p>
 
         @if (actual(); as doc) {
           <p class="nota">
@@ -51,6 +63,12 @@
             subes otro, lo reemplaza; se conservan las citas y lo humanizado de los párrafos que
             sigan igual.
           </p>
+          @if (doc.reporteIa; as rep) {
+            <p class="nota">
+              También tienes subido su reporte de IA de Turnitin ({{ rep.porcentaje ?? 'menos de 20' }} %).
+              Si Turnitin te dio uno nuevo, súbelo y reemplaza al anterior.
+            </p>
+          }
         }
 
         <label
@@ -63,23 +81,25 @@
         >
           <input
             type="file"
-            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            multiple
+            accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             [disabled]="paso() === 'subiendo'"
             (change)="elegir($event)"
           />
           @if (paso() === 'subiendo') {
-            <span class="zona-titulo">Subiendo y leyendo «{{ nombre() }}»…</span>
+            <span class="zona-titulo">Subiendo y leyendo {{ nombres() }}…</span>
           } @else {
-            <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
-            <span class="nota">Word (.docx) · hasta 40 MB</span>
+            <span class="zona-titulo"><strong>Elige tus archivos</strong> o arrástralos aquí</span>
+            <span class="nota">Word (.docx) · reporte de IA de Turnitin (.pdf) · hasta 40 MB</span>
           }
         </label>
 
         <app-aviso-flotante [(error)]="error" />
 
         <p class="nota">
-          ¿Lo tienes en PDF o en .doc antiguo? Ábrelo en Word y guárdalo como «Documento de Word
-          (.docx)».
+          Tu tesis tiene que ir en Word: si la tienes en PDF o en .doc antiguo, ábrela en Word y
+          guárdala como «Documento de Word (.docx)». El único PDF que se sube aquí es el reporte de
+          IA de Turnitin.
         </p>
       }
     }
