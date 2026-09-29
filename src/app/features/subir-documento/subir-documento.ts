@@ -14,12 +14,12 @@ const esPdf = (archivo: File) => /\.pdf$/i.test(archivo.name) || archivo.type ==
 
 /**
  * Subir la tesis o el artículo escrito por su cuenta desde el enlace que da
- * Claude, para citarlo o humanizarlo, y con él el reporte de IA de Turnitin.
+ * Claude, para citarlo o humanizarlo, y con él los reportes de Turnitin (de IA o de similitud).
  *
  * Misma forma que `subir-material`: sube los archivos y vuelve a la
  * conversación. Si ya había un Word, se reemplaza, y el servidor conserva las
  * citas y lo humanizado de los párrafos que siguen igual. El reporte (PDF) es
- * lo que permite humanizar solo lo que Turnitin marcó.
+ * lo que permite humanizar o bajar la similitud solo en lo que Turnitin marcó.
  */
 @Component({
   selector: 'app-subir-documento',
@@ -75,7 +75,7 @@ export class SubirDocumento implements OnInit {
   /** El Word primero y el reporte después: así el mensaje del reporte ya dice cuántos párrafos marcó. */
   private subir(archivos: File[]): void {
     if (this.paso() === 'subiendo' || archivos.length === 0) return;
-    const enOrden = [...archivos.filter((a) => !esPdf(a)), ...archivos.filter(esPdf)].slice(0, 2);
+    const enOrden = [...archivos.filter((a) => !esPdf(a)), ...archivos.filter(esPdf)].slice(0, 3);
 
     this.error.set(null);
     this.mensajes.set([]);

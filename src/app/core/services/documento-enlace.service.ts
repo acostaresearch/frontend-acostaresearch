@@ -17,7 +17,7 @@ export interface ReporteIaSubido {
 /** Si el enlace que dio Claude sigue valiendo, y qué documento hay ahora. */
 export interface EnlaceDeDocumento {
   caduca: string;
-  documento: (DocumentoSubido & { reporteIa?: ReporteIaSubido | null }) | null;
+  documento: (DocumentoSubido & { reporteIa?: ReporteIaSubido | null; reporteSimilitud?: ReporteIaSubido | null }) | null;
 }
 
 export interface DocumentoRecibido {
