@@ -79,6 +79,26 @@ export interface DocumentoSubido {
   humanizados: number;
 }
 
+/** Una fase a la que fue un capítulo del avance subido. */
+export interface FaseDelAvance {
+  code: string;
+  displayName: string;
+  palabras: number;
+  /** Verdadero = no se tocó: ya tenía con Claude un texto más largo que el del Word. */
+  conservada: boolean;
+  palabrasGuardadas?: number;
+}
+
+/** El avance que subió desde el panel, repartido entre sus fases. */
+export interface AvanceSubido {
+  nombre: string;
+  subidoAt: string;
+  palabras: number;
+  /** Palabras que no estaban bajo ningún capítulo reconocido: portada, índice, referencias. */
+  sinUbicar: number;
+  fases: FaseDelAvance[];
+}
+
 /** Una de las tesis de un método. Un comprador tiene una; un administrador, las que abra. */
 export interface TesisDelMetodo {
   id: string;
@@ -150,8 +170,10 @@ export interface Proyecto {
   esquema: CapituloDelDocumento[] | null;
   /** Nulo = no se ha dicho; vacío = todavía no tiene. */
   asesor: string | null;
-  /** El documento que subió para citar, si subió uno. */
+  /** El documento que subió por el enlace de Claude para citar o humanizar, si subió uno. */
   documento: DocumentoSubido | null;
+  /** El avance que subió desde el panel. Opcional porque un backend anterior no lo manda. */
+  avanceSubido?: AvanceSubido | null;
   /** La norma de citas con la que sale el Word. Si no la eligió nadie, APA 7. */
   norma: NormaDelProyecto;
   updatedAt: string | null;
@@ -211,35 +233,26 @@ export class ProyectoService {
     return this.descargar(productCode, 'bib', 'bibliografia.bib');
   }
 
-  /** Su documento con las citas y la lista de referencias puestas, en la norma del proyecto. */
-  documento(productCode: string): Observable<{ archivo: Blob; nombre: string }> {
-    return this.descargar(productCode, 'documento', 'documento-con-referencias.docx');
-  }
-
   /**
-   * Sube la tesis o el artículo que escribió por su cuenta, para que Claude lo cite.
+   * Sube el avance de su tesis, su artículo o su informe: cada capítulo que el
+   * servidor reconoce pasa a su fase, que queda «En curso».
    *
    * Va en crudo, sin `FormData`: es un solo archivo y no lo acompaña ningún
    * otro campo. El nombre viaja por cabecera solo para poder enseñárselo
-   * después. Devuelve el mensaje del servidor, que dice cuántos párrafos leyó y
-   * qué decirle a Claude.
+   * después. Devuelve el mensaje del servidor, que dice a qué fases fue.
+   *
+   * No es el Word que Claude cita o humaniza: ese se sube por el enlace que da
+   * Claude en la conversación.
    */
-  subirDocumento(productCode: string, archivo: File): Observable<string> {
+  subirAvance(productCode: string, archivo: File): Observable<string> {
     return this.http
-      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/documento`, archivo, {
+      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/avance`, archivo, {
         headers: {
           'Content-Type': 'application/octet-stream',
           'X-Nombre-Archivo': encodeURIComponent(archivo.name).slice(0, 200),
         },
       })
       .pipe(map((r) => r.message ?? ''));
-  }
-
-  /** Quita el documento subido y las citas que tenía. */
-  quitarDocumento(productCode: string): Observable<void> {
-    return this.http
-      .delete<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/documento`)
-      .pipe(map(() => undefined));
   }
 
   /**
@@ -322,7 +335,7 @@ export class ProyectoService {
    */
   private descargar(
     productCode: string,
-    ruta: 'word' | 'bib' | 'documento',
+    ruta: 'word' | 'bib',
     respaldo: string,
   ): Observable<{ archivo: Blob; nombre: string }> {
     return this.http

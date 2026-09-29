@@ -14,8 +14,8 @@ import {
 } from '../../core/services/proyecto.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
 
-/** Qué se está bajando: la tesis armada, la bibliografía o el documento que subió, ya citado. */
-type Formato = 'word' | 'bib' | 'documento';
+/** Qué se está bajando: la tesis armada o la bibliografía. */
+type Formato = 'word' | 'bib';
 
 /** Las veces que cada tesis puede empezar de cero. El tope lo pone el servidor; esto solo lo cuenta. */
 const MAX_REINICIOS = 3;
@@ -41,13 +41,10 @@ interface TextosDeVarias {
   trabajara: string;
   deEsta: string;
   borrar: string;
-  /**
-   * El recuadro de «ya lo tengo escrito». Va partido en dos porque en medio de
-   * la frase el Word va en negrita, y una sola cadena no la llevaría.
-   */
+  /** El recuadro para subir su avance: el título antes y después de subirlo, y qué hace. */
   subirTitulo: string;
-  subirAntes: string;
-  subirDespues: string;
+  subirTexto: string;
+  avanceTitulo: string;
 }
 
 const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
@@ -63,14 +60,12 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con ella',
     deEsta: 'de esta tesis. Tus otras tesis no se tocan.',
     borrar: 'Borrar esta tesis',
-    subirTitulo: '¿Ya tienes tu tesis escrita?',
-    subirAntes:
-      'Súbela tal cual. Claude la lee, busca las fuentes en tu Zotero, en la biblioteca ' +
-      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
-    subirDespues:
-      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
-      'Queda guardada en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
-      'tu portada y tu formato no se tocan.',
+    subirTitulo: '¿Ya avanzaste tu tesis por tu cuenta?',
+    subirTexto:
+      'Sube tu Word tal cual lo tienes. Cada capítulo que reconozcamos —Capítulo I, Marco ' +
+      'teórico, Metodología…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ' +
+      'ya escribiste. Cuando avances más, sube la versión nueva.',
+    avanceTitulo: 'El avance de tu tesis',
   },
   articulo: {
     titulo: 'Qué artículo usar',
@@ -84,14 +79,12 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con él',
     deEsta: 'de este artículo. Tus otros artículos no se tocan.',
     borrar: 'Borrar este artículo',
-    subirTitulo: '¿Ya tienes tu artículo escrito?',
-    subirAntes:
-      'Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca ' +
-      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
-    subirDespues:
-      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
-      'Queda guardado en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
-      'tu portada y tu formato no se tocan.',
+    subirTitulo: '¿Ya avanzaste tu artículo por tu cuenta?',
+    subirTexto:
+      'Sube tu Word tal cual lo tienes. Cada sección que reconozcamos —Introducción, Método, ' +
+      'Resultados…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ya ' +
+      'escribiste. Cuando avances más, sube la versión nueva.',
+    avanceTitulo: 'El avance de tu artículo',
   },
   informe: {
     titulo: 'Qué informe usar',
@@ -105,14 +98,12 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     trabajara: 'Claude trabajará con él',
     deEsta: 'de este informe. Tus otros informes no se tocan.',
     borrar: 'Borrar este informe',
-    subirTitulo: '¿Ya tienes tu informe escrito?',
-    subirAntes:
-      'Súbelo tal cual. Claude lo lee, busca las fuentes en tu Zotero, en la biblioteca ' +
-      'de Scopus y en OpenAlex, y pone cada cita y la lista de referencias',
-    subirDespues:
-      ', en la norma que te pidan. También puede humanizar su redacción párrafo a párrafo. ' +
-      'Queda guardado en tu proyecto para seguir otro día, y tus tablas, tus figuras, ' +
-      'tu portada y tu formato no se tocan.',
+    subirTitulo: '¿Ya avanzaste tu informe por tu cuenta?',
+    subirTexto:
+      'Sube tu Word tal cual lo tienes. Cada parte que reconozcamos —Introducción, Desarrollo, ' +
+      'Conclusiones…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ya ' +
+      'escribiste. Cuando avances más, sube la versión nueva.',
+    avanceTitulo: 'El avance de tu informe',
   },
 };
 
@@ -451,16 +442,10 @@ export class MiTesis implements OnInit {
     if (this.bajando()) return;
 
     this.bajando.set({ productCode: p.productCode, formato });
-    // El error del documento sale en su recuadro, que es donde se pulsó.
-    const aviso = formato === 'documento' ? this.errorDocumento : this.errorDescarga;
+    const aviso = this.errorDescarga;
     aviso.set(null);
 
-    const peticion =
-      formato === 'bib'
-        ? this.proyectos.bib(p.productCode)
-        : formato === 'documento'
-          ? this.proyectos.documento(p.productCode)
-          : this.proyectos.word(p.productCode);
+    const peticion = formato === 'bib' ? this.proyectos.bib(p.productCode) : this.proyectos.word(p.productCode);
 
     peticion.subscribe({
       next: ({ archivo, nombre }) => {
@@ -505,65 +490,40 @@ export class MiTesis implements OnInit {
     );
   }
 
-  // ── El documento que escribió por su cuenta ──────────────────────────────
+  // ── El avance que escribió por su cuenta ─────────────────────────────────
   //
-  // Lo sube aquí y Claude lo cita en la conversación. La norma ya no se elige
-  // en esta pantalla: se la pregunta Claude cuando va a citar, que es cuando
-  // hace falta, y el formato es el de su propio Word.
-  readonly subiendoDocumento = signal(false);
-  readonly documentoSubido = signal<string | null>(null);
-  readonly errorDocumento = signal<string | null>(null);
+  // Lo sube aquí y cada capítulo que el servidor reconoce pasa a su fase. El
+  // Word que Claude cita o humaniza es otro: ese se sube por el enlace que da
+  // Claude en la conversación, y por eso aquí no se habla de él.
+  readonly subiendoAvance = signal(false);
+  readonly avanceSubido = signal<string | null>(null);
+  readonly errorAvance = signal<string | null>(null);
 
-  elegirDocumento(evento: Event, p: Proyecto): void {
+  elegirAvance(evento: Event, p: Proyecto): void {
     const entrada = evento.target as HTMLInputElement;
     const archivo = entrada.files?.[0];
     // Se limpia el input para que elegir el MISMO archivo otra vez —tras
     // corregirlo en Word— vuelva a disparar el evento.
     entrada.value = '';
-    if (archivo) this.subirDocumento(archivo, p);
+    if (archivo) this.subirAvance(archivo, p);
   }
 
-  private subirDocumento(archivo: File, p: Proyecto): void {
-    this.subiendoDocumento.set(true);
-    this.documentoSubido.set(null);
-    this.errorDocumento.set(null);
+  private subirAvance(archivo: File, p: Proyecto): void {
+    this.subiendoAvance.set(true);
+    this.avanceSubido.set(null);
+    this.errorAvance.set(null);
 
-    this.proyectos.subirDocumento(p.productCode, archivo).subscribe({
+    this.proyectos.subirAvance(p.productCode, archivo).subscribe({
       next: (mensaje) => {
-        this.subiendoDocumento.set(false);
-        // El servidor dice cuántos párrafos leyó y qué decirle a Claude.
-        this.documentoSubido.set(mensaje || 'Listo. Ahora abre Claude y dile: «cita mi documento».');
+        this.subiendoAvance.set(false);
+        // El servidor dice a qué fases fue cada capítulo.
+        this.avanceSubido.set(mensaje || 'Listo. Tus fases ya muestran tu avance.');
         this.recargar();
       },
       error: (e) => {
-        this.subiendoDocumento.set(false);
-        // Mensajes escritos para el tesista —«eso es un .doc antiguo»—: tal cual.
-        this.errorDocumento.set(toApiError(e).message);
-      },
-    });
-  }
-
-  async quitarDocumento(p: Proyecto): Promise<void> {
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Quitar tu documento',
-      mensaje:
-        'Se borra el documento que subiste y las citas que Claude le puso. Tu Word original, el que ' +
-        'tienes en tu computadora, no se toca.',
-      confirmar: 'Quitarlo',
-    });
-    if (!seguro) return;
-
-    this.subiendoDocumento.set(true);
-    this.documentoSubido.set(null);
-    this.errorDocumento.set(null);
-    this.proyectos.quitarDocumento(p.productCode).subscribe({
-      next: () => {
-        this.subiendoDocumento.set(false);
-        this.recargar();
-      },
-      error: (e) => {
-        this.subiendoDocumento.set(false);
-        this.errorDocumento.set(toApiError(e).message);
+        this.subiendoAvance.set(false);
+        // Mensajes escritos para el tesista —«no reconocimos ningún capítulo»—: tal cual.
+        this.errorAvance.set(toApiError(e).message);
       },
     });
   }
@@ -626,7 +586,7 @@ export class MiTesis implements OnInit {
         this.borrando.set(false);
         this.abiertos.set(new Set());
         this.retomarAbierto.set(false);
-        this.documentoSubido.set(null);
+        this.avanceSubido.set(null);
         // Se queda en su pestaña: al vaciarse pasa a ser el último proyecto
         // tocado, y sin esto la pantalla saltaría al otro si tiene dos.
         this.elegido.set(p.productCode);
@@ -697,8 +657,8 @@ export class MiTesis implements OnInit {
     this.eligiendoRetomar.set(false);
     this.errorRetomar.set(null);
     this.copiado.set(false);
-    this.documentoSubido.set(null);
-    this.errorDocumento.set(null);
+    this.avanceSubido.set(null);
+    this.errorAvance.set(null);
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
     this.errorTesis.set(null);

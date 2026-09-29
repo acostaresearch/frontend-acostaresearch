@@ -633,13 +633,6 @@
   border-radius: 4px;
 }
 
-.plantilla-acciones {
-  display: flex;
-  flex-shrink: 0;
-  gap: 14px;
-  align-items: center;
-}
-
 .plantilla-nota {
   margin: 10px 0 0;
   font-size: 12.5px;
@@ -648,6 +641,21 @@
 
 .plantilla-nota.ok {
   color: var(--color-exito);
+}
+
+/* A qué fases fue cada capítulo del avance: se lee de un vistazo, sin viñetas. */
+.avance-fases {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-texto-suave);
+}
+
+.avance-fases strong {
+  font-weight: 600;
+  color: var(--color-texto);
 }
 
 .aviso-descarga {

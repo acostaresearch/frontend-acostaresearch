@@ -4,7 +4,7 @@
 <app-aviso-flotante [(error)]="errorTesis" [(aviso)]="avisoTesis" />
 <app-aviso-flotante [(error)]="errorRetomar" />
 <app-aviso-flotante [(error)]="errorBorrado" [(aviso)]="avisoBorrado" />
-<app-aviso-flotante [(error)]="errorDocumento" [(aviso)]="documentoSubido" />
+<app-aviso-flotante [(error)]="errorAvance" [(aviso)]="avanceSubido" />
 
 @if (proyecto(); as p) {
   <section class="tesis">
@@ -501,93 +501,55 @@
       <p class="aviso-descarga">{{ mensaje }}</p>
     } -->
 
-    <!-- Su tesis o su artículo escrito por fuera, para que Claude le ponga las
-         citas. Sustituye a la norma y a la plantilla: la norma se la pregunta
-         Claude en la conversación, y el formato es el de su propio Word, que
-         sale tal como entró. -->
+    <!-- El avance que escribió por su cuenta: cada capítulo reconocido pasa a su
+         fase. Humanizar o citar un Word va por el enlace que da Claude en la
+         conversación, y por eso aquí no se nombra. -->
     <div class="caja plantilla documento">
-      @if (p.documento; as doc) {
-        <div class="caja-fila">
-          <div>
-            <p class="caja-titulo">Tu documento, guardado en tu proyecto</p>
+      <div class="caja-fila">
+        <div>
+          @if (p.avanceSubido; as av) {
+            <p class="caja-titulo">{{ textos(p).avanceTitulo }}</p>
             <p class="caja-texto">
-              <span class="plantilla-archivo">{{ doc.nombre }}</span>
-              {{ doc.parrafos }} párrafos, subido el {{ doc.subidoAt | date: 'd MMM y' }}.
-              @if (doc.citados > 0) {
-                Claude ya puso citas en {{ doc.citados }} párrafos.
-              }
-              @if (doc.humanizados > 0) {
-                Humanizó {{ doc.humanizados }} párrafos.
-              }
-              @if (doc.citados === 0 && doc.humanizados === 0) {
-                Todavía sin cambios.
-              }
+              <span class="plantilla-archivo">{{ av.nombre }}</span>
+              subido el {{ av.subidoAt | date: 'd MMM y' }}.
             </p>
+            <ul class="avance-fases">
+              @for (f of av.fases; track f.code) {
+                <li>
+                  <strong>{{ f.displayName }}</strong>
+                  @if (f.conservada) {
+                    — se conservó lo que ya tenías con Claude ({{ f.palabrasGuardadas }} palabras).
+                  } @else {
+                    — {{ f.palabras }} palabras.
+                  }
+                </li>
+              }
+            </ul>
             <p class="plantilla-nota">
-              Abre Claude y dile <strong>«cita mi documento»</strong> o
-              <strong>«humaniza mi documento»</strong>: trabaja sobre este Word, no hace falta
-              adjuntarlo. Todo lo que apruebes se guarda aquí, y al descargarlo sale completo y con su
-              mismo formato.
+              Abre Claude y dile <strong>«sigamos»</strong>: seguirá desde lo que ya escribiste.
             </p>
-          </div>
-          <div class="plantilla-acciones">
-            <button
-              type="button"
-              class="boton"
-              [disabled]="bajando() !== null"
-              (click)="descargar(p, 'documento')"
-            >
-              {{ seEstaBajando(p, 'documento') ? 'Armando…' : 'Descargar mi documento' }}
-            </button>
-            <label class="boton secundario" [class.inactivo]="subiendoDocumento()">
-              Cambiarlo
-              <input
-                type="file"
-                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                hidden
-                [disabled]="subiendoDocumento()"
-                (change)="elegirDocumento($event, p)"
-              />
-            </label>
-            <button
-              type="button"
-              class="boton enlace"
-              [disabled]="subiendoDocumento()"
-              (click)="quitarDocumento(p)"
-            >
-              Quitarlo
-            </button>
-          </div>
-        </div>
-      } @else {
-        <div class="caja-fila">
-          <div>
-            <!-- Las palabras cambian con lo que se escribe: al tesista se le habla de
-                 su tesis, y a quien escribe un artículo o un informe, del suyo. -->
+          } @else {
             <p class="caja-titulo">{{ textos(p).subirTitulo }}</p>
-            <p class="caja-texto">
-              {{ textos(p).subirAntes }}
-              <strong>dentro de tu mismo Word</strong>{{ textos(p).subirDespues }}
-            </p>
-          </div>
-          <!-- El <label> hace de botón porque el <input type="file"> va oculto:
-               es la única forma de que abra el diálogo sin enseñar el control
-               gris del navegador. -->
-          <label class="boton secundario" [class.inactivo]="subiendoDocumento()">
-            Subir mi documento
-            <input
-              type="file"
-              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              hidden
-              [disabled]="subiendoDocumento()"
-              (change)="elegirDocumento($event, p)"
-            />
-          </label>
+            <p class="caja-texto">{{ textos(p).subirTexto }}</p>
+          }
         </div>
-      }
+        <!-- El <label> hace de botón porque el <input type="file"> va oculto:
+             es la única forma de que abra el diálogo sin enseñar el control
+             gris del navegador. -->
+        <label class="boton secundario" [class.inactivo]="subiendoAvance()">
+          {{ p.avanceSubido ? 'Subir una versión nueva' : 'Subir mi avance' }}
+          <input
+            type="file"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            hidden
+            [disabled]="subiendoAvance()"
+            (change)="elegirAvance($event, p)"
+          />
+        </label>
+      </div>
 
-      @if (subiendoDocumento()) {
-        <p class="plantilla-nota">Leyendo tu documento…</p>
+      @if (subiendoAvance()) {
+        <p class="plantilla-nota">Leyendo tu avance…</p>
       }
     </div>
 
