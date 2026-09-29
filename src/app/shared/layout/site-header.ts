@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TemaService } from '../../core/services/tema.service';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
 
 /**
  * Cabecera del sitio. Cambia según haya sesión o no: al visitante le ofrece
@@ -17,7 +18,7 @@ import { TemaService } from '../../core/services/tema.service';
  */
 @Component({
   selector: 'app-site-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [PrivadaPipe, RouterLink, RouterLinkActive],
   templateUrl: './site-header.html',
   styleUrl: './site-header.css',
 })

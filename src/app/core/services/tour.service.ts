@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from './auth.service';
+import { rutaReal } from '../router/rutas-privadas';
 
 /** Un alto del recorrido: a qué se le hace foco y qué se cuenta de ello. */
 export interface PasoDelTour {
@@ -142,9 +143,12 @@ export class TourService {
    */
   readonly navegando = signal(false);
 
-  /** Si la página de ahora es esa. Se compara sin parámetros ni anclas. */
+  /**
+   * Si la página de ahora es esa. Se compara sin parámetros ni anclas, y con
+   * la dirección de esta sesión: los pasos dicen `/perfil`, la barra no.
+   */
   enLaRuta(ruta: string): boolean {
-    return this.router.url.split(/[?#]/)[0] === ruta;
+    return this.router.url.split(/[?#]/)[0] === rutaReal(ruta);
   }
 
   /**

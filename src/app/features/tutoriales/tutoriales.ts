@@ -7,6 +7,7 @@ import { TROPIEZOS } from '../../shared/contenido/tutoriales';
 import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
 
 /** Un bloque de la lista: su rótulo y los videos que lleva, con su posición. */
 interface Grupo {
@@ -38,7 +39,7 @@ interface Grupo {
  */
 @Component({
   selector: 'app-tutoriales',
-  imports: [RouterLink, SiteHeader, SiteFooter],
+  imports: [PrivadaPipe, RouterLink, SiteHeader, SiteFooter],
   templateUrl: './tutoriales.html',
   styleUrl: './tutoriales.css',
 })

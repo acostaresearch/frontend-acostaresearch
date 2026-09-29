@@ -35,7 +35,7 @@
              un visitante sería mandarlo al formulario de acceso desde el menú.
              A él se le vende desde /planes, que es pública. -->
         <!-- @if (auth.isAuthenticated()) {
-          <a routerLink="/preparar-documento" routerLinkActive="activo">Preparar documento</a>
+          <a [routerLink]="'preparar' | privada" routerLinkActive="activo">Preparar documento</a>
         } -->
         <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
         <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
@@ -50,9 +50,9 @@
                datos y su contraseña están en la pestaña «Cuentas» del panel, que
                es el mismo formulario que ve cualquiera en su perfil. -->
           @if (auth.hasRole('ADMIN')) {
-            <a class="boton secundario" routerLink="/admin" routerLinkActive="activo">Administrar</a>
+            <a class="boton secundario" [routerLink]="'admin' | privada" routerLinkActive="activo">Administrar</a>
           } @else {
-            <a class="boton secundario" routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
+            <a class="boton secundario" [routerLink]="'perfil' | privada" routerLinkActive="activo">Mi perfil</a>
           }
           <button type="button" class="enlace-salir" (click)="salir()">Cerrar sesión</button>
         } @else {

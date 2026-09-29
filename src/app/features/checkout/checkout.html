@@ -117,7 +117,7 @@
         tamaño que sean, en los dos servicios.
       </p>
       <div class="botones">
-        <a class="boton" routerLink="/preparar-documento">Preparar mi primer documento</a>
+        <a class="boton" [routerLink]="'preparar' | privada">Preparar mi primer documento</a>
       </div>
     </section>
   } @else if (bolsaComprada(); as pack) {
@@ -169,7 +169,7 @@
             </div>
             <p class="canje-pie">
               Pégala en Claude: Configuración → Conectores → Añadir personalizado. También te la
-              enviamos por correo. <a routerLink="/perfil">Ir a mi perfil</a>
+              enviamos por correo. <a [routerLink]="'perfil' | privada">Ir a mi perfil</a>
             </p>
           } @else {
             <!-- Una membresía de «Preparar documento»: no hay URL que copiar ni
@@ -187,7 +187,7 @@
               académico, traducirlo o sacarle el resumen.
             </p>
             <p class="canje-pie">
-              <a routerLink="/preparar-documento">Preparar mi primer documento</a>
+              <a [routerLink]="'preparar' | privada">Preparar mi primer documento</a>
             </p>
           }
         } @else {

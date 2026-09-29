@@ -25,6 +25,8 @@ import {
   PagoRevisado,
 } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
+import { cifrarSeccion, rutaDeSeccion } from '../../core/router/rutas-privadas';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TemaService } from '../../core/services/tema.service';
@@ -187,9 +189,9 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
 };
 
 /**
- * La dirección de cada sección: /admin/<esto>. Los nombres internos se quedan
- * como estaban —«grupos», «corpus», «pruebas»— y hacia fuera se dicen como en
- * la barra lateral. Cambiar uno de aquí rompe los enlaces guardados.
+ * El nombre de cada sección hacia fuera. En la barra no se ve tal cual: se
+ * cifra con la clave de la sesión (ver `rutas-privadas.ts`), así que cambiar
+ * uno de aquí solo cambia la cifra, y esa ya cambia con cada ingreso.
  */
 const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
@@ -211,10 +213,12 @@ const DIRECCIONES: Record<Seccion, string> = {
   asesores: 'asesores',
 };
 
-/** Al revés: de la dirección a la sección. */
-const SECCION_DE = Object.fromEntries(
-  Object.entries(DIRECCIONES).map(([seccion, direccion]) => [direccion, seccion]),
-) as Record<string, Seccion>;
+/** Al revés: de la dirección cifrada a la sección. Depende de la sesión. */
+function seccionDe(cifrada: string): Seccion | undefined {
+  return (Object.keys(DIRECCIONES) as Seccion[]).find(
+    (seccion) => cifrarSeccion(DIRECCIONES[seccion]) === cifrada,
+  );
+}
 
 /** Un destino de la barra lateral. */
 interface EntradaDelMenu {
@@ -458,6 +462,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
 @Component({
   selector: 'app-admin',
   imports: [
+    PrivadaPipe,
     ReactiveFormsModule,
     DatePipe,
     DecimalPipe,
@@ -2893,12 +2898,12 @@ export class Admin implements OnInit {
 
   /** Cambia de sección navegando: la dirección es la que manda. */
   ir(seccion: Seccion): void {
-    void this.router.navigate(['/admin', DIRECCIONES[seccion]]);
+    void this.router.navigateByUrl(this.direccion(seccion));
   }
 
   /** La dirección de una sección, para los `routerLink` de la barra lateral. */
   direccion(seccion: Seccion): string {
-    return `/admin/${DIRECCIONES[seccion]}`;
+    return rutaDeSeccion(DIRECCIONES[seccion]);
   }
 
   /**
@@ -2906,9 +2911,9 @@ export class Admin implements OnInit {
    * escrito— lleva al resumen sin dejar la mala en el historial.
    */
   private leerSeccion(direccion: string | null): void {
-    const seccion = direccion ? SECCION_DE[direccion] : undefined;
+    const seccion = direccion ? seccionDe(direccion) : undefined;
     if (!seccion) {
-      void this.router.navigate(['/admin', 'resumen'], { replaceUrl: true });
+      void this.router.navigateByUrl(this.direccion('resumen'), { replaceUrl: true });
       return;
     }
     this.titulo.setTitle(`${PAGINAS[seccion].titulo} · Administración · Acosta Research`);

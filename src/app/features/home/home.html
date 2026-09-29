@@ -15,7 +15,7 @@
           Hola, <b>{{ nombre() }}</b
           >. Entraste como administrador: las ventas, las cuentas y los grupos están en el panel.
         </p>
-        <a routerLink="/admin">Ir al panel de administración</a>
+        <a [routerLink]="'admin' | privada">Ir al panel de administración</a>
       </section>
     }
     @case ('cliente') {
@@ -24,7 +24,7 @@
           Hola, <b>{{ nombre() }}</b
           >. Tu conector y tus compras están en tu perfil.
         </p>
-        <a routerLink="/perfil">Ver mi conector y mis datos</a>
+        <a [routerLink]="'perfil' | privada">Ver mi conector y mis datos</a>
       </section>
     }
     @case ('nuevo') {

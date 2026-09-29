@@ -87,7 +87,7 @@
       <h3>Tu cuenta</h3>
       <a routerLink="/auth/registro">Crear cuenta</a>
       <a routerLink="/auth/login">Iniciar sesión</a>
-      <a routerLink="/perfil">Mi panel</a>
+      <a [routerLink]="'perfil' | privada">Mi panel</a>
       <!-- En el pie y no en la barra de arriba: la barra ya lleva cinco
            enlaces y este no es para elegir qué comprar, es para cuando ya
            compraste y no sabes seguir. Aquí es donde se busca eso. -->

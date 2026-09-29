@@ -16,6 +16,7 @@ import { filter } from 'rxjs';
 
 import { PasoDelTour, TourService } from '../../core/services/tour.service';
 import { escalaDePagina } from './escala';
+import { rutaReal } from '../../core/router/rutas-privadas';
 
 /** Las medidas del foco, en coordenadas de la ventana. */
 interface Recuadro {
@@ -213,7 +214,7 @@ export class Tour implements OnDestroy {
 
     this.tour.navegando.set(true);
 
-    void this.router.navigateByUrl(paso.ruta!).then((llego) => {
+    void this.router.navigateByUrl(rutaReal(paso.ruta!)).then((llego) => {
       this.tour.navegando.set(false);
 
       // Una ruta protegida puede devolver a otra parte —el guardián de sesión,

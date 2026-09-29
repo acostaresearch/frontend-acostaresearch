@@ -5,6 +5,7 @@ import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { LineasNoche } from './lineas-noche';
 
 import { environment } from '../../../environments/environment';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
 
 /** Un perfil público del pie, con su icono. */
 interface Red {
@@ -18,7 +19,7 @@ interface Red {
 
 @Component({
   selector: 'app-site-footer',
-  imports: [RouterLink, LineasNoche],
+  imports: [PrivadaPipe, RouterLink, LineasNoche],
   templateUrl: './site-footer.html',
   styleUrl: './site-footer.css',
 })

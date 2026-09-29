@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ProgresoDeArranque } from '../../core/models/payment.model';
+import { rutaPrivada } from '../../core/router/rutas-privadas';
 
 /** Un paso de la puesta en marcha, ya resuelto con su estado. */
 interface Paso {
@@ -45,7 +46,7 @@ export class PasosDeArranque {
         titulo: 'Tu cuenta está lista',
         texto: 'Correo confirmado.',
         hecho: p.cuenta,
-        accion: { texto: 'Confirmar mi correo', ruta: '/perfil' },
+        accion: { texto: 'Confirmar mi correo', ruta: rutaPrivada('perfil') },
       },
       {
         titulo: 'Tienes acceso activo',

@@ -41,6 +41,7 @@ import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
 
 /**
  * Cuántos acentos hay para las tarjetas de plan.
@@ -79,7 +80,7 @@ function soles(cents: number): string {
 }
 @Component({
   selector: 'app-checkout',
-  imports: [
+  imports: [PrivadaPipe, 
     AvisoFlotante,
     RouterLink,
     ReactiveFormsModule,

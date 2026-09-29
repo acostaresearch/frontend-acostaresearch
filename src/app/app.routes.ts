@@ -1,8 +1,39 @@
 import { inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
+import { Params, RedirectFunction, Router, Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import {
+  Privada,
+  asegurarRutas,
+  casaPrivada,
+  cifrarSeccion,
+  rutaPrivada,
+} from './core/router/rutas-privadas';
+import { AuthService } from './core/services/auth.service';
+
+/**
+ * La puerta de una página privada: /perfil y /preparar-documento no se abren
+ * nunca, llevan a la dirección de esta sesión (ver `rutas-privadas.ts`). Al ser
+ * `redirectTo`, la puerta no se queda en el historial. Sin sesión, a entrar, y
+ * al volver de allí se pasa otra vez por la puerta con las claves ya nuevas.
+ */
+function puerta(pagina: Privada, legible: string): RedirectFunction {
+  return ({ queryParams, fragment }) => {
+    const router = inject(Router);
+    if (!inject(AuthService).isAuthenticated()) {
+      const vuelta = router.serializeUrl(
+        router.createUrlTree([legible], { queryParams: queryParams as Params }),
+      );
+      return router.createUrlTree(['/auth/login'], { queryParams: { returnUrl: vuelta } });
+    }
+    asegurarRutas();
+    return router.createUrlTree([rutaPrivada(pagina)], {
+      queryParams: queryParams as Params,
+      fragment: fragment ?? undefined,
+    });
+  };
+}
 
 
 export const routes: Routes = [
@@ -97,8 +128,9 @@ export const routes: Routes = [
     pathMatch: 'full',
     redirectTo: () => inject(Router).parseUrl('/#mi-panel'),
   },
+  { path: 'perfil', pathMatch: 'full', redirectTo: puerta('perfil', '/perfil') },
   {
-    path: 'perfil',
+    matcher: casaPrivada('perfil'),
     canActivate: [authGuard],
     title: 'Mi perfil · Acosta Research',
     loadComponent: () => import('./features/perfil/perfil').then((m) => m.Perfil),
@@ -177,6 +209,11 @@ export const routes: Routes = [
    */
   {
     path: 'preparar-documento',
+    pathMatch: 'full',
+    redirectTo: puerta('preparar', '/preparar-documento'),
+  },
+  {
+    matcher: casaPrivada('preparar'),
     canActivate: [authGuard],
     title: 'Preparar documento · Acosta Research',
     loadComponent: () => import('./features/preparar/preparar').then((m) => m.Preparar),
@@ -254,19 +291,20 @@ export const routes: Routes = [
     loadComponent: () => import('./features/prueba/prueba').then((m) => m.Prueba),
   },
   /**
-   * El panel de administración, una dirección por sección: /admin/accesos,
-   * /admin/licencias… Así recargar deja en la misma sección y un enlace lleva
-   * directo a ella. /admin a secas va al resumen.
+   * El panel de administración, una dirección por sección: /<clave>/<sección
+   * cifrada>, las dos sorteadas en cada ingreso (ver `rutas-privadas.ts`).
+   * Recargar deja en la misma sección; la clave a secas va al resumen. /admin
+   * ya no existe: cae en el comodín como cualquier dirección inventada.
    *
    * Todas las secciones son el MISMO componente: al cambiar de una a otra solo
    * cambia el parámetro y Angular lo reutiliza, sin volver a pedir los datos.
    * Una sección que no existe la corrige el propio componente (ver `Admin`).
    */
   {
-    path: 'admin',
+    matcher: casaPrivada('admin', true),
     canActivate: [authGuard, roleGuard('ADMIN')],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'resumen' },
+      { path: '', pathMatch: 'full', redirectTo: () => cifrarSeccion('resumen') },
       {
         path: ':seccion',
         title: 'Administración · Acosta Research',

@@ -184,7 +184,7 @@
         <a class="boton oro grande" [href]="whatsappUrl" target="_blank" rel="noopener">
           WhatsApp · +51 923 095 940
         </a>
-        <a class="boton claro grande" routerLink="/perfil" [queryParams]="{ ver: 'metodo' }">
+        <a class="boton claro grande" [routerLink]="'perfil' | privada" [queryParams]="{ ver: 'metodo' }">
           Ir a mi conector
         </a>
       </div>

@@ -24,6 +24,7 @@ import { ResenaEmergenteService } from '../../core/services/resena-emergente.ser
 import { VideoDeResena } from '../../shared/resenas/video-resena';
 import { Contador } from './contador';
 import { HeroNetwork } from './hero-network/hero-network';
+import { PrivadaPipe } from '../../core/router/privada.pipe';
 
 /**
  * Inicio.
@@ -39,7 +40,7 @@ import { HeroNetwork } from './hero-network/hero-network';
  */
 @Component({
   selector: 'app-home',
-  imports: [
+  imports: [PrivadaPipe, 
     RouterLink,
     SiteHeader,
     SiteFooter,
