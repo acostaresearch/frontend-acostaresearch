@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 
 import { toApiError } from '../../core/http/api-error';
 import { License } from '../../core/models/payment.model';
@@ -64,7 +64,8 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     subirTexto:
       'Sube tu Word tal cual lo tienes. Cada capítulo que reconozcamos —Capítulo I, Marco ' +
       'teórico, Metodología…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ' +
-      'ya escribiste. Cuando avances más, sube la versión nueva.',
+      'ya escribiste. Se irá actualizando con lo que ' +
+      'trabajes con Claude, y lo descargas cuando quieras.',
     avanceTitulo: 'El avance de tu tesis',
   },
   articulo: {
@@ -83,7 +84,8 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     subirTexto:
       'Sube tu Word tal cual lo tienes. Cada sección que reconozcamos —Introducción, Método, ' +
       'Resultados…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ya ' +
-      'escribiste. Cuando avances más, sube la versión nueva.',
+      'escribiste. Se irá actualizando con lo que ' +
+      'trabajes con Claude, y lo descargas cuando quieras.',
     avanceTitulo: 'El avance de tu artículo',
   },
   informe: {
@@ -102,7 +104,8 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
     subirTexto:
       'Sube tu Word tal cual lo tienes. Cada parte que reconozcamos —Introducción, Desarrollo, ' +
       'Conclusiones…— pasa a su fase y queda «En curso», y Claude sigue desde lo que ya ' +
-      'escribiste. Cuando avances más, sube la versión nueva.',
+      'escribiste. Se irá actualizando con lo que ' +
+      'trabajes con Claude, y lo descargas cuando quieras.',
     avanceTitulo: 'El avance de tu informe',
   },
 };
@@ -422,6 +425,21 @@ export class MiTesis implements OnInit {
   /** Palabras escritas en todo el proyecto. Cero = no hay nada que descargar. */
   palabrasTotales(p: Proyecto): number {
     return p.etapas.reduce((suma, e) => suma + (e.palabras ?? 0), 0);
+  }
+
+  /**
+   * Las fases que ya tienen texto y salen en el Word, en el orden del método.
+   *
+   * Sale de las fases y no de lo que se subió: así el recuadro dice lo que hay
+   * hoy, también lo que Claude guardó después de subir el avance.
+   */
+  capitulosDelAvance(p: Proyecto): EtapaDelProyecto[] {
+    return p.etapas.filter((e) => !e.apoyo && e.enDocumento && (e.palabras ?? 0) > 0);
+  }
+
+  /** Las palabras que salen en el Word: sin la propuesta de tema ni el cuestionario. */
+  palabrasDelWord(p: Proyecto): number {
+    return this.capitulosDelAvance(p).reduce((suma, e) => suma + (e.palabras ?? 0), 0);
   }
 
   /** ¿Se está armando este archivo de este proyecto? */
@@ -759,6 +777,18 @@ export class MiTesis implements OnInit {
         this.errorTesis.set(toApiError(e).message);
       },
     });
+  }
+
+  /**
+   * Al volver a esta pestaña, lo que haya guardado Claude mientras tanto.
+   *
+   * Se trabaja en Claude y se vuelve aquí a ver el avance o a descargarlo: sin
+   * esto, el recuadro seguía diciendo lo de cuando se abrió la página y el
+   * capítulo recién guardado no aparecía hasta recargar.
+   */
+  @HostListener('document:visibilitychange')
+  alVolver(): void {
+    if (document.visibilityState === 'visible' && !this.cargando()) this.recargar();
   }
 
   /** Vuelve a pedir los proyectos, para que la pantalla diga lo que hay. */

@@ -501,53 +501,73 @@
       <p class="aviso-descarga">{{ mensaje }}</p>
     } -->
 
-    <!-- El avance que escribió por su cuenta: cada capítulo reconocido pasa a su
-         fase. Humanizar o citar un Word va por el enlace que da Claude en la
-         conversación, y por eso aquí no se nombra. -->
+    <!-- Su avance: lo sube aquí, cada capítulo reconocido pasa a su fase, y lo que
+         después guarda Claude se suma solo. La descarga es el Word armado con lo
+         que hay HOY en sus fases, no el archivo que subió. Humanizar o citar un
+         Word va por el enlace que da Claude en la conversación. -->
     <div class="caja plantilla documento">
       <div class="caja-fila">
         <div>
-          @if (p.avanceSubido; as av) {
+          @if (capitulosDelAvance(p).length > 0) {
             <p class="caja-titulo">{{ textos(p).avanceTitulo }}</p>
             <p class="caja-texto">
-              <span class="plantilla-archivo">{{ av.nombre }}</span>
-              subido el {{ av.subidoAt | date: 'd MMM y' }}.
+              {{ palabrasDelWord(p) }} palabras hasta hoy.
+              @if (p.avanceSubido; as av) {
+                Subiste <span class="plantilla-archivo">{{ av.nombre }}</span> el
+                {{ av.subidoAt | date: 'd MMM y' }}, y
+              } @else {
+                Lo que
+              }
+              trabajas con Claude se va sumando aquí solo.
             </p>
             <ul class="avance-fases">
-              @for (f of av.fases; track f.code) {
+              @for (f of capitulosDelAvance(p); track f.code) {
                 <li>
-                  <strong>{{ f.displayName }}</strong>
-                  @if (f.conservada) {
-                    — se conservó lo que ya tenías con Claude ({{ f.palabrasGuardadas }} palabras).
-                  } @else {
-                    — {{ f.palabras }} palabras.
-                  }
+                  <strong>{{ f.displayName }}</strong> — {{ f.palabras }} palabras ·
+                  {{ etiqueta(f.estado) }}
                 </li>
               }
             </ul>
             <p class="plantilla-nota">
-              Abre Claude y dile <strong>«sigamos»</strong>: seguirá desde lo que ya escribiste.
+              Descárgalo cuando quieras: sale con portada, índice, los capítulos en orden y las
+              referencias en {{ p.norma.nombre }}. Para seguir, abre Claude y dile
+              <strong>«sigamos»</strong>.
             </p>
           } @else {
             <p class="caja-titulo">{{ textos(p).subirTitulo }}</p>
             <p class="caja-texto">{{ textos(p).subirTexto }}</p>
           }
         </div>
-        <!-- El <label> hace de botón porque el <input type="file"> va oculto:
-             es la única forma de que abra el diálogo sin enseñar el control
-             gris del navegador. -->
-        <label class="boton secundario" [class.inactivo]="subiendoAvance()">
-          {{ p.avanceSubido ? 'Subir una versión nueva' : 'Subir mi avance' }}
-          <input
-            type="file"
-            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            hidden
-            [disabled]="subiendoAvance()"
-            (change)="elegirAvance($event, p)"
-          />
-        </label>
+        <div class="avance-acciones">
+          @if (capitulosDelAvance(p).length > 0) {
+            <button
+              type="button"
+              class="boton"
+              [disabled]="bajando() !== null"
+              (click)="descargar(p, 'word')"
+            >
+              {{ seEstaBajando(p, 'word') ? 'Armando tu avance…' : 'Descargar mi avance' }}
+            </button>
+          }
+          <!-- El <label> hace de botón porque el <input type="file"> va oculto:
+               es la única forma de que abra el diálogo sin enseñar el control
+               gris del navegador. -->
+          <label class="boton secundario" [class.inactivo]="subiendoAvance()">
+            {{ capitulosDelAvance(p).length > 0 ? 'Subir una versión nueva' : 'Subir mi avance' }}
+            <input
+              type="file"
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              hidden
+              [disabled]="subiendoAvance()"
+              (change)="elegirAvance($event, p)"
+            />
+          </label>
+        </div>
       </div>
 
+      @if (errorDescarga(); as mensaje) {
+        <p class="aviso-descarga">{{ mensaje }}</p>
+      }
       @if (subiendoAvance()) {
         <p class="plantilla-nota">Leyendo tu avance…</p>
       }
