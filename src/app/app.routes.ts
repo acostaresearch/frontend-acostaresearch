@@ -7,7 +7,7 @@ import {
   Privada,
   asegurarRutas,
   casaPrivada,
-  cifrarSeccion,
+  rutaDeSeccion,
   rutaPrivada,
 } from './core/router/rutas-privadas';
 import { AuthService } from './core/services/auth.service';
@@ -291,26 +291,30 @@ export const routes: Routes = [
     loadComponent: () => import('./features/prueba/prueba').then((m) => m.Prueba),
   },
   /**
-   * El panel de administración, una dirección por sección: /<clave>/<sección
-   * cifrada>, las dos sorteadas en cada ingreso (ver `rutas-privadas.ts`).
-   * Recargar deja en la misma sección; la clave a secas va al resumen. /admin
-   * ya no existe: cae en el comodín como cualquier dirección inventada.
+   * El panel de administración, una dirección por sección: /admin/<código>,
+   * con el código sacado de la clave que se sortea en cada ingreso (ver
+   * `rutas-privadas.ts`). Recargar deja en la misma sección. /admin a secas es
+   * la puerta: al administrador lo lleva al resumen y a cualquier otro, a la
+   * portada, igual que una dirección inventada.
    *
    * Todas las secciones son el MISMO componente: al cambiar de una a otra solo
    * cambia el parámetro y Angular lo reutiliza, sin volver a pedir los datos.
    * Una sección que no existe la corrige el propio componente (ver `Admin`).
    */
   {
-    matcher: casaPrivada('admin', true),
+    path: 'admin',
+    pathMatch: 'full',
+    redirectTo: () => {
+      if (!inject(AuthService).hasRole('ADMIN')) return '/';
+      asegurarRutas();
+      return rutaDeSeccion('resumen');
+    },
+  },
+  {
+    matcher: casaPrivada('admin'),
     canActivate: [authGuard, roleGuard('ADMIN')],
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: () => cifrarSeccion('resumen') },
-      {
-        path: ':seccion',
-        title: 'Administración · Acosta Research',
-        loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
-      },
-    ],
+    title: 'Administración · Acosta Research',
+    loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
   },
   { path: '**', redirectTo: '' },
 ];

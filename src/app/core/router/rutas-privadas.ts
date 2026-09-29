@@ -4,19 +4,19 @@ import { UrlMatcher, UrlSegment } from '@angular/router';
 /**
  * Las direcciones de las páginas con sesión, cambiadas por cada ingreso.
  *
- * El perfil, «Preparar documento» y el panel de administración no se ven como
- * /perfil o /admin: cada vez que alguien entra se sortea una dirección nueva
- * para cada una —/k7Qx9mZp2LwA— y la de antes deja de llevar a ningún sitio.
- * Dentro del panel, también la sección va cifrada con la clave de esa sesión.
+ * El perfil, «Preparar documento» y el panel de administración llevan detrás
+ * de su nombre una clave que se sortea en cada ingreso —/perfil/fDvxinjld3Wv—,
+ * y la de antes deja de llevar a ningún sitio. En el panel cada sección tiene
+ * su propio código —/admin/Qa81LmZr0pXe—, sacado de la clave de esa sesión.
  *
  * Esto NO es la cerradura. Quien protege los datos sigue siendo el backend,
  * que mira la sesión y el rol en cada petición, y los guards de la web. Esto
- * solo quita de la vista qué páginas hay: /admin ya no existe y cae en la
- * portada como cualquier dirección inventada.
+ * solo impide adivinar o reutilizar las direcciones de dentro.
  *
- * `/perfil` y `/preparar-documento` se quedan como puertas: las skills, los
- * correos y el asistente mandan allí, y con sesión llevan a la dirección del
- * momento (sin quedarse en el historial); sin sesión, a iniciar sesión.
+ * /perfil, /preparar-documento y /admin a secas son las puertas: las skills,
+ * los correos y el asistente mandan allí, y con sesión llevan a la dirección
+ * del momento (sin quedarse en el historial). /admin solo abre al
+ * administrador; a cualquier otro lo deja en la portada.
  *
  * Las claves se guardan en `localStorage` para que recargar o abrir otra
  * pestaña siga funcionando. No son un secreto que dé acceso a nada —la sesión
@@ -85,48 +85,45 @@ export function asegurarRutas(): void {
   claves.set(c);
 }
 
-/**
- * Las de la sesión que se acaba de cerrar, solo en memoria. Hacen falta un
- * instante más: cuando la sesión caduca, primero se borra y después se manda
- * a iniciar sesión con la página en la que se estaba (ver `rutaLegible`).
- */
-let anteriores: Claves | null = null;
-
 /** Al cerrar sesión. */
 export function olvidarRutas(): void {
-  anteriores = claves() ?? anteriores;
   guardar(null);
   claves.set(null);
 }
 
-/** La puerta de cada página, la que se puede escribir y repartir. */
+/**
+ * El nombre de cada página, que sí se ve: /perfil/<clave>. Sin clave detrás es
+ * la puerta, la que se puede escribir y repartir.
+ */
 const PUERTAS: Record<Privada, string> = {
   perfil: '/perfil',
   preparar: '/preparar-documento',
-  admin: '/',
+  admin: '/admin',
 };
 
 /**
- * La dirección de una página privada, con lo que cuelgue detrás.
- * Sin claves —sin sesión— da la puerta, que manda a iniciar sesión.
+ * La dirección de una página privada en esta sesión: /perfil/fDvxinjld3Wv.
+ * Sin claves —sin sesión— da la puerta, que manda a iniciar sesión. El panel
+ * no tiene una sola dirección, sino una por sección: ver `rutaDeSeccion`.
  */
-export function rutaPrivada(pagina: Privada, ...resto: string[]): string {
+export function rutaPrivada(pagina: Privada): string {
   const c = claves();
-  if (!c) return PUERTAS[pagina];
-  return ['', c[pagina], ...resto].join('/');
+  if (!c || pagina === 'admin') return PUERTAS[pagina];
+  return `${PUERTAS[pagina]}/${c[pagina]}`;
 }
 
 /**
- * La sección del panel, cifrada con la clave de esta sesión: «pagos» no se lee
- * en la barra y cambia con cada ingreso. No hace falta guardarla: sale siempre
- * igual de la misma clave (FNV-1a, sin pretensión criptográfica; el secreto,
- * si lo hubiera, es la clave de al lado).
+ * El código de una sección del panel en esta sesión: 12 caracteres sacados de
+ * la clave del admin y del nombre, así que «pagos» no se lee en la barra y
+ * cambia con cada ingreso. No hace falta guardarlo: sale siempre igual de la
+ * misma clave (FNV-1a, sin pretensión criptográfica; lo que no se adivina es
+ * la clave).
  */
 export function cifrarSeccion(nombre: string): string {
   const semilla = `${claves()?.admin ?? ''}:${nombre}`;
   let h = 0x811c9dc5;
   let tira = '';
-  for (let vuelta = 0; tira.length < 8; vuelta++) {
+  for (let vuelta = 0; tira.length < LARGO; vuelta++) {
     for (let i = 0; i < semilla.length; i++) {
       h ^= semilla.charCodeAt(i) + vuelta;
       h = Math.imul(h, 0x01000193) >>> 0;
@@ -136,42 +133,49 @@ export function cifrarSeccion(nombre: string): string {
   return tira;
 }
 
-/** La dirección de una sección del panel. */
+/** La dirección de una sección del panel: /admin/<código>. */
 export function rutaDeSeccion(nombre: string): string {
-  return rutaPrivada('admin', cifrarSeccion(nombre));
+  return `${PUERTAS.admin}/${cifrarSeccion(nombre)}`;
 }
 
 /**
- * Para las rutas: casa el primer tramo con la clave de esa página. Sin sesión
- * no casa nada y la dirección acaba en el comodín, igual que una inventada.
+ * Para las rutas: casa /<página>/<clave de esta sesión>, y nada más. Sin
+ * sesión, o con una clave vieja, no casa y la dirección acaba en el comodín,
+ * igual que una inventada.
+ *
+ * En el panel el segundo tramo es el código de la sección, que se entrega como
+ * el parámetro `seccion`; el propio componente corrige uno que no existe.
  */
-export function casaPrivada(pagina: Privada, conHijos = false): UrlMatcher {
+export function casaPrivada(pagina: Privada): UrlMatcher {
+  const nombre = PUERTAS[pagina].slice(1);
   return (segmentos: UrlSegment[]) => {
-    const clave = claves()?.[pagina];
-    if (!clave || segmentos[0]?.path !== clave) return null;
-    if (!conHijos && segmentos.length > 1) return null;
-    return { consumed: [segmentos[0]] };
+    const c = claves();
+    if (!c || segmentos.length !== 2 || segmentos[0].path !== nombre) return null;
+    const segundo = segmentos[1];
+    if (pagina === 'admin') {
+      return /^[A-Za-z0-9]{12}$/.test(segundo.path)
+        ? { consumed: segmentos, posParams: { seccion: segundo } }
+        : null;
+    }
+    return segundo.path === c[pagina] ? { consumed: segmentos } : null;
   };
 }
 
 /**
- * Al revés: de la dirección cifrada a la puerta, para el `returnUrl` de
+ * Al revés: de la dirección con clave a la puerta, para el `returnUrl` de
  * iniciar sesión. Al volver a entrar se sortean claves nuevas y la dirección
- * vieja ya no llevaría a ningún sitio; la puerta sí.
- *
- * El panel vuelve a la portada: no tiene puerta, y escribir /admin en la barra
- * sería justo lo que se quiere esconder.
+ * vieja ya no llevaría a ningún sitio; la puerta sí. El panel vuelve a su
+ * resumen: el código de la sección tampoco valdrá.
  */
 export function rutaLegible(url: string): string {
-  const c = claves() ?? anteriores;
-  if (!c) return url;
   const corte = url.search(/[?#]/);
   const camino = corte < 0 ? url : url.slice(0, corte);
   const cola = corte < 0 ? '' : url.slice(corte);
-  const primero = camino.split('/').filter(Boolean)[0];
-  if (primero === c.perfil) return PUERTAS.perfil + cola;
-  if (primero === c.preparar) return PUERTAS.preparar + cola;
-  if (primero === c.admin) return '/';
+  const [primero, segundo] = camino.split('/').filter(Boolean);
+  if (!segundo) return url;
+  for (const puerta of Object.values(PUERTAS)) {
+    if (`/${primero}` === puerta) return puerta === PUERTAS.admin ? puerta : puerta + cola;
+  }
   return url;
 }
 
