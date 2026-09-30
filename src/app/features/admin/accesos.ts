@@ -191,18 +191,23 @@ function dePasarela(pago: PagoAdmin): Acceso {
     tieneComprobante: false,
     anulable: false,
     licenseId: pago.licenseId ?? null,
-    ...estadoDe(ESTADO_PAGO, pago.status),
+    // Una orden abierta de PayPal no es una deuda ni un cobro: es alguien que
+    // abrió la ventana y no terminó (o su banco rechazó la tarjeta). «Sin
+    // pagar» lo dice; «Pendiente» a secas se leía como dinero por entrar.
+    ...(pago.status === 'PENDING'
+      ? { estado: 'Pendiente · sin pagar', tono: 'espera' as const }
+      : estadoDe(ESTADO_PAGO, pago.status)),
   };
 }
 
 /**
- * Una orden de pasarela que nunca llegó a cobrarse no es un acceso: abrir la
- * ventana de PayPal y cerrarla sin pagar dejaba una fila «Cancelado» que
- * parecía una venta perdida. Las abiertas sin pagar (PENDING) tampoco cuentan.
- * Siguen en el historial de cobros; aquí solo se quitan de la lista.
+ * Una orden de pasarela cancelada nunca llegó a cobrarse y no es un acceso:
+ * abrir la ventana de PayPal y cerrarla sin pagar dejaba una fila «Cancelado»
+ * que parecía una venta perdida. Las abiertas (PENDING) sí se enseñan: son
+ * compradores que se quedaron a medias y a los que conviene escribir.
  */
 function seCobro(pago: PagoAdmin): boolean {
-  return pago.status !== 'CANCELLED' && pago.status !== 'PENDING';
+  return pago.status !== 'CANCELLED';
 }
 
 /**
