@@ -57,8 +57,12 @@ export class PaymentService {
       .pipe(map((res) => res.data));
   }
 
-  cancel(orderId: string, provider = 'PAYPAL'): Observable<void> {
-    return this.http.post<void>(`${this.base}/orders/${orderId}/cancel?provider=${provider}`, {});
+  /** `motivo`: el error que dio el botón de PayPal, para que quede en el servidor. */
+  cancel(orderId: string, provider = 'PAYPAL', motivo?: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.base}/orders/${orderId}/cancel?provider=${provider}`,
+      motivo ? { motivo: motivo.slice(0, 200) } : {},
+    );
   }
 
   mine(): Observable<Payment[]> {

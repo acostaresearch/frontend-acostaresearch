@@ -996,6 +996,10 @@ export class Checkout implements OnInit {
   }
 
   private async montarBoton(contenedor: HTMLElement): Promise<void> {
+    // La orden abierta en este momento. `onError` no dice cuál era, y sin
+    // cerrarla quedaba «pendiente» en el servidor para siempre.
+    let ordenAbierta: string | null = null;
+
     try {
       const sdk = await this.paypal.load(this.pasarelaPaypal()?.currency ?? 'USD');
 
@@ -1010,6 +1014,7 @@ export class Checkout implements OnInit {
               const orden = await firstValueFrom(
                 this.payments.createOrder(this.seleccionado()!.code, this.descuento()?.code),
               );
+              ordenAbierta = orden.orderId;
               return orden.orderId;
             } catch (error: unknown) {
               this.procesando.set(false);
@@ -1021,6 +1026,7 @@ export class Checkout implements OnInit {
           onApprove: async (data, actions) => {
             try {
               const resultado = await firstValueFrom(this.payments.capture(data.orderID));
+              ordenAbierta = null;
               this.saldo.set(resultado.balance ?? null);
               this.bolsaComprada.set(resultado.pack ?? null);
               this.licenciaComprada.set(resultado.license ?? null);
@@ -1053,13 +1059,28 @@ export class Checkout implements OnInit {
 
           onCancel: (data) => {
             this.procesando.set(false);
-            if (data.orderID) {
-              this.payments.cancel(data.orderID).subscribe({ error: () => undefined });
+            const orden = data.orderID ?? ordenAbierta;
+            ordenAbierta = null;
+            if (orden) {
+              this.payments.cancel(orden).subscribe({ error: () => undefined });
             }
+            this.error.set(
+              'Cerraste PayPal sin terminar el pago; no se te cobró nada. ' +
+                'Si tu tarjeta no pasó en PayPal, puedes pagar por Yape.',
+            );
           },
 
-          onError: () => {
+          onError: (error: unknown) => {
             this.procesando.set(false);
+            // El error pasa dentro de la ventana de PayPal y el servidor no lo
+            // ve: se cierra la orden y se le manda el motivo para el log.
+            const motivo = error instanceof Error ? error.message : String(error ?? '');
+            if (ordenAbierta) {
+              this.payments
+                .cancel(ordenAbierta, 'PAYPAL', motivo || 'Error del botón de PayPal')
+                .subscribe({ error: () => undefined });
+              ordenAbierta = null;
+            }
             this.error.set('PayPal devolvió un error. Vuelve a intentarlo o págalo por Yape.');
           },
         })
