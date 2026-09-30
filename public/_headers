@@ -12,8 +12,10 @@
 # La lista tiene que ser LA MISMA que la de `worker/index.js`. Si se cambia una,
 # se cambia la otra: son los dos caminos por los que sale la web.
 #
-# La CSP va en Report-Only a propósito hasta comprobar a mano que entrar con
-# Google, pagar con PayPal y ver un video siguen funcionando. El hash es el del
+# La CSP está ACTIVA desde el 30-sep-2026. Antes iba en Report-Only: Angular
+# metía la hoja de estilos con onload (inlineCritical, ya apagado en angular.json)
+# y la web se quedaba sin estilos. Se probó en producción en Report-Only: la
+# única violación era Cloudflare Web Analytics, ya añadido. El hash es el del
 # script del tema que va dentro de index.html: si se toca ese script, hay que
 # recalcularlo o la página se queda en el tema claro.
 
@@ -23,4 +25,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
-  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com; connect-src 'self' https://accounts.google.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com; frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com; worker-src 'self' blob:
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://*.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com; connect-src 'self' https://accounts.google.com https://cloudflareinsights.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com; frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com; worker-src 'self' blob:

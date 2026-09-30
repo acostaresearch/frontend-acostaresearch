@@ -178,11 +178,11 @@ async function servirLaWeb(request, env) {
  * va por su hash: si se toca ese script, hay que recalcularlo o la página se
  * queda en el tema claro.
  *
- * VA EN «Report-Only» A PROPÓSITO, DE MOMENTO. Una CSP estricta que se cuele
- * rompe el botón de entrar o el pago sin un solo error visible para el usuario.
- * En Report-Only el navegador solo se queja por consola. Cuando se compruebe a
- * mano que entrar con Google, pagar con PayPal y ver un video siguen yendo,
- * esta cabecera pasa a llamarse `Content-Security-Policy` a secas.
+ * ACTIVA desde el 30-sep-2026, tras probarla en producción en Report-Only: la
+ * única violación era Cloudflare Web Analytics (static.cloudflareinsights.com),
+ * ya añadido. PayPal va como *.paypal.com porque su pago carga también el
+ * antifraude de c.paypal.com. Si algo deja de cargar, la consola del navegador
+ * dice qué dominio falta: se añade aquí Y en public/_headers.
  */
 const CSP = [
   "default-src 'self'",
@@ -190,7 +190,7 @@ const CSP = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://www.paypal.com https://www.sandbox.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com",
+  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://*.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com https://static.cloudflareinsights.com",
   // Angular inyecta los estilos de cada componente como <style> en la página.
   // cdnjs: la hoja de animaciones que carga la verificación 3DS de Culqi.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
@@ -200,7 +200,7 @@ const CSP = [
   "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com",
   // Culqi: su API y la verificación del banco (3-D Secure), que hace Cardinal
   // Commerce. Los dominios salen de los propios scripts de Culqi (21-sep-2026).
-  "connect-src 'self' https://accounts.google.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
+  "connect-src 'self' https://accounts.google.com https://cloudflareinsights.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
   "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
   // El visor de VOSviewer calcula la disposición y los clústeres en un Worker
   // que crea desde un `blob:`. Sin esto, con la CSP activa el mapa no se pinta.
@@ -208,7 +208,7 @@ const CSP = [
 ].join('; ');
 
 const CABECERAS_DE_SEGURIDAD = {
-  'Content-Security-Policy-Report-Only': CSP,
+  'Content-Security-Policy': CSP,
   // Por si la CSP no llega: ningún navegador la mete en un marco.
   'X-Frame-Options': 'DENY',
   // Nada de adivinar el tipo de un archivo por su contenido.
