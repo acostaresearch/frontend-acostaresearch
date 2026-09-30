@@ -106,7 +106,7 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota: 'Cómo va el negocio: lo cobrado, lo que espera revisión y lo que está por vencer.',
   },
   embudo: {
-    titulo: 'Embudo',
+    titulo: 'Avance de clientes',
     nota:
       'De ver los precios a cerrar la primera fase: dónde se queda la gente. Y lo que se hace ' +
       'para moverlo: los correos de avance que salen solos y los referidos.',
@@ -220,7 +220,7 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
  */
 const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
-  embudo: 'embudo',
+  embudo: 'avance-de-clientes',
   instituciones: 'universidades-y-asesores',
   accesos: 'accesos',
   descuentos: 'descuentos',
@@ -275,7 +275,7 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
       },
       {
         seccion: 'embudo',
-        texto: 'Embudo',
+        texto: 'Avance de clientes',
         icono: 'M3 4h18l-7 8.5V19l-4 2v-8.5z',
         enciende: ['embudo'],
       },
