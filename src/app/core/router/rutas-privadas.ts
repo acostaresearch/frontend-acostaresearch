@@ -108,7 +108,16 @@ const PUERTAS: Record<Privada, string> = {
 };
 
 /** Las secciones de la barra lateral del perfil, como van en la dirección. */
-export const SECCIONES_DEL_PERFIL = ['avance', 'herramientas', 'compras', 'ayuda'] as const;
+export const SECCIONES_DEL_PERFIL = [
+  'avance',
+  'herramientas',
+  'compras',
+  // Solo salen en la barra a quien le tocan: «invitar» a quien tiene el método
+  // y «grupos» a quien coordina alguno (una universidad o un asesor).
+  'invitar',
+  'grupos',
+  'ayuda',
+] as const;
 export type SeccionDelPerfil = (typeof SECCIONES_DEL_PERFIL)[number];
 
 /**

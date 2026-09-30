@@ -2080,6 +2080,20 @@
       }
     }
 
+    <!-- ══ EMBUDO ══════════════════════════════════════════════════════════════
+       De /planes a la primera fase, los correos de avance y los referidos. En
+       su propio componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'embudo') {
+      <app-embudo-admin />
+    }
+
+    <!-- ══ UNIVERSIDADES Y ASESORES ═══════════════════════════════════════════
+       Cupos vendidos a un grupo. Los productos salen de los planes del panel,
+       los mismos que ofrece el alta de un enlace de prueba. -->
+    @if (seccion() === 'instituciones') {
+      <app-instituciones-admin [productos]="productosPrueba()" />
+    }
+
     <!-- ══ PRUEBAS DEL CONECTOR ══════════════════════════════════════════════
        Un enlace por grupo. Lo que se comparte es la página del enlace; cada
        invitado recoge ahí su propio conector. -->
@@ -2813,6 +2827,13 @@
        su propio componente, como los asesores. -->
     @if (seccion() === 'pedidos') {
       <app-pedidos-admin [pedidos]="pedidos()" (cambiado)="pedidoCambiado($event)" />
+    }
+
+    <!-- ══ WHATSAPP ══════════════════════════════════════════════════════════
+       El bot de consultas: bandeja, simulador y ajustes. En su propio
+       componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'whatsapp') {
+      <app-whatsapp-admin />
     }
 
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════

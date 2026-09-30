@@ -58,6 +58,8 @@ import { Acceso, unirAccesos } from './accesos';
 import { columnas, linea, lunes, porCategoria, porMes, porSemana } from './graficos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
+import { EmbudoAdmin } from './embudo';
+import { InstitucionesAdmin } from './instituciones';
 import { PieLista } from './pie-lista';
 import { MenuFila } from './menu-fila';
 import { ReclamosAdmin } from './reclamos';
@@ -66,10 +68,13 @@ import { ResenaDelPanel, ResenaService } from '../../core/services/resena.servic
 import { AsesoresAdmin } from './asesores';
 import { Asesor, AsesorService } from '../../core/services/asesor.service';
 import { PedidosAdmin } from './pedidos';
+import { WhatsappAdmin } from './whatsapp';
 import { Pedido, PedidoService } from '../../core/services/pedido.service';
 
 type Seccion =
   | 'resumen'
+  | 'embudo'
+  | 'instituciones'
   | 'accesos'
   | 'grupos'
   | 'descuentos'
@@ -80,6 +85,7 @@ type Seccion =
   | 'resenas'
   | 'asesores'
   | 'pedidos'
+  | 'whatsapp'
   | 'corpus'
   | 'tutoriales'
   | 'guias'
@@ -98,6 +104,18 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   resumen: {
     titulo: 'Resumen',
     nota: 'Cómo va el negocio: lo cobrado, lo que espera revisión y lo que está por vencer.',
+  },
+  embudo: {
+    titulo: 'Embudo',
+    nota:
+      'De ver los precios a cerrar la primera fase: dónde se queda la gente. Y lo que se hace ' +
+      'para moverlo: los correos de avance que salen solos y los referidos.',
+  },
+  instituciones: {
+    titulo: 'Universidades y asesores',
+    nota:
+      'Cupos del método vendidos a un grupo. Cada alumno se une con su cuenta por el enlace del ' +
+      'grupo; el coordinador ve el avance de todos desde su perfil.',
   },
   accesos: {
     titulo: 'Accesos',
@@ -156,6 +174,13 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'no la marques como pública, el formulario funciona pero no lo encuentra nadie. Ninguna ' +
       'ficha se publica sola: se aprueba aquí, después de comprobar el grado en SUNEDU.',
   },
+  whatsapp: {
+    titulo: 'WhatsApp',
+    nota:
+      'El bot que contesta las consultas del WhatsApp de atención con Gemini, los precios del ' +
+      'panel y la ficha de la web. Aquí lees las conversaciones, tomas las que piden una ' +
+      'persona, lo pruebas y le das indicaciones.',
+  },
   corpus: {
     titulo: 'Bibliografía',
     nota: 'El corpus que citan las Skills. Se cura en Zotero; aquí solo se trae y se comprueba.',
@@ -195,6 +220,8 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
  */
 const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
+  embudo: 'embudo',
+  instituciones: 'universidades-y-asesores',
   accesos: 'accesos',
   descuentos: 'descuentos',
   pruebas: 'enlaces-de-prueba',
@@ -211,6 +238,7 @@ const DIRECCIONES: Record<Seccion, string> = {
   perfil: 'perfil',
   pedidos: 'revisiones',
   asesores: 'asesores',
+  whatsapp: 'whatsapp',
 };
 
 /** Al revés: de la dirección cifrada a la sección. Depende de la sesión. */
@@ -245,6 +273,12 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         icono: 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5',
         enciende: ['resumen'],
       },
+      {
+        seccion: 'embudo',
+        texto: 'Embudo',
+        icono: 'M3 4h18l-7 8.5V19l-4 2v-8.5z',
+        enciende: ['embudo'],
+      },
     ],
   },
   {
@@ -255,6 +289,12 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Accesos',
         icono: 'M3 6h18v12H3z M3 10h18',
         enciende: ['accesos'],
+      },
+      {
+        seccion: 'instituciones',
+        texto: 'Universidades y asesores',
+        icono: 'M3 10 12 4l9 6 M5 10v8 M9.5 10v8 M14.5 10v8 M19 10v8 M3 20h18',
+        enciende: ['instituciones'],
       },
       {
         seccion: 'descuentos',
@@ -268,6 +308,17 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         icono:
           'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
         enciende: ['pruebas'],
+      },
+    ],
+  },
+  {
+    grupo: 'Atención',
+    entradas: [
+      {
+        seccion: 'whatsapp',
+        texto: 'WhatsApp',
+        icono: 'M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z M8.5 9.5h7 M8.5 13h4.5',
+        enciende: ['whatsapp'],
       },
     ],
   },
@@ -468,6 +519,8 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     DecimalPipe,
     RouterLink,
     FiltrosLista,
+    EmbudoAdmin,
+    InstitucionesAdmin,
     PieLista,
     MenuFila,
     AjustesDeCuenta,
@@ -475,6 +528,7 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
     ResenasAdmin,
     AsesoresAdmin,
     PedidosAdmin,
+    WhatsappAdmin,
     AvisoFlotante,
   ],
   templateUrl: './admin.html',

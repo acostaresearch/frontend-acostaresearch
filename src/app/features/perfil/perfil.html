@@ -310,6 +310,28 @@
         </a>
       </section>
 
+      <!-- «Invita y gana días»: su código de referido. Solo con el método. -->
+      @if (referidos(); as r) {
+        @if (r.disponible) {
+          <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'invitar'">
+            <app-mi-invitacion [datos]="r" />
+          </section>
+        }
+      }
+
+      <!-- «Mis grupos»: el panel del coordinador (universidad o asesor). -->
+      @if (misGrupos().length > 0) {
+        <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'grupos'">
+          <app-mis-grupos [grupos]="misGrupos()" />
+        </section>
+      }
+
+      <!-- El interruptor de los correos de avance, junto a la ayuda: es donde
+           el enlace de baja del correo dice que está. -->
+      <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'ayuda'">
+        <app-mis-recordatorios />
+      </section>
+
       <app-mi-conector />
 
       <!-- «Tus datos» y «Contraseña» ya no son tarjetas de aquí: se abren como

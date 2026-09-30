@@ -1,0 +1,206 @@
+/* Lo justo para el embudo. Tarjeta, nota y botón vienen de styles.css. */
+
+:host {
+  display: grid;
+  gap: 18px;
+}
+
+.tarjeta h2 {
+  margin: 0 0 6px;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.periodos {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.periodos button {
+  padding: 5px 14px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.periodos button.activo {
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.embudo {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.embudo li {
+  display: grid;
+  grid-template-columns: minmax(130px, 190px) 1fr 56px 52px;
+  gap: 12px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.barra {
+  height: 22px;
+  overflow: hidden;
+  background: var(--color-fondo);
+  border-radius: 6px;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: var(--color-primario);
+  border-radius: 6px;
+}
+
+.valor {
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tasa {
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+  font-variant-numeric: tabular-nums;
+}
+
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.cifra {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.etiqueta {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.pie {
+  margin-top: 14px;
+  font-size: 12.5px;
+}
+
+.avisos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avisos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.vacio {
+  margin: 0;
+  padding: 22px 20px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--color-texto-suave);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tabla-envoltura {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+th {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--color-texto-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+td {
+  padding: 10px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tenue {
+  display: block;
+  font-size: 12.5px;
+  color: var(--color-texto-tenue);
+}
+
+.estado {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+  border-radius: 999px;
+}
+
+.estado.hecho {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.estado.anulado {
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo);
+}
+
+td .boton {
+  width: auto;
+  padding: 6px 12px;
+}
+
+@media (max-width: 640px) {
+  .embudo li {
+    grid-template-columns: 1fr 48px 44px;
+  }
+
+  .embudo .texto {
+    grid-column: 1 / -1;
+  }
+}

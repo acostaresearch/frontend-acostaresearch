@@ -38,6 +38,8 @@ import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
 import { INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
+import { InvitacionPlanes } from './invitacion-planes';
+import { PlanesInstituciones } from './planes-instituciones';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
@@ -90,6 +92,8 @@ function soles(cents: number): string {
     CuentaAtras,
     SiteHeader,
     SiteFooter,
+    InvitacionPlanes,
+    PlanesInstituciones,
   ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',

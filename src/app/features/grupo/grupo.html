@@ -1,0 +1,110 @@
+<app-site-header />
+
+<main class="pagina prueba">
+  <section class="tarjeta">
+    @if (cargando()) {
+      <p class="nota">Cargando el grupo…</p>
+    } @else if (union(); as u) {
+      <!-- ── Ya está dentro ───────────────────────────────────────────────── -->
+      <p class="antetitulo">{{ grupo()?.nombre }}</p>
+      @if (u.connectorUrl) {
+        <h1>¡Ya estás en el grupo!</h1>
+        <p>
+          Tienes tu propio acceso a <strong>{{ u.productName }}</strong>
+          @if (u.expiresAt) {
+            hasta el <strong>{{ u.expiresAt | date: 'd MMM y' }}</strong>
+          }. Te lo mandamos también a tu correo.
+        </p>
+
+        <div class="url-conector">
+          <label for="url">Tu URL del conector</label>
+          <div class="url-fila">
+            <input id="url" type="text" [value]="u.connectorUrl" readonly />
+            <button type="button" class="boton" (click)="copiar(u.connectorUrl)">
+              {{ copiada() ? '¡Copiada!' : 'Copiar' }}
+            </button>
+          </div>
+          <p class="aviso-url">
+            <strong>Es solo tuya.</strong> No la compartas: cada compañero del grupo tiene la suya.
+          </p>
+        </div>
+
+        <ol class="instrucciones">
+          <li>Abre Claude y entra en <strong>Configuración → Conectores</strong>.</li>
+          <li>Pulsa <strong>Añadir conector personalizado</strong> y pega la URL de arriba.</li>
+          <li>Abre un chat nuevo y escribe «empecemos mi tesis».</li>
+        </ol>
+
+        <a class="guia" routerLink="/guias-de-instalacion" target="_blank">
+          <span aria-hidden="true">📄</span>
+          <span><strong>Guías de instalación en PDF</strong> · los mismos pasos, con capturas</span>
+        </a>
+      } @else {
+        <h1>Ya estabas en este grupo</h1>
+        <p>
+          No se ha gastado otro cupo. Tu URL del conector está en tu perfil: si la perdiste, allí
+          puedes generar una nueva.
+        </p>
+        <a class="boton" [routerLink]="'perfil' | privada">Ir a mi perfil</a>
+      }
+      <p class="nota">
+        {{ grupo()?.coordinador }} verá cómo avanzas (si conectaste Claude, qué fases cerraste y en cuál
+        estás), pero no el texto de tu tesis.
+      </p>
+    } @else if (grupo(); as g) {
+      <!-- ── Aún no se ha unido ───────────────────────────────────────────── -->
+      <p class="antetitulo">Grupo · {{ g.nombre }}</p>
+      <h1>Únete al grupo de {{ g.coordinador }}</h1>
+
+      @switch (g.estado) {
+        @case ('ABIERTO') {
+          <p>
+            Recibes tu propio acceso a <strong>{{ g.productName }}</strong>
+            @if (g.duracionDias > 0) {
+              durante <strong>{{ g.duracionDias }} días</strong>
+            }
+            , con tu cuenta: tu conector para Claude, tu tesis guardada y tu Word. Ya está pagado por
+            tu grupo.
+          </p>
+          <p class="cupos">Quedan <strong>{{ g.quedan }}</strong> cupos.</p>
+          <p class="nota">
+            {{ g.coordinador }} verá cómo avanzas (si conectaste Claude, qué fases cerraste y en cuál
+            estás), pero no el texto de tu tesis.
+          </p>
+
+          <app-aviso-flotante [(error)]="error" />
+
+          @if (auth.isAuthenticated()) {
+            <button type="button" class="boton grande" [disabled]="uniendo()" (click)="unirme()">
+              {{ uniendo() ? 'Preparando tu acceso…' : 'Unirme al grupo' }}
+            </button>
+          } @else {
+            <p>Para unirte necesitas una cuenta. Después vuelves aquí solo.</p>
+            <a class="boton grande" routerLink="/auth/registro" [queryParams]="{ returnUrl: vuelta }">
+              Crear mi cuenta
+            </a>
+            <p class="nota">
+              ¿Ya tienes cuenta?
+              <a routerLink="/auth/login" [queryParams]="{ returnUrl: vuelta }">Entra aquí</a>.
+            </p>
+          }
+        }
+        @case ('LLENO') {
+          <div class="aviso info" role="status">Este grupo ya no tiene cupos libres.</div>
+          <p>Escríbele a {{ g.coordinador }}: puede pedir más cupos.</p>
+        }
+        @default {
+          <div class="aviso info" role="status">Este grupo ya no admite a nadie más.</div>
+          <p>Escríbele a {{ g.coordinador }} si crees que es un error.</p>
+        }
+      }
+    } @else {
+      <!-- ── Enlace que no existe ─────────────────────────────────────────── -->
+      <h1>Este enlace no funciona</h1>
+      <div class="aviso error" role="alert">
+        {{ noExiste() ?? 'Este enlace de grupo no existe. Revisa que esté bien copiado.' }}
+      </div>
+      <p><a routerLink="/">Ir a la portada</a></p>
+    }
+  </section>
+</main>

@@ -1,0 +1,49 @@
+/* El alta de un grupo. La tabla y las etiquetas vienen de embudo.css. */
+
+.alta {
+  width: auto;
+}
+
+.alta-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px 16px;
+  margin: 16px 0 22px;
+  padding: 18px;
+  background: var(--color-fondo);
+  border-radius: var(--radio);
+}
+
+.alta-form .campo {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.alta-form input,
+.alta-form select {
+  width: 100%;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.alta-form .ancho {
+  grid-column: 1 / -1;
+}
+
+.alta-form .ancho .boton {
+  width: auto;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

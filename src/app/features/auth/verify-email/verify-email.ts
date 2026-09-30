@@ -171,7 +171,10 @@ export class VerifyEmail implements OnInit {
   }
 
   irALogin(): void {
-    void this.router.navigate(['/auth/login']);
+    // Si venía del enlace de un grupo o de una invitación, vuelve allí al entrar.
+    const vuelta = this.ruta.snapshot.queryParamMap.get('returnUrl');
+    const interna = vuelta?.startsWith('/') && !vuelta.startsWith('//');
+    void this.router.navigate(['/auth/login'], interna ? { queryParams: { returnUrl: vuelta } } : {});
   }
 
   private iniciarEspera(): void {

@@ -1,0 +1,825 @@
+/* El bot de WhatsApp en el panel. Las clases globales —tarjeta, boton, campo,
+   ayuda— vienen de styles.css; las del panel no llegan hasta aquí. */
+
+:host {
+  display: grid;
+  gap: 18px;
+  /* Los colores propios de WhatsApp, para que el simulador se reconozca. */
+  --wa-verde: #1f9d57;
+  --wa-burbuja: #d9fdd3;
+  --wa-fondo: #efeae2;
+}
+
+:host-context([data-tema='oscuro']) {
+  --wa-burbuja: #144d37;
+  --wa-fondo: #0b141a;
+}
+
+.tarjeta {
+  margin: 0;
+}
+
+.tenue {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.vacio {
+  margin: 0;
+  padding: 22px 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--color-texto-suave);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio);
+}
+
+code {
+  padding: 1px 6px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  background: var(--color-fondo-suave);
+  border-radius: 5px;
+}
+
+/* ---------- Estado ---------- */
+
+.estado {
+  display: grid;
+  gap: 16px;
+}
+
+.luces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.luz {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.punto {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  background: var(--color-error);
+  border-radius: 50%;
+}
+
+.luz.encendida .punto {
+  background: var(--color-exito);
+  box-shadow: 0 0 0 4px var(--color-exito-suave);
+}
+
+.luz.pendiente .punto {
+  background: var(--color-aviso);
+  box-shadow: 0 0 0 4px var(--color-aviso-suave);
+}
+
+.luz-titulo {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.cifras div {
+  padding: 10px 12px;
+  background: var(--color-fondo-suave);
+  border-radius: var(--radio-sm);
+}
+
+.cifras dt {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.cifras dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.cifras small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.cifras .alerta {
+  background: var(--color-error-suave);
+}
+
+.cifras .alerta dd {
+  color: var(--color-error);
+}
+
+.conectar summary {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.conectar ol {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.copiable {
+  padding: 1px 6px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-primario);
+  overflow-wrap: anywhere;
+  background: var(--color-primario-suave);
+  border: none;
+  border-radius: 5px;
+  cursor: copy;
+}
+
+/* ---------- Pestañas y chips ---------- */
+
+.pestanas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pestanas button {
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.pestanas button.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+
+.chip {
+  padding: 5px 11px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip.activa {
+  color: var(--color-sobre-boton);
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+/* ---------- Bandeja ---------- */
+
+.bandeja {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  min-height: 520px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.lista-lado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border-right: 1px solid var(--color-borde);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.buscar {
+  width: 100%;
+  padding: 8px 11px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.conversaciones {
+  display: grid;
+  margin: 0 -12px -12px;
+  padding: 0;
+  max-height: 560px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.conversaciones button {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--color-borde);
+  cursor: pointer;
+}
+
+.conversaciones button:hover,
+.conversaciones button.activa {
+  background: var(--color-fondo-suave);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--wa-verde);
+  border-radius: 50%;
+}
+
+.avatar.prueba {
+  background: var(--color-texto-tenue);
+}
+
+.resumen {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fila {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.fila strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fila time {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--color-texto-tenue);
+}
+
+.ultimo {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ultimo em {
+  font-style: normal;
+  color: var(--color-texto-tenue);
+}
+
+.sin-leer {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--wa-verde);
+  border-radius: 999px;
+}
+
+.etiqueta {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.etiqueta.exito,
+.franja.exito {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.etiqueta.aviso,
+.franja.aviso {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.etiqueta.error,
+.franja.error {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.etiqueta.gris,
+.franja.gris {
+  color: var(--color-texto-suave);
+  background: var(--color-fondo-suave);
+}
+
+/* ---------- Chat ---------- */
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--wa-fondo);
+}
+
+.chat-vacio {
+  margin: auto;
+  border: none;
+}
+
+.chat-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.volver {
+  display: none;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 18px;
+  color: var(--color-texto);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.chat-quien {
+  display: grid;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.chat-quien .tenue {
+  font-size: 12px;
+}
+
+.chat-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-acciones .boton {
+  width: auto;
+  padding: 6px 11px;
+  font-size: 12.5px;
+}
+
+.boton.peligro {
+  color: var(--color-error);
+}
+
+.franja {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.mensajes {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 460px;
+  margin: 0;
+  padding: 14px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.burbuja {
+  max-width: min(78%, 520px);
+  padding: 7px 10px 5px;
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--color-superficie);
+  border-radius: 10px;
+  box-shadow: 0 1px 0.5px rgb(0 0 0 / 13%);
+}
+
+.burbuja.cliente {
+  align-self: flex-start;
+  border-top-left-radius: 2px;
+}
+
+.burbuja.bot,
+.burbuja.admin {
+  align-self: flex-end;
+  background: var(--wa-burbuja);
+  border-top-right-radius: 2px;
+}
+
+.burbuja p {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.autor {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--wa-verde);
+}
+
+.burbuja.admin .autor {
+  color: var(--color-primario);
+}
+
+.pie-burbuja {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  text-align: right;
+  color: var(--color-texto-tenue);
+}
+
+.fallo,
+.error-envio {
+  color: var(--color-error);
+}
+
+.error-envio {
+  display: block;
+  font-size: 11.5px;
+}
+
+.redactar {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 10px 12px 4px;
+  background: var(--color-superficie);
+  border-top: 1px solid var(--color-borde);
+}
+
+.redactar textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  resize: vertical;
+}
+
+.redactar .boton {
+  width: auto;
+}
+
+.chat > .ayuda {
+  margin: 0;
+  padding: 0 12px 10px;
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+  background: var(--color-superficie);
+}
+
+/* ---------- Probar el bot ---------- */
+
+.probar {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.probar > .tenue {
+  max-width: 560px;
+  text-align: center;
+}
+
+.telefono {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 420px);
+  height: 600px;
+  overflow: hidden;
+  background: var(--wa-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 12%);
+}
+
+.telefono-cabecera {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  color: #fff;
+  background: var(--wa-verde);
+}
+
+.telefono-cabecera .avatar {
+  color: var(--wa-verde);
+  background: #fff;
+}
+
+.telefono-cabecera div {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.telefono-cabecera strong {
+  font-size: 14.5px;
+}
+
+.telefono-cabecera span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.reiniciar {
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12px;
+  color: #fff;
+  background: rgb(255 255 255 / 18%);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.telefono-mensajes {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 14px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.telefono-mensajes li {
+  max-width: 82%;
+  padding: 7px 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  border-radius: 10px;
+  box-shadow: 0 1px 0.5px rgb(0 0 0 / 13%);
+}
+
+.telefono-mensajes p {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.telefono-mensajes .yo {
+  align-self: flex-end;
+  background: var(--wa-burbuja);
+}
+
+.telefono-mensajes .bot {
+  align-self: flex-start;
+  background: var(--color-superficie);
+}
+
+.telefono-mensajes .nota {
+  align-self: center;
+  max-width: 92%;
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo-suave);
+  box-shadow: none;
+}
+
+.telefono-mensajes .escribiendo p {
+  letter-spacing: 3px;
+}
+
+.modelo {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  text-align: right;
+  color: var(--color-texto-tenue);
+}
+
+.telefono-escribir {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: var(--color-fondo-suave);
+}
+
+.telefono-escribir input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: none;
+  border-radius: 999px;
+}
+
+.telefono-escribir button {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  font-size: 16px;
+  color: #fff;
+  background: var(--wa-verde);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.telefono-escribir button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Ajustes ---------- */
+
+.ajustes {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.interruptor {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.interruptor input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--wa-verde);
+}
+
+.interruptor span {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.interruptor small {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.horario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-left: 30px;
+}
+
+.horario label {
+  display: grid;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.horario input {
+  padding: 7px 10px;
+  font: inherit;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.dias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.campo textarea {
+  width: 100%;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  resize: vertical;
+}
+
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.pie {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pie .boton {
+  width: auto;
+}
+
+/* ---------- Celular ---------- */
+
+@media (max-width: 760px) {
+  .bandeja {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lista-lado {
+    border-right: none;
+  }
+
+  /* Con una conversación abierta, el chat ocupa la pantalla y la lista se
+     esconde; la flecha la trae de vuelta. */
+  .bandeja.con-chat .lista-lado {
+    display: none;
+  }
+
+  .bandeja:not(.con-chat) .chat {
+    display: none;
+  }
+
+  .volver {
+    display: block;
+  }
+
+  .horario {
+    margin-left: 0;
+  }
+
+  .telefono {
+    height: 540px;
+  }
+}

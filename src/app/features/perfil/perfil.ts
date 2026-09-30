@@ -22,6 +22,11 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { UserService } from '../../core/services/user.service';
+import { GrupoQueCoordino, GruposService } from '../../core/services/grupos.service';
+import { MisReferidos, RetencionService } from '../../core/services/retencion.service';
+import { MiInvitacion } from '../../shared/cuenta/mi-invitacion';
+import { MisGrupos } from '../../shared/cuenta/mis-grupos';
+import { MisRecordatorios } from '../../shared/cuenta/mis-recordatorios';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { SeccionDelPerfil, VistaDelPerfil } from '../../shared/cuenta/vista-del-perfil';
 import { InvitarResena, VentanaResena } from '../../shared/cuenta/invitar-resena';
@@ -70,6 +75,9 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
     VentanaResena,
     MiConector,
     SiteHeader,
+    MiInvitacion,
+    MisGrupos,
+    MisRecordatorios,
   ],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
@@ -80,6 +88,8 @@ export class Perfil implements OnInit {
   private readonly fondo = inject(FondoService);
   private readonly pagos = inject(PaymentService);
   private readonly usuarios = inject(UserService);
+  private readonly retencion = inject(RetencionService);
+  private readonly grupos = inject(GruposService);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly destruir = inject(DestroyRef);
@@ -118,13 +128,36 @@ export class Perfil implements OnInit {
         cuenta: this.compras().length || undefined,
       },
       {
+        id: 'invitar',
+        texto: 'Invita y gana días',
+        icono: 'M20 12v9H4v-9 M2 7h20v5H2z M12 21V7 M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z',
+      },
+      {
+        id: 'grupos',
+        texto: 'Mis grupos',
+        icono:
+          'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',
+        cuenta: this.misGrupos().length || undefined,
+      },
+      {
         id: 'ayuda',
         texto: '¿Necesitas ayuda?',
         icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7 M12 17h.01',
       },
     ];
-    return todas.filter((s) => s.id !== 'herramientas' || this.vista.hayHerramientas());
+    return todas.filter((s) => {
+      if (s.id === 'herramientas') return this.vista.hayHerramientas();
+      if (s.id === 'invitar') return Boolean(this.referidos()?.disponible);
+      if (s.id === 'grupos') return this.misGrupos().length > 0;
+      return true;
+    });
   });
+
+  // ── Invitar y grupos ─────────────────────────────────────────────────────
+  /** Su código de invitación. Nulo hasta que contesta el servidor. */
+  readonly referidos = signal<MisReferidos | null>(null);
+  /** Los grupos que coordina, si es una universidad o un asesor. */
+  readonly misGrupos = signal<GrupoQueCoordino[]>([]);
 
   /** Cambia de sección y vuelve arriba: la nueva empieza por su título. */
   irA(seccion: SeccionDelPerfil): void {
@@ -228,7 +261,33 @@ export class Perfil implements OnInit {
         this.cargandoCompras.set(false);
       },
     });
+
+    // Si fallan, sus secciones no salen en la barra y ya está.
+    this.retencion.misReferidos().subscribe({
+      next: (datos) => this.referidos.set(datos),
+      error: () => this.referidos.set(null),
+    });
+    this.grupos.mios().subscribe({
+      next: (lista) => this.misGrupos.set(lista),
+      error: () => this.misGrupos.set([]),
+      complete: () => this.gruposCargados.set(true),
+    });
   }
+
+  /** Ya contestó el servidor con sus grupos (aunque sean cero). */
+  private readonly gruposCargados = signal(false);
+
+  /**
+   * Una sección que no le toca —la dirección guardada de «Mis grupos» sin
+   * grupos, o «Invita» sin el método— se quedaría en blanco: se vuelve a «Por
+   * dónde vas», como hace el conector con las herramientas.
+   */
+  private readonly corregirSeccion = effect(() => {
+    const seccion = this.vista.seccion();
+    const sinInvitar = seccion === 'invitar' && this.referidos() !== null && !this.referidos()!.disponible;
+    const sinGrupos = seccion === 'grupos' && this.gruposCargados() && this.misGrupos().length === 0;
+    if (sinInvitar || sinGrupos) this.vista.ir('avance', true);
+  });
 
   /**
    * Lleva a la sección que pide el `#ancla` de la dirección.

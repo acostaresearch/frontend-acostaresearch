@@ -1,0 +1,396 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+
+<!-- ══ CÓMO ESTÁ MONTADO ═══════════════════════════════════════════════════
+     Dos luces: si el bot piensa (su clave de Gemini) y si habla por WhatsApp
+     (las cuatro claves de Meta). Con la segunda apagada todo funciona en modo
+     maqueta y se prueba desde «Probar el bot». -->
+@if (estado(); as e) {
+  <section class="tarjeta estado">
+    <div class="luces">
+      <div class="luz" [class.encendida]="e.ia">
+        <span class="punto"></span>
+        <div>
+          <p class="luz-titulo">Cerebro · Gemini</p>
+          <p class="tenue">
+            @if (e.ia) {
+              Con su propia clave · {{ e.modelos.join(' → ') }}
+            } @else {
+              Falta WHATSAPP_GEMINI_API_KEY en el servidor
+            }
+          </p>
+        </div>
+      </div>
+      <div class="luz" [class.encendida]="e.meta" [class.pendiente]="!e.meta">
+        <span class="punto"></span>
+        <div>
+          <p class="luz-titulo">WhatsApp · API de Meta</p>
+          <p class="tenue">
+            @if (e.meta) {
+              Conectada: los mensajes salen por WhatsApp
+            } @else {
+              Pendiente · modo maqueta: nada sale a WhatsApp
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <dl class="cifras">
+      <div>
+        <dt>Conversaciones hoy</dt>
+        <dd>{{ e.cifras.conversaciones }}</dd>
+      </div>
+      <div>
+        <dt>Mensajes recibidos</dt>
+        <dd>{{ e.cifras.delCliente }}</dd>
+      </div>
+      <div>
+        <dt>Respuestas del bot</dt>
+        <dd>{{ e.cifras.delBot }} <small>/ {{ e.maxDiario || '∞' }}</small></dd>
+      </div>
+      <div [class.alerta]="e.cifras.esperando > 0">
+        <dt>Esperan a una persona</dt>
+        <dd>{{ e.cifras.esperando }}</dd>
+      </div>
+    </dl>
+
+    @if (!e.meta) {
+      <details class="conectar">
+        <summary>Qué falta para conectar WhatsApp</summary>
+        <ol>
+          <li>
+            En el <code>.env</code> del servidor, rellenar:
+            @for (clave of e.faltan; track clave) {
+              <code>{{ clave }}</code>
+            }
+            y reiniciar la API.
+          </li>
+          <li>
+            En developers.facebook.com → tu app → WhatsApp → Configuración, poner como URL de
+            devolución de llamada
+            <button type="button" class="copiable" (click)="copiar(e.webhookUrl)" title="Copiar">
+              {{ e.webhookUrl }}
+            </button>
+            y como token de verificación el mismo <code>WHATSAPP_VERIFY_TOKEN</code>.
+          </li>
+          <li>Suscribirse al campo <code>messages</code> del webhook.</li>
+          <li>Escribir al número desde tu celular: el mensaje aparece aquí en la bandeja.</li>
+        </ol>
+        <p class="tenue">
+          Las conversaciones se guardan {{ e.retencionDias }} días y se borran solas.
+        </p>
+      </details>
+    }
+  </section>
+}
+
+<section class="tarjeta">
+  <nav class="pestanas" aria-label="WhatsApp">
+    <button type="button" [class.activa]="pestana() === 'bandeja'" (click)="cambiarPestana('bandeja')">
+      Bandeja
+    </button>
+    <button type="button" [class.activa]="pestana() === 'probar'" (click)="cambiarPestana('probar')">
+      Probar el bot
+    </button>
+    <button type="button" [class.activa]="pestana() === 'ajustes'" (click)="cambiarPestana('ajustes')">
+      Ajustes
+    </button>
+  </nav>
+
+  <!-- ══ BANDEJA ═══════════════════════════════════════════════════════════ -->
+  @if (pestana() === 'bandeja') {
+    <div class="bandeja" [class.con-chat]="abierta()">
+      <aside class="lista-lado">
+        <div class="filtros">
+          @for (f of filtros; track f.codigo) {
+            <button type="button" class="chip" [class.activa]="filtro() === f.codigo" (click)="elegirFiltro(f.codigo)">
+              {{ f.nombre }}
+            </button>
+          }
+        </div>
+        <input
+          type="search"
+          class="buscar"
+          placeholder="Buscar por nombre o número"
+          [value]="busqueda()"
+          (input)="buscar($event)"
+        />
+
+        @if (cargando() && conversaciones().length === 0) {
+          <p class="vacio">Cargando…</p>
+        } @else if (conversaciones().length === 0) {
+          <p class="vacio">
+            @if (filtro() === 'TODAS' && !busqueda()) {
+              Todavía no ha escrito nadie. Mientras no esté conectada la API de Meta, prueba el bot
+              desde «Probar el bot»: esas conversaciones también salen aquí.
+            } @else {
+              No hay conversaciones con ese filtro.
+            }
+          </p>
+        } @else {
+          <ul class="conversaciones">
+            @for (c of conversaciones(); track c.id) {
+              <li>
+                <button type="button" [class.activa]="abierta()?.id === c.id" (click)="abrir(c)">
+                  <span class="avatar" [class.prueba]="esPrueba(c)">{{ iniciales(c) }}</span>
+                  <span class="resumen">
+                    <span class="fila">
+                      <strong>{{ quien(c) }}</strong>
+                      <time>{{ c.ultimoMensajeAt | date: 'd MMM, HH:mm' }}</time>
+                    </span>
+                    <span class="fila">
+                      <span class="ultimo">
+                        @if (c.ultimo; as u) {
+                          @if (u.autor !== 'CLIENTE') {
+                            <em>{{ u.autor === 'BOT' ? 'Bot:' : 'Tú:' }}</em>
+                          }
+                          {{ u.texto }}
+                        }
+                      </span>
+                      @if (c.noLeidos > 0) {
+                        <span class="sin-leer">{{ c.noLeidos }}</span>
+                      }
+                    </span>
+                    <span [class]="'etiqueta ' + estadoDe(c).clase">{{ estadoDe(c).texto }}</span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </aside>
+
+      <div class="chat">
+        @if (abierta(); as a) {
+          <header class="chat-cabecera">
+            <button type="button" class="volver" aria-label="Volver a la lista" (click)="cerrar()">←</button>
+            <div class="chat-quien">
+              <strong>{{ quien(a) }}</strong>
+              <span class="tenue">{{ numero(a) }} · desde {{ a.createdAt | date: 'd MMM y' }}</span>
+            </div>
+            <div class="chat-acciones">
+              @if (a.modo === 'BOT') {
+                <button type="button" class="boton secundario" (click)="tomar('HUMANO')">Tomar la conversación</button>
+              } @else {
+                <button type="button" class="boton secundario" (click)="tomar('BOT')">Devolver al bot</button>
+              }
+              <button type="button" class="boton secundario" (click)="bloquear()">
+                {{ a.bloqueado ? 'Desbloquear' : 'Bloquear' }}
+              </button>
+              <button type="button" class="boton secundario peligro" (click)="borrar()">Borrar</button>
+            </div>
+          </header>
+
+          @if (a.modo === 'HUMANO') {
+            <p class="franja aviso">La llevas tú: el bot no contesta en esta conversación hasta que se la devuelvas.</p>
+          } @else if (a.pideHumano) {
+            <p class="franja error">El bot pidió que la atienda una persona. Si le respondes, la tomas tú.</p>
+          }
+          @if (a.bloqueado) {
+            <p class="franja gris">Número bloqueado: sus mensajes se guardan, pero nadie le contesta.</p>
+          }
+
+          <ol class="mensajes">
+            @for (m of a.mensajes; track m.id) {
+              <li [class]="'burbuja ' + m.autor.toLowerCase()">
+                @if (autor(m)) {
+                  <span class="autor">{{ autor(m) }}</span>
+                }
+                <p>{{ m.texto }}</p>
+                <span class="pie-burbuja">
+                  {{ m.createdAt | date: 'd MMM, HH:mm' }}
+                  @if (etiquetaDeEnvio(m)) {
+                    · <span [class.fallo]="m.envio === 'FALLIDO'">{{ etiquetaDeEnvio(m) }}</span>
+                  }
+                </span>
+                @if (m.error) {
+                  <span class="error-envio">{{ m.error }}</span>
+                }
+              </li>
+            }
+          </ol>
+
+          @if (!a.ventanaAbierta && !esPrueba(a) && estado()?.meta) {
+            <p class="franja gris">
+              Pasaron más de 24 horas desde su último mensaje: WhatsApp solo deja escribirle con una
+              plantilla aprobada por Meta.
+            </p>
+          } @else {
+            <div class="redactar">
+              <textarea
+                rows="2"
+                maxlength="4000"
+                placeholder="Escribe tu respuesta (Enter para enviar, Mayús+Enter para otra línea)"
+                [value]="borrador()"
+                (input)="escribir($event)"
+                (keydown)="teclaEnRespuesta($event)"
+              ></textarea>
+              <button type="button" class="boton" [disabled]="!borrador().trim() || enviando()" (click)="responder()">
+                {{ enviando() ? 'Enviando…' : 'Enviar' }}
+              </button>
+            </div>
+            <p class="ayuda">
+              Al responder tomas la conversación y el bot se calla en ella.
+              @if (!estado()?.meta || esPrueba(a)) {
+                Modo maqueta: se guarda, pero no sale a WhatsApp.
+              }
+            </p>
+          }
+        } @else {
+          <p class="vacio chat-vacio">Elige una conversación para leerla y responder.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══ PROBAR EL BOT ═════════════════════════════════════════════════════
+       El mismo camino que un mensaje de verdad —ajustes, horario, palabras,
+       Gemini— pero con un número de prueba y sin mandar nada a WhatsApp. -->
+  @if (pestana() === 'probar') {
+    <div class="probar">
+      <p class="tenue">
+        Escribe como si fueras un cliente. El bot responde con Gemini, los precios de la base y tus
+        ajustes. Nada sale a WhatsApp, aunque la API esté conectada.
+      </p>
+      <div class="telefono">
+        <div class="telefono-cabecera">
+          <span class="avatar">AA</span>
+          <div>
+            <strong>Acosta | IA &amp; Research</strong>
+            <span>{{ probando() ? 'escribiendo…' : 'en línea' }}</span>
+          </div>
+          <button type="button" class="reiniciar" (click)="empezarDeNuevo()">Empezar de nuevo</button>
+        </div>
+        <ol class="telefono-mensajes">
+          @if (lineas().length === 0) {
+            <li class="nota">Prueba con «Hola, ¿cuánto cuesta el método de tesis?»</li>
+          }
+          @for (l of lineas(); track $index) {
+            <li [class]="l.de">
+              <p>{{ l.texto }}</p>
+              @if (l.modelo) {
+                <span class="modelo">{{ l.modelo }}</span>
+              }
+            </li>
+          }
+          @if (probando()) {
+            <li class="bot escribiendo"><p>…</p></li>
+          }
+        </ol>
+        <div class="telefono-escribir">
+          <input
+            type="text"
+            maxlength="2000"
+            placeholder="Escribe un mensaje"
+            [value]="prueba()"
+            (input)="escribirPrueba($event)"
+            (keydown)="teclaEnPrueba($event)"
+          />
+          <button type="button" [disabled]="!prueba().trim() || probando()" (click)="probar()" aria-label="Enviar">
+            ➤
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══ AJUSTES ═══════════════════════════════════════════════════════════ -->
+  @if (pestana() === 'ajustes') {
+    @if (ajustes(); as aj) {
+      <div class="ajustes">
+        <label class="interruptor">
+          <input type="checkbox" [checked]="aj.activo" (change)="casilla('activo', $event)" />
+          <span>
+            <strong>El bot contesta solo</strong>
+            <small>Apagado, los mensajes se guardan y te llega un aviso, pero nadie contesta hasta que lo hagas tú.</small>
+          </span>
+        </label>
+
+        <label class="interruptor">
+          <input type="checkbox" [checked]="aj.usarHorario" (change)="casilla('usarHorario', $event)" />
+          <span>
+            <strong>Solo fuera de mi horario</strong>
+            <small>Dentro del horario atiende una persona (hora de Lima); fuera de él, el bot.</small>
+          </span>
+        </label>
+
+        @if (aj.usarHorario) {
+          <div class="horario">
+            <label>
+              Desde
+              <input type="time" [value]="aj.horaInicio" (change)="texto('horaInicio', $event)" />
+            </label>
+            <label>
+              Hasta
+              <input type="time" [value]="aj.horaFin" (change)="texto('horaFin', $event)" />
+            </label>
+            <div class="dias" role="group" aria-label="Días de atención humana">
+              @for (d of dias; track d.numero) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.activa]="diasElegidos().includes(d.numero)"
+                  (click)="alternarDia(d.numero)"
+                >
+                  {{ d.corto }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="campo">
+          <label for="wa-bienvenida">Mensaje de bienvenida</label>
+          <textarea
+            id="wa-bienvenida"
+            rows="3"
+            maxlength="1000"
+            placeholder="Vacío = el bot saluda solo"
+            [value]="aj.bienvenida"
+            (input)="texto('bienvenida', $event)"
+          ></textarea>
+          <span class="ayuda">Se manda una sola vez, al primer mensaje de cada número, antes de la respuesta del bot.</span>
+        </div>
+
+        <div class="campo">
+          <label for="wa-instrucciones">Indicaciones para el bot</label>
+          <textarea
+            id="wa-instrucciones"
+            rows="5"
+            maxlength="4000"
+            placeholder="Ej.: Esta semana hay un taller gratuito el viernes a las 7 p. m.; si preguntan, invítalos."
+            [value]="aj.instrucciones"
+            (input)="texto('instrucciones', $event)"
+          ></textarea>
+          <span class="ayuda">
+            Se suman a lo que ya sabe (la ficha de la web y los precios del panel) y mandan sobre ello.
+            Útil para ofertas, avisos o cambios de estos días.
+          </span>
+        </div>
+
+        <div class="campo">
+          <label for="wa-palabras">Frases que pasan la conversación a una persona</label>
+          <input
+            id="wa-palabras"
+            type="text"
+            maxlength="500"
+            [value]="aj.palabrasHumano"
+            (input)="texto('palabrasHumano', $event)"
+          />
+          <span class="ayuda">
+            Separadas por comas. Si el mensaje contiene una, el bot avisa que le escribirá una persona
+            y se calla. Evita palabras sueltas como «asesor»: los tesistas hablan de su asesor de tesis.
+          </span>
+        </div>
+
+        <div class="pie">
+          <button type="button" class="boton" [disabled]="guardando()" (click)="guardarAjustes()">
+            {{ guardando() ? 'Guardando…' : 'Guardar ajustes' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <p class="vacio">Cargando…</p>
+    }
+  }
+</section>

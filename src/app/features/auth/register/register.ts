@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { fieldErrors, toApiError } from '../../../core/http/api-error';
@@ -25,6 +25,10 @@ export class Register {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+
+  /** Con Google se entra de una vez: vuelve a donde iba (un grupo, una invitación). */
+  readonly destinoTrasEntrar = this.vueltaInterna() ?? '/';
 
   /** Las reglas replican exactamente las de `auth.schema.js` en el backend. */
   readonly formulario = this.fb.nonNullable.group(
@@ -152,6 +156,12 @@ export class Register {
     return null;
   }
 
+  /** El `returnUrl` con el que llegó, solo si es de esta web. */
+  private vueltaInterna(): string | null {
+    const vuelta = this.ruta.snapshot.queryParamMap.get('returnUrl');
+    return vuelta?.startsWith('/') && !vuelta.startsWith('//') ? vuelta : null;
+  }
+
   alternarContrasena(): void {
     this.verContrasena.update((v) => !v);
   }
@@ -186,8 +196,15 @@ export class Register {
         this.auth.recordarAlta(email, password);
         // Todavía no hay cuenta: los datos esperan y el usuario nace al acertar
         // el código, así que se le lleva directo a introducirlo.
+        // Y a dónde iba (el enlace de un grupo, /planes con un código de
+        // invitación): viaja hasta el acceso para volver allí al entrar.
+        const vuelta = this.vueltaInterna();
         void this.router.navigate(['/auth/verificar-email'], {
-          queryParams: { email, ...(emailSent ? {} : { sinCorreo: '1' }) },
+          queryParams: {
+            email,
+            ...(emailSent ? {} : { sinCorreo: '1' }),
+            ...(vuelta ? { returnUrl: vuelta } : {}),
+          },
         });
       },
       error: (error: unknown) => {

@@ -1,0 +1,129 @@
+<section class="tarjeta">
+  <div class="cabecera">
+    <h2>Del precio a la primera fase</h2>
+    <div class="periodos" role="group" aria-label="Periodo">
+      @for (p of periodos; track p) {
+        <button type="button" [class.activo]="dias() === p" (click)="elegir(p)">{{ p }} días</button>
+      }
+    </div>
+  </div>
+
+  @if (cargando() && !embudo()) {
+    <p class="nota">Contando…</p>
+  } @else if (embudo(); as e) {
+    <p class="nota">
+      Del {{ e.desde | date: 'd MMM' }} al {{ e.hasta | date: 'd MMM y' }}. Desde «Recibieron el
+      método» se sigue a los mismos: los que empezaron en este periodo, cuántos conectaron Claude y
+      cuántos cerraron una fase. Sin administradores ni enlaces de prueba.
+    </p>
+
+    <ol class="embudo">
+      @for (paso of e.pasos; track paso.id) {
+        <li>
+          <span class="texto">{{ paso.texto }}</span>
+          <span class="barra"><span [style.width.%]="ancho(paso.valor)"></span></span>
+          <span class="valor">{{ paso.valor }}</span>
+          <span class="tasa">
+            @if (paso.tasa !== null) {
+              {{ paso.tasa }} %
+            }
+          </span>
+        </li>
+      }
+    </ol>
+
+    <div class="cifras">
+      <div>
+        <span class="cifra">{{ e.activacion ?? '—' }}{{ e.activacion !== null ? ' %' : '' }}</span>
+        <span class="etiqueta">conectó Claude</span>
+      </div>
+      <div>
+        <span class="cifra">{{ e.avance ?? '—' }}{{ e.avance !== null ? ' %' : '' }}</span>
+        <span class="etiqueta">cerró una fase</span>
+      </div>
+      <div>
+        <span class="cifra">{{ e.porVia.web }} · {{ e.porVia.codigo }} · {{ e.porVia.grupo }}</span>
+        <span class="etiqueta">por la web · por código · por grupo</span>
+      </div>
+    </div>
+
+    <p class="nota pie">
+      «Vieron /planes» empieza a contar el día que se desplegó esta sección. «Empezaron a pagar»
+      son quienes abrieron PayPal o Culqi o mandaron un Yape; «Recibieron el método» incluye a los
+      que entraron por un código o por un grupo, por eso puede pasar del 100 %.
+    </p>
+  }
+</section>
+
+@if (embudo(); as e) {
+  <section class="tarjeta">
+    <h2>Correos de avance enviados</h2>
+    <p class="nota">
+      Salen solos una vez al día (9 a. m. de Lima), uno por persona como mucho cada tres días. Se
+      apagan con AVISOS_AVANCE_ACTIVOS=false en el .env del servidor.
+    </p>
+    <ul class="avisos">
+      @for (a of avisos(); track a.tipo) {
+        <li>
+          <span>{{ a.nombre }}</span>
+          <strong>{{ a.valor }}</strong>
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+<section class="tarjeta">
+  <h2>Referidos</h2>
+  <p class="nota">
+    Quién entró con el código de quién. Se premian solos cuando el invitado paga su primer acceso:
+    días extra para los dos. Anula uno pendiente si es la misma persona con otra cuenta.
+  </p>
+  @if (referidos().length === 0) {
+    <p class="vacio">Todavía nadie ha entrado con un código de invitación.</p>
+  } @else {
+    <div class="tabla-envoltura">
+      <table>
+        <thead>
+          <tr>
+            <th>Invitó</th>
+            <th>Invitado</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of referidos(); track r.id) {
+            <tr>
+              <td>
+                {{ r.invitador.firstName }} {{ r.invitador.lastName }}
+                <span class="tenue">{{ r.invitador.email }} · {{ r.invitador.codigoReferido }}</span>
+              </td>
+              <td>
+                {{ r.invitado.firstName }} {{ r.invitado.lastName }}
+                <span class="tenue">{{ r.invitado.email }}</span>
+              </td>
+              <td>
+                <span class="estado" [class.hecho]="r.estado === 'PREMIADO'" [class.anulado]="r.estado === 'ANULADO'">
+                  {{ r.estado === 'PREMIADO' ? 'Premiado' : r.estado === 'ANULADO' ? 'Anulado' : 'Pendiente' }}
+                </span>
+                @if (r.diasPorAplicar > 0) {
+                  <span class="tenue">{{ r.diasPorAplicar }} días esperando</span>
+                }
+              </td>
+              <td class="tenue">{{ r.premiadoAt ?? r.createdAt | date: 'd MMM y' }}</td>
+              <td>
+                @if (r.estado === 'PENDIENTE') {
+                  <button type="button" class="boton secundario" (click)="anular(r)">Anular</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />

@@ -295,6 +295,14 @@ export const routes: Routes = [
     title: 'Prueba el conector · Acosta Research',
     loadComponent: () => import('./features/prueba/prueba').then((m) => m.Prueba),
   },
+  // El enlace que reparte una universidad o un asesor que compró cupos. Se ve
+  // sin sesión; para unirse hay que entrar, porque lo que recibe cada alumno
+  // es una licencia de verdad a su nombre.
+  {
+    path: 'grupo/:slug',
+    title: 'Únete a tu grupo · Acosta Research',
+    loadComponent: () => import('./features/grupo/grupo').then((m) => m.GrupoPagina),
+  },
   /**
    * El panel de administración, una dirección por sección: /admin/<código>,
    * con el código sacado de la clave que se sortea en cada ingreso (ver

@@ -227,6 +227,10 @@
     <app-aviso-flotante [(error)]="errorComprobante" />
     <app-aviso-flotante [(error)]="errorCulqi" />
 
+    <!-- Cuenta la visita (embudo) y el código de quien lo invitó. Ver
+         `InvitacionPlanes`. -->
+    <app-invitacion-planes />
+
  <section class="planes">
       @if (cargando()) {
         <p class="tenue">Cargando precios…</p>
@@ -440,6 +444,9 @@
         }
       } -->
     </section>
+
+    <!-- Cupos para un grupo: se cotiza por WhatsApp. Ver `PlanesInstituciones`. -->
+    <app-planes-instituciones />
 
     <!-- ── El pago, en una ventana ─────────────────────────────────────────
          Se abre al pulsar «Comprar». Antes era un panel debajo de las tarjetas
