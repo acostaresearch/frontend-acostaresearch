@@ -4,8 +4,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import { SorteoPublico, SorteoService } from '../../core/services/sorteo.service';
+import { DOMINIOS_BUENOS, revisarCorreo } from '../../shared/validators/correo';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
+
+/** ¿Proveedor conocido o correo académico (.edu, .edu.pe…)? Copia del servidor. */
+function dominioAdmitido(dominio: string): boolean {
+  return DOMINIOS_BUENOS.has(dominio) || /(^|\.)edu(\.[a-z]{2})?$/.test(dominio);
+}
+
+const NO_ADMITIDO =
+  'Usa un correo de Gmail, Hotmail, Outlook, Yahoo o iCloud, o el de tu universidad.';
 
 /** Dónde se recuerda que este navegador ya se apuntó, por sorteo. */
 const CLAVE = (slug: string) => `sorteo-inscrito:${slug}`;
@@ -38,6 +47,10 @@ export class SorteoPagina implements OnInit {
   email = '';
   nombre = '';
 
+  /** Lo que le pasa al correo escrito, y el arreglo si se puede adivinar. */
+  readonly problema = signal<string | null>(null);
+  readonly sugerencia = signal<string | null>(null);
+
   ngOnInit(): void {
     this.inscrito.set(this.recordado());
 
@@ -53,13 +66,31 @@ export class SorteoPagina implements OnInit {
     });
   }
 
+  /**
+   * Revisa el correo: la forma, las erratas de siempre («gmaiol.com») y que
+   * sea de un proveedor conocido o de una universidad. No comprueba que la
+   * cuenta exista. El servidor hace lo mismo y es el que manda.
+   */
+  revisar(): boolean {
+    const revision = revisarCorreo(this.email);
+    let problema = revision.problema;
+    if (!problema && !dominioAdmitido(revision.correo.split('@')[1] ?? '')) problema = NO_ADMITIDO;
+    this.problema.set(problema);
+    this.sugerencia.set(problema ? revision.sugerencia : null);
+    return !problema;
+  }
+
+  usarSugerencia(): void {
+    const sugerencia = this.sugerencia();
+    if (!sugerencia) return;
+    this.email = sugerencia;
+    this.revisar();
+  }
+
   inscribirme(): void {
     if (this.enviando()) return;
-    const email = this.email.trim();
-    if (!email) {
-      this.error.set('Escribe tu correo.');
-      return;
-    }
+    if (!this.revisar()) return;
+    const email = this.email.trim().toLowerCase();
 
     this.enviando.set(true);
     this.error.set(null);

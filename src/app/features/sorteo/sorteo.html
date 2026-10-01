@@ -46,7 +46,7 @@
               [(ngModel)]="nombre"
             />
           </div>
-          <div class="campo">
+          <div class="campo" [class.invalido]="problema()">
             <label for="sorteo-correo">Tu correo</label>
             <input
               id="sorteo-correo"
@@ -57,7 +57,23 @@
               required
               placeholder="tucorreo@gmail.com"
               [(ngModel)]="email"
+              (blur)="email && revisar()"
+              (ngModelChange)="problema() && revisar()"
+              [attr.aria-invalid]="problema() ? true : null"
+              aria-describedby="sorteo-correo-ayuda"
             />
+            @if (problema(); as p) {
+              <p class="error" id="sorteo-correo-ayuda" role="alert">
+                {{ p }}
+                @if (sugerencia(); as s) {
+                  <button type="button" class="sugerencia" (click)="usarSugerencia()">
+                    ¿Quisiste decir <strong>{{ s }}</strong>?
+                  </button>
+                }
+              </p>
+            } @else {
+              <p class="ayuda" id="sorteo-correo-ayuda">Gmail, Hotmail, Outlook, Yahoo, iCloud o el de tu universidad.</p>
+            }
           </div>
           <button type="submit" class="boton grande" [disabled]="enviando()">
             {{ enviando() ? 'Inscribiendo…' : 'Quiero participar' }}

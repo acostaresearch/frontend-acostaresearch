@@ -10,6 +10,8 @@ export interface InscritoSorteo {
   id: string;
   email: string;
   nombre: string;
+  /** En qué vuelta salió eliminado (1 o 2). Nulo = sigue en la ruleta. */
+  eliminadoEn: number | null;
   createdAt: string;
 }
 
@@ -25,25 +27,49 @@ export interface Sorteo {
   premio: string;
   duracionDias: number;
   abierto: boolean;
+  /** Vueltas ya giradas. */
+  ronda: number;
+  /** Cuántas vueltas tiene: las primeras eliminan y la última da el ganador. */
+  vueltas: number;
   inscritos: number;
   ganador: InscritoSorteo | null;
   sorteadoAt: string | null;
-  /** Los últimos caracteres del código regalado. */
-  codigoHint: string | null;
   correoEnviado: boolean;
   createdAt: string;
   /** Solo al abrir uno: la lista completa. */
   participantes?: InscritoSorteo[];
 }
 
-/** Lo que devuelve girar la ruleta. */
-export interface ResultadoSorteo {
-  ganador: InscritoSorteo;
+/** Una vuelta que elimina a alguien. */
+export interface VueltaEliminado {
+  tipo: 'ELIMINADO';
+  ronda: number;
   /** La lista que gira, en el mismo orden con que se eligió. */
   participantes: InscritoSorteo[];
   indice: number;
-  /** En claro, una sola vez: por si el correo no llegó. */
-  codigo: string;
+  eliminado: InscritoSorteo;
+  sorteo: Sorteo;
+}
+
+/** La vuelta que da el ganador. */
+export interface VueltaGanador {
+  tipo: 'GANADOR';
+  ronda: number;
+  participantes: InscritoSorteo[];
+  indice: number;
+  ganador: InscritoSorteo;
+  /** «ACR-R7VC-PJWV-****»: el código entero solo le llega al ganador. */
+  codigoOculto: string;
+  correoEnviado: boolean;
+  sorteo: Sorteo;
+}
+
+export type ResultadoSorteo = VueltaEliminado | VueltaGanador;
+
+/** Lo que devuelve reenviar el premio. */
+export interface Reenvio {
+  ganador: InscritoSorteo;
+  codigoOculto: string;
   correoEnviado: boolean;
   sorteo: Sorteo;
 }
@@ -119,6 +145,13 @@ export class SorteoService {
   sortear(id: string): Observable<ResultadoSorteo> {
     return this.http
       .post<ApiResponse<ResultadoSorteo>>(`${this.base}/${id}/sortear`, {})
+      .pipe(map((r) => r.data));
+  }
+
+  /** Anula el código del ganador y le manda uno nuevo. */
+  reenviar(id: string): Observable<Reenvio> {
+    return this.http
+      .post<ApiResponse<Reenvio>>(`${this.base}/${id}/reenviar`, {})
       .pipe(map((r) => r.data));
   }
 }

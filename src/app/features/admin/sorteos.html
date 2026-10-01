@@ -34,6 +34,8 @@
                 {{ s.inscritos }} {{ s.inscritos === 1 ? 'inscrito' : 'inscritos' }} ·
                 @if (s.ganador) {
                   <span class="estado hecho">Sorteado</span>
+                } @else if (s.ronda > 0) {
+                  <span class="estado en-curso">Vuelta {{ s.ronda }} de {{ s.vueltas }}</span>
                 } @else if (s.abierto) {
                   <span class="estado abierto">Abierto</span>
                 } @else {
@@ -70,46 +72,71 @@
           <button type="button" class="boton" (click)="copiar(s.url)">Copiar</button>
         </div>
         <p class="tenue">
-          Cada correo entra una sola vez. No se verifica: basta con escribirlo.
+          Cada correo entra una sola vez. Se aceptan Gmail, Hotmail, Outlook, Yahoo, iCloud y
+          correos de universidad; no se comprueba si la cuenta existe.
         </p>
       </div>
 
+      <!-- Las vueltas: dos que eliminan y la del ganador -->
       @if (!s.ganador) {
+        <ol class="vueltas" [attr.aria-label]="'Vueltas del sorteo'">
+          @for (n of [1, 2, 3].slice(0, s.vueltas); track n) {
+            <li
+              [class.hecha]="n <= s.ronda"
+              [class.toca]="n === s.ronda + 1"
+            >
+              <span class="numero">{{ n }}</span>
+              {{ n === s.vueltas ? 'Ganador' : 'Elimina' }}
+            </li>
+          }
+        </ol>
+
         <div class="acciones">
-          <button
-            type="button"
-            class="boton secundario"
-            [disabled]="girando()"
-            (click)="cambiarInscripciones(s)"
-          >
-            {{ s.abierto ? 'Cerrar inscripciones' : 'Reabrir inscripciones' }}
-          </button>
-          <button
-            type="button"
-            class="boton girar"
-            [disabled]="girando() || s.inscritos === 0"
-            (click)="girar(s)"
-          >
-            {{ girando() ? 'Girando…' : '🎡 Girar la ruleta' }}
-          </button>
+          @if (s.ronda === 0) {
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="girando()"
+              (click)="cambiarInscripciones(s)"
+            >
+              {{ s.abierto ? 'Cerrar inscripciones' : 'Reabrir inscripciones' }}
+            </button>
+          }
+          @if (siguiente(); as sig) {
+            <button
+              type="button"
+              class="boton girar"
+              [class.final]="sig.final"
+              [disabled]="girando() || enJuego().length === 0"
+              (click)="girar(s)"
+            >
+              @if (girando()) {
+                Girando…
+              } @else if (sig.final) {
+                🏆 Girar la vuelta {{ sig.numero }}: ganador
+              } @else {
+                🎡 Girar la vuelta {{ sig.numero }}: elimina
+              }
+            </button>
+          }
         </div>
       }
 
       <!-- La ruleta -->
-      @if (enRueda().length > 0) {
-        <div class="ruleta" [class.girando]="girando()">
+      @if (enRueda().length > 0 && !(s.ganador && !resultado())) {
+        <div class="ruleta">
           <div class="flecha" aria-hidden="true"></div>
           <svg
             viewBox="0 0 200 200"
             class="rueda"
             role="img"
-            [attr.aria-label]="'Ruleta con ' + enRueda().length + ' inscritos'"
+            [attr.aria-label]="'Ruleta con ' + enRueda().length + ' en juego'"
             [style.transform]="'rotate(' + rotacion() + 'deg)'"
             [style.transition]="transicion()"
           >
             @if (porciones().length === 0) {
-              <circle cx="100" cy="100" [attr.r]="96" fill="#1d4ed8" />
-              <text x="100" y="104" text-anchor="middle" class="etiqueta" font-size="9">
+              <circle cx="100" cy="100" r="96" fill="#1d4ed8" />
+              <text x="100" y="80" text-anchor="middle" class="etiqueta" font-size="9">
                 {{ enRueda()[0].nombre || enRueda()[0].email }}
               </text>
             } @else {
@@ -135,40 +162,60 @@
             <circle cx="100" cy="100" r="11" class="centro" />
           </svg>
         </div>
-      } @else {
+      } @else if (!s.ganador) {
         <p class="vacio">Todavía no se ha inscrito nadie. Comparte el enlace.</p>
       }
 
-      <!-- El ganador -->
+      <!-- Lo que salió en la última vuelta -->
       @if (resultado(); as r) {
+        @if (r.tipo === 'ELIMINADO') {
+          <div class="fuera" role="status">
+            <p class="titulo">❌ Vuelta {{ r.ronda }}: queda fuera</p>
+            <p class="correo">{{ quien(r.eliminado) }}</p>
+            <p class="tenue">Sale de la ruleta. Cuando quieras, gira la vuelta siguiente.</p>
+          </div>
+        }
+      }
+
+      @if (s.ganador && !girando()) {
         <div class="ganador" role="status">
-          <p class="titulo">🎉 ¡Tenemos ganador!</p>
-          <p class="correo">{{ r.ganador.nombre ? r.ganador.nombre + ' · ' : '' }}{{ r.ganador.email }}</p>
+          <p class="titulo">{{ resultado()?.tipo === 'GANADOR' ? '🎉 ¡Tenemos ganador!' : '🏆 Ganador' }}</p>
+          <p class="correo">{{ quien(s.ganador) }}</p>
           <p class="tenue">
-            @if (r.correoEnviado) {
-              Ya le mandamos su código por correo.
+            @if (s.sorteadoAt) {
+              Sorteado el {{ s.sorteadoAt | date: 'd MMM y, HH:mm' }} ·
+            }
+            @if (s.correoEnviado) {
+              su código de {{ duracion(s.duracionDias) }} le llegó por correo.
             } @else {
-              <strong>El correo no salió.</strong> Mándale el código por otra vía.
+              <strong>el correo no salió.</strong>
             }
           </p>
-          <div class="enlace-fila">
-            <input type="text" [value]="r.codigo" readonly aria-label="Código del ganador" />
-            <button type="button" class="boton secundario" (click)="copiar(r.codigo, 'Código copiado.')">
-              Copiar código
+          @if (codigoOculto(); as codigo) {
+            <p class="codigo" aria-label="Código del ganador, con los cuatro últimos caracteres ocultos">
+              {{ codigo }}
+            </p>
+          }
+          <div>
+            <button
+              type="button"
+              class="boton secundario"
+              [disabled]="reenviando()"
+              (click)="reenviar(s)"
+            >
+              {{ reenviando() ? 'Reenviando…' : 'Reenviar el código' }}
             </button>
           </div>
-          <p class="tenue">Este código solo se ve ahora. Después queda en Accesos con sus últimos caracteres.</p>
+          <p class="tenue">El código completo solo lo recibe el ganador en su correo.</p>
         </div>
-      } @else if (s.ganador && !girando()) {
-        <div class="ganador">
-          <p class="titulo">🏆 Ganador</p>
-          <p class="correo">{{ s.ganador.nombre ? s.ganador.nombre + ' · ' : '' }}{{ s.ganador.email }}</p>
-          <p class="tenue">
-            Sorteado el {{ s.sorteadoAt | date: 'd MMM y, HH:mm' }} · código terminado en
-            <code>{{ s.codigoHint }}</code> ·
-            {{ s.correoEnviado ? 'correo enviado' : 'el correo no salió' }}
-          </p>
-        </div>
+      }
+
+      @if (eliminados().length > 0) {
+        <ul class="eliminados">
+          @for (p of eliminados(); track p.id) {
+            <li><span>Vuelta {{ p.eliminadoEn }}</span> {{ quien(p) }}</li>
+          }
+        </ul>
       }
 
       <!-- Los inscritos -->
@@ -187,13 +234,17 @@
             </thead>
             <tbody>
               @for (p of s.participantes; track p.id; let i = $index) {
-                <tr [class.es-ganador]="s.ganador?.id === p.id">
+                <tr [class.es-ganador]="s.ganador?.id === p.id" [class.fuera]="p.eliminadoEn !== null">
                   <td>{{ i + 1 }}</td>
                   <td>{{ p.email }}</td>
                   <td>{{ p.nombre || '—' }}</td>
                   <td>{{ p.createdAt | date: 'd MMM, HH:mm' }}</td>
                   <td>
-                    @if (!s.ganador) {
+                    @if (s.ganador?.id === p.id) {
+                      🏆
+                    } @else if (p.eliminadoEn !== null) {
+                      Fuera (vuelta {{ p.eliminadoEn }})
+                    } @else if (s.ronda === 0 && !s.ganador) {
                       <button
                         type="button"
                         class="quitar"
@@ -203,8 +254,6 @@
                       >
                         Quitar
                       </button>
-                    } @else if (s.ganador.id === p.id) {
-                      🏆
                     }
                   </td>
                 </tr>

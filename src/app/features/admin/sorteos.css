@@ -336,3 +336,138 @@ code {
   color: var(--color-sobre-relleno);
   background: var(--color-error);
 }
+
+/* ---------- Vueltas ---------- */
+
+.estado.en-curso {
+  color: var(--color-aviso);
+}
+
+.vueltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vueltas li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 12px 6px 6px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.vueltas .numero {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 50%;
+}
+
+.vueltas li.hecha {
+  color: var(--color-texto-tenue);
+  text-decoration: line-through;
+}
+
+.vueltas li.toca {
+  font-weight: 600;
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.vueltas li.toca .numero {
+  color: var(--color-sobre-boton);
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.boton.girar.final {
+  background: var(--color-exito);
+  border-color: var(--color-exito);
+}
+
+/* ---------- Eliminado ---------- */
+
+.fuera {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  text-align: center;
+  background: var(--color-error-suave);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radio);
+  animation: aparecer 0.4s ease-out;
+}
+
+.fuera .titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-error);
+}
+
+.fuera .correo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--color-texto);
+  word-break: break-all;
+}
+
+.eliminados {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.eliminados span {
+  display: inline-block;
+  min-width: 70px;
+  margin-right: 6px;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.inscritos tr.fuera td {
+  color: var(--color-texto-tenue);
+}
+
+.inscritos tr.fuera td:nth-child(2) {
+  text-decoration: line-through;
+}
+
+/* El código del ganador, con los cuatro últimos tapados. */
+.ganador .codigo {
+  margin: 2px auto 0;
+  padding: 10px 16px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fuera {
+    animation: none;
+  }
+}

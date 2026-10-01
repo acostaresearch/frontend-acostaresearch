@@ -14,8 +14,8 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
 /** Lo que tarda la ruleta en pararse. */
 const GIRO_MS = 6500;
-/** Vueltas completas antes de caer en el ganador. */
-const VUELTAS = 7;
+/** Vueltas completas antes de caer en el elegido. */
+const VUELTAS_DE_RUEDA = 7;
 /** Con más porciones que estas, los nombres no caben y la rueda va sin texto. */
 const MAX_ETIQUETAS = 40;
 /** Radio de la rueda, en unidades del SVG (caja de 200×200). */
@@ -45,14 +45,23 @@ function etiquetaDe(p: InscritoSorteo): string {
   return base.length > 14 ? `${base.slice(0, 13)}…` : base;
 }
 
+/** Quién es, para los textos: «Ana · ana@gmail.com». */
+function quien(p: InscritoSorteo): string {
+  return p.nombre ? `${p.nombre} · ${p.email}` : p.email;
+}
+
 /**
  * Los sorteos en el panel: crear uno, compartir su enlace, ver quién se apuntó
  * y girar la ruleta.
  *
- * El ganador NO se decide aquí. Al pulsar «Girar», el servidor lo elige, le
- * genera el código y le escribe; esta pantalla recibe su posición en la lista y
- * solo anima la rueda hasta dejarla ahí. Así recargar a mitad de giro, o tocar
- * el navegador, no cambia el resultado.
+ * Son tres vueltas y el administrador pulsa «Girar» en cada una: las dos
+ * primeras eliminan a alguien y la tercera da el ganador. Nada de eso se decide
+ * aquí: el servidor elige en cada vuelta y esta pantalla recibe la posición del
+ * elegido y anima la rueda hasta él. Así recargar a mitad de giro, o tocar el
+ * navegador, no cambia el resultado.
+ *
+ * El código del premio tampoco llega entero: el panel lo enseña con los cuatro
+ * últimos caracteres tapados y solo el ganador lo recibe completo, por correo.
  *
  * Componente aparte, como WhatsApp: la hoja de estilos del panel ya roza el
  * tope de la compilación.
@@ -71,21 +80,50 @@ export class SorteosAdmin implements OnInit, OnDestroy {
   readonly abierto = signal<Sorteo | null>(null);
   readonly cargando = signal(true);
   readonly creando = signal(false);
+  readonly reenviando = signal(false);
   readonly error = signal<string | null>(null);
   readonly aviso = signal<string | null>(null);
 
-  /** La ruleta: girando, cuánto lleva girado y el resultado al pararse. */
+  /** Desde que se pulsa «Girar» hasta que la rueda se para: apaga los botones. */
   readonly girando = signal(false);
+  /** Solo mientras la rueda se mueve: es lo que enciende la transición. */
+  private readonly animando = signal(false);
   readonly rotacion = signal(0);
+  /** Lo que salió en la última vuelta, para enseñarlo al pararse. */
   readonly resultado = signal<ResultadoSorteo | null>(null);
-  /** La lista que pinta la rueda mientras gira (la que devolvió el servidor). */
+  /** El código tapado del ganador, tras sortear o reenviar. */
+  readonly codigoOculto = signal<string | null>(null);
+  /** La lista que pinta la rueda desde que gira hasta la vuelta siguiente. */
   private readonly ruedaFija = signal<InscritoSorteo[] | null>(null);
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
   nombreNuevo = 'Sorteo: matrícula de tesis por 3 meses';
 
+  readonly quien = quien;
+
+  /** Los que siguen dentro: ni eliminados ni, claro, el sorteo terminado. */
+  readonly enJuego = computed(
+    () => this.abierto()?.participantes?.filter((p) => p.eliminadoEn === null) ?? [],
+  );
+
+  /** Los eliminados, en el orden en que salieron. */
+  readonly eliminados = computed(() =>
+    (this.abierto()?.participantes ?? [])
+      .filter((p) => p.eliminadoEn !== null)
+      .sort((a, b) => (a.eliminadoEn ?? 0) - (b.eliminadoEn ?? 0)),
+  );
+
   /** Quiénes están en la rueda. */
-  readonly enRueda = computed(() => this.ruedaFija() ?? this.abierto()?.participantes ?? []);
+  readonly enRueda = computed(() => this.ruedaFija() ?? this.enJuego());
+
+  /** La vuelta que toca y si es la que da el ganador. */
+  readonly siguiente = computed(() => {
+    const s = this.abierto();
+    if (!s) return null;
+    const numero = s.ronda + 1;
+    const final = numero >= s.vueltas || this.enJuego().length <= 1;
+    return { numero, final };
+  });
 
   readonly porciones = computed<Porcion[]>(() => {
     const lista = this.enRueda();
@@ -113,7 +151,7 @@ export class SorteosAdmin implements OnInit, OnDestroy {
   });
 
   readonly transicion = computed(() =>
-    this.girando() ? `transform ${GIRO_MS}ms cubic-bezier(0.12, 0.7, 0.12, 1)` : 'none',
+    this.animando() ? `transform ${GIRO_MS}ms cubic-bezier(0.12, 0.7, 0.12, 1)` : 'none',
   );
 
   ngOnInit(): void {
@@ -145,6 +183,7 @@ export class SorteosAdmin implements OnInit, OnDestroy {
       next: (sorteo) => {
         if (this.abierto()?.id !== sorteo.id) {
           this.resultado.set(null);
+          this.codigoOculto.set(null);
           this.ruedaFija.set(null);
           this.rotacion.set(0);
         }
@@ -171,10 +210,10 @@ export class SorteosAdmin implements OnInit, OnDestroy {
     });
   }
 
-  async copiar(texto: string, que = 'Enlace copiado.'): Promise<void> {
+  async copiar(texto: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(texto);
-      this.aviso.set(que);
+      this.aviso.set('Enlace copiado.');
     } catch {
       this.error.set('No se pudo copiar. Selecciónalo y cópialo a mano.');
     }
@@ -223,6 +262,7 @@ export class SorteosAdmin implements OnInit, OnDestroy {
       next: () => {
         this.abierto.set(null);
         this.resultado.set(null);
+        this.codigoOculto.set(null);
         this.aviso.set('Sorteo borrado.');
         this.cargar();
       },
@@ -230,31 +270,42 @@ export class SorteosAdmin implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Una vuelta. Solo la primera pide confirmación, porque es la que cierra las
+   * inscripciones; las siguientes las pide el propio administrador al pulsar.
+   */
   async girar(sorteo: Sorteo): Promise<void> {
     if (this.girando()) return;
-    const seguro = await this.dialogos.confirmar({
-      titulo: 'Girar la ruleta',
-      mensaje:
-        `Entran los ${sorteo.inscritos} inscritos. El ganador recibe al instante por correo su ` +
-        `código de ${sorteo.premio}, y el sorteo se cierra.`,
-      nota: 'No se puede repetir.',
-      confirmar: 'Girar',
-    });
-    if (!seguro) return;
+    if (sorteo.ronda === 0) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: 'Empezar el sorteo',
+        mensaje:
+          `Son ${sorteo.vueltas} vueltas entre los ${sorteo.inscritos} inscritos: las ` +
+          `${sorteo.vueltas - 1} primeras eliminan a alguien y la última da el ganador, que ` +
+          `recibe al instante por correo su código de ${sorteo.premio}.`,
+        nota: 'Al girar la primera se cierran las inscripciones. No se puede repetir.',
+        confirmar: 'Girar la primera',
+      });
+      if (!seguro) return;
+    }
 
-    this.girando.set(true);
+    // La rueda vuelve a cero sin animación y ya sin el que salió en la vuelta anterior.
+    this.ruedaFija.set(null);
+    this.rotacion.set(0);
     this.resultado.set(null);
+    this.girando.set(true);
     this.api.sortear(sorteo.id).subscribe({
       next: (resultado) => this.animar(resultado),
       error: (e: unknown) => {
         this.girando.set(false);
         this.error.set(mensajeDeError(e));
+        this.abrir(sorteo.id);
       },
     });
   }
 
   /**
-   * Lleva la rueda hasta el ganador.
+   * Lleva la rueda hasta el elegido.
    *
    * La porción `i` ocupa de `i·paso` a `(i+1)·paso` contando desde arriba; la
    * flecha está arriba, en 0°. Girar la rueda R grados deja bajo la flecha lo
@@ -267,27 +318,68 @@ export class SorteosAdmin implements OnInit, OnDestroy {
     const paso = 360 / n;
     const desvio = (Math.random() - 0.5) * paso * 0.6;
     const destino = (360 - (resultado.indice * paso + paso / 2 + desvio)) % 360;
-    const actual = this.rotacion();
-    const base = actual - (actual % 360);
     const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const espera = n < 2 || reducir ? 300 : GIRO_MS;
 
-    // Un fotograma para que la rueda se pinte con la lista del servidor antes de girar.
-    requestAnimationFrame(() => {
-      this.rotacion.set(base + VUELTAS * 360 + destino);
-      this.temporizador = setTimeout(() => {
-        this.girando.set(false);
-        this.resultado.set(resultado);
-        this.abierto.set(resultado.sorteo);
-        this.reemplazar(resultado.sorteo);
-        if (resultado.correoEnviado) {
-          this.aviso.set(`¡Ganó ${resultado.ganador.email}! Ya le llegó su código por correo.`);
+    // Dos fotogramas: uno para pintar la rueda nueva en cero, otro para lanzarla.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        this.animando.set(true);
+        this.rotacion.set(VUELTAS_DE_RUEDA * 360 + destino);
+        this.temporizador = setTimeout(() => this.alPararse(resultado), espera);
+      }),
+    );
+  }
+
+  private alPararse(resultado: ResultadoSorteo): void {
+    this.animando.set(false);
+    this.girando.set(false);
+    this.resultado.set(resultado);
+    this.abierto.set(resultado.sorteo);
+    this.reemplazar(resultado.sorteo);
+
+    if (resultado.tipo === 'ELIMINADO') {
+      this.aviso.set(`Vuelta ${resultado.ronda}: queda fuera ${resultado.eliminado.email}.`);
+      return;
+    }
+
+    this.codigoOculto.set(resultado.codigoOculto);
+    if (resultado.correoEnviado) {
+      this.aviso.set(`¡Ganó ${resultado.ganador.email}! Ya le llegó su código por correo.`);
+    } else {
+      this.error.set(
+        `Ganó ${resultado.ganador.email}, pero el correo no salió. Pulsa «Reenviar el código».`,
+      );
+    }
+  }
+
+  async reenviar(sorteo: Sorteo): Promise<void> {
+    if (this.reenviando() || !sorteo.ganador) return;
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Reenviar el código',
+      mensaje: `Se anula el código anterior y le mandamos uno nuevo a ${sorteo.ganador.email}.`,
+      nota: 'Si ya lo canjeó, no se manda nada: ya tiene su matrícula.',
+      confirmar: 'Reenviar',
+    });
+    if (!seguro) return;
+
+    this.reenviando.set(true);
+    this.api.reenviar(sorteo.id).subscribe({
+      next: (r) => {
+        this.reenviando.set(false);
+        this.codigoOculto.set(r.codigoOculto);
+        this.abierto.set(r.sorteo);
+        this.reemplazar(r.sorteo);
+        if (r.correoEnviado) {
+          this.aviso.set(`Le mandamos un código nuevo a ${r.ganador.email}.`);
         } else {
-          this.error.set(
-            `Ganó ${resultado.ganador.email}, pero el correo no salió. Copia el código y mándaselo.`,
-          );
+          this.error.set('El correo tampoco salió esta vez. Inténtalo en un rato.');
         }
-      }, espera);
+      },
+      error: (e: unknown) => {
+        this.reenviando.set(false);
+        this.error.set(mensajeDeError(e));
+      },
     });
   }
 

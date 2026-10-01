@@ -27,7 +27,7 @@ export interface RevisionDeCorreo {
 }
 
 /** Dominios reales que se parecen a los grandes y no hay que «corregir». */
-const DOMINIOS_BUENOS = new Set([
+export const DOMINIOS_BUENOS = new Set([
   'gmail.com',
   'googlemail.com',
   'hotmail.com',
