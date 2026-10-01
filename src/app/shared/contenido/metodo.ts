@@ -127,10 +127,10 @@ export const RAZONES = [
       'dentro de tu mismo documento. Tu formato, tus tablas y tus figuras no se tocan.',
   },
   {
-    titulo: '15 normas de citas',
+    titulo: '17 normas de citas',
     icono: 'lista',
     texto:
-      'APA 7, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
+      'APA 7, ISO 690, IEEE, Vancouver, AMA, Chicago, Harvard, MLA y más, en español de España, México ' +
       'o Chile, o en inglés. Tu agente.ia te pregunta cuál te piden, y si tu asesor luego pide otra, ' +
       'se lo dices y sale en la nueva sin reescribir nada.',
   },
@@ -443,7 +443,7 @@ export const INCLUYE: Record<string, string[]> = {
   METODO_DE_TESIS_HUMANIZADOR: [
     'Las 12 Skills: las 9 fases de la tesis, el Humanizador académico y Bajar similitud',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
-    'Tu tesis en un solo Word en 15 normas de citas, o tu propio Word ya escrito con sus citas puestas',
+    'Tu tesis en un solo Word en 17 normas de citas, o tu propio Word ya escrito con sus citas puestas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],
@@ -451,7 +451,7 @@ export const INCLUYE: Record<string, string[]> = {
     'Las 10 fases de la ruta, de la idea a la respuesta a revisores, y la variante bibliométrica',
     'El Humanizador académico',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
-    'Tu artículo en Word en 15 normas de citas, o tu manuscrito ya escrito con sus citas puestas',
+    'Tu artículo en Word en 17 normas de citas, o tu manuscrito ya escrito con sus citas puestas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],

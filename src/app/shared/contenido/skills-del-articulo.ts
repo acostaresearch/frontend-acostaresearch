@@ -74,7 +74,7 @@ export const GARANTIAS_DEL_ARTICULO = [
   },
   {
     icono: 'lineas',
-    titulo: '15 normas de citas',
+    titulo: '17 normas de citas',
     texto:
       'APA, Vancouver, IEEE, AMA, Nature, ACS, Chicago y más. Si la revista te pide otra, se lo ' +
       'dices a Claude y no reescribes una línea.',
