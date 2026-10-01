@@ -41,10 +41,11 @@ import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
-import { INCLUYE } from '../../shared/contenido/metodo';
+import { FASES_ARTICULO, INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
-import { PlanesInstituciones } from './planes-instituciones';
+// Oculto por ahora en la plantilla (1-oct).
+// import { PlanesInstituciones } from './planes-instituciones';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
@@ -86,6 +87,23 @@ function soles(cents: number): string {
   return `S/ ${Number.isInteger(valor) ? valor : valor.toFixed(2)}`;
 }
 
+/**
+ * Las etapas de la tesis con el nombre que se entiende en una ficha de precios.
+ * `FASES_TESIS` es más corto («Tema», «Datos») porque va en fichas del inicio
+ * donde caben dos palabras; aquí hay sitio para decir qué es cada una.
+ */
+const ETAPAS_TESIS = [
+  'Tema y delimitación',
+  'Problema y objetivos',
+  'Marco teórico',
+  'Metodología',
+  'Instrumento',
+  'Recolección de datos',
+  'Análisis de datos',
+  'Discusión',
+  'Conclusiones y abstract',
+] as const;
+
 @Component({
   selector: 'app-checkout',
   imports: [PrivadaPipe, 
@@ -99,7 +117,7 @@ function soles(cents: number): string {
     SiteHeader,
     SiteFooter,
     InvitacionPlanes,
-    PlanesInstituciones,
+    // PlanesInstituciones,
   ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
@@ -137,6 +155,13 @@ export class Checkout implements OnInit {
   readonly promos = signal<Promo[]>([]);
   readonly pasarelas = signal<PaymentProvider[]>([]);
   readonly saldo = signal<Balance | null>(null);
+
+  /**
+   * Las licencias de quien mira, para marcar en su tarjeta lo que ya compró.
+   * Sin esto, quien ya tenía el método veía «Añadir al carrito» como cualquier
+   * visitante y no sabía si le faltaba algo o si iba a pagar dos veces.
+   */
+  readonly misLicencias = signal<License[]>([]);
 
   /**
    * El carrito: lo que el comprador va juntando para pagarlo de una vez.
@@ -428,6 +453,19 @@ export class Checkout implements OnInit {
     // como escaparate de precios.
     if (this.auth.isAuthenticated()) {
       this.billing.balance().subscribe({ next: (saldo) => this.saldo.set(saldo) });
+      // Si falla, las tarjetas salen como para cualquiera: es una ayuda, no un requisito.
+      this.licencias.mine().subscribe({
+        next: ({ licencias }) => {
+          this.misLicencias.set(licencias);
+          // Lo que aún no se puede renovar sale del carrito: si se quedara,
+          // se pagaría desde la cabecera sin pasar por la tarjeta que lo frena.
+          const fuera = this.planes()
+            .filter((plan) => this.miLicencia(plan)?.renovable === false)
+            .map((plan) => plan.code);
+          if (fuera.length > 0) this.carritoGuardado.quitar(fuera);
+        },
+        error: () => this.misLicencias.set([]),
+      });
     }
 
     this.payments.providers().subscribe({
@@ -884,6 +922,84 @@ export class Checkout implements OnInit {
    */
   clavesDe(plan: Plan): number {
     return this.incluye[plan.code] ? 3 : 2;
+  }
+
+  // ── «Qué incluye cada paquete» ─────────────────────────────────────────
+
+  /** La pestaña elegida. Sin elegir, la del primer paquete. */
+  readonly pestana = signal<string | null>(null);
+
+  readonly pestanaActiva = computed(() => {
+    const planes = this.metodo();
+    return planes.find((plan) => plan.code === this.pestana()) ?? planes[0] ?? null;
+  });
+
+  /** «Ver qué incluye» de una tarjeta: abre su pestaña y baja hasta el panel. */
+  verQueIncluye(plan: Plan): void {
+    this.pestana.set(plan.code);
+    document.getElementById('que-incluye')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** El nombre de la pestaña: el de venta no cabe en tres pestañas seguidas. */
+  nombreCorto(plan: Plan): string {
+    const codigo = plan.code.toUpperCase();
+    if (codigo.startsWith('METODO')) return 'Método de Tesis';
+    if (codigo.startsWith('ARTICULO')) return 'Artículos Científicos';
+    if (codigo.startsWith('HUMANIZ')) return 'Humanizador';
+    return plan.name;
+  }
+
+  /**
+   * Las fases de la ruta, si el paquete la tiene. Por prefijo, como `imagenDe`.
+   * El Humanizador no sigue ninguna ruta: su pestaña va sin esta columna.
+   */
+  fasesDe(plan: Plan): { titulo: string; lista: readonly string[] } | null {
+    const codigo = plan.code.toUpperCase();
+    if (codigo.startsWith('METODO')) {
+      return { titulo: `Las ${ETAPAS_TESIS.length} etapas del método`, lista: ETAPAS_TESIS };
+    }
+    if (codigo.startsWith('ARTICULO')) {
+      return { titulo: `Las ${FASES_ARTICULO.length} fases de la ruta`, lista: FASES_ARTICULO };
+    }
+    return null;
+  }
+
+  /** Días antes del fin desde los que se puede renovar. */
+  private readonly DIAS_PARA_RENOVAR = 30;
+
+  /**
+   * La licencia que ya tiene de este producto, si la tiene.
+   *
+   * Solo cuentan las activas: una revocada o suspendida no es «ya lo tienes».
+   * La vencida sí se devuelve, porque lo que toca entonces es renovarla y la
+   * tarjeta lo dice así. Si hay varias, la que dura más.
+   *
+   * `renovable` se abre un mes antes del fin: antes, el botón de compra queda
+   * apagado y dice desde cuándo podrá renovar, para que nadie pague por error
+   * lo que ya tiene vigente para meses.
+   */
+  miLicencia(
+    plan: Plan,
+  ): { licencia: License; vencida: boolean; renovable: boolean; renovarDesde: Date | null } | null {
+    if (!plan.productCode) return null;
+    const mias = this.misLicencias()
+      .filter((l) => l.productCode === plan.productCode && l.status === 'ACTIVE')
+      .sort((a, b) => this.finDe(b) - this.finDe(a));
+    const licencia = mias[0];
+    if (!licencia) return null;
+    const fin = this.finDe(licencia);
+    const desde = fin - this.DIAS_PARA_RENOVAR * 24 * 60 * 60 * 1000;
+    return {
+      licencia,
+      vencida: fin < Date.now(),
+      renovable: desde <= Date.now(),
+      renovarDesde: Number.isFinite(desde) ? new Date(desde) : null,
+    };
+  }
+
+  /** Sin fecha de fin es para siempre. */
+  private finDe(licencia: License): number {
+    return licencia.expiresAt ? new Date(licencia.expiresAt).getTime() : Number.POSITIVE_INFINITY;
   }
 
   /**

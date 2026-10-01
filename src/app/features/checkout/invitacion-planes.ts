@@ -57,28 +57,21 @@ function guardar(clave: string, valor: string | null): void {
           </span>
         }
       </p>
-    } @else if (!escribiendo()) {
-      <p class="pregunta">
-        <button type="button" class="boton enlace" (click)="escribiendo.set(true)">
-          ¿Te invitó un compañero? Escribe su código
-        </button>
-      </p>
     } @else {
+      <!-- A la vista y no detrás de un enlace: va bajo el canje, en la
+           cabecera, y un campo se entiende sin tener que pulsar nada antes. -->
       <form class="codigo" (submit)="$event.preventDefault(); usar()">
-        <label for="codigo-invitacion">Código de quien te invitó</label>
-        <div class="fila">
-          <input
-            id="codigo-invitacion"
-            [value]="codigo()"
-            (input)="codigo.set($any($event.target).value)"
-            placeholder="ANAK7Q2"
-            autocomplete="off"
-            maxlength="24"
-          />
-          <button type="submit" class="boton" [disabled]="codigo().trim().length < 5 || enviando()">
-            Usar
-          </button>
-        </div>
+        <input
+          aria-label="Código de un compañero"
+          [value]="codigo()"
+          (input)="codigo.set($any($event.target).value)"
+          placeholder="Código de un compañero"
+          autocomplete="off"
+          maxlength="24"
+        />
+        <button type="submit" [disabled]="codigo().trim().length < 5 || enviando()">
+          Aplicar
+        </button>
       </form>
     }
     @if (error(); as e) {
@@ -86,22 +79,31 @@ function guardar(clave: string, valor: string | null): void {
     }
   `,
   styles: `
-    :host { display: block; margin: 0 0 18px; }
+    :host { display: block; margin: 10px 0 0; }
     .invitacion {
-      display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 16px;
-      font-size: 14.5px; line-height: 1.5; color: var(--color-texto);
-      background: var(--color-exito-suave); border-radius: var(--radio);
+      display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 14px;
+      font-size: 13.5px; line-height: 1.5; color: var(--color-texto);
+      background: var(--color-exito-suave); border-radius: 10px;
     }
     .icono { font-size: 18px; line-height: 1.2; }
-    .pregunta { margin: 0; font-size: 14px; }
-    .codigo label { display: block; margin: 0 0 6px; font-size: 13.5px; color: var(--color-texto-suave); }
-    .fila { display: flex; gap: 8px; max-width: 360px; }
-    .fila input {
-      flex: 1; min-width: 0; padding: 10px 12px; font: inherit; text-transform: uppercase;
-      color: var(--color-texto); background: var(--color-superficie);
-      border: 1px solid var(--color-borde-fuerte); border-radius: var(--radio-sm);
+    .codigo {
+      display: flex; overflow: hidden;
+      background: var(--color-superficie);
+      border: 1px solid var(--color-borde-fuerte); border-radius: 10px;
     }
-    .fila .boton { width: auto; }
+    .codigo:focus-within { border-color: var(--color-primario); }
+    .codigo input {
+      flex: 1; min-width: 0; padding: 10px 14px; font: inherit; font-size: 14px;
+      color: var(--color-texto); background: none; border: 0;
+    }
+    .codigo input:focus { outline: none; }
+    .codigo input::placeholder { color: var(--color-texto-tenue); }
+    .codigo button {
+      flex: none; padding: 0 18px; font: inherit; font-size: 14px; font-weight: 600;
+      color: var(--color-primario); background: var(--color-primario-suave);
+      border: 0; cursor: pointer;
+    }
+    .codigo button:disabled { cursor: default; opacity: 0.6; }
     .error { margin: 8px 0 0; font-size: 13.5px; color: var(--color-error); }
   `,
 })
@@ -113,7 +115,6 @@ export class InvitacionPlanes implements OnInit {
 
   readonly invitador = signal<{ nombre: string; dias: number } | null>(null);
   readonly apuntado = signal(false);
-  readonly escribiendo = signal(false);
   readonly codigo = signal('');
   readonly enviando = signal(false);
   readonly error = signal<string | null>(null);

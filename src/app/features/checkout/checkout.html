@@ -275,8 +275,9 @@
             </p>
           }
         } @else {
-        <h2>¿Compraste por Yape o transferencia a través de whatsapp?</h2>
-        <p>Canjea aquí el código que te enviamos por correo.</p>
+        <p class="canje-intro">
+          ¿Pagaste por Yape o transferencia? Canjea el código que te llegó por correo.
+        </p>
 
         <!-- El campo y su botón, en una sola pieza: dos cajas sueltas al lado
              del titular se leían como dos cosas distintas. El recuadro entero
@@ -301,6 +302,11 @@
         </div>
 
         }
+
+        <!-- El código de quien lo invitó, debajo del canje: los dos son «tengo
+             un código», y juntos arriba no obligan a buscarlo entre los
+             paquetes. Cuenta además la visita (embudo). Ver `InvitacionPlanes`. -->
+        <app-invitacion-planes />
       </aside>
     </header>
 
@@ -311,9 +317,6 @@
     <app-aviso-flotante [(error)]="errorComprobante" />
     <app-aviso-flotante [(error)]="errorCulqi" />
 
-    <!-- Cuenta la visita (embudo) y el código de quien lo invitó. Ver
-         `InvitacionPlanes`. -->
-    <app-invitacion-planes />
 
  <section class="planes">
       @if (cargando()) {
@@ -346,19 +349,24 @@
 
               <ng-container *ngTemplateOutlet="figura; context: { $implicit: plan }" />
 
-              <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
-              @if (plan.description) {
-                <p class="tarjeta-lema">{{ plan.description }}</p>
-              }
+              <!-- Nombre, lema y el enlace a lo que incluye. Esta parte crece
+                   lo que haga falta y empuja el precio abajo: así los precios
+                   de una fila caen a la misma altura. La lista de lo incluido
+                   ya no va aquí, sino en «Qué incluye cada paquete», debajo:
+                   dentro de la tarjeta la estiraba media pantalla. -->
+              <div class="tarjeta-texto">
+                <h3 class="tarjeta-nombre">{{ plan.name }}</h3>
+                @if (plan.description) {
+                  <p class="tarjeta-lema">{{ plan.description }}</p>
+                }
+                <button type="button" class="ver-incluye" (click)="verQueIncluye(plan)">
+                  Ver qué incluye <span aria-hidden="true">↓</span>
+                </button>
+              </div>
 
               <!-- El importe grande es LO QUE SE PAGA, con el código anunciado
-                   ya descontado. Puede serlo porque elegir el plan lo aplica
-                   solo: si hubiera que teclearlo, la tarjeta diría 159 y la
-                   ventana de pago 199.
-
-                   El tachado va al lado y arriba, pequeño. Detrás y no delante
-                   porque lo primero que tiene que leerse es lo que cuesta hoy;
-                   el precio viejo es el contexto, no el titular. -->
+                   ya descontado. El tachado va pegado y en pequeño: lo primero
+                   que tiene que leerse es lo que cuesta hoy. -->
               <p class="tarjeta-precio">
                 <span class="importe">{{ precioTarjeta(plan) }}</span>
                 @if (precioTachado(plan); as antes) {
@@ -373,79 +381,165 @@
                 }}
               </p>
 
-              <!-- El código, pegado al precio: es el motivo de esa cifra.
-                   Va aquí y no en un recuadro aparte porque no es una acción
-                   —ya está aplicado— sino la explicación de por qué son 159. -->
+              <!-- El código o la oferta, en una pastilla pegada al precio: es
+                   su motivo, no una acción aparte. -->
               @if (promoDe(plan); as promo) {
-                <p class="tarjeta-cupon">
+                <p class="tarjeta-pastilla cupon">
                   <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m5 12.5 4.5 4.5L19 7.5" />
                   </svg>
-                  <span>Código {{ promo.code }} aplicado · te ahorras {{ ahorro(plan) }}</span>
+                  <span>Código {{ promo.code }} aplicado · ahorras {{ ahorro(plan) }}</span>
                 </p>
               } @else if (ahorro(plan); as rebaja) {
-                <p class="tarjeta-oferta">
+                <p class="tarjeta-pastilla">
                   <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" />
                     <path d="M12 7v5.2l3 1.8" />
                   </svg>
-                  <span>Precio por tiempo limitado · te ahorras {{ rebaja }}</span>
+                  <span>Precio por tiempo limitado · ahorras {{ rebaja }}</span>
                 </p>
               }
- 
-              <button
-                type="button"
-                class="boton grande bloque"
-                [class.secundario]="!esElMasElegido(plan) && metodo().length > 1"
-                (click)="enCarrito(plan) ? pagarCarrito() : alternarCarrito(plan)"
-              >
-                <!-- Toda compra pasa por el carrito: se añade aquí y se paga con
-                     «Ir a pagar» o con el «Carrito» de la cabecera. Una vez
-                     dentro, este mismo botón lleva a pagar, para que quien
-                     solo quiere un producto no tenga que buscar dónde. -->
-                @if (enCarrito(plan)) {
-                  Ir a pagar
-                  @if (carrito().length > 1) {
-                    ({{ carrito().length }} productos)
-                  }
-                } @else {
-                  Añadir al carrito
-                }
-              </button>
 
-              @if (enCarrito(plan)) {
-                <button
-                  type="button"
-                  class="tarjeta-carrito dentro"
-                  (click)="alternarCarrito(plan)"
-                >
+              <!-- Quien ya lo compró lo ve aquí, encima de los botones. La
+                   renovación se abre un mes antes del fin (`miLicencia`):
+                   antes no hay nada que comprar, y lo dice. -->
+              @let mia = miLicencia(plan);
+              @if (mia) {
+                <div class="tarjeta-ya-tienes" [class.vencida]="mia.vencida">
                   <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                    @if (mia.vencida) {
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5.2l3 1.8" />
+                    } @else {
+                      <path d="m5 12.5 4.5 4.5L19 7.5" />
+                    }
                   </svg>
-                  En el carrito · quitar
-                </button>
+                  <div>
+                    <p class="ya-tienes-titulo">
+                      {{ mia.vencida ? 'Tu acceso a este producto venció' : 'Ya tienes este producto' }}
+                    </p>
+                    <p class="ya-tienes-detalle">
+                      @if (mia.licencia.expiresAt) {
+                        {{ mia.vencida ? 'Venció el' : 'Activo hasta el' }}
+                        {{ mia.licencia.expiresAt | date: 'd MMM y' }} ·
+                        @if (!mia.renovable && mia.renovarDesde) {
+                          podrás renovar desde el {{ mia.renovarDesde | date: 'd MMM y' }} ·
+                        }
+                      } @else {
+                        Sin fecha de vencimiento ·
+                      }
+                      <a [routerLink]="'perfil' | privada">Ir a mi perfil</a>
+                    </p>
+                  </div>
+                </div>
               }
 
-              <p class="tarjeta-rotulo">Qué incluye</p>
-              <!-- Las tres primeras destacadas: son las que deciden la compra.
-                   Con las siete iguales, «se instala en tu cuenta» pesaba lo
-                   mismo que los nueve capítulos. De una frase larga solo va en
-                   negrita el arranque (ver `partirVentaja`). -->
-              <ul class="tarjeta-lista">
-                @for (item of loQueIncluye(plan); track item; let j = $index) {
-                  <li>
-                    @if (j < clavesDe(plan)) {
-                      @let partes = partirVentaja(item);
-                      <strong>{{ partes[0] }}</strong>{{ partes[1] }}
+              <!-- Dos caminos: «Comprar ahora» paga solo este producto, sin
+                   tocar el carrito; «Añadir al carrito» lo junta con otros
+                   para pagarlos de una vez. -->
+              <div class="tarjeta-acciones">
+                @if (mia && !mia.renovable) {
+                  <button type="button" class="boton grande bloque secundario" disabled>
+                    Ya lo tienes
+                  </button>
+                } @else {
+                  <button type="button" class="boton grande bloque" (click)="elegir(plan)">
+                    {{ mia ? 'Renovar ahora' : 'Comprar ahora' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="boton grande bloque secundario"
+                    (click)="enCarrito(plan) ? pagarCarrito() : alternarCarrito(plan)"
+                  >
+                    @if (enCarrito(plan)) {
+                      Ir al carrito
+                      @if (carrito().length > 1) {
+                        ({{ carrito().length }} productos)
+                      }
                     } @else {
-                      {{ item }}
+                      Añadir al carrito
                     }
-                  </li>
+                  </button>
+                  @if (enCarrito(plan)) {
+                    <button
+                      type="button"
+                      class="tarjeta-carrito dentro"
+                      (click)="alternarCarrito(plan)"
+                    >
+                      <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m5 12.5 4.5 4.5L19 7.5" />
+                      </svg>
+                      En el carrito · quitar
+                    </button>
+                  }
                 }
-              </ul>
+              </div>
             </article>
           }
         </div>
+
+        <!-- ── Qué incluye cada paquete ──────────────────────────────────
+             Una pestaña por paquete. Lo que antes iba en la lista de cada
+             tarjeta vive aquí: lo incluido a la izquierda y, si el paquete
+             sigue una ruta por fases, sus fases numeradas a la derecha. -->
+        @if (pestanaActiva(); as activo) {
+          <section id="que-incluye" class="incluye-panel" aria-labelledby="incluye-titulo">
+            <div class="incluye-cabecera">
+              <h2 id="incluye-titulo">Qué incluye cada paquete</h2>
+              @if (metodo().length > 1) {
+                <div class="incluye-pestanas" role="tablist">
+                  @for (plan of metodo(); track plan.code) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="activo.code === plan.code"
+                      [class.activa]="activo.code === plan.code"
+                      (click)="pestana.set(plan.code)"
+                    >
+                      {{ nombreCorto(plan) }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            @let fases = fasesDe(activo);
+            <div class="incluye-cuerpo" [class.con-fases]="fases">
+              <div>
+                <p class="incluye-rotulo">Lo que te llevas</p>
+                <ul class="incluye-lista">
+                  @for (item of loQueIncluye(activo); track item) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+                @let miaActivo = miLicencia(activo);
+                @if (!miaActivo || miaActivo.renovable) {
+                  <button
+                    type="button"
+                    class="boton secundario incluye-carrito"
+                    (click)="enCarrito(activo) ? pagarCarrito() : alternarCarrito(activo)"
+                  >
+                    {{ enCarrito(activo) ? 'Ir al carrito' : 'Añadir al carrito' }}
+                  </button>
+                }
+              </div>
+
+              @if (fases) {
+                <div>
+                  <p class="incluye-rotulo">{{ fases.titulo }}</p>
+                  <ol class="incluye-fases">
+                    @for (fase of fases.lista; track fase; let n = $index) {
+                      <li>
+                        <span class="fase-numero">{{ n + 1 }}</span>
+                        <span>{{ fase }}</span>
+                      </li>
+                    }
+                  </ol>
+                </div>
+              }
+            </div>
+          </section>
+        }
       }
 
       <!-- ── «Preparar documento»: las dos membresías ───────────────────── -->
@@ -567,8 +661,10 @@
       } -->
     </section>
 
-    <!-- Cupos para un grupo: se cotiza por WhatsApp. Ver `PlanesInstituciones`. -->
-    <app-planes-instituciones />
+    <!-- Cupos para un grupo: se cotiza por WhatsApp. Ver `PlanesInstituciones`.
+         Oculto por ahora (1-oct, a pedido). Para volver a enseñarlo, quitar el
+         comentario de aquí y de `imports` en checkout.ts. -->
+    <!-- <app-planes-instituciones /> -->
 
     <!-- ── El pago, en una ventana ─────────────────────────────────────────
          Se abre al pulsar «Comprar». Antes era un panel debajo de las tarjetas

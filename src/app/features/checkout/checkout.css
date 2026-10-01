@@ -15,8 +15,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 200px;
-  margin-bottom: 24px;
+  gap: 40px;
+  margin-bottom: 28px;
 }
 
 .volver {
@@ -1151,6 +1151,49 @@ h1 {
   color: var(--color-exito);
 }
 
+/* «Ya tienes este producto»: en verde, encima del botón, para que quien ya lo
+   compró no lo confunda con una compra nueva. Vencido, en naranja. */
+.tarjeta-ya-tienes {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--color-exito);
+  background: color-mix(in srgb, var(--color-exito) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-exito) 30%, transparent);
+}
+
+.tarjeta-ya-tienes.vencida {
+  color: var(--color-aviso);
+  background: color-mix(in srgb, var(--color-aviso) 9%, transparent);
+  border-color: color-mix(in srgb, var(--color-aviso) 30%, transparent);
+}
+
+.tarjeta-ya-tienes .icono {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.ya-tienes-titulo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ya-tienes-detalle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.ya-tienes-detalle a {
+  font-weight: 600;
+}
+
 /* La oferta sin código, en naranja y con el reloj: dura lo que dure. */
 .tarjeta-oferta {
   color: var(--color-aviso);
@@ -2059,4 +2102,275 @@ h1 {
 
 .carrito-entregado .tenue {
   margin: 0 0 10px;
+}
+
+
+/* ══ /planes, estilo compacto (1-oct) ══════════════════════════════════════
+ *
+ * Tarjetas más bajas —caja pequeña, sin la lista de lo incluido— con dos
+ * botones, y lo incluido en un panel con pestañas debajo. Va al final para
+ * pisar lo de arriba sin tocarlo: las membresías de «Preparar documento»
+ * siguen usando la tarjeta larga y sus reglas.
+ */
+
+/* Canje y código del compañero: dos campos sueltos, sin recuadro alrededor. */
+.canje-atajo {
+  flex: none;
+  width: 100%;
+  max-width: 380px;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.canje-atajo .canje-intro {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.canje-grupo {
+  border-width: 1px;
+  border-color: var(--color-borde-fuerte);
+}
+
+.canje-grupo input {
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.tarjeta-plan {
+  padding: 24px 22px 22px;
+}
+
+.tarjeta-figura {
+  margin: 0 0 14px;
+}
+
+.figura-caja,
+.figura {
+  height: 72px;
+}
+
+/* Crece y empuja el precio abajo: los de una fila quedan a la misma altura. */
+.tarjeta-texto {
+  flex: 1;
+  margin-bottom: 18px;
+}
+
+.tarjeta-texto .tarjeta-lema {
+  min-height: 0;
+  margin: 0 0 8px;
+}
+
+.ver-incluye {
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ver-incluye:hover {
+  text-decoration: underline;
+}
+
+.tarjeta-precio .importe {
+  font-size: 40px;
+}
+
+.tarjeta-vigencia {
+  margin-bottom: 10px;
+}
+
+/* La oferta en pastilla: se lee de un vistazo sin competir con el precio. */
+.tarjeta-pastilla {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 5px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-aviso);
+  background: color-mix(in srgb, var(--color-aviso) 12%, transparent);
+  border-radius: 999px;
+}
+
+.tarjeta-pastilla.cupon {
+  color: var(--color-exito);
+  background: color-mix(in srgb, var(--color-exito) 12%, transparent);
+}
+
+.tarjeta-pastilla .icono {
+  width: 13px;
+  height: 13px;
+}
+
+.tarjeta-acciones {
+  display: grid;
+  gap: 10px;
+}
+
+.tarjeta-acciones .tarjeta-carrito {
+  justify-self: center;
+}
+
+.tarjeta-plan .boton.secundario:disabled {
+  color: var(--color-texto-suave);
+  opacity: 1;
+  cursor: default;
+}
+
+/* ── Qué incluye cada paquete ─────────────────────────────────────────── */
+.incluye-panel {
+  margin-top: 28px;
+  padding: 24px 26px 26px;
+  scroll-margin-top: 96px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+}
+
+.incluye-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.incluye-cabecera h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.incluye-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.incluye-pestanas button {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.incluye-pestanas button.activa {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+.incluye-cuerpo {
+  display: grid;
+  gap: 28px;
+}
+
+.incluye-cuerpo.con-fases {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+}
+
+.incluye-rotulo {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.incluye-lista {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.incluye-lista li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-texto);
+}
+
+.incluye-lista li::before {
+  content: '✓';
+  position: absolute;
+  left: 2px;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.incluye-carrito {
+  width: auto;
+}
+
+.incluye-fases {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.incluye-fases li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border-radius: 8px;
+}
+
+.fase-numero {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 6px;
+}
+
+@media (max-width: 860px) {
+  .cabecera {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .canje-atajo {
+    max-width: none;
+  }
+
+  .incluye-cuerpo.con-fases {
+    grid-template-columns: 1fr;
+  }
 }
