@@ -288,6 +288,12 @@ export const routes: Routes = [
     title: 'Mis encargos · Acosta Research',
     loadComponent: () => import('./features/asesor/asesor').then((m) => m.PanelAsesor),
   },
+  // El enlace de un sorteo: cada persona se apunta con su correo, sin cuenta.
+  {
+    path: 'sorteo/:slug',
+    title: 'Sorteo · Acosta Research',
+    loadComponent: () => import('./features/sorteo/sorteo').then((m) => m.SorteoPagina),
+  },
   // El enlace de prueba que el administrador reparte a un grupo. Sin sesión a
   // propósito: quien lo recibe no se registra, solo recoge su conector.
   {

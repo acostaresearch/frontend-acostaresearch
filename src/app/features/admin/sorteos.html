@@ -1,0 +1,218 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+
+<div class="rejilla-sorteos">
+  <!-- ── La lista y el alta ─────────────────────────────────────────────── -->
+  <aside class="tarjeta lista">
+    <h2>Nuevo sorteo</h2>
+    <form class="nuevo" (ngSubmit)="crear()">
+      <div class="campo">
+        <label for="sorteo-nombre">Nombre</label>
+        <input id="sorteo-nombre" name="nombre" maxlength="120" [(ngModel)]="nombreNuevo" />
+      </div>
+      <button type="submit" class="boton" [disabled]="creando() || nombreNuevo.trim().length < 3">
+        {{ creando() ? 'Creando…' : 'Generar sorteo y enlace' }}
+      </button>
+    </form>
+
+    <h2>Sorteos</h2>
+    @if (cargando()) {
+      <p class="tenue">Cargando…</p>
+    } @else if (sorteos().length === 0) {
+      <p class="vacio">Todavía no hay sorteos.</p>
+    } @else {
+      <ul class="sorteos">
+        @for (s of sorteos(); track s.id) {
+          <li>
+            <button
+              type="button"
+              class="sorteo-fila"
+              [class.activo]="abierto()?.id === s.id"
+              (click)="abrir(s.id)"
+            >
+              <span class="nombre">{{ s.nombre }}</span>
+              <span class="detalle">
+                {{ s.inscritos }} {{ s.inscritos === 1 ? 'inscrito' : 'inscritos' }} ·
+                @if (s.ganador) {
+                  <span class="estado hecho">Sorteado</span>
+                } @else if (s.abierto) {
+                  <span class="estado abierto">Abierto</span>
+                } @else {
+                  <span class="estado cerrado">Cerrado</span>
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
+  <!-- ── El sorteo abierto ──────────────────────────────────────────────── -->
+  @if (abierto(); as s) {
+    <section class="tarjeta detalle-sorteo">
+      <header class="cabecera">
+        <div>
+          <h2>{{ s.nombre }}</h2>
+          <p class="tenue">
+            Premio: <strong>{{ s.premio }}</strong> · {{ duracion(s.duracionDias) }} · creado el
+            {{ s.createdAt | date: 'd MMM y' }}
+          </p>
+        </div>
+        <button type="button" class="boton secundario peligro" [disabled]="girando()" (click)="borrar(s)">
+          Borrar
+        </button>
+      </header>
+
+      <div class="enlace">
+        <label for="sorteo-url">Enlace para que se inscriban</label>
+        <div class="enlace-fila">
+          <input id="sorteo-url" type="text" [value]="s.url" readonly />
+          <button type="button" class="boton" (click)="copiar(s.url)">Copiar</button>
+        </div>
+        <p class="tenue">
+          Cada correo entra una sola vez. No se verifica: basta con escribirlo.
+        </p>
+      </div>
+
+      @if (!s.ganador) {
+        <div class="acciones">
+          <button
+            type="button"
+            class="boton secundario"
+            [disabled]="girando()"
+            (click)="cambiarInscripciones(s)"
+          >
+            {{ s.abierto ? 'Cerrar inscripciones' : 'Reabrir inscripciones' }}
+          </button>
+          <button
+            type="button"
+            class="boton girar"
+            [disabled]="girando() || s.inscritos === 0"
+            (click)="girar(s)"
+          >
+            {{ girando() ? 'Girando…' : '🎡 Girar la ruleta' }}
+          </button>
+        </div>
+      }
+
+      <!-- La ruleta -->
+      @if (enRueda().length > 0) {
+        <div class="ruleta" [class.girando]="girando()">
+          <div class="flecha" aria-hidden="true"></div>
+          <svg
+            viewBox="0 0 200 200"
+            class="rueda"
+            role="img"
+            [attr.aria-label]="'Ruleta con ' + enRueda().length + ' inscritos'"
+            [style.transform]="'rotate(' + rotacion() + 'deg)'"
+            [style.transition]="transicion()"
+          >
+            @if (porciones().length === 0) {
+              <circle cx="100" cy="100" [attr.r]="96" fill="#1d4ed8" />
+              <text x="100" y="104" text-anchor="middle" class="etiqueta" font-size="9">
+                {{ enRueda()[0].nombre || enRueda()[0].email }}
+              </text>
+            } @else {
+              @for (p of porciones(); track $index) {
+                <path [attr.d]="p.d" [attr.fill]="p.color" stroke="#fff" stroke-width="0.6" />
+              }
+              @for (p of porciones(); track $index) {
+                @if (p.etiqueta) {
+                  <text
+                    class="etiqueta"
+                    x="100"
+                    y="100"
+                    [attr.font-size]="tamanoEtiqueta()"
+                    [attr.transform]="'rotate(' + (p.angulo - 90) + ' 100 100) translate(88 0)'"
+                    text-anchor="end"
+                    dominant-baseline="middle"
+                  >
+                    {{ p.etiqueta }}
+                  </text>
+                }
+              }
+            }
+            <circle cx="100" cy="100" r="11" class="centro" />
+          </svg>
+        </div>
+      } @else {
+        <p class="vacio">Todavía no se ha inscrito nadie. Comparte el enlace.</p>
+      }
+
+      <!-- El ganador -->
+      @if (resultado(); as r) {
+        <div class="ganador" role="status">
+          <p class="titulo">🎉 ¡Tenemos ganador!</p>
+          <p class="correo">{{ r.ganador.nombre ? r.ganador.nombre + ' · ' : '' }}{{ r.ganador.email }}</p>
+          <p class="tenue">
+            @if (r.correoEnviado) {
+              Ya le mandamos su código por correo.
+            } @else {
+              <strong>El correo no salió.</strong> Mándale el código por otra vía.
+            }
+          </p>
+          <div class="enlace-fila">
+            <input type="text" [value]="r.codigo" readonly aria-label="Código del ganador" />
+            <button type="button" class="boton secundario" (click)="copiar(r.codigo, 'Código copiado.')">
+              Copiar código
+            </button>
+          </div>
+          <p class="tenue">Este código solo se ve ahora. Después queda en Accesos con sus últimos caracteres.</p>
+        </div>
+      } @else if (s.ganador && !girando()) {
+        <div class="ganador">
+          <p class="titulo">🏆 Ganador</p>
+          <p class="correo">{{ s.ganador.nombre ? s.ganador.nombre + ' · ' : '' }}{{ s.ganador.email }}</p>
+          <p class="tenue">
+            Sorteado el {{ s.sorteadoAt | date: 'd MMM y, HH:mm' }} · código terminado en
+            <code>{{ s.codigoHint }}</code> ·
+            {{ s.correoEnviado ? 'correo enviado' : 'el correo no salió' }}
+          </p>
+        </div>
+      }
+
+      <!-- Los inscritos -->
+      <details class="inscritos" [open]="(s.participantes?.length ?? 0) <= 30">
+        <summary>{{ s.inscritos }} {{ s.inscritos === 1 ? 'inscrito' : 'inscritos' }}</summary>
+        @if (s.participantes?.length) {
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Correo</th>
+                <th>Nombre</th>
+                <th>Se inscribió</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of s.participantes; track p.id; let i = $index) {
+                <tr [class.es-ganador]="s.ganador?.id === p.id">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ p.email }}</td>
+                  <td>{{ p.nombre || '—' }}</td>
+                  <td>{{ p.createdAt | date: 'd MMM, HH:mm' }}</td>
+                  <td>
+                    @if (!s.ganador) {
+                      <button
+                        type="button"
+                        class="quitar"
+                        [disabled]="girando()"
+                        (click)="quitar(s, p)"
+                        [attr.aria-label]="'Quitar a ' + p.email"
+                      >
+                        Quitar
+                      </button>
+                    } @else if (s.ganador.id === p.id) {
+                      🏆
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </details>
+    </section>
+  }
+</div>

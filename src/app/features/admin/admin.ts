@@ -69,6 +69,7 @@ import { AsesoresAdmin } from './asesores';
 import { Asesor, AsesorService } from '../../core/services/asesor.service';
 import { PedidosAdmin } from './pedidos';
 import { WhatsappAdmin } from './whatsapp';
+import { SorteosAdmin } from './sorteos';
 import { Pedido, PedidoService } from '../../core/services/pedido.service';
 
 type Seccion =
@@ -86,6 +87,7 @@ type Seccion =
   | 'asesores'
   | 'pedidos'
   | 'whatsapp'
+  | 'sorteos'
   | 'corpus'
   | 'tutoriales'
   | 'guias'
@@ -181,6 +183,13 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'panel y la ficha de la web. Aquí lees las conversaciones, tomas las que piden una ' +
       'persona, lo pruebas y le das indicaciones.',
   },
+  sorteos: {
+    titulo: 'Sorteos',
+    nota:
+      'Sortea una matrícula del método. Crea el sorteo, comparte su enlace para que cada persona ' +
+      'se apunte con su correo (una vez, sin verificarlo) y, cuando quieras, gira la ruleta: el ' +
+      'ganador recibe por correo su código de activación.',
+  },
   corpus: {
     titulo: 'Bibliografía',
     nota: 'El corpus que citan las Skills. Se cura en Zotero; aquí solo se trae y se comprueba.',
@@ -239,6 +248,7 @@ const DIRECCIONES: Record<Seccion, string> = {
   pedidos: 'revisiones',
   asesores: 'asesores',
   whatsapp: 'whatsapp',
+  sorteos: 'sorteos',
 };
 
 /** Al revés: de la dirección cifrada a la sección. Depende de la sesión. */
@@ -308,6 +318,12 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         icono:
           'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7 M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
         enciende: ['pruebas'],
+      },
+      {
+        seccion: 'sorteos',
+        texto: 'Sorteos',
+        icono: 'M20 12v9H4v-9 M2 7h20v5H2z M12 21V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
+        enciende: ['sorteos'],
       },
     ],
   },
@@ -531,6 +547,7 @@ const NOMBRE_DE_MES = [
     MenuFila,
     AjustesDeCuenta,
     ReclamosAdmin,
+    SorteosAdmin,
     ResenasAdmin,
     AsesoresAdmin,
     PedidosAdmin,

@@ -1,0 +1,338 @@
+/* Los sorteos en el panel. Las clases globales —tarjeta, boton, campo— vienen
+   de styles.css; las del panel no llegan hasta aquí. */
+
+:host {
+  display: block;
+}
+
+.rejilla-sorteos {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.tarjeta {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.tarjeta h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.tenue {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.vacio {
+  margin: 0;
+  padding: 20px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--color-texto-suave);
+  border: 1px dashed var(--color-borde);
+  border-radius: var(--radio);
+}
+
+code {
+  padding: 1px 6px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  background: var(--color-fondo-suave);
+  border-radius: 5px;
+}
+
+/* ---------- Lista ---------- */
+
+.nuevo {
+  display: grid;
+  gap: 10px;
+}
+
+.sorteos {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sorteo-fila {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.sorteo-fila:hover {
+  border-color: var(--color-borde-fuerte);
+}
+
+.sorteo-fila.activo {
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.sorteo-fila .nombre {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sorteo-fila .detalle {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.estado {
+  font-weight: 600;
+}
+
+.estado.abierto {
+  color: var(--color-exito);
+}
+
+.estado.cerrado {
+  color: var(--color-aviso);
+}
+
+.estado.hecho {
+  color: var(--color-primario);
+}
+
+/* ---------- Detalle ---------- */
+
+.cabecera {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cabecera h2 {
+  font-size: 18px;
+}
+
+.enlace {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.enlace label {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.enlace-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.enlace-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.boton.girar {
+  min-width: 190px;
+  font-weight: 650;
+}
+
+/* ---------- Ruleta ---------- */
+
+.ruleta {
+  position: relative;
+  width: min(100%, 440px);
+  margin: 6px auto 0;
+  aspect-ratio: 1;
+}
+
+.rueda {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 18px rgb(0 0 0 / 0.18));
+  will-change: transform;
+}
+
+.etiqueta {
+  font-family: inherit;
+  font-weight: 600;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.centro {
+  fill: var(--color-superficie);
+  stroke: var(--color-borde-fuerte);
+  stroke-width: 1.5;
+}
+
+/* La flecha, arriba y quieta: marca la porción que gana. */
+.flecha {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-top: 30px solid var(--color-texto);
+  border-right: 15px solid transparent;
+  border-left: 15px solid transparent;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.25));
+}
+
+/* ---------- Ganador ---------- */
+
+.ganador {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  text-align: center;
+  background: var(--color-exito-suave);
+  border: 1px solid var(--color-exito);
+  border-radius: var(--radio);
+  animation: aparecer 0.4s ease-out;
+}
+
+.ganador .titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-exito);
+}
+
+.ganador .correo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--color-texto);
+  word-break: break-all;
+}
+
+.ganador .enlace-fila {
+  max-width: 420px;
+  margin: 4px auto 0;
+  width: 100%;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* ---------- Inscritos ---------- */
+
+.inscritos summary {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inscritos table {
+  width: 100%;
+  margin-top: 10px;
+  font-size: 13px;
+  border-collapse: collapse;
+}
+
+.inscritos th,
+.inscritos td {
+  padding: 7px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.inscritos th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.inscritos td:nth-child(2) {
+  word-break: break-all;
+}
+
+.inscritos tr.es-ganador td {
+  font-weight: 650;
+  background: var(--color-exito-suave);
+}
+
+.quitar {
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-error);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+}
+
+.quitar:hover:not(:disabled) {
+  border-color: var(--color-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ganador {
+    animation: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .rejilla-sorteos {
+    grid-template-columns: 1fr;
+  }
+
+  .inscritos th:nth-child(4),
+  .inscritos td:nth-child(4) {
+    display: none;
+  }
+}
+
+/* El «Borrar» de la cabecera: secundario, pero en rojo. */
+.boton.secundario.peligro {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.boton.secundario.peligro:hover:not(:disabled) {
+  color: var(--color-sobre-relleno);
+  background: var(--color-error);
+}

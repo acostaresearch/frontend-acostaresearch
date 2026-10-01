@@ -2854,6 +2854,13 @@
       <app-whatsapp-admin />
     }
 
+    <!-- ══ SORTEOS ════════════════════════════════════════════════════════════
+       Sortear una matrícula: el enlace para apuntarse, los inscritos y la
+       ruleta. En su propio componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'sorteos') {
+      <app-sorteos-admin />
+    }
+
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════
        Los videos de acostaresearch.com/tutoriales. Se editan aquí y no en el
        código porque quien los graba no despliega: antes había que tocar

@@ -5,6 +5,7 @@ Disallow: /perfil
 Disallow: /subir-datos/
 Disallow: /auth/
 Disallow: /prueba/
+Disallow: /sorteo/
 Disallow: /asesores/
 Disallow: /revision
 Disallow: /pedido

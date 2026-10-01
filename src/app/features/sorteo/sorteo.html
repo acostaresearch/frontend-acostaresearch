@@ -1,0 +1,80 @@
+<app-site-header />
+
+<main class="pagina sorteo">
+  <section class="tarjeta">
+    @if (cargando()) {
+      <p class="nota">Cargando el sorteo…</p>
+    } @else if (sorteo(); as s) {
+      <p class="antetitulo">Sorteo · {{ s.nombre }}</p>
+      <h1>
+        Gana {{ s.premio }}
+        @if (duracion(s.duracionDias); as tiempo) {
+          por {{ tiempo }}
+        }
+      </h1>
+
+      @if (inscrito(); as correo) {
+        <div class="aviso exito" role="status">
+          <strong>¡Ya estás participando!</strong> Te apuntaste con {{ correo }}.
+        </div>
+        <p>
+          Si ganas, te escribimos a ese correo con tu código de activación. Revisa también la
+          carpeta de spam o promociones el día del sorteo.
+        </p>
+      } @else if (s.sorteado) {
+        <div class="aviso info" role="status">Este sorteo ya se realizó. ¡Gracias por participar!</div>
+        <p>Mientras tanto, puedes ver los <a routerLink="/planes">planes</a>.</p>
+      } @else if (!s.abierto) {
+        <div class="aviso info" role="status">Las inscripciones de este sorteo están cerradas.</div>
+      } @else {
+        <p>
+          Déjanos tu correo y entras al sorteo. Solo una vez por persona: el día del sorteo giramos
+          la ruleta entre todos los inscritos y le escribimos al ganador.
+        </p>
+
+        <app-aviso-flotante [(error)]="error" />
+
+        <form class="formulario" (ngSubmit)="inscribirme()">
+          <div class="campo">
+            <label for="sorteo-nombre">Tu nombre <span class="opcional">(opcional)</span></label>
+            <input
+              id="sorteo-nombre"
+              name="nombre"
+              type="text"
+              maxlength="120"
+              autocomplete="name"
+              [(ngModel)]="nombre"
+            />
+          </div>
+          <div class="campo">
+            <label for="sorteo-correo">Tu correo</label>
+            <input
+              id="sorteo-correo"
+              name="email"
+              type="email"
+              maxlength="255"
+              autocomplete="email"
+              required
+              placeholder="tucorreo@gmail.com"
+              [(ngModel)]="email"
+            />
+          </div>
+          <button type="submit" class="boton grande" [disabled]="enviando()">
+            {{ enviando() ? 'Inscribiendo…' : 'Quiero participar' }}
+          </button>
+        </form>
+      }
+
+      <p class="cupos">
+        Van <strong>{{ s.inscritos }}</strong>
+        {{ s.inscritos === 1 ? 'persona inscrita' : 'personas inscritas' }}.
+      </p>
+    } @else {
+      <h1>Este enlace no funciona</h1>
+      <div class="aviso error" role="alert">
+        {{ error() ?? 'Este sorteo no existe. Revisa que el enlace esté bien copiado.' }}
+      </div>
+      <p><a routerLink="/">Ir a la portada</a></p>
+    }
+  </section>
+</main>
