@@ -510,6 +510,12 @@ const VIAS_DE_COBRO = ['PayPal', 'Yape', 'Código de activación'];
  * Es una herramienta de trabajo, no un escaparate: lo que se mira a diario va
  * primero —vender y vigilar— y el histórico queda detrás.
  */
+/** Los meses con nombre entero, para las notas del resumen. */
+const NOMBRE_DE_MES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
 @Component({
   selector: 'app-admin',
   imports: [
@@ -926,7 +932,37 @@ export class Admin implements OnInit {
   readonly mesEnCurso = computed(() => {
     const barras = this.ingresosPorMes().barras;
     const actual = barras[barras.length - 1];
-    return { valor: actual?.valor ?? 0, mes: (actual?.etiqueta ?? '').toLowerCase() };
+    const anterior = barras[barras.length - 2];
+    return {
+      valor: actual?.valor ?? 0,
+      mes: (actual?.etiqueta ?? '').toLowerCase(),
+      // Al empezar el mes la cifra es pequeña y la semana, que viene del mes
+      // anterior, sale mayor. Con lo que cerró el anterior al lado se entiende.
+      anterior: anterior?.valor ?? 0,
+      mesAnterior: ((m) => m[0].toUpperCase() + m.slice(1))(
+        NOMBRE_DE_MES[(new Date().getMonth() + 11) % 12],
+      ),
+      dias: new Date().getDate(),
+    };
+  });
+
+  /**
+   * Los días de la semana en curso que caen en el mes anterior, o null.
+   *
+   * La semana va de lunes a domingo y no se corta al cambiar de mes: el 1 de
+   * octubre la semana incluye del 28 al 30 de setiembre, que en la cifra del
+   * mes no están. Sin decirlo, la semana sale mayor que el mes y parece un error.
+   */
+  readonly semanaCruzaMes = computed(() => {
+    const hoy = new Date();
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    if (lunes.getMonth() === hoy.getMonth()) return null;
+    const ultimo = new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
+    const mes = NOMBRE_DE_MES[lunes.getMonth()];
+    return lunes.getDate() === ultimo
+      ? `el ${ultimo} de ${mes}`
+      : `del ${lunes.getDate()} al ${ultimo} de ${mes}`;
   });
 
   /** Cuántos meses del gráfico tienen algún cobro, para su frase de pie. */

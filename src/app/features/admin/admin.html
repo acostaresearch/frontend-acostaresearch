@@ -212,7 +212,13 @@
           <p class="cifra-rotulo">Ingresos del mes ({{ mesEnCurso().mes }})</p>
           <p class="cifra-valor">{{ soles(mesEnCurso().valor) }}</p>
           <p class="cifra-nota">
-            Cada mes cerrado tiene su PDF en
+            @if (mesEnCurso().dias === 1) {
+              Solo lo de hoy.
+            } @else {
+              Lo de {{ mesEnCurso().dias }} días.
+            }
+            {{ mesEnCurso().mesAnterior }} cerró en {{ soles(mesEnCurso().anterior) }}; su PDF,
+            en
             <button type="button" class="enlace-texto" (click)="abrirVentas()">
               «Ventas mensuales»</button
             >.
@@ -222,7 +228,12 @@
         <article class="cifra-tarjeta">
           <p class="cifra-rotulo">Esta semana, desde el lunes {{ semanaEnCurso().desde }}</p>
           <p class="cifra-valor">{{ soles(semanaEnCurso().valor) }}</p>
-          <p class="cifra-nota">La anterior cerró en {{ soles(semanaEnCurso().anterior) }}.</p>
+          <p class="cifra-nota">
+            @if (semanaCruzaMes(); as dias) {
+              Incluye {{ dias }}, que no cuentan en el mes.
+            }
+            La anterior cerró en {{ soles(semanaEnCurso().anterior) }}.
+          </p>
         </article>
 
         <article class="cifra-tarjeta">
