@@ -150,6 +150,42 @@
   background: var(--color-fondo);
 }
 
+/* El carrito: botón con borde, icono y palabra, al principio de las
+   acciones. Discreto —sin relleno— para no competir con «Mi perfil». */
+.carrito {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-primario);
+  text-decoration: none;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  transition: background var(--transicion);
+}
+
+.carrito:hover {
+  background: var(--color-fondo);
+}
+
+.carrito-numero {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+  background: var(--color-primario);
+  border-radius: 9px;
+}
+
 /* ── Menú de móvil ──────────────────────────────────────────────────────────
  *
  * En escritorio este envoltorio NO existe: display:contents hace que la
@@ -298,5 +334,10 @@
   .enlace-salir {
     border: 1px solid var(--color-borde);
     border-radius: var(--radio-sm);
+  }
+
+  .carrito {
+    justify-content: center;
+    height: 44px;
   }
 }

@@ -41,7 +41,91 @@
 </ng-template>
 
 
-  @if (licenciaComprada(); as licencia) {
+  @if (carritoComprado(); as entregados) {
+    <!-- ── Carrito comprado ────────────────────────────────────────────────
+         Una ficha por producto. Cada licencia trae SU URL del conector, y esta
+         es la única vez que se ve: por eso cada una tiene su botón de copiar y
+         no se resume en «ya tienes tus accesos». -->
+    <section class="panel confirmacion">
+      <h1>¡Listo! Ya tienes tu compra</h1>
+      <p>Pagaste {{ entregados.length }} productos de una vez. Esto es lo que recibiste:</p>
+
+      <ul class="carrito-entregado">
+        @for (entregado of entregados; track entregado.plan.code) {
+          <li>
+            <p class="carrito-entregado-nombre">{{ entregado.plan.name }}</p>
+
+            @if (entregado.license; as licencia) {
+              <p class="tenue">
+                @if (entregado.renovada) {
+                  Renovado: tu URL de siempre sigue sirviendo
+                } @else {
+                  Acceso activo
+                }
+                @if (licencia.expiresAt) {
+                  hasta el {{ licencia.expiresAt | date: 'd MMM y' }}
+                }
+              </p>
+            } @else if (entregado.membresia; as membresia) {
+              <p class="tenue">
+                {{ membresia.docsPorMes }} documentos al mes, hasta el
+                {{ membresia.expiresAt | date: 'd MMM y' }}
+              </p>
+            } @else if (entregado.pack; as pack) {
+              <p class="tenue">{{ pack.wordsTotal | number }} palabras añadidas</p>
+            }
+
+            @if (entregado.connectorUrl; as url) {
+              <div class="url-fila">
+                <input
+                  type="text"
+                  [value]="url"
+                  readonly
+                  [attr.aria-label]="'URL del conector de ' + entregado.plan.name"
+                />
+                <button type="button" class="boton" (click)="copiarUrlDe(entregado)">
+                  {{ copiadaDe() === entregado.plan.code ? '¡Copiada!' : 'Copiar' }}
+                </button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (hayUrlEn(entregados)) {
+        <p class="aviso-url">
+          <strong>Guarda tus URL ahora.</strong> Por seguridad no las almacenamos en claro, así que
+          no podemos volver a mostrártelas. Si pierdes una, genera otra desde tu panel.
+        </p>
+
+        <ol class="instrucciones">
+          <li>Abre Claude y entra en <strong>Configuración → Conectores</strong>.</li>
+          <li>
+            Pulsa <strong>Añadir conector personalizado</strong> y pega una URL. Repite con cada
+            una: cada producto es su propio conector.
+          </li>
+          <li>Abre una conversación nueva y escríbele a Claude «trabajemos con el método».</li>
+        </ol>
+
+        <a class="guia" routerLink="/guias-de-instalacion" target="_blank">
+          <span class="guia-icono" aria-hidden="true">📄</span>
+          <span class="guia-texto">
+            <strong>Guías de instalación en PDF</strong>
+            <span>Los mismos pasos, con capturas de cada pantalla.</span>
+          </span>
+          <span class="guia-accion">Ver guías</span>
+        </a>
+
+        <p class="nota">
+          Las licencias son individuales. Compartir una URL puede provocar que se desactive.
+        </p>
+      }
+
+      <div class="botones">
+        <a class="boton secundario" routerLink="/" fragment="mi-panel">Ir a mi panel</a>
+      </div>
+    </section>
+  } @else if (licenciaComprada(); as licencia) {
     <!-- ── Licencia comprada ───────────────────────────────────────────────── -->
     <section class="panel confirmacion">
       <h1>¡Listo! Ya tienes el método</h1>
@@ -313,15 +397,34 @@
                 type="button"
                 class="boton grande bloque"
                 [class.secundario]="!esElMasElegido(plan) && metodo().length > 1"
-                (click)="elegir(plan)"
-                [attr.aria-pressed]="seleccionado()?.code === plan.code"
+                (click)="enCarrito(plan) ? pagarCarrito() : alternarCarrito(plan)"
               >
-                @if (seleccionado()?.code === plan.code) {
-                  Elige abajo cómo pagar ↓
+                <!-- Toda compra pasa por el carrito: se añade aquí y se paga con
+                     «Ir a pagar» o con el «Carrito» de la cabecera. Una vez
+                     dentro, este mismo botón lleva a pagar, para que quien
+                     solo quiere un producto no tenga que buscar dónde. -->
+                @if (enCarrito(plan)) {
+                  Ir a pagar
+                  @if (carrito().length > 1) {
+                    ({{ carrito().length }} productos)
+                  }
                 } @else {
-                  Comprar por {{ precioTarjeta(plan) }}
+                  Añadir al carrito
                 }
               </button>
+
+              @if (enCarrito(plan)) {
+                <button
+                  type="button"
+                  class="tarjeta-carrito dentro"
+                  (click)="alternarCarrito(plan)"
+                >
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
+                  En el carrito · quitar
+                </button>
+              }
 
               <p class="tarjeta-rotulo">Qué incluye</p>
               <!-- Las tres primeras destacadas: son las que deciden la compra.
@@ -391,15 +494,34 @@
                 type="button"
                 class="boton grande bloque"
                 [class.secundario]="membresias().length > 1 && i > 0"
-                (click)="elegir(plan)"
-                [attr.aria-pressed]="seleccionado()?.code === plan.code"
+                (click)="enCarrito(plan) ? pagarCarrito() : alternarCarrito(plan)"
               >
-                @if (seleccionado()?.code === plan.code) {
-                  Elige abajo cómo pagar ↓
+                <!-- Toda compra pasa por el carrito: se añade aquí y se paga con
+                     «Ir a pagar» o con el «Carrito» de la cabecera. Una vez
+                     dentro, este mismo botón lleva a pagar, para que quien
+                     solo quiere un producto no tenga que buscar dónde. -->
+                @if (enCarrito(plan)) {
+                  Ir a pagar
+                  @if (carrito().length > 1) {
+                    ({{ carrito().length }} productos)
+                  }
                 } @else {
-                  Comprar por {{ precioTarjeta(plan) }}
+                  Añadir al carrito
                 }
               </button>
+
+              @if (enCarrito(plan)) {
+                <button
+                  type="button"
+                  class="tarjeta-carrito dentro"
+                  (click)="alternarCarrito(plan)"
+                >
+                  <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
+                  En el carrito · quitar
+                </button>
+              }
 
               <p class="tarjeta-rotulo">Qué incluye</p>
               <ul class="tarjeta-lista">
@@ -466,7 +588,7 @@
       "
     />
 
-    @if (seleccionado(); as plan) {
+    @if (enPago().length > 0) {
       <div class="pago-fondo">
         <div class="pago-ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-pago">
           <div class="pago-barra">
@@ -526,17 +648,25 @@
             @if (metodoPago()) {
               <div class="resumen-compacto">
                 <div class="resumen-compacto-texto">
-                  <p class="pago-producto">{{ plan.name }}</p>
-                  <p class="resumen-detalle">
-                    <span class="resumen-tic" aria-hidden="true">✓</span>
-                    <span>{{ vigencia(plan) }}</span>
-                    @if (descuento(); as promo) {
-                      <span aria-hidden="true">·</span>
-                      <span>
-                        Código <strong>{{ promo.code }}</strong> aplicado
-                      </span>
-                    }
-                  </p>
+                  @if (seleccionado(); as plan) {
+                    <p class="pago-producto">{{ plan.name }}</p>
+                    <p class="resumen-detalle">
+                      <span class="resumen-tic" aria-hidden="true">✓</span>
+                      <span>{{ vigencia(plan) }}</span>
+                      @if (descuento(); as promo) {
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          Código <strong>{{ promo.code }}</strong> aplicado
+                        </span>
+                      }
+                    </p>
+                  } @else {
+                    <p class="pago-producto">Tu carrito · {{ enPago().length }} productos</p>
+                    <p class="resumen-detalle">
+                      <span class="resumen-tic" aria-hidden="true">✓</span>
+                      <span>{{ nombresEnPago() }}</span>
+                    </p>
+                  }
                 </div>
 
                 <!-- Un solo tachado, el que corresponda: con código promocional
@@ -544,22 +674,25 @@
                      hay—, y sin código, el de antes de la oferta. Dos cifras
                      tachadas seguidas no se leen; se calculan. -->
                 <p class="pago-total">
-                  @if (descuento()) {
-                    <span class="tachado">{{ precio(plan) }}</span>
-                  } @else if (precioAntes(plan); as antes) {
+                  @if (totalTachado(); as antes) {
                     <span class="tachado">{{ antes }}</span>
                   }
-                  <strong>{{ precioFinal(plan) }}</strong>
+                  <strong>{{ total() }}</strong>
                 </p>
               </div>
             } @else {
               <div class="resumen-plan">
                 <div class="resumen-cabecera">
                   <div>
-                    <p class="pago-producto">{{ plan.name }}</p>
-                    <p class="resumen-vigencia">
-                      {{ plan.durationDays > 0 ? vigencia(plan) + ' de acceso' : 'Pago único' }}
-                    </p>
+                    @if (seleccionado(); as plan) {
+                      <p class="pago-producto">{{ plan.name }}</p>
+                      <p class="resumen-vigencia">
+                        {{ plan.durationDays > 0 ? vigencia(plan) + ' de acceso' : 'Pago único' }}
+                      </p>
+                    } @else {
+                      <p class="pago-producto">Tu carrito · {{ enPago().length }} productos</p>
+                      <p class="resumen-vigencia">Un solo pago por todo</p>
+                    }
                   </div>
 
                   <!-- «Cambiar» hace lo mismo que la ✕: soltar el plan, el
@@ -570,27 +703,63 @@
                   </button>
                 </div>
 
+                <!-- En un carrito, cada producto con su precio: el total solo no
+                     deja ver a cuál se le aplicó el código. -->
+                @if (esCarrito()) {
+                  <ul class="carrito-lineas">
+                    @for (plan of enPago(); track plan.code) {
+                      <li>
+                        <span class="carrito-linea-nombre">
+                          {{ plan.name }}
+                          <span class="tenue">· {{ vigencia(plan) }}</span>
+                        </span>
+                        <span class="carrito-linea-precio">
+                          @if (ahorroAplicado(plan)) {
+                            <span class="tachado">{{ precio(plan) }}</span>
+                          }
+                          {{ precioFinal(plan) }}
+                          <!-- Sin barra de carrito en la página, aquí es donde
+                               se arrepiente de uno sin cerrar la ventana. -->
+                          <button
+                            type="button"
+                            class="enlace-quitar"
+                            [attr.aria-label]="'Quitar ' + plan.name + ' del carrito'"
+                            (click)="quitarDelPago(plan)"
+                          >
+                            Quitar
+                          </button>
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                }
+
                 <p class="pago-total grande">
-                  <strong>{{ precioFinal(plan) }}</strong>
-                  @if (descuento()) {
-                    <span class="tachado">{{ precio(plan) }}</span>
-                  } @else if (precioAntes(plan); as antes) {
+                  <strong>{{ total() }}</strong>
+                  @if (totalTachado(); as antes) {
                     <span class="tachado">{{ antes }}</span>
                   }
                 </p>
 
-                <!-- ── Código promocional aplicado ────────────────────────── -->
-                @if (descuento(); as promo) {
+                <!-- ── Códigos promocionales aplicados ───────────────────────
+                     Uno por producto como mucho. En un carrito se dice a cuál
+                     rebaja cada uno. -->
+                @for (linea of conCodigo(); track linea.plan.code) {
+                  @let plan = linea.plan;
+                  @let promo = linea.promo;
                   <div class="promo-aplicada">
                     <p class="promo-linea">
                       <span class="promo-texto">
                         <span class="resumen-tic" aria-hidden="true">✓</span>
                         Código <strong>{{ promo.code }}</strong> aplicado
+                        @if (esCarrito()) {
+                          en {{ plan.name }}
+                        }
                         @if (ahorroAplicado(plan); as rebaja) {
                           <span class="promo-ahorro">· te ahorras {{ rebaja }}</span>
                         }
                       </span>
-                      <button type="button" class="enlace-quitar" (click)="quitarDescuento()">
+                      <button type="button" class="enlace-quitar" (click)="quitarDescuentoDe(plan)">
                         Quitar
                       </button>
                     </p>
@@ -606,7 +775,7 @@
                             Vence en
                             <app-cuenta-atras
                               [hasta]="promo.expiresAt"
-                              (vencido)="descuentoVencido()"
+                              (vencido)="descuentoVencido(plan)"
                             />
                           </span>
                         }
@@ -633,7 +802,7 @@
                  se acuerda del cupón al ver el QR no tiene que cerrar y empezar
                  otra vez. Desaparece en cuanto hay uno aplicado, que entonces se
                  lee en el resumen. -->
-            @if (auth.isAuthenticated() && !descuento()) {
+            @if (auth.isAuthenticated() && faltaCodigo()) {
               <div class="promo">
                 <label for="promo">¿Tienes un código de descuento?</label>
                 <div class="promo-fila">
@@ -760,7 +929,7 @@
               </div>
 
               @if (metodoPago() === 'paypal') {
-                @if (precioFinalDolares(plan); as dolares) {
+                @if (totalDolares(); as dolares) {
                   <section class="pasarela">
                     <div class="pasarela-cabecera">
                       <div>
@@ -791,8 +960,8 @@
                   </section>
                 } @else {
                   <p class="nota">
-                    Este producto todavía no tiene precio en dólares. Escríbenos y lo activamos a
-                    mano.
+                    {{ esCarrito() ? 'Algún producto del carrito' : 'Este producto' }} todavía no
+                    tiene precio en dólares. Escríbenos y lo activamos a mano.
                   </p>
                 }
               }
@@ -812,7 +981,7 @@
                     </div>
                     <p class="pasarela-total">
                       <span class="pasarela-total-rotulo">Total</span>
-                      <strong>{{ precioFinal(plan) }}</strong>
+                      <strong>{{ total() }}</strong>
                     </p>
                   </div>
 
@@ -827,7 +996,7 @@
                     } @else if (procesando()) {
                       Confirmando el pago…
                     } @else {
-                      Pagar {{ precioFinal(plan) }}
+                      Pagar {{ total() }}
                     }
                   </button>
 
@@ -876,7 +1045,7 @@
                         <h3 class="pasarela-titulo">Pagar con Yape</h3>
                         <p class="pasarela-nota">
                           Escanea el código con tu app y paga
-                          <strong>{{ precioFinal(plan) }}</strong
+                          <strong>{{ total() }}</strong
                           >. Luego súbenos la captura.
                         </p>
                       </div>
@@ -914,7 +1083,10 @@
                           descárgalo y ábrelo desde la galería de tu app.
                         </li>
                         <li>
-                          Paga <strong>{{ precioFinal(plan) }}</strong> exactos.
+                          Paga <strong>{{ total() }}</strong> exactos.
+                          @if (esCarrito()) {
+                            Es un solo pago por todo el carrito.
+                          }
                         </li>
                         <li>Sube la captura de la constancia aquí abajo.</li>
                       </ol>

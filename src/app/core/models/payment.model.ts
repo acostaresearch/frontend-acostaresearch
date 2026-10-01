@@ -57,6 +57,37 @@ export interface PaymentOrder {
   currency: string;
   discount: { code: string; amountCents: number } | null;
   plan: { code: string; name: string; words: number };
+  /** Solo en un carrito: lo que cobra el servidor por cada producto. */
+  items?: LineaCobrada[];
+}
+
+/**
+ * Una línea del carrito tal como viaja al servidor: el plan y, si lo hay, su
+ * código de descuento. Nunca el precio: ese lo pone el servidor.
+ */
+export interface LineaCarrito {
+  planCode: string;
+  discountCode?: string;
+}
+
+/** Una línea del carrito con el importe que fijó el servidor. */
+export interface LineaCobrada {
+  plan: { code: string; name: string };
+  amountCents: number;
+  discount: { code: string; amountCents: number } | null;
+}
+
+/**
+ * Lo que recibió el comprador por cada producto de un carrito. Tiene la misma
+ * forma que la compra suelta, más el producto al que corresponde.
+ */
+export interface ProductoEntregado {
+  plan: { code: string; name: string };
+  license?: License | null;
+  connectorUrl?: string | null;
+  membresia?: MembresiaComprada | null;
+  pack?: WordPack | null;
+  renovada?: boolean;
 }
 
 /** Licencia del conector MCP. El token solo se ve en la URL, y solo una vez. */
@@ -142,6 +173,8 @@ export interface PaymentResult {
    * /preparar-documento.
    */
   membresia?: MembresiaComprada | null;
+  /** Solo en un carrito: lo entregado por cada producto. */
+  items?: ProductoEntregado[];
   balance?: Balance;
 }
 
@@ -183,6 +216,8 @@ export interface ComprobanteEnviado {
   currency: string;
   status: 'IN_REVIEW';
   plan: { code: string; name: string };
+  /** Solo en un carrito. */
+  items?: LineaCobrada[];
 }
 
 /** Una fila de la bandeja de comprobantes del panel de administración. */
@@ -205,6 +240,11 @@ export interface PagoPorRevisar {
     durationDays: number;
   };
   user: { id: string; email: string; firstName: string; lastName: string };
+  /**
+   * Si el comprobante es de un carrito: lo que lleva y los pagos que cubre.
+   * El importe de la fila ya es la suma, y aprobarla aprueba todos.
+   */
+  carrito?: { productos: string[]; pagos: string[] } | null;
 }
 
 /**

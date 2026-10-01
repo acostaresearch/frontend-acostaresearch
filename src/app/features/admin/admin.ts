@@ -2523,7 +2523,9 @@ export class Admin implements OnInit {
         this.aviso.set(
           resultado.alreadyProcessed
             ? 'Ese pago ya estaba aprobado.'
-            : `Aprobado. ${pago.user.firstName} ya tiene su acceso y le hemos avisado por correo.`,
+            : pago.carrito
+              ? `Aprobado el carrito. ${pago.user.firstName} ya tiene sus ${pago.carrito.productos.length} productos y le hemos avisado por correo.`
+              : `Aprobado. ${pago.user.firstName} ya tiene su acceso y le hemos avisado por correo.`,
         );
         this.olvidarPago(pago.id);
         this.revisando.set(null);
@@ -2565,12 +2567,17 @@ export class Admin implements OnInit {
     });
   }
 
-  /** Saca el pago de la bandeja y libera su miniatura. */
+  /**
+   * Saca el pago de la bandeja y libera su miniatura. Un carrito sale entero:
+   * el servidor lo aprueba o lo rechaza todo de una vez.
+   */
   private olvidarPago(paymentId: string): void {
     const url = this.capturas()[paymentId];
     if (url) URL.revokeObjectURL(url);
 
-    this.porRevisar.update((pagos) => pagos.filter((p) => p.id !== paymentId));
+    const pago = this.porRevisar().find((p) => p.id === paymentId);
+    const fuera = new Set(pago?.carrito?.pagos ?? [paymentId]);
+    this.porRevisar.update((pagos) => pagos.filter((p) => !fuera.has(p.id)));
     this.capturas.update(({ [paymentId]: _fuera, ...resto }) => resto);
     this.motivos.update(({ [paymentId]: _tambien, ...resto }) => resto);
   }

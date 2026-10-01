@@ -156,7 +156,8 @@ function dePendiente(pago: PagoPorRevisar): Acceso {
     canalNombre: 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
-    producto: pago.plan.name,
+    // Un carrito sale una vez, con todo lo que lleva y la suma.
+    producto: pago.carrito ? pago.carrito.productos.join(' + ') : pago.plan.name,
     productCode: pago.plan.productCode,
     productoActual: null,
     amountCents: pago.amountCents,

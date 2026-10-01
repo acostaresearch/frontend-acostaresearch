@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
   computed,
@@ -11,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -23,14 +25,17 @@ import {
   DatosYape,
   Descuento,
   License,
+  LineaCarrito,
   MembresiaComprada,
   PaymentOrder,
   PaymentProvider,
   PaymentResult,
+  ProductoEntregado,
 } from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService, Promo } from '../../core/services/billing.service';
+import { CarritoService } from '../../core/services/carrito.service';
 import { CulqiSdkService, ResultadoCheckout } from '../../core/services/culqi-sdk.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
@@ -80,6 +85,7 @@ function soles(cents: number): string {
   const valor = cents / 100;
   return `S/ ${Number.isInteger(valor) ? valor : valor.toFixed(2)}`;
 }
+
 @Component({
   selector: 'app-checkout',
   imports: [PrivadaPipe, 
@@ -107,6 +113,8 @@ export class Checkout implements OnInit {
   private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly licencias = inject(LicenseService);
+  private readonly carritoGuardado = inject(CarritoService);
+  private readonly destruir = inject(DestroyRef);
   protected readonly auth = inject(AuthService);
 
   readonly whatsappUrl = environment.whatsappUrl;
@@ -129,7 +137,36 @@ export class Checkout implements OnInit {
   readonly promos = signal<Promo[]>([]);
   readonly pasarelas = signal<PaymentProvider[]>([]);
   readonly saldo = signal<Balance | null>(null);
-  readonly seleccionado = signal<Plan | null>(null);
+
+  /**
+   * El carrito: lo que el comprador va juntando para pagarlo de una vez.
+   *
+   * Es distinto de lo que se está pagando (`enPago`): «Comprar» en una tarjeta
+   * paga solo ese producto y deja el carrito como estaba, y cerrar la ventana
+   * de pago no lo vacía. Los códigos los guarda `CarritoService`, que también
+   * lee la cabecera; aquí se convierten en planes con el catálogo de HOY.
+   */
+  readonly carrito = computed(() => {
+    const codigos = this.carritoGuardado.codigos();
+    return this.planes().filter((plan) => codigos.includes(plan.code));
+  });
+
+  /**
+   * Lo que se está pagando en la ventana: un producto, o todo el carrito.
+   * Vacío = la ventana está cerrada.
+   */
+  readonly enPago = signal<Plan[]>([]);
+
+  /** El producto, cuando se paga uno solo. Null con la ventana cerrada o con varios. */
+  readonly seleccionado = computed(() => {
+    const planes = this.enPago();
+    return planes.length === 1 ? planes[0] : null;
+  });
+
+  readonly esCarrito = computed(() => this.enPago().length > 1);
+
+  /** «A + B», para las líneas que no caben en una lista. */
+  readonly nombresEnPago = computed(() => this.enPago().map((plan) => plan.name).join(' + '));
 
   /**
    * Cuánto vive la ventana de pago abierta sin tocarla.
@@ -159,7 +196,27 @@ export class Checkout implements OnInit {
 
   // ── Código promocional ─────────────────────────────────────────────────
   readonly codigoPromo = new FormControl('', { nonNullable: true });
-  readonly descuento = signal<Descuento | null>(null);
+  /**
+   * Los códigos aplicados, uno por producto como mucho. Por producto porque los
+   * códigos anunciados son de un plan concreto: en un carrito, el del método
+   * rebaja el método y no lo demás.
+   */
+  readonly descuentos = signal<Record<string, Descuento>>({});
+  /** El código del producto, cuando se paga uno solo. */
+  readonly descuento = computed(() => {
+    const plan = this.seleccionado();
+    return plan ? (this.descuentos()[plan.code] ?? null) : null;
+  });
+  /** Los productos en pago que llevan un código aplicado, con el suyo. */
+  readonly conCodigo = computed(() =>
+    this.enPago()
+      .map((plan) => ({ plan, promo: this.descuentos()[plan.code] ?? null }))
+      .filter((linea): linea is { plan: Plan; promo: Descuento } => linea.promo !== null),
+  );
+  /** Si queda algún producto sin código: entonces se ofrece el campo. */
+  readonly faltaCodigo = computed(() =>
+    this.enPago().some((plan) => !this.descuentos()[plan.code]),
+  );
   readonly errorPromo = signal<string | null>(null);
   readonly comprobandoPromo = signal(false);
 
@@ -190,6 +247,10 @@ export class Checkout implements OnInit {
   readonly membresiaComprada = signal<MembresiaComprada | null>(null);
   readonly urlConector = signal<string | null>(null);
   readonly copiada = signal(false);
+  /** Lo recibido por cada producto de un carrito recién pagado. */
+  readonly carritoComprado = signal<ProductoEntregado[] | null>(null);
+  /** El producto cuya URL se acaba de copiar, para el «¡Copiada!» de su botón. */
+  readonly copiadaDe = signal<string | null>(null);
 
   private readonly hostBoton = viewChild<ElementRef<HTMLDivElement>>('paypalHost');
 
@@ -232,13 +293,67 @@ export class Checkout implements OnInit {
    * HTML, y anidarlos deja la página rota sin avisar.
    */
   readonly seVendePreparar = false;
-  readonly esLicencia = computed(() => this.seleccionado()?.kind === 'LICENSE');
   readonly comprado = computed(
     () =>
       this.bolsaComprada() !== null ||
       this.licenciaComprada() !== null ||
-      this.membresiaComprada() !== null,
+      this.membresiaComprada() !== null ||
+      this.carritoComprado() !== null,
   );
+
+  // ── Totales de lo que se está pagando ──────────────────────────────────
+  // Son la suma de cada producto con SU código, y valen igual para uno solo
+  // que para un carrito. Las cifras son las que enseña la ventana; la que se
+  // cobra la vuelve a calcular el servidor.
+
+  /** Céntimos de sol a pagar, ya con los códigos aplicados. */
+  readonly totalCents = computed(() =>
+    this.enPago().reduce((suma, plan) => suma + this.finalCentsDe(plan), 0),
+  );
+
+  /** Lo que se paga, en soles. */
+  readonly total = computed(() => soles(this.totalCents()));
+
+  /**
+   * La cifra tachada del total, o null si no hay nada que tachar.
+   *
+   * La misma regla que en la tarjeta, sumada: con algún código se tacha el
+   * precio de catálogo, y sin ninguno, el de antes de la oferta. Nunca las dos.
+   */
+  readonly totalTachado = computed(() => {
+    const planes = this.enPago();
+    const antes =
+      this.conCodigo().length > 0
+        ? planes.reduce((suma, plan) => suma + plan.priceCents, 0)
+        : planes.reduce(
+            (suma, plan) =>
+              suma + Math.max(plan.priceCents, plan.listPriceCents ?? plan.priceCents),
+            0,
+          );
+    return antes > this.totalCents() ? soles(antes) : null;
+  });
+
+  /** El total en dólares para PayPal, o null si algún producto no tiene precio en dólares. */
+  readonly totalDolares = computed(() => {
+    let suma = 0;
+    for (const plan of this.enPago()) {
+      const rebajado = this.descuentos()[plan.code]?.finalPriceUsdCents;
+      const dolares = rebajado ?? plan.priceUsdCents;
+      if (!dolares) return null;
+      suma += dolares;
+    }
+    return `$ ${(suma / 100).toFixed(2)}`;
+  });
+
+  /** Lo que viaja al servidor: códigos de plan y de descuento, nunca importes. */
+  readonly lineas = computed<LineaCarrito[]>(() =>
+    this.enPago().map((plan) => {
+      const codigo = this.descuentos()[plan.code]?.code;
+      return { planCode: plan.code, ...(codigo ? { discountCode: codigo } : {}) };
+    }),
+  );
+
+
 
   readonly pasarelaPaypal = computed(
     () => this.pasarelas().find((p) => p.code === 'PAYPAL') ?? null,
@@ -297,7 +412,8 @@ export class Checkout implements OnInit {
     });
 
     // La ventana del pago congela la página de detrás mientras está abierta.
-    effect(() => this.fondo.fijar('pago', this.seleccionado() !== null));
+    effect(() => this.fondo.fijar('pago', this.enPago().length > 0));
+
   }
 
   ngOnInit(): void {
@@ -349,11 +465,28 @@ export class Checkout implements OnInit {
         //
         // La excepción es ?plan=CODIGO: quien llega por ese enlace ya decidió,
         // y hacerle pulsar otra vez sería un paso de más.
-        const pedido = this.ruta.snapshot.queryParamMap.get('plan');
-        const directo = pedido ? (vendibles.find((p) => p.code === pedido) ?? null) : null;
-        if (directo) this.seleccionado.set(directo);
+        // Lo que dejó de venderse sale del carrito, también del número de la cabecera.
+        this.carritoGuardado.conservar(vendibles.map((plan) => plan.code));
 
         this.cargando.set(false);
+
+        const pedido = this.ruta.snapshot.queryParamMap.get('plan');
+        const directo = pedido ? (vendibles.find((p) => p.code === pedido) ?? null) : null;
+        if (directo) this.elegir(directo);
+
+        // El icono del carrito de la cabecera trae aquí con `?carrito=pagar`.
+        this.ruta.queryParamMap
+          .pipe(takeUntilDestroyed(this.destruir))
+          .subscribe((parametros) => {
+            if (parametros.get('carrito') !== 'pagar') return;
+            this.pagarCarrito();
+            void this.router.navigate([], {
+              relativeTo: this.ruta,
+              queryParams: { carrito: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true,
+            });
+          });
       },
       error: (error: unknown) => {
         this.error.set(toApiError(error).message);
@@ -362,11 +495,14 @@ export class Checkout implements OnInit {
     });
   }
 
-  /** Deshace la elección y vuelve a esconder los medios de pago. */
+  /**
+   * Cierra la ventana de pago y suelta lo elegido. El carrito se queda como
+   * estaba: cerrar no es vaciarlo.
+   */
   cambiarPlan(): void {
     if (this.procesando() || this.enviandoComprobante()) return;
 
-    this.seleccionado.set(null);
+    this.enPago.set([]);
     this.metodoPago.set(null);
     this.cierraEn.set(null);
     this.quitarDescuento();
@@ -394,10 +530,53 @@ export class Checkout implements OnInit {
     this.cerradaPorTiempo.set(true);
   }
 
+  /** «Comprar» en una tarjeta: se paga solo ese producto. */
   elegir(plan: Plan): void {
+    this.abrirPago([plan]);
+  }
+
+  /** «Ir a pagar» en la barra del carrito: se paga todo lo que hay en él. */
+  pagarCarrito(): void {
+    if (this.carrito().length > 0) this.abrirPago(this.carrito());
+  }
+
+  // ── El carrito ───────────────────────────────────────────────────────────
+
+  enCarrito(plan: Plan): boolean {
+    return this.carritoGuardado.tiene(plan.code);
+  }
+
+  /** Lo mete o lo saca. Un producto va una vez: dos licencias iguales no suman nada. */
+  alternarCarrito(plan: Plan): void {
+    this.carritoGuardado.alternar(plan.code);
+  }
+
+  /** Saca del carrito lo que se acaba de pagar, se haya pagado junto o suelto. */
+  private sacarDelCarrito(codigos: string[]): void {
+    this.carritoGuardado.quitar(codigos);
+  }
+
+  /** Quita un producto desde la propia ventana de pago del carrito. */
+  quitarDelPago(plan: Plan): void {
+    if (this.procesando() || this.enviandoComprobante()) return;
+    this.carritoGuardado.quitar([plan.code]);
+    const quedan = this.enPago().filter((p) => p.code !== plan.code);
+    if (quedan.length === 0) {
+      this.cambiarPlan();
+      return;
+    }
+    // Lo pagado cambia de importe: la captura elegida ya no vale, y el código
+    // del que sale tampoco.
+    this.enPago.set(quedan);
+    this.quitarDescuentoDe(plan);
+    this.quitarCaptura();
+  }
+
+  /** Abre la ventana de pago con estos productos. */
+  private abrirPago(planes: Plan[]): void {
     if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
-    this.seleccionado.set(plan);
+    this.enPago.set([...planes]);
     this.metodoPago.set(null);
     this.cerradaPorTiempo.set(false);
     this.cierraEn.set(new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString());
@@ -410,7 +589,7 @@ export class Checkout implements OnInit {
     this.errorComprobante.set(null);
 
     /**
-     * El código anunciado se aplica solo.
+     * El código anunciado de cada producto se aplica solo.
      *
      * Porque la tarjeta ya enseña el precio CON él puesto. Si hubiera que
      * teclearlo, quien pulsara el botón principal vería 159 en la tarjeta y 199
@@ -423,10 +602,9 @@ export class Checkout implements OnInit {
      * enseña el precio de catálogo. Es la única forma de que las dos cifras no
      * puedan discrepar.
      */
-    const promo = this.promoDe(plan);
-    if (promo) {
-      this.codigoPromo.setValue(promo.code);
-      this.aplicarDescuento();
+    for (const plan of planes) {
+      const promo = this.promoDe(plan);
+      if (promo) void this.aplicarCodigo(promo.code, [plan]);
     }
   }
 
@@ -476,21 +654,23 @@ export class Checkout implements OnInit {
   }
 
   enviarComprobante(): void {
-    const plan = this.seleccionado();
+    const lineas = this.lineas();
     const archivo = this.capturaElegida();
-    if (!plan || !archivo || this.enviandoComprobante()) return;
+    if (lineas.length === 0 || !archivo || this.enviandoComprobante()) return;
 
     this.enviandoComprobante.set(true);
     this.errorComprobante.set(null);
 
     this.payments
-      .enviarComprobante(plan.code, archivo, {
+      .enviarComprobante(lineas, archivo, {
         operationCode: this.numeroOperacion.value.trim() || undefined,
-        discountCode: this.descuento()?.code,
       })
       .subscribe({
         next: (enviado) => {
           this.comprobanteEnviado.set(enviado);
+          // Ya está pagado y en revisión: dejarlo en el carrito invitaría a
+          // pagarlo otra vez.
+          this.sacarDelCarrito(lineas.map((linea) => linea.planCode));
           this.quitarCaptura();
           this.numeroOperacion.reset();
           this.enviandoComprobante.set(false);
@@ -502,59 +682,93 @@ export class Checkout implements OnInit {
       });
   }
 
+  /** El código que escribió a mano: vale para los productos que aún no llevan uno. */
   aplicarDescuento(): void {
     const codigo = this.codigoPromo.value.trim();
-    const plan = this.seleccionado();
-    if (!codigo || !plan || this.comprobandoPromo()) return;
-
-    this.comprobandoPromo.set(true);
-    this.errorPromo.set(null);
-
-    this.billing.validarDescuento(codigo, plan.code).subscribe({
-      next: (descuento) => {
-        this.descuento.set(descuento);
-        this.comprobandoPromo.set(false);
-        // No hace falta remontar el botón de PayPal: su `createOrder` lee el
-        // descuento en el momento del clic, así que siempre usa el vigente.
-      },
-      error: (error: unknown) => {
-        this.descuento.set(null);
-        this.errorPromo.set(toApiError(error).message);
-        this.comprobandoPromo.set(false);
-      },
-    });
+    const sinCodigo = this.enPago().filter((plan) => !this.descuentos()[plan.code]);
+    if (!codigo || sinCodigo.length === 0 || this.comprobandoPromo()) return;
+    void this.aplicarCodigo(codigo, sinCodigo);
   }
 
   /**
-   * El código venció con el modal abierto.
+   * Valida un código contra cada producto y lo deja puesto en los que lo
+   * aceptan. Solo da error si no vale para ninguno: en un carrito, que el
+   * código del método no rebaje el humanizador es lo esperado, no un fallo.
+   *
+   * El servidor decide si vale y cuánto rebaja; esta pantalla solo lo enseña.
+   * No hace falta remontar el botón de PayPal: su `createOrder` lee los
+   * códigos en el momento del clic, así que siempre usa los vigentes.
+   */
+  private async aplicarCodigo(codigo: string, planes: Plan[]): Promise<void> {
+    this.comprobandoPromo.set(true);
+    this.errorPromo.set(null);
+
+    const resultados = await Promise.all(
+      planes.map((plan) =>
+        firstValueFrom(this.billing.validarDescuento(codigo, plan.code)).then(
+          (promo) => ({ plan, promo, error: null }),
+          (error: unknown) => ({ plan, promo: null, error: toApiError(error).message }),
+        ),
+      ),
+    );
+
+    // Se cerró la ventana o cambió lo que se paga mientras se comprobaba.
+    const siguen = new Set(this.enPago().map((plan) => plan.code));
+    const validos = resultados.filter((r) => r.promo && siguen.has(r.plan.code));
+
+    if (validos.length > 0) {
+      this.descuentos.update((actuales) => {
+        const nuevos = { ...actuales };
+        for (const { plan, promo } of validos) nuevos[plan.code] = promo!;
+        return nuevos;
+      });
+      this.codigoPromo.reset();
+    } else if (resultados.some((r) => siguen.has(r.plan.code))) {
+      this.codigoPromo.setValue(codigo);
+      this.errorPromo.set(resultados.find((r) => r.error)?.error ?? 'Ese código no es válido.');
+    }
+
+    this.comprobandoPromo.set(false);
+  }
+
+  /**
+   * El código de este producto venció con el modal abierto.
    *
    * Se quita la rebaja y se dice por qué. La alternativa —dejar el precio
    * rebajado en pantalla— convierte un plazo cumplido en un cobro que falla al
    * pulsar pagar, y ahí el comprador no entiende que se le acabó el plazo:
    * entiende que la web está rota.
    */
-  descuentoVencido(): void {
-    const promo = this.descuento();
+  descuentoVencido(plan: Plan): void {
+    const promo = this.descuentos()[plan.code];
     if (!promo) return;
 
-    this.descuento.set(null);
-    this.codigoPromo.reset();
+    this.quitarDescuentoDe(plan);
     this.errorPromo.set(
       `El código ${promo.code} venció mientras decidías. El precio vuelve a ser el de catálogo.`,
     );
   }
 
+  /** Quita el código de un producto. */
+  quitarDescuentoDe(plan: Plan): void {
+    this.descuentos.update(({ [plan.code]: _fuera, ...resto }) => resto);
+  }
+
+  /** Quita todos los códigos y el error que hubiera. */
   quitarDescuento(): void {
-    if (!this.descuento() && !this.errorPromo()) return;
-    this.descuento.set(null);
+    this.descuentos.set({});
     this.errorPromo.set(null);
     this.codigoPromo.reset();
   }
 
-  /** Precio a pagar, ya con la rebaja si la hay. */
+  /** Lo que se paga por este producto en la ventana, con su código si lo hay. */
+  private finalCentsDe(plan: Plan): number {
+    return this.descuentos()[plan.code]?.finalPriceCents ?? plan.priceCents;
+  }
+
+  /** El precio de este producto en la ventana de pago. */
   precioFinal(plan: Plan): string {
-    const rebajado = this.descuento()?.finalPriceCents;
-    return soles(rebajado ?? plan.priceCents);
+    return soles(this.finalCentsDe(plan));
   }
 
   /**
@@ -566,17 +780,11 @@ export class Checkout implements OnInit {
    * mayor que el que se hace en el cobro.
    */
   ahorroAplicado(plan: Plan): string | null {
-    const promo = this.descuento();
+    const promo = this.descuentos()[plan.code];
     if (!promo) return null;
 
     const rebaja = plan.priceCents - promo.finalPriceCents;
     return rebaja > 0 ? soles(rebaja) : null;
-  }
-
-  precioFinalDolares(plan: Plan): string | null {
-    const rebajado = this.descuento()?.finalPriceUsdCents;
-    if (rebajado != null) return `$ ${(rebajado / 100).toFixed(2)}`;
-    return this.precioDolares(plan);
   }
 
   /** «30 días» o «permanente», según el plan. */
@@ -877,6 +1085,23 @@ export class Checkout implements OnInit {
     return plan.words > 0 ? `S/ ${((plan.priceCents / 100 / plan.words) * 1000).toFixed(2)}` : '';
   }
 
+  /** Copia la URL de un producto del carrito recién comprado. */
+  async copiarUrlDe(entregado: ProductoEntregado): Promise<void> {
+    if (!entregado.connectorUrl) return;
+    try {
+      await navigator.clipboard.writeText(entregado.connectorUrl);
+      this.copiadaDe.set(entregado.plan.code);
+      setTimeout(() => this.copiadaDe.set(null), 2500);
+    } catch {
+      this.error.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
+    }
+  }
+
+  /** Si alguno de los productos del carrito trae una URL del conector que guardar. */
+  hayUrlEn(entregados: ProductoEntregado[]): boolean {
+    return entregados.some((entregado) => Boolean(entregado.connectorUrl));
+  }
+
   async copiarUrl(): Promise<void> {
     const url = this.urlConector();
     if (!url) return;
@@ -898,9 +1123,9 @@ export class Checkout implements OnInit {
    * enseña la cifra; el navegador nunca decide cuánto se paga.
    */
   async pagarConCulqi(): Promise<void> {
-    const plan = this.seleccionado();
+    const lineas = this.lineas();
     const clave = this.pasarelaCulqi()?.publicKey;
-    if (!plan || !clave || this.abriendoCulqi() || this.procesando()) return;
+    if (lineas.length === 0 || !clave || this.abriendoCulqi() || this.procesando()) return;
 
     this.error.set(null);
     this.errorCulqi.set(null);
@@ -909,7 +1134,7 @@ export class Checkout implements OnInit {
     try {
       await this.culqi.preparar();
       const orden = await firstValueFrom(
-        this.payments.createOrder(plan.code, this.descuento()?.code, 'CULQI'),
+        this.payments.createOrder(lineas, 'CULQI'),
       );
       this.culqi.abrir(
         clave,
@@ -983,9 +1208,27 @@ export class Checkout implements OnInit {
     }
   }
 
-  /** Enseña lo comprado, igual que tras un pago con PayPal. */
+  /**
+   * Enseña lo comprado, venga de PayPal o de Culqi, y lo saca del carrito.
+   *
+   * Un carrito trae `items`, uno por producto, y se enseña en su propia
+   * pantalla: cada licencia llega con su URL, y una pantalla pensada para una
+   * sola se quedaría con la primera.
+   */
   private mostrarCompra(resultado: PaymentResult): void {
     if (resultado.balance) this.saldo.set(resultado.balance);
+    this.sacarDelCarrito(this.enPago().map((plan) => plan.code));
+
+    // La ventana ya no tiene nada que cobrar. Se suelta aquí y no con
+    // `cambiarPlan`, que se niega mientras el pago se está procesando.
+    this.enPago.set([]);
+    this.cierraEn.set(null);
+
+    if (resultado.items) {
+      this.carritoComprado.set(resultado.items);
+      return;
+    }
+
     this.bolsaComprada.set(resultado.pack ?? null);
     this.licenciaComprada.set(resultado.license ?? null);
     this.membresiaComprada.set(resultado.membresia ?? null);
@@ -1015,9 +1258,7 @@ export class Checkout implements OnInit {
             this.error.set(null);
             this.procesando.set(true);
             try {
-              const orden = await firstValueFrom(
-                this.payments.createOrder(this.seleccionado()!.code, this.descuento()?.code),
-              );
+              const orden = await firstValueFrom(this.payments.createOrder(this.lineas()));
               ordenAbierta = orden.orderId;
               return orden.orderId;
             } catch (error: unknown) {
@@ -1031,18 +1272,7 @@ export class Checkout implements OnInit {
             try {
               const resultado = await firstValueFrom(this.payments.capture(data.orderID));
               ordenAbierta = null;
-              this.saldo.set(resultado.balance ?? null);
-              this.bolsaComprada.set(resultado.pack ?? null);
-              this.licenciaComprada.set(resultado.license ?? null);
-              this.membresiaComprada.set(resultado.membresia ?? null);
-              this.urlConector.set(resultado.connectorUrl ?? null);
-
-              if (resultado.alreadyProcessed && !resultado.connectorUrl) {
-                this.error.set(
-                  'Este pago ya estaba confirmado. Si compraste el método y perdiste tu URL, ' +
-                    'genera una nueva desde tu panel.',
-                );
-              }
+              this.mostrarCompra(resultado);
             } catch (error: unknown) {
               const apiError = toApiError(error);
               this.error.set(apiError.message);

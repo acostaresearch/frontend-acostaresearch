@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
+import { CarritoService } from '../../core/services/carrito.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TemaService } from '../../core/services/tema.service';
 import { PrivadaPipe } from '../../core/router/privada.pipe';
@@ -27,6 +28,7 @@ export class SiteHeader {
   private readonly recorrido = inject(RecorridoWeb);
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
+  protected readonly carrito = inject(CarritoService);
 
   /** Solo cuenta en móvil: en pantalla ancha el menú está siempre desplegado. */
   readonly menuAbierto = signal(false);

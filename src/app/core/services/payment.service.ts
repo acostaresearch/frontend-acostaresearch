@@ -8,6 +8,7 @@ import {
   AprobacionManual,
   ComprobanteEnviado,
   DatosDelCobro,
+  LineaCarrito,
   DatosYape,
   PagoPorRevisar,
   PagoRevisado,
@@ -30,20 +31,24 @@ export class PaymentService {
   }
 
   /**
-   * Abre la orden. Se manda el código del plan, nunca el precio: el importe lo
-   * calcula el servidor.
+   * Abre la orden de lo que se está pagando: un plan o todo el carrito. Se
+   * mandan los códigos, nunca el precio: el importe lo calcula el servidor.
+   *
+   * Un solo producto viaja como siempre (`planCode`) y va por el camino de la
+   * compra suelta; con varios, como `items`, y el servidor abre una sola orden
+   * por la suma.
    */
-  createOrder(
-    planCode: string,
-    discountCode?: string,
-    provider = 'PAYPAL',
-  ): Observable<PaymentOrder> {
+  createOrder(lineas: LineaCarrito[], provider = 'PAYPAL'): Observable<PaymentOrder> {
+    const cuerpo =
+      lineas.length === 1
+        ? {
+            planCode: lineas[0].planCode,
+            ...(lineas[0].discountCode ? { discountCode: lineas[0].discountCode } : {}),
+          }
+        : { items: lineas };
+
     return this.http
-      .post<ApiResponse<{ order: PaymentOrder }>>(`${this.base}/orders`, {
-        planCode,
-        provider,
-        ...(discountCode ? { discountCode } : {}),
-      })
+      .post<ApiResponse<{ order: PaymentOrder }>>(`${this.base}/orders`, { ...cuerpo, provider })
       .pipe(map((res) => res.data.order));
   }
 
@@ -88,13 +93,25 @@ export class PaymentService {
    * resto de datos viaja en la query.
    */
   enviarComprobante(
-    planCode: string,
+    lineas: LineaCarrito[],
     archivo: File,
-    opciones: { operationCode?: string; discountCode?: string } = {},
+    opciones: { operationCode?: string } = {},
   ): Observable<ComprobanteEnviado> {
-    let params = new HttpParams().set('planCode', planCode);
+    // Un plan, como siempre; un carrito, como `PLAN:CODIGO,PLAN2` en la query,
+    // porque el cuerpo de esta petición es la imagen.
+    let params =
+      lineas.length === 1
+        ? new HttpParams().set('planCode', lineas[0].planCode)
+        : new HttpParams().set(
+            'items',
+            lineas
+              .map((l) => (l.discountCode ? `${l.planCode}:${l.discountCode}` : l.planCode))
+              .join(','),
+          );
+    if (lineas.length === 1 && lineas[0].discountCode) {
+      params = params.set('discountCode', lineas[0].discountCode);
+    }
     if (opciones.operationCode) params = params.set('operationCode', opciones.operationCode);
-    if (opciones.discountCode) params = params.set('discountCode', opciones.discountCode);
 
     return this.http
       .post<ApiResponse<ComprobanteEnviado>>(`${this.base}/manual`, archivo, {

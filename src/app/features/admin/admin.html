@@ -474,8 +474,15 @@
 
                     <dl class="comprobante-detalle">
                       <div>
-                        <dt>Plan</dt>
-                        <dd>{{ pago.plan.name }}</dd>
+                        @if (pago.carrito; as carrito) {
+                          <!-- Un carrito: una sola captura por la suma. Aprobarlo
+                               entrega todo lo que lleva. -->
+                          <dt>Carrito · {{ carrito.productos.length }} productos</dt>
+                          <dd>{{ carrito.productos.join(' + ') }}</dd>
+                        } @else {
+                          <dt>Plan</dt>
+                          <dd>{{ pago.plan.name }}</dd>
+                        }
                       </div>
                       <div>
                         <dt>Importe</dt>
