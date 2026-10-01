@@ -48,8 +48,27 @@ export interface MensajeWhatsapp {
   envio: EnvioWhatsapp;
   error: string | null;
   modelo: string | null;
+  /** La imagen de la galería que llevaba, si fue una. */
+  imagenId: string | null;
   createdAt: string;
 }
+
+/** Una imagen de la galería del bot. */
+export interface ImagenWhatsapp {
+  id: string;
+  nombre: string;
+  /** Cuándo la manda el bot. */
+  cuando: string;
+  /** El texto que va debajo en WhatsApp. */
+  pie: string;
+  /** Si el bot la puede mandar solo; si no, solo se manda desde el panel. */
+  enBot: boolean;
+  mime: string;
+  bytes: number;
+  createdAt: string;
+}
+
+export type DatosImagenWhatsapp = Pick<ImagenWhatsapp, 'nombre' | 'cuando' | 'pie' | 'enBot'>;
 
 export interface ConversacionWhatsapp {
   id: string;
@@ -79,6 +98,7 @@ export const MOTIVOS: Record<string, string> = {
   pidio_persona: 'Pidió una persona: la conversación pasó a «La llevas tú».',
   no_es_texto: 'No era texto: se le pidió que lo escriba.',
   persona: 'La conversación la llevas tú: el bot no contesta.',
+  personal: 'Parecía un mensaje personal: el bot no contestó y la conversación pasó a ti.',
   apagado: 'El bot está apagado: el mensaje quedó guardado.',
   horario: 'Es horario de atención humana: el bot no contesta.',
   bloqueado: 'El número está bloqueado.',
@@ -122,10 +142,50 @@ export class WhatsappService {
       .pipe(map((r) => r.data));
   }
 
-  responder(id: string, texto: string): Observable<MensajeWhatsapp> {
+  /** Texto, una imagen de la galería, o las dos: el texto va debajo de la imagen. */
+  responder(id: string, texto: string, imagenId?: string | null): Observable<MensajeWhatsapp> {
     return this.http
-      .post<ApiResponse<MensajeWhatsapp>>(`${this.base}/conversaciones/${id}/responder`, { texto })
+      .post<ApiResponse<MensajeWhatsapp>>(`${this.base}/conversaciones/${id}/responder`, {
+        texto,
+        ...(imagenId ? { imagenId } : {}),
+      })
       .pipe(map((r) => r.data));
+  }
+
+  // ── La galería de imágenes ───────────────────────────────────────────────
+
+  imagenes(): Observable<ImagenWhatsapp[]> {
+    return this.http.get<ApiResponse<ImagenWhatsapp[]>>(`${this.base}/imagenes`).pipe(map((r) => r.data));
+  }
+
+  /** El archivo va crudo en el cuerpo y sus datos en la dirección, como los comprobantes. */
+  subirImagen(archivo: File, datos: DatosImagenWhatsapp): Observable<ImagenWhatsapp> {
+    const params = new HttpParams()
+      .set('nombre', datos.nombre)
+      .set('cuando', datos.cuando)
+      .set('pie', datos.pie)
+      .set('enBot', String(datos.enBot));
+    return this.http
+      .post<ApiResponse<ImagenWhatsapp>>(`${this.base}/imagenes`, archivo, {
+        params,
+        headers: { 'Content-Type': archivo.type },
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  editarImagen(id: string, datos: Partial<DatosImagenWhatsapp>): Observable<ImagenWhatsapp> {
+    return this.http
+      .put<ApiResponse<ImagenWhatsapp>>(`${this.base}/imagenes/${id}`, datos)
+      .pipe(map((r) => r.data));
+  }
+
+  borrarImagen(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/imagenes/${id}`);
+  }
+
+  /** Se pide con el token, así que llega como blob. */
+  archivoImagen(id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/imagenes/${id}/archivo`, { responseType: 'blob' });
   }
 
   cambiarModo(id: string, modo: ModoWhatsapp): Observable<ConversacionWhatsapp> {

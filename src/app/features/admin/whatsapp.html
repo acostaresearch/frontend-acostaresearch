@@ -92,6 +92,9 @@
     <button type="button" [class.activa]="pestana() === 'probar'" (click)="cambiarPestana('probar')">
       Probar el bot
     </button>
+    <button type="button" [class.activa]="pestana() === 'imagenes'" (click)="cambiarPestana('imagenes')">
+      Imágenes
+    </button>
     <button type="button" [class.activa]="pestana() === 'ajustes'" (click)="cambiarPestana('ajustes')">
       Ajustes
     </button>
@@ -196,7 +199,12 @@
                 @if (autor(m)) {
                   <span class="autor">{{ autor(m) }}</span>
                 }
-                <p>{{ m.texto }}</p>
+                @if (m.imagenId && miniaturas()[m.imagenId]) {
+                  <img class="foto" [src]="miniaturas()[m.imagenId]" alt="" />
+                }
+                @if (textoVisible(m)) {
+                  <p>{{ textoVisible(m) }}</p>
+                }
                 <span class="pie-burbuja">
                   {{ m.createdAt | date: 'd MMM, HH:mm' }}
                   @if (etiquetaDeEnvio(m)) {
@@ -216,7 +224,64 @@
               plantilla aprobada por Meta.
             </p>
           } @else {
+            @if (eligiendo()) {
+              <div class="selector">
+                <div class="selector-cabecera">
+                  <strong>Elige una imagen</strong>
+                  <label class="boton secundario subir-suelta" [class.deshabilitado]="subiendo()">
+                    {{ subiendo() ? 'Subiendo…' : 'Subir otra' }}
+                    <input type="file" accept="image/png,image/jpeg" hidden (change)="subirYAdjuntar($event)" />
+                  </label>
+                </div>
+                @if (imagenes().length === 0) {
+                  <p class="tenue">Todavía no hay imágenes. Sube una aquí o en la pestaña «Imágenes».</p>
+                } @else {
+                  <ul class="selector-lista">
+                    @for (i of imagenes(); track i.id) {
+                      <li>
+                        <button type="button" (click)="adjuntar(i)" [title]="i.nombre">
+                          @if (miniaturas()[i.id]) {
+                            <img [src]="miniaturas()[i.id]" alt="" />
+                          }
+                          <span>{{ i.nombre }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+            @if (adjunta(); as img) {
+              <div class="adjunta">
+                @if (miniaturas()[img.id]) {
+                  <img [src]="miniaturas()[img.id]" alt="" />
+                }
+                <span>
+                  <strong>{{ img.nombre }}</strong>
+                  <small class="tenue">
+                    @if (borrador().trim()) {
+                      Lo que escribas va debajo de la imagen.
+                    } @else if (img.pie) {
+                      Sin texto, va con su pie: «{{ img.pie }}».
+                    } @else {
+                      Sin texto, va la imagen sola.
+                    }
+                  </small>
+                </span>
+                <button type="button" class="quitar" aria-label="Quitar la imagen" (click)="quitarAdjunta()">×</button>
+              </div>
+            }
             <div class="redactar">
+              <button
+                type="button"
+                class="boton secundario adjuntar"
+                [class.activa]="eligiendo()"
+                aria-label="Adjuntar una imagen"
+                title="Adjuntar una imagen"
+                (click)="alternarSelector()"
+              >
+                🖼
+              </button>
               <textarea
                 rows="2"
                 maxlength="4000"
@@ -225,7 +290,12 @@
                 (input)="escribir($event)"
                 (keydown)="teclaEnRespuesta($event)"
               ></textarea>
-              <button type="button" class="boton" [disabled]="!borrador().trim() || enviando()" (click)="responder()">
+              <button
+                type="button"
+                class="boton"
+                [disabled]="(!borrador().trim() && !adjunta()) || enviando()"
+                (click)="responder()"
+              >
                 {{ enviando() ? 'Enviando…' : 'Enviar' }}
               </button>
             </div>
@@ -267,7 +337,12 @@
           }
           @for (l of lineas(); track $index) {
             <li [class]="l.de">
-              <p>{{ l.texto }}</p>
+              @if (l.imagenId && miniaturas()[l.imagenId]) {
+                <img class="foto" [src]="miniaturas()[l.imagenId]" alt="" />
+              }
+              @if (textoVisible(l)) {
+                <p>{{ textoVisible(l) }}</p>
+              }
               @if (l.modelo) {
                 <span class="modelo">{{ l.modelo }}</span>
               }
@@ -293,6 +368,145 @@
       </div>
     </div>
   }
+
+  <!-- ══ IMÁGENES ══════════════════════════════════════════════════════════
+       La galería: lo que el bot puede mandar solo (según «cuándo») y lo que
+       se adjunta a mano al responder. -->
+  @if (pestana() === 'imagenes') {
+    <div class="galeria">
+      <p class="tenue">
+        Las imágenes con «El bot la puede mandar» las elige el bot cuando la conversación encaja con
+        su «cuándo». Todas se pueden adjuntar a mano al responder. PNG o JPG de hasta 5 MB.
+      </p>
+
+      <div class="imagen-nueva">
+        <label class="previa" [class.vacia]="!nuevaPrevia()">
+          @if (nuevaPrevia(); as previa) {
+            <img [src]="previa" alt="" />
+          } @else {
+            <span>Elegir imagen</span>
+          }
+          <input type="file" accept="image/png,image/jpeg" hidden (change)="elegirArchivo($event)" />
+        </label>
+        <div class="imagen-campos">
+          <div class="campo">
+            <label for="wa-img-nombre">Nombre</label>
+            <input
+              id="wa-img-nombre"
+              type="text"
+              maxlength="80"
+              placeholder="Ej.: QR de Yape"
+              [value]="nueva().nombre"
+              (input)="campoNueva('nombre', $event)"
+            />
+          </div>
+          <div class="campo">
+            <label for="wa-img-cuando">Cuándo la manda el bot</label>
+            <input
+              id="wa-img-cuando"
+              type="text"
+              maxlength="400"
+              placeholder="Ej.: cuando quiera pagar con Yape o pida el número de Yape"
+              [value]="nueva().cuando"
+              (input)="campoNueva('cuando', $event)"
+            />
+          </div>
+          <div class="campo">
+            <label for="wa-img-pie">Texto debajo de la imagen (opcional)</label>
+            <textarea
+              id="wa-img-pie"
+              rows="2"
+              maxlength="1000"
+              placeholder="Ej.: Yape a nombre de Benicio Acosta. Luego envía tu captura por aquí."
+              [value]="nueva().pie"
+              (input)="campoNueva('pie', $event)"
+            ></textarea>
+          </div>
+          <label class="interruptor">
+            <input type="checkbox" [checked]="nueva().enBot" (change)="casillaNueva($event)" />
+            <span>
+              <strong>El bot la puede mandar</strong>
+              <small>Apagado, solo la mandas tú desde el panel.</small>
+            </span>
+          </label>
+          <div class="pie">
+            <button
+              type="button"
+              class="boton"
+              [disabled]="!nuevoArchivo() || !nueva().nombre.trim() || subiendo()"
+              (click)="subirNueva()"
+            >
+              {{ subiendo() ? 'Subiendo…' : 'Guardar imagen' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (imagenes().length === 0) {
+        <p class="vacio">Todavía no hay imágenes en la galería.</p>
+      } @else {
+        <ul class="imagenes">
+          @for (i of imagenes(); track i.id) {
+            @let d = datosDe(i);
+            <li class="imagen-tarjeta">
+              <div class="previa">
+                @if (miniaturas()[i.id]) {
+                  <img [src]="miniaturas()[i.id]" alt="" />
+                }
+              </div>
+              <div class="imagen-campos">
+                <input
+                  type="text"
+                  class="imagen-nombre"
+                  maxlength="80"
+                  aria-label="Nombre"
+                  [value]="d.nombre"
+                  (input)="campoImagen(i, 'nombre', $event)"
+                />
+                <div class="campo">
+                  <label [for]="'cuando-' + i.id">Cuándo la manda el bot</label>
+                  <input
+                    [id]="'cuando-' + i.id"
+                    type="text"
+                    maxlength="400"
+                    [value]="d.cuando"
+                    (input)="campoImagen(i, 'cuando', $event)"
+                  />
+                </div>
+                <div class="campo">
+                  <label [for]="'pie-' + i.id">Texto debajo</label>
+                  <textarea
+                    [id]="'pie-' + i.id"
+                    rows="2"
+                    maxlength="1000"
+                    [value]="d.pie"
+                    (input)="campoImagen(i, 'pie', $event)"
+                  ></textarea>
+                </div>
+                <label class="interruptor">
+                  <input type="checkbox" [checked]="d.enBot" (change)="casillaImagen(i, $event)" />
+                  <span><strong>El bot la puede mandar</strong></span>
+                </label>
+                <div class="imagen-acciones">
+                  <span class="tenue">{{ i.mime === 'image/png' ? 'PNG' : 'JPG' }} · {{ (i.bytes / 1024).toFixed(0) }} KB</span>
+                  <button type="button" class="boton secundario peligro" (click)="borrarImagen(i)">Borrar</button>
+                  <button
+                    type="button"
+                    class="boton"
+                    [disabled]="!hayCambios(i) || !d.nombre.trim()"
+                    (click)="guardarImagen(i)"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
 
   <!-- ══ AJUSTES ═══════════════════════════════════════════════════════════ -->
   @if (pestana() === 'ajustes') {
