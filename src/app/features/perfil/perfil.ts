@@ -141,8 +141,8 @@ export class Perfil implements OnInit {
       },
       {
         id: 'ayuda',
-        texto: '¿Necesitas ayuda?',
-        icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7 M12 17h.01',
+        texto: 'Video curso paso a paso',
+        icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M10 8.5v7l5.5-3.5z',
       },
     ];
     return todas.filter((s) => {
