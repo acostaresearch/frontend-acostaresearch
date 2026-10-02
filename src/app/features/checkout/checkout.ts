@@ -24,6 +24,7 @@ import {
   DatosDelCobro,
   DatosYape,
   Descuento,
+  DescuentoDelCarrito,
   License,
   LineaCarrito,
   MembresiaComprada,
@@ -238,9 +239,22 @@ export class Checkout implements OnInit {
       .map((plan) => ({ plan, promo: this.descuentos()[plan.code] ?? null }))
       .filter((linea): linea is { plan: Plan; promo: Descuento } => linea.promo !== null),
   );
-  /** Si queda algún producto sin código: entonces se ofrece el campo. */
+  /**
+   * El código del carrito, que rebaja el TOTAL una sola vez: «S/ 50» en un
+   * carrito de tres productos son S/ 50, no S/ 150. Se calcula sobre lo que
+   * ya se paga con los códigos de cada producto.
+   */
+  readonly descuentoTotal = signal<Descuento | null>(null);
+  /** El código del total, para mandarlo al abrir la orden. */
+  readonly codigoDelTotal = computed(() => this.descuentoTotal()?.code);
+  /**
+   * Si se ofrece el campo del código. En un carrito, mientras no haya uno
+   * sobre el total; con un producto, mientras no lleve el suyo.
+   */
   readonly faltaCodigo = computed(() =>
-    this.enPago().some((plan) => !this.descuentos()[plan.code]),
+    this.esCarrito()
+      ? !this.descuentoTotal()
+      : this.enPago().some((plan) => !this.descuentos()[plan.code]),
   );
   readonly errorPromo = signal<string | null>(null);
   readonly comprobandoPromo = signal(false);
@@ -332,9 +346,17 @@ export class Checkout implements OnInit {
   // cobra la vuelve a calcular el servidor.
 
   /** Céntimos de sol a pagar, ya con los códigos aplicados. */
-  readonly totalCents = computed(() =>
-    this.enPago().reduce((suma, plan) => suma + this.finalCentsDe(plan), 0),
+  readonly totalCents = computed(
+    () =>
+      this.enPago().reduce((suma, plan) => suma + this.finalCentsDe(plan), 0) -
+      (this.descuentoTotal()?.amountCents ?? 0),
   );
+
+  /** Lo que rebaja el código del total, en soles. Null sin código. */
+  readonly ahorroDelTotal = computed(() => {
+    const promo = this.descuentoTotal();
+    return promo ? soles(promo.amountCents) : null;
+  });
 
   /** Lo que se paga, en soles. */
   readonly total = computed(() => soles(this.totalCents()));
@@ -348,7 +370,7 @@ export class Checkout implements OnInit {
   readonly totalTachado = computed(() => {
     const planes = this.enPago();
     const antes =
-      this.conCodigo().length > 0
+      this.conCodigo().length > 0 || this.descuentoTotal()
         ? planes.reduce((suma, plan) => suma + plan.priceCents, 0)
         : planes.reduce(
             (suma, plan) =>
@@ -367,6 +389,7 @@ export class Checkout implements OnInit {
       if (!dolares) return null;
       suma += dolares;
     }
+    suma -= this.descuentoTotal()?.discountUsdCents ?? 0;
     return `$ ${(suma / 100).toFixed(2)}`;
   });
 
@@ -608,6 +631,13 @@ export class Checkout implements OnInit {
     this.enPago.set(quedan);
     this.quitarDescuentoDe(plan);
     this.quitarCaptura();
+    // La rebaja del total se calculó sobre otra suma: se vuelve a comprobar.
+    // Si queda un solo producto, el mismo código pasa a ser el suyo.
+    const delTotal = this.descuentoTotal();
+    if (delTotal) {
+      this.descuentoTotal.set(null);
+      void this.aplicarCodigo(delTotal.code, quedan);
+    }
   }
 
   /** Abre la ventana de pago con estos productos. */
@@ -640,10 +670,29 @@ export class Checkout implements OnInit {
      * enseña el precio de catálogo. Es la única forma de que las dos cifras no
      * puedan discrepar.
      */
-    for (const plan of planes) {
-      const promo = this.promoDe(plan);
-      if (promo) void this.aplicarCodigo(promo.code, [plan]);
+    //
+    // En un carrito, el anunciado para «cualquier producto» rebaja el total una
+    // sola vez, no cada producto: se aplica después de los de cada uno, porque
+    // se calcula sobre lo que queda.
+    void this.aplicarPromosAnunciadas(planes);
+  }
+
+  private async aplicarPromosAnunciadas(planes: Plan[]): Promise<void> {
+    if (planes.length === 1) {
+      const promo = this.promoDe(planes[0]);
+      if (promo) await this.aplicarCodigo(promo.code, planes);
+      return;
     }
+
+    await Promise.all(
+      planes.map((plan) => {
+        const promo = this.promoDe(plan);
+        return promo && promo.planCode ? this.aplicarCodigo(promo.code, [plan]) : null;
+      }),
+    );
+
+    const general = this.promos().find((p) => p.planCode === null);
+    if (general && this.enPago().length > 1) await this.aplicarCodigo(general.code, this.enPago());
   }
 
   // ── Pago por Yape ────────────────────────────────────────────────────────
@@ -702,6 +751,7 @@ export class Checkout implements OnInit {
     this.payments
       .enviarComprobante(lineas, archivo, {
         operationCode: this.numeroOperacion.value.trim() || undefined,
+        codigoDelTotal: this.codigoDelTotal(),
       })
       .subscribe({
         next: (enviado) => {
@@ -720,12 +770,14 @@ export class Checkout implements OnInit {
       });
   }
 
-  /** El código que escribió a mano: vale para los productos que aún no llevan uno. */
+  /**
+   * El código que escribió a mano. Con un producto, es el suyo; en un carrito,
+   * el servidor dice si rebaja el total o solo uno de los productos.
+   */
   aplicarDescuento(): void {
     const codigo = this.codigoPromo.value.trim();
-    const sinCodigo = this.enPago().filter((plan) => !this.descuentos()[plan.code]);
-    if (!codigo || sinCodigo.length === 0 || this.comprobandoPromo()) return;
-    void this.aplicarCodigo(codigo, sinCodigo);
+    if (!codigo || !this.faltaCodigo() || this.comprobandoPromo()) return;
+    void this.aplicarCodigo(codigo, this.enPago());
   }
 
   /**
@@ -738,6 +790,8 @@ export class Checkout implements OnInit {
    * códigos en el momento del clic, así que siempre usa los vigentes.
    */
   private async aplicarCodigo(codigo: string, planes: Plan[]): Promise<void> {
+    if (planes.length > 1) return this.aplicarCodigoAlCarrito(codigo);
+
     this.comprobandoPromo.set(true);
     this.errorPromo.set(null);
 
@@ -770,6 +824,61 @@ export class Checkout implements OnInit {
   }
 
   /**
+   * Comprueba el código escrito en un carrito contra todo lo que lleva.
+   *
+   * El servidor dice a qué se aplica: un código de un producto rebaja ese
+   * producto, y uno general rebaja el total una sola vez.
+   */
+  private async aplicarCodigoAlCarrito(codigo: string): Promise<void> {
+    this.comprobandoPromo.set(true);
+    this.errorPromo.set(null);
+    const lineas = this.lineas();
+
+    let resultado: DescuentoDelCarrito | null = null;
+    try {
+      resultado = await firstValueFrom(this.billing.validarDescuentoCarrito(codigo, lineas));
+    } catch (error: unknown) {
+      if (this.esCarrito()) {
+        this.codigoPromo.setValue(codigo);
+        this.errorPromo.set(toApiError(error).message);
+      }
+    }
+
+    // Se cerró la ventana o cambió lo que se paga mientras se comprobaba.
+    const sigue =
+      this.lineas().length === lineas.length &&
+      this.lineas().every((l, i) => l.planCode === lineas[i].planCode);
+
+    if (resultado && sigue) {
+      if (resultado.alcance === 'TOTAL') {
+        this.descuentoTotal.set(resultado.discount);
+      } else if (resultado.planCode) {
+        const planCode = resultado.planCode;
+        this.descuentos.update((actuales) => ({ ...actuales, [planCode]: resultado!.discount }));
+      }
+      this.codigoPromo.reset();
+    }
+
+    this.comprobandoPromo.set(false);
+  }
+
+  /** El código del total venció con el modal abierto. */
+  descuentoTotalVencido(): void {
+    const promo = this.descuentoTotal();
+    if (!promo) return;
+
+    this.descuentoTotal.set(null);
+    this.errorPromo.set(
+      `El código ${promo.code} venció mientras decidías. El total vuelve a ser sin él.`,
+    );
+  }
+
+  /** Quita el código del total. */
+  quitarDescuentoTotal(): void {
+    this.descuentoTotal.set(null);
+  }
+
+  /**
    * El código de este producto venció con el modal abierto.
    *
    * Se quita la rebaja y se dice por qué. La alternativa —dejar el precio
@@ -790,11 +899,18 @@ export class Checkout implements OnInit {
   /** Quita el código de un producto. */
   quitarDescuentoDe(plan: Plan): void {
     this.descuentos.update(({ [plan.code]: _fuera, ...resto }) => resto);
+    // El del total se calculó contando esa rebaja: se vuelve a comprobar.
+    const delTotal = this.descuentoTotal();
+    if (delTotal && this.esCarrito()) {
+      this.descuentoTotal.set(null);
+      void this.aplicarCodigoAlCarrito(delTotal.code);
+    }
   }
 
   /** Quita todos los códigos y el error que hubiera. */
   quitarDescuento(): void {
     this.descuentos.set({});
+    this.descuentoTotal.set(null);
     this.errorPromo.set(null);
     this.codigoPromo.reset();
   }
@@ -1250,7 +1366,7 @@ export class Checkout implements OnInit {
     try {
       await this.culqi.preparar();
       const orden = await firstValueFrom(
-        this.payments.createOrder(lineas, 'CULQI'),
+        this.payments.createOrder(lineas, 'CULQI', this.codigoDelTotal()),
       );
       this.culqi.abrir(
         clave,
@@ -1374,7 +1490,7 @@ export class Checkout implements OnInit {
             this.error.set(null);
             this.procesando.set(true);
             try {
-              const orden = await firstValueFrom(this.payments.createOrder(this.lineas()));
+              const orden = await firstValueFrom(this.payments.createOrder(this.lineas(), 'PAYPAL', this.codigoDelTotal()));
               ordenAbierta = orden.orderId;
               return orden.orderId;
             } catch (error: unknown) {

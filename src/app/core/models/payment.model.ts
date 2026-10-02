@@ -48,6 +48,18 @@ export interface Descuento {
   usesLeft: number | null;
 }
 
+/**
+ * El código escrito en un carrito, ya comprobado por el servidor.
+ *
+ * `TOTAL`: rebaja la suma una sola vez (un código de «cualquier producto»).
+ * `PLAN`: es de un producto concreto y rebaja solo ese, el de `planCode`.
+ */
+export interface DescuentoDelCarrito {
+  alcance: 'TOTAL' | 'PLAN';
+  planCode: string | null;
+  discount: Descuento;
+}
+
 /** Orden abierta en la pasarela. Todavía no se ha cobrado nada. */
 export interface PaymentOrder {
   paymentId: string;

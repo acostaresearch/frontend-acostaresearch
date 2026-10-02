@@ -2032,7 +2032,7 @@
                   <div class="campo">
                     <label for="plan-promo">Válido para</label>
                     <select id="plan-promo" formControlName="planCode">
-                      <option value="">Cualquier producto</option>
+                      <option value="">Cualquier producto (en un carrito, rebaja el total una vez)</option>
                       @for (plan of planes(); track plan.code) {
                         <option [value]="plan.code">{{ plan.name }}</option>
                       }

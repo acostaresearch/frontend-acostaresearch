@@ -891,6 +891,49 @@
                     }
                   </div>
                 }
+
+                <!-- El código del carrito: rebaja el total una sola vez. -->
+                @if (esCarrito() && descuentoTotal(); as promo) {
+                  <div class="promo-aplicada">
+                    <p class="promo-linea">
+                      <span class="promo-texto">
+                        <span class="resumen-tic" aria-hidden="true">✓</span>
+                        Código <strong>{{ promo.code }}</strong> aplicado al total
+                        @if (ahorroDelTotal(); as rebaja) {
+                          <span class="promo-ahorro">· te ahorras {{ rebaja }}</span>
+                        }
+                      </span>
+                      <button type="button" class="enlace-quitar" (click)="quitarDescuentoTotal()">
+                        Quitar
+                      </button>
+                    </p>
+                    @if (promo.expiresAt || promo.usesLeft !== null) {
+                      <p class="promo-plazo">
+                        @if (promo.expiresAt) {
+                          <span>
+                            Vence en
+                            <app-cuenta-atras
+                              [hasta]="promo.expiresAt"
+                              (vencido)="descuentoTotalVencido()"
+                            />
+                          </span>
+                        }
+                        @if (promo.expiresAt && promo.usesLeft !== null) {
+                          <span aria-hidden="true">·</span>
+                        }
+                        @if (promo.usesLeft !== null) {
+                          <span>
+                            @if (promo.usesLeft === 1) {
+                              queda 1 uso
+                            } @else {
+                              quedan {{ promo.usesLeft }} usos
+                            }
+                          </span>
+                        }
+                      </p>
+                    }
+                  </div>
+                }
               </div>
             }
 
@@ -900,7 +943,13 @@
                  lee en el resumen. -->
             @if (auth.isAuthenticated() && faltaCodigo()) {
               <div class="promo">
-                <label for="promo">¿Tienes un código de descuento?</label>
+                <label for="promo">
+                  @if (esCarrito()) {
+                    ¿Tienes un código de descuento? Se aplica al total
+                  } @else {
+                    ¿Tienes un código de descuento?
+                  }
+                </label>
                 <div class="promo-fila">
                   <input
                     id="promo"

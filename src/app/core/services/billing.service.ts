@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
-import { Descuento } from '../models/payment.model';
+import { Descuento, DescuentoDelCarrito, LineaCarrito } from '../models/payment.model';
 import { Balance, Plan } from '../models/rewrite.model';
 
 /**
@@ -140,6 +140,19 @@ export class BillingService {
         planCode,
       })
       .pipe(map((res) => res.data.discount));
+  }
+
+  /**
+   * Comprueba el código escrito en un carrito contra todo lo que lleva. El
+   * servidor dice si rebaja el total, una vez, o solo un producto.
+   */
+  validarDescuentoCarrito(code: string, items: LineaCarrito[]): Observable<DescuentoDelCarrito> {
+    return this.http
+      .post<ApiResponse<DescuentoDelCarrito>>(`${this.base}/discounts/validate-cart`, {
+        code,
+        items,
+      })
+      .pipe(map((res) => res.data));
   }
 
   balance(): Observable<Balance> {

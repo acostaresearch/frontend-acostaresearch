@@ -36,16 +36,21 @@ export class PaymentService {
    *
    * Un solo producto viaja como siempre (`planCode`) y va por el camino de la
    * compra suelta; con varios, como `items`, y el servidor abre una sola orden
-   * por la suma.
+   * por la suma. `codigoDelTotal` es el código del carrito, que rebaja la
+   * suma una sola vez.
    */
-  createOrder(lineas: LineaCarrito[], provider = 'PAYPAL'): Observable<PaymentOrder> {
+  createOrder(
+    lineas: LineaCarrito[],
+    provider = 'PAYPAL',
+    codigoDelTotal?: string,
+  ): Observable<PaymentOrder> {
     const cuerpo =
       lineas.length === 1
         ? {
             planCode: lineas[0].planCode,
             ...(lineas[0].discountCode ? { discountCode: lineas[0].discountCode } : {}),
           }
-        : { items: lineas };
+        : { items: lineas, ...(codigoDelTotal ? { discountCode: codigoDelTotal } : {}) };
 
     return this.http
       .post<ApiResponse<{ order: PaymentOrder }>>(`${this.base}/orders`, { ...cuerpo, provider })
@@ -95,7 +100,7 @@ export class PaymentService {
   enviarComprobante(
     lineas: LineaCarrito[],
     archivo: File,
-    opciones: { operationCode?: string } = {},
+    opciones: { operationCode?: string; codigoDelTotal?: string } = {},
   ): Observable<ComprobanteEnviado> {
     // Un plan, como siempre; un carrito, como `PLAN:CODIGO,PLAN2` en la query,
     // porque el cuerpo de esta petición es la imagen.
@@ -110,6 +115,9 @@ export class PaymentService {
           );
     if (lineas.length === 1 && lineas[0].discountCode) {
       params = params.set('discountCode', lineas[0].discountCode);
+    }
+    if (lineas.length > 1 && opciones.codigoDelTotal) {
+      params = params.set('discountCode', opciones.codigoDelTotal);
     }
     if (opciones.operationCode) params = params.set('operationCode', opciones.operationCode);
 
