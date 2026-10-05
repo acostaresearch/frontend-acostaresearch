@@ -3091,7 +3091,14 @@
                   </label>
                   <label class="campo estrecho">
                     <span>Duración</span>
-                    <input type="text" formControlName="duracion" placeholder="8 min" />
+                    <!-- Solo lectura: la pone el propio video al pegar el enlace. -->
+                    <input
+                      type="text"
+                      formControlName="duracion"
+                      placeholder="Del video"
+                      readonly
+                      tabindex="-1"
+                    />
                   </label>
                 </div>
 

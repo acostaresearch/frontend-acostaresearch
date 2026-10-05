@@ -3637,7 +3637,6 @@ export class Admin implements OnInit {
     this.videoLeido.set(null);
     this.videoPedido = tutorial?.videoUrl ? idDeYouTube(tutorial.videoUrl) : null;
     this.autoTitulo = '';
-    this.autoDuracion = '';
 
     this.formTutorial.reset({
       // Uno nuevo, siempre al final; el sitio se cambia arrastrando en la lista.
@@ -3666,9 +3665,9 @@ export class Admin implements OnInit {
   // ── Título y duración desde el propio video ──
   //
   // Al pegar el enlace se leen solos: el título por el servidor (oEmbed) y la
-  // duración con el reproductor incrustado (ver `youtube-datos.ts`). Solo se
-  // rellena lo que está vacío o lo que se rellenó solo antes: lo escrito a
-  // mano no se pisa.
+  // duración con el reproductor incrustado (ver `youtube-datos.ts`). El título
+  // solo se rellena si está vacío o se rellenó solo antes: lo escrito a mano
+  // no se pisa. La duración es de solo lectura y siempre la pone el video.
 
   /** «leyendo» mientras pregunta; el texto del resultado, o null. */
   readonly videoLeido = signal<{ estado: 'leyendo' | 'listo' | 'nada'; texto: string } | null>(
@@ -3677,7 +3676,6 @@ export class Admin implements OnInit {
   private videoPedido: string | null = null;
   private videoEspera: ReturnType<typeof setTimeout> | null = null;
   private autoTitulo = '';
-  private autoDuracion = '';
 
   alCambiarEnlaceVideo(): void {
     if (this.videoEspera) clearTimeout(this.videoEspera);
@@ -3713,10 +3711,9 @@ export class Admin implements OnInit {
       this.autoTitulo = titulo;
       puestos.push('el título');
     }
-    const duracionActual = campos.duracion.value.trim();
-    if (duracion && (!duracionActual || duracionActual === this.autoDuracion)) {
+    // La duración no se edita a mano: siempre la del video.
+    if (duracion) {
       campos.duracion.setValue(duracion);
-      this.autoDuracion = duracion;
       puestos.push('la duración');
     }
 

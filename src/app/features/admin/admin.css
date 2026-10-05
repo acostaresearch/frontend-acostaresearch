@@ -2403,3 +2403,15 @@ td.acciones {
 .ayuda.video-listo {
   color: var(--color-exito);
 }
+
+/* La duración del tutorial: la pone el video, no se escribe. */
+.campo input[readonly] {
+  color: var(--color-texto-suave);
+  cursor: default;
+  background: transparent;
+  border-style: dashed;
+}
+
+.campo input[readonly]:focus {
+  outline: none;
+}
