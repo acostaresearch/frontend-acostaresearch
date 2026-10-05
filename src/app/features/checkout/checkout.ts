@@ -1167,6 +1167,7 @@ export class Checkout implements OnInit {
     if (codigo.startsWith('ARTICULO')) return '/productos/02-articulos-cientificos-caja.svg';
     if (codigo.startsWith('HUMANIZ')) return '/productos/03-humanizador-academico-caja.svg';
     if (codigo.startsWith('METODO')) return '/productos/01-metodo-de-tesis-caja.svg';
+    if (codigo.startsWith('TSP')) return '/productos/06-suficiencia-profesional-caja.svg';
     return null;
   }
 
