@@ -241,6 +241,32 @@ tbody tr.revocada {
   white-space: nowrap;
 }
 
+.asa-arrastre {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 3px;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  color: var(--color-texto-tenue);
+}
+
+.asa-arrastre:hover {
+  background: var(--color-borde);
+}
+
+.asa-arrastre:active {
+  cursor: grabbing;
+}
+
+tbody tr.arrastrando {
+  opacity: 0.4;
+}
+
+tbody tr.destino-arrastre td {
+  box-shadow: inset 0 2px 0 var(--color-primario);
+}
+
 .derecha {
   text-align: right;
   white-space: nowrap;

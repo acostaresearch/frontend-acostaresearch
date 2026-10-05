@@ -2904,8 +2904,29 @@
                 </thead>
                 <tbody>
                   @for (tutorial of listaTutoriales.visible(); track tutorial.id) {
-                    <tr [class.apagado]="!tutorial.active">
-                      <td class="tenue numero">{{ tutorial.orden }}</td>
+                    <tr
+                      [class.apagado]="!tutorial.active"
+                      [class.arrastrando]="arrastrandoTutorial() === tutorial.id"
+                      [class.destino-arrastre]="
+                        destinoTutorial() === tutorial.id && arrastrandoTutorial() !== tutorial.id
+                      "
+                      draggable="true"
+                      (dragstart)="empezarArrastreTutorial($event, tutorial)"
+                      (dragover)="sobreTutorial($event, tutorial)"
+                      (drop)="soltarTutorial($event, tutorial)"
+                      (dragend)="terminarArrastreTutorial()"
+                    >
+                      <td class="tenue numero">
+                        <span
+                          class="asa-arrastre"
+                          title="Arrastra para cambiar el orden"
+                          aria-hidden="true"
+                          (mousedown)="agarrarTutorial()"
+                          (touchstart)="agarrarTutorial()"
+                          >⠿</span
+                        >
+                        {{ tutorial.orden }}
+                      </td>
                       <td>
                         <b>{{ tutorial.titulo }}</b>
                         @if (!tutorial.active) {

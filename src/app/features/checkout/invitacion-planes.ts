@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError } from '../../core/http/api-error';
@@ -35,6 +35,10 @@ function guardar(clave: string, valor: string | null): void {
  *    escribe aquí. Se guarda en el navegador, porque lo normal es llegar sin
  *    cuenta, registrarse y volver: cuando vuelve con sesión se apunta solo, y
  *    así los días extra le llegan al pagar sin que tenga que acordarse.
+ *
+ * Va dos veces en /planes: en la cabecera solo saluda a quien llegó invitado
+ * y cuenta la visita (`conCampo` en false); en la ventana de pago, bajo
+ * «¿Tienes un código?», enseña el campo y no vuelve a contar (`contar` en false).
  */
 @Component({
   selector: 'app-invitacion-planes',
@@ -57,9 +61,7 @@ function guardar(clave: string, valor: string | null): void {
           </span>
         }
       </p>
-    } @else {
-      <!-- A la vista y no detrás de un enlace: va bajo el canje, en la
-           cabecera, y un campo se entiende sin tener que pulsar nada antes. -->
+    } @else if (conCampo()) {
       <form class="codigo" (submit)="$event.preventDefault(); usar()">
         <input
           aria-label="Código de un compañero"
@@ -113,6 +115,11 @@ export class InvitacionPlanes implements OnInit {
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
 
+  /** Si enseña el campo para escribir el código (sin él, solo el saludo). */
+  readonly conCampo = input(true);
+  /** Si cuenta la visita del embudo: una sola de las dos copias debe hacerlo. */
+  readonly contar = input(true);
+
   readonly invitador = signal<{ nombre: string; dias: number } | null>(null);
   readonly apuntado = signal(false);
   readonly codigo = signal('');
@@ -124,7 +131,7 @@ export class InvitacionPlanes implements OnInit {
     const traido = params.get('ref')?.trim() || null;
     if (traido) guardar(REFERIDO, traido);
 
-    this.contarVisita(params.get('utm_source') ?? (traido ? 'referido' : null));
+    if (this.contar()) this.contarVisita(params.get('utm_source') ?? (traido ? 'referido' : null));
 
     const ref = traido ?? leer(REFERIDO);
     if (ref) this.saludar(ref);

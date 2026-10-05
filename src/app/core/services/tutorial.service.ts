@@ -67,6 +67,13 @@ export class TutorialService {
       .pipe(map((res) => res.data.tutorial));
   }
 
+  /** Guarda el orden de arrastrar: todos los ids, como quedan. Devuelve la lista renumerada. */
+  reordenar(ids: string[]): Observable<Tutorial[]> {
+    return this.http
+      .put<ApiResponse<{ tutoriales: Tutorial[] }>>(`${this.base}/orden`, { ids })
+      .pipe(map((res) => res.data.tutoriales));
+  }
+
   borrar(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }

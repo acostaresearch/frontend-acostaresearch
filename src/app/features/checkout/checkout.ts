@@ -122,6 +122,7 @@ const ETAPAS_TESIS = [
   ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
+  host: { '(document:keydown.escape)': 'cerrarCajon()' },
 })
 export class Checkout implements OnInit {
   private readonly billing = inject(BillingService);
@@ -461,6 +462,9 @@ export class Checkout implements OnInit {
 
     // La ventana del pago congela la página de detrás mientras está abierta.
     effect(() => this.fondo.fijar('pago', this.enPago().length > 0));
+    effect(() => this.fondo.fijar('carrito', this.cajonAbierto()));
+    // Salir de /planes con el cajón abierto no puede dejar el resto del sitio congelado.
+    this.destruir.onDestroy(() => this.fondo.fijar('carrito', false));
 
   }
 
@@ -535,12 +539,14 @@ export class Checkout implements OnInit {
         const directo = pedido ? (vendibles.find((p) => p.code === pedido) ?? null) : null;
         if (directo) this.elegir(directo);
 
-        // El icono del carrito de la cabecera trae aquí con `?carrito=pagar`.
+        // El icono del carrito de la cabecera trae aquí con `?carrito=ver`, que
+        // abre el cajón. `pagar` era el de antes y se sigue aceptando.
         this.ruta.queryParamMap
           .pipe(takeUntilDestroyed(this.destruir))
           .subscribe((parametros) => {
-            if (parametros.get('carrito') !== 'pagar') return;
-            this.pagarCarrito();
+            const pedido = parametros.get('carrito');
+            if (pedido !== 'ver' && pedido !== 'pagar') return;
+            this.abrirCajon();
             void this.router.navigate([], {
               relativeTo: this.ruta,
               queryParams: { carrito: null },
@@ -612,6 +618,97 @@ export class Checkout implements OnInit {
     this.carritoGuardado.alternar(plan.code);
   }
 
+  // ── El cajón «Tu carrito» ────────────────────────────────────────────────
+  // Se abre desde la derecha con lo que lleva, sus precios y el total. «Comprar
+  // ahora» también pasa por aquí: lo mete y abre el cajón, y el pago sale de
+  // «Ir a pagar». Así hay un solo camino para pagar, se compre uno o varios.
+
+  readonly cajonAbierto = signal(false);
+
+  abrirCajon(): void {
+    this.cajonAbierto.set(true);
+  }
+
+  cerrarCajon(): void {
+    this.cajonAbierto.set(false);
+  }
+
+  /** «Comprar ahora»: al carrito (si no estaba) y el cajón abierto. */
+  comprarAhora(plan: Plan): void {
+    if (!this.enCarrito(plan)) this.carritoGuardado.alternar(plan.code);
+    this.abrirCajon();
+  }
+
+  quitarDelCajon(plan: Plan): void {
+    this.carritoGuardado.quitar([plan.code]);
+  }
+
+  /** «¿Tienes un código?» de la ventana de pago: despliega el de descuento y el de un compañero. */
+  readonly verCodigos = signal(false);
+
+  /** «+ Agregar número de operación»: el campo opcional, plegado hasta que se pide. */
+  readonly verOperacion = signal(false);
+
+  /** «Cambiar» en la ventana de pago: se cierra y vuelve al cajón, donde se quita o se añade. */
+  volverAlCarrito(): void {
+    if (this.procesando() || this.enviandoComprobante()) return;
+    this.cambiarPlan();
+    this.abrirCajon();
+  }
+
+  /** «Ir a pagar» del cajón: se cierra y se abre la ventana de pago con todo. */
+  irAPagarDesdeCajon(): void {
+    this.cerrarCajon();
+    this.pagarCarrito();
+  }
+
+  /**
+   * El precio de cada línea, igual que lo cobrará la ventana de pago: con un
+   * solo producto vale su código anunciado, sea suyo o general; con varios,
+   * solo el suyo, porque el general rebaja el total una vez (`descuentoGeneralCajon`).
+   */
+  precioEnCajonCents(plan: Plan): number {
+    if (this.carrito().length === 1 || this.promoDe(plan)?.planCode) {
+      return this.centimosAPagar(plan);
+    }
+    return plan.priceCents;
+  }
+
+  precioEnCajon(plan: Plan): string {
+    return soles(this.precioEnCajonCents(plan));
+  }
+
+  private readonly descuentoGeneralCajon = computed(() => {
+    const planes = this.carrito();
+    if (planes.length < 2) return 0;
+    const general = this.promos().find((p) => p.planCode === null);
+    if (!general) return 0;
+    const suma = planes.reduce((s, plan) => s + this.precioEnCajonCents(plan), 0);
+    return Math.max(0, Math.min(general.amountCents, suma - 100));
+  });
+
+  /** Lo que costaría sin ofertas ni códigos: el tachado de cada tarjeta. */
+  readonly subtotalCajonCents = computed(() =>
+    this.carrito().reduce((suma, plan) => {
+      const lista = plan.listPriceCents ?? 0;
+      const antes = this.promoDe(plan) ? plan.priceCents : Math.max(lista, plan.priceCents);
+      return suma + antes;
+    }, 0),
+  );
+
+  readonly totalCajonCents = computed(
+    () =>
+      this.carrito().reduce((suma, plan) => suma + this.precioEnCajonCents(plan), 0) -
+      this.descuentoGeneralCajon(),
+  );
+
+  readonly subtotalCajon = computed(() => soles(this.subtotalCajonCents()));
+  readonly totalCajon = computed(() => soles(this.totalCajonCents()));
+  readonly descuentosCajon = computed(() => {
+    const rebaja = this.subtotalCajonCents() - this.totalCajonCents();
+    return rebaja > 0 ? soles(rebaja) : null;
+  });
+
   /** Saca del carrito lo que se acaba de pagar, se haya pagado junto o suelto. */
   private sacarDelCarrito(codigos: string[]): void {
     this.carritoGuardado.quitar(codigos);
@@ -645,7 +742,11 @@ export class Checkout implements OnInit {
     if (this.procesando() || this.enviandoComprobante()) return;
     this.error.set(null);
     this.enPago.set([...planes]);
-    this.metodoPago.set(null);
+    // Abre ya en Yape: con PayPal oculto es el medio de siempre, y Culqi, si
+    // está activo, queda a una pestaña.
+    this.metodoPago.set('yape');
+    this.verCodigos.set(false);
+    this.verOperacion.set(false);
     this.cerradaPorTiempo.set(false);
     this.cierraEn.set(new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString());
 

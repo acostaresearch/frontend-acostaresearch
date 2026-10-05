@@ -44,16 +44,16 @@
 
       <div class="acciones">
         <!-- El carrito, al principio de las acciones. Siempre a la vista, con el
-             número cuando hay algo dentro. Vacío lleva a los precios; con algo,
-             a /planes con la ventana de pago abierta para todo lo que lleva. -->
+             número cuando hay algo dentro. Lleva a /planes con el cajón «Tu
+             carrito» abierto; desde ahí se quita o se paga. -->
         <a
           class="carrito"
           routerLink="/planes"
-          [queryParams]="carrito.cantidad() > 0 ? { carrito: 'pagar' } : {}"
+          [queryParams]="{ carrito: 'ver' }"
           [attr.aria-label]="
             carrito.cantidad() > 0
-              ? 'Ir a pagar tu carrito: ' + carrito.cantidad() + ' productos'
-              : 'Carrito vacío: ver los precios'
+              ? 'Ver tu carrito: ' + carrito.cantidad() + ' productos'
+              : 'Ver tu carrito, vacío'
           "
         >
           <svg

@@ -80,19 +80,18 @@ export const CIFRAS_AUTOR = [
 
 export const DEMOS: Demo[] = [
   {
+    titulo: 'Ecosistema del método Skill Acosta - Plataforma',
+    descripcion:
+      'Este es el método Skill Acosta que está revolucionando la forma de hacer ' +
+      'investigación científica.',
+    video: 'https://youtu.be/lAb-4GECXr0',
+  },
+  {
     titulo: 'Tesis completa desde cero con Claude + Skills',
     descripcion:
       'Empezamos en blanco, como empiezas tú. Verás cómo se elige el tema, cómo va tomando ' +
       'forma el Capítulo I y cómo cada Skill cierra con un Word que puedes llevar a asesoría.',
     video: 'https://www.youtube.com/watch?v=A5UtR27hZw0',
-  },
-  {
-    titulo: 'Análisis estadístico con Claude y Excel',
-    descripcion:
-      'Si la estadística es lo que más te asusta, este es tu video. Sin programar: subes tu ' +
-      'base en Excel y salen los descriptivos, la confiabilidad, la normalidad y tus tablas ' +
-      'en APA 7.',
-    video: 'https://youtu.be/ACkSfVbB4Rk?si=ExzzhlKRvl0iTS7H',
   },
 ];
 

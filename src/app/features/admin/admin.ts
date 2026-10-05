@@ -3684,6 +3684,83 @@ export class Admin implements OnInit {
     });
   }
 
+  // ── Arrastrar para cambiar el orden ──
+  //
+  // Arrastre nativo de HTML, sin librería: es una tabla corta y solo hace falta
+  // soltar una fila encima de otra. Se arrastra SOLO desde el asa: si toda la
+  // fila fuera arrastrable, seleccionar el título o pulsar «Editar» empezaría
+  // a moverla.
+
+  /** El que se está arrastrando. */
+  readonly arrastrandoTutorial = signal<string | null>(null);
+  /** La fila sobre la que caería, para marcarla. */
+  readonly destinoTutorial = signal<string | null>(null);
+  private asaPulsada = false;
+
+  agarrarTutorial(): void {
+    this.asaPulsada = true;
+  }
+
+  empezarArrastreTutorial(evento: DragEvent, tutorial: Tutorial): void {
+    if (!this.asaPulsada) {
+      evento.preventDefault();
+      return;
+    }
+    this.arrastrandoTutorial.set(tutorial.id);
+    evento.dataTransfer?.setData('text/plain', tutorial.id);
+    if (evento.dataTransfer) evento.dataTransfer.effectAllowed = 'move';
+  }
+
+  sobreTutorial(evento: DragEvent, tutorial: Tutorial): void {
+    if (!this.arrastrandoTutorial()) return;
+    evento.preventDefault();
+    if (evento.dataTransfer) evento.dataTransfer.dropEffect = 'move';
+    this.destinoTutorial.set(tutorial.id);
+  }
+
+  terminarArrastreTutorial(): void {
+    this.asaPulsada = false;
+    this.arrastrandoTutorial.set(null);
+    this.destinoTutorial.set(null);
+  }
+
+  /**
+   * Suelta el arrastrado en el sitio del destino y guarda la lista entera.
+   *
+   * Se mueve dentro de la lista COMPLETA, no de la página visible: con el
+   * buscador o la paginación puestos, el destino sigue siendo la fila sobre la
+   * que se soltó y los demás no cambian de sitio entre sí.
+   */
+  soltarTutorial(evento: DragEvent, destino: Tutorial): void {
+    evento.preventDefault();
+    const movido = this.arrastrandoTutorial();
+    this.terminarArrastreTutorial();
+    if (!movido || movido === destino.id) return;
+
+    const antes = this.tutoriales();
+    const lista = [...antes];
+    const desde = lista.findIndex((t) => t.id === movido);
+    const hasta = lista.findIndex((t) => t.id === destino.id);
+    if (desde < 0 || hasta < 0) return;
+    const [fila] = lista.splice(desde, 1);
+    lista.splice(hasta, 0, fila);
+
+    // Se pinta ya, con los números nuevos, y si el servidor falla se vuelve atrás.
+    this.tutoriales.set(lista.map((t, i) => ({ ...t, orden: i + 1 })));
+    this.error.set(null);
+
+    this.tutorialesApi.reordenar(lista.map((t) => t.id)).subscribe({
+      next: (renumerada) => {
+        this.tutoriales.set(renumerada);
+        this.aviso.set(`«${fila.titulo}» pasó al número ${hasta + 1}.`);
+      },
+      error: (e: unknown) => {
+        this.tutoriales.set(antes);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
+
   async borrarTutorial(tutorial: Tutorial): Promise<void> {
     const seguro = await this.dialogos.confirmar({
       titulo: `¿Borrar «${tutorial.titulo}»?`,
