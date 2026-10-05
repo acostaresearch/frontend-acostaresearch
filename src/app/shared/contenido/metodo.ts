@@ -183,6 +183,20 @@ export const FASES_ARTICULO = [
   'Revisores',
 ];
 
+/**
+ * Las fases del Trabajo de Suficiencia Profesional (TSP), producto aparte del
+ * método de tesis: sin hipótesis, sin instrumento y sin muestra. La primera no
+ * es capítulo; las otras cinco son los capítulos del Word.
+ */
+export const FASES_TSP = [
+  'Tu experiencia y la empresa',
+  'Introducción',
+  'Marco teórico',
+  'Descripción de la experiencia',
+  'Resultados',
+  'Conclusiones y recomendaciones',
+];
+
 export const DESCRIPCIONES: Record<string, Detalle> = {
   'tema-y-delimitacion': {
     descripcion:
@@ -451,6 +465,13 @@ export const INCLUYE: Record<string, string[]> = {
     'El Humanizador académico',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
     'Tu artículo en Word en 17 normas de citas, o tu manuscrito ya escrito con sus citas puestas',
+    'Videos guía para conectarlo y usarlo',
+    'Funciona con el plan gratuito de Claude',
+  ],
+  TSP_SUFICIENCIA_PROFESIONAL: [
+    'Las 6 fases del Trabajo de Suficiencia Profesional, sin hipótesis ni instrumento, más el Humanizador académico y Bajar similitud',
+    'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador para tus indicadores',
+    'Tu informe en un solo Word con el formato de tu universidad, en 17 normas de citas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],

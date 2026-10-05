@@ -43,7 +43,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
-import { FASES_ARTICULO, INCLUYE } from '../../shared/contenido/metodo';
+import { FASES_ARTICULO, FASES_TSP, INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
 // Oculto por ahora en la plantilla (1-oct).
@@ -1205,6 +1205,7 @@ export class Checkout implements OnInit {
     if (codigo.startsWith('METODO')) return 'Método de Tesis';
     if (codigo.startsWith('ARTICULO')) return 'Artículos Científicos';
     if (codigo.startsWith('HUMANIZ')) return 'Humanizador';
+    if (codigo.startsWith('TSP')) return 'Suficiencia Profesional';
     return plan.name;
   }
 
@@ -1219,6 +1220,9 @@ export class Checkout implements OnInit {
     }
     if (codigo.startsWith('ARTICULO')) {
       return { titulo: `Las ${FASES_ARTICULO.length} fases de la ruta`, lista: FASES_ARTICULO };
+    }
+    if (codigo.startsWith('TSP')) {
+      return { titulo: `Las ${FASES_TSP.length} fases del TSP`, lista: FASES_TSP };
     }
     return null;
   }
