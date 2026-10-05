@@ -3637,6 +3637,7 @@ export class Admin implements OnInit {
     this.videoLeido.set(null);
     this.videoPedido = tutorial?.videoUrl ? idDeYouTube(tutorial.videoUrl) : null;
     this.autoTitulo = '';
+    this.resumenVideo.set(null);
 
     this.formTutorial.reset({
       // Uno nuevo, siempre al final; el sitio se cambia arrastrando en la lista.
@@ -3726,6 +3727,57 @@ export class Admin implements OnInit {
         estado: 'nada',
         texto: 'YouTube no dio el título ni la duración. Escríbelos a mano.',
       });
+    }
+
+  }
+
+  // ── «De qué va» y «Puntos que cubre», por la IA ──
+  //
+  // Gemini ve el video y los escribe (`POST /tutoriales/youtube/:id/resumen`).
+  // SOLO al pulsar «Escribir con IA»: ver un video gasta muchos tokens, y
+  // pegar o corregir un enlace no puede gastarlos sin que se pida.
+
+  readonly resumenVideo = signal<{ estado: 'leyendo' | 'listo' | 'nada'; texto: string } | null>(
+    null,
+  );
+
+  /** Si hay un enlace de YouTube válido: sin él, el botón no sale. */
+  hayVideoParaResumir(): boolean {
+    return idDeYouTube(this.formTutorial.controls.videoUrl.value) !== null;
+  }
+
+  escribirConIa(): void {
+    const id = idDeYouTube(this.formTutorial.controls.videoUrl.value);
+    if (!id || this.resumenVideo()?.estado === 'leyendo') return;
+    this.videoPedido = id;
+    void this.resumirVideo(id);
+  }
+
+  /** Pedido a mano: lo que traiga sustituye lo escrito en los dos cuadros. */
+  private async resumirVideo(id: string): Promise<void> {
+    const campos = this.formTutorial.controls;
+
+    this.resumenVideo.set({
+      estado: 'leyendo',
+      texto: 'La IA está viendo el video para escribir «De qué va» y los puntos… (unos segundos)',
+    });
+    try {
+      const resumen = await firstValueFrom(this.tutorialesApi.resumenDeYouTube(id));
+      if (this.videoPedido !== id) return;
+      if (resumen.entrada) {
+        campos.entrada.setValue(resumen.entrada);
+      }
+      const puntos = resumen.puntos.join('\n');
+      if (puntos) {
+        campos.puntos.setValue(puntos);
+      }
+      this.resumenVideo.set({
+        estado: 'listo',
+        texto: '✓ Escrito por la IA viendo el video. Revísalo y corrige lo que haga falta.',
+      });
+    } catch (e: unknown) {
+      if (this.videoPedido !== id) return;
+      this.resumenVideo.set({ estado: 'nada', texto: mensajeDeError(e) });
     }
   }
 

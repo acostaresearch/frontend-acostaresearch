@@ -3107,6 +3107,28 @@
                      final y el orden se cambia arrastrando en la lista. Los
                      campos siguen en la base, vacíos; la página se ve igual. -->
 
+                <!-- «Escribir con IA»: Gemini ve el video y rellena los dos
+                     cuadros. Solo al pulsarlo, nunca solo: gasta tokens. -->
+                @if (hayVideoParaResumir()) {
+                  <p class="ayuda resumen-ia" [class.video-listo]="resumenVideo()?.estado === 'listo'">
+                    <button
+                      type="button"
+                      class="boton secundario pequeno"
+                      [disabled]="resumenVideo()?.estado === 'leyendo'"
+                      (click)="escribirConIa()"
+                    >
+                      {{
+                        resumenVideo()?.estado === 'leyendo'
+                          ? 'Viendo el video…'
+                          : '✨ Escribir «De qué va» y los puntos con IA'
+                      }}
+                    </button>
+                    @if (resumenVideo(); as resumen) {
+                      <span>{{ resumen.texto }}</span>
+                    }
+                  </p>
+                }
+
                 <label class="campo">
                   <span>De qué va</span>
                   <textarea formControlName="entrada" rows="3"></textarea>

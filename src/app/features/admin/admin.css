@@ -2415,3 +2415,16 @@ td.acciones {
 .campo input[readonly]:focus {
   outline: none;
 }
+
+.resumen-ia {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  margin: 0 0 4px;
+}
+
+.resumen-ia .boton.pequeno {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}

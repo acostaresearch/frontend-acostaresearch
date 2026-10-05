@@ -74,6 +74,15 @@ export class TutorialService {
       .pipe(map((res) => res.data.titulo));
   }
 
+  /** «De qué va» y los puntos, escritos por la IA viendo el video (unos segundos). */
+  resumenDeYouTube(videoId: string): Observable<{ entrada: string; puntos: string[] }> {
+    return this.http
+      .post<
+        ApiResponse<{ entrada: string; puntos: string[] }>
+      >(`${this.base}/youtube/${videoId}/resumen`, {})
+      .pipe(map((res) => res.data));
+  }
+
   /** Guarda el orden de arrastrar: todos los ids, como quedan. Devuelve la lista renumerada. */
   reordenar(ids: string[]): Observable<Tutorial[]> {
     return this.http
