@@ -29,9 +29,32 @@
 /** El backend, en el servidor propio. */
 const API = 'https://api.acostaresearch.com';
 
+/**
+ * Enlaces cortos a WhatsApp con el mensaje ya escrito, para anuncios y bio.
+ *
+ * El mensaje va dentro del enlace de `wa.me`, así que cuanto más largo, más
+ * largo el enlace. Aquí se publica la dirección corta y se redirige a la larga;
+ * cambiar el texto o el número no cambia el enlace que ya circula.
+ *
+ * Es un 302 y no un 301 a propósito: un 301 lo guarda el navegador, y quien ya
+ * hizo clic una vez seguiría viendo el mensaje viejo después de cambiarlo.
+ */
+const WHATSAPP = '51923095940';
+const ENLACES_WHATSAPP = {
+  '/whatsapp':
+    'Hola, vi el Live y quiero aprovechar la oferta del Método de Tesis con IA a S/100 😊\n\n' +
+    '¿Cómo hago para comprarlo y empezar?',
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    const mensaje = ENLACES_WHATSAPP[url.pathname.replace(/\/+$/, '').toLowerCase()];
+    if (mensaje) {
+      const destino = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+      return new Response(null, { status: 302, headers: { Location: destino, 'Cache-Control': 'no-store' } });
+    }
 
     if (url.pathname.startsWith('/api/')) {
       return proxiarALaApi(request, url, env);
