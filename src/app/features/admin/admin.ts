@@ -35,6 +35,11 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { PaymentService } from '../../core/services/payment.service';
 import {
+  duracionLegible,
+  idDeYouTube,
+  leerDatosDeYouTube,
+} from '../../core/services/youtube-datos';
+import {
   duracionDeAcceso,
   EnlacePrueba,
   InvitadoPrueba,
@@ -3629,9 +3634,14 @@ export class Admin implements OnInit {
     this.aviso.set(null);
     this.tutorialAbierto.set(tutorial);
     this.formularioTutorial.set(true);
+    this.videoLeido.set(null);
+    this.videoPedido = tutorial?.videoUrl ? idDeYouTube(tutorial.videoUrl) : null;
+    this.autoTitulo = '';
+    this.autoDuracion = '';
 
     this.formTutorial.reset({
-      orden: tutorial?.orden ?? this.tutoriales().length + 1,
+      // Uno nuevo, siempre al final; el sitio se cambia arrastrando en la lista.
+      orden: tutorial?.orden ?? Math.min(99, Math.max(0, ...this.tutoriales().map((t) => t.orden)) + 1),
       // Uno nuevo cae en el grupo del último: casi siempre se añade al final
       // del bloque que se está grabando.
       grupo: tutorial?.grupo ?? this.tutoriales().at(-1)?.grupo ?? '',
@@ -3651,6 +3661,75 @@ export class Admin implements OnInit {
     this.formularioTutorial.set(false);
     this.tutorialAbierto.set(null);
     this.formTutorial.reset();
+  }
+
+  // ── Título y duración desde el propio video ──
+  //
+  // Al pegar el enlace se leen solos: el título por el servidor (oEmbed) y la
+  // duración con el reproductor incrustado (ver `youtube-datos.ts`). Solo se
+  // rellena lo que está vacío o lo que se rellenó solo antes: lo escrito a
+  // mano no se pisa.
+
+  /** «leyendo» mientras pregunta; el texto del resultado, o null. */
+  readonly videoLeido = signal<{ estado: 'leyendo' | 'listo' | 'nada'; texto: string } | null>(
+    null,
+  );
+  private videoPedido: string | null = null;
+  private videoEspera: ReturnType<typeof setTimeout> | null = null;
+  private autoTitulo = '';
+  private autoDuracion = '';
+
+  alCambiarEnlaceVideo(): void {
+    if (this.videoEspera) clearTimeout(this.videoEspera);
+    this.videoEspera = setTimeout(() => void this.leerVideo(), 500);
+  }
+
+  private async leerVideo(): Promise<void> {
+    const id = idDeYouTube(this.formTutorial.controls.videoUrl.value);
+    if (!id) {
+      this.videoPedido = null;
+      this.videoLeido.set(null);
+      return;
+    }
+    if (id === this.videoPedido) return;
+    this.videoPedido = id;
+    this.videoLeido.set({ estado: 'leyendo', texto: 'Leyendo el título y la duración del video…' });
+
+    const [tituloServidor, delReproductor] = await Promise.all([
+      firstValueFrom(this.tutorialesApi.tituloDeYouTube(id).pipe(catchError(() => of(null)))),
+      leerDatosDeYouTube(id),
+    ]);
+    // Si mientras tanto pegó otro enlace, esto ya no vale.
+    if (this.videoPedido !== id) return;
+
+    const titulo = tituloServidor ?? delReproductor?.titulo ?? null;
+    const duracion = delReproductor?.segundos ? duracionLegible(delReproductor.segundos) : null;
+    const campos = this.formTutorial.controls;
+    const puestos: string[] = [];
+
+    const tituloActual = campos.titulo.value.trim();
+    if (titulo && (!tituloActual || tituloActual === this.autoTitulo)) {
+      campos.titulo.setValue(titulo);
+      this.autoTitulo = titulo;
+      puestos.push('el título');
+    }
+    const duracionActual = campos.duracion.value.trim();
+    if (duracion && (!duracionActual || duracionActual === this.autoDuracion)) {
+      campos.duracion.setValue(duracion);
+      this.autoDuracion = duracion;
+      puestos.push('la duración');
+    }
+
+    if (puestos.length > 0) {
+      this.videoLeido.set({ estado: 'listo', texto: `✓ Tomé ${puestos.join(' y ')} del video.` });
+    } else if (titulo || duracion) {
+      this.videoLeido.set(null);
+    } else {
+      this.videoLeido.set({
+        estado: 'nada',
+        texto: 'YouTube no dio el título ni la duración. Escríbelos a mano.',
+      });
+    }
   }
 
   guardarTutorial(): void {

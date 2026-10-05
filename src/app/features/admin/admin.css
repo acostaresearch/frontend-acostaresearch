@@ -2399,3 +2399,7 @@ td.acciones {
   display: block;
   font-size: 0.8rem;
 }
+
+.ayuda.video-listo {
+  color: var(--color-exito);
+}

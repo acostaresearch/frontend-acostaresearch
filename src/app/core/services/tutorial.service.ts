@@ -67,6 +67,13 @@ export class TutorialService {
       .pipe(map((res) => res.data.tutorial));
   }
 
+  /** El título del video según YouTube (oEmbed, por el servidor). Null si no contesta. */
+  tituloDeYouTube(videoId: string): Observable<string | null> {
+    return this.http
+      .get<ApiResponse<{ titulo: string | null }>>(`${this.base}/youtube/${videoId}`)
+      .pipe(map((res) => res.data.titulo));
+  }
+
   /** Guarda el orden de arrastrar: todos los ids, como quedan. Devuelve la lista renumerada. */
   reordenar(ids: string[]): Observable<Tutorial[]> {
     return this.http

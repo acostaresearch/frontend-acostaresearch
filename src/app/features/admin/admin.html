@@ -3070,11 +3070,18 @@
                     type="url"
                     formControlName="videoUrl"
                     placeholder="https://www.youtube.com/watch?v=…"
+                    (input)="alCambiarEnlaceVideo()"
                   />
-                  <small class="ayuda">
-                    Vale cualquier forma: la de la barra, la de «Compartir» o solo el código. Déjalo
-                    vacío mientras no esté grabado.
-                  </small>
+                  @if (videoLeido(); as leido) {
+                    <small class="ayuda" [class.video-listo]="leido.estado === 'listo'">
+                      {{ leido.texto }}
+                    </small>
+                  } @else {
+                    <small class="ayuda">
+                      Vale cualquier forma: la de la barra, la de «Compartir» o solo el código. Al
+                      pegarlo, el título y la duración se toman solos del video.
+                    </small>
+                  }
                 </label>
 
                 <div class="fila">
@@ -3086,27 +3093,12 @@
                     <span>Duración</span>
                     <input type="text" formControlName="duracion" placeholder="8 min" />
                   </label>
-                  <label class="campo estrecho">
-                    <span>Orden</span>
-                    <input type="number" formControlName="orden" min="0" />
-                  </label>
                 </div>
 
-                <div class="fila">
-                  <label class="campo">
-                    <span>Grupo</span>
-                    <input type="text" formControlName="grupo" placeholder="Para empezar" />
-                    <small class="ayuda">
-                      El rótulo del bloque en la lista. Los videos seguidos con el mismo grupo van
-                      juntos.
-                    </small>
-                  </label>
-                  <label class="campo estrecho">
-                    <span>Etiqueta</span>
-                    <input type="text" formControlName="etiqueta" placeholder="S4" maxlength="8" />
-                    <small class="ayuda">Vacío = su número.</small>
-                  </label>
-                </div>
+                <!-- Sin «Orden», «Grupo» ni «Etiqueta» (5-oct, a pedido): eran
+                     tres conceptos para algo que nadie usaba. Uno nuevo va al
+                     final y el orden se cambia arrastrando en la lista. Los
+                     campos siguen en la base, vacíos; la página se ve igual. -->
 
                 <label class="campo">
                   <span>De qué va</span>
