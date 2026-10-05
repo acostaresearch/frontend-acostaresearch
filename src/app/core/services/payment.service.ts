@@ -9,7 +9,9 @@ import {
   ComprobanteEnviado,
   DatosDelCobro,
   LineaCarrito,
+  DatosWesternUnion,
   DatosYape,
+  MetodoManual,
   PagoPorRevisar,
   PagoRevisado,
   Payment,
@@ -85,9 +87,19 @@ export class PaymentService {
 
   /** Titular y número que se enseñan junto al QR. */
   datosYape(): Observable<DatosYape> {
+    return this.datosManuales().pipe(map((datos) => datos.yape));
+  }
+
+  /**
+   * Yape y Western Union de una vez: salen de la misma petición.
+   * `westernUnion` llega null cuando no se ofrece.
+   */
+  datosManuales(): Observable<{ yape: DatosYape; westernUnion: DatosWesternUnion | null }> {
     return this.http
-      .get<ApiResponse<{ yape: DatosYape }>>(`${this.base}/manual/info`)
-      .pipe(map((res) => res.data.yape));
+      .get<ApiResponse<{ yape: DatosYape; westernUnion?: DatosWesternUnion | null }>>(
+        `${this.base}/manual/info`,
+      )
+      .pipe(map((res) => ({ yape: res.data.yape, westernUnion: res.data.westernUnion ?? null })));
   }
 
   /**
@@ -100,7 +112,7 @@ export class PaymentService {
   enviarComprobante(
     lineas: LineaCarrito[],
     archivo: File,
-    opciones: { operationCode?: string; codigoDelTotal?: string } = {},
+    opciones: { operationCode?: string; codigoDelTotal?: string; metodo?: MetodoManual } = {},
   ): Observable<ComprobanteEnviado> {
     // Un plan, como siempre; un carrito, como `PLAN:CODIGO,PLAN2` en la query,
     // porque el cuerpo de esta petición es la imagen.
@@ -120,6 +132,7 @@ export class PaymentService {
       params = params.set('discountCode', opciones.codigoDelTotal);
     }
     if (opciones.operationCode) params = params.set('operationCode', opciones.operationCode);
+    if (opciones.metodo) params = params.set('metodo', opciones.metodo);
 
     return this.http
       .post<ApiResponse<ComprobanteEnviado>>(`${this.base}/manual`, archivo, {

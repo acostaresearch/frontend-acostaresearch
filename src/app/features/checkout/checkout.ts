@@ -22,6 +22,7 @@ import { ERROR_CODE } from '../../core/models/api.model';
 import {
   ComprobanteEnviado,
   DatosDelCobro,
+  DatosWesternUnion,
   DatosYape,
   Descuento,
   DescuentoDelCarrito,
@@ -149,7 +150,7 @@ export class Checkout implements OnInit {
    * formulario de captura— y la página se convertía en una lista interminable.
    * Ahora se elige uno y solo se despliega ese.
    */
-  readonly metodoPago = signal<'yape' | 'paypal' | 'culqi' | null>(null);
+  readonly metodoPago = signal<'yape' | 'western_union' | 'paypal' | 'culqi' | null>(null);
 
   readonly planes = signal<Plan[]>([]);
 
@@ -275,6 +276,26 @@ export class Checkout implements OnInit {
   readonly enviandoComprobante = signal(false);
   readonly comprobanteEnviado = signal<ComprobanteEnviado | null>(null);
   readonly errorComprobante = signal<string | null>(null);
+
+  // ── Pago por Western Union ───────────────────────────────────────────
+  // Para quien paga desde fuera del Perú. Mismo camino que Yape —captura y
+  // revisión a mano—, pero en dólares y con el MTCN obligatorio: son los diez
+  // dígitos con los que se cobra el giro en la agencia.
+  readonly datosWU = signal<DatosWesternUnion | null>(null);
+  readonly mtcn = new FormControl('', { nonNullable: true });
+  private readonly mtcnEscrito = signal('');
+
+  /** El MTCN sin espacios ni guiones, si tiene sus 10 dígitos. */
+  readonly mtcnValido = computed(() => /^\d{10}$/.test(this.mtcnEscrito().replace(/[\s-]/g, '')));
+
+  /**
+   * Se ofrece si el servidor trae el beneficiario y todo lo que se paga tiene
+   * precio en dólares: se cobra el mismo que en PayPal.
+   */
+  readonly ofreceWU = computed(() => Boolean(this.datosWU()) && this.totalDolares() !== null);
+
+  /** Pestañas de medios: solo si hay más de uno que elegir. */
+  readonly variosMedios = computed(() => this.pagoConCulqi() || this.ofreceWU());
 
   /** Lo que el navegador acepta subir; el servidor lo vuelve a comprobar. */
   private readonly FORMATOS = ['image/png', 'image/jpeg', 'image/webp'];
@@ -508,11 +529,21 @@ export class Checkout implements OnInit {
     });
 
     // El titular y el número son opcionales: si no están configurados, el QR
-    // se enseña solo y la página sigue funcionando igual.
-    this.payments.datosYape().subscribe({
-      next: (datos) => this.datosYape.set(datos),
-      error: () => this.datosYape.set(null),
+    // se enseña solo y la página sigue funcionando igual. Western Union llega
+    // en la misma respuesta; null = no se ofrece y su pestaña no aparece.
+    this.payments.datosManuales().subscribe({
+      next: (datos) => {
+        this.datosYape.set(datos.yape);
+        this.datosWU.set(datos.westernUnion);
+      },
+      error: () => {
+        this.datosYape.set(null);
+        this.datosWU.set(null);
+      },
     });
+    this.mtcn.valueChanges
+      .pipe(takeUntilDestroyed(this.destruir))
+      .subscribe((valor) => this.mtcnEscrito.set(valor));
 
     this.billing.plans().subscribe({
       next: (planes) => {
@@ -574,6 +605,7 @@ export class Checkout implements OnInit {
     this.cierraEn.set(null);
     this.quitarDescuento();
     this.quitarCaptura();
+    this.mtcn.reset();
     this.comprobanteEnviado.set(null);
     this.errorComprobante.set(null);
     this.errorCulqi.set(null);
@@ -846,13 +878,22 @@ export class Checkout implements OnInit {
     const archivo = this.capturaElegida();
     if (lineas.length === 0 || !archivo || this.enviandoComprobante()) return;
 
+    const porWU = this.metodoPago() === 'western_union';
+    if (porWU && !this.mtcnValido()) {
+      this.errorComprobante.set('Escribe el MTCN de tu envío: son 10 dígitos.');
+      return;
+    }
+
     this.enviandoComprobante.set(true);
     this.errorComprobante.set(null);
 
     this.payments
       .enviarComprobante(lineas, archivo, {
-        operationCode: this.numeroOperacion.value.trim() || undefined,
+        operationCode: porWU
+          ? this.mtcn.value.replace(/[\s-]/g, '')
+          : this.numeroOperacion.value.trim() || undefined,
         codigoDelTotal: this.codigoDelTotal(),
+        metodo: porWU ? 'WESTERN_UNION' : 'YAPE',
       })
       .subscribe({
         next: (enviado) => {
@@ -862,6 +903,7 @@ export class Checkout implements OnInit {
           this.sacarDelCarrito(lineas.map((linea) => linea.planCode));
           this.quitarCaptura();
           this.numeroOperacion.reset();
+          this.mtcn.reset();
           this.enviandoComprobante.set(false);
         },
         error: (error: unknown) => {

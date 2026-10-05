@@ -457,8 +457,9 @@
         <section class="tarjeta">
           <h2>Comprobantes por revisar</h2>
           <p class="nota">
-            Cotéjalo con tu Yape antes de aprobar. La captura demuestra que existe una pantalla, no
-            que el dinero haya entrado: lo que cuadra con el extracto es el número de operación.
+            Cotéjalo con tu Yape (o cobra el Western Union con su MTCN) antes de aprobar. La captura
+            demuestra que existe una pantalla, no que el dinero haya entrado: lo que cuadra con el
+            extracto es el número de operación.
           </p>
 
           @if (porRevisar().length === 0) {
@@ -497,10 +498,16 @@
                       </div>
                       <div>
                         <dt>Importe</dt>
-                        <dd>S/ {{ pago.amountCents / 100 | number: '1.2-2' }}</dd>
+                        <dd>
+                          {{ pago.currency === 'USD' ? 'US$' : 'S/' }}
+                          {{ pago.amountCents / 100 | number: '1.2-2' }}
+                          @if (pago.provider === 'WESTERN_UNION') {
+                            <span class="tenue">· Western Union</span>
+                          }
+                        </dd>
                       </div>
                       <div>
-                        <dt>Nº de operación</dt>
+                        <dt>{{ pago.provider === 'WESTERN_UNION' ? 'MTCN' : 'Nº de operación' }}</dt>
                         <dd [class.falta]="!pago.operationCode">
                           {{ pago.operationCode ?? 'no lo indicó' }}
                         </dd>
@@ -512,7 +519,10 @@
                       @if (pago.discountCents > 0) {
                         <div>
                           <dt>Descuento</dt>
-                          <dd>− S/ {{ pago.discountCents / 100 | number: '1.2-2' }}</dd>
+                          <dd>
+                            − {{ pago.currency === 'USD' ? 'US$' : 'S/' }}
+                            {{ pago.discountCents / 100 | number: '1.2-2' }}
+                          </dd>
                         </div>
                       }
                     </dl>

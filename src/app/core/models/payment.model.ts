@@ -220,6 +220,17 @@ export interface DatosYape {
   currency: string;
 }
 
+/** A quién enviar el Western Union. `null` en la respuesta = no se ofrece. */
+export interface DatosWesternUnion {
+  beneficiario: string;
+  dni: string | null;
+  ciudad: string | null;
+  currency: string;
+}
+
+/** Los dos cobros que se revisan a mano. */
+export type MetodoManual = 'YAPE' | 'WESTERN_UNION';
+
 /** Comprobante recién enviado, a la espera de que un administrador lo mire. */
 export interface ComprobanteEnviado {
   paymentId: string;

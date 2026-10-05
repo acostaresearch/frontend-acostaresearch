@@ -108,6 +108,9 @@ function deCodigo(codigo: ActivationCode): Acceso {
   };
 }
 
+/** Los que se revisan a mano: ya vienen del historial de comprobantes. */
+const MANUALES = new Set(['YAPE', 'WESTERN_UNION']);
+
 function deComprobante(pago: PagoRevisado): Acceso {
   // Un Yape aprobado se dice «Aprobado» y no «Pagado»: lo que ocurrió es que
   // una persona miró la captura y la dio por buena, y esa diferencia importa
@@ -116,8 +119,9 @@ function deComprobante(pago: PagoRevisado): Acceso {
 
   return {
     id: pago.id,
+    // El canal es el de los pagos revisados a mano; el nombre, el de verdad.
     canal: 'yape',
-    canalNombre: 'Yape',
+    canalNombre: MEDIOS_PAGO[pago.provider] ?? 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
@@ -152,8 +156,9 @@ function deComprobante(pago: PagoRevisado): Acceso {
 function dePendiente(pago: PagoPorRevisar): Acceso {
   return {
     id: pago.id,
+    // El canal es el de los pagos revisados a mano; el nombre, el de verdad.
     canal: 'yape',
-    canalNombre: 'Yape',
+    canalNombre: MEDIOS_PAGO[pago.provider] ?? 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
     // Un carrito sale una vez, con todo lo que lleva y la suma.
@@ -242,7 +247,7 @@ export function unirAccesos(
     ...porRevisar.map(dePendiente),
     ...comprobantes.filter(noEsCanje).map(deComprobante),
     ...pagos
-      .filter((pago) => pago.provider !== 'YAPE' && noEsCanje(pago) && seCobro(pago))
+      .filter((pago) => !MANUALES.has(pago.provider) && noEsCanje(pago) && seCobro(pago))
       .map(dePasarela),
     // Fechas ISO en UTC: se comparan como cadenas y salen en orden. La más
     // reciente primero, que es por donde se empieza a mirar.

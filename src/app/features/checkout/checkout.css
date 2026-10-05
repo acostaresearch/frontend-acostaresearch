@@ -2675,7 +2675,9 @@ h1 {
 
 .pago-medios {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Dos o tres pestañas según lo que se ofrezca, siempre del mismo ancho. */
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   padding: 4px;
   background: var(--color-fondo);
   border-radius: 10px;
@@ -2749,6 +2751,45 @@ h1 {
 
 .pago-cuerpo .yape-titular {
   margin: 0;
+}
+
+/* Western Union: los datos del beneficiario, para copiarlos tal cual. */
+.wu-pasos {
+  margin: 0;
+}
+
+/* El contador es de CSS y no lee `start`: el segundo paso sigue en 2. */
+.wu-pasos[start='2'] {
+  counter-reset: paso 1;
+}
+
+.wu-datos {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--color-fondo);
+  border-radius: 10px;
+}
+
+.wu-datos div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.wu-datos dt {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.wu-datos dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto);
+  user-select: all;
 }
 
 /* La captura: zona punteada, ancha, que se lee como «aquí va algo». */

@@ -768,7 +768,7 @@ export class Admin implements OnInit {
     filtros: [
       { valor: 'todos', etiqueta: 'Todos' },
       { valor: 'codigo', etiqueta: 'Código' },
-      { valor: 'yape', etiqueta: 'Yape' },
+      { valor: 'yape', etiqueta: 'Yape / Western Union' },
       // Hoy la única pasarela es PayPal; si entra otra, este filtro se parte.
       { valor: 'paypal', etiqueta: 'PayPal' },
     ],

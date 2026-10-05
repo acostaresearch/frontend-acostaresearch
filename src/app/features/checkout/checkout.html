@@ -908,10 +908,10 @@
               <a class="boton bloque" routerLink="/auth/registro">Crear cuenta y comprar</a>
               <a class="boton secundario bloque" routerLink="/auth/login">Ya tengo cuenta</a>
             } @else {
-              <!-- Con Culqi activo, dos pestañas; sin él, directo al QR. PayPal
-                   está oculto (5-oct) por las fallas de cobro: su pestaña y su
-                   botón (`#paypalHost`) volverían aquí, junto a estas dos. -->
-              @if (pagoConCulqi()) {
+              <!-- Con Culqi o Western Union activos, pestañas; sin ellos, directo
+                   al QR. PayPal está oculto (5-oct) por las fallas de cobro: su
+                   pestaña y su botón (`#paypalHost`) volverían aquí. -->
+              @if (variosMedios()) {
                 <div class="pago-medios" role="tablist">
                   <button
                     type="button"
@@ -922,15 +922,28 @@
                   >
                     Yape o Plin
                   </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    [attr.aria-selected]="metodoPago() === 'culqi'"
-                    [class.activa]="metodoPago() === 'culqi'"
-                    (click)="metodoPago.set('culqi')"
-                  >
-                    Tarjeta o Yape al instante
-                  </button>
+                  @if (pagoConCulqi()) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="metodoPago() === 'culqi'"
+                      [class.activa]="metodoPago() === 'culqi'"
+                      (click)="metodoPago.set('culqi')"
+                    >
+                      Tarjeta o Yape al instante
+                    </button>
+                  }
+                  @if (ofreceWU()) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="metodoPago() === 'western_union'"
+                      [class.activa]="metodoPago() === 'western_union'"
+                      (click)="metodoPago.set('western_union')"
+                    >
+                      Western Union
+                    </button>
+                  }
                 </div>
               }
 
@@ -961,14 +974,17 @@
                 </section>
               }
 
-              <!-- ── Pago por Yape ──────────────────────────────────────────── -->
-              @if (metodoPago() === 'yape') {
+              <!-- ── Pago por Yape o por Western Union ──────────────────────────
+                   Los dos acaban igual: una captura que un administrador revisa.
+                   Cambia lo de arriba (QR o datos del beneficiario) y el número
+                   de operación, que en Western Union es el MTCN obligatorio. -->
+              @if (metodoPago() === 'yape' || metodoPago() === 'western_union') {
                 @if (comprobanteEnviado(); as enviado) {
                   <div class="yape-enviado">
                     <p class="yape-enviado-titulo">Comprobante recibido</p>
                     <p>
                       Estamos comprobando tu pago de
-                      <strong>S/ {{ (enviado.amountCents / 100).toFixed(2) }}</strong>. En cuanto
+                      <strong>{{ enviado.currency === 'USD' ? 'US$' : 'S/' }} {{ (enviado.amountCents / 100).toFixed(2) }}</strong>. En cuanto
                       quede confirmado te llega un correo y tu acceso aparece en tu panel.
                     </p>
                     <p class="tenue">
@@ -981,6 +997,60 @@
                       </a>
                     }
                   </div>
+                } @else if (metodoPago() === 'western_union') {
+                  <!-- Western Union: los datos que el comprador lleva a la agencia
+                       o escribe en la app. Se cobra en dólares, el precio de PayPal. -->
+                  <ol class="yape-pasos wu-pasos">
+                    <li>
+                      Envía <strong>{{ totalDolares() }}</strong> (dólares) por Western Union, en una
+                      agencia o desde su app, a nombre de:
+                    </li>
+                  </ol>
+                  @if (datosWU(); as wu) {
+                    <dl class="wu-datos">
+                      <div>
+                        <dt>Beneficiario</dt>
+                        <dd>{{ wu.beneficiario }}</dd>
+                      </div>
+                      @if (wu.dni) {
+                        <div>
+                          <dt>DNI</dt>
+                          <dd>{{ wu.dni }}</dd>
+                        </div>
+                      }
+                      @if (wu.ciudad) {
+                        <div>
+                          <dt>Destino</dt>
+                          <dd>{{ wu.ciudad }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  }
+                  <ol class="yape-pasos wu-pasos" start="2">
+                    <li>Escribe el MTCN (los 10 dígitos de tu recibo) y sube su foto o captura</li>
+                  </ol>
+
+                  <ng-container *ngTemplateOutlet="subirCaptura" />
+
+                  <input
+                    class="pago-operacion"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="14"
+                    [formControl]="mtcn"
+                    placeholder="MTCN · 10 dígitos"
+                    aria-label="MTCN del envío de Western Union"
+                    autocomplete="off"
+                  />
+
+                  <button
+                    type="button"
+                    class="boton oro grande bloque"
+                    [disabled]="!capturaElegida() || !mtcnValido() || enviandoComprobante()"
+                    (click)="enviarComprobante()"
+                  >
+                    {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
+                  </button>
                 } @else {
                   <!-- El QR con los tres pasos al lado. Descargarlo no es un
                        extra: desde el móvil no se puede escanear la pantalla de
@@ -1021,33 +1091,7 @@
                     }
                   }
 
-                  @if (capturaPrevia(); as previa) {
-                    <div class="captura">
-                      <img [src]="previa" alt="Captura del pago que vas a enviar" />
-                      <div class="captura-datos">
-                        <span>{{ capturaElegida()?.name }}</span>
-                        <button type="button" class="enlace-quitar" (click)="quitarCaptura()">
-                          Elegir otra
-                        </button>
-                      </div>
-                    </div>
-                  } @else {
-                    <label class="captura-elegir">
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        (change)="elegirCaptura($event)"
-                      />
-                      <span class="captura-elegir-texto">
-                        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M12 16V4" />
-                          <path d="m7.5 8.5 4.5-4.5 4.5 4.5" />
-                          <path d="M4 15.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3.5" />
-                        </svg>
-                        Subir captura del pago
-                      </span>
-                    </label>
-                  }
+                  <ng-container *ngTemplateOutlet="subirCaptura" />
 
                   @if (verOperacion()) {
                     <input
@@ -1091,5 +1135,36 @@
     }
   }
 </main>
+
+<!-- La subida de la captura, igual en Yape y en Western Union. -->
+<ng-template #subirCaptura>
+  @if (capturaPrevia(); as previa) {
+    <div class="captura">
+      <img [src]="previa" alt="Captura del pago que vas a enviar" />
+      <div class="captura-datos">
+        <span>{{ capturaElegida()?.name }}</span>
+        <button type="button" class="enlace-quitar" (click)="quitarCaptura()">
+          Elegir otra
+        </button>
+      </div>
+    </div>
+  } @else {
+    <label class="captura-elegir">
+      <input
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        (change)="elegirCaptura($event)"
+      />
+      <span class="captura-elegir-texto">
+        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 16V4" />
+          <path d="m7.5 8.5 4.5-4.5 4.5 4.5" />
+          <path d="M4 15.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3.5" />
+        </svg>
+        Subir captura del pago
+      </span>
+    </label>
+  }
+</ng-template>
 
 <app-site-footer />
