@@ -18,7 +18,14 @@
       @case ('subido') {
         @if (resultado(); as r) {
           <h1>Tus datos ya están listos</h1>
-          @if (r.tipo === 'bibliografia') {
+          @if (r.tipo === 'documentos') {
+            <p>
+              Con tus <strong>{{ r.documentos }} PDF</strong> se armó una matriz de
+              <strong>{{ r.filas }} {{ r.filas === 1 ? 'fila' : 'filas' }}</strong> y
+              <strong>{{ r.columnas.length }} columnas</strong>: una fila por caso y una columna por
+              resultado.
+            </p>
+          } @else if (r.tipo === 'bibliografia') {
             <p>
               Se leyeron <strong>{{ r.filas }} documentos</strong>
               @if (nombre()) {
@@ -42,6 +49,17 @@
             Él sigue desde ahí.
           </div>
 
+          @if (r.revisar?.length) {
+            <div class="revisar">
+              <strong>Revisa esto con tu asistente:</strong>
+              <ul>
+                @for (cosa of r.revisar; track $index) {
+                  <li>{{ cosa }}</li>
+                }
+              </ul>
+            </div>
+          }
+
           @if (r.aviso) {
             <p class="nota">{{ r.aviso }}</p>
           }
@@ -60,7 +78,7 @@
           </p>
           <label class="boton secundario otro">
             Subir otro archivo
-            <input type="file" accept=".csv,.xlsx,.xls,.txt,.sav,.bib" (change)="elegir($event)" />
+            <input type="file" multiple accept=".csv,.xlsx,.xls,.txt,.sav,.bib,.pdf,.zip" (change)="elegir($event)" />
           </label>
         }
       }
@@ -70,6 +88,11 @@
         <p>
           Tu asistente va a hacer el análisis contigo. Solo le falta tu archivo: el Excel, el CSV o el
           SPSS con las respuestas de tu instrumento, una fila por persona.
+        </p>
+        <p class="nota">
+          ¿No tienes una matriz sino <strong>un PDF por caso</strong> (informes de laboratorio, de un
+          equipo, de análisis de suelo o agua…)? Sube la carpeta entera o todos los PDF a la vez: se
+          arma la matriz sola, una fila por caso, y sin los datos personales.
         </p>
         <p class="nota">
           ¿Es un mapeo bibliométrico? Sube aquí el exporte de Scopus (CSV, BibTeX o texto plano), de
@@ -86,7 +109,8 @@
         >
           <input
             type="file"
-            accept=".csv,.xlsx,.xls,.txt,.sav,.bib"
+            multiple
+            accept=".csv,.xlsx,.xls,.txt,.sav,.bib,.pdf,.zip"
             [disabled]="paso() === 'subiendo'"
             (change)="elegir($event)"
           />
@@ -95,9 +119,20 @@
           } @else {
             <span class="zona-titulo"><strong>Elige tu archivo</strong> o arrástralo aquí</span>
             <span class="nota">
-              Excel (.xlsx), CSV o SPSS (.sav) · hasta 5 MB · exportes bibliográficos, hasta 25 MB
+              Excel (.xlsx), CSV o SPSS (.sav) · hasta 5 MB · exportes bibliográficos, hasta 25 MB ·
+              varios PDF, hasta 60 MB juntos
             </span>
           }
+        </label>
+
+        <label class="boton secundario otro carpeta" [class.desactivado]="paso() === 'subiendo'">
+          Elegir una carpeta de PDF
+          <input
+            type="file"
+            webkitdirectory
+            [disabled]="paso() === 'subiendo'"
+            (change)="elegir($event)"
+          />
         </label>
 
         <app-aviso-flotante [(error)]="error" />

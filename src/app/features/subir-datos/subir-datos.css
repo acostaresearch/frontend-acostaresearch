@@ -142,6 +142,31 @@
   opacity: 0;
 }
 
+.carpeta.desactivado {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Lo que no se pudo leer de los PDF: a la vista, no dentro de un desplegable. */
+.revisar {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-texto);
+  background: var(--color-aviso-suave);
+  border-left: 3px solid var(--color-aviso);
+  border-radius: var(--radio-sm);
+}
+
+.revisar ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.revisar li + li {
+  margin-top: 4px;
+}
+
 .detalle {
   margin: 0;
   padding: 12px;

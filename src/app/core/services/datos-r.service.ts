@@ -15,14 +15,21 @@ export interface EnlaceDeSubida {
 /** Lo que R leyó del archivo. Solo la forma: ningún valor de ninguna persona. */
 export interface DatosSubidos {
   leido: boolean;
-  /** «bibliografia» si subió el exporte de Scopus, WoS o PubMed: cada fila es un documento. */
-  tipo?: 'matriz' | 'bibliografia';
+  /**
+   * «bibliografia» si subió el exporte de Scopus, WoS o PubMed: cada fila es un documento.
+   * «documentos» si subió informes en PDF y la matriz la armó el servidor.
+   */
+  tipo?: 'matriz' | 'bibliografia' | 'documentos';
   filas: number | null;
   columnas: string[];
   /** Cómo estaba escrito el archivo, si tuvo algo que decir (punto y coma, codificación). */
   aviso: string | null;
   /** Si R no pudo leerlo, las últimas líneas de su consola. */
   detalle: string | null;
+  /** De la matriz armada desde PDF: lo que no se pudo leer o no cuadra. */
+  revisar?: string[];
+  /** Cuántos PDF se leyeron, si eran PDF. */
+  documentos?: number | null;
 }
 
 /**
@@ -42,8 +49,11 @@ export class DatosRService {
       .pipe(map((res) => res.data));
   }
 
-  /** El archivo va tal cual, como bytes: el formato lo decide el servidor leyéndolo. */
-  subir(token: string, archivo: File): Observable<DatosSubidos> {
+  /**
+   * El archivo va tal cual, como bytes: el formato lo decide el servidor leyéndolo.
+   * Varios PDF van juntos en un .zip (ver `shared/archivos/zip`).
+   */
+  subir(token: string, archivo: Blob): Observable<DatosSubidos> {
     return this.http
       .post<ApiResponse<DatosSubidos>>(`${this.base}/${encodeURIComponent(token)}`, archivo, {
         headers: { 'Content-Type': 'application/octet-stream' },
