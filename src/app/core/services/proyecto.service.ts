@@ -117,7 +117,7 @@ export interface TesisDelMetodo {
  */
 export interface FichaInforme {
   ambito?: 'curso' | 'empresa';
-  /** De curso: curso, proyecto o caso. De empresa: diagnostico, gestion, factibilidad… */
+  /** De curso: curso, proyecto, caso o monografia. De empresa: diagnostico, gestion, factibilidad… */
   tipo?: string;
   /** Solo de empresa. */
   empresa?: string;
