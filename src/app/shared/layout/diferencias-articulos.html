@@ -1,0 +1,45 @@
+<div class="dif" [class.abierto]="abierto()">
+  <button
+    type="button"
+    class="dif-boton"
+    [attr.aria-expanded]="abierto()"
+    aria-controls="dif-panel"
+    (click)="abierto.set(!abierto())"
+  >
+    <span>¿En qué se diferencian los dos productos de artículos?</span>
+    <svg class="dif-flecha" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  </button>
+
+  @if (abierto()) {
+    <div id="dif-panel" class="dif-panel">
+      <div class="dif-tabla" role="table" aria-label="Artículo empírico frente a artículo de revisión">
+        <div class="dif-fila dif-cab" role="row">
+          <span role="columnheader"></span>
+          <span role="columnheader" [class.actual]="actual() === 'empirico'">
+            <b>Artículos Científicos (Empíricos)</b>
+            <a routerLink="/articulo" [queryParams]="{ tipo: null }">Ver sus fases</a>
+          </span>
+          <span role="columnheader" [class.actual]="actual() === 'revision'">
+            <b>Artículos de Revisión (Sistemática y Bibliométrica)</b>
+            <a routerLink="/articulo" [queryParams]="{ tipo: 'revision' }">Ver sus fases</a>
+          </span>
+        </div>
+
+        @for (f of filas; track f.aspecto) {
+          <div class="dif-fila" role="row">
+            <span class="dif-aspecto" role="rowheader">{{ f.aspecto }}</span>
+            <span role="cell" data-producto="Empírico" [class.actual]="actual() === 'empirico'">
+              {{ f.empirico }}
+            </span>
+            <span role="cell" data-producto="Revisión" [class.actual]="actual() === 'revision'">
+              {{ f.revision }}
+            </span>
+          </div>
+        }
+      </div>
+      <p class="dif-nota">Los dos incluyen el Humanizador académico, tu panel y Zotero o Mendeley.</p>
+    </div>
+  }
+</div>

@@ -184,6 +184,22 @@ export const FASES_ARTICULO = [
 ];
 
 /**
+ * Las fases del Artículo de Revisión (`ARTICULOS_REVIEW`). Son nueve y no
+ * diez: no hay fase 3, porque el protocolo de la fase 1 hace su trabajo.
+ */
+export const FASES_REVISION = [
+  'Pregunta y revista',
+  'Protocolo',
+  'Introducción',
+  'Métodos (PRISMA)',
+  'Resultados',
+  'Discusión',
+  'Conclusiones',
+  'Envío',
+  'Revisores',
+];
+
+/**
  * Las fases del Trabajo de Suficiencia Profesional (TSP), producto aparte del
  * método de tesis: sin hipótesis, sin instrumento y sin muestra. La primera no
  * es capítulo; las otras cinco son los capítulos del Word.
@@ -355,6 +371,70 @@ export const DESCRIPCIONES: Record<string, Detalle> = {
       'real y se responde punto por punto, incluidas las que no atendiste y por qué.',
     entregable: 'Manuscrito revisado y carta de respuesta',
   },
+  // ── Ruta del Artículo de Revisión ───────────────────────────────────────
+  // Otro producto (`ARTICULOS_REVIEW`), con sus propias skills. Sin fase 3.
+  'revision-fase0-tema-y-orientacion': {
+    descripcion:
+      'De una inquietud a una pregunta de revisión con destino. Eliges el tipo —sistemática, ' +
+      'de alcance, bibliométrica o mixta—, se comprueba si ya hay revisiones recientes del tema ' +
+      'y se elige la revista verificando en la fuente su cuartil, su cobertura y cuánto cobra.',
+    entregable: 'Ficha de Orientación y revista destino verificada',
+  },
+  'revision-fase1-matriz-de-estrategia': {
+    descripcion:
+      'El protocolo, antes de buscar: la guía que seguirás (PRISMA 2020, PRISMA-ScR o ' +
+      'bibliométrica), la pregunta en PICO, PEO o PCC, los criterios de inclusión, las bases, ' +
+      'la ecuación de cada una y qué vas a extraer de cada estudio.',
+    entregable: 'Protocolo de la revisión',
+  },
+  'revision-fase2-introduccion': {
+    descripcion:
+      'Crea el Word del artículo, que crecerá hasta el envío. La Introducción de una revisión ' +
+      'tiene que justificar algo propio: por qué hace falta, porque no hay revisiones previas, ' +
+      'están desactualizadas o se contradicen.',
+    entregable: 'Introducción, en el documento del artículo',
+  },
+  'revision-fase4-metodos': {
+    descripcion:
+      'Métodos como protocolo reproducible: elegibilidad, fuentes con su fecha y ecuación ' +
+      'literal, depuración de duplicados, cribado, acuerdo entre revisores, extracción y riesgo ' +
+      'de sesgo. Nunca inventa fechas, conteos ni códigos de registro: te los pide.',
+    entregable: 'Métodos, unidos al mismo Word',
+  },
+  'revision-fase5-resultados': {
+    descripcion:
+      'Dibuja el diagrama PRISMA desde tus conteos y se niega si no cuadran. En una ' +
+      'sistemática presenta los estudios incluidos y su calidad; en una bibliométrica, la ' +
+      'producción anual, Bradford, Lotka, países y palabras clave, con bibliometrix en el servidor.',
+    entregable: 'Resultados con diagrama PRISMA, tablas y figuras',
+  },
+  'revision-fase6-discusion': {
+    descripcion:
+      'Qué muestra la evidencia en conjunto, organizada por pregunta o por eje temático, ' +
+      'contrastada con revisiones previas. Cierra con los vacíos, las implicaciones y las ' +
+      'limitaciones propias de una revisión: bases, idioma, periodo y sesgo de publicación.',
+    entregable: 'Discusión en prosa continua',
+  },
+  'revision-fase7-conclusiones-abstract': {
+    descripcion:
+      'Conclusiones que proponen una agenda, sin repetir la Discusión; el título definitivo que ' +
+      'nombra el tipo de revisión y el resumen estructurado según PRISMA for Abstracts, con su ' +
+      'versión en inglés.',
+    entregable: 'Conclusiones, título, resumen y abstract',
+  },
+  'revision-fase8-adaptacion-y-envio': {
+    descripcion:
+      'El cumplimiento final contra la guía de la revista y lo que pide una revisión: registro ' +
+      'del protocolo, checklist PRISMA, diagrama de flujo y ecuaciones como material ' +
+      'suplementario, página de título con ORCID y CRediT, carta y declaraciones.',
+    entregable: 'Manuscrito listo para enviar y carta de presentación',
+  },
+  'revision-fase9-respuesta-revisores': {
+    descripcion:
+      'Ordena las observaciones del dictamen, decides qué se acepta, se matiza o se refuta, se ' +
+      'aplican los cambios con control de cambios real y se responde punto por punto.',
+    entregable: 'Manuscrito revisado y carta de respuesta',
+  },
   'humanizador-academico': {
     descripcion:
       'Para cuando te dicen que tu texto suena a IA. Primero un informe de diagnóstico con los ' +
@@ -465,6 +545,15 @@ export const INCLUYE: Record<string, string[]> = {
     'El Humanizador académico',
     'Tu panel: tus fuentes de Scopus, tus PDF o tu Zotero, y R en tu navegador',
     'Tu artículo en Word en 17 normas de citas, o tu manuscrito ya escrito con sus citas puestas',
+    'Videos guía para conectarlo y usarlo',
+    'Funciona con el plan gratuito de Claude',
+  ],
+  ARTICULOS_REVIEW: [
+    'Las 9 fases de la ruta de revisión: sistemática (PRISMA 2020), de alcance (PRISMA-ScR) o bibliométrica',
+    'El Humanizador académico',
+    'Tu panel: Scopus, Web of Science o PubMed, tu Zotero, y bibliometrix en R sin instalar nada',
+    'Diagrama PRISMA desde tus conteos, y checklist y protocolo listos para el envío',
+    'Tu artículo en Word en 17 normas de citas',
     'Videos guía para conectarlo y usarlo',
     'Funciona con el plan gratuito de Claude',
   ],

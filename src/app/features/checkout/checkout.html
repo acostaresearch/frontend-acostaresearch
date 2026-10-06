@@ -525,10 +525,24 @@
                         <span>{{ fase }}</span>
                       </li>
                     }
+                    <!-- Lo que viene con el paquete sin ser una etapa. -->
+                    @for (extra of fases.extras; track extra) {
+                      <li class="fase-extra">
+                        <span class="fase-numero">+</span>
+                        <span>{{ extra }}</span>
+                      </li>
+                    }
                   </ol>
                 </div>
               }
             </div>
+
+            @if (esArticulo(activo)) {
+              <app-diferencias-articulos
+                class="incluye-diferencias"
+                [actual]="esRevision(activo) ? 'revision' : 'empirico'"
+              />
+            }
           </section>
         }
       }

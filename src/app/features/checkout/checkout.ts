@@ -43,7 +43,8 @@ import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
-import { FASES_ARTICULO, FASES_TSP, INCLUYE } from '../../shared/contenido/metodo';
+import { DiferenciasArticulos } from '../../shared/layout/diferencias-articulos';
+import { FASES_ARTICULO, FASES_REVISION, FASES_TSP, INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
 // Oculto por ahora en la plantilla (1-oct).
@@ -119,6 +120,7 @@ const ETAPAS_TESIS = [
     SiteHeader,
     SiteFooter,
     InvitacionPlanes,
+    DiferenciasArticulos,
     // PlanesInstituciones,
   ],
   templateUrl: './checkout.html',
@@ -1204,7 +1206,9 @@ export class Checkout implements OnInit {
   nombreCorto(plan: Plan): string {
     const codigo = plan.code.toUpperCase();
     if (codigo.startsWith('METODO')) return 'Método de Tesis';
-    if (codigo.startsWith('ARTICULO')) return 'Artículos Científicos';
+    // Los dos de artículos empiezan igual: el de revisión se mira antes.
+    if (this.esRevision(plan)) return 'Artículos de Revisión';
+    if (codigo.startsWith('ARTICULO')) return 'Artículos Empíricos';
     if (codigo.startsWith('HUMANIZ')) return 'Humanizador';
     if (codigo.startsWith('TSP')) return 'Suficiencia Profesional';
     return plan.name;
@@ -1214,18 +1218,59 @@ export class Checkout implements OnInit {
    * Las fases de la ruta, si el paquete la tiene. Por prefijo, como `imagenDe`.
    * El Humanizador no sigue ninguna ruta: su pestaña va sin esta columna.
    */
-  fasesDe(plan: Plan): { titulo: string; lista: readonly string[] } | null {
+  fasesDe(plan: Plan): { titulo: string; lista: readonly string[]; extras: readonly string[] } | null {
     const codigo = plan.code.toUpperCase();
+    // Lo que viene con el paquete sin ser una etapa: va debajo de la lista,
+    // con «+» en vez de número. Solo lo que el grupo trae de verdad en el
+    // catálogo: si una skill se retira del grupo, se retira de aquí.
     if (codigo.startsWith('METODO')) {
-      return { titulo: `Las ${ETAPAS_TESIS.length} etapas del método`, lista: ETAPAS_TESIS };
+      return {
+        titulo: `Las ${ETAPAS_TESIS.length} etapas del método`,
+        lista: ETAPAS_TESIS,
+        extras: [
+          'Humanizador académico: quita los rastros de IA',
+          'Bajar similitud: reduce el porcentaje de Turnitin',
+          'Análisis cualitativo',
+          'Aspectos administrativos',
+        ],
+      };
+    }
+    if (this.esRevision(plan)) {
+      return {
+        titulo: `Las ${FASES_REVISION.length} fases de la revisión`,
+        lista: FASES_REVISION,
+        extras: ['Humanizador académico: quita los rastros de IA'],
+      };
     }
     if (codigo.startsWith('ARTICULO')) {
-      return { titulo: `Las ${FASES_ARTICULO.length} fases de la ruta`, lista: FASES_ARTICULO };
+      return {
+        titulo: `Las ${FASES_ARTICULO.length} fases de la ruta`,
+        lista: FASES_ARTICULO,
+        extras: [
+          'Variante bibliométrica (3B)',
+          'Humanizador académico: quita los rastros de IA',
+        ],
+      };
     }
     if (codigo.startsWith('TSP')) {
-      return { titulo: `Las ${FASES_TSP.length} fases del TSP`, lista: FASES_TSP };
+      return {
+        titulo: `Las ${FASES_TSP.length} fases del TSP`,
+        lista: FASES_TSP,
+        extras: ['Humanizador académico: quita los rastros de IA'],
+      };
     }
     return null;
+  }
+
+  /** El Artículo de Revisión (`ARTICULOS_REVIEW`), que también empieza por ARTICULO. */
+  esRevision(plan: Plan): boolean {
+    const codigo = plan.code.toUpperCase();
+    return codigo.startsWith('ARTICULO') && codigo.includes('REVIEW');
+  }
+
+  /** Cualquiera de los dos de artículos: llevan el comparador debajo. */
+  esArticulo(plan: Plan): boolean {
+    return plan.code.toUpperCase().startsWith('ARTICULO');
   }
 
   /** Días antes del fin desde los que se puede renovar. */

@@ -2360,6 +2360,22 @@ h1 {
   border-radius: 6px;
 }
 
+/* Lo que viene con el paquete sin ser una etapa: el «+» en el azul suave,
+   para que no se lea como un paso más de la ruta. */
+.fase-extra {
+  grid-column: 1 / -1;
+}
+
+.fase-extra .fase-numero {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.incluye-diferencias {
+  display: block;
+  margin-top: 24px;
+}
+
 @media (max-width: 860px) {
   .cabecera {
     flex-direction: column;

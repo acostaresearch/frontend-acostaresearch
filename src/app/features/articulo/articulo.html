@@ -8,15 +8,29 @@
 
     <div class="mt-ancho mt-hero-fila">
       <div class="mt-hero-texto">
-        <p class="mt-rotulo">Ruta del Artículo Científico</p>
-        <h1>De una idea a un artículo enviado a una revista real</h1>
-        <p class="mt-hero-entrada">
-          Diez fases en estructura IMRyD y variante para revisión. Se instalan en Claude, ChatGPT o Grok para redactar a tu lado, paso a paso y con tus fuentes científicas. No tienes que empezar desde la primera fase: entra directo en la etapa donde estés hoy.
-        </p>
+        <!-- Los dos productos de artículos. Cada pestaña es un enlace con
+             `?tipo=`: el que se ve se puede compartir tal cual. -->
+        <nav class="art-selector" aria-label="Tipo de artículo">
+          @for (t of tipos; track t.clave) {
+            <a
+              routerLink="/articulo"
+              [queryParams]="{ tipo: t.clave === 'revision' ? 'revision' : null }"
+              [class.activo]="tipo() === t.clave"
+              [attr.aria-current]="tipo() === t.clave ? 'page' : null"
+              replaceUrl
+            >
+              {{ t.nombre }}
+            </a>
+          }
+        </nav>
+
+        <p class="mt-rotulo">{{ producto().rotulo }}</p>
+        <h1>{{ producto().titulo }}</h1>
+        <p class="mt-hero-entrada">{{ producto().entrada }}</p>
       </div>
 
       <ul data-tour="articulo-cifras" class="mt-cifras">
-        @for (c of cifras; track c.pie) {
+        @for (c of producto().cifras; track c.pie) {
           <li>
             <b>{{ c.valor }}</b>
             <span>{{ c.pie }}</span>
@@ -31,13 +45,13 @@
       <div class="mt-cab">
         <div>
           <p class="mt-rotulo mt-rotulo-azul">Las fases</p>
-          <h2 class="mt-titulo">Doce, en el orden en que se publica un artículo</h2>
+          <h2 class="mt-titulo">{{ producto().fasesTitulo }}</h2>
         </div>
-        <p class="mt-cab-nota">
-          Las de número azul forman la ruta. La 3B es la variante bibliométrica, que reemplaza a
-          la 03, y el Humanizador se usa en cualquier momento.
-        </p>
+        <p class="mt-cab-nota">{{ producto().fasesNota }}</p>
       </div>
+
+      <!-- ¿Cuál de los dos me toca? Plegado: a quien ya lo sabe no le estorba. -->
+      <app-diferencias-articulos class="art-diferencias" [actual]="tipo()" />
 
       @if (cargando()) {
         <p class="cargando">Cargando la ruta…</p>
@@ -95,7 +109,7 @@
       </div>
 
       <ul class="mt-tarjetas">
-        @for (g of garantias; track g.titulo) {
+        @for (g of producto().garantias; track g.titulo) {
           <li>
             <span class="mt-ico mt-ico-grande" aria-hidden="true">
               <app-icono-ruta [clave]="g.icono" />
@@ -118,8 +132,8 @@
       <div class="mt-cierre">
         <app-lineas-noche densidad="compacta" />
         <div>
-          <h2>Quiero la ruta completa</h2>
-          <p>Doce meses de acceso, renovables. Incluye el Humanizador académico.</p>
+          <h2>{{ producto().cierre }}</h2>
+          <p>{{ vigencia() }}, renovables. Incluye el Humanizador académico.</p>
         </div>
         <div class="mt-cierre-compra">
           @if (precio(); as valor) {
@@ -131,7 +145,7 @@
           <a
             class="boton grande"
             routerLink="/planes"
-            [queryParams]="{ plan: 'ARTICULO_SCIENTIFICOS' }"
+            [queryParams]="{ plan: codigoPlan() }"
           >
             Ver los paquetes
           </a>

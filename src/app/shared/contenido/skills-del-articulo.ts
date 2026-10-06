@@ -94,3 +94,131 @@ export const GARANTIAS_DEL_ARTICULO = [
       'afirmaciones sin fuente, antes de que los encuentre el revisor.',
   },
 ];
+
+// ── La Ruta del Artículo de Revisión ─────────────────────────────────────────
+//
+// El segundo producto de artículos (`ARTICULOS_REVIEW`). Se parece mucho al
+// empírico y comparte los nombres de fase, pero sus skills son otras
+// (`revision-fase*`) y no tiene fase 3: el protocolo de la fase 1 hace ese
+// trabajo. No mezclar una lista con la otra.
+
+export const SEÑAS_DE_LA_REVISION: Record<string, SeñaDeFase> = {
+  'revision-fase0-tema-y-orientacion': { icono: 'diana' },
+  'revision-fase1-matriz-de-estrategia': { icono: 'lineas' },
+  'revision-fase2-introduccion': { icono: 'documento' },
+  'revision-fase4-metodos': { icono: 'formulario' },
+  'revision-fase5-resultados': { icono: 'barras' },
+  'revision-fase6-discusion': { icono: 'ciclo' },
+  'revision-fase7-conclusiones-abstract': { icono: 'check' },
+  'revision-fase8-adaptacion-y-envio': { icono: 'avion' },
+  'revision-fase9-respuesta-revisores': { icono: 'chat' },
+  'humanizador-academico': {
+    icono: 'lapiz',
+    etiqueta: 'En cualquier momento',
+    fuera: true,
+  },
+};
+
+export const CIFRAS_DE_LA_REVISION = [
+  { valor: '9', pie: 'fases en orden' },
+  { valor: '3', pie: 'tipos de revisión' },
+  { valor: '1', pie: 'de uso libre' },
+];
+
+export const GARANTIAS_DE_LA_REVISION = [
+  {
+    icono: 'buscar',
+    titulo: 'Una búsqueda que se puede repetir',
+    texto:
+      'La ecuación literal de cada base —Scopus, Web of Science, PubMed, SciELO—, con su fecha y ' +
+      'sus conteos, lista para el apartado de Métodos. Es lo primero que mira un revisor.',
+  },
+  {
+    icono: 'check',
+    titulo: 'Un diagrama PRISMA que cuadra',
+    texto:
+      'Se dibuja desde tus conteos de identificación, cribado e inclusión, y se niega a hacerlo ' +
+      'si los números no suman. Un flujo que no cuadra es un rechazo seguro.',
+  },
+  {
+    icono: 'red',
+    titulo: 'Bibliometría sin instalar R',
+    texto:
+      'bibliometrix corre en el servidor: producción anual, Bradford, Lotka, países, ' +
+      'coautoría y palabras clave, con las figuras y su interpretación escrita.',
+  },
+  {
+    icono: 'marcador',
+    titulo: 'Zotero y Mendeley integrado',
+    texto:
+      'Tus estudios incluidos y sus referencias se gestionan solos. Ninguna cita queda ' +
+      'huérfana ni aparece un autor que no existe.',
+  },
+  {
+    icono: 'lineas',
+    titulo: '17 normas de citas',
+    texto:
+      'APA, Vancouver, IEEE, AMA, Nature, ACS, Chicago y más. Si la revista te pide otra, se lo ' +
+      'dices a Claude y no reescribes una línea.',
+  },
+  {
+    icono: 'formulario',
+    titulo: 'Listo para el envío',
+    texto:
+      'Checklist PRISMA 2020 o PRISMA-ScR, registro del protocolo en PROSPERO u OSF y las ' +
+      'ecuaciones como material suplementario: lo que una revista pide a una revisión.',
+  },
+];
+
+// ── En qué se diferencian los dos productos de artículos ─────────────────────
+//
+// Lo usan /articulo y /planes. Cada fila compara lo mismo en los dos: si una
+// cambia en un producto, se cambia aquí y se ve igual en las dos páginas.
+
+export interface Diferencia {
+  aspecto: string;
+  empirico: string;
+  revision: string;
+}
+
+export const DIFERENCIAS_ARTICULOS: Diferencia[] = [
+  {
+    aspecto: 'Qué publicas',
+    empirico: 'Un estudio con datos que tú recoges: encuesta, experimento, entrevistas o registros.',
+    revision:
+      'Una síntesis de lo ya publicado: revisión sistemática (PRISMA), de alcance (scoping) o ' +
+      'bibliométrica.',
+  },
+  {
+    aspecto: 'Qué necesitas',
+    empirico: 'Tu base de datos, o un estudio que vas a aplicar.',
+    revision: 'Una pregunta y acceso a las bases. No recoges datos: los extraes de los estudios.',
+  },
+  {
+    aspecto: 'Fases',
+    empirico: '10 fases, de la idea a la respuesta a revisores, más la variante bibliométrica 3B.',
+    revision: '9 fases. No hay fase 3: el protocolo de la fase 1 reemplaza a la revisión de la literatura.',
+  },
+  {
+    aspecto: 'Métodos',
+    empirico: 'Diseño, muestra, instrumento y la Tabla 1 sociodemográfica calculada desde tu base.',
+    revision:
+      'Protocolo reproducible: ecuación por base, cribado, acuerdo entre revisores y riesgo de sesgo.',
+  },
+  {
+    aspecto: 'Resultados',
+    empirico: 'Las tablas y figuras de tu análisis estadístico, con R en tu navegador.',
+    revision:
+      'Diagrama PRISMA, tabla de estudios incluidos o los indicadores bibliométricos de bibliometrix.',
+  },
+  {
+    aspecto: 'Guía que sigue',
+    empirico: 'IMRyD y la guía de autores de la revista destino.',
+    revision: 'PRISMA 2020 o PRISMA-ScR, con registro del protocolo en PROSPERO u OSF.',
+  },
+  {
+    aspecto: 'Elígelo si…',
+    empirico: 'Tienes datos propios o vas a recogerlos.',
+    revision: 'Quieres ordenar, sintetizar o mapear lo que ya se investigó sobre un tema.',
+  },
+];
