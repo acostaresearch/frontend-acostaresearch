@@ -70,7 +70,15 @@
 
         <div class="sc-buscador-cabecera">
           <span class="sc-buscador-izquierda">
-            <span class="sc-buscador-titulo">Buscar en Scopus</span>
+            <span class="sc-buscador-titulo">
+              Buscar en Scopus{{ conScielo() ? ' y SciELO' : '' }}
+            </span>
+            <!-- SciELO en la misma lista, con su etiqueta. Encendido por
+                 defecto; ver `conScielo`. -->
+            <label class="sc-incluir-scielo" title="Revistas de Perú y Latinoamérica, en español y portugués">
+              <input type="checkbox" [checked]="conScielo()" (change)="alternarScielo()" />
+              Incluir SciELO
+            </label>
             <!-- La columna de la IA de Scopus: las búsquedas guardadas y las
                  conversaciones del copiloto, por fechas. En un cajón que sale
                  por la izquierda, para no quitarle ancho a la tabla. -->
@@ -803,7 +811,8 @@
           } @else if (busqueda(); as lista) {
             @if (lista.total === 0) {
               <p class="scopus-aviso">
-                Scopus no encontró nada con esa búsqueda. Suele ser por afinar de más: quita un
+                {{ lista.totalScielo !== undefined ? 'Ni Scopus ni SciELO encontraron' : 'Scopus no encontró' }}
+                nada con esa búsqueda. Suele ser por afinar de más: quita un
                 <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
                 @if (hayFiltros()) {
                   Prueba también a quitar algún filtro.
@@ -990,8 +999,16 @@
 
               <div class="sc-resultados-cabecera">
                 <p class="sc-total">
-                  Se encontraron <strong>{{ lista.total | number }}</strong>
-                  {{ lista.total === 1 ? 'documento' : 'documentos' }}.
+                  @if (lista.totalScielo !== undefined) {
+                    Se encontraron <strong>{{ lista.totalScopus ?? 0 | number }}</strong> en Scopus y
+                    <strong>{{ lista.totalScielo | number }}</strong> en SciELO.
+                  } @else {
+                    Se encontraron <strong>{{ lista.total | number }}</strong>
+                    {{ lista.total === 1 ? 'documento' : 'documentos' }}.
+                  }
+                  @if (motivoSinScielo(); as motivo) {
+                    <small class="sc-sin-scielo">{{ motivo }}</small>
+                  }
                   @if (lista.semantica && lista.porRelevancia) {
                     <!-- Gemini no dio los vectores: la lista no se comparó con su
                          pregunta, así que no se dice que sea «la más cercana». -->
@@ -1159,7 +1176,7 @@
                       </p>
                     }
                     <small class="sc-mapeo-nota">
-                      Va la búsqueda de estos resultados
+                      Va la búsqueda de estos resultados{{ busqueda()?.totalScielo !== undefined ? ' en Scopus (lo de SciELO no entra en el mapeo)' : '' }}
                       @if (ecuacionDeLosResultados(); as ecuacion) {
                         (<code class="sc-mapeo-ecuacion">{{ ecuacion }}</code>)
                       }
@@ -1219,6 +1236,15 @@
                               </span>
                               ·
                             }
+                            @if (lista.totalScielo !== undefined) {
+                              <span class="sc-base" [attr.data-base]="resultado.base">
+                                {{ resultado.base === 'scielo' ? 'SciELO' : 'Scopus' }}
+                              </span>
+                              @if (resultado.tambienEnScielo) {
+                                <span class="sc-base" data-base="scielo">SciELO</span>
+                              }
+                              ·
+                            }
                             {{ resultado.tipo || 'Documento' }}
                             @if (resultado.accesoAbierto) {
                               · <span class="sc-abierto">Acceso abierto</span>
@@ -1245,7 +1271,7 @@
                           </span>
                           <span class="sc-titulo">{{ resultado.titulo }}</span>
                           <span class="sc-enlaces">
-                            @if (resultado.doi) {
+                            @if (resultado.doi || resultado.resumen) {
                               <button
                                 type="button"
                                 class="sc-ver-resumen"
@@ -1272,7 +1298,7 @@
                             }
                             @if (resultado.enlace) {
                               <a [href]="resultado.enlace" target="_blank" rel="noopener noreferrer"
-                                >Ver en Scopus ↗</a
+                                >{{ resultado.base === 'scielo' ? 'Ver en la revista' : 'Ver en Scopus' }} ↗</a
                               >
                             }
                             @if (resultado.doi) {
@@ -1380,6 +1406,11 @@
               </p>
             }
           }
+
+          <!-- La misma búsqueda en ALICIA (tesis y revistas peruanas). Fuera
+               del bloque de resultados: también sale cuando Scopus no encuentra
+               nada, que es cuando más falta un antecedente nacional. -->
+          <app-mi-alicia [ecuacion]="busqueda() ? ecuacionDeLosResultados() : null" />
 
           <!-- Desconectar solo tiene sentido si hay algo conectado: con la
                credencial del servidor no hay vínculo que deshacer. -->

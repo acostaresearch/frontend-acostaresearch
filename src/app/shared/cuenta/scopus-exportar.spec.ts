@@ -116,3 +116,24 @@ describe('Exportar los resultados de Scopus', () => {
     expect(nombreDelArchivo('bib', new Date(2026, 8, 22))).toBe('scopus-2026-09-22.bib');
   });
 });
+
+/** De SciELO, en la lista mezclada: sin EID de Scopus y con su base dicha. */
+describe('un artículo de SciELO', () => {
+  const DE_SCIELO: ResultadoDeScopus = {
+    ...ARTICULO,
+    eid: 'scielo:W2897152668',
+    scopusId: null,
+    enlace: 'https://www.scielo.cl/articulo',
+    base: 'scielo',
+  };
+
+  it('no lleva un EID inventado y dice que es de SciELO', () => {
+    const ris = comoRis([DE_SCIELO]);
+    expect(ris).not.toContain('EID');
+    expect(ris).toContain('DB  - SciELO');
+    expect(comoBibtex([DE_SCIELO])).not.toContain('Scopus EID');
+    const csv = comoCsv([DE_SCIELO]);
+    expect(csv).not.toContain('scielo:W2897152668');
+    expect(csv).toContain('"SciELO"');
+  });
+});

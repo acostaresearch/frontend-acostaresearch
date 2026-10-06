@@ -1,6 +1,7 @@
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { toApiError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
@@ -21,7 +22,9 @@ import {
   ResumenConIa,
   ScopusService,
 } from '../../core/services/scopus.service';
+import { PaginaDeScielo, ResultadoDeScielo, ScieloService } from '../../core/services/scielo.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
+import { MiAlicia } from './mi-alicia';
 import {
   FORMATOS,
   FormatoDeExportacion,
@@ -111,12 +114,13 @@ interface Faceta {
 
 @Component({
   selector: 'app-mi-scopus',
-  imports: [AvisoFlotante, DecimalPipe, NgTemplateOutlet],
+  imports: [AvisoFlotante, DecimalPipe, MiAlicia, NgTemplateOutlet],
   templateUrl: './mi-scopus.html',
   styleUrls: ['./mi-scopus.css', './mi-scopus-ia.css', './mi-scopus-historial.css'],
 })
 export class MiScopusPanel implements OnInit {
   private readonly scopus = inject(ScopusService);
+  private readonly scielo = inject(ScieloService);
   private readonly dialogos = inject(DialogoService);
   private readonly misFuentes = inject(MisFuentesService);
   private readonly ruta = inject(ActivatedRoute);
@@ -617,6 +621,7 @@ export class MiScopusPanel implements OnInit {
   }
 
   resumenDe(resultado: ResultadoDeScopus): string | null {
+    if (resultado.resumen) return resultado.resumen;
     if (!resultado.doi) return null;
     return this.resumenesDePagina()?.[resultado.doi.toLowerCase()] ?? null;
   }
@@ -626,6 +631,183 @@ export class MiScopusPanel implements OnInit {
 
   anadirReferencias(): void {
     this.importarEids(this.referenciasPorAnadir().map((r) => r.eid));
+  }
+
+  // ── SciELO, en la misma lista ─────────────────────────────────────────────
+
+  /**
+   * Si la búsqueda trae también lo de SciELO, mezclado con lo de Scopus.
+   *
+   * Encendido por defecto: lo latinoamericano en español y portugués es lo que
+   * Scopus casi no tiene, y es lo que pide el jurado como antecedentes
+   * nacionales. Cada resultado lleva la etiqueta de su base, y lo que está en
+   * las dos (mismo DOI) sale una sola vez, como de Scopus.
+   */
+  readonly conScielo = signal(true);
+
+  /**
+   * Cuántos de SciELO por página. Menos que los 25 de Scopus: la lista es de
+   * Scopus con SciELO al lado, y con 25 y 25 la página se haría el doble.
+   */
+  private static readonly POR_PAGINA_SCIELO = 10;
+
+  /** Cuántas páginas tiene la parte de Scopus de la búsqueda que se ve. */
+  private paginasDeScopus = Number.POSITIVE_INFINITY;
+
+  /**
+   * Por qué esta búsqueda no lleva SciELO, para decirlo bajo el total. Nulo si
+   * lo lleva o si lo apagó él (eso ya se ve en el interruptor).
+   *
+   * SciELO se busca con los CONCEPTOS de la búsqueda normal, no con la
+   * ecuación: el lenguaje de Scopus no se puede traducir a OpenAlex sin
+   * inventarse la mitad. Y los filtros de la columna, salvo los años, son de
+   * Scopus: aplicarlos a una mitad y no a la otra daría una lista que no
+   * cuadra con lo marcado.
+   */
+  readonly motivoSinScielo = computed<string | null>(() => {
+    if (!this.conScielo()) return null;
+    if (this.orden() === 'significado') return 'El orden por significado es solo de Scopus.';
+    if (this.conceptosParaContar().length === 0) {
+      return 'SciELO entra solo con la búsqueda normal en título, resumen y palabras clave.';
+    }
+    if (this.filtrosSoloDeScopus()) {
+      return 'Con filtros de Scopus puestos (aparte de los años), SciELO no entra.';
+    }
+    return null;
+  });
+
+  private readonly filtrosSoloDeScopus = computed(
+    () =>
+      !this.iaAbierta() &&
+      (this.clausulas().length > (this.clausulaDeAnios() ? 1 : 0) ||
+        this.clausulasExcluidas().length > 0),
+  );
+
+  alternarScielo(): void {
+    this.conScielo.set(!this.conScielo());
+    if (this.busqueda()) this.buscar(1);
+  }
+
+  /** La página de SciELO que va con esta de Scopus, o nada si no toca. */
+  private paginaDeScielo(pagina: number): Observable<PaginaDeScielo | null> {
+    if (!this.conScielo() || this.motivoSinScielo()) return of(null);
+    const orden = this.orden();
+    const desde = this.anio(this.anioDesde());
+    const hasta = this.anio(this.anioHasta());
+    return this.scielo
+      .buscar({
+        conceptos: this.conceptosParaContar(),
+        pagina,
+        porPagina: MiScopusPanel.POR_PAGINA_SCIELO,
+        orden: orden === 'significado' ? 'citas' : orden,
+        ...(desde ? { desdeAnio: desde } : {}),
+        ...(hasta ? { hastaAnio: hasta } : {}),
+      })
+      .pipe(
+        map((r) => r.pagina),
+        // Si SciELO falla, la lista sale con lo de Scopus y se dice.
+        catchError(() => {
+          this.mostrarError('SciELO no respondió esta vez: ves solo lo de Scopus.');
+          return of(null);
+        }),
+      );
+  }
+
+  /** Un artículo de SciELO, con la forma de una fila de la tabla. */
+  private comoFila(art: ResultadoDeScielo): ResultadoDeScopus {
+    return {
+      eid: `scielo:${art.id}`,
+      scopusId: null,
+      titulo: art.titulo,
+      autores: art.autores,
+      anio: art.anio,
+      revista: art.revista,
+      doi: art.doi,
+      tipo: 'Article',
+      citas: art.citas,
+      accesoAbierto: Boolean(art.pdfLibre),
+      enlace: art.enlace,
+      conResumen: Boolean(art.resumen),
+      yaLaTienes: art.tuya,
+      enlaceAbierto: art.pdfLibre
+        ? {
+            url: art.pdfLibre,
+            esPdf: true,
+            version: 'publishedVersion',
+            licencia: null,
+            donde: art.revista,
+            catalogo: 'openalex',
+            mismoQueEditorial: false,
+          }
+        : null,
+      base: 'scielo',
+      resumen: art.resumen,
+    };
+  }
+
+  /**
+   * Las dos listas en una. Lo de SciELO con el mismo DOI que algo de Scopus no
+   * se repite: se queda la fila de Scopus con la marca «también en SciELO».
+   * El orden es el pedido; en «relevancia», que no se puede comparar entre dos
+   * buscadores, se intercalan.
+   */
+  private mezclar(
+    scopus: BusquedaDeScopus,
+    scielo: PaginaDeScielo | null,
+    pagina: number,
+  ): BusquedaDeScopus {
+    if (!scielo) return scopus;
+
+    const porDoi = new Map(
+      scopus.resultados.filter((r) => r.doi).map((r) => [r.doi!.toLowerCase(), r.eid]),
+    );
+    const enLasDos = new Set<string>();
+    const deScielo: ResultadoDeScopus[] = [];
+    for (const art of scielo.resultados) {
+      const igual = art.doi ? porDoi.get(art.doi.toLowerCase()) : undefined;
+      if (igual) enLasDos.add(igual);
+      else deScielo.push(this.comoFila(art));
+    }
+    const deScopus = scopus.resultados.map(
+      (r): ResultadoDeScopus => ({ ...r, base: 'scopus', tambienEnScielo: enLasDos.has(r.eid) }),
+    );
+
+    const orden = this.orden();
+    let resultados: ResultadoDeScopus[];
+    if (orden === 'citas') {
+      resultados = [...deScopus, ...deScielo].sort((a, b) => b.citas - a.citas);
+    } else if (orden === 'recientes' || orden === 'antiguos') {
+      const signo = orden === 'recientes' ? -1 : 1;
+      resultados = [...deScopus, ...deScielo].sort(
+        (a, b) => signo * ((a.anio ?? 0) - (b.anio ?? 0)),
+      );
+    } else {
+      resultados = [];
+      for (let i = 0; i < Math.max(deScopus.length, deScielo.length); i++) {
+        if (deScopus[i]) resultados.push(deScopus[i]);
+        if (deScielo[i]) resultados.push(deScielo[i]);
+      }
+    }
+
+    // OpenAlex no deja pasar de 10.000 resultados; Scopus, de 200 páginas.
+    const paginasDeScielo = scielo.porPagina
+      ? Math.ceil(Math.min(scielo.total, 10_000) / scielo.porPagina)
+      : 0;
+    return {
+      ...scopus,
+      pagina,
+      total: scopus.total + scielo.total,
+      totalScopus: scopus.total,
+      totalScielo: scielo.total,
+      paginas: Math.min(200, Math.max(scopus.paginas, paginasDeScielo)),
+      desde: (pagina - 1) * (scopus.porPagina + MiScopusPanel.POR_PAGINA_SCIELO) + 1,
+      resultados,
+    };
+  }
+
+  /** Una página de Scopus vacía: cuando SciELO tiene más páginas que Scopus. */
+  private paginaVaciaDeScopus(pagina: number): BusquedaDeScopus {
+    return { total: 0, pagina, paginas: 0, desde: 1, porPagina: 25, conResumenes: false, resultados: [] };
   }
 
   // ── El orden de los resultados ────────────────────────────────────────────
@@ -2003,16 +2185,24 @@ export class MiScopusPanel implements OnInit {
     this.mapeo.set(null);
     this.destinosDelMapeo.set(null);
 
-    const peticion = porSignificado
+    // Las dos a la vez. Pasada la última página de Scopus, si SciELO tiene
+    // más, se sigue solo con SciELO sin volver a preguntar a Elsevier.
+    if (pagina === 1) this.paginasDeScopus = Number.POSITIVE_INFINITY;
+    const deScopus = porSignificado
       ? this.scopus.semantica(ecuacion, pregunta)
-      : this.scopus.buscar(ecuacion, pagina, this.orden() === 'significado' ? 'citas' : this.orden());
+      : pagina > this.paginasDeScopus
+        ? of(this.paginaVaciaDeScopus(pagina))
+        : this.scopus.buscar(ecuacion, pagina, this.orden() === 'significado' ? 'citas' : this.orden());
+    const peticion = forkJoin([deScopus, this.paginaDeScielo(pagina)]);
 
     peticion.subscribe({
-      next: (resultado) => {
+      next: ([soloScopus, deScielo]) => {
+        if (pagina === 1 || soloScopus.paginas > 0) this.paginasDeScopus = soloScopus.paginas;
+        const resultado = this.mezclar(soloScopus, deScielo, pagina);
         this.busqueda.set(resultado);
         this.ecuacionDeLosResultados.set(ecuacion);
         this.buscando.set(false);
-        if (pagina === 1) this.anotarEnHistorial(ecuacion, resultado.total);
+        if (pagina === 1) this.anotarEnHistorial(ecuacion, soloScopus.total);
         if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
         else if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
         this.cargarCuentas();
@@ -2253,7 +2443,23 @@ export class MiScopusPanel implements OnInit {
     this.error.set(null);
     this.parte.set(null);
 
-    this.scopus.importar(eids).subscribe({
+    // Cada uno por su puerta: lo de Scopus por su EID, lo de SciELO por su
+    // identificador de OpenAlex. Uno detrás del otro, para que el total de la
+    // biblioteca del segundo parte ya cuente lo que guardó el primero.
+    const deScielo = eids.filter((eid) => eid.startsWith('scielo:')).map((eid) => eid.slice(7));
+    const deScopus = eids.filter((eid) => !eid.startsWith('scielo:'));
+    const primero: Observable<ImportacionDeScopus | null> = deScopus.length
+      ? this.scopus.importar(deScopus)
+      : of(null);
+    const importacion: Observable<ImportacionDeScopus> = primero.pipe(
+      switchMap((a) =>
+        deScielo.length
+          ? this.scielo.guardar(deScielo).pipe(map(({ resultado: b }) => (a ? sumarPartes(a, b) : b)))
+          : of(a!),
+      ),
+    );
+
+    importacion.subscribe({
       next: (resultado) => {
         this.importando.set(false);
         this.parte.set(resultado);
@@ -2387,4 +2593,17 @@ export class MiScopusPanel implements OnInit {
       error: (fallo: unknown) => this.mostrarError(toApiError(fallo).message),
     });
   }
+}
+
+/** Los partes de Scopus y de SciELO en uno. El total es el del segundo, que ya cuenta los dos. */
+function sumarPartes(a: ImportacionDeScopus, b: ImportacionDeScopus): ImportacionDeScopus {
+  return {
+    pedidas: a.pedidas + b.pedidas,
+    guardadas: a.guardadas + b.guardadas,
+    repetidas: a.repetidas + b.repetidas,
+    noEncontradas: a.noEncontradas + b.noEncontradas,
+    sinResumen: a.sinResumen + b.sinResumen,
+    total: b.total,
+    sinResumenEnTotal: b.sinResumenEnTotal,
+  };
 }

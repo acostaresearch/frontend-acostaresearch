@@ -1434,3 +1434,37 @@
   font-size: 0.85em;
   word-break: break-word;
 }
+
+/* ── SciELO en la misma lista ─────────────────────────────────────────────────
+   El interruptor junto al título, y la etiqueta de la base en cada fila: en la
+   lista mezclada hay que saber de un vistazo de dónde viene cada artículo. */
+.sc-incluir-scielo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+
+.sc-base {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+}
+
+.sc-base[data-base='scielo'] {
+  background: var(--color-aviso-suave);
+  color: var(--color-aviso);
+}
+
+.sc-sin-scielo {
+  display: block;
+  color: var(--color-texto-tenue);
+}

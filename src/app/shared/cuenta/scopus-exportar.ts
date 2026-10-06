@@ -114,9 +114,15 @@ const COLUMNAS: readonly { titulo: string; valor: (r: ResultadoDeScopus) => stri
   { titulo: 'Citas', valor: (r) => String(r.citas) },
   { titulo: 'DOI', valor: (r) => r.doi ?? '' },
   { titulo: 'Acceso abierto', valor: (r) => (r.accesoAbierto ? 'Sí' : 'No') },
-  { titulo: 'EID', valor: (r) => r.eid },
-  { titulo: 'Enlace en Scopus', valor: (r) => r.enlace ?? '' },
+  { titulo: 'EID', valor: (r) => (esDeScielo(r) ? '' : r.eid) },
+  { titulo: 'Enlace', valor: (r) => r.enlace ?? '' },
+  { titulo: 'Base', valor: (r) => (esDeScielo(r) ? 'SciELO' : 'Scopus') },
 ];
+
+/** Lo que entró en la lista desde SciELO: no tiene EID de Scopus. */
+function esDeScielo(r: ResultadoDeScopus): boolean {
+  return r.base === 'scielo';
+}
 
 /**
  * Una celda entrecomillada SIEMPRE.
@@ -183,8 +189,8 @@ export function comoRis(resultados: readonly ResultadoDeScopus[]): string {
     if (r.enlace) lineas.push(['UR', r.enlace]);
     // El identificador de Scopus, en la nota: es lo que permite volver al
     // registro exacto cuando el DOI falta o la editorial lo cambió.
-    lineas.push(['N1', `EID: ${r.eid}`]);
-    lineas.push(['DB', 'Scopus']);
+    if (!esDeScielo(r)) lineas.push(['N1', `EID: ${r.eid}`]);
+    lineas.push(['DB', esDeScielo(r) ? 'SciELO' : 'Scopus']);
     lineas.push(['ER', '']);
 
     return lineas.map(([etiqueta, valor]) => `${etiqueta}  - ${sinSaltos(valor)}`).join('\r\n');
@@ -268,7 +274,7 @@ export function comoBibtex(resultados: readonly ResultadoDeScopus[]): string {
       if (desde) campos.push(['pages', hasta ? `${valorBib(desde)}--${valorBib(hasta)}` : valorBib(desde)]);
       if (r.doi) campos.push(['doi', valorBib(r.doi)]);
       if (r.enlace) campos.push(['url', valorBib(r.enlace)]);
-      campos.push(['note', `Scopus EID: ${valorBib(r.eid)}`]);
+      if (!esDeScielo(r)) campos.push(['note', `Scopus EID: ${valorBib(r.eid)}`]);
 
       const cuerpo = campos.map(([nombre, valor]) => `  ${nombre} = {${valor}}`).join(',\n');
       return `@${tipoBib(r.tipo)}{${claveDe(r, usadas)},\n${cuerpo}\n}`;

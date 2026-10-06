@@ -93,6 +93,16 @@ export interface ResultadoDeScopus {
    * un servidor anterior a esto: la vista trata los dos casos igual.
    */
   enlaceAbierto?: EnlaceAbierto | null;
+  /**
+   * De qué base viene, en la lista mezclada con SciELO. Sin esto, de Scopus.
+   * Los de SciELO llevan `eid = 'scielo:W…'` (su identificador de OpenAlex):
+   * no tienen EID y al guardarlos van por `ScieloService`.
+   */
+  base?: 'scopus' | 'scielo';
+  /** De Scopus, y SciELO también lo tiene (mismo DOI): sale una sola vez. */
+  tambienEnScielo?: boolean;
+  /** El resumen, cuando ya llega con el resultado (los de SciELO). */
+  resumen?: string | null;
 }
 
 /** Cómo se ordenan los resultados. «citas» es el de siempre: más citados primero. */
@@ -177,6 +187,12 @@ export interface BusquedaDeScopus {
   porRelevancia?: boolean;
   conResumenes: boolean;
   resultados: ResultadoDeScopus[];
+  /**
+   * En la lista mezclada, cuántos hay en cada base. `total` es la suma, que
+   * cuenta dos veces lo que está en las dos.
+   */
+  totalScopus?: number;
+  totalScielo?: number;
 }
 
 /** Un proyecto al que puede ir el mapeo bibliométrico. */

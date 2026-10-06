@@ -1,0 +1,283 @@
+:host {
+  display: block;
+}
+
+.al {
+  margin-top: 1.5rem;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background: var(--color-superficie);
+}
+
+.al-cabecera {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.al-plegar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.al-flecha {
+  color: var(--color-texto-suave);
+}
+
+.al-titulo {
+  font-weight: 600;
+}
+
+.al-fuente {
+  font-size: 0.8rem;
+  color: var(--color-texto-tenue);
+}
+
+.al-total {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.al-cuerpo {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.al-explica {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.al-consulta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.al-consulta-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-texto-suave);
+}
+
+.al-consulta-texto code {
+  font-size: 0.8rem;
+  color: var(--color-texto);
+}
+
+.al-etiqueta {
+  font-weight: 600;
+}
+
+.al-consulta-editar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.al-consulta-editar textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font: 0.85rem/1.4 ui-monospace, monospace;
+  resize: vertical;
+}
+
+.al-consulta-botones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.al-tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.al-chip {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-texto-suave);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+.al-chip-activo {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+}
+
+.al-chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.al-vacio,
+.al-aviso {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+}
+
+.al-aviso {
+  color: var(--color-aviso);
+}
+
+.al-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.al-cargando {
+  opacity: 0.55;
+}
+
+.al-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-borde);
+}
+
+.al-item:first-child {
+  border-top: 0;
+}
+
+.al-item-marcado {
+  background: var(--color-primario-suave);
+}
+
+.al-marca {
+  flex: none;
+  margin-top: 0.2rem;
+}
+
+.al-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.al-meta {
+  font-size: 0.75rem;
+  color: var(--color-texto-tenue);
+}
+
+.al-tipo {
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.al-tuya {
+  color: var(--color-exito);
+}
+
+.al-titulo-item {
+  font-weight: 600;
+  color: var(--color-primario);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+a.al-titulo-item:hover {
+  text-decoration: underline;
+}
+
+.al-autores,
+.al-procedencia,
+.al-asesor {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.al-asesor {
+  color: var(--color-texto-tenue);
+}
+
+.al-resumen {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-texto);
+}
+
+.al-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-borde);
+}
+
+.al-paginas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.al-boton {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.al-boton-primario {
+  border-color: var(--color-primario);
+  background: var(--color-primario);
+  color: var(--color-sobre-relleno);
+}
+
+.al-boton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.al-enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primario);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.al-ver-resumen {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
