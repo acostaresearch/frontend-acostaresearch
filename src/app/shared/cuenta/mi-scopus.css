@@ -1468,3 +1468,8 @@
   display: block;
   color: var(--color-texto-tenue);
 }
+
+/* La búsqueda vacía, rescatada: la palabra que no existe y lo que hizo el copiloto. */
+.sc-rescate {
+  line-height: 1.6;
+}

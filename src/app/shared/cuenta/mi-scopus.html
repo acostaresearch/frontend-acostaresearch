@@ -809,7 +809,25 @@
               }
             </div>
           } @else if (busqueda(); as lista) {
-            @if (lista.total === 0) {
+            @if (lista.total === 0 && rescate(); as r) {
+              <!-- La búsqueda vacía, rescatada. Ver `rescatar`. -->
+              <p class="scopus-aviso sc-rescate">
+                @if (r.palabras.length > 0) {
+                  <strong>
+                    {{ r.palabras.length === 1 ? 'La palabra' : 'Las palabras' }}
+                    «{{ r.palabras.join('», «') }}»
+                    {{ r.palabras.length === 1 ? 'no aparece' : 'no aparecen' }} en ningún artículo.
+                  </strong>
+                  ¿Está bien escrita? Basta una palabra así para que no salga nada.
+                }
+                @if (r.buscando) {
+                  <span class="sc-girando" aria-hidden="true"></span>
+                  No hubo resultados con tus palabras exactas: el copiloto está corrigiendo y
+                  ampliando tu búsqueda…
+                }
+              </p>
+            }
+            @if (lista.total === 0 && !rescate()?.buscando) {
               <p class="scopus-aviso">
                 {{ lista.totalScielo !== undefined ? 'Ni Scopus ni SciELO encontraron' : 'Scopus no encontró' }}
                 nada con esa búsqueda. Suele ser por afinar de más: quita un
@@ -997,6 +1015,17 @@
                 }
               </section>
 
+              @if (rescate(); as r) {
+                @if (r.rehecha) {
+                  <p class="scopus-aviso sc-rescate">
+                    No había nada con «{{ r.original }}». Te mostramos lo que encontró el copiloto
+                    al corregir y ampliar tu búsqueda, en inglés para Scopus y en español para SciELO.
+                    @if (r.palabras.length > 0) {
+                      Revisa «{{ r.palabras.join('», «') }}»: no aparece en ningún artículo.
+                    }
+                  </p>
+                }
+              }
               <div class="sc-resultados-cabecera">
                 <p class="sc-total">
                   @if (lista.totalScielo !== undefined) {

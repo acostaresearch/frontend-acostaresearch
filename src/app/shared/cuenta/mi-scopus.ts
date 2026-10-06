@@ -290,6 +290,13 @@ export class MiScopusPanel implements OnInit {
   readonly sinonimos = signal<Readonly<Record<string, readonly string[]>>>({});
 
   /**
+   * Los términos en español de cada concepto, que propone el copiloto. Solo
+   * van a SciELO: en español el buscador no junta «minería» con «minero», y
+   * sin ellos una búsqueda en inglés casi no encuentra nada allí.
+   */
+  readonly espanol = signal<Readonly<Record<string, readonly string[]>>>({});
+
+  /**
    * Lo escrito, partido por comas: cada trozo es un concepto de la búsqueda.
    *
    * «use of AI, critical thinking, college students» son TRES ideas que tienen
@@ -406,6 +413,8 @@ export class MiScopusPanel implements OnInit {
     tema: string;
     conceptos: number;
     sinonimos: number;
+    /** Cuántos términos en español añadió, para SciELO. */
+    espanol?: number;
     nota: string | null;
   } | null>(null);
 
@@ -420,6 +429,9 @@ export class MiScopusPanel implements OnInit {
         ? `Añadí ${generacion.sinonimos} sinónimos en inglés, los que usa de verdad la literatura.`
         : 'No hacían falta sinónimos: los términos ya son los que usa la literatura.',
     ];
+    if (generacion.espanol) {
+      pasos.push(`Añadí ${generacion.espanol} términos en español para buscar también en SciELO.`);
+    }
     if (generacion.nota) pasos.push(generacion.nota);
     pasos.push('Armé la búsqueda: cada concepto con sus sinónimos (O), y todos los conceptos a la vez (Y).');
     return pasos;
@@ -462,18 +474,7 @@ export class MiScopusPanel implements OnInit {
           this.temasSugeridos.set({ nota, temas: sugerencias ?? [] });
           return;
         }
-        this.campo.set('TITLE-ABS-KEY');
-        this.texto.set(conceptos.map((c) => c.nombre).join(', '));
-        this.sinonimos.set(
-          Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
-        );
-        this.notaIa.set(nota);
-        this.ultimaGeneracion.set({
-          tema,
-          conceptos: conceptos.length,
-          sinonimos: conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
-          nota,
-        });
+        this.aplicarConceptos(tema, conceptos, nota);
         // Los pasos y los conceptos se quedan plegados: quien pregunta al
         // copiloto viene a por la respuesta, no a revisar la ecuación. Y se
         // busca en el acto, por significado, con el resumen detrás; y es una
@@ -487,6 +488,82 @@ export class MiScopusPanel implements OnInit {
         this.generando.set(false);
         this.errorIa.set(toApiError(fallo).message);
       },
+    });
+  }
+
+  /** Lo que propuso el copiloto, puesto en el buscador. */
+  private aplicarConceptos(
+    tema: string,
+    conceptos: { nombre: string; sinonimos: string[]; espanol?: string[] }[],
+    nota: string | null,
+  ): void {
+    this.campo.set('TITLE-ABS-KEY');
+    this.texto.set(conceptos.map((c) => c.nombre).join(', '));
+    this.sinonimos.set(
+      Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.sinonimos])),
+    );
+    this.espanol.set(
+      Object.fromEntries(conceptos.map((c) => [c.nombre.toLowerCase(), c.espanol ?? []])),
+    );
+    this.notaIa.set(nota);
+    this.ultimaGeneracion.set({
+      tema,
+      conceptos: conceptos.length,
+      sinonimos: conceptos.reduce((suma, c) => suma + c.sinonimos.length, 0),
+      espanol: conceptos.reduce((suma, c) => suma + (c.espanol?.length ?? 0), 0),
+      nota,
+    });
+  }
+
+  // ── Cuando no sale nada ───────────────────────────────────────────────────
+
+  /**
+   * La búsqueda vacía, rescatada: qué escribió, qué palabras no existen en
+   * ningún artículo, y si el copiloto la rehízo.
+   *
+   * Casi siempre es una errata («minbero») o una frase en español buscada en
+   * Scopus. Una pantalla vacía no explica ninguna de las dos cosas, y el
+   * tesista concluía que «no hay nada sobre su tema».
+   */
+  readonly rescate = signal<{
+    original: string;
+    palabras: string[];
+    rehecha: boolean;
+    buscando: boolean;
+  } | null>(null);
+
+  /** La próxima búsqueda es la del rescate: no se vuelve a rescatar ni se borra el aviso. */
+  private enRescate = false;
+
+  private rescatar(): void {
+    const original = this.texto().trim();
+    if (!original) return;
+    this.rescate.set({ original, palabras: [], rehecha: false, buscando: true });
+
+    // Las dos cosas a la vez: la palabra culpable y la búsqueda rehecha.
+    this.scielo.palabrasSinUso(original).subscribe({
+      next: (palabras) => this.rescate.update((r) => (r ? { ...r, palabras } : r)),
+      error: () => undefined,
+    });
+
+    // Si ya venía del copiloto con este mismo tema, no hay nada que rehacer.
+    if (original.length < 8 || this.ultimaGeneracion()?.tema === original) {
+      this.rescate.update((r) => (r ? { ...r, buscando: false } : r));
+      return;
+    }
+
+    this.scopus.generarConsulta(original).subscribe({
+      next: ({ conceptos, nota }) => {
+        if (conceptos.length === 0) {
+          this.rescate.update((r) => (r ? { ...r, buscando: false } : r));
+          return;
+        }
+        this.aplicarConceptos(original, conceptos, nota);
+        this.rescate.update((r) => (r ? { ...r, rehecha: true, buscando: false } : r));
+        this.enRescate = true;
+        this.buscar(1);
+      },
+      error: () => this.rescate.update((r) => (r ? { ...r, buscando: false } : r)),
     });
   }
 
@@ -666,7 +743,6 @@ export class MiScopusPanel implements OnInit {
    */
   readonly motivoSinScielo = computed<string | null>(() => {
     if (!this.conScielo()) return null;
-    if (this.orden() === 'significado') return 'El orden por significado es solo de Scopus.';
     if (this.conceptosParaContar().length === 0) {
       return 'SciELO entra solo con la búsqueda normal en título, resumen y palabras clave.';
     }
@@ -694,12 +770,24 @@ export class MiScopusPanel implements OnInit {
     const orden = this.orden();
     const desde = this.anio(this.anioDesde());
     const hasta = this.anio(this.anioHasta());
+    // Como Scopus: una sola idea sin comas ni sinónimos se busca palabra por
+    // palabra, no como frase exacta. «Artificial intelligence in the mining
+    // sector» entre comillas daba 0 en SciELO; suelta, lo que hay.
+    // Con lo que propuso el copiloto en español, cada concepto lleva además
+    // sus términos en español: es lo que de verdad encuentra cosas en SciELO.
+    const espanol = this.espanol();
+    const conceptos = this.conceptosParaContar().map((c) => ({
+      nombre: c.nombre,
+      sinonimos: [...c.sinonimos, ...(espanol[c.nombre.toLowerCase()] ?? [])],
+    }));
+    const porConceptos = this.enConceptos() || conceptos.some((c) => c.sinonimos.length > 0);
     return this.scielo
       .buscar({
-        conceptos: this.conceptosParaContar(),
+        ...(porConceptos ? { conceptos } : { tema: conceptos.map((c) => c.nombre).join(' ') }),
         pagina,
         porPagina: MiScopusPanel.POR_PAGINA_SCIELO,
-        orden: orden === 'significado' ? 'citas' : orden,
+        // Por significado es de Scopus: lo de SciELO va por su relevancia, intercalado.
+        orden: orden === 'significado' ? 'relevancia' : orden,
         ...(desde ? { desdeAnio: desde } : {}),
         ...(hasta ? { hastaAnio: hasta } : {}),
       })
@@ -2171,6 +2259,9 @@ export class MiScopusPanel implements OnInit {
       this.iaAbierta() && generacion !== null && pagina === 1 && !(hiloGuardado?.length);
     const pregunta = this.preguntaSemantica();
     const porSignificado = this.orden() === 'significado' && Boolean(pregunta);
+    const esRescate = this.enRescate;
+    this.enRescate = false;
+    if (pagina === 1 && !esRescate) this.rescate.set(null);
     this.hilo.set([]);
     this.errorResumen.set(null);
     this.referenciaResaltada.set(null);
@@ -2203,6 +2294,9 @@ export class MiScopusPanel implements OnInit {
         this.ecuacionDeLosResultados.set(ecuacion);
         this.buscando.set(false);
         if (pagina === 1) this.anotarEnHistorial(ecuacion, soloScopus.total);
+        if (pagina === 1 && resultado.total === 0 && !esRescate && this.modo() === 'normal') {
+          this.rescatar();
+        }
         if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
         else if (resumirAlLlegar && resultado.total > 0) this.resumir(generacion!.tema);
         this.cargarCuentas();
@@ -2272,6 +2366,8 @@ export class MiScopusPanel implements OnInit {
     this.conversacionId = null;
     this.texto.set('');
     this.sinonimos.set({});
+    this.espanol.set({});
+    this.rescate.set(null);
     this.notaIa.set(null);
     this.ultimaGeneracion.set(null);
     this.temaIa.set('');

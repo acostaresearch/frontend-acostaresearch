@@ -74,6 +74,16 @@ export class ScieloService {
       .pipe(map((res) => ({ pagina: res.data, mensaje: res.message })));
   }
 
+  /** Las palabras de una búsqueda vacía que no están en ningún artículo. */
+  palabrasSinUso(texto: string): Observable<string[]> {
+    return this.http
+      .post<ApiResponse<{ palabras: string[] }>>(
+        `${environment.apiUrl}/mis-fuentes/palabras-sin-uso`,
+        { texto },
+      )
+      .pipe(map((res) => res.data.palabras));
+  }
+
   guardar(ids: string[]): Observable<{ resultado: GuardadoDeScielo; mensaje?: string }> {
     return this.http
       .post<ApiResponse<GuardadoDeScielo>>(this.base, { ids })

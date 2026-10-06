@@ -136,7 +136,11 @@ export interface BusquedaGuardada extends BusquedaGuardadaResumida {
 
 /** Lo que propone el generador con IA: conceptos en inglés con sus sinónimos. */
 export interface ConsultaGenerada {
-  conceptos: { nombre: string; sinonimos: string[] }[];
+  /**
+   * `espanol`: los mismos conceptos en español, con sus variantes, para la
+   * mitad SciELO de la lista. No entran en la ecuación de Scopus.
+   */
+  conceptos: { nombre: string; sinonimos: string[]; espanol?: string[] }[];
   /** Una frase para el tesista: qué se dejó fuera y por qué. */
   nota: string | null;
   /**
