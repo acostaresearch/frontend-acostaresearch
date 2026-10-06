@@ -28,8 +28,8 @@
 
         @if (!subioReporte()) {
           <p class="nota">
-            ¿Lo quieres humanizar o bajar la similitud? Sube aquí también el reporte de Turnitin en
-            PDF, el de IA o el de similitud: así se reescribe solo lo que Turnitin marcó.
+            ¿Quieres bajar la similitud? Sube aquí también el reporte de similitud de Turnitin en
+            PDF: así se reescribe solo lo que Turnitin marcó. Para humanizar no hace falta ningún reporte.
           </p>
         } @else {
           <p class="nota">¿Te equivocaste de archivo? Sube el correcto aquí mismo.</p>
@@ -53,9 +53,10 @@
           tocan.
         </p>
         <p>
-          <strong>Para humanizarlo o bajar la similitud</strong>, sube también el reporte de Turnitin en
-          PDF, el de IA o el de similitud: se reescribe solo lo que Turnitin marcó, de una vez. Puedes
-          elegir los archivos juntos. Si tu tesis ya está guardada en tu proyecto, basta con el reporte.
+          <strong>Para bajar la similitud</strong>, sube también el reporte de similitud de Turnitin en
+          PDF: se reescribe solo lo que Turnitin marcó. Puedes elegir los archivos juntos. Si tu tesis ya
+          está guardada en tu proyecto, basta con el reporte. <strong>Para humanizarlo</strong> no hace
+          falta ningún reporte: tu asistente te lo enseña por bloques para que los apruebes.
         </p>
 
         @if (actual(); as doc) {
@@ -64,18 +65,9 @@
             subes otro, lo reemplaza; se conservan las citas y lo humanizado de los párrafos que
             sigan igual.
           </p>
-          @if (doc.reporteIa; as rep) {
-            <p class="nota">
-              También tienes subido su reporte de IA de Turnitin ({{ rep.porcentaje ?? 'menos de 20' }} %).
-              @if (rep.leyendo) {
-                Trae tu tesis como imagen y todavía la estamos leyendo.
-              }
-              Si Turnitin te dio uno nuevo, súbelo y reemplaza al anterior.
-            </p>
-          }
           @if (doc.reporteSimilitud; as rep) {
             <p class="nota">
-              Y su reporte de similitud ({{ rep.porcentaje ?? '?' }} %).
+              También tienes subido su reporte de similitud ({{ rep.porcentaje ?? '?' }} %).
               @if (rep.leyendo) {
                 Turnitin trae tu tesis como imagen y todavía la estamos leyendo: en unos minutos se sabrá
                 qué párrafos marcó.
@@ -104,7 +96,7 @@
             <span class="zona-titulo">Subiendo y leyendo {{ nombres() }}…</span>
           } @else {
             <span class="zona-titulo"><strong>Elige tus archivos</strong> o arrástralos aquí</span>
-            <span class="nota">Word (.docx) · reportes de Turnitin (.pdf) · hasta 40 MB</span>
+            <span class="nota">Word (.docx) · reporte de similitud de Turnitin (.pdf) · hasta 40 MB</span>
           }
         </label>
 
@@ -112,8 +104,8 @@
 
         <p class="nota">
           Tu tesis tiene que ir en Word: si la tienes en PDF o en .doc antiguo, ábrela en Word y
-          guárdala como «Documento de Word (.docx)». Los únicos PDF que se suben aquí son los reportes
-          de Turnitin.
+          guárdala como «Documento de Word (.docx)». El único PDF que se sube aquí es el reporte de
+          similitud de Turnitin.
         </p>
       }
     }

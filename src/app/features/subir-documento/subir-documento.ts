@@ -103,7 +103,7 @@ export class SubirDocumento implements OnInit {
           return;
         }
         this.mensajes.set(resultados.map((r) => r.texto).filter(Boolean));
-        this.subioReporte.update((antes) => antes || bien.some((r) => esPdf(r.archivo)) || Boolean(this.actual()?.reporteIa));
+        this.subioReporte.update((antes) => antes || bien.some((r) => esPdf(r.archivo)) || Boolean(this.actual()?.reporteSimilitud));
         this.paso.set('subido');
       });
   }

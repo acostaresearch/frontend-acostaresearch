@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 import { DocumentoSubido } from './proyecto.service';
 
-/** El reporte de IA de Turnitin que subió junto al Word. */
+/** El reporte de similitud de Turnitin que subió junto al Word. */
 export interface ReporteIaSubido {
   nombre: string;
   subidoAt: string;
@@ -19,7 +19,7 @@ export interface ReporteIaSubido {
 /** Si el enlace que dio Claude sigue valiendo, y qué documento hay ahora. */
 export interface EnlaceDeDocumento {
   caduca: string;
-  documento: (DocumentoSubido & { reporteIa?: ReporteIaSubido | null; reporteSimilitud?: ReporteIaSubido | null }) | null;
+  documento: (DocumentoSubido & { reporteSimilitud?: ReporteIaSubido | null }) | null;
 }
 
 export interface DocumentoRecibido {
@@ -31,8 +31,8 @@ export interface DocumentoRecibido {
  * La subida del documento del tesista desde el enlace que da Claude al citar o
  * humanizar. Sin sesión, como la del formato: el token del enlace es la llave.
  *
- * El mismo enlace recibe el Word y el reporte de IA de Turnitin en PDF: el
- * servidor distingue uno de otro por su contenido.
+ * El mismo enlace recibe el Word y el reporte de similitud de Turnitin en PDF:
+ * el servidor distingue uno de otro por su contenido. El de IA ya no se acepta.
  */
 @Injectable({ providedIn: 'root' })
 export class DocumentoEnlaceService {
