@@ -67,13 +67,20 @@
           @if (doc.reporteIa; as rep) {
             <p class="nota">
               También tienes subido su reporte de IA de Turnitin ({{ rep.porcentaje ?? 'menos de 20' }} %).
+              @if (rep.leyendo) {
+                Trae tu tesis como imagen y todavía la estamos leyendo.
+              }
               Si Turnitin te dio uno nuevo, súbelo y reemplaza al anterior.
             </p>
           }
           @if (doc.reporteSimilitud; as rep) {
             <p class="nota">
-              Y su reporte de similitud ({{ rep.porcentaje ?? '?' }} %). Si Turnitin te dio uno nuevo,
-              súbelo y reemplaza al anterior.
+              Y su reporte de similitud ({{ rep.porcentaje ?? '?' }} %).
+              @if (rep.leyendo) {
+                Turnitin trae tu tesis como imagen y todavía la estamos leyendo: en unos minutos se sabrá
+                qué párrafos marcó.
+              }
+              Si Turnitin te dio uno nuevo, súbelo y reemplaza al anterior.
             </p>
           }
         }

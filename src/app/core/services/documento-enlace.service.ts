@@ -12,6 +12,8 @@ export interface ReporteIaSubido {
   subidoAt: string;
   /** Null cuando Turnitin da «*%»: menos del 20 %. */
   porcentaje: number | null;
+  /** El reporte clásico trae la tesis como imagen: el servidor la lee un rato después de subirlo. */
+  leyendo?: boolean;
 }
 
 /** Si el enlace que dio Claude sigue valiendo, y qué documento hay ahora. */
