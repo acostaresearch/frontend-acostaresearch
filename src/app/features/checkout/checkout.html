@@ -1052,22 +1052,43 @@
                       Hotmart, escríbelo en su página de pago.
                     </p>
                   }
+                  @if (enPago().length > 1 && !hotmartAbierto()) {
+                    <p class="pasarela-nota">
+                      Hotmart cobra un producto por pago: harás {{ enPago().length }} pagos, uno
+                      tras otro. El descuento por llevar varios solo se aplica con Yape o Plin.
+                    </p>
+                  }
                   @if (hotmartAbierto()) {
                     <p class="pasarela-nota" role="status">
-                      Te abrimos Hotmart en otra pestaña. Cuando termines de pagar, tu acceso se
-                      activa solo en esta cuenta y te llega un correo.
+                      @if (hotmartSiguiente(); as siguiente) {
+                        Te abrimos Hotmart en otra pestaña. Cuando termines ese pago, vuelve aquí
+                        para pagar el siguiente: <strong>{{ siguiente.name }}</strong>.
+                      } @else {
+                        Te abrimos Hotmart en otra pestaña. Cuando termines de pagar, tu acceso se
+                        activa solo en esta cuenta y te llega un correo.
+                      }
+                    </p>
+                  }
+                  @if (enPago().length > 1 && hotmartSiguiente(); as siguiente) {
+                    <p class="hotmart-paso">
+                      Pago {{ hotmartPaso() }} de {{ enPago().length }} ·
+                      <strong>{{ siguiente.name }}</strong>
                     </p>
                   }
                   <button
                     type="button"
                     class="boton oro grande bloque hotmart-boton"
                     [disabled]="abriendoHotmart()"
-                    (click)="pagarConHotmart()"
+                    (click)="hotmartSiguiente() ? pagarConHotmart() : pagarConHotmart(hotmartUltimo())"
                   >
                     @if (abriendoHotmart()) {
                       Abriendo Hotmart…
                     } @else {
-                      {{ hotmartAbierto() ? 'Volver a abrir' : 'Pagar ' + total() + ' con' }}
+                      @if (hotmartSiguiente(); as siguiente) {
+                        {{ 'Pagar ' + precioHotmart(siguiente) + ' con' }}
+                      } @else {
+                        Volver a abrir
+                      }
                       <span class="hotmart-logo"><img src="/iconos/hotmart.png" alt="Hotmart" /></span>
                     }
                   </button>

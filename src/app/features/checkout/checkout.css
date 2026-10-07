@@ -750,6 +750,12 @@ h1 {
   margin-bottom: 12px;
 }
 
+/* «Pago 1 de 2 · Método de Tesis»: cuál toca cuando el carrito lleva varios. */
+.hotmart-paso {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
 .boton.hotmart-boton {
   display: flex;
   gap: 10px;

@@ -299,8 +299,9 @@ export class Checkout implements OnInit {
   readonly ofreceWU = computed(() => Boolean(this.datosWU()) && this.totalDolares() !== null);
 
   /**
-   * Hotmart: solo para un producto a la vez y si ese producto tiene su página
-   * de pago en Hotmart. Un carrito de varios no se puede pagar allí.
+   * Hotmart: si todos los productos del carrito tienen su página de pago allí.
+   * Hotmart cobra un producto por pago, así que con varios se pagan uno tras
+   * otro (ver `pagarConHotmart`).
    */
   readonly pasarelaHotmart = computed(
     () => this.pasarelas().find((p) => p.code === 'HOTMART') ?? null,
@@ -312,8 +313,8 @@ export class Checkout implements OnInit {
     return (
       Boolean(pasarela) &&
       this.auth.isAuthenticated() &&
-      enPago.length === 1 &&
-      Boolean(pasarela?.planes?.includes(enPago[0].code))
+      enPago.length > 0 &&
+      enPago.every((plan) => pasarela?.planes?.includes(plan.code))
     );
   });
 
@@ -1570,8 +1571,31 @@ export class Checkout implements OnInit {
 
   readonly abriendoHotmart = signal(false);
   readonly errorHotmart = signal<string | null>(null);
-  /** Ya se abrió la pestaña de Hotmart: esta se queda con el aviso. */
-  readonly hotmartAbierto = signal(false);
+  /** Los productos cuya pestaña de Hotmart ya se abrió, en orden. */
+  readonly hotmartAbiertos = signal<readonly string[]>([]);
+  readonly hotmartAbierto = computed(() => this.hotmartAbiertos().length > 0);
+
+  /** El que toca pagar ahora: el primero del carrito que aún no se abrió. */
+  readonly hotmartSiguiente = computed(
+    () => this.enPago().find((plan) => !this.hotmartAbiertos().includes(plan.code)) ?? null,
+  );
+
+  /** «Pago 2 de 3»: el número del que toca pagar. */
+  readonly hotmartPaso = computed(() => {
+    const siguiente = this.hotmartSiguiente();
+    return siguiente ? this.enPago().indexOf(siguiente) + 1 : this.enPago().length;
+  });
+
+  /** El último que se abrió, para volver a abrirlo si cerró la pestaña. */
+  readonly hotmartUltimo = computed(() => {
+    const codigo = this.hotmartAbiertos().at(-1);
+    return this.enPago().find((plan) => plan.code === codigo) ?? null;
+  });
+
+  /** Lo que cobra Hotmart por un producto: su precio de lista, sin nuestros códigos. */
+  precioHotmart(plan: Plan): string {
+    return soles(plan.priceCents);
+  }
 
   /**
    * Abre la página de pago de Hotmart en otra pestaña.
@@ -1583,9 +1607,11 @@ export class Checkout implements OnInit {
    * La pestaña se abre en blanco ANTES de esperar al servidor: abierta después
    * del `await` ya no cuenta como respuesta al clic y el navegador la bloquea.
    * Si aun así la bloquea, se va a Hotmart en esta misma pestaña.
+   *
+   * Con varios productos se paga uno cada vez, en el orden del carrito: cada
+   * clic abre el siguiente. Sin `plan`, el que toca; con él, se reabre ese.
    */
-  async pagarConHotmart(): Promise<void> {
-    const plan = this.enPago()[0];
+  async pagarConHotmart(plan: Plan | null = this.hotmartSiguiente()): Promise<void> {
     if (!plan || !this.ofreceHotmart() || this.abriendoHotmart()) return;
 
     this.errorHotmart.set(null);
@@ -1601,7 +1627,9 @@ export class Checkout implements OnInit {
       if (pestana) {
         pestana.opener = null;
         pestana.location.href = orden.approveUrl;
-        this.hotmartAbierto.set(true);
+        this.hotmartAbiertos.update((abiertos) =>
+          abiertos.includes(plan.code) ? abiertos : [...abiertos, plan.code],
+        );
       } else {
         window.location.href = orden.approveUrl;
       }
