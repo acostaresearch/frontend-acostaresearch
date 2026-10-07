@@ -605,6 +605,50 @@
   width: auto;
 }
 
+/* Las pestañas Scopus y SciELO / ALICIA, encima de los resultados. */
+.sc-pestanas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--color-borde);
+  overflow-x: auto;
+}
+
+.sc-pestana {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.sc-pestana:hover {
+  color: var(--color-texto);
+}
+
+.sc-pestana.activa {
+  color: var(--color-primario);
+  border-bottom-color: var(--color-primario);
+}
+
+.sc-pestana-cifra {
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+}
+
 /* Exportar: reaprovecha el desplegable del orden, pero sin su `margin-left:
    auto` —con dos en la misma fila, el hueco libre se repartía entre los dos y
    el orden se despegaba del total—. */

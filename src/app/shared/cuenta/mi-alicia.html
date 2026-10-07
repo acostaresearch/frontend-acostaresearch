@@ -1,196 +1,224 @@
 @if (ecuacion()) {
   <section class="al" aria-labelledby="al-titulo">
     <header class="al-cabecera">
-      <button
-        type="button"
-        class="al-plegar"
-        [attr.aria-expanded]="abierto()"
-        aria-controls="al-cuerpo"
-        (click)="abierto.set(!abierto())"
-      >
-        <span class="al-flecha" aria-hidden="true">{{ abierto() ? '▾' : '▸' }}</span>
-        <span id="al-titulo" class="al-titulo">Tesis y revistas peruanas</span>
-        <span class="al-fuente">ALICIA · CONCYTEC</span>
-        @if (busqueda(); as b) {
-          <span class="al-total">{{ b.total | number }} {{ b.total === 1 ? 'resultado' : 'resultados' }}</span>
-        } @else if (buscando()) {
-          <span class="al-total">Buscando…</span>
-        }
-      </button>
+      <h3 id="al-titulo" class="al-titulo">Tesis y revistas peruanas</h3>
+      <span class="al-fuente">ALICIA · CONCYTEC</span>
+      @if (busqueda(); as b) {
+        <span class="al-total"
+          >{{ b.total | number }} {{ b.total === 1 ? 'resultado' : 'resultados' }}</span
+        >
+      } @else if (buscando()) {
+        <span class="al-total">Buscando…</span>
+      }
     </header>
 
-    @if (abierto()) {
-      <div id="al-cuerpo" class="al-cuerpo">
-        <p class="al-explica">
-          Tu misma búsqueda, en los repositorios de las universidades del Perú y en RENATI: sirven como
-          antecedentes nacionales.
-        </p>
+    <div class="al-cuerpo">
+      <p class="al-explica">
+        Tu misma búsqueda, en los repositorios de las universidades del Perú y en RENATI: sirven
+        como antecedentes nacionales.
+      </p>
 
-        @if (busqueda(); as b) {
-          <div class="al-consulta">
-            @if (editando()) {
-              <label class="al-consulta-editar">
-                <span>Buscar en ALICIA con:</span>
-                <textarea
-                  rows="2"
-                  [value]="borrador()"
-                  (input)="borrador.set($any($event.target).value)"
-                  (keydown.enter)="$event.preventDefault(); aplicarConsulta()"
-                ></textarea>
-              </label>
-              <div class="al-consulta-botones">
-                <button type="button" class="al-boton al-boton-primario" (click)="aplicarConsulta()">Buscar</button>
-                <button type="button" class="al-boton" (click)="editando.set(false)">Cancelar</button>
-              </div>
-            } @else {
-              <span class="al-consulta-texto">
-                <span class="al-etiqueta">Se buscó:</span> <code>{{ b.consulta || '—' }}</code>
-                @if (b.desde || b.hasta) {
-                  <span class="al-anios">
-                    · {{ b.desde ?? '…' }}–{{ b.hasta ?? 'hoy' }}
-                  </span>
-                }
-              </span>
-              <button type="button" class="al-enlace" (click)="empezarAEditar()">Cambiar palabras</button>
-              @if (consultaPropia()) {
-                <button type="button" class="al-enlace" (click)="deshacerConsulta()">Volver a la de Scopus</button>
+      @if (busqueda(); as b) {
+        <div class="al-consulta">
+          @if (editando()) {
+            <label class="al-consulta-editar">
+              <span>Buscar en ALICIA con:</span>
+              <textarea
+                rows="2"
+                [value]="borrador()"
+                (input)="borrador.set($any($event.target).value)"
+                (keydown.enter)="$event.preventDefault(); aplicarConsulta()"
+              ></textarea>
+            </label>
+            <div class="al-consulta-botones">
+              <button type="button" class="al-boton al-boton-primario" (click)="aplicarConsulta()">
+                Buscar
+              </button>
+              <button type="button" class="al-boton" (click)="editando.set(false)">Cancelar</button>
+            </div>
+          } @else {
+            <span class="al-consulta-texto">
+              <span class="al-etiqueta">Se buscó:</span> <code>{{ b.consulta || '—' }}</code>
+              @if (b.desde || b.hasta) {
+                <span class="al-anios"> · {{ b.desde ?? '…' }}–{{ b.hasta ?? 'hoy' }} </span>
               }
+            </span>
+            <button type="button" class="al-enlace" (click)="empezarAEditar()">
+              Cambiar palabras
+            </button>
+            @if (consultaPropia()) {
+              <button type="button" class="al-enlace" (click)="deshacerConsulta()">
+                Volver a la de Scopus
+              </button>
             }
-          </div>
-        }
+          }
+        </div>
+      }
 
-        <div class="al-tipos" role="group" aria-label="Tipo de documento">
+      <div class="al-tipos" role="group" aria-label="Tipo de documento">
+        <button
+          type="button"
+          class="al-chip"
+          [class.al-chip-activo]="tiposElegidos().size === 0"
+          [attr.aria-pressed]="tiposElegidos().size === 0"
+          [disabled]="buscando()"
+          (click)="todosLosTipos()"
+        >
+          Todos
+        </button>
+        @for (tipo of tipos; track tipo.valor) {
           <button
             type="button"
             class="al-chip"
-            [class.al-chip-activo]="tiposElegidos().size === 0"
-            [attr.aria-pressed]="tiposElegidos().size === 0"
+            [class.al-chip-activo]="tiposElegidos().has(tipo.valor)"
+            [attr.aria-pressed]="tiposElegidos().has(tipo.valor)"
             [disabled]="buscando()"
-            (click)="todosLosTipos()"
+            (click)="alternarTipo(tipo.valor)"
           >
-            Todos
+            {{ tipo.texto }}
           </button>
-          @for (tipo of tipos; track tipo.valor) {
-            <button
-              type="button"
-              class="al-chip"
-              [class.al-chip-activo]="tiposElegidos().has(tipo.valor)"
-              [attr.aria-pressed]="tiposElegidos().has(tipo.valor)"
-              [disabled]="buscando()"
-              (click)="alternarTipo(tipo.valor)"
-            >
-              {{ tipo.texto }}
-            </button>
-          }
-        </div>
-
-        @if (error(); as mensaje) {
-          <p class="al-aviso" role="alert">
-            {{ mensaje }}
-            <button type="button" class="al-enlace" (click)="buscar(busqueda()?.pagina ?? 1)">Reintentar</button>
-          </p>
-        } @else if (buscando() && !busqueda()) {
-          <p class="al-vacio">Buscando en ALICIA…</p>
-        } @else if (busqueda(); as b) {
-          @if (!b.consulta) {
-            <p class="al-vacio">
-              Tu búsqueda de Scopus no tiene palabras que llevar a ALICIA (solo autor, revista o filtros).
-              Usa «Cambiar palabras» o busca por temas.
-            </p>
-          } @else if (b.total === 0) {
-            <p class="al-vacio">
-              ALICIA no tiene nada con esas palabras. Prueba con menos términos o cámbialos a mano.
-            </p>
-          } @else {
-            <ol class="al-lista" [class.al-cargando]="buscando()" [attr.start]="(b.pagina - 1) * b.porPagina + 1">
-              @for (r of b.resultados; track r.id) {
-                <li class="al-item" [class.al-item-marcado]="marcados().has(r.id)">
-                  <input
-                    type="checkbox"
-                    class="al-marca"
-                    [attr.aria-label]="'Seleccionar: ' + r.titulo"
-                    [checked]="marcados().has(r.id)"
-                    [disabled]="guardando() || r.yaLaTienes"
-                    (change)="marcar(r.id)"
-                  />
-                  <div class="al-ficha">
-                    <span class="al-meta">
-                      <span class="al-tipo">{{ r.tipo }}</span>
-                      @if (r.anio) {
-                        · {{ r.anio }}
-                      }
-                      @if (r.yaLaTienes) {
-                        · <span class="al-tuya">Ya en tus fuentes</span>
-                      }
-                    </span>
-                    @if (r.url) {
-                      <a class="al-titulo-item" [href]="r.url" target="_blank" rel="noopener">{{ r.titulo }}</a>
-                    } @else {
-                      <span class="al-titulo-item">{{ r.titulo }}</span>
-                    }
-                    <span class="al-autores">{{ r.autores || 'Sin autor' }}</span>
-                    @if (procedencia(r)) {
-                      <span class="al-procedencia">{{ procedencia(r) }}</span>
-                    }
-                    @if (r.asesor) {
-                      <span class="al-asesor">Asesor: {{ r.asesor }}</span>
-                    }
-                    @if (r.resumen) {
-                      <button
-                        type="button"
-                        class="al-enlace al-ver-resumen"
-                        [attr.aria-expanded]="resumenesAbiertos().has(r.id)"
-                        (click)="alternarResumen(r.id)"
-                      >
-                        {{ resumenesAbiertos().has(r.id) ? 'Ocultar resumen' : 'Ver resumen' }}
-                      </button>
-                      @if (resumenesAbiertos().has(r.id)) {
-                        <p class="al-resumen">{{ r.resumen }}</p>
-                      }
-                    }
-                  </div>
-                </li>
-              }
-            </ol>
-
-            <div class="al-pie">
-              <button
-                type="button"
-                class="al-boton al-boton-primario"
-                [disabled]="marcados().size === 0 || guardando()"
-                (click)="guardar()"
-              >
-                {{ guardando() ? 'Guardando…' : 'Guardar en mis fuentes' }}
-                @if (marcados().size > 0) {
-                  ({{ marcados().size }})
-                }
-              </button>
-
-              @if (b.paginas > 1) {
-                <nav class="al-paginas" aria-label="Páginas de ALICIA">
-                  <button
-                    type="button"
-                    class="al-boton"
-                    [disabled]="b.pagina <= 1 || buscando()"
-                    (click)="buscar(b.pagina - 1)"
-                  >
-                    Anterior
-                  </button>
-                  <span>Página {{ b.pagina }} de {{ b.paginas }}</span>
-                  <button
-                    type="button"
-                    class="al-boton"
-                    [disabled]="b.pagina >= b.paginas || buscando()"
-                    (click)="buscar(b.pagina + 1)"
-                  >
-                    Siguiente
-                  </button>
-                </nav>
-              }
-            </div>
-          }
         }
       </div>
-    }
+
+      @if (error(); as mensaje) {
+        <p class="al-aviso" role="alert">
+          {{ mensaje }}
+          <button type="button" class="al-enlace" (click)="buscar(busqueda()?.pagina ?? 1)">
+            Reintentar
+          </button>
+        </p>
+      } @else if (buscando() && !busqueda()) {
+        <p class="al-vacio">Buscando en ALICIA…</p>
+      } @else if (busqueda(); as b) {
+        @if (!b.consulta) {
+          <p class="al-vacio">
+            Tu búsqueda de Scopus no tiene palabras que llevar a ALICIA (solo autor, revista o
+            filtros). Usa «Cambiar palabras» o busca por temas.
+          </p>
+        } @else if (b.total === 0) {
+          <p class="al-vacio">
+            ALICIA no tiene nada con esas palabras. Prueba con menos términos o cámbialos a mano.
+          </p>
+        } @else {
+          <!-- Lo mismo que encima de la tabla de Scopus: marcar y añadir sin
+                 bajar hasta el final de la página. -->
+          <div class="al-barra">
+            <label class="al-todas">
+              <input
+                type="checkbox"
+                [checked]="todasMarcadas()"
+                [disabled]="guardando() || marcables().length === 0"
+                (change)="marcarTodas()"
+              />
+              Seleccionar toda la página
+            </label>
+            <span class="al-seleccion">
+              {{ marcados().size }} {{ marcados().size === 1 ? 'seleccionada' : 'seleccionadas' }}
+            </span>
+            <button
+              type="button"
+              class="boton al-anadir"
+              [disabled]="marcados().size === 0 || guardando()"
+              (click)="guardar()"
+            >
+              {{ guardando() ? 'Añadiendo…' : 'Añadir seleccionadas a mis fuentes' }}
+            </button>
+          </div>
+
+          <ol
+            class="al-lista"
+            [class.al-cargando]="buscando()"
+            [attr.start]="(b.pagina - 1) * b.porPagina + 1"
+          >
+            @for (r of b.resultados; track r.id) {
+              <li class="al-item" [class.al-item-marcado]="marcados().has(r.id)">
+                <input
+                  type="checkbox"
+                  class="al-marca"
+                  [attr.aria-label]="'Seleccionar: ' + r.titulo"
+                  [checked]="marcados().has(r.id)"
+                  [disabled]="guardando() || r.yaLaTienes"
+                  (change)="marcar(r.id)"
+                />
+                <div class="al-ficha">
+                  <span class="al-meta">
+                    <span class="al-tipo">{{ r.tipo }}</span>
+                    @if (r.anio) {
+                      · {{ r.anio }}
+                    }
+                    @if (r.yaLaTienes) {
+                      · <span class="al-tuya">Ya en tus fuentes</span>
+                    }
+                  </span>
+                  @if (r.url) {
+                    <a class="al-titulo-item" [href]="r.url" target="_blank" rel="noopener">{{
+                      r.titulo
+                    }}</a>
+                  } @else {
+                    <span class="al-titulo-item">{{ r.titulo }}</span>
+                  }
+                  <span class="al-autores">{{ r.autores || 'Sin autor' }}</span>
+                  @if (procedencia(r)) {
+                    <span class="al-procedencia">{{ procedencia(r) }}</span>
+                  }
+                  @if (r.asesor) {
+                    <span class="al-asesor">Asesor: {{ r.asesor }}</span>
+                  }
+                  @if (r.resumen) {
+                    <button
+                      type="button"
+                      class="al-enlace al-ver-resumen"
+                      [attr.aria-expanded]="resumenesAbiertos().has(r.id)"
+                      (click)="alternarResumen(r.id)"
+                    >
+                      {{ resumenesAbiertos().has(r.id) ? 'Ocultar resumen' : 'Ver resumen' }}
+                    </button>
+                    @if (resumenesAbiertos().has(r.id)) {
+                      <p class="al-resumen">{{ r.resumen }}</p>
+                    }
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+
+          <div class="al-pie">
+            <button
+              type="button"
+              class="al-boton al-boton-primario"
+              [disabled]="marcados().size === 0 || guardando()"
+              (click)="guardar()"
+            >
+              {{ guardando() ? 'Añadiendo…' : 'Añadir seleccionadas a mis fuentes' }}
+              @if (marcados().size > 0) {
+                ({{ marcados().size }})
+              }
+            </button>
+
+            @if (b.paginas > 1) {
+              <nav class="al-paginas" aria-label="Páginas de ALICIA">
+                <button
+                  type="button"
+                  class="al-boton"
+                  [disabled]="b.pagina <= 1 || buscando()"
+                  (click)="buscar(b.pagina - 1)"
+                >
+                  Anterior
+                </button>
+                <span>Página {{ b.pagina }} de {{ b.paginas }}</span>
+                <button
+                  type="button"
+                  class="al-boton"
+                  [disabled]="b.pagina >= b.paginas || buscando()"
+                  (click)="buscar(b.pagina + 1)"
+                >
+                  Siguiente
+                </button>
+              </nav>
+            }
+          </div>
+        }
+      }
+    </div>
   </section>
 }

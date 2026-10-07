@@ -1,24 +1,31 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 
 import { toApiError } from '../../core/http/api-error';
 import { AvisosService } from '../../core/services/avisos.service';
 import { MisFuentesService } from '../../core/services/mis-fuentes.service';
-import {
-  AliciaService,
-  BusquedaDeAlicia,
-  TipoDeAlicia,
-} from '../../core/services/alicia.service';
+import { AliciaService, BusquedaDeAlicia, TipoDeAlicia } from '../../core/services/alicia.service';
 
 /**
  * Lo que encuentra ALICIA (CONCYTEC) con la búsqueda que el tesista acaba de
  * hacer en Scopus: tesis peruanas de pregrado, maestría y doctorado, y
  * artículos de revistas de las universidades.
  *
- * Va DEBAJO de la tabla de Scopus y no mezclado con ella: ALICIA no tiene
- * recuento de citas ni DOI, y meter sus tesis en una tabla ordenada por citas
- * las mandaría todas al fondo. Aquí se ven como lo que son: los antecedentes
- * nacionales.
+ * Va en su propia pestaña, al lado de la de Scopus y SciELO, y no mezclado
+ * con ella: ALICIA no tiene recuento de citas ni DOI, y meter sus tesis en una
+ * tabla ordenada por citas las mandaría todas al fondo. Aquí se ven como lo
+ * que son: los antecedentes nacionales. La pestaña la pone `mi-scopus`; este
+ * componente sigue vivo aunque no se vea, para que la cifra de la pestaña
+ * esté lista antes de abrirla.
  *
  * No se escribe nada: toma la ecuación de los resultados de Scopus y el
  * servidor la lleva a ALICIA con los términos también en español. Si la
@@ -41,7 +48,9 @@ export class MiAlicia {
   readonly busqueda = signal<BusquedaDeAlicia | null>(null);
   readonly buscando = signal(false);
   readonly error = signal<string | null>(null);
-  readonly abierto = signal(true);
+
+  /** Para la pestaña de `mi-scopus`: cuántas encontró, o null si no hay búsqueda. */
+  readonly total = output<number | null>();
 
   readonly tipos: readonly { valor: TipoDeAlicia; texto: string }[] = [
     { valor: 'pregrado', texto: 'Tesis de pregrado' },
@@ -74,7 +83,10 @@ export class MiAlicia {
         this.editando.set(false);
         this.tiposElegidos.set(new Set());
         if (ecuacion) this.buscar(1);
-        else this.busqueda.set(null);
+        else {
+          this.busqueda.set(null);
+          this.total.emit(null);
+        }
       });
     });
   }
@@ -99,7 +111,9 @@ export class MiAlicia {
         tipos: [...this.tiposElegidos()],
         // Con la consulta suya se mandan también los años que salieron de la
         // ecuación: corregir las palabras no tiene por qué quitar el filtro.
-        ...(propia ? { consulta: propia, desde: anterior?.desde ?? null, hasta: anterior?.hasta ?? null } : {}),
+        ...(propia
+          ? { consulta: propia, desde: anterior?.desde ?? null, hasta: anterior?.hasta ?? null }
+          : {}),
       })
       .subscribe({
         next: (resultado) => {
@@ -108,6 +122,7 @@ export class MiAlicia {
           if (turno !== this.turno) return;
           this.busqueda.set(resultado);
           this.buscando.set(false);
+          this.total.emit(resultado.consulta ? resultado.total : 0);
         },
         error: (fallo: unknown) => {
           if (turno !== this.turno) return;
@@ -158,6 +173,21 @@ export class MiAlicia {
     this.marcados.set(marcados);
   }
 
+  /** Las de esta página que todavía puede añadir. */
+  readonly marcables = computed(() =>
+    (this.busqueda()?.resultados ?? []).filter((r) => !r.yaLaTienes).map((r) => r.id),
+  );
+
+  readonly todasMarcadas = computed(() => {
+    const marcables = this.marcables();
+    return marcables.length > 0 && marcables.every((id) => this.marcados().has(id));
+  });
+
+  /** «Seleccionar toda la página», como en la tabla de Scopus. */
+  marcarTodas(): void {
+    this.marcados.set(this.todasMarcadas() ? new Set() : new Set(this.marcables()));
+  }
+
   alternarResumen(id: string): void {
     const abiertos = new Set(this.resumenesAbiertos());
     if (abiertos.has(id)) abiertos.delete(id);
@@ -174,7 +204,7 @@ export class MiAlicia {
       next: ({ datos, mensaje }) => {
         this.guardando.set(false);
         this.marcados.set(new Set());
-        this.avisos.exito(mensaje ?? `${datos.guardadas} guardadas en tus fuentes.`);
+        this.avisos.exito(mensaje ?? `${datos.guardadas} añadidas a tus fuentes.`);
         // Pasan a «ya la tienes», para que la lista cuadre con lo que hay.
         const busqueda = this.busqueda();
         if (busqueda) {

@@ -157,6 +157,15 @@ export class MiScopusPanel implements OnInit {
   readonly ecuacionDeLosResultados = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
+  /**
+   * Qué resultados se ven: los de Scopus y SciELO o los de ALICIA (tesis y
+   * revistas peruanas). Se cambia con las pestañas de encima de la lista; las
+   * dos búsquedas corren igual, así que cambiar no vuelve a buscar.
+   */
+  readonly vista = signal<'scopus' | 'alicia'>('scopus');
+  /** Lo que encontró ALICIA, para la cifra de su pestaña. */
+  readonly totalAlicia = signal<number | null>(null);
+
   readonly busqueda = signal<BusquedaDeScopus | null>(null);
   readonly parte = signal<ImportacionDeScopus | null>(null);
 

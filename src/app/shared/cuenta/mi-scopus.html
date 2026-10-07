@@ -750,6 +750,39 @@
         }
 
         <div class="sc-resultados">
+          <!-- Dos pestañas: Scopus y SciELO, o las tesis y revistas peruanas de
+               ALICIA. Las dos listas están cargadas; la pestaña solo elige cuál
+               se ve. -->
+          @if (busqueda(); as lista) {
+            <div class="sc-pestanas" role="tablist" aria-label="Dónde buscar">
+              <button
+                type="button"
+                role="tab"
+                class="sc-pestana"
+                [class.activa]="vista() === 'scopus'"
+                [attr.aria-selected]="vista() === 'scopus'"
+                (click)="vista.set('scopus')"
+              >
+                Scopus y SciELO
+                <span class="sc-pestana-cifra">{{ lista.total | number }}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="sc-pestana"
+                [class.activa]="vista() === 'alicia'"
+                [attr.aria-selected]="vista() === 'alicia'"
+                (click)="vista.set('alicia')"
+              >
+                ALICIA
+                @if (totalAlicia() !== null) {
+                  <span class="sc-pestana-cifra">{{ totalAlicia() | number }}</span>
+                }
+              </button>
+            </div>
+          }
+
+          <div [style.display]="busqueda() && vista() === 'alicia' ? 'none' : null">
           @if (!busqueda() && !iaAbierta()) {
             <!-- Lo que hace falta para escribir una búsqueda DE SU TEMA, no
                  cómo funciona esto por dentro. -->
@@ -1436,10 +1469,16 @@
             }
           }
 
-          <!-- La misma búsqueda en ALICIA (tesis y revistas peruanas). Fuera
-               del bloque de resultados: también sale cuando Scopus no encuentra
-               nada, que es cuando más falta un antecedente nacional. -->
-          <app-mi-alicia [ecuacion]="busqueda() ? ecuacionDeLosResultados() : null" />
+          </div>
+
+          <!-- La misma búsqueda en ALICIA (tesis y revistas peruanas), en su
+               pestaña. Se queda montada aunque no se vea, para que su cifra
+               esté en la pestaña y al abrirla ya haya lista. -->
+          <app-mi-alicia
+            [style.display]="busqueda() && vista() === 'alicia' ? null : 'none'"
+            [ecuacion]="busqueda() ? ecuacionDeLosResultados() : null"
+            (total)="totalAlicia.set($event)"
+          />
 
           <!-- Desconectar solo tiene sentido si hay algo conectado: con la
                credencial del servidor no hay vínculo que deshacer. -->
