@@ -883,6 +883,68 @@
                     <app-aviso-flotante [(error)]="errorVariasTesis" />
                   </div>
 
+                  <!-- Días desde el canje, como al vender el método. Vacío = que
+                     no caduque. Sale tras consultar la licencia. -->
+                  @if (vigencia(); as vig) {
+                    <div class="accion">
+                      <button
+                        type="button"
+                        class="accion-fila accion-boton"
+                        [attr.aria-expanded]="accionAbierta() === 'duracion'"
+                        (click)="alternarAccion('duracion')"
+                      >
+                        <span class="accion-texto">
+                          <span class="accion-titulo">Duración de la membresía</span>
+                          <span class="accion-nota" role="status">
+                            @if (vig.expiresAt) {
+                              Vence el {{ vig.expiresAt | date: 'd MMM y' }}
+                            } @else {
+                              Sin caducidad
+                            }
+                          </span>
+                        </span>
+                        <span class="accion-flecha" aria-hidden="true"></span>
+                      </button>
+
+                      @if (accionAbierta() === 'duracion') {
+                        <div class="accion-cuerpo">
+                          <div class="mover-fila">
+                            <input
+                              type="number"
+                              min="1"
+                              max="3650"
+                              step="1"
+                              inputmode="numeric"
+                              aria-label="Duración en días desde el canje"
+                              placeholder="Sin caducidad"
+                              [value]="diasDuracion()"
+                              (input)="diasDuracion.set($any($event.target).value)"
+                              (keyup.enter)="cambiarDuracionDelAcceso()"
+                            />
+                            <button
+                              type="button"
+                              class="boton"
+                              [disabled]="!duracionCambia() || guardandoDuracion()"
+                              (click)="cambiarDuracionDelAcceso()"
+                            >
+                              {{ guardandoDuracion() ? 'Guardando…' : 'Guardar' }}
+                            </button>
+                          </div>
+                          <p class="accion-ayuda">
+                            Días desde el canje ({{ vig.createdAt | date: 'd MMM y' }}).
+                            @if (vencimientoPrevisto(); as fecha) {
+                              Vencería el {{ fecha | date: 'd MMM y' }}.
+                            } @else if (!diasDuracion().trim()) {
+                              Vacío: no caduca.
+                            }
+                            Su URL no cambia.
+                          </p>
+                          <app-aviso-flotante [(error)]="errorDuracion" [(aviso)]="avisoDuracion" />
+                        </div>
+                      }
+                    </div>
+                  }
+
                   <div class="accion">
                     <button
                       type="button"

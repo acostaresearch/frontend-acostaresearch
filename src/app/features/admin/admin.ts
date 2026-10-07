@@ -4653,7 +4653,7 @@ export class Admin implements OnInit {
     this.limpiarVariasTesis();
     this.limpiarCorreo();
     if (acceso.tieneComprobante) this.descargarCaptura(acceso);
-    if (acceso.licenseId) this.consultarVariasTesis(acceso.licenseId);
+    if (acceso.licenseId) this.consultarLicencia(acceso.licenseId);
   }
 
   cerrarAcceso(): void {
@@ -4670,9 +4670,9 @@ export class Admin implements OnInit {
   // pide por WhatsApp. Cambia la cuenta, no la licencia: la URL sigue igual.
 
   /** Qué formulario de la ficha está desplegado: de uno en uno, para que no se alargue. */
-  readonly accionAbierta = signal<'correo' | 'producto' | null>(null);
+  readonly accionAbierta = signal<'duracion' | 'correo' | 'producto' | null>(null);
 
-  alternarAccion(cual: 'correo' | 'producto'): void {
+  alternarAccion(cual: 'duracion' | 'correo' | 'producto'): void {
     this.accionAbierta.update((abierta) => (abierta === cual ? null : cual));
   }
 
@@ -4742,18 +4742,106 @@ export class Admin implements OnInit {
     this.guardandoVariasTesis.set(false);
     this.avisoVariasTesis.set(null);
     this.errorVariasTesis.set(null);
+    this.limpiarDuracion();
   }
 
-  private consultarVariasTesis(licenseId: string): void {
-    this.admin.variasTesisDe(licenseId).subscribe({
-      next: (valor) => {
+  /** Una sola consulta para las dos filas que leen la licencia: varias tesis y duración. */
+  private consultarLicencia(licenseId: string): void {
+    this.admin.licenciaDe(licenseId).subscribe({
+      next: (license) => {
         // Si ya se abrió otra ficha, esta respuesta no es de ella.
-        if (this.accesoAbierto()?.licenseId === licenseId) this.variasTesis.set(valor);
+        if (this.accesoAbierto()?.licenseId !== licenseId) return;
+        this.variasTesis.set(license.variasTesis === true);
+        this.ponerVigencia(license);
       },
       error: (fallo) => {
         if (this.accesoAbierto()?.licenseId === licenseId) {
           this.errorVariasTesis.set(mensajeDeError(fallo));
         }
+      },
+    });
+  }
+
+  // ── Duración de la membresía ─────────────────────────────────────────────
+  //
+  // En días desde el canje, igual que al vender el método: el mismo número
+  // significa lo mismo en los dos sitios. Vacío = que no caduque.
+
+  /** Caducidad y canje de la licencia de la ficha. Nulo mientras se consulta. */
+  readonly vigencia = signal<{ expiresAt: string | null; createdAt: string } | null>(null);
+  readonly diasDuracion = signal('');
+  readonly guardandoDuracion = signal(false);
+  readonly avisoDuracion = signal<string | null>(null);
+  readonly errorDuracion = signal<string | null>(null);
+
+  /** Lo que hay escrito en el campo, ya como número. Nulo = vacío; NaN = no vale. */
+  private readonly diasEscritos = computed(() => {
+    const texto = this.diasDuracion().trim();
+    if (!texto) return null;
+    const dias = Number(texto);
+    return Number.isInteger(dias) && dias >= 1 && dias <= 3650 ? dias : NaN;
+  });
+
+  /** La fecha en que vencería con lo escrito; nula si quedaría sin caducidad. */
+  readonly vencimientoPrevisto = computed(() => {
+    const vigencia = this.vigencia();
+    const dias = this.diasEscritos();
+    if (!vigencia || dias === null || Number.isNaN(dias)) return null;
+    return new Date(new Date(vigencia.createdAt).getTime() + dias * 86_400_000);
+  });
+
+  /** Si lo escrito vale y además cambia algo. */
+  readonly duracionCambia = computed(() => {
+    const vigencia = this.vigencia();
+    const dias = this.diasEscritos();
+    if (!vigencia || Number.isNaN(dias)) return false;
+    if (dias === null) return vigencia.expiresAt !== null;
+    return this.vencimientoPrevisto()?.getTime() !== new Date(vigencia.expiresAt ?? 0).getTime();
+  });
+
+  private ponerVigencia(license: { expiresAt: string | null; createdAt: string }): void {
+    this.vigencia.set({ expiresAt: license.expiresAt, createdAt: license.createdAt });
+    // Se rellena con lo que dura ahora, redondeado a días, para que se edite
+    // sobre el número y no desde cero.
+    this.diasDuracion.set(
+      license.expiresAt
+        ? String(
+            Math.round(
+              (new Date(license.expiresAt).getTime() - new Date(license.createdAt).getTime()) /
+                86_400_000,
+            ),
+          )
+        : '',
+    );
+  }
+
+  private limpiarDuracion(): void {
+    this.vigencia.set(null);
+    this.diasDuracion.set('');
+    this.guardandoDuracion.set(false);
+    this.avisoDuracion.set(null);
+    this.errorDuracion.set(null);
+  }
+
+  cambiarDuracionDelAcceso(): void {
+    const acceso = this.accesoAbierto();
+    const dias = this.diasEscritos();
+    if (!acceso?.licenseId || !this.duracionCambia() || this.guardandoDuracion()) return;
+
+    this.guardandoDuracion.set(true);
+    this.avisoDuracion.set(null);
+    this.errorDuracion.set(null);
+
+    this.admin.cambiarDuracion(acceso.licenseId, dias).subscribe({
+      next: ({ license, mensaje }) => {
+        this.guardandoDuracion.set(false);
+        if (this.accesoAbierto()?.licenseId !== acceso.licenseId) return;
+        this.ponerVigencia(license);
+        this.avisoDuracion.set(mensaje);
+      },
+      error: (fallo) => {
+        this.guardandoDuracion.set(false);
+        this.errorDuracion.set(mensajeDeError(fallo));
       },
     });
   }

@@ -182,11 +182,24 @@ export class AdminService {
       .pipe(map((res) => res.data.historial ?? []));
   }
 
-  /** Si esa licencia puede abrir varias tesis. Sale de su ficha. */
-  variasTesisDe(id: string): Observable<boolean> {
+  /** La licencia tal como está ahora: varias tesis, caducidad, fecha del canje. */
+  licenciaDe(id: string): Observable<LicenciaAdmin> {
     return this.http
       .get<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}`)
-      .pipe(map((res) => res.data.license.variasTesis === true));
+      .pipe(map((res) => res.data.license));
+  }
+
+  /**
+   * Cuánto dura el acceso, en días desde el canje. Nulo = que no caduque.
+   * La URL del conector no cambia.
+   */
+  cambiarDuracion(
+    id: string,
+    dias: number | null,
+  ): Observable<{ license: LicenciaAdmin; mensaje: string }> {
+    return this.http
+      .post<ApiResponse<{ license: LicenciaAdmin }>>(`${this.licencias}/${id}/duracion`, { dias })
+      .pipe(map((res) => ({ license: res.data.license, mensaje: res.message ?? '' })));
   }
 
   /** Enciende o apaga que esa licencia pueda abrir varias tesis. */
