@@ -1119,7 +1119,7 @@ export class Admin implements OnInit {
   readonly revisionesServidor = signal<ReadonlyMap<string, RevisionDeCorreo>>(new Map());
   readonly comprobandoCorreos = signal(false);
 
-  private readonly valoresCodigos = toSignal(
+  protected readonly valoresCodigos = toSignal(
     this.formCodigos.valueChanges.pipe(map(() => this.formCodigos.getRawValue())),
     { initialValue: this.formCodigos.getRawValue() },
   );
@@ -1225,6 +1225,18 @@ export class Admin implements OnInit {
     }
     return lista;
   });
+
+  /** Los plazos que más se venden, a un clic. Cualquier otro se escribe en días. */
+  readonly plazosRapidos = [
+    { nombre: '1 mes', dias: 30 },
+    { nombre: '3 meses', dias: 90 },
+    { nombre: '6 meses', dias: 180 },
+    { nombre: '1 año', dias: 365 },
+  ];
+
+  elegirDuracion(dias: number | null): void {
+    this.formCodigos.controls.duracion.setValue(dias);
+  }
 
   /** El plazo del producto elegido, para enseñarlo como lo que vale si se deja vacío. */
   readonly duracionDelPlan = computed(() => {

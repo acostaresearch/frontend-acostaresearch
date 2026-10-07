@@ -90,3 +90,53 @@
 .accion-cuerpo .aviso {
   margin: 8px 0 0;
 }
+
+/* ── Duración del código, en «Vender el método» ─────────────────────────
+   Los plazos habituales a un clic y una casilla para cualquier otro. */
+.duracion-elegir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.duracion-elegir button {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.duracion-elegir button:hover {
+  color: var(--color-texto);
+  border-color: var(--color-primario);
+}
+
+.duracion-elegir button.activo {
+  color: var(--color-primario-oscuro);
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.duracion-otra {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.campo .duracion-otra input {
+  width: 84px;
+  padding: 7px 10px;
+  text-align: center;
+}
