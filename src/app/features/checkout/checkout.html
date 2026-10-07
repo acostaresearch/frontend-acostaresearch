@@ -822,7 +822,8 @@
                     <span class="tachado">{{ antes }}</span>
                   }
                 </p>
-                @if (auth.isAuthenticated() && !comprobanteEnviado()) {
+                <!-- Con Hotmart los cupones se escriben en su página de pago. -->
+                @if (auth.isAuthenticated() && !comprobanteEnviado() && metodoPago() !== 'hotmart') {
                   <button
                     type="button"
                     class="pago-enlace"
@@ -891,7 +892,7 @@
 
               <!-- Plegados tras «¿Tienes un código?»: el de descuento y el de
                    un compañero, que antes estaba en la cabecera de la página. -->
-              @if (verCodigos() && auth.isAuthenticated()) {
+              @if (verCodigos() && auth.isAuthenticated() && metodoPago() !== 'hotmart') {
                 <div class="pago-codigos">
                   @if (faltaCodigo()) {
                     <div class="promo-fila">
@@ -1017,8 +1018,14 @@
                   </p>
                   @if (hotmartConCodigo()) {
                     <p class="pasarela-nota">
-                      Con Hotmart no se aplican códigos de descuento: pagas el precio que muestra
-                      Hotmart.
+                      Los códigos de esta web no se aplican en Hotmart. Si tienes un cupón de
+                      Hotmart, escríbelo en su página de pago.
+                    </p>
+                  }
+                  @if (hotmartAbierto()) {
+                    <p class="pasarela-nota" role="status">
+                      Te abrimos Hotmart en otra pestaña. Cuando termines de pagar, tu acceso se
+                      activa solo en esta cuenta y te llega un correo.
                     </p>
                   }
                   <button
@@ -1027,7 +1034,13 @@
                     [disabled]="abriendoHotmart()"
                     (click)="pagarConHotmart()"
                   >
-                    {{ abriendoHotmart() ? 'Llevándote a Hotmart…' : 'Pagar con Hotmart' }}
+                    @if (abriendoHotmart()) {
+                      Abriendo Hotmart…
+                    } @else if (hotmartAbierto()) {
+                      Volver a abrir Hotmart
+                    } @else {
+                      Pagar con Hotmart
+                    }
                   </button>
                   <p class="pasarela-pie">Procesado por Hotmart · Pago seguro</p>
                 </section>

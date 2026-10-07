@@ -1570,13 +1570,19 @@ export class Checkout implements OnInit {
 
   readonly abriendoHotmart = signal(false);
   readonly errorHotmart = signal<string | null>(null);
+  /** Ya se abrió la pestaña de Hotmart: esta se queda con el aviso. */
+  readonly hotmartAbierto = signal(false);
 
   /**
-   * Lleva a la página de pago de Hotmart.
+   * Abre la página de pago de Hotmart en otra pestaña.
    *
    * La orden se abre primero en nuestro servidor, que pone su referencia en el
    * enlace: así el aviso de Hotmart sabe de quién es la compra. Se manda solo
    * el plan, sin código: Hotmart cobra su precio y no admite los nuestros.
+   *
+   * La pestaña se abre en blanco ANTES de esperar al servidor: abierta después
+   * del `await` ya no cuenta como respuesta al clic y el navegador la bloquea.
+   * Si aun así la bloquea, se va a Hotmart en esta misma pestaña.
    */
   async pagarConHotmart(): Promise<void> {
     const plan = this.enPago()[0];
@@ -1584,19 +1590,29 @@ export class Checkout implements OnInit {
 
     this.errorHotmart.set(null);
     this.abriendoHotmart.set(true);
+    const pestana = window.open('', '_blank');
 
     try {
       const orden = await firstValueFrom(
         this.payments.createOrder([{ planCode: plan.code }], 'HOTMART'),
       );
       if (!orden.approveUrl) throw new Error('Sin enlace de pago');
-      window.location.href = orden.approveUrl;
+
+      if (pestana) {
+        pestana.opener = null;
+        pestana.location.href = orden.approveUrl;
+        this.hotmartAbierto.set(true);
+      } else {
+        window.location.href = orden.approveUrl;
+      }
     } catch (error: unknown) {
+      pestana?.close();
       this.errorHotmart.set(
         error instanceof HttpErrorResponse
           ? toApiError(error).message
           : 'No pudimos abrir el pago con Hotmart. Inténtalo de nuevo o elige otro medio.',
       );
+    } finally {
       this.abriendoHotmart.set(false);
     }
   }
