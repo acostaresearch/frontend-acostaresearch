@@ -152,7 +152,9 @@ export class Checkout implements OnInit {
    * formulario de captura— y la página se convertía en una lista interminable.
    * Ahora se elige uno y solo se despliega ese.
    */
-  readonly metodoPago = signal<'yape' | 'western_union' | 'paypal' | 'culqi' | null>(null);
+  readonly metodoPago = signal<'yape' | 'western_union' | 'paypal' | 'culqi' | 'hotmart' | null>(
+    null,
+  );
 
   readonly planes = signal<Plan[]>([]);
 
@@ -296,8 +298,34 @@ export class Checkout implements OnInit {
    */
   readonly ofreceWU = computed(() => Boolean(this.datosWU()) && this.totalDolares() !== null);
 
+  /**
+   * Hotmart: solo para un producto a la vez y si ese producto tiene su página
+   * de pago en Hotmart. Un carrito de varios no se puede pagar allí.
+   */
+  readonly pasarelaHotmart = computed(
+    () => this.pasarelas().find((p) => p.code === 'HOTMART') ?? null,
+  );
+
+  readonly ofreceHotmart = computed(() => {
+    const pasarela = this.pasarelaHotmart();
+    const enPago = this.enPago();
+    return (
+      Boolean(pasarela) &&
+      this.auth.isAuthenticated() &&
+      enPago.length === 1 &&
+      Boolean(pasarela?.planes?.includes(enPago[0].code))
+    );
+  });
+
+  /** ¿Lleva algún código? Con Hotmart no se aplica: se avisa antes de ir. */
+  readonly hotmartConCodigo = computed(
+    () => Boolean(this.codigoDelTotal()) || this.lineas().some((linea) => linea.discountCode),
+  );
+
   /** Pestañas de medios: solo si hay más de uno que elegir. */
-  readonly variosMedios = computed(() => this.pagoConCulqi() || this.ofreceWU());
+  readonly variosMedios = computed(
+    () => this.pagoConCulqi() || this.ofreceWU() || this.ofreceHotmart(),
+  );
 
   /** Lo que el navegador acepta subir; el servidor lo vuelve a comprobar. */
   private readonly FORMATOS = ['image/png', 'image/jpeg', 'image/webp'];
@@ -1537,6 +1565,39 @@ export class Checkout implements OnInit {
       setTimeout(() => this.copiada.set(false), 2500);
     } catch {
       this.error.set('No pudimos copiar. Selecciona la URL y cópiala a mano.');
+    }
+  }
+
+  readonly abriendoHotmart = signal(false);
+  readonly errorHotmart = signal<string | null>(null);
+
+  /**
+   * Lleva a la página de pago de Hotmart.
+   *
+   * La orden se abre primero en nuestro servidor, que pone su referencia en el
+   * enlace: así el aviso de Hotmart sabe de quién es la compra. Se manda solo
+   * el plan, sin código: Hotmart cobra su precio y no admite los nuestros.
+   */
+  async pagarConHotmart(): Promise<void> {
+    const plan = this.enPago()[0];
+    if (!plan || !this.ofreceHotmart() || this.abriendoHotmart()) return;
+
+    this.errorHotmart.set(null);
+    this.abriendoHotmart.set(true);
+
+    try {
+      const orden = await firstValueFrom(
+        this.payments.createOrder([{ planCode: plan.code }], 'HOTMART'),
+      );
+      if (!orden.approveUrl) throw new Error('Sin enlace de pago');
+      window.location.href = orden.approveUrl;
+    } catch (error: unknown) {
+      this.errorHotmart.set(
+        error instanceof HttpErrorResponse
+          ? toApiError(error).message
+          : 'No pudimos abrir el pago con Hotmart. Inténtalo de nuevo o elige otro medio.',
+      );
+      this.abriendoHotmart.set(false);
     }
   }
 

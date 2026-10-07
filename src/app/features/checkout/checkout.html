@@ -316,6 +316,7 @@
     <app-aviso-flotante [(error)]="errorPromo" />
     <app-aviso-flotante [(error)]="errorComprobante" />
     <app-aviso-flotante [(error)]="errorCulqi" />
+    <app-aviso-flotante [(error)]="errorHotmart" />
 
 
  <section class="planes">
@@ -773,7 +774,13 @@
           <div class="pago-barra">
             <div>
               <h2 id="titulo-pago">
-                {{ metodoPago() === 'culqi' ? 'Paga con tarjeta o Yape' : 'Paga con Yape o Plin' }}
+                {{
+                  metodoPago() === 'culqi'
+                    ? 'Paga con tarjeta o Yape'
+                    : metodoPago() === 'hotmart'
+                      ? 'Paga con Hotmart'
+                      : 'Paga con Yape o Plin'
+                }}
               </h2>
               @if (cierraEn(); as limite) {
                 <p class="pago-tiempo" role="status">
@@ -947,6 +954,17 @@
                       Tarjeta o Yape al instante
                     </button>
                   }
+                  @if (ofreceHotmart()) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="metodoPago() === 'hotmart'"
+                      [class.activa]="metodoPago() === 'hotmart'"
+                      (click)="metodoPago.set('hotmart')"
+                    >
+                      Hotmart
+                    </button>
+                  }
                   @if (ofreceWU()) {
                     <button
                       type="button"
@@ -985,6 +1003,33 @@
                     }
                   </button>
                   <p class="pasarela-pie">Procesado por Culqi · Pago seguro</p>
+                </section>
+              }
+
+              <!-- ── Pago con Hotmart ───────────────────────────────────────
+                   Se paga en la página de Hotmart; el acceso lo activa su aviso
+                   a nuestro servidor, no esta página. -->
+              @if (metodoPago() === 'hotmart' && ofreceHotmart()) {
+                <section class="pasarela">
+                  <p class="pasarela-nota">
+                    Tarjeta, PayPal o el medio de pago de tu país, en la página segura de Hotmart.
+                    Tu acceso se activa solo en esta cuenta en cuanto Hotmart aprueba el pago.
+                  </p>
+                  @if (hotmartConCodigo()) {
+                    <p class="pasarela-nota">
+                      Con Hotmart no se aplican códigos de descuento: pagas el precio que muestra
+                      Hotmart.
+                    </p>
+                  }
+                  <button
+                    type="button"
+                    class="boton oro grande bloque"
+                    [disabled]="abriendoHotmart()"
+                    (click)="pagarConHotmart()"
+                  >
+                    {{ abriendoHotmart() ? 'Llevándote a Hotmart…' : 'Pagar con Hotmart' }}
+                  </button>
+                  <p class="pasarela-pie">Procesado por Hotmart · Pago seguro</p>
                 </section>
               }
 

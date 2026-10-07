@@ -8,6 +8,14 @@ export interface PaymentProvider {
   currency: string;
   /** Solo Culqi: la llave pública con la que se abre su formulario. */
   publicKey?: string | null;
+  /** Solo Hotmart: se paga en su página y lo confirma su aviso, no el navegador. */
+  confirmaPorAviso?: boolean;
+  /** Solo Hotmart: un producto por pago, sin carrito. */
+  soloCompraSuelta?: boolean;
+  /** Solo Hotmart: no admite nuestros códigos de descuento. */
+  sinDescuentos?: boolean;
+  /** Solo Hotmart: los planes que tienen producto allí. */
+  planes?: string[];
 }
 
 /** Lo que devuelve la verificación del banco (Culqi3DS) para el segundo cobro. */
@@ -363,6 +371,7 @@ export interface Payment {
 export const MEDIOS_PAGO: Record<string, string> = {
   PAYPAL: 'PayPal',
   CULQI: 'Tarjeta o Yape',
+  HOTMART: 'Hotmart',
   YAPE: 'Yape',
   PLIN: 'Plin',
   TRANSFERENCIA: 'Transferencia',
