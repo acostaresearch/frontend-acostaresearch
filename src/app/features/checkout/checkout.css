@@ -662,6 +662,115 @@ h1 {
   color: var(--color-texto-tenue);
 }
 
+/* ── Hotmart ───────────────────────────────────────────────────────────────
+   Recuadro crema con el candado arriba, los tres medios que acepta su página
+   y el botón dorado que termina en el logo de Hotmart sobre un chip blanco. */
+.pasarela.hotmart {
+  background: color-mix(in srgb, var(--dorado) 9%, var(--color-superficie));
+  border-color: color-mix(in srgb, var(--dorado) 45%, transparent);
+}
+
+.pasarela.hotmart svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hotmart-cabecera {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: -16px -16px 14px;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-texto);
+  border-bottom: 1px solid color-mix(in srgb, var(--dorado) 30%, transparent);
+}
+
+.hotmart-cabecera svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hotmart-medios {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.hotmart-medios li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.hotmart-medios svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-texto-suave);
+}
+
+.hotmart-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.hotmart-check svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: #16a34a;
+  stroke-width: 2.4;
+}
+
+.pasarela.hotmart .pasarela-nota {
+  max-width: none;
+  margin-bottom: 12px;
+}
+
+.boton.hotmart-boton {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.hotmart-logo {
+  display: inline-flex;
+  padding: 5px 9px;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.hotmart-logo img {
+  display: block;
+  height: 18px;
+  width: auto;
+}
+
 /* ── El QR y lo que hay que hacer con él ───────────────────────────────────
    Uno al lado del otro. El código solo no dice qué pasa después de pagar, y
    las capturas llegaban sin número de operación o no llegaban. */
