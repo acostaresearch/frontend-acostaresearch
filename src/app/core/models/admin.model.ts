@@ -143,6 +143,8 @@ export interface GenerarCodigos {
   buyerEmails?: string[];
   note?: string;
   expiraEnDias?: number;
+  /** Días de acceso al canjearlo. Omitirlo toma los del plan. */
+  durationDays?: number;
   /** Cómo entró el dinero. CORTESIA no registra cobro: es un regalo. */
   paymentMethod?: MetodoDeCobro;
   /** Nº de operación o MTCN, para cuadrarlo con el extracto. */

@@ -3643,6 +3643,24 @@
                 </div>
               </div>
 
+              <!-- El plazo cuenta desde el canje, no desde hoy: un código vendido
+                 hoy y canjeado la semana que viene da sus días enteros. -->
+              <div class="campo">
+                <label for="duracion-codigo">
+                  Duración de la membresía en días
+                  <span class="opcional">(vacío = la del plan: {{ duracionDelPlan() }})</span>
+                </label>
+                <input
+                  id="duracion-codigo"
+                  type="number"
+                  min="1"
+                  max="3650"
+                  step="1"
+                  formControlName="duracion"
+                  placeholder="30 = un mes · 90 = tres meses · 365 = un año"
+                />
+              </div>
+
               @if (!variosCompradores()) {
                 <div class="campo">
                   <label for="comprador">

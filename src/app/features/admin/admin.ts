@@ -1072,6 +1072,8 @@ export class Admin implements OnInit {
     paymentMethod: ['WESTERN_UNION' as MetodoDeCobro, Validators.required],
     paymentRef: [''],
     importe: [null as number | null, [Validators.min(0)]],
+    // Días de acceso que da el código. Vacío = los del plan, que es lo habitual.
+    duracion: [null as number | null, [Validators.min(1), Validators.max(3650)]],
     // El código promocional que se le aplicó a esta venta, si hubo uno.
     descuento: [''],
   });
@@ -1194,6 +1196,7 @@ export class Admin implements OnInit {
       productCode: plan.productCode ?? plan.code,
       nombre: plan.name,
       priceCents: plan.priceCents,
+      durationDays: plan.durationDays,
     }));
     const vistos = new Set(lista.map((p) => p.productCode));
 
@@ -1201,7 +1204,12 @@ export class Admin implements OnInit {
       const codigo = plan.productCode ?? plan.code;
       if (vistos.has(codigo)) continue;
       vistos.add(codigo);
-      lista.push({ productCode: codigo, nombre: plan.name, priceCents: plan.priceCents });
+      lista.push({
+        productCode: codigo,
+        nombre: plan.name,
+        priceCents: plan.priceCents,
+        durationDays: plan.durationDays,
+      });
     }
 
     for (const grupo of this.grupos()) {
@@ -1212,9 +1220,17 @@ export class Admin implements OnInit {
         productCode: codigo,
         nombre: `${grupo.name} · en prueba`,
         priceCents: grupo.priceCents,
+        durationDays: grupo.durationDays,
       });
     }
     return lista;
+  });
+
+  /** El plazo del producto elegido, para enseñarlo como lo que vale si se deja vacío. */
+  readonly duracionDelPlan = computed(() => {
+    const { productCode } = this.valoresCodigos();
+    const dias = this.productosCodigos().find((p) => p.productCode === productCode)?.durationDays;
+    return dias && dias > 0 ? `${dias} días` : 'sin caducidad';
   });
 
   /** Cuántos códigos salen y cuánto se apunta, para verlo antes de generar. */
@@ -4403,7 +4419,7 @@ export class Admin implements OnInit {
     this.enviosNuevos.set([]);
     this.cobroApuntado.set(null);
 
-    const { cantidad, productCode, note, paymentMethod, paymentRef, importe } =
+    const { cantidad, productCode, note, paymentMethod, paymentRef, importe, duracion } =
       this.formCodigos.getRawValue();
 
     // El cupón se anota en la nota. El importe final ya recoge la rebaja, pero
@@ -4425,6 +4441,8 @@ export class Admin implements OnInit {
         // Vacío no es cero: significa «cobré el precio de la web» y lo resuelve
         // el servidor. Mandar 0 sería decir que la venta fue gratis.
         importe: importe === null || importe === undefined ? undefined : importe,
+        // Vacío = el plazo del plan; lo resuelve el servidor al canjear.
+        durationDays: duracion ? duracion : undefined,
       })
       .subscribe({
         next: ({ codes, ids, enviadoA, envios, cobro }) => {
@@ -4444,6 +4462,7 @@ export class Admin implements OnInit {
             note: '',
             paymentRef: '',
             importe: null,
+            duracion: null,
           });
           this.formCodigos.controls.buyerEmail.markAsUntouched();
           this.formCodigos.controls.buyerEmails.markAsUntouched();
