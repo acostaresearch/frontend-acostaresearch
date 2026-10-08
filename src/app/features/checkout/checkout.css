@@ -6,10 +6,6 @@
   background: var(--color-superficie);
 }
 
-.pagina {
-  margin-left: 12%;
-  margin-right: 12%;
-}
 
 .cabecera {
   display: flex;
@@ -220,11 +216,6 @@ h1 {
   color: var(--color-texto-suave);
 }
 
-/* El SDK de PayPal inyecta aquí su propio iframe: solo se le reserva sitio. */
-.boton-paypal {
-  min-height: 48px;
-}
-
 .tenue {
   font-size: 12.5px;
   color: var(--color-texto-tenue);
@@ -299,6 +290,48 @@ h1 {
   margin-top: 18px;
 }
 
+/* Selector de escaparate: los paquetes de skills o las membresías de
+ * «Preparar documento». Mismo control segmentado que «Qué incluye», en grande. */
+.vitrinas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+}
+
+.vitrinas button {
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.vitrinas button.activa {
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+@media (max-width: 560px) {
+  .vitrinas {
+    display: flex;
+  }
+
+  .vitrinas button {
+    flex: 1 1 0;
+    padding: 9px 10px;
+  }
+}
+
 /* Una línea debajo del rótulo de grupo, para los productos que no se explican
  * solos con el nombre. El método no la necesita —toda la página habla de él—;
  * «Preparar documento», sí. */
@@ -308,11 +341,6 @@ h1 {
   font-size: 14px;
   line-height: 1.6;
   color: var(--color-texto-suave);
-}
-
-.plan.destacado {
-  border-color: var(--color-primario-suave);
-  background: linear-gradient(var(--color-primario-suave), var(--color-superficie) 70%);
 }
 
 .boton.bloque {
@@ -514,22 +542,6 @@ h1 {
   opacity: 0.5;
   cursor: not-allowed;
 }
-/* El código aplicado, con su plazo debajo cuando lo tiene. */
-/* El código aplicado, dentro de la ficha del plan y pegado al precio: es la
-   explicación de esa cifra, no un aviso aparte. En verde porque es lo único
-   del modal que son buenas noticias. */
-.promo-aplicada {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-  margin: 14px 0 0;
-  padding: 11px 13px;
-  background-color: var(--color-exito-suave);
-  border: 1px solid color-mix(in srgb, var(--color-exito) 26%, transparent);
-  border-radius: var(--radio-sm);
-}
-
 .promo-linea {
   display: flex;
   flex-wrap: wrap;
@@ -552,22 +564,6 @@ h1 {
    mismo verde fuerte del código competía con él y la línea se leía a gritos. */
 .promo-ahorro {
   color: color-mix(in srgb, var(--color-exito) 78%, var(--color-texto));
-}
-
-.promo-aplicada .enlace-quitar {
-  margin-left: 0;
-  color: var(--color-exito);
-}
-
-/* El plazo va debajo y en pequeño: informa, no grita. Quien decide mirarlo lo
-   mira; el contador se pone en rojo solo, desde dentro, cuando baja de la hora. */
-.promo-plazo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
 }
 
 .enlace-quitar {
@@ -606,51 +602,12 @@ h1 {
   border-radius: 12px;
 }
 
-.pasarela-cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.pasarela-titulo {
-  margin: 0 0 4px;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
 .pasarela-nota {
   margin: 0;
   max-width: 44ch;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--color-texto-suave);
-}
-
-/* El total en dólares arriba y a la derecha, no debajo del botón: quien paga
-   desde fuera decide por esa cifra, y enterarse de ella dentro de la ventana
-   de PayPal es enterarse tarde. */
-.pasarela-total {
-  margin: 0;
-  text-align: right;
-}
-
-.pasarela-total-rotulo {
-  display: block;
-  font-size: 10.5px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
-}
-
-.pasarela-total strong {
-  font-size: 19px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-  color: var(--color-texto);
 }
 
 /* Quién cobra. Va debajo del botón que pinta PayPal, en pequeño: no es un
@@ -896,52 +853,6 @@ h1 {
   color: var(--color-texto);
 }
 
-.yape-formulario {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-borde);
-}
-
-.yape-formulario label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-texto);
-}
-
-/* «(opcional)» dicho en el rótulo y no solo en la ayuda de abajo: quien no
-   tiene a mano la constancia dejaba el campo vacío con miedo a que el envío
-   fallara, o se iba a buscarla sin necesidad. */
-.opcional {
-  font-weight: 400;
-  color: var(--color-texto-tenue);
-}
-
-.yape-formulario input[type='text'] {
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--color-texto);
-  background-color: var(--color-superficie);
-  border: 1px solid var(--color-borde-fuerte);
-  border-radius: var(--radio-sm);
-  box-sizing: border-box;
-}
-
-.yape-formulario input[type='text']:focus {
-  outline: 2px solid var(--color-primario-suave);
-  border-color: var(--color-primario);
-}
-
-.campo-ayuda {
-  margin: 6px 0 16px;
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
 /* El input de archivo real se oculta: su aspecto no se puede diseñar y cambia
    en cada navegador. La etiqueta hace de botón y mantiene el foco accesible. */
 .captura-elegir {
@@ -1053,12 +964,6 @@ h1 {
   border: 1px solid color-mix(in srgb, var(--color-peligro) 40%, transparent);
 }
 
-/* Lo que pasa después de darle a enviar. Debajo del botón porque es la
-   respuesta a la duda que aparece justo al pulsarlo: «¿y ahora cuánto tardan?». */
-.pie-revision {
-  margin: 10px 0 0;
-}
-
 /* Estado de espera: el comprobante ya está enviado y ahora depende de nosotros. */
 .yape-enviado {
   padding: 16px;
@@ -1083,381 +988,6 @@ h1 {
   margin-top: 8px;
 }
 
-/* ══ Llamada a la compra dentro de la tarjeta ══════════════════════════════
-   La tarjeta entera ya es un botón, pero un recuadro con un precio se lee
-   como información. Esto le pone cara de paso siguiente. */
-
-.plan-accion {
-  display: block;
-  margin-top: 16px;
-  padding: 11px 16px;
-  font-size: 14.5px;
-  font-weight: 650;
-  text-align: center;
-  color: var(--color-sobre-relleno);
-  background: var(--color-primario);
-  border-radius: var(--radio-sm);
-  transition: background var(--transicion);
-}
-
-.plan:hover .plan-accion {
-  background: var(--color-primario-oscuro);
-}
-
-/* Ya elegido: deja de invitar y pasa a confirmar. */
-.plan.activo .plan-accion {
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  box-shadow: inset 0 0 0 1px var(--color-primario);
-}
-
-/* ══ Panel de pago ════════════════════════════════════════════════════════ */
-
-/* Estado de espera: hay algo escrito, pero nada que parezca un formulario. */
-
-/* ══ Tarjeta de venta ══════════════════════════════════════════════════════
-   Sustituye a la lista «Producto / Incluye / Vigencia / Total», que describía
-   la operación en vez de vender el producto. Lo que decide una compra es qué
-   te llevas, así que la lista de lo incluido ocupa la mitad de la tarjeta. */
-
-.tarjeta-plan {
-  /* Columna flexible para que el bloque de «Qué incluye» se pegue abajo y las
-     tarjetas de una fila acaben a la misma altura, tengan cuatro ventajas o
-     siete. Antes cada una terminaba donde le tocaba y la fila quedaba dentada. */
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  padding: 30px 26px 26px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
-}
-
-.tarjeta-plan.elegido {
-  border-color: var(--color-primario);
-}
-
-/* ── La caja del producto, en la cabecera ──────────────────────────────────
- *
- * Aquí había una franja gris a sangre, de lado a lado de la tarjeta, con la
- * caja flotando en medio. Ocupaba media pantalla en la fila de dos productos,
- * y el gris del archivo contra el blanco de la tarjeta se veía como un hueco
- * sin rellenar. Ahora la caja viene recortada y sin fondo, así que se apoya
- * directamente sobre la tarjeta: no hay franja, no hay costura y en tema
- * oscuro no hace falta apagar nada, porque no hay nada que apagar.
- *
- * Alineada a la izquierda y no centrada: el nombre, el precio, los ✓ y el
- * botón empiezan todos en el mismo margen, y una caja centrada era el único
- * elemento de la tarjeta fuera de esa línea.
- */
-.tarjeta-figura {
-  margin: 0 0 16px;
-}
-
-/*
- * Alto fijo y ancho libre: la caja mide lo mismo en la fila de tres, en la de
- * dos y en el móvil, y el precio queda siempre a la misma distancia del borde
- * de arriba. Con una proporción del ancho, la tarjeta ancha se comía la
- * pantalla, que es justo de lo que venimos.
- *
- * OJO: el `<img>` lleva `width`/`height` con el tamaño del archivo para
- * reservar el hueco antes de que baje, y el navegador los aplica como medidas
- * si el CSS no dice otra cosa. El `height` de aquí abajo no es decorativo.
- */
-.figura-caja,
-.figura {
-  display: block;
-  width: auto;
-  height: 112px;
-}
-
-/*
- * El documento genérico: el que le toca al producto cuyo código no
- * reconocemos y que por eso no tiene caja. De pie y no tumbado, para que ocupe
- * el mismo hueco que una caja y dos tarjetas de la misma fila no empiecen a
- * distinta altura.
- */
-.figura .papel {
-  fill: var(--color-superficie);
-  stroke: color-mix(in srgb, var(--acento) 34%, transparent);
-  stroke-width: 2;
-}
-
-.figura .linea {
-  fill: color-mix(in srgb, var(--acento) 26%, transparent);
-}
-
-/* ── La cinta de «El más elegido» ───────────────────────────────
- *
- * Montada sobre el borde de arriba, a la izquierda. Fuera del flujo para que
- * las tarjetas de la fila sigan empezando a la misma altura: dentro, la que la
- * llevaba bajaba 30 px respecto a las otras.
- */
-.cinta-elegido {
-  position: absolute;
-  top: -11px;
-  left: 20px;
-  margin: 0;
-  padding: 4px 11px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff;
-  background: var(--color-primario);
-  border-radius: 999px;
-}
-
-/* La tarjeta que la lleva: solo el borde en azul. Las demás, blancas con el
-   borde fino; la diferencia la marcan la cinta, el borde y el botón lleno. */
-.rejilla-planes.varios .tarjeta-plan.destacada {
-  border-color: var(--acento);
-  box-shadow: 0 0 0 1px var(--acento);
-}
-
-/* El sitio por donde la cinta se sale de la tarjeta. */
-.rejilla-planes.varios {
-  margin-top: 14px;
-}
-
-.tarjeta-nombre {
-  margin: 0 0 10px;
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  color: var(--color-texto);
-}
-
-/* Cuatro líneas de hueco reservado: es lo que hace que los precios de una fila
-   caigan a la misma altura aunque una descripción sea más larga que otra. */
-.tarjeta-lema {
-  min-height: 84px;
-  margin: 0 0 22px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--color-texto-suave);
-}
-
-/* El tachado va pegado al importe y ARRIBA, no en su misma línea de base: así
-   se lee como un apunte sobre la cifra grande y no como una segunda cifra que
-   compite con ella. */
-.tarjeta-precio {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: flex-start;
-  margin: 0 0 4px;
-}
-
-.tarjeta-precio .importe {
-  font-size: 44px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--color-texto);
-}
-
-/* El precio de antes, en gris y pequeño: es el contexto, no el titular. */
-.tarjeta-precio .antes {
-  align-self: flex-end;
-  padding-bottom: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #be2222;
-  text-decoration: line-through;
-  text-decoration-thickness: 1.5px;
-}
-
-
-
-.tarjeta-vigencia {
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--color-texto-suave);
-}
-
-/* ── El código que explica esa cifra ──────────────────────────────────────── */
-
-/* Va pegado al precio porque es su motivo, no una acción aparte: al elegir el
-   plan el código ya se aplica solo, así que aquí no hay nada que pulsar. */
-.tarjeta-cupon,
-.tarjeta-oferta {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin: 0 0 20px;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--color-exito);
-}
-
-/* «Ya tienes este producto»: en verde, encima del botón, para que quien ya lo
-   compró no lo confunda con una compra nueva. Vencido, en naranja. */
-.tarjeta-ya-tienes {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: var(--color-exito);
-  background: color-mix(in srgb, var(--color-exito) 9%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-exito) 30%, transparent);
-}
-
-.tarjeta-ya-tienes.vencida {
-  color: var(--color-aviso);
-  background: color-mix(in srgb, var(--color-aviso) 9%, transparent);
-  border-color: color-mix(in srgb, var(--color-aviso) 30%, transparent);
-}
-
-.tarjeta-ya-tienes .icono {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
-}
-
-.ya-tienes-titulo {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.ya-tienes-detalle {
-  margin: 2px 0 0;
-  font-size: 12.5px;
-  color: var(--color-texto-suave);
-}
-
-.ya-tienes-detalle a {
-  font-weight: 600;
-}
-
-/* La oferta sin código, en naranja y con el reloj: dura lo que dure. */
-.tarjeta-oferta {
-  color: var(--color-aviso);
-}
-
-.tarjeta-cupon .icono,
-.tarjeta-oferta .icono {
-  width: 14px;
-  height: 14px;
-}
-
-.tarjeta-rotulo {
-  /* Margen superior automático: empuja el bloque de ventajas al fondo, que es
-     lo que alinea el pie de todas las de una fila. */
-  margin: auto 0 8px;
-  padding-top: 26px;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-texto-tenue);
-}
-
-.tarjeta-lista {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tarjeta-lista li {
-  position: relative;
-  padding: 6px 0 6px 28px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--color-texto-suave);
-}
-
-.tarjeta-lista strong {
-  font-weight: 650;
-  color: var(--color-texto);
-}
-
-/* El visto dentro de un círculo azul claro. */
-.tarjeta-lista li::before {
-  content: '✓';
-  position: absolute;
-  top: 8px;
-  left: 0;
-  display: grid;
-  place-items: center;
-  width: 17px;
-  height: 17px;
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 50%;
-}
-
-/* ══ Qué se está comprando ════════════════════════════════════════════════
-   Dos formas del mismo dato: la ficha entera mientras se decide y una sola
-   línea en cuanto hay medio elegido. Ver `pago-cuerpo` en la plantilla. */
-
-.resumen-plan,
-.resumen-compacto {
-  padding: 14px 15px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 12px;
-}
-
-.resumen-cabecera {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.pago-producto {
-  margin: 0 0 6px;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
-/* La vigencia, en pastilla: es una condición del producto, no una frase más.
-   Suelta en gris bajo el nombre se leía como un subtítulo y nadie la miraba. */
-.resumen-vigencia {
-  display: inline-block;
-  margin: 0;
-  padding: 3px 9px;
-  font-size: 11.5px;
-  font-weight: 650;
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-  border-radius: 999px;
-}
-
-/* «Cambiar» hace lo mismo que la ✕: suelta el plan, el descuento y la captura.
-   Con cara de botón secundario pequeño, que es lo que es: una salida, no el
-   paso siguiente. */
-.boton-cambiar {
-  flex: none;
-  padding: 7px 14px;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde-fuerte);
-  border-radius: var(--radio-sm);
-  cursor: pointer;
-  transition:
-    border-color var(--transicion),
-    background var(--transicion);
-}
-
-.boton-cambiar:hover {
-  border-color: var(--color-primario);
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-}
-
 .pago-total {
   display: flex;
   flex-wrap: wrap;
@@ -1478,39 +1008,6 @@ h1 {
   line-height: 1.1;
 }
 
-/* ── La versión plegada ─────────────────────────────────────────────────── */
-.resumen-compacto {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.resumen-compacto-texto {
-  min-width: 0;
-}
-
-.resumen-compacto .pago-producto {
-  margin: 0 0 3px;
-  font-size: 13.5px;
-}
-
-.resumen-detalle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: baseline;
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-texto-suave);
-}
-
-.resumen-detalle strong {
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
 .resumen-tic {
   color: var(--color-exito);
   font-weight: 700;
@@ -1529,15 +1026,6 @@ h1 {
   font-size: 20px;
   font-weight: 750;
   letter-spacing: -0.02em;
-  color: var(--color-texto);
-}
-
-/* ══ Selector de medio de pago ════════════════════════════════════════════ */
-
-.pago-rotulo {
-  margin: 18px 0 10px;
-  font-size: 13px;
-  font-weight: 650;
   color: var(--color-texto);
 }
 
@@ -1574,114 +1062,6 @@ h1 {
   background: var(--color-primario-suave);
   border-color: var(--color-primario);
   box-shadow: inset 0 0 0 1px var(--color-primario);
-}
-
-/* El icono y la marca de elegido comparten renglón, uno en cada punta: el
-   redondel a la derecha es lo que convierte dos recuadros en una elección de
-   una sola cosa, y arriba se ve sin recorrer la tarjeta. */
-.medio-fila {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.medio-icono {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-}
-
-/* El morado es de Yape y el azul de PayPal: el comprador reconoce la app por
-   el color antes de leer el nombre. */
-.medio-icono.yape {
-  color: #7b2fa0;
-  background: color-mix(in srgb, #7b2fa0 12%, transparent);
-}
-
-.medio-icono.culqi {
-  color: #00857f;
-  background: color-mix(in srgb, #00857f 12%, transparent);
-}
-
-.medio-icono.paypal {
-  color: #0070ba;
-  background: color-mix(in srgb, #0070ba 12%, transparent);
-}
-
-.medio-icono .icono {
-  width: 17px;
-  height: 17px;
-}
-
-/* Un radio, pintado a mano: el de verdad no se puede dibujar igual en todos
-   los navegadores y aquí quien recoge el clic es el botón entero. El estado
-   lo dice `aria-pressed`, que es lo que lee el lector de pantalla. */
-.medio-marca {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  color: transparent;
-  background: var(--color-superficie);
-  border: 1.5px solid var(--color-borde-fuerte);
-  border-radius: 50%;
-  transition:
-    background var(--transicion),
-    border-color var(--transicion);
-}
-
-.medio.activo .medio-marca {
-  color: var(--color-sobre-relleno);
-  background: var(--color-primario);
-  border-color: var(--color-primario);
-}
-
-.medio-marca .icono {
-  width: 12px;
-  height: 12px;
-  stroke-width: 2.6;
-}
-
-.medio-nombre {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
-.medio-detalle {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--color-texto-suave);
-}
-
-/* ── Varias tarjetas ──────────────────────────────────────────────────────
- *
- * Con un solo grupo la tarjeta manda sola y ocupa el ancho de la columna. Con
- * varios se ponen en rejilla para poder compararlos de un vistazo, que es lo
- * que hace alguien que ve dos precios: mirarlos a la vez, no uno debajo del
- * otro.
- */
-.rejilla-planes.varios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
-  /* `stretch`, y no `start`: es lo que iguala la altura de la fila. */
-  align-items: stretch;
-}
-
-/* Solo la tarjeta elegida lleva el borde fuerte: si todas gritan, ninguna
-   destaca y no se ve cuál está seleccionada. */
-.rejilla-planes.varios .tarjeta-plan {
-  border-color: var(--color-borde);
-  box-shadow: none;
-}
-
-.rejilla-planes.varios .tarjeta-plan.elegido {
-  border-color: var(--color-primario);
-  box-shadow: var(--sombra);
 }
 
 /* ── Guía de instalación en PDF ────────────────────────────────────────────
@@ -1753,68 +1133,7 @@ h1 {
     width: 100%;
     padding-left: 36px;
   }
-}
-
-/* ══ Un color por paquete ═══════════════════════════════════════════════════
- *
- * Cada tarjeta lleva su tono en la cinta, el precio, los ✓ y el botón. Los
- * cuatro salen del verificador de contraste, no del gusto: se distinguen entre
- * sí bajo daltonismo protán y deután, y los cuatro aguantan texto blanco encima
- * por encima de 4,5:1, que es lo que necesita el botón de comprar.
- *
- * El color agrupa; quien identifica es el nombre de la tarjeta. Por eso ningún
- * dato depende solo del tono.
- */
-.tarjeta-plan {
-  --acento: var(--color-primario);
-  --acento-suave: var(--color-primario-suave);
-}
-
-/*
- * Todos los planes en el azul de la casa.
- *
- * Cada uno tenía su color —magenta, verde, naranja— para agruparlos de un
- * vistazo. Con dos productos eso no agrupa nada: solo pone tres marcas ajenas
- * a la paleta en la única página donde se cobra, y el magenta del segundo plan
- * se leía como si fuera otra empresa. Lo que identifica es el nombre de la
- * tarjeta, y eso no cambia. Las variantes se quedan definidas por si algún día
- * hay cuatro productos que sí convenga agrupar.
- */
-
-.tarjeta-plan .tarjeta-lista li::before {
-  color: var(--acento);
-}
-
-.tarjeta-plan .boton {
-  background: var(--acento);
-  border-color: var(--acento);
-}
-
-/* Sin un tono más oscuro por acento: oscurecer el que haya es una regla que
-   vale para los cuatro y para el que se añada mañana. */
-.tarjeta-plan .boton:hover:not(:disabled) {
-  background: var(--acento);
-  filter: brightness(0.92);
-}
-
-/* Los paquetes que no son el destacado llevan el botón blanco con borde: un
-   solo botón lleno por fila, el del más elegido. */
-.tarjeta-plan .boton.secundario {
-  color: var(--color-texto);
-  background: var(--color-superficie);
-  border-color: var(--color-borde-fuerte);
-}
-
-.tarjeta-plan .boton.secundario:hover:not(:disabled) {
-  background: var(--color-fondo);
-  filter: none;
-}
-
-.rejilla-planes.varios .tarjeta-plan.elegido {
-  border-color: var(--acento);
-}
-
-/* ══ La ventana del pago ════════════════════════════════════════════════════
+}/* ══ La ventana del pago ════════════════════════════════════════════════════
  *
  * Se abre al pulsar «Comprar» y solo se cierra con la ✕: pulsar fuera no hace
  * nada, porque un clic despistado con el comprobante a medio subir lo perdía.
@@ -2062,162 +1381,13 @@ h1 {
     width: 100%;
     text-align: center;
   }
-}
-
-/* ── El plazo de la ventana de pago ──────────────────────────────────────
-   Va pegado bajo el título, antes que nada: si se anuncia un plazo, se ve
-   al abrir, no al hacer scroll. Y no promete ninguna reserva, porque no la
-   hay: dice que la ventana se cierra, que es lo que de verdad ocurre. */
-.pago-plazo {
-  flex: none;
-  margin: 0 20px 14px;
-  padding: 11px 13px 12px;
-  background: var(--color-error-suave, #fdeeee);
-  border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
-  border-radius: var(--radio-sm);
-}
-
-.pago-plazo-linea {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-error);
-}
-
-.pago-plazo-texto {
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
-}
-
-/* El número, grande y en cifras de ancho fijo: es lo que se mira de reojo
-   mientras se paga, y no puede bailar de ancho a cada segundo. */
-.pago-plazo-linea app-cuenta-atras {
-  font-size: 17px;
-  font-weight: 750;
-  letter-spacing: -0.01em;
-}
-
-.pago-plazo-nota {
-  margin: 8px 0 0;
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--color-error);
-  opacity: 0.85;
-}
-
-/* La barra se vacía sola con CSS y sin un segundo temporizador: arranca
-   cuando se monta el cartel, igual que el contador. Dos relojes que cuentan
-   lo mismo por su cuenta acaban discrepando.
-
-   Va dentro de una pista propia, bajo la línea del contador: pegada al borde
-   del cartel se confundía con el borde mismo y no se veía menguar. */
-.pago-plazo-pista {
-  display: block;
-  height: 3px;
-  margin-top: 8px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--color-error) 18%, transparent);
-  border-radius: 999px;
-}
-
-.pago-plazo-barra {
-  display: block;
-  height: 100%;
-  background: var(--color-error);
-  border-radius: 999px;
-  animation: vaciar-plazo 300s linear forwards;
-}
-
-@keyframes vaciar-plazo {
+}@keyframes vaciar-plazo {
   from {
     width: 100%;
   }
   to {
     width: 0%;
   }
-}
-
-/* Quien pidió que no se le muevan las cosas en pantalla no ve la barra
-   correr; el número le sigue diciendo lo mismo. */
-@media (prefers-reduced-motion: reduce) {
-  .pago-plazo-barra {
-    animation: none;
-    width: 100%;
-  }
-}
-
-/* ── Carrito ──────────────────────────────────────────────────────────────── */
-
-/* El botón de la tarjeta: debajo de «Comprar» y más discreto, porque comprar
-   un solo producto sigue siendo lo habitual. */
-.tarjeta-carrito {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  align-self: center;
-  margin-top: 10px;
-  padding: 6px 10px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primario);
-  background: none;
-  border: 0;
-  border-radius: var(--radio-sm);
-  cursor: pointer;
-  transition: background var(--transicion);
-}
-
-.tarjeta-carrito:hover {
-  background: var(--color-primario-suave);
-}
-
-.tarjeta-carrito.dentro {
-  color: var(--color-exito);
-}
-
-.tarjeta-carrito .icono {
-  width: 16px;
-  height: 16px;
-}
-
-/* Las líneas del carrito en la ventana de pago: cada producto con su precio. */
-.carrito-lineas {
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.carrito-lineas li {
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 8px 0;
-  font-size: 13.5px;
-  border-top: 1px solid var(--color-borde);
-}
-
-.carrito-linea-nombre {
-  min-width: 0;
-}
-
-.carrito-linea-precio {
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.carrito-linea-precio .tachado {
-  margin-right: 6px;
-  font-weight: 400;
-  color: var(--color-texto-tenue);
-  text-decoration: line-through;
-  text-decoration-color: var(--color-error);
 }
 
 /* La confirmación de un carrito: una ficha por producto. */
@@ -2280,30 +1450,6 @@ h1 {
   font-size: 14px;
 }
 
-.tarjeta-plan {
-  padding: 24px 22px 22px;
-}
-
-.tarjeta-figura {
-  margin: 0 0 14px;
-}
-
-.figura-caja,
-.figura {
-  height: 72px;
-}
-
-/* Crece y empuja el precio abajo: los de una fila quedan a la misma altura. */
-.tarjeta-texto {
-  flex: 1;
-  margin-bottom: 18px;
-}
-
-.tarjeta-texto .tarjeta-lema {
-  min-height: 0;
-  margin: 0 0 8px;
-}
-
 .ver-incluye {
   padding: 0;
   font: inherit;
@@ -2317,175 +1463,6 @@ h1 {
 
 .ver-incluye:hover {
   text-decoration: underline;
-}
-
-.tarjeta-precio .importe {
-  font-size: 40px;
-}
-
-.tarjeta-vigencia {
-  margin-bottom: 10px;
-}
-
-/* La oferta en pastilla: se lee de un vistazo sin competir con el precio. */
-.tarjeta-pastilla {
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 5px;
-  align-items: center;
-  margin: 0 0 16px;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-aviso);
-  background: color-mix(in srgb, var(--color-aviso) 12%, transparent);
-  border-radius: 999px;
-}
-
-.tarjeta-pastilla.cupon {
-  color: var(--color-exito);
-  background: color-mix(in srgb, var(--color-exito) 12%, transparent);
-}
-
-.tarjeta-pastilla .icono {
-  width: 13px;
-  height: 13px;
-}
-
-.tarjeta-acciones {
-  display: grid;
-  gap: 10px;
-}
-
-.tarjeta-acciones .tarjeta-carrito {
-  justify-self: center;
-}
-
-.tarjeta-plan .boton.secundario:disabled {
-  color: var(--color-texto-suave);
-  opacity: 1;
-  cursor: default;
-}
-
-/* ── Qué incluye cada paquete ─────────────────────────────────────────── */
-.incluye-panel {
-  margin-top: 28px;
-  padding: 24px 26px 26px;
-  scroll-margin-top: 96px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
-}
-
-.incluye-cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.incluye-cabecera h2 {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
-.incluye-pestanas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-  border-radius: 10px;
-}
-
-.incluye-pestanas button {
-  padding: 7px 14px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-texto-suave);
-  background: none;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.incluye-pestanas button.activa {
-  color: var(--color-primario);
-  background: var(--color-superficie);
-  box-shadow: var(--sombra);
-}
-
-.incluye-cuerpo {
-  display: grid;
-  gap: 28px;
-}
-
-.incluye-cuerpo.con-fases {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-}
-
-.incluye-rotulo {
-  margin: 0 0 10px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-texto-suave);
-}
-
-.incluye-lista {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 18px;
-  padding: 0;
-  list-style: none;
-}
-
-.incluye-lista li {
-  position: relative;
-  padding-left: 24px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-texto);
-}
-
-.incluye-lista li::before {
-  content: '✓';
-  position: absolute;
-  left: 2px;
-  font-weight: 700;
-  color: var(--color-primario);
-}
-
-.incluye-carrito {
-  width: auto;
-}
-
-.incluye-fases {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.incluye-fases li {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 9px 10px;
-  font-size: 13px;
-  line-height: 1.3;
-  color: var(--color-texto);
-  background: var(--color-fondo);
-  border-radius: 8px;
 }
 
 .fase-numero {
@@ -2512,11 +1489,6 @@ h1 {
   background: var(--color-primario-suave);
 }
 
-.incluye-diferencias {
-  display: block;
-  margin-top: 24px;
-}
-
 @media (max-width: 860px) {
   .cabecera {
     flex-direction: column;
@@ -2527,10 +1499,7 @@ h1 {
     max-width: none;
   }
 
-  .incluye-cuerpo.con-fases {
-    grid-template-columns: 1fr;
   }
-}
 
 /* ══ El cajón «Tu carrito» ══════════════════════════════════════════════════
  *
@@ -2991,4 +1960,573 @@ h1 {
 
 .pago-letra a {
   text-decoration: underline;
+}
+
+/* ══ /planes, rediseño del 8-oct-2026 ═══════════════════════════════════════
+ *
+ * Según una maqueta del usuario: fondo blanco a sangre, cabecera con el canje
+ * a la derecha, pestañas subrayadas y los paquetes en una rejilla de tres
+ * tarjetas —portada sobre fondo de color arriba, precio y «Comprar» abajo—
+ * que acaba en la casilla oscura de «Cómo pagar». Va al final para pisar lo
+ * de arriba.
+ *
+ * Los colores van como variables de la página y no sueltos: así el modo
+ * oscuro solo tiene que cambiarlas, aquí abajo, en un sitio.
+ */
+:host {
+  --p-azul: #1f4fd8;
+  --p-azul-hover: #1a43b8;
+  --p-texto: #171a21;
+  --p-gris-1: #4a505c;
+  --p-gris-2: #5a606c;
+  --p-gris-3: #6b7280;
+  --p-gris-4: #8a909c;
+  --p-fondo: #ffffff;
+  --p-borde: #e3e6ec;
+  --p-linea: #eceef2;
+  --p-campo: #d5dbea;
+  --p-pildora: #f2f4f8;
+  --p-tono-gris: #f2f4f8;
+  --p-tono-azul: #e9efff;
+  --p-tono-verde: #e6f2ec;
+  --p-verde: #0e6b3a;
+  --p-noche: #13161d;
+  --p-sombra: 0 8px 28px rgba(18, 21, 28, 0.05);
+
+  display: block;
+  background: var(--p-fondo);
+}
+
+:host-context([data-tema='oscuro']) {
+  --p-azul: var(--color-primario);
+  --p-azul-hover: var(--color-primario-oscuro);
+  --p-texto: var(--color-texto);
+  --p-gris-1: var(--color-texto-suave);
+  --p-gris-2: var(--color-texto-suave);
+  --p-gris-3: var(--color-texto-tenue);
+  --p-gris-4: var(--color-texto-tenue);
+  --p-fondo: var(--color-pagina);
+  --p-borde: var(--color-borde);
+  --p-linea: var(--color-borde);
+  --p-campo: var(--color-borde-fuerte);
+  --p-pildora: var(--color-superficie-alta);
+  --p-tono-gris: var(--color-superficie);
+  --p-tono-azul: var(--color-primario-suave);
+  --p-tono-verde: color-mix(in srgb, var(--color-exito) 18%, var(--color-superficie));
+  --p-verde: var(--color-exito);
+  --p-noche: var(--color-superficie-alta);
+  --p-sombra: var(--sombra);
+}
+
+/* ── Fondo y contenedor ────────────────────────────────────────────────── */
+.pagina {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--banda) 24px;
+  font-family: 'Plus Jakarta Sans', var(--fuente);
+  background: none;
+  box-shadow: none;
+}
+
+/* ── Cabecera ──────────────────────────────────────────────────────────── */
+.cabecera {
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.antetitulo {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: var(--p-azul);
+}
+
+.cabecera h1 {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--p-texto);
+}
+
+.subtitulo {
+  margin-top: 10px;
+  font-size: 16px;
+  color: var(--p-gris-1);
+}
+
+.canje-atajo {
+  align-self: flex-end;
+  width: 380px;
+  max-width: 100%;
+}
+
+.canje-atajo .canje-intro {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--p-gris-1);
+}
+
+.canje-atajo .canje-intro strong {
+  font-weight: 700;
+  color: var(--p-texto);
+}
+
+.canje-grupo {
+  height: 44px;
+  background: var(--p-fondo);
+  border: 1px solid var(--p-campo);
+  border-radius: 12px;
+}
+
+.canje-grupo input {
+  padding: 0 14px;
+  font-size: 14px;
+  color: var(--p-texto);
+}
+
+.canje-grupo button {
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--p-azul);
+}
+
+.canje-grupo button:hover {
+  background: var(--p-azul-hover);
+}
+
+.canje-grupo button:focus-visible {
+  outline-color: #fff;
+}
+
+/* ── Pestañas: texto subrayado sobre una línea a todo lo ancho ─────────── */
+.vitrinas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--p-linea);
+  border-radius: 0;
+}
+
+.vitrinas button {
+  margin-bottom: -1px;
+  padding: 10px 2px;
+  margin-right: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-gris-3);
+  background: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.vitrinas button:hover {
+  color: var(--p-texto);
+}
+
+.vitrinas button.activa {
+  font-weight: 700;
+  color: var(--p-texto);
+  background: none;
+  border-bottom-color: var(--p-azul);
+  box-shadow: none;
+}
+
+.grupo-entrada {
+  color: var(--p-gris-1);
+}
+
+/* ── La rejilla de tarjetas ────────────────────────────────────────────── */
+.rejilla-paquetes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.paquete {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--p-fondo);
+  border: 1px solid var(--p-borde);
+  border-radius: 16px;
+  box-shadow: var(--p-sombra);
+  transition:
+    border-color var(--transicion),
+    box-shadow var(--transicion);
+}
+
+.paquete:hover {
+  border-color: var(--p-campo);
+}
+
+/* El más elegido: borde azul. */
+.paquete.destacada {
+  border-color: var(--p-azul);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--p-azul) 25%, transparent), var(--p-sombra);
+}
+
+/* La portada, centrada sobre un fondo de color. */
+.paquete-portada {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 150px;
+}
+
+.paquete-portada.tono-gris {
+  background: var(--p-tono-gris);
+}
+
+.paquete-portada.tono-azul {
+  background: var(--p-tono-azul);
+}
+
+.paquete-portada.tono-verde {
+  background: var(--p-tono-verde);
+}
+
+.paquete-portada img,
+.paquete-portada svg {
+  display: block;
+  width: auto;
+  height: 112px;
+  filter: drop-shadow(0 8px 12px rgba(18, 21, 28, 0.18));
+}
+
+.paquete-portada .papel {
+  fill: var(--p-fondo);
+  stroke: var(--p-campo);
+  stroke-width: 3;
+}
+
+.paquete-portada .linea {
+  fill: var(--p-azul);
+  opacity: 0.35;
+}
+
+.paquete-cinta {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--p-azul);
+  border-radius: 999px;
+}
+
+.paquete-cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px 18px 16px;
+}
+
+.paquete-nombre {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--p-texto);
+}
+
+.paquete-trae {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--p-azul);
+}
+
+.paquete-lema {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--p-gris-2);
+}
+
+.paquete-cuerpo .ver-incluye {
+  align-self: flex-start;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-azul);
+}
+
+/* «Qué incluye», desplegado dentro de la tarjeta. */
+.paquete-detalle {
+  margin-top: 12px;
+}
+
+.paquete-incluye {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paquete-incluye li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--p-gris-1);
+}
+
+.paquete-incluye li::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 2px;
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid var(--p-azul);
+  border-left: 2px solid var(--p-azul);
+  transform: rotate(-45deg);
+}
+
+.paquete-rotulo {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--p-gris-3);
+}
+
+.paquete-fases {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paquete-fases li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--p-gris-1);
+}
+
+.paquete-fases .fase-numero {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  background: var(--p-azul);
+}
+
+.paquete-fases .fase-extra .fase-numero {
+  color: var(--p-azul);
+  background: var(--p-pildora);
+}
+
+.paquete-carrito {
+  margin-top: 12px;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--p-azul);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.paquete-carrito:hover {
+  text-decoration: underline;
+}
+
+/* «Ya lo tienes»: una sola línea verde. */
+.paquete-ya-tienes {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--p-verde);
+}
+
+.paquete-ya-tienes.vencida {
+  color: var(--p-texto);
+}
+
+/* El pie de la tarjeta, siempre abajo: así los precios de una fila caen a la
+ * misma altura aunque los textos de encima midan distinto. */
+.paquete-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--p-linea);
+}
+
+.paquete-cuerpo > :nth-last-child(2) {
+  margin-bottom: 14px;
+}
+
+.paquete-precio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.paquete-precio .importe {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--p-texto);
+  white-space: nowrap;
+}
+
+.paquete-detalle-precio {
+  font-size: 11.5px;
+  color: var(--p-gris-4);
+}
+
+.paquete-detalle-precio s {
+  white-space: nowrap;
+}
+
+.paquete-detalle-precio strong {
+  font-weight: 700;
+  color: var(--p-verde);
+}
+
+.paquete-boton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--p-azul);
+  border: 1px solid var(--p-azul);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    background var(--transicion),
+    border-color var(--transicion),
+    color var(--transicion);
+}
+
+.paquete-boton:hover {
+  background: var(--p-azul-hover);
+  border-color: var(--p-azul-hover);
+}
+
+.paquete-boton.contorno {
+  color: var(--p-texto);
+  background: var(--p-fondo);
+  border-color: var(--p-campo);
+}
+
+.paquete-boton.contorno:hover {
+  color: var(--p-azul);
+  background: var(--p-fondo);
+  border-color: var(--p-azul);
+}
+
+.paquete-boton.en-carrito {
+  color: var(--p-verde);
+}
+
+/* ── «Cómo pagar»: la casilla oscura del final ─────────────────────────── */
+.como-pagar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 24px;
+  color: #c9cdd6;
+  background: var(--p-noche);
+  border-radius: 16px;
+}
+
+.como-pagar p {
+  margin: 0;
+}
+
+.como-pagar-rotulo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fb0ff;
+}
+
+.como-pagar-titulo {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.como-pagar-medios {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.como-pagar-medios strong {
+  font-weight: 700;
+  color: #fff;
+}
+
+.como-pagar-nota {
+  font-size: 12px;
+  color: #8a909c;
+}
+
+/* ── Pantallas medianas y móvil ────────────────────────────────────────── */
+@media (max-width: 1000px) {
+  .rejilla-paquetes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .cabecera {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .cabecera h1 {
+    font-size: 36px;
+  }
+
+  .canje-atajo {
+    align-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .rejilla-paquetes {
+    grid-template-columns: 1fr;
+  }
+
+  .vitrinas button {
+    margin-right: 12px;
+  }
 }

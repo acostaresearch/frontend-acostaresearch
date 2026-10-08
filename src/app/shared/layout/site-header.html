@@ -28,15 +28,69 @@
          como estaban; en móvil se convierte en el desplegable. -->
     <div id="menu-principal" class="menu" [class.abierto]="menuAbierto()">
       <nav class="navegacion" data-tour="menu">
-        <a routerLink="/metodo" routerLinkActive="activo">Tesis</a>
-        <a routerLink="/articulo" routerLinkActive="activo">Artículos</a>
-        <!-- «Preparar documento» solo para quien ya entró: la pantalla pide
-             sesión —la membresía cuelga de la cuenta—, y enseñarle el enlace a
-             un visitante sería mandarlo al formulario de acceso desde el menú.
-             A él se le vende desde /planes, que es pública. -->
-        <!-- @if (auth.isAuthenticated()) {
-          <a [routerLink]="'preparar' | privada" routerLinkActive="activo">Preparar documento</a>
-        } -->
+        <!-- «Productos»: Tesis, Artículos y Preparar documento juntos. Se abre
+             al pasar el ratón (`:hover` en el CSS) o al pulsarlo, que es lo
+             único que hay en un teléfono; se cierra al elegir, al pulsar
+             fuera o con Escape. En el menú de móvil la lista se despliega en
+             su sitio, sangrada, en vez de flotar. -->
+        <div class="productos" [class.abierto]="productosAbierto()" (keydown.escape)="cerrarProductos()">
+          <button
+            type="button"
+            class="productos-boton"
+            [class.activo]="enProducto()"
+            aria-haspopup="true"
+            [attr.aria-expanded]="productosAbierto()"
+            aria-controls="productos-lista"
+            (click)="alternarProductos()"
+          >
+            Productos
+            <svg class="flecha" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          <div id="productos-lista" class="productos-lista">
+            <a class="producto" routerLink="/metodo" routerLinkActive="activo" (click)="cerrarProductos()">
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5-10-5z" /><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5" /><path d="M22 9v5" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Tesis</span>
+                <span class="producto-lema">Las skills de tu tesis, capítulo a capítulo</span>
+              </span>
+            </a>
+            <a class="producto" routerLink="/articulo" routerLinkActive="activo" (click)="cerrarProductos()">
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Artículos</span>
+                <span class="producto-lema">Empíricos y de revisión, para publicar</span>
+              </span>
+            </a>
+            <!-- Con sesión lleva a la pantalla de trabajo —la membresía cuelga
+                 de la cuenta—; al visitante, a sus precios en /planes, que es
+                 pública: mandarlo a /preparar-documento sería mandarlo al
+                 formulario de acceso. -->
+            @if (auth.isAuthenticated()) {
+              <a class="producto" [routerLink]="'preparar' | privada" routerLinkActive="activo" (click)="cerrarProductos()">
+                <ng-container *ngTemplateOutlet="preparar" />
+              </a>
+            } @else {
+              <a class="producto" routerLink="/planes" [queryParams]="{ ver: 'preparar' }" (click)="cerrarProductos()">
+                <ng-container *ngTemplateOutlet="preparar" />
+              </a>
+            }
+            <ng-template #preparar>
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 5h8M8 3v2M6 5c0 4 2.5 7 6 8.5" /><path d="M10 5c0 3-2 6.5-6 8.5" /><path d="M12 21l4.5-10L21 21M13.5 18h6" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Edición y Traducción</span>
+                <span class="producto-lema">Corrige tu inglés académico o traduce tu Word</span>
+              </span>
+            </ng-template>
+          </div>
+        </div>
         <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>
         <a routerLink="/quien-soy" routerLinkActive="activo">Quién soy</a>
         <a routerLink="/planes" routerLinkActive="activo" data-tour="comprar">Comprar</a>

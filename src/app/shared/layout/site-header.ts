@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 
@@ -19,19 +20,26 @@ import { PrivadaPipe } from '../../core/router/privada.pipe';
  */
 @Component({
   selector: 'app-site-header',
-  imports: [PrivadaPipe, RouterLink, RouterLinkActive],
+  imports: [NgTemplateOutlet, PrivadaPipe, RouterLink, RouterLinkActive],
   templateUrl: './site-header.html',
   styleUrl: './site-header.css',
 })
 export class SiteHeader {
   private readonly router = inject(Router);
   private readonly recorrido = inject(RecorridoWeb);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
   protected readonly carrito = inject(CarritoService);
 
   /** Solo cuenta en móvil: en pantalla ancha el menú está siempre desplegado. */
   readonly menuAbierto = signal(false);
+
+  /** El desplegable «Productos» abierto con un clic (con el ratón basta pasar por encima). */
+  readonly productosAbierto = signal(false);
+
+  /** Si la página actual es uno de los productos: «Productos» se marca como activo. */
+  readonly enProducto = signal(false);
 
   constructor() {
     // Al cambiar de página se cierra solo. Sin esto, tocar un enlace deja el
@@ -42,7 +50,11 @@ export class SiteHeader {
         filter((evento) => evento instanceof NavigationEnd),
         takeUntilDestroyed(),
       )
-      .subscribe(() => this.menuAbierto.set(false));
+      .subscribe(() => {
+        this.menuAbierto.set(false);
+        this.productosAbierto.set(false);
+        this.enProducto.set(/^\/(metodo|articulo|preparar-documento)(\/|\?|#|$)/.test(this.router.url));
+      });
   }
 
   /**
@@ -58,6 +70,22 @@ export class SiteHeader {
 
   alternarMenu(): void {
     this.menuAbierto.update((abierto) => !abierto);
+  }
+
+  alternarProductos(): void {
+    this.productosAbierto.update((abierto) => !abierto);
+  }
+
+  cerrarProductos(): void {
+    this.productosAbierto.set(false);
+  }
+
+  /** Un clic fuera de «Productos» lo cierra, como cualquier desplegable. */
+  @HostListener('document:click', ['$event'])
+  alPulsarFuera(evento: MouseEvent): void {
+    if (!this.productosAbierto()) return;
+    const productos = this.elemento.nativeElement.querySelector('.productos');
+    if (productos && !productos.contains(evento.target as Node)) this.cerrarProductos();
   }
 
   cerrarMenu(): void {

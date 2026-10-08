@@ -70,6 +70,176 @@
   color: var(--color-primario);
 }
 
+/* ── «Productos»: desplegable con Tesis, Artículos y Preparar documento ── */
+.productos {
+  position: relative;
+}
+
+.productos-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 15px;
+  white-space: nowrap;
+  color: var(--color-texto-suave);
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
+}
+
+.productos-boton:hover,
+.productos.abierto .productos-boton {
+  color: var(--color-texto);
+  background: var(--color-fondo);
+}
+
+.productos-boton.activo {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.productos-boton .flecha {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transicion);
+}
+
+.productos.abierto .flecha {
+  transform: rotate(180deg);
+}
+
+/* Flota debajo del botón. El `padding-top` hace de puente: sin él, al bajar
+   el ratón del botón a la lista se cruza un hueco y se cierra antes de llegar. */
+.productos-lista {
+  position: absolute;
+  top: 100%;
+  left: -8px;
+  z-index: 30;
+  display: none;
+  gap: 2px;
+  width: 340px;
+  padding: 8px;
+  margin-top: 8px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -12px rgb(15 23 42 / 22%), 0 4px 10px -4px rgb(15 23 42 / 10%);
+  animation: productos-entra 140ms ease-out;
+}
+
+@keyframes productos-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.productos-lista::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.productos.abierto .productos-lista {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (hover: hover) {
+  .productos:hover .productos-lista {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .productos:hover .flecha {
+    transform: rotate(180deg);
+  }
+}
+
+/* Cada producto, una fila con icono, nombre y una línea de qué es. */
+.navegacion .productos-lista a.producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  white-space: normal;
+  border-radius: 10px;
+}
+
+.navegacion .productos-lista a.producto:hover {
+  background: var(--color-fondo);
+}
+
+.navegacion .productos-lista a.producto.activo {
+  font-weight: inherit;
+  background: var(--color-primario-suave);
+}
+
+.producto-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 10px;
+  transition:
+    color var(--transicion),
+    background var(--transicion);
+}
+
+.producto-icono svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.producto:hover .producto-icono,
+.producto.activo .producto-icono {
+  color: #fff;
+  background: var(--color-primario);
+}
+
+.producto-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.producto-nombre {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.producto.activo .producto-nombre {
+  color: var(--color-primario);
+}
+
+.producto-lema {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--color-texto-tenue);
+}
+
 .secundario {
   background: var(--color-primario);
 }
@@ -313,6 +483,50 @@
     padding: 13px 0;
     font-size: 15px;
     border-bottom: 1px solid var(--color-borde);
+  }
+
+  /* En el menú de móvil «Productos» es una fila más, y su lista se abre en
+     su sitio, sangrada, en vez de flotar encima. */
+  .productos-boton {
+    justify-content: space-between;
+    width: 100%;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--color-borde);
+    border-radius: 0;
+  }
+
+  .productos-boton:hover,
+  .productos.abierto .productos-boton {
+    background: none;
+  }
+
+  .productos-lista,
+  .productos-lista::before {
+    position: static;
+  }
+
+  .productos-lista {
+    width: auto;
+    padding: 6px 0;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-borde);
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .navegacion .productos-lista a.producto {
+    padding: 9px 4px;
+    border-bottom: 0;
+  }
+
+  .productos:not(.abierto) .productos-lista {
+    display: none;
+  }
+
+  .productos-lista::before {
+    display: none;
   }
 
   .acciones {

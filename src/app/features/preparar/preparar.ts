@@ -518,7 +518,7 @@ export class Preparar implements OnInit, OnDestroy {
 
   /** El correo de «escribirnos», ya con el documento y la referencia dentro. */
   correoDe(trabajo: Preparacion): string {
-    const asunto = `Preparar documento: ${trabajo.nombre}`;
+    const asunto = `Edición y Traducción: ${trabajo.nombre}`;
     const cuerpo = `Referencia del trabajo: ${trabajo.id}\n\n`;
     return `mailto:${CORREO}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
   }
@@ -615,12 +615,13 @@ export class Preparar implements OnInit, OnDestroy {
   // ── Textos ───────────────────────────────────────────────────────────────
 
   /**
-   * El plan, sin repetir el título de la pantalla: «Preparar documento ·
-   * mensual» se queda en «Mensual» debajo de un título que ya lo dice.
+   * El plan, sin repetir el título de la pantalla: «Edición y Traducción ·
+   * mensual» se queda en «Mensual» debajo de un título que ya lo dice. Se
+   * acepta también el nombre de antes del 8-oct-2026, «Preparar documento».
    */
   nombreDelPlan(nombre: string | null | undefined): string {
     if (!nombre) return '';
-    const corto = nombre.replace(/^preparar documento\s*[·:—-]?\s*/i, '');
+    const corto = nombre.replace(/^(preparar documento|edición y traducción)\s*[·:—-]?\s*/i, '');
     return corto.charAt(0).toUpperCase() + corto.slice(1);
   }
 

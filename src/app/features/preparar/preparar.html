@@ -432,7 +432,7 @@
           <!-- ═══ La lista: subir y lo que ya mandó ══════════════════════ -->
           @default {
             <header class="pagina-cabecera">
-              <h1>Preparar documento</h1>
+              <h1>Edición y Traducción</h1>
               @if (!datos.disponible) {
                 <p>El servicio está apagado ahora mismo. Vuelve en un rato.</p>
               } @else if (datos.ilimitado) {
@@ -442,14 +442,14 @@
                   {{ nombreDelPlan(datos.membresia?.plan?.name) }} · te quedan
                   {{ datos.cupo.restantes }} de {{ datos.cupo.total }} este mes · vence el
                   {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }} ·
-                  <a routerLink="/planes">Renovar</a>
+                  <a routerLink="/planes" [queryParams]="{ ver: 'preparar' }">Renovar</a>
                   @if (datos.cupo.restantes === 0) {
                     · vuelves a tener {{ datos.cupo.total }} el
                     {{ datos.cupo.renuevaEl | date: 'd MMM' }}
                   }
                 </p>
               } @else {
-                <p>{{ datos.motivo }} <a routerLink="/planes">Ver las membresías</a></p>
+                <p>{{ datos.motivo }} <a routerLink="/planes" [queryParams]="{ ver: 'preparar' }">Ver las membresías</a></p>
               }
             </header>
 
@@ -528,7 +528,7 @@
                       <p class="soltar-texto">Aquí subirás tu documento</p>
                       <p class="soltar-nota">{{ datos.motivo }}</p>
                       @if (!datos.membresia?.vigente) {
-                        <a class="boton primario" routerLink="/planes">Ver las membresías</a>
+                        <a class="boton primario" routerLink="/planes" [queryParams]="{ ver: 'preparar' }">Ver las membresías</a>
                       }
                     } @else {
                       <span class="icono-cuadro" aria-hidden="true">

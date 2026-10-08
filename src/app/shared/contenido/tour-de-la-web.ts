@@ -71,7 +71,8 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ruta: '/',
       ancla: '[data-tour="menu"]',
       titulo: 'Todo está aquí arriba',
-      texto: 'Estas cinco entradas son el sitio entero. Ahora las vemos una por una.',
+      texto: 'Estas entradas son el sitio entero. «Productos» agrupa Tesis, Artículos y Preparar ' +
+        'documento; ahora las vemos una por una.',
     },
     {
       seccion: 'La portada',
@@ -237,11 +238,20 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
     {
       seccion: 'Los paquetes',
       ruta: '/planes',
+      ancla: '[data-tour="planes-vitrinas"]',
+      titulo: 'Dos tipos de paquete',
+      texto:
+        'Aquí cambias entre las skills para tu tesis o artículo y «Edición y Traducción», que ' +
+        'corrige tu inglés académico o traduce tu Word.',
+    },
+    {
+      seccion: 'Los paquetes',
+      ruta: '/planes',
       ancla: '[data-tour="planes-lista"]',
       titulo: 'Lo que se vende, y a cuánto',
       texto:
-        'Cada tarjeta dice qué te llevas y cuánto cuesta. Se paga una vez: no hay suscripción ni ' +
-        'cobros automáticos.',
+        'Una tarjeta por paquete: cuánto cuesta y cuánto dura. «Ver qué incluye» la despliega ' +
+        'con todo lo que te llevas. Se paga una vez: no hay suscripción ni cobros automáticos.',
     },
     {
       seccion: 'Los paquetes',

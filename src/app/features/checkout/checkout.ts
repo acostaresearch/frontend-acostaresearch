@@ -44,8 +44,7 @@ import { FondoService } from '../../core/services/fondo.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
-import { DiferenciasArticulos } from '../../shared/layout/diferencias-articulos';
-import { FASES_ARTICULO, FASES_REVISION, FASES_TSP, INCLUYE } from '../../shared/contenido/metodo';
+import { FASES_ARTICULO, FASES_INFORME, FASES_REVISION, FASES_TSP, INCLUYE } from '../../shared/contenido/metodo';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
 // Oculto por ahora en la plantilla (1-oct).
@@ -55,30 +54,6 @@ import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 import { PrivadaPipe } from '../../core/router/privada.pipe';
 
-/**
- * Cuántos acentos hay para las tarjetas de plan.
- *
- * Cuatro tonos —azul, fucsia, verde y naranja— comprobados con el verificador
- * de contraste: se distinguen entre sí incluso sin ver el rojo, y los cuatro
- * aguantan texto blanco encima (más de 4,5:1), que es lo que exige el botón.
- */
-const ACENTOS = 4;
-
-/**
- * Qué acento le toca a la tarjeta que ocupa esta posición.
- *
- * Se reparte por ORDEN del catálogo, no por un cálculo sobre el código del
- * plan. Lo probé al revés —un hash del código— y con los códigos reales dos
- * paquetes salían del mismo color, que es justo lo que no se quería.
- *
- * La contrapartida, dicha claramente: si mañana se retira un producto del
- * medio, los de detrás se corren un color. Es asumible porque el catálogo
- * cambia una vez cada varios meses y las tarjetas llevan su nombre encima; el
- * color agrupa, no identifica.
- */
-function acentoDe(posicion: number): number {
-  return posicion % ACENTOS;
-}
 /**
  * Importe en soles, con los céntimos solo cuando los hay.
  *
@@ -121,7 +96,6 @@ const ETAPAS_TESIS = [
     SiteHeader,
     SiteFooter,
     InvitacionPlanes,
-    DiferenciasArticulos,
     // PlanesInstituciones,
   ],
   templateUrl: './checkout.html',
@@ -399,20 +373,29 @@ export class Checkout implements OnInit {
   /**
    * Si «Preparar documento» se vende o no.
    *
-   * APAGADO EL 22-SEP-2026, a propósito y de forma temporal. La clave de Gemini
-   * está en el plan gratuito y se agota: un manuscrito de doce mil palabras no
-   * cabe en veinte peticiones al día, y los clientes de esta tarde recibieron
-   * «no lo terminamos» uno detrás de otro. Vender una membresía que no se puede
-   * cumplir es cobrar por algo que no se entrega.
+   * Apagado del 22-sep al 8-oct-2026: la clave de Gemini estaba en el plan
+   * gratuito y los clientes recibían «no lo terminamos» uno detrás de otro.
+   * Encendido de nuevo el 8-oct-2026, con el trabajo pasado a Amazon Bedrock
+   * (`PREPARAR_MODELO=bedrock:…`, de pago), que ya entregó un manuscrito de
+   * trece mil palabras en 80 s.
    *
-   * PARA VOLVER A VENDERLO: activar la facturación de la clave en Google AI
-   * Studio y poner esto en `true`. No hay nada más que deshacer; el producto
-   * entero sigue en pie y quien ya tiene membresía lo sigue usando.
-   *
-   * No se comenta el bloque de la plantilla porque dentro lleva comentarios
-   * HTML, y anidarlos deja la página rota sin avisar.
+   * Para apagarlo otra vez basta poner esto en `false`. No se comenta el
+   * bloque de la plantilla porque dentro lleva comentarios HTML, y anidarlos
+   * deja la página rota sin avisar.
    */
-  readonly seVendePreparar = false;
+  readonly seVendePreparar = true;
+
+  /**
+   * Qué escaparate se enseña en /planes: los paquetes de skills (el método)
+   * o las membresías de «Preparar documento». Son dos productos que no se
+   * comparan entre sí, y con los dos a la vez las membresías quedaban al
+   * fondo, debajo de «Qué incluye cada paquete». Se elige con el selector de
+   * arriba de las tarjetas o llegando con `?ver=preparar`.
+   */
+  readonly vitrina = signal<'skills' | 'preparar'>('skills');
+  readonly hayDosVitrinas = computed(
+    () => this.seVendePreparar && this.membresias().length > 0 && this.metodo().length > 0,
+  );
   readonly comprado = computed(
     () =>
       this.bolsaComprada() !== null ||
@@ -628,9 +611,14 @@ export class Checkout implements OnInit {
 
         this.cargando.set(false);
 
+        if (this.ruta.snapshot.queryParamMap.get('ver') === 'preparar' && this.seVendePreparar) {
+          this.vitrina.set('preparar');
+        }
+
         const pedido = this.ruta.snapshot.queryParamMap.get('plan');
         const directo = pedido ? (vendibles.find((p) => p.code === pedido) ?? null) : null;
         if (directo) this.elegir(directo);
+        if (directo?.kind === 'DOCUMENTO') this.vitrina.set('preparar');
 
         // El icono del carrito de la cabecera trae aquí con `?carrito=ver`, que
         // abre el cajón. `pagar` era el de antes y se sigue aceptando.
@@ -1272,6 +1260,7 @@ export class Checkout implements OnInit {
     if (codigo.startsWith('HUMANIZ')) return '/productos/03-humanizador-academico-caja.svg';
     if (codigo.startsWith('METODO')) return '/productos/01-metodo-de-tesis-caja.svg';
     if (codigo.startsWith('TSP')) return '/productos/06-suficiencia-profesional-caja.svg';
+    if (codigo.startsWith('INFORME')) return '/productos/07-informes-caja.svg';
     return null;
   }
 
@@ -1288,33 +1277,119 @@ export class Checkout implements OnInit {
     return this.incluye[plan.code] ? 3 : 2;
   }
 
-  // ── «Qué incluye cada paquete» ─────────────────────────────────────────
+  // ── Las tarjetas de paquetes ───────────────────────────────────────────
 
-  /** La pestaña elegida. Sin elegir, la del primer paquete. */
-  readonly pestana = signal<string | null>(null);
-
-  readonly pestanaActiva = computed(() => {
-    const planes = this.metodo();
-    return planes.find((plan) => plan.code === this.pestana()) ?? planes[0] ?? null;
+  /**
+   * Los paquetes de skills en el orden de la rejilla: método de tesis,
+   * artículos empíricos, de revisión, suficiencia profesional, humanizador y,
+   * al final, lo que no encaje en ninguno. Por prefijo del código, como
+   * `imagenDe`: un grupo nuevo creado desde el panel cae en su sitio.
+   */
+  readonly ordenSkills = computed(() => {
+    const puesto = (plan: Plan): number => {
+      const codigo = plan.code.toUpperCase();
+      if (codigo.startsWith('METODO')) return this.esElMasElegido(plan) ? 0 : 1;
+      if (this.esRevision(plan)) return 3;
+      if (codigo.startsWith('ARTICULO')) return 2;
+      if (codigo.startsWith('TSP')) return 4;
+      if (codigo.startsWith('HUMANIZ')) return 5;
+      return 6;
+    };
+    return [...this.metodo()].sort((a, b) => puesto(a) - puesto(b));
   });
 
-  /** «Ver qué incluye» de una tarjeta: abre su pestaña y baja hasta el panel. */
-  verQueIncluye(plan: Plan): void {
-    this.pestana.set(plan.code);
-    document.getElementById('que-incluye')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  /** El fondo de la portada: azul el más elegido, verde la suficiencia, gris el resto. */
+  tonoDe(plan: Plan): 'azul' | 'verde' | 'gris' {
+    if (this.esElMasElegido(plan)) return 'azul';
+    if (plan.code.toUpperCase().startsWith('TSP')) return 'verde';
+    return 'gris';
   }
 
-  /** El nombre de la pestaña: el de venta no cabe en tres pestañas seguidas. */
-  nombreCorto(plan: Plan): string {
+  /** La tarjeta con «Qué incluye» desplegado; de inicio, ninguna. */
+  private readonly filaAbierta = signal<string | null>(null);
+
+  estaAbierta(plan: Plan): boolean {
+    return this.filaAbierta() === plan.code;
+  }
+
+  alternarFila(plan: Plan): void {
+    this.filaAbierta.set(this.estaAbierta(plan) ? null : plan.code);
+  }
+
+  /** El nombre de la tarjeta: el de venta es largo y repite lo que dicen las etiquetas. */
+  nombreFila(plan: Plan): string {
+    if (plan.kind === 'DOCUMENTO') {
+      // «Edición y Traducción · mensual» → «Mensual»: el título de encima ya lo dice.
+      const corto = plan.name.replace(/^.*·\s*/, '');
+      return corto.charAt(0).toUpperCase() + corto.slice(1);
+    }
     const codigo = plan.code.toUpperCase();
     if (codigo.startsWith('METODO')) return 'Método de Tesis';
     // Los dos de artículos empiezan igual: el de revisión se mira antes.
     if (this.esRevision(plan)) return 'Artículos de Revisión';
-    if (codigo.startsWith('ARTICULO')) return 'Artículos Empíricos';
-    if (codigo.startsWith('HUMANIZ')) return 'Humanizador';
+    if (codigo.startsWith('ARTICULO')) return 'Artículos Científicos (Empíricos)';
+    if (codigo.startsWith('HUMANIZ')) return 'Humanizador Académico';
     if (codigo.startsWith('TSP')) return 'Suficiencia Profesional';
+    if (codigo.startsWith('INFORME')) return 'Informes';
     return plan.name;
   }
+
+  /**
+   * Una línea de qué es. Las de los paquetes conocidos están escritas para
+   * caber en dos o tres renglones de la tarjeta; el resto usa la descripción del
+   * catálogo, que es la que se escribió en el panel.
+   */
+  lemaDe(plan: Plan): string | null {
+    if (plan.kind !== 'DOCUMENTO') {
+      const codigo = plan.code.toUpperCase();
+      if (codigo.startsWith('METODO'))
+        return 'Herramientas para desarrollar tu tesis, estructurar cada capítulo y mejorar la claridad de tu redacción.';
+      if (codigo.startsWith('TSP'))
+        return 'Titúlate con tu experiencia laboral: de la empresa y tu cargo al Word final, sin hipótesis ni instrumento.';
+      if (this.esRevision(plan))
+        return 'Artículos de revisión sistemática y bibliométrica en todas las disciplinas científicas.';
+      if (codigo.startsWith('ARTICULO'))
+        return 'Planifica y elabora artículos científicos paso a paso con las Skills de Claude.';
+      if (codigo.startsWith('INFORME'))
+        return 'Tu informe de curso o de empresa en cinco fases: de la consigna y la rúbrica al Word final.';
+      if (codigo.startsWith('HUMANIZ'))
+        return 'Un estilo más natural, claro y coherente, conservando el contenido y sentido original de tu texto.';
+    }
+    return plan.description ?? null;
+  }
+
+  /** Lo que trae, de un vistazo: la línea azul de debajo del nombre, unida con «+». */
+  etiquetasDe(plan: Plan): string[] {
+    if (plan.kind === 'DOCUMENTO') {
+      return [`${plan.docsPorMes} documentos al mes`, 'Inglés académico', '4 idiomas'];
+    }
+    const codigo = plan.code.toUpperCase();
+    if (codigo.startsWith('METODO')) return ['9 capítulos', 'Humanizador', 'Reducción de similitud'];
+    if (codigo.startsWith('TSP')) return ['Trabajo de suficiencia', 'Humanizador'];
+    if (this.esRevision(plan)) return ['Sistemática', 'Bibliométrica', 'Humanizador'];
+    if (codigo.startsWith('ARTICULO')) return ['Redacción de artículos', 'Humanizador'];
+    if (codigo.startsWith('INFORME')) return ['5 fases', 'Humanizador', 'Reducción de similitud'];
+    return [];
+  }
+
+  /** Si algún paquete está rebajado: «Cómo pagar» avisa de que es por tiempo limitado. */
+  readonly hayOfertas = computed(() =>
+    [...this.metodo(), ...this.membresias()].some((plan) => this.ahorro(plan) !== null),
+  );
+
+  /**
+   * Con qué se puede pagar, para «Cómo pagar». Sale de las pasarelas
+   * que anuncia el servidor: si mañana se apaga una, deja de prometerse aquí.
+   * Yape o Plin está siempre, porque no depende de ninguna pasarela.
+   */
+  readonly mediosDePago = computed(() => {
+    const medios = ['Yape o Plin'];
+    if (this.pasarelaCulqi() && !this.pasarelaHotmart()) medios.push('tarjeta');
+    if (this.pasarelaHotmart()) medios.push('tarjeta o PayPal (vía Hotmart)');
+    else if (this.pasarelaPaypal()) medios.push('PayPal');
+    if (this.datosWU()) medios.push('Western Union');
+    return medios;
+  });
 
   /**
    * Las fases de la ruta, si el paquete la tiene. Por prefijo, como `imagenDe`.
@@ -1359,6 +1434,16 @@ export class Checkout implements OnInit {
         titulo: `Las ${FASES_TSP.length} fases del TSP`,
         lista: FASES_TSP,
         extras: ['Humanizador académico: quita los rastros de IA'],
+      };
+    }
+    if (codigo.startsWith('INFORME')) {
+      return {
+        titulo: `Las ${FASES_INFORME.length} fases del informe`,
+        lista: FASES_INFORME,
+        extras: [
+          'Humanizador académico: quita los rastros de IA',
+          'Bajar similitud: reduce el porcentaje de Turnitin',
+        ],
       };
     }
     return null;
@@ -1521,10 +1606,6 @@ export class Checkout implements OnInit {
    * página, y el «.00» solo sirve para que parezca una factura. Si algún plan
    * llega a costar S/ 199.50, los céntimos vuelven a salir.
    */
-  /** La clase del acento de la tarjeta: acento-0 … acento-3. */
-  acento(posicion: number): string {
-    return `acento-${acentoDe(posicion)}`;
-  }
 
   precio(plan: Plan): string {
     return soles(plan.priceCents);

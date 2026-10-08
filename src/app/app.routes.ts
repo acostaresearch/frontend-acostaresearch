@@ -202,7 +202,7 @@ export const routes: Routes = [
     path: 'preparar-documento',
     pathMatch: 'full',
     canActivate: [authGuard],
-    title: 'Preparar documento · Acosta Research',
+    title: 'Edición y Traducción · Acosta Research',
     loadComponent: () => import('./features/preparar/preparar').then((m) => m.Preparar),
   },
   /*
