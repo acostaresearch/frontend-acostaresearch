@@ -213,6 +213,18 @@ export const FASES_TSP = [
   'Conclusiones y recomendaciones',
 ];
 
+/**
+ * Las fases del Informe (de curso o de empresa), como las nombra
+ * `skills/informe/PLAN-SKILLS-INFORME.md`. La tercera es opcional en el de curso.
+ */
+export const FASES_INFORME = [
+  'El encargo: consigna, rúbrica y esquema',
+  'Las fuentes',
+  'El desarrollo',
+  'Análisis y resultados',
+  'Introducción, conclusiones y revisión con la rúbrica',
+];
+
 export const DESCRIPCIONES: Record<string, Detalle> = {
   'tema-y-delimitacion': {
     descripcion:
