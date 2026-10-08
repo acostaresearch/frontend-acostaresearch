@@ -1168,7 +1168,7 @@
                   <button
                     type="button"
                     class="boton oro grande bloque"
-                    [disabled]="!capturaElegida() || !mtcnValido() || enviandoComprobante()"
+                    [disabled]="!capturaElegida() || !capturaAceptable() || !mtcnValido() || enviandoComprobante()"
                     (click)="enviarComprobante()"
                   >
                     {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
@@ -1232,7 +1232,7 @@
                   <button
                     type="button"
                     class="boton oro grande bloque"
-                    [disabled]="!capturaElegida() || !operacionValida() || enviandoComprobante()"
+                    [disabled]="!capturaElegida() || !capturaAceptable() || !operacionValida() || enviandoComprobante()"
                     (click)="enviarComprobante()"
                   >
                     {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
@@ -1276,8 +1276,11 @@
         <p class="captura-aviso alerta" role="alert">
           Esta imagen no parece un comprobante de pago. Sube la pantalla que te muestra
           {{ metodoPago() === 'western_union' ? 'tu recibo de Western Union' : 'Yape al terminar el pago' }},
-          con el monto, la fecha y el número de operación. Si lo envías así, lo más probable es que
-          lo rechacemos.
+          con el monto, la fecha y el número de operación. Pulsa «Elegir otra» para cambiarla.
+          @if (whatsappUrl) {
+            ¿Es tu constancia y sigue saliendo esto?
+            <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>.
+          }
         </p>
       } @else if (revision.veredicto === 'DUDOSO') {
         <p class="captura-aviso duda">

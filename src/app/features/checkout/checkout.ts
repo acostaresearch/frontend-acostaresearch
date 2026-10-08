@@ -300,6 +300,15 @@ export class Checkout implements OnInit {
   readonly revisandoCaptura = signal(false);
   private vueltaDeRevision = 0;
 
+  /**
+   * Si la captura deja enviar. Mientras se lee, no; si no parece un
+   * comprobante, tampoco (el servidor también la frena). «No se lee bien» y
+   * un fallo de la lectura sí dejan: un error nuestro no puede impedir pagar.
+   */
+  readonly capturaAceptable = computed(
+    () => !this.revisandoCaptura() && this.revisionCaptura()?.veredicto !== 'NO_PARECE',
+  );
+
   // ── Pago por Western Union ───────────────────────────────────────────
   // Para quien paga desde fuera del Perú. Mismo camino que Yape —captura y
   // revisión a mano—, pero en dólares y con el MTCN obligatorio: son los diez
@@ -965,6 +974,7 @@ export class Checkout implements OnInit {
     const lineas = this.lineas();
     const archivo = this.capturaElegida();
     if (lineas.length === 0 || !archivo || this.enviandoComprobante()) return;
+    if (!this.capturaAceptable()) return;
 
     const porWU = this.metodoPago() === 'western_union';
     if (porWU && !this.mtcnValido()) {
