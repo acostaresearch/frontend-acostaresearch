@@ -898,6 +898,11 @@ td.acciones {
 }
 
 /* Sin número de operación hay que cotejar a ojo: conviene que se note. */
+/* La lectura automática ocupa la fila entera: su texto es más largo. */
+.comprobante-detalle .revision-auto {
+  grid-column: 1 / -1;
+}
+
 .comprobante-detalle dd.falta {
   font-weight: 400;
   color: var(--color-aviso);

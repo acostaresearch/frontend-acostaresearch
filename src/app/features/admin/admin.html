@@ -44,7 +44,11 @@
             <span>{{ rolUsuario(user.role) }} · Mi perfil</span>
           </span>
         </a>
-        <a class="lateral-salida" [routerLink]="'perfil' | privada">
+        <a
+          class="lateral-salida"
+          data-tour="admin-panel-usuario"
+          [routerLink]="'perfil' | privada"
+        >
           <svg class="lateral-icono" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3" />
           </svg>
@@ -75,6 +79,20 @@
         <strong>{{ pagina().titulo }}</strong>
       </p>
       <div class="barra-superior-acciones">
+        <!-- El recorrido guiado: la brújula, como en la cabecera del sitio, que
+             aquí no está. Empieza por la sección que se está mirando. -->
+        <button
+          type="button"
+          class="boton-icono"
+          data-tour="admin-recorrido"
+          aria-label="Ver el recorrido guiado"
+          title="Ver el recorrido guiado"
+          (click)="verElRecorrido()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z" />
+          </svg>
+        </button>
         <button
           type="button"
           class="boton-icono"
@@ -516,6 +534,28 @@
                         <dt>Enviado</dt>
                         <dd>{{ pago.createdAt | date: 'd MMM, HH:mm' }}</dd>
                       </div>
+                      <!-- Lo que leyó el OCR en la captura. Es una pista para
+                           mirar con más cuidado, no una decisión. -->
+                      @if (pago.revision; as revision) {
+                        @if (revision.veredicto !== 'SIN_LEER') {
+                          <div class="revision-auto">
+                            <dt>Lectura automática</dt>
+                            <dd [class.falta]="revision.veredicto !== 'OK'">
+                              @switch (revision.veredicto) {
+                                @case ('OK') { parece una constancia }
+                                @case ('DUDOSO') { no se lee bien }
+                                @default { no parece un comprobante }
+                              }
+                              @if (revision.veredicto !== 'NO_PARECE' && revision.montoVisto === false) {
+                                · no se ve el importe
+                              }
+                              @if (revision.operacionCoincide === false) {
+                                · el nº escrito no aparece en la imagen
+                              }
+                            </dd>
+                          </div>
+                        }
+                      }
                       @if (pago.discountCents > 0) {
                         <div>
                           <dt>Descuento</dt>

@@ -109,12 +109,18 @@ export class Perfil implements OnInit {
   protected readonly vista = inject(VistaDelPerfil);
 
   /**
-   * Las secciones de la barra lateral, en el orden en que se usan: por dónde
-   * va, con qué trabaja, qué ha pagado y a quién escribir. Las herramientas,
-   * solo si alguna licencia vigente las trae.
+   * Las secciones de la barra lateral, en el orden en que se usan: primero el
+   * video curso (es lo primero que ve quien entra, desde el 8-oct), luego por
+   * dónde va, con qué trabaja y qué ha pagado. Las herramientas, solo si
+   * alguna licencia vigente las trae.
    */
   readonly secciones = computed(() => {
     const todas: { id: SeccionDelPerfil; texto: string; icono: string; cuenta?: number }[] = [
+      {
+        id: 'ayuda',
+        texto: 'Video curso paso a paso',
+        icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M10 8.5v7l5.5-3.5z',
+      },
       { id: 'avance', texto: 'Por dónde vas', icono: 'M4 19h16 M7 16V11 M12 16V6 M17 16v-3' },
       {
         id: 'herramientas',
@@ -138,11 +144,6 @@ export class Perfil implements OnInit {
         icono:
           'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8',
         cuenta: this.misGrupos().length || undefined,
-      },
-      {
-        id: 'ayuda',
-        texto: 'Video curso paso a paso',
-        icono: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M10 8.5v7l5.5-3.5z',
       },
     ];
     return todas.filter((s) => {

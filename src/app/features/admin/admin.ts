@@ -29,6 +29,7 @@ import { PrivadaPipe } from '../../core/router/privada.pipe';
 import { cifrarSeccion, rutaDeSeccion } from '../../core/router/rutas-privadas';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
+import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TemaService } from '../../core/services/tema.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { DialogoService } from '../../core/services/dialogo.service';
@@ -583,6 +584,7 @@ export class Admin implements OnInit {
    */
   readonly seccion = signal<Seccion>('resumen');
   private readonly router = inject(Router);
+  private readonly recorrido = inject(RecorridoWeb);
   private readonly ruta = inject(ActivatedRoute);
   private readonly titulo = inject(Title);
   private readonly destruir = inject(DestroyRef);
@@ -2981,6 +2983,15 @@ export class Admin implements OnInit {
   }
 
   readonly cerrandoSesion = signal(false);
+
+  /**
+   * El recorrido guiado desde el panel. Aquí no está la cabecera del sitio con
+   * su brújula, así que el botón va en la barra lateral. Empieza por este panel
+   * (ver `RecorridoWeb.empezarAqui`).
+   */
+  verElRecorrido(): void {
+    this.recorrido.empezarAqui();
+  }
 
   /** «Cerrar sesión» del pie de la barra lateral. */
   salir(): void {

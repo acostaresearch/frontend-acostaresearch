@@ -331,7 +331,14 @@ export class HeroNetwork {
    */
   private escalar(): void {
     if (typeof ResizeObserver === 'undefined') return;
-    const observador = new ResizeObserver(() => this.medir());
+    // Se mide en el fotograma siguiente: medir cambia la escala y con ella el
+    // tamaño observado, y hacerlo dentro del aviso dispara «ResizeObserver loop
+    // completed with undelivered notifications» en la consola.
+    let fotograma = 0;
+    const observador = new ResizeObserver(() => {
+      cancelAnimationFrame(fotograma);
+      fotograma = requestAnimationFrame(() => this.medir());
+    });
     observador.observe(this.host.nativeElement);
     // El alto de la ventana también cuenta y el observador no lo ve: cambiar
     // solo el alto no cambia el ancho de la columna.
@@ -339,6 +346,7 @@ export class HeroNetwork {
     window.addEventListener('resize', alCambiar);
     this.destroyRef.onDestroy(() => {
       observador.disconnect();
+      cancelAnimationFrame(fotograma);
       window.removeEventListener('resize', alCambiar);
     });
   }

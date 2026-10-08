@@ -23,7 +23,7 @@ export type { SeccionDelPerfil };
 export class VistaDelPerfil {
   private readonly router = inject(Router);
 
-  readonly seccion = signal<SeccionDelPerfil>('avance');
+  readonly seccion = signal<SeccionDelPerfil>('ayuda');
   /** Si hay herramientas: sin ellas, la barra no ofrece la sección. */
   readonly hayHerramientas = signal(false);
 

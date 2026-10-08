@@ -153,7 +153,7 @@ export class MiConector implements OnInit {
 
     inject(DestroyRef).onDestroy(() => {
       this.vista.hayHerramientas.set(false);
-      this.vista.seccion.set('avance');
+      this.vista.seccion.set('ayuda');
     });
   }
 
@@ -243,6 +243,9 @@ export class MiConector implements OnInit {
     if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
     if (!this.tour.leToca(TOUR_PANEL)) return;
 
-    setTimeout(() => this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL), 900);
+    setTimeout(
+      () => this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true }),
+      900,
+    );
   }
 }

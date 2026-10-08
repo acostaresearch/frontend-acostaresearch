@@ -21,6 +21,7 @@ import { toApiError } from '../../core/http/api-error';
 import { ERROR_CODE } from '../../core/models/api.model';
 import {
   ComprobanteEnviado,
+  RevisionCaptura,
   DatosDelCobro,
   DatosWesternUnion,
   DatosYape,
@@ -280,6 +281,24 @@ export class Checkout implements OnInit {
   readonly enviandoComprobante = signal(false);
   readonly comprobanteEnviado = signal<ComprobanteEnviado | null>(null);
   readonly errorComprobante = signal<string | null>(null);
+
+  /**
+   * El número de operación de Yape, obligatorio desde el 8-oct: solo cifras,
+   * entre 6 y 12 (Yape enseña 8). Es lo que se coteja con el extracto.
+   */
+  private readonly operacionEscrita = signal('');
+  readonly operacionValida = computed(() =>
+    /^\d{6,12}$/.test(this.operacionEscrita().replace(/[\s-]/g, '')),
+  );
+
+  /**
+   * Lo que el servidor lee en la captura al elegirla. Es un aviso: no bloquea
+   * el envío, porque las capturas varían y el OCR se equivoca. `vuelta` evita
+   * que la respuesta de una imagen ya cambiada pise a la de la nueva.
+   */
+  readonly revisionCaptura = signal<RevisionCaptura | null>(null);
+  readonly revisandoCaptura = signal(false);
+  private vueltaDeRevision = 0;
 
   // ── Pago por Western Union ───────────────────────────────────────────
   // Para quien paga desde fuera del Perú. Mismo camino que Yape —captura y
@@ -575,6 +594,9 @@ export class Checkout implements OnInit {
     this.mtcn.valueChanges
       .pipe(takeUntilDestroyed(this.destruir))
       .subscribe((valor) => this.mtcnEscrito.set(valor));
+    this.numeroOperacion.valueChanges
+      .pipe(takeUntilDestroyed(this.destruir))
+      .subscribe((valor) => this.operacionEscrita.set(valor));
 
     this.billing.plans().subscribe({
       next: (planes) => {
@@ -637,6 +659,7 @@ export class Checkout implements OnInit {
     this.quitarDescuento();
     this.quitarCaptura();
     this.mtcn.reset();
+    this.numeroOperacion.reset();
     this.comprobanteEnviado.set(null);
     this.errorComprobante.set(null);
     this.errorCulqi.set(null);
@@ -708,9 +731,6 @@ export class Checkout implements OnInit {
 
   /** «¿Tienes un código?» de la ventana de pago: despliega el de descuento y el de un compañero. */
   readonly verCodigos = signal(false);
-
-  /** «+ Agregar número de operación»: el campo opcional, plegado hasta que se pide. */
-  readonly verOperacion = signal(false);
 
   /** «Cambiar» en la ventana de pago: se cierra y vuelve al cajón, donde se quita o se añade. */
   volverAlCarrito(): void {
@@ -809,7 +829,6 @@ export class Checkout implements OnInit {
     // está activo, queda a una pestaña.
     this.metodoPago.set('yape');
     this.verCodigos.set(false);
-    this.verOperacion.set(false);
     this.cerradaPorTiempo.set(false);
     this.cierraEn.set(new Date(Date.now() + this.MINUTOS_DE_VENTANA * 60_000).toISOString());
 
@@ -894,6 +913,41 @@ export class Checkout implements OnInit {
 
     this.capturaElegida.set(archivo);
     this.capturaPrevia.set(URL.createObjectURL(archivo));
+    this.revisarCaptura(archivo);
+  }
+
+  /**
+   * Pide al servidor que lea la captura. Si no parece un comprobante se avisa
+   * debajo de la miniatura; si lee el número de operación y la casilla está
+   * vacía, la rellena. Un fallo aquí no se enseña: es una ayuda, no un paso.
+   */
+  private revisarCaptura(archivo: File): void {
+    const vuelta = ++this.vueltaDeRevision;
+    const porWU = this.metodoPago() === 'western_union';
+    this.revisandoCaptura.set(true);
+
+    this.payments
+      .revisarCaptura(archivo, {
+        metodo: porWU ? 'WESTERN_UNION' : 'YAPE',
+        // En Western Union se busca el importe en dólares, que no tenemos en
+        // céntimos aquí: sin monto se busca solo lo demás.
+        monto: porWU ? undefined : this.totalCents(),
+      })
+      .subscribe({
+        next: (revision) => {
+          if (vuelta !== this.vueltaDeRevision) return;
+          this.revisionCaptura.set(revision);
+          this.revisandoCaptura.set(false);
+          const casilla = porWU ? this.mtcn : this.numeroOperacion;
+          if (revision.operacionLeida && !casilla.value.trim()) {
+            casilla.setValue(revision.operacionLeida);
+          }
+        },
+        error: () => {
+          if (vuelta !== this.vueltaDeRevision) return;
+          this.revisandoCaptura.set(false);
+        },
+      });
   }
 
   /** Suelta el archivo y libera la miniatura. */
@@ -902,6 +956,9 @@ export class Checkout implements OnInit {
     if (previa) URL.revokeObjectURL(previa);
     this.capturaPrevia.set(null);
     this.capturaElegida.set(null);
+    this.vueltaDeRevision += 1;
+    this.revisionCaptura.set(null);
+    this.revisandoCaptura.set(false);
   }
 
   enviarComprobante(): void {
@@ -914,6 +971,12 @@ export class Checkout implements OnInit {
       this.errorComprobante.set('Escribe el MTCN de tu envío: son 10 dígitos.');
       return;
     }
+    if (!porWU && !this.operacionValida()) {
+      this.errorComprobante.set(
+        'Escribe el número de operación de tu Yape: está en la constancia, debajo del monto.',
+      );
+      return;
+    }
 
     this.enviandoComprobante.set(true);
     this.errorComprobante.set(null);
@@ -922,7 +985,7 @@ export class Checkout implements OnInit {
       .enviarComprobante(lineas, archivo, {
         operationCode: porWU
           ? this.mtcn.value.replace(/[\s-]/g, '')
-          : this.numeroOperacion.value.trim() || undefined,
+          : this.numeroOperacion.value.replace(/[\s-]/g, ''),
         codigoDelTotal: this.codigoDelTotal(),
         metodo: porWU ? 'WESTERN_UNION' : 'YAPE',
       })

@@ -1027,6 +1027,32 @@ h1 {
   align-self: flex-start;
 }
 
+/* Lo que el servidor leyó en la captura, debajo de la miniatura. Avisa, no
+   bloquea: el envío sigue disponible. */
+.captura-aviso {
+  margin: -6px 0 14px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  border-radius: var(--radio-sm);
+}
+
+.captura-aviso.revisando {
+  padding: 0 2px;
+  color: var(--color-texto-tenue);
+}
+
+.captura-aviso.duda {
+  color: var(--color-texto);
+  background: color-mix(in srgb, var(--color-aviso) 12%, transparent);
+}
+
+.captura-aviso.alerta {
+  color: var(--color-texto);
+  background: color-mix(in srgb, var(--color-peligro) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-peligro) 40%, transparent);
+}
+
 /* Lo que pasa después de darle a enviar. Debajo del botón porque es la
    respuesta a la duda que aparece justo al pulsarlo: «¿y ahora cuánto tardan?». */
 .pie-revision {

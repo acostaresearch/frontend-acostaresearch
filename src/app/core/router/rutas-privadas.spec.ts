@@ -37,7 +37,7 @@ describe('Rutas privadas', () => {
     rotarRutas();
     const perfil = rutaPrivada('perfil');
     const pagos = rutaDeSeccion('pagos');
-    expect(perfil).toMatch(/^\/perfil\/avance\/[A-Za-z0-9]{12}$/);
+    expect(perfil).toMatch(/^\/perfil\/ayuda\/[A-Za-z0-9]{12}$/);
     expect(rutaDelPerfil('herramientas')).toMatch(/^\/perfil\/herramientas\/[A-Za-z0-9]{12}$/);
     expect(rutaDelPerfil('herramientas').split('/')[3]).not.toBe(perfil.split('/')[3]);
     expect(rutaPrivada('preparar')).toMatch(/^\/preparar-documento\/[A-Za-z0-9]{12}$/);

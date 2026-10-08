@@ -47,7 +47,7 @@ const CABECERA = 69;
  * falta que el navegador descargue el trozo de esa página y que su servidor
  * conteste.
  */
-const ESPERA = 700;
+const ESPERA = 1000;
 const ESPERA_AL_LLEGAR = 2000;
 
 /**
@@ -157,13 +157,21 @@ export class Tour implements OnDestroy {
     //
     // Salvo cuando el que navega es él: el recorrido cruza el sitio entero, y
     // cambiar de página es justo lo que hace entre un paso y el siguiente.
+    //
+    // Y salvo cuando se queda en la MISMA página: el perfil y el panel tienen
+    // una dirección por sección, y pulsar una sección de la barra (lo que hace
+    // el `abrir` de un paso) cambia la dirección sin salir de ella. Cortar ahí
+    // era lo que dejaba el recorrido parado a medias.
     this.router.events
       .pipe(
-        filter((evento) => evento instanceof NavigationStart),
+        filter((evento): evento is NavigationStart => evento instanceof NavigationStart),
         takeUntilDestroyed(),
       )
-      .subscribe(() => {
-        if (this.tour.activo() && !this.tour.navegando()) this.tour.terminar();
+      .subscribe((evento) => {
+        if (!this.tour.activo() || this.tour.navegando()) return;
+        const ruta = this.tour.paso()?.ruta;
+        if (ruta && this.tour.esDeLaRuta(evento.url, ruta)) return;
+        this.tour.terminar();
       });
 
     // En marcha el recorrido, las páginas que va a visitar se empiezan a traer
@@ -232,7 +240,17 @@ export class Tour implements OnDestroy {
   private arrancarPaso(paso: PasoDelTour, trasViajar: boolean): void {
     // Se pulsa la pestaña que contiene lo que se va a señalar. El panel no
     // está pintado todavía; de eso se encarga el seguimiento.
-    if (paso.abrir) document.querySelector<HTMLElement>(paso.abrir)?.click();
+    //
+    // En el perfil esa pestaña es una sección de la barra lateral, y cada
+    // sección tiene su dirección: pulsarla NAVEGA. Ese cambio es del propio
+    // recorrido, así que se avisa con `navegando` igual que al viajar; si no,
+    // el corte de arriba lo acababa al pasar del video a «Por dónde vas».
+    if (paso.abrir) {
+      this.tour.navegando.set(true);
+      document.querySelector<HTMLElement>(paso.abrir)?.click();
+      // La navegación, si la hay, empieza antes de que corra este plazo.
+      setTimeout(() => this.tour.navegando.set(false));
+    }
 
     this.recienLlegado = trasViajar;
     this.desde = performance.now();

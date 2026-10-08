@@ -216,7 +216,9 @@ const CSP = [
   "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://*.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com https://static.cloudflareinsights.com",
   // Angular inyecta los estilos de cada componente como <style> en la página.
   // cdnjs: la hoja de animaciones que carga la verificación 3DS de Culqi.
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+  // accounts.google.com/gsi/style: la hoja del botón «Continuar con Google»
+  // (bloqueada hasta el 8-oct-2026; el botón salía sin sus estilos).
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://accounts.google.com/gsi/style",
   "font-src 'self' data: https://fonts.gstatic.com",
   // gstatic: los iconos que mete el botón de Google. Los videos van SOLO por
   // youtube-nocookie (ver `tutoriales` y `demos`); youtube.com es solo enlace.

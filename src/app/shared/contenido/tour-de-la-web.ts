@@ -92,18 +92,18 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'con el plan gratuito.',
     },
 
-    // ── Las 12 Skills ──────────────────────────────────────────────────────
+    // ── Tesis (/metodo) ──────────────────────────────────────────────────────
     {
-      seccion: 'Las 12 Skills',
+      seccion: 'Tesis',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-cifras"]',
       titulo: 'La ruta de la tesis, en cifras',
       texto:
-        'Once skills, diez fases en orden, una vía cualitativa aparte y dos que se usan en ' +
-        'cualquier momento. Esto es lo que compras.',
+        'Diez fases en orden, una vía cualitativa aparte y dos skills que se usan en cualquier ' +
+        'momento. Esto es lo que compras.',
     },
     {
-      seccion: 'Las 12 Skills',
+      seccion: 'Tesis',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-skills"]',
       titulo: 'Una skill por fase, en orden',
@@ -112,7 +112,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'qué capítulo de tu Word queda.',
     },
     {
-      seccion: 'Las 12 Skills',
+      seccion: 'Tesis',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-panel"]',
       titulo: 'Y lo que viene además',
@@ -121,7 +121,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'análisis en R y tu documento en Word.',
     },
     {
-      seccion: 'Las 12 Skills',
+      seccion: 'Tesis',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-libros"]',
       titulo: 'De dónde sale el método',
@@ -130,7 +130,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'se evalúa una tesis de verdad.',
     },
     {
-      seccion: 'Las 12 Skills',
+      seccion: 'Tesis',
       ruta: '/metodo',
       ancla: '[data-tour="metodo-precio"]',
       titulo: 'Y cuánto cuesta',
@@ -139,7 +139,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
 
     // ── Ruta del artículo ──────────────────────────────────────────────────
     {
-      seccion: 'Ruta del artículo',
+      seccion: 'Artículos',
       ruta: '/articulo',
       ancla: '[data-tour="articulo-cifras"]',
       titulo: 'La otra ruta, para publicar',
@@ -148,25 +148,25 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'estas sus cifras.',
     },
     {
-      seccion: 'Ruta del artículo',
+      seccion: 'Artículos',
       ruta: '/articulo',
       ancla: '[data-tour="articulo-fases"]',
-      titulo: 'Doce fases hasta el envío',
+      titulo: 'Las fases, en orden, hasta el envío',
       texto:
         'De la idea al manuscrito enviado, con la carta de presentación y la respuesta a los ' +
-        'revisores incluidas.',
+        'revisores incluidas. Arriba eliges si es artículo empírico o de revisión.',
     },
     {
-      seccion: 'Ruta del artículo',
+      seccion: 'Artículos',
       ruta: '/articulo',
       ancla: '[data-tour="articulo-como"]',
-      titulo: 'Escribe contigo, no por ti',
+      titulo: 'Redacta a tu lado, no por ti',
       texto:
         'Cómo trabaja en cada fase: te pregunta, te explica el criterio y ordena lo que tú ' +
         'decides. La firma del artículo sigue siendo tuya.',
     },
     {
-      seccion: 'Ruta del artículo',
+      seccion: 'Artículos',
       ruta: '/articulo',
       ancla: '[data-tour="articulo-precio"]',
       titulo: 'Y su precio',
@@ -247,7 +247,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       seccion: 'Los paquetes',
       ruta: '/planes',
       ancla: '[data-tour="planes-canje"]',
-      titulo: 'Si ya pagaste por Yape',
+      titulo: 'Si pagaste por Yape o transferencia',
       texto:
         'Aquí se canjea el código que te llega al correo. Es el único sitio donde se hace, y no ' +
         'hay que recorrer los paquetes para encontrarlo.',
@@ -308,6 +308,24 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
             titulo: 'Cómo va el negocio',
             texto: 'Lo vendido, lo cobrado y lo que está esperando revisión, de un vistazo.',
           },
+          {
+            seccion: 'Administración',
+            ruta: '/admin/resumen',
+            ancla: '[data-tour="admin-panel-usuario"]',
+            titulo: 'Tu panel de usuario',
+            texto:
+              'Lo mismo que ve un comprador, con tus propios accesos: por dónde vas, tus ' +
+              'herramientas y tus compras.',
+          },
+          {
+            seccion: 'Administración',
+            ruta: '/admin/resumen',
+            ancla: '[data-tour="admin-recorrido"]',
+            titulo: 'Este recorrido, cuando quieras',
+            texto:
+              'Esta brújula lo repite cuando quieras, como la de la cabecera del sitio, y empieza ' +
+              'por la sección donde estés.',
+          },
         ]
       : []),
 
@@ -326,7 +344,42 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ruta: '/',
       ancla: '[data-tour="recorrido"]',
       titulo: 'Eso es todo',
-      texto: 'Este recorrido vuelve a salir desde aquí, cuando quieras y desde cualquier página.',
+      texto:
+        'Este recorrido vuelve a salir desde aquí, cuando quieras. Desde cualquier página empieza ' +
+        'por lo que estás mirando.',
     },
   ];
+}
+
+/**
+ * El recorrido, empezando por la página donde se está y siguiendo HACIA
+ * DELANTE hasta el final.
+ *
+ * Primero los pasos de esta página (en el perfil, desde la sección que se
+ * mira hasta la última de la barra), después las páginas que vienen detrás y
+ * al final el cierre, que se enseña en la misma página (la cabecera y el
+ * asistente están en todas) en vez de volver a la portada. No da la vuelta:
+ * lo de antes no se repite (pedido del 8-oct: desde «Invita» volvía al
+ * video). La bienvenida se quita: ya está dentro.
+ *
+ * Si la página no tiene pasos, devuelve la lista tal cual (la misma
+ * referencia): quien llama sabe así que toca el recorrido desde la portada.
+ */
+export function desdeAqui(
+  pasos: PasoDelTour[],
+  esDeAqui: (paso: PasoDelTour) => boolean,
+  empiezaPor?: (paso: PasoDelTour) => boolean,
+): PasoDelTour[] {
+  const cierre = pasos
+    .filter((paso) => paso.seccion === 'Para terminar')
+    .map((paso) => ({ ...paso, ruta: undefined }));
+  const cuerpo = pasos.filter(
+    (paso) => paso.seccion !== 'Bienvenida' && paso.seccion !== 'Para terminar',
+  );
+
+  const desde = cuerpo.findIndex(esDeAqui);
+  if (desde < 0) return pasos;
+
+  const k = empiezaPor ? cuerpo.findIndex((paso) => esDeAqui(paso) && empiezaPor(paso)) : -1;
+  return [...cuerpo.slice(k >= 0 ? k : desde), ...cierre];
 }

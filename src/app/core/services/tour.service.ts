@@ -36,6 +36,12 @@ export interface PasoDelTour {
    * el panel de Zotero sin abrir su pestaña sería iluminar un hueco vacío.
    */
   abrir?: string;
+  /**
+   * La sección del perfil donde vive el paso (`ayuda`, `avance`, `compras`…).
+   * Con ella, el recorrido pedido desde una sección empieza por esa y sigue
+   * con las demás. Ver `RecorridoWeb.empezarAqui`.
+   */
+  parte?: string;
 }
 
 /*
@@ -56,6 +62,12 @@ export interface OpcionesDelTour {
   tambien?: string[];
   /** Qué hacer si se acepta la oferta de su último paso. */
   alAceptar?: () => void;
+  /**
+   * Si se salta antes del último paso, NO queda visto y se vuelve a ofrecer en
+   * la próxima entrada. Es el del panel: a quien empieza le tiene que salir sí
+   * o sí, sobre todo el paso de su acceso a Claude (pedido del 8-oct).
+   */
+  obligatorio?: boolean;
 }
 
 /** Lo que se guarda en el navegador de quien ya lo vio. */
@@ -101,6 +113,9 @@ export class TourService {
 
   /** Qué hacer si quien mira acepta la oferta del último paso. */
   private alAceptar: (() => void) | null = null;
+
+  /** Si saltarlo a medias lo deja sin ver. Ver `OpcionesDelTour`. */
+  private obligatorio = false;
 
   readonly activo = computed(() => this.pasos().length > 0);
   readonly paso = computed<PasoDelTour | null>(() => this.pasos()[this.indice()] ?? null);
@@ -148,10 +163,19 @@ export class TourService {
    * la dirección de esta sesión: los pasos dicen `/perfil`, la barra no.
    */
   enLaRuta(ruta: string): boolean {
-    // El perfil tiene una dirección por sección, y el recorrido cambia de una
-    // a otra sin salir de la página.
-    if (ruta === '/perfil') return esDelPerfil(this.router.url);
-    return this.router.url.split(/[?#]/)[0] === rutaReal(ruta);
+    return this.esDeLaRuta(this.router.url, ruta);
+  }
+
+  /**
+   * Si una dirección es de esa página. El perfil y el panel tienen una
+   * dirección por sección, y el recorrido cambia de una a otra sin salir de la
+   * página: cualquier sección cuenta como la misma.
+   */
+  esDeLaRuta(url: string, ruta: string): boolean {
+    const camino = url.split(/[?#]/)[0];
+    if (ruta === '/perfil') return esDelPerfil(camino);
+    if (ruta.startsWith('/admin/')) return camino === '/admin' || camino.startsWith('/admin/');
+    return camino === rutaReal(ruta);
   }
 
   /**
@@ -173,6 +197,7 @@ export class TourService {
     this.nombre = nombre;
     this.tambien = opciones.tambien ?? [];
     this.alAceptar = opciones.alAceptar ?? null;
+    this.obligatorio = opciones.obligatorio ?? false;
     this.sentido.set(1);
     this.indice.set(0);
     this.pasos.set(vivos);
@@ -223,7 +248,7 @@ export class TourService {
    */
   aceptar(): void {
     const hacer = this.alAceptar;
-    this.terminar();
+    this.terminar(true);
     hacer?.();
   }
 
@@ -241,7 +266,7 @@ export class TourService {
 
   siguiente(): void {
     if (this.esElUltimo()) {
-      this.terminar();
+      this.terminar(true);
       return;
     }
     this.sentido.set(1);
@@ -264,18 +289,30 @@ export class TourService {
   saltarPaso(): void {
     const siguiente = this.indice() + this.sentido();
     if (siguiente < 0 || siguiente >= this.pasos().length) {
-      this.terminar();
+      // Hacia delante, el que se cayó era el último: se dio por acabado.
+      this.terminar(siguiente >= this.pasos().length);
       return;
     }
     this.indice.set(siguiente);
   }
 
-  /** Se acabó, por el final o por «Saltar». En los dos casos queda visto. */
-  terminar(): void {
-    if (this.nombre) [this.nombre, ...this.tambien].forEach((n) => this.marcar(n));
+  /**
+   * Se acabó, por el final (`completo`) o por «Saltar».
+   *
+   * Saltado, queda visto él mismo —salvo si es obligatorio— pero NO los que da
+   * por vistos de paso: quien salta el recorrido de la web en la portada no ha
+   * visto los pasos del panel, que venían al final, y le tienen que salir al
+   * entrar en su perfil.
+   */
+  terminar(completo = false): void {
+    if (this.nombre) {
+      if (completo || !this.obligatorio) this.marcar(this.nombre);
+      if (completo) this.tambien.forEach((n) => this.marcar(n));
+    }
     this.nombre = '';
     this.tambien = [];
     this.alAceptar = null;
+    this.obligatorio = false;
     this.pasos.set([]);
     this.indice.set(0);
   }

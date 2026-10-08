@@ -135,9 +135,32 @@ describe('Tour', () => {
     const tour = servicio();
 
     tour.empezar('web', PASOS, { tambien: ['panel'] });
-    tour.terminar();
+    tour.terminar(true);
 
     expect(tour.visto('web')).toBe(true);
+    expect(tour.visto('panel')).toBe(true);
+  });
+
+  it('saltar el de la web no da por visto el del panel: no llegó a verlo', () => {
+    const tour = servicio();
+
+    tour.empezar('web', PASOS, { tambien: ['panel'] });
+    tour.terminar(); // «Saltar» a medias.
+
+    expect(tour.visto('web')).toBe(true);
+    expect(tour.visto('panel')).toBe(false);
+  });
+
+  it('el obligatorio vuelve a salir si se salta, y no al acabarlo', () => {
+    const tour = servicio();
+
+    tour.ofrecer('panel', PASOS, { obligatorio: true });
+    tour.terminar();
+    expect(tour.visto('panel')).toBe(false);
+
+    tour.ofrecer('panel', PASOS, { obligatorio: true });
+    expect(tour.activo()).toBe(true);
+    tour.terminar(true);
     expect(tour.visto('panel')).toBe(true);
   });
 

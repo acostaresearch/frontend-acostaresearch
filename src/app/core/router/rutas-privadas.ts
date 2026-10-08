@@ -122,13 +122,13 @@ export type SeccionDelPerfil = (typeof SECCIONES_DEL_PERFIL)[number];
 
 /**
  * La dirección de una página privada en esta sesión. Sin claves —sin sesión—
- * da la puerta, que manda a iniciar sesión. El perfil entra por «Por dónde
- * vas», y el panel por su puerta, que lleva al resumen.
+ * da la puerta, que manda a iniciar sesión. El perfil entra por el «Video
+ * curso paso a paso» (desde el 8-oct; antes, «Por dónde vas»), y el panel por su puerta, que lleva al resumen.
  */
 export function rutaPrivada(pagina: Privada): string {
   const c = claves();
   if (!c || pagina === 'admin') return PUERTAS[pagina];
-  if (pagina === 'perfil') return rutaDelPerfil('avance');
+  if (pagina === 'perfil') return rutaDelPerfil('ayuda');
   return `${PUERTAS[pagina]}/${c[pagina]}`;
 }
 

@@ -7,6 +7,7 @@ import { ApiResponse } from '../models/api.model';
 import {
   AprobacionManual,
   ComprobanteEnviado,
+  RevisionCaptura,
   DatosDelCobro,
   LineaCarrito,
   DatosWesternUnion,
@@ -136,6 +137,26 @@ export class PaymentService {
 
     return this.http
       .post<ApiResponse<ComprobanteEnviado>>(`${this.base}/manual`, archivo, {
+        params,
+        headers: { 'Content-Type': archivo.type },
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Revisión previa de la captura, al elegirla: si parece un comprobante y qué
+   * número de operación se lee. No guarda nada. `monto` va en céntimos y solo
+   * sirve para buscarlo en la imagen.
+   */
+  revisarCaptura(
+    archivo: File,
+    opciones: { metodo: MetodoManual; monto?: number },
+  ): Observable<RevisionCaptura> {
+    let params = new HttpParams().set('metodo', opciones.metodo);
+    if (opciones.monto !== undefined) params = params.set('monto', String(opciones.monto));
+
+    return this.http
+      .post<ApiResponse<RevisionCaptura>>(`${this.base}/manual/revisar-captura`, archivo, {
         params,
         headers: { 'Content-Type': archivo.type },
       })

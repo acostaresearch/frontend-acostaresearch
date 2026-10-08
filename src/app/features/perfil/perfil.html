@@ -227,6 +227,7 @@
       <!-- La sección «Mis compras» de la barra lateral, a todo el ancho. -->
       <section
         class="tarjeta tramo-6 compras-tarjeta"
+        data-tour="compras"
         [class.fuera]="vista.seccion() !== 'compras'"
       >
         <div class="compras-cabecera">
@@ -313,7 +314,11 @@
       <!-- «Invita y gana días»: su código de referido. Solo con el método. -->
       @if (referidos(); as r) {
         @if (r.disponible) {
-          <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'invitar'">
+          <section
+            class="tarjeta tramo-6"
+            data-tour="invitar"
+            [class.fuera]="vista.seccion() !== 'invitar'"
+          >
             <app-mi-invitacion [datos]="r" />
           </section>
         }
@@ -321,14 +326,22 @@
 
       <!-- «Mis grupos»: el panel del coordinador (universidad o asesor). -->
       @if (misGrupos().length > 0) {
-        <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'grupos'">
+        <section
+          class="tarjeta tramo-6"
+          data-tour="grupos"
+          [class.fuera]="vista.seccion() !== 'grupos'"
+        >
           <app-mis-grupos [grupos]="misGrupos()" />
         </section>
       }
 
       <!-- El interruptor de los correos de avance, junto a la ayuda: es donde
            el enlace de baja del correo dice que está. -->
-      <section class="tarjeta tramo-6" [class.fuera]="vista.seccion() !== 'ayuda'">
+      <section
+        class="tarjeta tramo-6"
+        data-tour="recordatorios"
+        [class.fuera]="vista.seccion() !== 'ayuda'"
+      >
         <app-mis-recordatorios />
       </section>
 

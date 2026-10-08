@@ -251,6 +251,22 @@ export interface ComprobanteEnviado {
   items?: LineaCobrada[];
 }
 
+/**
+ * Lo que el OCR del servidor ve en una captura. Es un aviso, nunca una
+ * decisión: OK = parece una constancia; DUDOSO = solo una huella;
+ * NO_PARECE = ninguna; SIN_LEER = no se pudo leer (no se avisa de nada).
+ */
+export type VeredictoCaptura = 'OK' | 'DUDOSO' | 'NO_PARECE' | 'SIN_LEER';
+
+/** Revisión previa de la captura, antes de enviarla. */
+export interface RevisionCaptura {
+  veredicto: VeredictoCaptura;
+  /** El número de operación (o MTCN) que se leyó, si se leyó. */
+  operacionLeida: string | null;
+  /** Si el importe a pagar aparece en la imagen. */
+  montoVisto: boolean | null;
+}
+
 /** Una fila de la bandeja de comprobantes del panel de administración. */
 export interface PagoPorRevisar {
   id: string;
@@ -271,6 +287,11 @@ export interface PagoPorRevisar {
     durationDays: number;
   };
   user: { id: string; email: string; firstName: string; lastName: string };
+  /**
+   * Lo que vio el OCR en la captura después de enviarla. Null mientras no se
+   * ha leído. `operacionCoincide`: si el número escrito aparece en la imagen.
+   */
+  revision?: (RevisionCaptura & { operacionCoincide?: boolean | null }) | null;
   /**
    * Si el comprobante es de un carrito: lo que lleva y los pagos que cubre.
    * El importe de la fila ya es la suma, y aprobarla aprueba todos.

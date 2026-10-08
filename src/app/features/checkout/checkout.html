@@ -1215,26 +1215,24 @@
 
                   <ng-container *ngTemplateOutlet="subirCaptura" />
 
-                  @if (verOperacion()) {
-                    <input
-                      class="pago-operacion"
-                      type="text"
-                      inputmode="numeric"
-                      [formControl]="numeroOperacion"
-                      placeholder="Número de operación de tu constancia"
-                      aria-label="Número de operación"
-                      autocomplete="off"
-                    />
-                  } @else {
-                    <button type="button" class="pago-enlace" (click)="verOperacion.set(true)">
-                      + Agregar número de operación (opcional, confirma más rápido)
-                    </button>
-                  }
+                  <!-- Obligatorio desde el 8-oct: es lo que se coteja con el
+                       extracto. Si el servidor lo lee en la captura, llega
+                       relleno. -->
+                  <input
+                    class="pago-operacion"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="16"
+                    [formControl]="numeroOperacion"
+                    placeholder="Nº de operación · está en tu constancia de Yape"
+                    aria-label="Número de operación de tu constancia de Yape"
+                    autocomplete="off"
+                  />
 
                   <button
                     type="button"
                     class="boton oro grande bloque"
-                    [disabled]="!capturaElegida() || enviandoComprobante()"
+                    [disabled]="!capturaElegida() || !operacionValida() || enviandoComprobante()"
                     (click)="enviarComprobante()"
                   >
                     {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
@@ -1270,6 +1268,31 @@
         </button>
       </div>
     </div>
+    <!-- Lo que leyó el servidor. Es un aviso: se puede enviar igual. -->
+    @if (revisandoCaptura()) {
+      <p class="captura-aviso revisando">Revisando la captura…</p>
+    } @else if (revisionCaptura(); as revision) {
+      @if (revision.veredicto === 'NO_PARECE') {
+        <p class="captura-aviso alerta" role="alert">
+          Esta imagen no parece un comprobante de pago. Sube la pantalla que te muestra
+          {{ metodoPago() === 'western_union' ? 'tu recibo de Western Union' : 'Yape al terminar el pago' }},
+          con el monto, la fecha y el número de operación. Si lo envías así, lo más probable es que
+          lo rechacemos.
+        </p>
+      } @else if (revision.veredicto === 'DUDOSO') {
+        <p class="captura-aviso duda">
+          No logramos leer bien la captura. Comprueba que se vean el monto
+          @if (metodoPago() !== 'western_union') {
+            ({{ total() }})
+          }
+          y el número de operación.
+        </p>
+      } @else if (revision.veredicto === 'OK' && revision.montoVisto === false && metodoPago() !== 'western_union') {
+        <p class="captura-aviso duda">
+          No encontramos {{ total() }} en la captura. Revisa que hayas pagado el monto exacto.
+        </p>
+      }
+    }
   } @else {
     <label class="captura-elegir">
       <input
