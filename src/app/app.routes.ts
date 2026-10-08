@@ -3,42 +3,24 @@ import { Params, RedirectFunction, Router, Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
-import {
-  Privada,
-  asegurarRutas,
-  casaPrivada,
-  rutaDeSeccion,
-  rutaDelPerfil,
-  rutaPrivada,
-} from './core/router/rutas-privadas';
+import { casaPrivada, rutaDeSeccion, rutaDelPerfil, rutaPrivada } from './core/router/rutas-privadas';
 import { AuthService } from './core/services/auth.service';
 
 /**
- * La puerta de una página privada: /perfil y /preparar-documento no se abren
- * nunca, llevan a la dirección de esta sesión (ver `rutas-privadas.ts`). Al ser
- * `redirectTo`, la puerta no se queda en el historial. Sin sesión, a entrar, y
- * al volver de allí se pasa otra vez por la puerta con las claves ya nuevas.
+ * La puerta del perfil: /perfil a secas lleva a la sección de entrada (ver
+ * `rutas-privadas.ts`). Al ser `redirectTo`, la puerta no se queda en el
+ * historial. Sin sesión, el `authGuard` de la sección manda a entrar.
  */
-function puerta(pagina: Privada, legible: string): RedirectFunction {
-  return ({ queryParams, fragment }) => {
-    const router = inject(Router);
-    if (!inject(AuthService).isAuthenticated()) {
-      const vuelta = router.serializeUrl(
-        router.createUrlTree([legible], { queryParams: queryParams as Params }),
-      );
-      return router.createUrlTree(['/auth/login'], { queryParams: { returnUrl: vuelta } });
-    }
-    asegurarRutas();
-    // Quien vuelve de autorizar Zotero o Mendeley viene a ver cómo fue, y el
-    // aviso está en las herramientas.
-    const deVuelta = pagina === 'perfil' && ('zotero' in queryParams || 'mendeley' in queryParams);
-    const destino = deVuelta ? rutaDelPerfil('herramientas') : rutaPrivada(pagina);
-    return router.createUrlTree([destino], {
-      queryParams: queryParams as Params,
-      fragment: fragment ?? undefined,
-    });
-  };
-}
+const puertaDelPerfil: RedirectFunction = ({ queryParams, fragment }) => {
+  // Quien vuelve de autorizar Zotero o Mendeley viene a ver cómo fue, y el
+  // aviso está en las herramientas.
+  const deVuelta = 'zotero' in queryParams || 'mendeley' in queryParams;
+  const destino = deVuelta ? rutaDelPerfil('herramientas') : rutaPrivada('perfil');
+  return inject(Router).createUrlTree([destino], {
+    queryParams: queryParams as Params,
+    fragment: fragment ?? undefined,
+  });
+};
 
 
 export const routes: Routes = [
@@ -133,7 +115,10 @@ export const routes: Routes = [
     pathMatch: 'full',
     redirectTo: () => inject(Router).parseUrl('/#mi-panel'),
   },
-  { path: 'perfil', pathMatch: 'full', redirectTo: puerta('perfil', '/perfil') },
+  { path: 'perfil', pathMatch: 'full', redirectTo: puertaDelPerfil },
+  // Las direcciones con clave de antes del 8-oct (/perfil/ayuda/kFZ5mTnQBH0j)
+  // siguen guardadas en marcadores e historiales: van a la limpia.
+  { path: 'perfil/:seccion/:clave', redirectTo: '/perfil/:seccion' },
   {
     matcher: casaPrivada('perfil'),
     canActivate: [authGuard],
@@ -212,13 +197,10 @@ export const routes: Routes = [
    * hay enlace firmado que valga como llave, porque la membresía cuelga de la
    * cuenta y hay que saber de quién es el cupo del mes.
    */
+  { path: 'preparar-documento/:clave', redirectTo: '/preparar-documento' },
   {
     path: 'preparar-documento',
     pathMatch: 'full',
-    redirectTo: puerta('preparar', '/preparar-documento'),
-  },
-  {
-    matcher: casaPrivada('preparar'),
     canActivate: [authGuard],
     title: 'Preparar documento · Acosta Research',
     loadComponent: () => import('./features/preparar/preparar').then((m) => m.Preparar),
@@ -310,9 +292,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/grupo/grupo').then((m) => m.GrupoPagina),
   },
   /**
-   * El panel de administración, una dirección por sección: /admin/<código>,
-   * con el código sacado de la clave que se sortea en cada ingreso (ver
-   * `rutas-privadas.ts`). Recargar deja en la misma sección. /admin a secas es
+   * El panel de administración, una dirección por sección: /admin/licencias
+   * (ver `rutas-privadas.ts`). Recargar deja en la misma sección. /admin a secas es
    * la puerta: al administrador lo lleva al resumen y a cualquier otro, a la
    * portada, igual que una dirección inventada.
    *
@@ -325,7 +306,6 @@ export const routes: Routes = [
     pathMatch: 'full',
     redirectTo: () => {
       if (!inject(AuthService).hasRole('ADMIN')) return '/';
-      asegurarRutas();
       return rutaDeSeccion('resumen');
     },
   },

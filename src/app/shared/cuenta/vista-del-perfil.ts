@@ -14,7 +14,7 @@ export type { SeccionDelPerfil };
  * vas», las herramientas y la ayuda. En el panel del administrador nadie lo
  * toca y todo sigue a la vista en la rejilla.
  *
- * Desde el 29-sep cada sección tiene su dirección —/perfil/herramientas/<código>—
+ * Desde el 29-sep cada sección tiene su dirección —/perfil/herramientas—
  * y la que manda es la dirección: `ir` navega, y el perfil escribe `seccion`
  * al leer la ruta. Así recargar deja donde se estaba y «atrás» vuelve a la
  * sección de antes.

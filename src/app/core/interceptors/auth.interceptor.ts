@@ -5,7 +5,6 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiError, ERROR_CODE } from '../models/api.model';
-import { rutaLegible } from '../router/rutas-privadas';
 import { AuthService } from '../services/auth.service';
 import { esCaidaDelServicio } from '../services/mantenimiento.service';
 
@@ -73,8 +72,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           // El refresh también falló: la sesión murió de verdad.
           auth.clearSession();
           void router.navigate(['/auth/login'], {
-            // La dirección cifrada ya no valdrá al volver a entrar: la puerta sí.
-            queryParams: { returnUrl: rutaLegible(router.url), expirada: '1' },
+            queryParams: { returnUrl: router.url, expirada: '1' },
           });
           return throwError(() => errorDeRefresh);
         }),

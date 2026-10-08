@@ -1,395 +1,848 @@
 <app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
 <app-site-header />
 
+<!-- El campo de archivo, una sola vez: lo abren el recuadro, «Reintentar» y
+     «Volver a procesar», que viven en vistas distintas. -->
+<input #selector type="file" accept=".docx" hidden (change)="desdeElBoton($event)" />
+
 <main class="pagina preparar-fondo">
   <section class="seccion">
     <div class="preparar-pagina">
       @if (cargando()) {
         <p class="vacio">Cargando tu membresía…</p>
       } @else if (panel(); as datos) {
-        @if (!datos.disponible) {
-          <p class="vacio">
-            El servicio está apagado ahora mismo. Vuelve en un rato o
-            <a routerLink="/planes">escríbenos</a> si te corre prisa.
-          </p>
-        } @else {
-          <div class="columnas">
-            <!-- ═══ Izquierda: la membresía, el servicio y la subida ═══════ -->
-            <section class="tarjeta">
-              <header class="cabecera">
-                <div class="cabecera-texto">
-                  <h1>Preparar documento</h1>
-
-                  @if (datos.ilimitado) {
-                    <p class="cabecera-nota">Acceso ilimitado · usuario beta</p>
-                  } @else if (datos.cupo && datos.membresia?.vigente) {
-                    <p class="cabecera-nota">
-                      {{ nombreDelPlan(datos.membresia?.plan?.name) }} · vence el
-                      {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }} ·
-                      <a routerLink="/planes">Renovar</a>
-                      @if (datos.cupo.restantes === 0) {
-                        <span class="cabecera-repone">
-                          Vuelves a tener {{ datos.cupo.total }} el
-                          {{ datos.cupo.renuevaEl | date: 'd MMM' }}.
-                        </span>
-                      }
-                    </p>
-                  } @else {
-                    <p class="cabecera-nota">{{ datos.motivo }}</p>
-                  }
-                </div>
-
-                @if (datos.ilimitado) {
-                  <p class="cupo-texto">Sin tope de documentos</p>
-                } @else if (datos.cupo && datos.membresia?.vigente) {
-                  <div class="cupo" [class.agotado]="datos.cupo.restantes === 0">
-                    <div
-                      class="cupo-barra"
-                      role="img"
-                      [attr.aria-label]="
-                        'Te quedan ' +
-                        datos.cupo.restantes +
-                        ' de ' +
-                        datos.cupo.total +
-                        ' documentos este mes'
-                      "
+        @switch (vista()) {
+          <!-- ═══ «Procesando…» ══════════════════════════════════════════ -->
+          @case ('procesando') {
+            @if (abierto(); as t) {
+              <div class="procesando">
+                <div class="tarjeta proceso">
+                  <header class="proceso-cabecera">
+                    <span
+                      class="icono-cuadro"
+                      [class.rojo]="t.estado === 'FALLIDO'"
+                      aria-hidden="true"
                     >
-                      <span [style.width.%]="restantePorciento()"></span>
-                    </div>
-                    <!-- «7 de 10» al lado de una barra se lee como «has gastado 7».
-                         Es al revés: son los que QUEDAN. Se dice con el verbo
-                         delante para que no haya que adivinarlo. -->
-                    <p class="cupo-texto">
-                      Te quedan <strong>{{ datos.cupo.restantes }}</strong> de
-                      {{ datos.cupo.total }} este mes
-                    </p>
-                  </div>
-                } @else {
-                  <a class="boton-principal" routerLink="/planes">Ver las membresías</a>
-                }
-              </header>
-
-              <!-- ── Las pestañas ─────────────────────────────────────────── -->
-              <div class="pestanas" role="tablist" aria-label="Qué quieres que hagamos">
-                @for (p of pestanas; track p.id) {
-                  <button
-                    type="button"
-                    role="tab"
-                    class="pestana"
-                    [class.activa]="elegida() === p.id"
-                    [attr.aria-selected]="elegida() === p.id"
-                    (click)="elegir(p.id)"
-                  >
-                    <span class="pestana-icono" aria-hidden="true">
-                      @switch (p.icono) {
-                        @case ('edicion') {
-                          <svg viewBox="0 0 20 20">
-                            <path
-                              d="M13.2 3.3 16.7 6.8 7.5 16H4v-3.5zM11.8 4.7l3.5 3.5"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linejoin="round"
-                            />
-                          </svg>
-                        }
-                        @case ('traduccion') {
-                          <svg viewBox="0 0 20 20">
-                            <path
-                              d="M2.6 5.2h7M6.1 3.4v1.8m1.6 0c0 3.4-2.1 6-5.1 7.2m1.3-4.3c.9 2 2.4 3.4 4.4 4.1M10.6 17l3.4-8.4 3.4 8.4m-5.8-2.4h4.8"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="1.5"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            />
-                          </svg>
-                        }
-                      }
-                    </span>
-                    {{ p.titulo }}
-                  </button>
-                }
-              </div>
-
-              <div class="panel" role="tabpanel">
-                <!-- Qué es y qué hace falta, en una sola línea. Lo que manda a
-                     la otra pestaña es un botón que se lee como enlace. -->
-                <p class="resumen">
-                  {{ pestana().descripcion }}
-                  @if (pestana().enlace; as enlace) {
-                    <button type="button" class="enlace" (click)="elegir(enlace.va)">
-                      {{ enlace.texto }}</button
-                    >.
-                  }
-                </p>
-
-                <!-- El idioma, solo donde significa algo. -->
-                @if (elegida() === 'TRADUCCION') {
-                  <div class="idiomas">
-                    <span class="idiomas-rotulo">Traducir a</span>
-                    @for (i of datos.idiomas; track i.codigo) {
-                      <button
-                        type="button"
-                        class="idioma"
-                        [class.activo]="idioma() === i.codigo"
-                        (click)="elegirIdioma(i.codigo)"
-                      >
-                        {{ i.nombre }}
-                      </button>
-                    }
-                  </div>
-                }
-
-                <!-- ── Subir ────────────────────────────────────────────── -->
-                <input
-                  #selector
-                  type="file"
-                  accept=".docx"
-                  hidden
-                  (change)="desdeElBoton($event)"
-                />
-
-                <div
-                  class="soltar"
-                  [class.encima]="encima()"
-                  [class.apagado]="!puede() || subiendo()"
-                  (dragover)="arrastrar($event, true)"
-                  (dragleave)="arrastrar($event, false)"
-                  (drop)="soltar($event)"
-                >
-                  @if (subiendo()) {
-                    <span class="soltar-icono" aria-hidden="true">
-                      <span class="rueda"></span>
-                    </span>
-                    <p class="soltar-texto">Subiendo tu documento…</p>
-                  } @else if (!puede()) {
-                    <span class="soltar-icono" aria-hidden="true">
                       <svg viewBox="0 0 20 20">
                         <path
-                          d="M6 9V6.5a4 4 0 0 1 8 0V9M5 9h10v8H5z"
+                          d="M4.5 2.8h7L15.5 7v10.2h-11zM11 2.8V7h4.5"
                           fill="none"
                           stroke="currentColor"
-                          stroke-width="1.6"
+                          stroke-width="1.5"
                           stroke-linejoin="round"
                         />
                       </svg>
                     </span>
-                    <p class="soltar-texto">
-                      Aquí subirás tu documento.
-                      <span class="soltar-motivo">{{ datos.motivo }}</span>
-                    </p>
-                    @if (!datos.membresia?.vigente) {
-                      <a class="boton-principal" routerLink="/planes">Ver las membresías</a>
-                    }
+                    <div class="proceso-titulo">
+                      <h1>{{ t.nombre }}</h1>
+                      <p>{{ tituloDe(t) }} · {{ t.palabras | number: '1.0-0' }} palabras</p>
+                    </div>
+                  </header>
+
+                  @if (t.estado === 'FALLIDO') {
+                    <div class="proceso-fallo">
+                      <p class="proceso-fallo-titulo">No se completó</p>
+                      <p>{{ t.error }}</p>
+                      <p class="sin-cobro">No se descontó de tu membresía.</p>
+                      <div class="proceso-fallo-acciones">
+                        @if (puede()) {
+                          <button type="button" class="boton secundario" (click)="volverAMandar(t)">
+                            <svg viewBox="0 0 16 16" aria-hidden="true">
+                              <path
+                                d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              />
+                            </svg>
+                            Reintentar
+                          </button>
+                        }
+                        <a class="boton secundario" [href]="correoDe(t)">Escribirnos</a>
+                      </div>
+                    </div>
                   } @else {
-                    <span class="soltar-icono" aria-hidden="true">
-                      <svg viewBox="0 0 20 20">
+                    <div class="barra-cabecera">
+                      <span>{{ t.estado === 'EN_COLA' ? 'En cola…' : 'Procesando…' }}</span>
+                      <span>{{ porcentajeDe(t) }} %</span>
+                    </div>
+                    <div
+                      class="barra"
+                      role="progressbar"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      [attr.aria-valuenow]="porcentajeDe(t)"
+                    >
+                      <span [style.width.%]="porcentajeDe(t)"></span>
+                    </div>
+
+                    <ol class="pasos">
+                      @for (
+                        texto of [
+                          'Leyendo el documento',
+                          'Protegiendo citas, siglas y bibliografía',
+                          pasoEditar(t),
+                          pasoArmar(t),
+                        ];
+                        track $index
+                      ) {
+                        <li
+                          class="paso"
+                          [class.hecho]="$index < pasoDe(t)"
+                          [class.activo]="$index === pasoDe(t)"
+                        >
+                          <span class="paso-marca" aria-hidden="true">
+                            @if ($index < pasoDe(t)) {
+                              <svg viewBox="0 0 16 16">
+                                <path
+                                  d="m4 8.2 2.6 2.6L12 5.4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.8"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            } @else if ($index === pasoDe(t)) {
+                              <span class="rueda grande"></span>
+                            }
+                          </span>
+                          <span>
+                            @if ($index === pasoDe(t)) {
+                              <strong>{{ texto }}</strong>
+                              @if ($index === 2 && seccionDe(t); as seccion) {
+                                · {{ seccion }}
+                              }
+                            } @else {
+                              {{ texto }}
+                            }
+                          </span>
+                        </li>
+                      }
+                    </ol>
+
+                    <p class="proceso-nota">
+                      @if (t.estado === 'EN_COLA') {
+                        Hay otro documento delante; el tuyo empieza en cuanto termine.
+                      }
+                      Puedes seguir usando la plataforma. El documento aparecerá como
+                      <strong>Listo</strong> en tu lista cuando termine.
+                    </p>
+                  }
+                </div>
+
+                <button type="button" class="volver" (click)="volverALaLista()">
+                  ← Volver a mis documentos
+                </button>
+              </div>
+            }
+          }
+
+          <!-- ═══ El documento terminado ═════════════════════════════════ -->
+          @case ('detalle') {
+            @if (abierto(); as t) {
+              <nav class="migas" aria-label="Ruta">
+                <button type="button" (click)="volverALaLista()">Mis documentos</button>
+                <span aria-hidden="true">/</span>
+                <span class="migas-actual">{{ t.nombre }}</span>
+              </nav>
+
+              <header class="detalle-cabecera">
+                <div class="detalle-titulo">
+                  <h1>{{ t.nombre }}</h1>
+                  <div class="etiquetas">
+                    <span class="chip listo"><span class="punto"></span>Listo</span>
+                    <span class="etiqueta">{{ tituloDe(t) }}</span>
+                    <span class="etiqueta">{{ t.palabras | number: '1.0-0' }} palabras</span>
+                    <span class="etiqueta">{{ t.createdAt | date: 'd MMM, HH:mm' }}</span>
+                  </div>
+                </div>
+                <div class="detalle-acciones">
+                  @if (puede()) {
+                    <button type="button" class="boton secundario" (click)="volverAMandar(t)">
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
                         <path
-                          d="M10 13.5V4m0 0L6.5 7.5M10 4l3.5 3.5M3.5 16h13"
+                          d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"
                           fill="none"
                           stroke="currentColor"
-                          stroke-width="1.6"
+                          stroke-width="1.5"
                           stroke-linecap="round"
                           stroke-linejoin="round"
                         />
                       </svg>
-                    </span>
-                    <p class="soltar-texto">
-                      Arrastra tu .docx aquí
-                      <button type="button" class="enlace" (click)="abrirSelector()">
-                        o elige el archivo
-                      </button>
-                    </p>
-                    <p class="soltar-nota">
-                      Hasta {{ datos.maxPalabras | number: '1.0-0' }} palabras de cuerpo. La
-                      bibliografía y las tablas no cuentan, porque no se tocan.
-                    </p>
+                      Volver a procesar
+                    </button>
                   }
+                  <button type="button" class="boton primario" (click)="descargar(t)">
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="M8 2.5v7.5m0 0L5 7m3 3 3-3M3 12.5h10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    Descargar .docx
+                  </button>
                 </div>
+              </header>
 
-                <!-- El aviso de la IA: es lo que el cliente tiene que saber
-                     ANTES de soltar el archivo, no en la letra pequeña del
-                     pie. Sin relleno de color, porque va pegado a un recuadro
-                     que ya es un bloque. -->
-                <p class="aviso-ia">
-                  <svg class="aviso-ia-icono" viewBox="0 0 20 20" aria-hidden="true">
-                    <path
-                      d="M10 2.6 18.4 17H1.6zM10 8v4m0 2.6v.1"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span>
-                    <strong>Lo hace una inteligencia artificial y nadie lo revisa después.</strong>
-                    Léelo antes de entregarlo o de mandarlo a una revista. Lo que firmes, lo firmas
-                    tú.
-                  </span>
-                </p>
-              </div>
-            </section>
-
-            <!-- ═══ Derecha: lo que ya mandó ══════════════════════════════ -->
-            <section class="tarjeta documentos">
-              <header class="cabecera cabecera-lista">
-                <div class="cabecera-texto">
-                  <h2>Tus documentos</h2>
-                  @if (trabajosDelServicio().length > 0) {
-                    <span class="total">{{ trabajosDelServicio().length }} en total</span>
-                  }
-                </div>
-
-                <!-- El filtro solo aparece cuando hay algo que filtrar: con dos
-                     documentos, tres botones son más ruido que ayuda. -->
-                @if (trabajosDelServicio().length > 1) {
-                  <div class="filtros" role="group" aria-label="Qué documentos ver">
-                    @for (f of filtros; track f.id) {
+              <div class="detalle">
+                <!-- ── La vista previa ─────────────────────────────────── -->
+                <section class="tarjeta visor">
+                  <div class="visor-barra">
+                    <div class="segmentos" role="tablist" aria-label="Qué ver">
+                      @for (m of modos; track m.id) {
+                        <button
+                          type="button"
+                          role="tab"
+                          class="segmento"
+                          [class.activo]="modo() === m.id"
+                          [attr.aria-selected]="modo() === m.id"
+                          (click)="elegirModo(m.id)"
+                        >
+                          {{ m.texto }}
+                        </button>
+                      }
+                    </div>
+                    <label class="casilla">
+                      <input
+                        type="checkbox"
+                        [checked]="resaltar()"
+                        (change)="alternarResaltar($event)"
+                      />
+                      Resaltar cambios
+                    </label>
+                    <div class="visor-paginas">
                       <button
                         type="button"
-                        class="filtro"
-                        [class.activo]="filtro() === f.id"
-                        [attr.aria-pressed]="filtro() === f.id"
-                        (click)="elegirFiltro(f.id)"
+                        class="flecha"
+                        aria-label="Página anterior"
+                        [disabled]="paginaDoc() === 0"
+                        (click)="paginaAnterior()"
                       >
-                        {{ f.texto }}
+                        ‹
+                      </button>
+                      <span>Página {{ paginaDoc() + 1 }} de {{ totalPaginasDoc() }}</span>
+                      <button
+                        type="button"
+                        class="flecha"
+                        aria-label="Página siguiente"
+                        [disabled]="paginaDoc() >= totalPaginasDoc() - 1"
+                        (click)="paginaSiguiente()"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="visor-fondo" [class.doble]="modo() === 'LADO'">
+                    @if (cargandoComparacion()) {
+                      <p class="visor-vacio">Preparando la vista previa…</p>
+                    } @else if (errorComparacion(); as fallo) {
+                      <p class="visor-vacio">
+                        {{ fallo }} El documento se descarga igual con el botón de arriba.
+                      </p>
+                    } @else {
+                      @if (modo() !== 'RESULTADO') {
+                        <div class="hoja-columna">
+                          @if (modo() === 'LADO') {
+                            <p class="hoja-rotulo">Original</p>
+                          }
+                          <article class="hoja">
+                            @for (p of parrafosPintados(); track p.clave) {
+                              <p class="hoja-parrafo" [class.titulo]="p.nivel">
+                                @for (trozo of p.original; track $index) {
+                                  <span [class]="'trozo ' + trozo.tipo">{{ trozo.texto }}</span>
+                                }
+                              </p>
+                            }
+                          </article>
+                        </div>
+                      }
+                      @if (modo() !== 'ORIGINAL') {
+                        <div class="hoja-columna">
+                          @if (modo() === 'LADO') {
+                            <p class="hoja-rotulo">Resultado</p>
+                          }
+                          <article class="hoja">
+                            @for (p of parrafosPintados(); track p.clave) {
+                              <p class="hoja-parrafo" [class.titulo]="p.nivel">
+                                @for (trozo of p.resultado; track $index) {
+                                  <span [class]="'trozo ' + trozo.tipo">{{ trozo.texto }}</span>
+                                }
+                              </p>
+                            }
+                          </article>
+                        </div>
+                      }
+                    }
+                  </div>
+
+                  <footer class="leyenda">
+                    @if (t.servicio === 'EDICION') {
+                      <span><i class="muestra quitado"></i>Texto reemplazado</span>
+                      <span><i class="muestra nuevo"></i>Texto nuevo</span>
+                    }
+                    <span><i class="muestra cita"></i>Cita protegida (sin cambios)</span>
+                  </footer>
+                </section>
+
+                <!-- ── La columna de la derecha ────────────────────────── -->
+                <aside class="lateral">
+                  <section class="tarjeta lateral-caja">
+                    <h2>Verificación</h2>
+                    @if (comparacion(); as c) {
+                      <ul class="verificacion">
+                        <li
+                          [class.mal]="
+                            c.verificacion.citas.conservadas < c.verificacion.citas.total
+                          "
+                        >
+                          <span class="verificacion-marca" aria-hidden="true"></span>
+                          Citas conservadas
+                          <strong>
+                            @if (c.verificacion.citas.total === 0) {
+                              Sin citas
+                            } @else {
+                              {{ c.verificacion.citas.conservadas }} /
+                              {{ c.verificacion.citas.total }}
+                            }
+                          </strong>
+                        </li>
+                        <li
+                          [class.mal]="
+                            c.verificacion.siglas.conservadas < c.verificacion.siglas.total
+                          "
+                        >
+                          <span class="verificacion-marca" aria-hidden="true"></span>
+                          Siglas sin cambios
+                          <strong>
+                            @if (c.verificacion.siglas.total === 0) {
+                              Sin siglas
+                            } @else if (
+                              c.verificacion.siglas.conservadas === c.verificacion.siglas.total
+                            ) {
+                              {{ c.verificacion.siglas.total }}
+                            } @else {
+                              {{ c.verificacion.siglas.conservadas }} /
+                              {{ c.verificacion.siglas.total }}
+                            }
+                          </strong>
+                        </li>
+                        <li [class.mal]="c.verificacion.bibliografia === false">
+                          <span class="verificacion-marca" aria-hidden="true"></span>
+                          Bibliografía
+                          <strong>
+                            @switch (c.verificacion.bibliografia) {
+                              @case (true) {
+                                Intacta
+                              }
+                              @case (false) {
+                                Con cambios
+                              }
+                              @default {
+                                No tiene
+                              }
+                            }
+                          </strong>
+                        </li>
+                        <li [class.mal]="c.verificacion.tablas === false">
+                          <span class="verificacion-marca" aria-hidden="true"></span>
+                          Tablas
+                          <strong>
+                            @switch (c.verificacion.tablas) {
+                              @case (true) {
+                                Sin modificar
+                              }
+                              @case (false) {
+                                Con cambios
+                              }
+                              @case ('TRADUCIDAS') {
+                                Traducidas
+                              }
+                              @default {
+                                No tiene
+                              }
+                            }
+                          </strong>
+                        </li>
+                      </ul>
+                    } @else {
+                      <p class="lateral-vacio">
+                        {{ cargandoComparacion() ? 'Comprobando…' : 'No disponible.' }}
+                      </p>
+                    }
+                  </section>
+
+                  <section class="tarjeta lateral-caja">
+                    <h2>Cambios</h2>
+                    <div class="cifras">
+                      <div class="cifra">
+                        <strong>{{ t.tocados | number: '1.0-0' }}</strong>
+                        <span
+                          >párrafos
+                          {{ t.servicio === 'TRADUCCION' ? 'traducidos' : 'editados' }}</span
+                        >
+                      </div>
+                      <div class="cifra">
+                        <strong>{{ t.intactos | number: '1.0-0' }}</strong>
+                        <span>párrafos sin cambios</span>
+                      </div>
+                    </div>
+                    @if (t.intactos > 0) {
+                      <button type="button" class="enlace" (click)="abrirResumen(t)">
+                        Ver los {{ t.intactos }} párrafos sin cambios →
                       </button>
                     }
+                  </section>
+
+                  <p class="nota-ia">
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="7.4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      />
+                      <path
+                        d="M10 6.2v4.6m0 2.7v.1"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    <span>
+                      Resultado generado con IA. Revísalo antes de enviarlo; la responsabilidad del
+                      texto es del autor.
+                    </span>
+                  </p>
+                </aside>
+              </div>
+            }
+          }
+
+          <!-- ═══ La lista: subir y lo que ya mandó ══════════════════════ -->
+          @default {
+            <header class="pagina-cabecera">
+              <h1>Preparar documento</h1>
+              @if (!datos.disponible) {
+                <p>El servicio está apagado ahora mismo. Vuelve en un rato.</p>
+              } @else if (datos.ilimitado) {
+                <p>Plan beta · documentos ilimitados</p>
+              } @else if (datos.cupo && datos.membresia?.vigente) {
+                <p>
+                  {{ nombreDelPlan(datos.membresia?.plan?.name) }} · te quedan
+                  {{ datos.cupo.restantes }} de {{ datos.cupo.total }} este mes · vence el
+                  {{ datos.cupo.caducaEl | date: "d 'de' MMMM" }} ·
+                  <a routerLink="/planes">Renovar</a>
+                  @if (datos.cupo.restantes === 0) {
+                    · vuelves a tener {{ datos.cupo.total }} el
+                    {{ datos.cupo.renuevaEl | date: 'd MMM' }}
+                  }
+                </p>
+              } @else {
+                <p>{{ datos.motivo }} <a routerLink="/planes">Ver las membresías</a></p>
+              }
+            </header>
+
+            @if (datos.disponible) {
+              <!-- ── Subir ───────────────────────────────────────────── -->
+              <section class="tarjeta subir">
+                <div class="subir-servicio">
+                  <div class="segmentos" role="tablist" aria-label="Qué quieres que hagamos">
+                    @for (p of pestanas; track p.id) {
+                      <button
+                        type="button"
+                        role="tab"
+                        class="segmento"
+                        [class.activo]="elegida() === p.id"
+                        [attr.aria-selected]="elegida() === p.id"
+                        (click)="elegir(p.id)"
+                      >
+                        {{ p.titulo }}
+                      </button>
+                    }
+                  </div>
+
+                  <p class="descripcion">{{ pestana().descripcion }}</p>
+
+                  @if (elegida() === 'TRADUCCION') {
+                    <div class="idiomas">
+                      <span class="idiomas-rotulo">Traducir a</span>
+                      @for (i of datos.idiomas; track i.codigo) {
+                        <button
+                          type="button"
+                          class="idioma"
+                          [class.activo]="idioma() === i.codigo"
+                          [attr.aria-pressed]="idioma() === i.codigo"
+                          (click)="elegirIdioma(i.codigo)"
+                        >
+                          {{ i.nombre }}
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  <ul class="promesas">
+                    @for (promesa of pestana().promesas; track promesa) {
+                      <li>{{ promesa }}</li>
+                    }
+                    <li>Hasta {{ datos.maxPalabras | number: '1.0-0' }} palabras de cuerpo</li>
+                  </ul>
+                </div>
+
+                <div class="subir-archivo">
+                  <div
+                    class="soltar"
+                    [class.encima]="encima()"
+                    [class.apagado]="!puede() || subiendo()"
+                    (dragover)="arrastrar($event, true)"
+                    (dragleave)="arrastrar($event, false)"
+                    (drop)="soltar($event)"
+                  >
+                    @if (subiendo()) {
+                      <span class="icono-cuadro" aria-hidden="true"
+                        ><span class="rueda grande"></span
+                      ></span>
+                      <p class="soltar-texto">Subiendo tu documento…</p>
+                    } @else if (!puede()) {
+                      <span class="icono-cuadro gris" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path
+                            d="M6 9V6.5a4 4 0 0 1 8 0V9M5 9h10v8H5z"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <p class="soltar-texto">Aquí subirás tu documento</p>
+                      <p class="soltar-nota">{{ datos.motivo }}</p>
+                      @if (!datos.membresia?.vigente) {
+                        <a class="boton primario" routerLink="/planes">Ver las membresías</a>
+                      }
+                    } @else {
+                      <span class="icono-cuadro" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path
+                            d="M10 13.5V4m0 0L6.5 7.5M10 4l3.5 3.5M3.5 16h13"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <p class="soltar-texto">
+                        Arrastra tu archivo .docx o
+                        <button type="button" class="enlace" (click)="abrirSelector()">
+                          búscalo en tu equipo
+                        </button>
+                      </p>
+                      <p class="soltar-nota">
+                        La bibliografía y las tablas no cuentan para el límite.
+                      </p>
+                    }
+                  </div>
+
+                  <!-- Lo que tiene que saber ANTES de soltar el archivo. -->
+                  <p class="nota-ia">
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <circle
+                        cx="10"
+                        cy="10"
+                        r="7.4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      />
+                      <path
+                        d="M10 6.2v4.6m0 2.7v.1"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    <span>
+                      <strong>Revisión recomendada.</strong> El resultado se genera con IA. Revísalo
+                      antes de entregarlo o enviarlo a una revista; la responsabilidad del texto es
+                      del autor.
+                    </span>
+                  </p>
+                </div>
+              </section>
+            }
+
+            <!-- ── Tus documentos ──────────────────────────────────────── -->
+            <section class="tarjeta documentos">
+              <header class="documentos-cabecera">
+                <h2>
+                  Tus documentos
+                  @if (trabajos().length > 0) {
+                    <span class="total">{{ trabajos().length }} en total</span>
+                  }
+                </h2>
+
+                @if (trabajos().length > 0) {
+                  <div class="documentos-herramientas">
+                    <label class="buscador">
+                      <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <circle
+                          cx="9"
+                          cy="9"
+                          r="5.5"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                        />
+                        <path
+                          d="m13.2 13.2 3.6 3.6"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <input
+                        type="search"
+                        placeholder="Buscar por nombre"
+                        aria-label="Buscar por nombre"
+                        [value]="busqueda()"
+                        (input)="buscar($event)"
+                      />
+                    </label>
+                    <div class="segmentos" role="group" aria-label="Qué documentos ver">
+                      @for (f of filtros; track f.id) {
+                        <button
+                          type="button"
+                          class="segmento"
+                          [class.activo]="filtro() === f.id"
+                          [attr.aria-pressed]="filtro() === f.id"
+                          (click)="elegirFiltro(f.id)"
+                        >
+                          {{ f.texto }}
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
               </header>
 
               @if (trabajosFiltrados().length === 0) {
                 <p class="lista-vacia">
-                  @if (filtro() === 'LISTO') {
+                  @if (busqueda().trim()) {
+                    Ningún documento se llama así.
+                  } @else if (filtro() === 'LISTO') {
                     Aquí no hay ninguno terminado todavía.
                   } @else if (filtro() === 'FALLIDO') {
                     Ninguno se quedó a medias. Mejor así.
-                  } @else if (enLaOtra() > 0) {
-                    Aquí no hay nada todavía: lo que has mandado está en la otra pestaña.
                   } @else {
                     Aquí irán apareciendo los documentos que mandes, con su estado y el enlace para
                     descargarlos.
                   }
                 </p>
               } @else {
-                <ul class="lista">
-                  @for (t of visibles(); track t.id) {
-                    <li class="fila">
-                      <span class="fila-icono" aria-hidden="true">
-                        <svg viewBox="0 0 20 20">
-                          <path
-                            d="M4.5 2.8h7L15.5 7v10.2h-11zM11 2.8V7h4.5"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
-                      </span>
-
-                      <div class="datos">
-                        <div class="fila-arriba">
-                          <h3>{{ t.nombre }}</h3>
-
-                          @switch (t.estado) {
-                            @case ('LISTO') {
-                              <span class="chip listo"><span class="punto"></span>Listo</span>
-                            }
-                            @case ('FALLIDO') {
-                              <span class="chip fallo"
-                                ><span class="punto"></span>No se completó</span
-                              >
-                            }
-                            @default {
-                              <span class="chip curso">
-                                <span class="rueda" aria-hidden="true"></span>
-                                {{ t.estado === 'EN_COLA' ? 'En cola' : 'Preparándolo' }}
-                              </span>
-                            }
-                          }
-                        </div>
-
-                        <p class="meta">
-                          {{ tituloDe(t) }} · {{ t.palabras | number: '1.0-0' }} palabras ·
-                          {{ t.createdAt | date: 'd MMM, HH:mm' }}
-                        </p>
-
-                        @if (t.estado === 'EN_COLA' || t.estado === 'EN_CURSO') {
-                          <p class="estado">
-                            Tarda unos minutos. Puedes cerrar esta página: te avisamos por correo.
-                          </p>
-                        } @else if (t.estado === 'LISTO') {
-                          <div class="acciones">
-                            <button type="button" class="descargar" (click)="descargar(t)">
-                              <span class="descargar-icono" aria-hidden="true">
-                                <svg viewBox="0 0 16 16">
+                <div class="tabla-caja">
+                  <table class="tabla">
+                    <thead>
+                      <tr>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Servicio</th>
+                        <th scope="col" class="num">Palabras</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="der">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (t of visibles(); track t.id) {
+                        <tr [class.fallo]="t.estado === 'FALLIDO'">
+                          <td>
+                            <div class="col-nombre">
+                              <span class="doc-icono" aria-hidden="true">
+                                <svg viewBox="0 0 20 20">
                                   <path
-                                    d="M8 2.5v7.5m0 0L5 7m3 3 3-3M3 12.5h10"
+                                    d="M4.5 2.8h7L15.5 7v10.2h-11zM11 2.8V7h4.5"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="1.5"
-                                    stroke-linecap="round"
                                     stroke-linejoin="round"
                                   />
                                 </svg>
                               </span>
-                              Descargar
-                            </button>
-                            <button type="button" class="ver-resumen" (click)="abrirResumen(t)">
-                              Resumen
-                              @if (t.intactos > 0) {
-                                <span class="resumen-cuenta">{{ t.intactos }} sin tocar</span>
+                              <span class="doc-nombre" [title]="t.nombre">{{ t.nombre }}</span>
+                            </div>
+                          </td>
+                          <td class="suave">{{ servicioCorto(t) }}</td>
+                          <td class="num">{{ t.palabras | number: '1.0-0' }}</td>
+                          <td class="suave">{{ t.createdAt | date: 'd MMM, HH:mm' }}</td>
+                          <td>
+                            @switch (t.estado) {
+                              @case ('LISTO') {
+                                <span class="chip listo"><span class="punto"></span>Listo</span>
                               }
-                            </button>
-                          </div>
-                        } @else {
-                          <!-- El motivo del fallo va en el resumen, como los avisos
-                               de los que salieron: la fila solo lleva qué hacer. -->
-                          <div class="acciones">
-                            @if (puede()) {
-                              <button type="button" class="descargar reenviar" (click)="volverAMandar(t)">
-                                <span class="descargar-icono" aria-hidden="true">
-                                  <svg viewBox="0 0 16 16">
-                                    <path
-                                      d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      stroke-width="1.5"
-                                      stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                    />
-                                  </svg>
+                              @case ('FALLIDO') {
+                                <span class="chip fallo"
+                                  ><span class="punto"></span>No se completó</span
+                                >
+                              }
+                              @default {
+                                <span class="chip curso">
+                                  <span class="rueda" aria-hidden="true"></span>
+                                  {{ t.estado === 'EN_COLA' ? 'En cola' : 'Procesando' }}
                                 </span>
-                                Volver a mandarlo
-                              </button>
+                              }
                             }
-                            <button type="button" class="ver-resumen" (click)="abrirResumen(t)">
-                              Resumen
-                            </button>
-                          </div>
-                        }
-                      </div>
-                    </li>
-                  }
-                </ul>
+                          </td>
+                          <td class="der">
+                            <div class="fila-acciones">
+                              @if (t.estado === 'FALLIDO') {
+                                @if (puede()) {
+                                  <button
+                                    type="button"
+                                    class="boton secundario chico"
+                                    (click)="volverAMandar(t)"
+                                  >
+                                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                                      <path
+                                        d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                      />
+                                    </svg>
+                                    Reintentar
+                                  </button>
+                                }
+                              } @else {
+                                <button
+                                  type="button"
+                                  class="boton secundario chico"
+                                  (click)="abrir(t)"
+                                >
+                                  Ver
+                                </button>
+                                @if (t.estado === 'LISTO') {
+                                  <button
+                                    type="button"
+                                    class="boton secundario chico cuadrado"
+                                    aria-label="Descargar"
+                                    title="Descargar .docx"
+                                    (click)="descargar(t)"
+                                  >
+                                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                                      <path
+                                        d="M8 2.5v7.5m0 0L5 7m3 3 3-3M3 12.5h10"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                      />
+                                    </svg>
+                                  </button>
+                                }
+                              }
 
-                <!-- Los tres primeros y un botón: el historial crece diez al
-                     mes y la columna no puede ser un rollo de papel. -->
-                @if (ocultos() > 0) {
-                  <button type="button" class="mas" (click)="verTodos.set(true)">
-                    Ver los {{ ocultos() }} restantes
-                  </button>
-                } @else if (verTodos() && trabajosFiltrados().length > tope) {
-                  <button type="button" class="mas" (click)="verTodos.set(false)">
-                    Ver solo los últimos {{ tope }}
-                  </button>
-                }
+                              @if (t.estado === 'LISTO' || t.estado === 'FALLIDO') {
+                                <div class="menu-caja">
+                                  <button
+                                    type="button"
+                                    class="puntos"
+                                    aria-label="Más acciones"
+                                    [attr.aria-expanded]="menu() === t.id"
+                                    (click)="alternarMenu(t.id, $event)"
+                                  >
+                                    ⋮
+                                  </button>
+                                  @if (menu() === t.id) {
+                                    <div
+                                      class="menu"
+                                      role="menu"
+                                      (click)="$event.stopPropagation()"
+                                    >
+                                      @if (t.estado === 'LISTO') {
+                                        <button
+                                          type="button"
+                                          role="menuitem"
+                                          (click)="abrirResumen(t)"
+                                        >
+                                          Resumen
+                                        </button>
+                                        <button
+                                          type="button"
+                                          role="menuitem"
+                                          (click)="descargar(t)"
+                                        >
+                                          Descargar .docx
+                                        </button>
+                                        @if (puede()) {
+                                          <button
+                                            type="button"
+                                            role="menuitem"
+                                            (click)="volverAMandar(t)"
+                                          >
+                                            Volver a procesar
+                                          </button>
+                                        }
+                                      } @else {
+                                        <button
+                                          type="button"
+                                          role="menuitem"
+                                          (click)="abrirResumen(t)"
+                                        >
+                                          Ver el motivo
+                                        </button>
+                                        <a role="menuitem" [href]="correoDe(t)">Escribirnos</a>
+                                      }
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <footer class="paginacion">
+                  <span>Mostrando {{ mostrando() }} de {{ trabajosFiltrados().length }}</span>
+                  <div>
+                    <button
+                      type="button"
+                      class="boton secundario chico"
+                      [disabled]="pagina() === 0"
+                      (click)="anterior()"
+                    >
+                      Anterior
+                    </button>
+                    <button
+                      type="button"
+                      class="boton secundario chico"
+                      [disabled]="pagina() >= paginas() - 1"
+                      (click)="siguiente()"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                </footer>
               }
             </section>
-          </div>
+          }
         }
       }
     </div>
@@ -399,12 +852,7 @@
 <!-- El resumen de un trabajo, aparte: con doce avisos no cabe en la fila. -->
 @if (resumen(); as t) {
   <div class="resumen-fondo" (click)="cerrarResumen()"></div>
-  <div
-    class="resumen-ventana"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="resumen-titulo"
-  >
+  <div class="resumen-ventana" role="dialog" aria-modal="true" aria-labelledby="resumen-titulo">
     <header class="resumen-cabecera">
       <div>
         <h2 id="resumen-titulo">Resumen</h2>
@@ -414,7 +862,9 @@
           {{ t.createdAt | date: 'd MMM, HH:mm' }}
         </p>
       </div>
-      <button type="button" class="resumen-x" aria-label="Cerrar" (click)="cerrarResumen()">✕</button>
+      <button type="button" class="resumen-x" aria-label="Cerrar" (click)="cerrarResumen()">
+        ✕
+      </button>
     </header>
 
     <div class="resumen-cuerpo">
@@ -432,8 +882,7 @@
         <ul class="resumen-avisos">
           @for (aviso of avisosDe(t); track aviso.donde + aviso.motivo + aviso.ejemplo) {
             <li>
-              <strong>{{ aviso.cuantos }}</strong> en {{ aviso.donde }}, porque
-              {{ aviso.motivo }}.
+              <strong>{{ aviso.cuantos }}</strong> en {{ aviso.donde }}, porque {{ aviso.motivo }}.
               @if (aviso.ejemplo) {
                 <span class="ejemplo">«{{ aviso.ejemplo }}»</span>
               }
@@ -444,11 +893,11 @@
     </div>
 
     <footer class="resumen-pie">
-      <button type="button" class="accion" (click)="cerrarResumen()">Cerrar</button>
+      <button type="button" class="boton secundario" (click)="cerrarResumen()">Cerrar</button>
       @if (t.estado === 'FALLIDO') {
-        <a class="descargar" [href]="correoDe(t)">Escribirnos</a>
+        <a class="boton primario" [href]="correoDe(t)">Escribirnos</a>
       } @else {
-        <button type="button" class="descargar" (click)="descargar(t)">Descargar</button>
+        <button type="button" class="boton primario" (click)="descargar(t)">Descargar</button>
       }
     </footer>
   </div>

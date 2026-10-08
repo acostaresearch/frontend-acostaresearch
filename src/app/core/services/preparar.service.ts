@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 import {
+  ComparacionPreparacion,
   EncargoAceptado,
   IdiomaPreparar,
   PanelPreparar,
@@ -57,6 +58,13 @@ export class PrepararService {
   ver(id: string): Observable<Preparacion> {
     return this.http
       .get<ApiResponse<Preparacion>>(`${this.base}/trabajos/${id}`)
+      .pipe(map((res) => res.data));
+  }
+
+  /** El original y el resultado, párrafo a párrafo, con la verificación. */
+  comparacion(id: string): Observable<ComparacionPreparacion> {
+    return this.http
+      .get<ApiResponse<ComparacionPreparacion>>(`${this.base}/trabajos/${id}/comparacion`)
       .pipe(map((res) => res.data));
   }
 

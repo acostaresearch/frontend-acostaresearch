@@ -62,6 +62,47 @@ export interface Preparacion {
   avisos: AvisoPreparacion[];
   createdAt: string;
   entregadoAt: string | null;
+  /** Por dónde va mientras está EN_CURSO. Null en cola, terminado o tras un reinicio. */
+  progreso?: ProgresoPreparacion | null;
+}
+
+/** Los cuatro pasos de la pantalla de «Procesando…», en orden. */
+export type PasoPreparacion = 'LEYENDO' | 'PROTEGIENDO' | 'EDITANDO' | 'ARMANDO';
+
+export interface ProgresoPreparacion {
+  paso: PasoPreparacion;
+  /** Secciones (tandas del motor) terminadas y totales: «sección 4 de 12». */
+  hechas: number;
+  total: number;
+}
+
+/** Un párrafo, antes y después. Lo que pinta la vista «Lado a lado». */
+export interface ParrafoComparado {
+  clave: string;
+  /** «el cuerpo del documento», «las notas al pie»… */
+  parte: string;
+  /** Nivel de título (1, 2, 3…) o null si es un párrafo normal. */
+  nivel: number | null;
+  original: string;
+  resultado: string;
+  cambiado: boolean;
+  /** Las citas tal y como aparecen en cada texto, para pintarlas en azul. */
+  citasOriginal: string[];
+  citasResultado: string[];
+}
+
+export interface VerificacionPreparacion {
+  citas: { total: number; conservadas: number };
+  siglas: { total: number; conservadas: number };
+  /** null = el documento no tiene; true / false = idéntica o no. */
+  bibliografia: boolean | null;
+  /** Traduciendo, 'TRADUCIDAS'; corrigiendo, true / false; null si no hay tablas. */
+  tablas: boolean | 'TRADUCIDAS' | null;
+}
+
+export interface ComparacionPreparacion {
+  parrafos: ParrafoComparado[];
+  verificacion: VerificacionPreparacion;
 }
 
 /** Cuántos documentos quedan este mes y cuándo vuelve a haber. */

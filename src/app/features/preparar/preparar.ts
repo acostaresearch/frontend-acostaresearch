@@ -6,17 +6,23 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 
 import { mensajeDeError } from '../../core/http/api-error';
 import {
   AvisoPreparacion,
+  ComparacionPreparacion,
   IdiomaPreparar,
   PanelPreparar,
+  ParrafoComparado,
   Preparacion,
   ServicioPreparar,
 } from '../../core/models/preparar.model';
@@ -24,99 +30,107 @@ import { PrepararService } from '../../core/services/preparar.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
+import { Trozo, trocear } from './comparar-texto';
 
 /** Lo que se cuenta de cada pestaña, en un solo sitio para no repetirlo en la plantilla. */
 interface Pestana {
   id: ServicioPreparar;
   titulo: string;
-  /** Cuál de los dos dibujos lleva la pestaña. El `<svg>` vive en la plantilla. */
-  icono: 'edicion' | 'traduccion';
-  /**
-   * Qué es y qué hace falta para usarlo, en dos o tres frases.
-   *
-   * Es TODO lo que se cuenta del servicio. La pantalla llevaba antes cuatro
-   * promesas en lista y un «cómo funciona» de dos pasos al lado, y entre las
-   * dos cosas el recuadro de subir quedaba por debajo del pliegue. Lo que hace
-   * falta para no equivocarse de pestaña —«esto es para textos ya en inglés»—
-   * cabe en una línea; lo demás se vende en /planes, no aquí dentro.
-   */
+  /** Qué es, en una o dos frases. Lo demás se vende en /planes, no aquí dentro. */
   descripcion: string;
-  /** Si la descripción acaba mandándole a la otra pestaña, el enlace que lo lleva. */
-  enlace?: { texto: string; va: ServicioPreparar };
+  /** Las tres promesas con check. La última lleva el tope de palabras, que viene del servidor. */
+  promesas: readonly string[];
 }
 
 const PESTANAS: readonly Pestana[] = [
   {
     id: 'EDICION',
     titulo: 'Edición de inglés académico',
-    icono: 'edicion',
     descripcion:
-      'Para textos ya escritos en inglés. Te lo devolvemos con control de cambios. Si está en ' +
-      'español, usa',
-    enlace: { texto: 'Traducción', va: 'TRADUCCION' },
+      'Para textos ya escritos en inglés. Lo recibes con control de cambios. Las citas, siglas y ' +
+      'bibliografía no se modifican.',
+    promesas: ['Citas y referencias protegidas', 'Control de cambios en Word'],
   },
   {
     id: 'TRADUCCION',
     titulo: 'Traducción',
-    icono: 'traduccion',
     descripcion:
       'A español, inglés, portugués o chino, con el registro de una revista indexada. Las citas, ' +
-      'las siglas y la bibliografía se quedan como están.',
+      'siglas y bibliografía se quedan como están.',
+    promesas: ['Citas y referencias protegidas', 'El índice sale traducido'],
   },
 ];
 
-/** Por qué estado se puede filtrar la lista de la derecha. */
+/** Por qué estado se puede filtrar la lista. */
 type Filtro = 'TODOS' | 'LISTO' | 'FALLIDO';
 
 /**
- * Los tres botones del filtro.
- *
- * No hay uno de «en marcha» a propósito: lo que está preparándose se va solo
- * en unos minutos, y un filtro que casi siempre sale vacío es un botón que
- * estorba. Con «Todos» se ven igual.
+ * Los tres botones del filtro. No hay uno de «en marcha»: lo que se está
+ * preparando se va solo en unos minutos y el filtro casi siempre saldría vacío.
  */
 const FILTROS: readonly { id: Filtro; texto: string }[] = [
   { id: 'TODOS', texto: 'Todos' },
   { id: 'LISTO', texto: 'Listos' },
-  { id: 'FALLIDO', texto: 'Sin completar' },
+  { id: 'FALLIDO', texto: 'Con error' },
 ];
 
-/** Cada cuánto se pregunta por los trabajos que están en marcha. */
-const CADA_MS = 5000;
+/** Las tres formas de ver un documento terminado. */
+type Modo = 'ORIGINAL' | 'RESULTADO' | 'LADO';
 
-/** Cuántos documentos se enseñan de entrada. El resto, pulsando «ver más». */
-const TOPE = 3;
+const MODOS: readonly { id: Modo; texto: string }[] = [
+  { id: 'ORIGINAL', texto: 'Original' },
+  { id: 'RESULTADO', texto: 'Resultado' },
+  { id: 'LADO', texto: 'Lado a lado' },
+];
+
+/** Los cuatro pasos de «Procesando…», en el orden en que los da el servidor. */
+const PASOS = ['LEYENDO', 'PROTEGIENDO', 'EDITANDO', 'ARMANDO'] as const;
+
+/** Cada cuánto se pregunta por los trabajos que están en marcha. */
+const CADA_MS = 3000;
+
+/** Filas por página en la tabla de documentos. */
+const POR_PAGINA = 5;
 
 /**
- * Los servicios que hoy tienen pestaña.
+ * Cuántas palabras caben en una «página» de la vista previa.
  *
- * Sirve para lo que NO está aquí: un trabajo de un servicio retirado —los
- * resúmenes, que se quitaron el 22-sep-2026— no es de ninguna de las dos
- * pestañas, y filtrando a secas desaparecería de la pantalla para siempre.
- * Esos se enseñan en la lista mire lo que mire: son pocos, no se crean más y
- * el cliente tiene que poder descargarlos.
+ * No son las páginas del Word —esas dependen de la letra, los márgenes y las
+ * figuras, y no las sabemos—: es un trozo que se lee sin desplazarse mucho.
  */
-const CON_PESTANA: readonly string[] = PESTANAS.map((p) => p.id);
+const PALABRAS_POR_PAGINA = 420;
 
 /** A dónde escribe quien tuvo un problema. Es el mismo correo del pie del sitio. */
 const CORREO = 'asesoriaprofesional599@gmail.com';
 
+/** Para buscar sin que importen las tildes ni las mayúsculas. */
+const plano = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Un párrafo de la vista previa, ya troceado para pintarlo. */
+interface ParrafoPintado {
+  clave: string;
+  nivel: number | null;
+  original: Trozo[];
+  resultado: Trozo[];
+}
+
 /**
  * «Preparar documento»: edición de inglés académico y traducción.
  *
- * DOS PESTAÑAS Y UNA SOLA MEMBRESÍA
+ * TRES VISTAS EN LA MISMA DIRECCIÓN
  * ---------------------------------
- * Las dos hacen lo mismo de cara al cliente —subir un .docx y recibir otro— y
- * gastan del mismo cupo. Por eso el cupo vive en la cabecera de la tarjeta,
- * fuera de las pestañas: es de la membresía, no del servicio.
+ * La lista (subir y ver lo mandado), «Procesando…» y el documento terminado
+ * con su vista previa. Las dos últimas cuelgan de `?doc=<id>` en la misma
+ * página, sin rutas hijas: recargar o volver atrás siguen funcionando y la
+ * página no se desmonta al ir de una vista a otra (el sondeo sigue vivo).
+ * Cuál de las dos se ve lo decide el estado del trabajo: en marcha,
+ * «Procesando…»; listo, la vista previa.
  *
- * POR QUÉ SE PREGUNTA CADA CINCO SEGUNDOS
- * ---------------------------------------
- * Porque preparar un documento son minutos y la petición de subida contesta
- * enseguida (ver `preparar.service` en el backend). Se pregunta solo mientras
- * haya algo en marcha, y se deja de preguntar en cuanto no queda ninguno: un
- * reloj que sigue corriendo con la pestaña abierta en segundo plano es tráfico
- * que no le sirve a nadie.
+ * POR QUÉ SE PREGUNTA CADA TRES SEGUNDOS
+ * --------------------------------------
+ * Preparar un documento son minutos y la subida contesta enseguida (ver
+ * `preparar.service` en el backend). Se pregunta solo mientras haya algo en
+ * marcha y se para en cuanto no queda ninguno.
  */
 @Component({
   selector: 'app-preparar',
@@ -126,10 +140,12 @@ const CORREO = 'asesoriaprofesional599@gmail.com';
 })
 export class Preparar implements OnInit, OnDestroy {
   private readonly api = inject(PrepararService);
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
 
   readonly pestanas = PESTANAS;
   readonly filtros = FILTROS;
-  readonly tope = TOPE;
+  readonly modos = MODOS;
 
   readonly panel = signal<PanelPreparar | null>(null);
   readonly cargando = signal(true);
@@ -140,41 +156,19 @@ export class Preparar implements OnInit, OnDestroy {
   readonly idioma = signal<IdiomaPreparar>('en');
   readonly subiendo = signal(false);
   readonly encima = signal(false);
-  /** Si la lista de la derecha está desplegada. Se recoge al cambiar de pestaña. */
-  readonly verTodos = signal(false);
-  readonly filtro = signal<Filtro>('TODOS');
 
-  /**
-   * El trabajo cuyo resumen está abierto en el emergente, o null.
-   *
-   * El resumen —cuántos párrafos se hicieron, la nota del índice y qué quedó
-   * sin tocar con su motivo— iba escrito dentro de la fila, y con doce avisos
-   * la lista se volvía un rollo que tapaba los demás documentos (24-sep-2026).
-   * Ahora la fila solo lleva «Descargar» y «Resumen», y esto se abre aparte.
-   */
+  // ── La lista ─────────────────────────────────────────────────────────────
+
+  readonly filtro = signal<Filtro>('TODOS');
+  readonly busqueda = signal('');
+  readonly pagina = signal(0);
+  /** El trabajo cuyo menú «⋮» está abierto. */
+  readonly menu = signal<string | null>(null);
+
+  /** El trabajo cuyo resumen está abierto en el emergente, o null. */
   readonly resumen = signal<Preparacion | null>(null);
 
-  abrirResumen(trabajo: Preparacion): void {
-    this.resumen.set(trabajo);
-  }
-
-  cerrarResumen(): void {
-    this.resumen.set(null);
-  }
-
-  /** Escape cierra el emergente, como cualquier ventana. */
-  @HostListener('document:keydown.escape')
-  alPulsarEscape(): void {
-    if (this.resumen()) this.cerrarResumen();
-  }
-
-  /**
-   * El campo de archivo, escondido.
-   *
-   * Está una sola vez y se abre desde dos sitios: «elige el archivo» del
-   * recuadro y «volver a mandarlo» de un trabajo que falló. Antes era un
-   * `<label>` que lo envolvía, que solo sirve para el primero.
-   */
+  /** El campo de archivo, escondido. Se abre desde el recuadro, «Reintentar» y «Volver a procesar». */
   private readonly selector = viewChild<ElementRef<HTMLInputElement>>('selector');
 
   private reloj: ReturnType<typeof setInterval> | null = null;
@@ -189,49 +183,165 @@ export class Preparar implements OnInit, OnDestroy {
 
   readonly trabajos = computed(() => this.panel()?.trabajos ?? []);
 
-  /**
-   * Los de la pestaña que está mirando.
-   *
-   * La lista de la derecha es del servicio elegido y no de todo lo que ha
-   * mandado nunca: quien viene a traducir no tiene por qué revolver entre sus
-   * ediciones de inglés para encontrar lo suyo. El sondeo, en cambio, sigue
-   * mirando `trabajos` entero: un documento en marcha en la otra pestaña tiene
-   * que seguir refrescándose igual.
-   */
-  readonly trabajosDelServicio = computed(() =>
-    this.trabajos().filter(
-      (t) => t.servicio === this.elegida() || !CON_PESTANA.includes(t.servicio),
-    ),
-  );
-
-  /** Los de la pestaña que además pasan el filtro de estado. */
   readonly trabajosFiltrados = computed(() => {
     const filtro = this.filtro();
-    const lista = this.trabajosDelServicio();
-    return filtro === 'TODOS' ? lista : lista.filter((t) => t.estado === filtro);
+    const buscado = plano(this.busqueda().trim());
+    return this.trabajos().filter(
+      (t) =>
+        (filtro === 'TODOS' || t.estado === filtro) &&
+        (buscado === '' || plano(t.nombre).includes(buscado)),
+    );
   });
 
-  /** Los tres primeros, o todos si ha pulsado «ver más». */
+  readonly paginas = computed(() =>
+    Math.max(1, Math.ceil(this.trabajosFiltrados().length / POR_PAGINA)),
+  );
+
   readonly visibles = computed(() => {
-    const lista = this.trabajosFiltrados();
-    return this.verTodos() ? lista : lista.slice(0, TOPE);
+    const desde = Math.min(this.pagina(), this.paginas() - 1) * POR_PAGINA;
+    return this.trabajosFiltrados().slice(desde, desde + POR_PAGINA);
   });
 
-  readonly ocultos = computed(() => this.trabajosFiltrados().length - this.visibles().length);
-
-  /** Cuántos hay en la otra pestaña: un «aquí no hay nada» a secas despista. */
-  readonly enLaOtra = computed(() => this.trabajos().length - this.trabajosDelServicio().length);
+  /** «Mostrando 10 de 23»: hasta dónde llega lo visto, no cuántos hay en la página. */
+  readonly mostrando = computed(
+    () => Math.min(this.pagina(), this.paginas() - 1) * POR_PAGINA + this.visibles().length,
+  );
 
   readonly enMarcha = computed(() =>
     this.trabajos().filter((t) => t.estado === 'EN_COLA' || t.estado === 'EN_CURSO'),
   );
 
-  /** Cuánto queda del mes, para la barra de la cabecera. */
-  readonly restantePorciento = computed(() => {
-    const cupo = this.panel()?.cupo;
-    if (!cupo || cupo.total === 0) return 0;
-    return Math.round((cupo.restantes / cupo.total) * 100);
+  // ── El documento abierto (?doc=) ─────────────────────────────────────────
+
+  readonly docId = toSignal(this.ruta.queryParamMap.pipe(map((q) => q.get('doc'))), {
+    initialValue: null,
   });
+
+  /**
+   * Un trabajo que no está en la lista del panel —el panel trae los últimos
+   * cincuenta— y se pidió suelto.
+   */
+  private readonly suelto = signal<Preparacion | null>(null);
+
+  readonly abierto = computed<Preparacion | null>(() => {
+    const id = this.docId();
+    if (!id) return null;
+    return (
+      this.trabajos().find((t) => t.id === id) ?? (this.suelto()?.id === id ? this.suelto() : null)
+    );
+  });
+
+  readonly vista = computed<'lista' | 'procesando' | 'detalle'>(() => {
+    const t = this.abierto();
+    if (!t) return 'lista';
+    return t.estado === 'LISTO' ? 'detalle' : 'procesando';
+  });
+
+  readonly comparacion = signal<ComparacionPreparacion | null>(null);
+  readonly cargandoComparacion = signal(false);
+  readonly errorComparacion = signal<string | null>(null);
+
+  readonly modo = signal<Modo>('LADO');
+  readonly resaltar = signal(true);
+  readonly paginaDoc = signal(0);
+
+  /** Los párrafos en páginas de unas cuatrocientas palabras. */
+  private readonly paginasDoc = computed<ParrafoComparado[][]>(() => {
+    const parrafos = this.comparacion()?.parrafos ?? [];
+    const paginas: ParrafoComparado[][] = [];
+    let actual: ParrafoComparado[] = [];
+    let palabras = 0;
+    for (const p of parrafos) {
+      const suyas = p.original.split(/\s+/).length;
+      if (actual.length > 0 && palabras + suyas > PALABRAS_POR_PAGINA) {
+        paginas.push(actual);
+        actual = [];
+        palabras = 0;
+      }
+      actual.push(p);
+      palabras += suyas;
+    }
+    if (actual.length > 0) paginas.push(actual);
+    return paginas;
+  });
+
+  readonly totalPaginasDoc = computed(() => Math.max(1, this.paginasDoc().length));
+
+  /** La página que se ve, troceada con sus colores. */
+  readonly parrafosPintados = computed<ParrafoPintado[]>(() => {
+    const pagina = this.paginasDoc()[Math.min(this.paginaDoc(), this.totalPaginasDoc() - 1)] ?? [];
+    const conColor = this.resaltar();
+    const palabraAPalabra = this.abierto()?.servicio === 'EDICION';
+    return pagina.map((p) => {
+      if (!conColor) {
+        return {
+          clave: p.clave,
+          nivel: p.nivel,
+          original: [{ texto: p.original, tipo: 'igual' }],
+          resultado: [{ texto: p.resultado, tipo: 'igual' }],
+        };
+      }
+      const trozos = trocear(
+        p.original,
+        p.resultado,
+        p.citasOriginal,
+        p.citasResultado,
+        palabraAPalabra,
+      );
+      return { clave: p.clave, nivel: p.nivel, ...trozos };
+    });
+  });
+
+  constructor() {
+    // Al abrir un documento terminado, su comparación. Una sola vez por documento.
+    effect(() => {
+      const t = this.abierto();
+      const listo = t?.estado === 'LISTO' ? t.id : null;
+      untracked(() => this.cargarComparacion(listo));
+    });
+
+    // Un ?doc= que no está en la lista del panel: se pide suelto.
+    effect(() => {
+      const id = this.docId();
+      const panel = this.panel();
+      if (!id || !panel || panel.trabajos.some((t) => t.id === id)) return;
+      untracked(() => {
+        if (this.suelto()?.id === id) return;
+        this.api.ver(id).subscribe({
+          next: (t) => this.suelto.set(t),
+          error: (e: unknown) => {
+            this.error.set(mensajeDeError(e));
+            this.volverALaLista();
+          },
+        });
+      });
+    });
+  }
+
+  private comparacionDe: string | null = null;
+
+  private cargarComparacion(id: string | null): void {
+    if (id === this.comparacionDe) return;
+    this.comparacionDe = id;
+    this.comparacion.set(null);
+    this.errorComparacion.set(null);
+    this.paginaDoc.set(0);
+    if (!id) return;
+
+    this.cargandoComparacion.set(true);
+    this.api.comparacion(id).subscribe({
+      next: (c) => {
+        if (this.comparacionDe !== id) return;
+        this.comparacion.set(c);
+        this.cargandoComparacion.set(false);
+      },
+      error: (e: unknown) => {
+        if (this.comparacionDe !== id) return;
+        this.errorComparacion.set(mensajeDeError(e));
+        this.cargandoComparacion.set(false);
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.cargar(true);
@@ -253,9 +363,7 @@ export class Preparar implements OnInit, OnDestroy {
       },
       error: (e: unknown) => {
         this.cargando.set(false);
-        // Un fallo del sondeo no borra lo que ya se ve: si la red parpadea
-        // mientras se espera un documento, la pantalla no tiene por qué
-        // vaciarse. Solo se avisa en la primera carga.
+        // Un fallo del sondeo no borra lo que ya se ve. Solo se avisa en la primera carga.
         if (primeraVez) this.error.set(mensajeDeError(e));
       },
     });
@@ -274,11 +382,21 @@ export class Preparar implements OnInit, OnDestroy {
     this.reloj = null;
   }
 
-  // ── La pestaña ───────────────────────────────────────────────────────────
+  // ── Navegar entre las vistas ─────────────────────────────────────────────
+
+  abrir(trabajo: Preparacion): void {
+    this.menu.set(null);
+    this.router.navigate([], { relativeTo: this.ruta, queryParams: { doc: trabajo.id } });
+  }
+
+  volverALaLista(): void {
+    this.router.navigate([], { relativeTo: this.ruta, queryParams: {} });
+  }
+
+  // ── La pestaña, el filtro y la tabla ─────────────────────────────────────
 
   elegir(servicio: ServicioPreparar): void {
     this.elegida.set(servicio);
-    this.verTodos.set(false);
     this.aviso.set(null);
     this.error.set(null);
   }
@@ -289,7 +407,92 @@ export class Preparar implements OnInit, OnDestroy {
 
   elegirFiltro(filtro: Filtro): void {
     this.filtro.set(filtro);
-    this.verTodos.set(false);
+    this.pagina.set(0);
+  }
+
+  buscar(evento: Event): void {
+    this.busqueda.set((evento.target as HTMLInputElement).value);
+    this.pagina.set(0);
+  }
+
+  anterior(): void {
+    this.pagina.update((p) => Math.max(0, p - 1));
+  }
+
+  siguiente(): void {
+    this.pagina.update((p) => Math.min(this.paginas() - 1, p + 1));
+  }
+
+  alternarMenu(id: string, evento: Event): void {
+    evento.stopPropagation();
+    this.menu.update((abierto) => (abierto === id ? null : id));
+  }
+
+  /** Un clic en cualquier otro sitio cierra el menú «⋮». */
+  @HostListener('document:click')
+  alHacerClic(): void {
+    if (this.menu()) this.menu.set(null);
+  }
+
+  /** Escape cierra el emergente o el menú, como cualquier ventana. */
+  @HostListener('document:keydown.escape')
+  alPulsarEscape(): void {
+    if (this.resumen()) this.cerrarResumen();
+    else if (this.menu()) this.menu.set(null);
+  }
+
+  abrirResumen(trabajo: Preparacion): void {
+    this.menu.set(null);
+    this.resumen.set(trabajo);
+  }
+
+  cerrarResumen(): void {
+    this.resumen.set(null);
+  }
+
+  // ── La vista previa ──────────────────────────────────────────────────────
+
+  elegirModo(modo: Modo): void {
+    this.modo.set(modo);
+  }
+
+  alternarResaltar(evento: Event): void {
+    this.resaltar.set((evento.target as HTMLInputElement).checked);
+  }
+
+  paginaAnterior(): void {
+    this.paginaDoc.update((p) => Math.max(0, p - 1));
+  }
+
+  paginaSiguiente(): void {
+    this.paginaDoc.update((p) => Math.min(this.totalPaginasDoc() - 1, p + 1));
+  }
+
+  // ── «Procesando…» ────────────────────────────────────────────────────────
+
+  /** En qué paso va: 0 a 3, o -1 si aún está en cola. */
+  pasoDe(trabajo: Preparacion): number {
+    if (trabajo.estado === 'EN_COLA') return -1;
+    // EN_CURSO sin progreso: acaba de empezar, o el proceso se reinició.
+    return PASOS.indexOf(trabajo.progreso?.paso ?? 'LEYENDO');
+  }
+
+  /** El porcentaje de la barra. Leer y proteger son segundos; editar es casi todo. */
+  porcentajeDe(trabajo: Preparacion): number {
+    const paso = this.pasoDe(trabajo);
+    if (paso < 0) return 2;
+    if (paso === 0) return 5;
+    if (paso === 1) return 10;
+    if (paso === 3) return 95;
+    const { hechas = 0, total = 0 } = trabajo.progreso ?? {};
+    return total > 0 ? Math.round(12 + (80 * hechas) / total) : 12;
+  }
+
+  /** «sección 4 de 12», contando la que está en marcha. */
+  seccionDe(trabajo: Preparacion): string | null {
+    const { hechas = 0, total = 0 } = trabajo.progreso ?? {};
+    if (total === 0) return null;
+    return `sección ${Math.min(hechas + 1, total)} de ${total}`;
   }
 
   // ── Subir ────────────────────────────────────────────────────────────────
@@ -299,19 +502,17 @@ export class Preparar implements OnInit, OnDestroy {
   }
 
   /**
-   * Volver a mandar uno que falló.
+   * Volver a mandar uno: tras un fallo («Reintentar») o uno terminado («Volver
+   * a procesar»).
    *
-   * No se reenvía lo que hay en el servidor: se deja la pantalla puesta en el
-   * mismo servicio y el mismo idioma y se abre el archivo. El navegador no
-   * guarda el .docx de antes —ni puede—, así que lo honesto es pedirlo otra
-   * vez ya con todo lo demás elegido. Un fallo no descuenta cupo, así que
-   * repetirlo no cuesta nada.
+   * No se reenvía lo que hay en el servidor: se deja elegido el mismo servicio
+   * y el mismo idioma y se abre el archivo. Un fallo no descuenta cupo; uno
+   * terminado que se vuelve a mandar sí, porque es otro documento.
    */
   volverAMandar(trabajo: Preparacion): void {
+    this.menu.set(null);
     this.elegir(trabajo.servicio);
     if (trabajo.servicio === 'TRADUCCION' && trabajo.idioma) this.idioma.set(trabajo.idioma);
-    // En el turno siguiente: la pestaña acaba de cambiar y el campo puede estar
-    // recién pintado.
     setTimeout(() => this.abrirSelector());
   }
 
@@ -343,7 +544,11 @@ export class Preparar implements OnInit, OnDestroy {
   }
 
   private mandar(archivo: File): void {
-    if (this.subiendo() || !this.puede()) return;
+    if (this.subiendo()) return;
+    if (!this.puede()) {
+      this.error.set(this.panel()?.motivo ?? 'Ahora mismo no puedes mandar documentos.');
+      return;
+    }
 
     if (!archivo.name.toLowerCase().endsWith('.docx')) {
       this.error.set(
@@ -361,18 +566,17 @@ export class Preparar implements OnInit, OnDestroy {
     const idioma = servicio === 'TRADUCCION' ? this.idioma() : undefined;
 
     this.api.encargar(servicio, archivo, idioma).subscribe({
-      next: () => {
+      next: ({ preparacion }) => {
         this.subiendo.set(false);
-        this.aviso.set(
-          'Lo tenemos. Te avisamos por correo cuando esté, y aquí al lado lo verás cambiar solo.',
-        );
+        // Se mete ya en la lista para que «Procesando…» se pinte sin esperar al sondeo.
+        this.panel.update((p) => (p ? { ...p, trabajos: [preparacion, ...p.trabajos] } : p));
+        this.abrir(preparacion);
         this.cargar();
       },
       error: (e: unknown) => {
         this.subiendo.set(false);
         this.error.set(mensajeDeError(e));
-        // Puede ser un «se te acabó el cupo»: se recarga para que la cabecera
-        // diga la verdad en vez de seguir anunciando documentos que ya no hay.
+        // Puede ser un «se te acabó el cupo»: se recarga para que la cabecera diga la verdad.
         this.cargar();
       },
     });
@@ -381,6 +585,7 @@ export class Preparar implements OnInit, OnDestroy {
   // ── Descargar ────────────────────────────────────────────────────────────
 
   descargar(trabajo: Preparacion): void {
+    this.menu.set(null);
     this.api.descargar(trabajo.id).subscribe({
       next: (blob) => this.guardar(blob, this.nombreDeDescarga(trabajo)),
       error: (e: unknown) => this.error.set(mensajeDeError(e)),
@@ -388,12 +593,9 @@ export class Preparar implements OnInit, OnDestroy {
   }
 
   /**
-   * El nombre con el que se guarda.
-   *
-   * Se calcula también aquí, igual que en el servidor, porque el archivo llega
-   * como blob y el navegador no ve la cabecera `Content-Disposition`. Que sean
-   * dos sitios no es ideal; la alternativa —leer la cabecera— obliga a pedir la
-   * respuesta entera y a desenredar el `filename*`, que es más frágil que esto.
+   * El nombre con el que se guarda. Se calcula también aquí, igual que en el
+   * servidor, porque el archivo llega como blob y el navegador no ve la
+   * cabecera `Content-Disposition`.
    */
   private nombreDeDescarga(trabajo: Preparacion): string {
     const base = trabajo.nombre.replace(/\.docx$/i, '');
@@ -413,12 +615,8 @@ export class Preparar implements OnInit, OnDestroy {
   // ── Textos ───────────────────────────────────────────────────────────────
 
   /**
-   * El plan, sin repetir el título de la pantalla.
-   *
-   * Los dos planes se llaman «Preparar documento · mensual» y «Preparar
-   * documento · trimestral», que es como tienen que aparecer en /planes y en
-   * el comprobante. Aquí dentro, debajo de un título que ya dice «Preparar
-   * documento», se queda en «Mensual» o «Trimestral».
+   * El plan, sin repetir el título de la pantalla: «Preparar documento ·
+   * mensual» se queda en «Mensual» debajo de un título que ya lo dice.
    */
   nombreDelPlan(nombre: string | null | undefined): string {
     if (!nombre) return '';
@@ -430,24 +628,40 @@ export class Preparar implements OnInit, OnDestroy {
     return this.panel()?.idiomas.find((i) => i.codigo === codigo)?.nombre ?? 'idioma elegido';
   }
 
+  /** El servicio, largo: «Edición de inglés académico», «Traducción al inglés». */
   tituloDe(trabajo: Preparacion): string {
-    const pestana = PESTANAS.find((p) => p.id === trabajo.servicio);
-    if (trabajo.servicio === 'TRADUCCION') {
+    if (trabajo.servicio === 'TRADUCCION')
       return `Traducción al ${this.nombreDelIdioma(trabajo.idioma)}`;
-    }
-    return pestana?.titulo ?? trabajo.servicio;
+    return PESTANAS.find((p) => p.id === trabajo.servicio)?.titulo ?? trabajo.servicio;
   }
 
-  /** Qué se le dice de un trabajo terminado, incluida la letra pequeña. */
+  /** El servicio, corto, para la columna de la tabla: «Edición en inglés», «Traducción → ES». */
+  servicioCorto(trabajo: Preparacion): string {
+    if (trabajo.servicio === 'EDICION') return 'Edición en inglés';
+    if (trabajo.servicio === 'TRADUCCION')
+      return `Traducción → ${(trabajo.idioma ?? '').toUpperCase()}`;
+    return 'Resumen';
+  }
+
+  /** El paso de editar se llama distinto traduciendo. */
+  pasoEditar(trabajo: Preparacion): string {
+    return trabajo.servicio === 'TRADUCCION' ? 'Traduciendo el texto' : 'Editando el texto';
+  }
+
+  pasoArmar(trabajo: Preparacion): string {
+    return trabajo.servicio === 'TRADUCCION'
+      ? 'Armando el Word traducido'
+      : 'Armando el Word con control de cambios';
+  }
+
+  /** Qué se le dice de un trabajo terminado, en el resumen. */
   resultadoDe(trabajo: Preparacion): string | null {
     if (trabajo.estado !== 'LISTO') return null;
 
     const tocados = `${trabajo.tocados} párrafo${trabajo.tocados === 1 ? '' : 's'}`;
     const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : 'traducidos';
 
-    // El índice sale traducido desde el servidor, copiado de los títulos (ver
-    // `preparar.indice` en el backend). Lo que Word sigue teniendo que rehacer
-    // son los números de página, porque el texto traducido no ocupa lo mismo.
+    // El índice sale traducido desde el servidor; los números de página los rehace Word.
     const indice =
       trabajo.servicio === 'TRADUCCION'
         ? ' El índice va traducido; si quieres los números de página al día, ábrelo en Word y ' +
@@ -456,22 +670,12 @@ export class Preparar implements OnInit, OnDestroy {
 
     if (trabajo.intactos === 0) return `${tocados} ${hecho}.${indice}`;
 
-    // El porqué NO se escribe aquí: lo manda el servidor en `avisos`, uno por
-    // motivo, y se enseña debajo. Esta frase decía «llevaban dentro una nota al
-    // pie, una ecuación o una imagen» pasara lo que pasara, y salía igual en
-    // documentos que no tienen ni una sola nota al pie.
+    // El porqué lo manda el servidor en `avisos`, uno por motivo.
     const otros = `${tocados} ${hecho}. Otros ${trabajo.intactos} quedaron como estaban`;
-
     return trabajo.avisos?.length ? `${otros}:${indice}` : `${otros}.${indice}`;
   }
 
-  /**
-   * Por qué quedó cada grupo sin tocar, para enseñarlo en lista.
-   *
-   * Vacío en los trabajos entregados antes de que el servidor guardara el
-   * motivo: de aquellos no hay de dónde sacarlo, y preferimos no decir nada a
-   * decir algo que no sabemos.
-   */
+  /** Por qué quedó cada grupo sin tocar. Vacío en los trabajos de antes de guardarlo. */
   avisosDe(trabajo: Preparacion): AvisoPreparacion[] {
     return trabajo.estado === 'LISTO' ? (trabajo.avisos ?? []) : [];
   }

@@ -160,7 +160,7 @@ export class TourService {
 
   /**
    * Si la página de ahora es esa. Se compara sin parámetros ni anclas, y con
-   * la dirección de esta sesión: los pasos dicen `/perfil`, la barra no.
+   * la dirección real: los pasos dicen `/perfil`, la barra `/perfil/ayuda`.
    */
   enLaRuta(ruta: string): boolean {
     return this.esDeLaRuta(this.router.url, ruta);

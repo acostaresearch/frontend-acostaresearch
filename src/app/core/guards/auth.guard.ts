@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
-import { rutaLegible } from '../router/rutas-privadas';
 import { AuthService } from '../services/auth.service';
 
 /**
@@ -17,6 +16,6 @@ export const authGuard: CanActivateFn = (_route, state) => {
   }
 
   return router.createUrlTree(['/auth/login'], {
-    queryParams: { returnUrl: rutaLegible(state.url) },
+    queryParams: { returnUrl: state.url },
   });
 };

@@ -26,7 +26,7 @@ import {
 } from '../../core/models/payment.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { PrivadaPipe } from '../../core/router/privada.pipe';
-import { cifrarSeccion, rutaDeSeccion } from '../../core/router/rutas-privadas';
+import { rutaDeSeccion } from '../../core/router/rutas-privadas';
 import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
@@ -229,9 +229,8 @@ const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
 };
 
 /**
- * El nombre de cada sección hacia fuera. En la barra no se ve tal cual: se
- * cifra con la clave de la sesión (ver `rutas-privadas.ts`), así que cambiar
- * uno de aquí solo cambia la cifra, y esa ya cambia con cada ingreso.
+ * El nombre de cada sección en la dirección: /admin/<nombre>. Cambiar uno de
+ * aquí rompe los enlaces guardados a esa sección (llevan al resumen).
  */
 const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
@@ -257,10 +256,10 @@ const DIRECCIONES: Record<Seccion, string> = {
   sorteos: 'sorteos',
 };
 
-/** Al revés: de la dirección cifrada a la sección. Depende de la sesión. */
-function seccionDe(cifrada: string): Seccion | undefined {
+/** Al revés: de la dirección a la sección. */
+function seccionDe(direccion: string): Seccion | undefined {
   return (Object.keys(DIRECCIONES) as Seccion[]).find(
-    (seccion) => cifrarSeccion(DIRECCIONES[seccion]) === cifrada,
+    (seccion) => DIRECCIONES[seccion] === direccion,
   );
 }
 

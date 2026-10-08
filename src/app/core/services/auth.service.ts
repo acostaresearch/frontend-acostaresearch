@@ -3,7 +3,6 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { asegurarRutas, olvidarRutas, rotarRutas } from '../router/rutas-privadas';
 import { ApiResponse } from '../models/api.model';
 import {
   LoginRequest,
@@ -55,8 +54,6 @@ export class AuthService {
     return this.http.post<ApiResponse<LoginResponse>>(`${this.base}/login`, payload).pipe(
       map((res) => res.data),
       tap(({ user, accessToken }) => {
-        // Cada ingreso, direcciones nuevas para las páginas privadas.
-        rotarRutas();
         this.accessTokenSignal.set(accessToken);
         this.userSignal.set(user);
       }),
@@ -72,8 +69,6 @@ export class AuthService {
     return this.http.post<ApiResponse<LoginResponse>>(`${this.base}/google`, { credential }).pipe(
       map((res) => res.data),
       tap(({ user, accessToken }) => {
-        // Cada ingreso, direcciones nuevas para las páginas privadas.
-        rotarRutas();
         this.accessTokenSignal.set(accessToken);
         this.userSignal.set(user);
       }),
@@ -140,14 +135,11 @@ export class AuthService {
   }
 
   clearSession(): void {
-    olvidarRutas();
     this.accessTokenSignal.set(null);
     this.userSignal.set(null);
   }
 
   setUser(user: User | null): void {
-    // Al recargar con la sesión viva, las direcciones siguen siendo las mismas.
-    if (user) asegurarRutas();
     this.userSignal.set(user);
   }
 
