@@ -16,13 +16,15 @@
       </p>
     </header>
 
-    <!-- La fila de arriba: a la izquierda en qué proyecto se está, a la derecha
-         el acceso de ESE proyecto. La URL vive aquí y no en una lista de
+    <!-- Arriba, en qué proyecto se está y, en su propia fila debajo, el acceso
+         de ESE proyecto. La URL vive aquí y no en una lista de
          accesos aparte porque es de lo que se está mirando: con tres métodos
          comprados, aquella lista obligaba a emparejar a mano cuál era cuál. -->
     <div class="fila-superior">
-      <!-- Una pestaña por proyecto, solo si hay más de uno. -->
-      @if (lista().length > 1) {
+      <!-- Una pestaña por proyecto, también con uno solo: así la página se ve
+           igual tenga uno o seis, y el acceso cae siempre en el mismo sitio,
+           por debajo del emergente de la reseña (8-oct). -->
+      @if (lista().length > 0) {
         <div class="pestanas">
           @for (otro of lista(); track otro.productCode) {
             <button

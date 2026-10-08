@@ -19,29 +19,27 @@
   color: var(--color-texto-suave);
 }
 
-/* ── La fila de arriba: las pestañas y el acceso ───────────────────────────
+/* ── Arriba: las pestañas y, debajo, el acceso ─────────────────────────────
  *
- * Las pestañas a la izquierda y el acceso a la derecha, en la misma línea:
- * son la misma pregunta —«¿de qué producto estamos hablando?»— y separarlos
- * obligaba a emparejarlos con la vista. En pantalla estrecha el acceso baja
- * y se queda alineado a la izquierda, debajo de sus pestañas.
+ * Las pestañas a la izquierda y el acceso en su PROPIA fila, debajo y a la
+ * derecha, tenga uno o seis productos (8-oct). En la misma línea, con pocos
+ * productos, el emergente de la reseña —fijo arriba a la derecha— tapaba
+ * «Consultas de hoy» y «Generar nueva URL»; con muchos ya bajaba solo, y así
+ * se ve siempre.
  */
 .fila-superior {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
   margin-bottom: 26px;
 }
 
-/* `margin-left: auto` y no solo el `space-between` de la fila: con un único
-   producto no hay pestañas, y el acceso se quedaba pegado a la izquierda. */
 .acceso {
   display: inline-flex;
   gap: 12px;
   align-items: center;
-  margin-left: auto;
+  align-self: flex-end;
 }
 
 .acceso-uso {
@@ -822,6 +820,13 @@
 
   .pestanas {
     display: flex;
+    align-self: stretch;
+  }
+
+  /* En el teléfono el acceso se queda a la izquierda, debajo de sus pestañas. */
+  .acceso {
+    align-self: flex-start;
+    flex-wrap: wrap;
   }
 
   .pestana {
