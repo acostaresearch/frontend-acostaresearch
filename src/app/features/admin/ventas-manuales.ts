@@ -43,10 +43,12 @@ export class VentasManualesAdmin {
     // La lista pegada tal cual, para vender a varios compradores de una vez.
     buyerEmails: [''],
     note: [''],
-    // El medio arranca en Western Union porque este formulario existe para las
-    // ventas cobradas fuera de la web; una cortesía es lo excepcional y se elige
-    // a propósito. Importe vacío = el precio del plan, que es lo habitual.
-    paymentMethod: ['WESTERN_UNION' as MetodoDeCobro, Validators.required],
+    // El medio arranca en Yape porque este formulario existe para las ventas
+    // cobradas fuera de la web y casi todas entran por ahí; una cortesía es lo
+    // excepcional y se elige a propósito. Arrancaba en Western Union y, si no
+    // se cambiaba, así le salía al comprador en «Mis compras». Importe vacío =
+    // el precio del plan, que es lo habitual.
+    paymentMethod: ['YAPE' as MetodoDeCobro, Validators.required],
     paymentRef: [''],
     importe: [null as number | null, [Validators.min(0)]],
     // Días de acceso que da el código. Vacío = los del plan, que es lo habitual.

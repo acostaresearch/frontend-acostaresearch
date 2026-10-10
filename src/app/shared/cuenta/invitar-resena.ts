@@ -9,7 +9,10 @@ import {
   signal,
 } from '@angular/core';
 
+import { forkJoin } from 'rxjs';
+
 import { FondoService } from '../../core/services/fondo.service';
+import { LicenseService } from '../../core/services/license.service';
 import { ResenaEmergenteService } from '../../core/services/resena-emergente.service';
 import { ResenaService } from '../../core/services/resena.service';
 import { MiResenaDelServicio } from './mi-resena';
@@ -19,7 +22,8 @@ import { MiResenaDelServicio } from './mi-resena';
  *
  * Una tarjeta flotante fija arriba a la derecha, debajo de la cabecera: se
  * queda a la vista al desplazarse. Sale a quien todavía no ha escrito ninguna
- * reseña. La × la quita solo para esta vista: al recargar vuelve a salir, a
+ * reseña y ya tiene algún acceso: pedirle opinión del servicio a quien acaba de
+ * registrarse y no ha usado nada es pedir una reseña vacía. La × la quita solo para esta vista: al recargar vuelve a salir, a
  * pedido del dueño. «Dejar mi reseña» abre `app-ventana-resena` sin salir
  * del panel.
  */
@@ -49,6 +53,7 @@ import { MiResenaDelServicio } from './mi-resena';
 export class InvitarResena implements OnInit {
   private readonly resenas = inject(ResenaService);
   private readonly emergente = inject(ResenaEmergenteService);
+  private readonly licencias = inject(LicenseService);
 
   private readonly toca = signal(false);
   readonly cerrada = signal(false);
@@ -56,9 +61,10 @@ export class InvitarResena implements OnInit {
   readonly visible = computed(() => this.toca() && !this.cerrada());
 
   ngOnInit(): void {
-    this.resenas.mias().subscribe({
-      next: (mias) => this.toca.set(mias.length === 0),
-      // Sin saber si ya escribió una, mejor no molestar.
+    forkJoin({ mias: this.resenas.mias(), accesos: this.licencias.mine() }).subscribe({
+      next: ({ mias, accesos }) =>
+        this.toca.set(mias.length === 0 && accesos.licencias.length > 0),
+      // Sin saber si ya escribió una o si tiene acceso, mejor no molestar.
       error: () => this.toca.set(false),
     });
   }

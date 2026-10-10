@@ -97,6 +97,13 @@ export class UserService {
   }
 
   /** Listado paginado. Solo accesible con rol ADMIN. */
+  /** Suspende o reactiva una cuenta (solo administradores). Devuelve la cuenta y el mensaje. */
+  cambiarEstado(id: string, status: 'ACTIVE' | 'SUSPENDED') {
+    return this.http
+      .patch<ApiResponse<{ user: User }>>(`${this.base}/${id}/status`, { status })
+      .pipe(map((res) => ({ user: res.data.user, mensaje: res.message ?? '' })));
+  }
+
   list(options: { page?: number; perPage?: number; search?: string } = {}) {
     let params = new HttpParams();
     if (options.page) params = params.set('page', options.page);

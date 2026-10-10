@@ -494,7 +494,14 @@ export class Checkout implements OnInit {
    * hay nada que pegar en Claude, y lo que hace falta es el enlace a la
    * herramienta.
    */
-  readonly canjeado = signal<{ producto: string; url: string | null; renovada: boolean } | null>(
+  readonly canjeado = signal<{
+    producto: string;
+    url: string | null;
+    renovada: boolean;
+    /** Una licencia del conector, no una membresía de documentos. */
+    conector: boolean;
+    hasta: string | null;
+  } | null>(
     null,
   );
   readonly urlCopiada = signal(false);
@@ -1273,11 +1280,21 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
         // puede vender las dos cosas, y solo llega una.
         this.canjeado.set(
           membresia
-            ? { producto: membresia.plan.name, url: null, renovada: Boolean(renovada) }
+            ? {
+                producto: membresia.plan.name,
+                url: null,
+                renovada: Boolean(renovada),
+                conector: false,
+                hasta: null,
+              }
             : {
                 producto: license?.productName ?? license?.productCode ?? 'tu acceso',
                 url: connectorUrl ?? null,
-                renovada: false,
+                // Ya tenía el producto: el código le alargó la licencia y no
+                // hay URL nueva, la de siempre sigue valiendo.
+                renovada: Boolean(renovada),
+                conector: true,
+                hasta: license?.expiresAt ?? null,
               },
         );
         // Quita el código de la dirección: ya está gastado, y recargar la

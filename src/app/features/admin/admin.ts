@@ -6,6 +6,7 @@ import { AccesosVista } from './accesos-vista';
 import { PruebasVista } from './pruebas-vista';
 import { DescuentosVista } from './descuentos-vista';
 import { ProductosVista } from './productos-vista';
+import { VentasMensualesVista } from './ventas-mensuales-vista';
 import { ResumenVista } from './resumen-vista';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
@@ -81,6 +82,7 @@ const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CO
     DescuentosVista,
     ProductosVista,
     ResumenVista,
+    VentasMensualesVista,
     PrivadaPipe,
     ReactiveFormsModule,
     DatePipe,
@@ -241,8 +243,26 @@ export class Admin implements OnInit {
   // vive en su propia pestaña para poder compararlas antes de decidir si las
   // otras sobran.
   readonly accesos = computed(() =>
-    unirAccesos(this.codigos(), this.pagosManuales.porRevisar(), this.pagosManuales.historial(), this.pagos()),
+    unirAccesos(
+      this.codigos(),
+      this.pagosManuales.porRevisar(),
+      this.pagosManuales.historial(),
+      this.pagos(),
+      this.nombresDeProducto(),
+    ),
   );
+
+  /**
+   * El nombre de venta de cada producto, para las filas de código de «Accesos».
+   * Sale de los planes a la venta: un producto retirado se queda con su código.
+   */
+  private readonly nombresDeProducto = computed(() => {
+    const nombres = new Map<string, string>();
+    for (const plan of this.planes()) {
+      if (plan.productCode && !nombres.has(plan.productCode)) nombres.set(plan.productCode, plan.name);
+    }
+    return nombres;
+  });
 
   /**
    * Estado por el que se está cribando, o vacío para todos.
@@ -751,7 +771,7 @@ export class Admin implements OnInit {
 
   // ── Usuarios y administradores ──────────────────────────────────────────
 
-  readonly cuentas = new UsuariosAdmin(this.error);
+  readonly cuentas = new UsuariosAdmin(this.error, this.aviso);
 
   // ── Vender ───────────────────────────────────────────────────────────────
 

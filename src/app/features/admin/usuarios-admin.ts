@@ -4,13 +4,18 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { mensajeDeError } from '../../core/http/api-error';
 import { User } from '../../core/models/user.model';
 import { AdminCreado, UserService } from '../../core/services/user.service';
+import { DialogoService } from '../../core/services/dialogo.service';
 
 /** Búsqueda paginada de cuentas y formulario para crear administradores. */
 export class UsuariosAdmin {
   private readonly usuariosApi = inject(UserService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialogos = inject(DialogoService);
 
-  constructor(private readonly error: WritableSignal<string | null>) {
+  constructor(
+    private readonly error: WritableSignal<string | null>,
+    private readonly aviso: WritableSignal<string | null> = signal(null),
+  ) {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.busquedaPendiente));
   }
 
@@ -73,6 +78,56 @@ export class UsuariosAdmin {
           this.cargandoUsuarios.set(false);
         },
       });
+  }
+
+  // ── Suspender y reactivar ────────────────────────────────────────────────
+
+  /** La cuenta que se está suspendiendo o reactivando, para apagar su botón. */
+  readonly cambiandoEstado = signal<string | null>(null);
+
+  /**
+   * Suspende una cuenta activa o reactiva una suspendida.
+   *
+   * Pide confirmación porque corta al momento: las sesiones abiertas y el
+   * conector de esa persona dejan de funcionar en la petición siguiente. Al
+   * reactivarla no vuelve sola: tiene que iniciar sesión otra vez.
+   */
+  async cambiarEstadoDe(usuario: User): Promise<void> {
+    if (this.cambiandoEstado()) return;
+    const suspender = usuario.status !== 'SUSPENDED';
+
+    const seguro = await this.dialogos.confirmar(
+      suspender
+        ? {
+            titulo: '¿Suspender esta cuenta?',
+            mensaje:
+              `${usuario.email} no podrá entrar a la web y su conector dejará de responder ` +
+              'ahora mismo, aunque tenga una sesión abierta.',
+            nota: 'No se borra nada: sus licencias, sus compras y su tesis se quedan como están. Puedes reactivarla cuando quieras.',
+            confirmar: 'Suspender la cuenta',
+          }
+        : {
+            titulo: '¿Reactivar esta cuenta?',
+            mensaje: `${usuario.email} podrá volver a entrar y su conector volverá a responder.`,
+            nota: 'Tendrá que iniciar sesión de nuevo: las sesiones que tenía antes no se recuperan.',
+            confirmar: 'Reactivar la cuenta',
+          },
+    );
+    if (!seguro) return;
+
+    this.cambiandoEstado.set(usuario.id);
+    this.error.set(null);
+    this.usuariosApi.cambiarEstado(usuario.id, suspender ? 'SUSPENDED' : 'ACTIVE').subscribe({
+      next: ({ user, mensaje }) => {
+        this.usuarios.update((lista) => lista.map((u) => (u.id === user.id ? { ...u, ...user } : u)));
+        this.aviso.set(mensaje || (suspender ? 'Cuenta suspendida.' : 'Cuenta reactivada.'));
+        this.cambiandoEstado.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.cambiandoEstado.set(null);
+      },
+    });
   }
 
   // ── Crear administrador ──────────────────────────────────────────────────

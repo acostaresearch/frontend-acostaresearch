@@ -2,12 +2,20 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
 
+import { User } from '../../core/models/user.model';
+import { DialogoService } from '../../core/services/dialogo.service';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { UsuariosAdmin } from './usuarios-admin';
 
 describe('Usuarios del administrador', () => {
   let cuentas: UsuariosAdmin;
-  let api: { list: ReturnType<typeof vi.fn>; crearAdministrador: ReturnType<typeof vi.fn> };
+  let api: {
+    list: ReturnType<typeof vi.fn>;
+    crearAdministrador: ReturnType<typeof vi.fn>;
+    cambiarEstado: ReturnType<typeof vi.fn>;
+  };
+  let dialogos: { confirmar: ReturnType<typeof vi.fn> };
+  const aviso = signal<string | null>(null);
   const error = signal<string | null>(null);
 
   beforeEach(() => {
@@ -17,9 +25,17 @@ describe('Usuarios del administrador', () => {
     api = {
       list: vi.fn(() => of({ users: [], meta: { totalPages: 3, total: 120 } })),
       crearAdministrador: vi.fn(),
+      cambiarEstado: vi.fn(),
     };
-    TestBed.configureTestingModule({ providers: [{ provide: UserService, useValue: api }] });
-    cuentas = TestBed.runInInjectionContext(() => new UsuariosAdmin(error));
+    dialogos = { confirmar: vi.fn(() => Promise.resolve(true)) };
+    aviso.set(null);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: UserService, useValue: api },
+        { provide: DialogoService, useValue: dialogos },
+      ],
+    });
+    cuentas = TestBed.runInInjectionContext(() => new UsuariosAdmin(error, aviso));
   });
 
   afterEach(() => {
@@ -97,5 +113,52 @@ describe('Usuarios del administrador', () => {
     api.crearAdministrador.mockReturnValue(new Subject<AdminCreado>());
     cuentas.crearAdministrador();
     expect(api.crearAdministrador).toHaveBeenCalledTimes(2);
+  });
+  it('suspender pide confirmación, cambia la fila y avisa', async () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE' } as User;
+    cuentas.usuarios.set([ana, { id: 'u2', email: 'luis@example.com', status: 'ACTIVE' } as User]);
+    api.cambiarEstado.mockReturnValue(
+      of({ user: { ...ana, status: 'SUSPENDED' }, mensaje: 'Cuenta suspendida.' }),
+    );
+
+    await cuentas.cambiarEstadoDe(ana);
+
+    expect(dialogos.confirmar).toHaveBeenCalledWith(
+      expect.objectContaining({ confirmar: 'Suspender la cuenta' }),
+    );
+    expect(api.cambiarEstado).toHaveBeenCalledWith('u1', 'SUSPENDED');
+    expect(cuentas.usuarios().map((u) => u.status)).toEqual(['SUSPENDED', 'ACTIVE']);
+    expect(aviso()).toBe('Cuenta suspendida.');
+    expect(cuentas.cambiandoEstado()).toBeNull();
+  });
+
+  it('una cuenta suspendida se reactiva, y sin confirmar no se toca nada', async () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'SUSPENDED' } as User;
+    cuentas.usuarios.set([ana]);
+
+    dialogos.confirmar.mockResolvedValueOnce(false);
+    await cuentas.cambiarEstadoDe(ana);
+    expect(api.cambiarEstado).not.toHaveBeenCalled();
+
+    api.cambiarEstado.mockReturnValue(of({ user: { ...ana, status: 'ACTIVE' }, mensaje: '' }));
+    await cuentas.cambiarEstadoDe(ana);
+    expect(api.cambiarEstado).toHaveBeenCalledWith('u1', 'ACTIVE');
+    expect(cuentas.usuarios()[0].status).toBe('ACTIVE');
+    expect(aviso()).toBe('Cuenta reactivada.');
+  });
+
+  it('si el servidor rechaza el cambio, la fila se queda como estaba', async () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE' } as User;
+    cuentas.usuarios.set([ana]);
+    const cambio = new Subject<{ user: User; mensaje: string }>();
+    api.cambiarEstado.mockReturnValue(cambio);
+
+    await cuentas.cambiarEstadoDe(ana);
+    expect(cuentas.cambiandoEstado()).toBe('u1');
+    cambio.error(new Error('No puedes suspender tu propia cuenta.'));
+
+    expect(cuentas.usuarios()[0].status).toBe('ACTIVE');
+    expect(error()).not.toBeNull();
+    expect(cuentas.cambiandoEstado()).toBeNull();
   });
 });

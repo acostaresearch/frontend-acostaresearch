@@ -32,7 +32,8 @@ interface Herramienta {
   funcion: string;
   /** Variable CSS con su color: en modo oscuro Grok no puede ser negro. */
   color: string;
-  logo: string;
+  /** `null` mientras no haya archivo: sale la inicial, sin pedir una imagen que daría 404. */
+  logo: string | null;
   /** Esquina superior izquierda del nodo, en unidades del lienzo. */
   x: number;
   y: number;
@@ -123,7 +124,7 @@ const HERRAMIENTAS: Herramienta[] = [
     nombre: 'Claude',
     funcion: 'agente de IA',
     color: 'var(--hn-claude)',
-    logo: '/logos/claude.png',
+    logo: null,
     x: 210,
     y: 20,
     aporte: 'Redacción con tu voz',
@@ -134,7 +135,7 @@ const HERRAMIENTAS: Herramienta[] = [
     nombre: 'ChatGPT',
     funcion: 'agente de IA',
     color: 'var(--hn-chatgpt)',
-    logo: '/logos/chatgpt.png',
+    logo: null,
     x: 200,
     y: 500,
     aporte: 'Revisión cruzada',
@@ -145,7 +146,7 @@ const HERRAMIENTAS: Herramienta[] = [
     nombre: 'Grok',
     funcion: 'agente de IA',
     color: 'var(--hn-grok)',
-    logo: '/logos/grok.png',
+    logo: null,
     x: 380,
     y: 40,
     aporte: 'Contraste de argumentos',

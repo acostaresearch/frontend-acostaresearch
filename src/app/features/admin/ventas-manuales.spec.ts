@@ -31,7 +31,7 @@ describe('Ventas manuales del administrador', () => {
   it('conserva importe y duración vacíos como valores por resolver en el servidor', () => {
     ventas.generarCodigos();
     expect(api.generarCodigos).toHaveBeenCalledWith(expect.objectContaining({
-      importe: undefined, durationDays: undefined, paymentMethod: 'WESTERN_UNION',
+      importe: undefined, durationDays: undefined, paymentMethod: 'YAPE',
     }));
     expect(ventas.codigosNuevos()).toEqual(['CODIGO']);
     expect(ventas.formularioCodigosAbierto()).toBe(false);

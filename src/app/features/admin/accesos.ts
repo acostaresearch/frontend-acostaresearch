@@ -85,18 +85,18 @@ function estadoDe(mapa: Record<string, { estado: string; tono: Acceso['tono'] }>
   return mapa[clave] ?? { estado: clave, tono: 'espera' as const };
 }
 
-function deCodigo(codigo: ActivationCode): Acceso {
+function deCodigo(codigo: ActivationCode, nombreDe: (productCode: string) => string): Acceso {
   return {
     id: codigo.id,
     canal: 'codigo',
     canalNombre: 'Código',
     fecha: codigo.createdAt,
     comprador: codigo.buyerEmail ?? '—',
-    producto: codigo.productCode,
+    producto: nombreDe(codigo.productCode),
     productCode: codigo.productCode,
     productoActual:
       codigo.license && codigo.license.productCode !== codigo.productCode
-        ? codigo.license.productCode
+        ? nombreDe(codigo.license.productCode)
         : null,
     amountCents: codigo.amountCents,
     moneda: 'PEN',
@@ -237,13 +237,18 @@ export function unirAccesos(
   porRevisar: readonly PagoPorRevisar[],
   comprobantes: readonly PagoRevisado[],
   pagos: readonly PagoAdmin[],
+  nombres: ReadonlyMap<string, string> = new Map(),
 ): Acceso[] {
+  // Un código guarda el código del producto, no el nombre del plan. Con los
+  // nombres de venta la fila dice «Método de tesis · 9 capítulos» como las de
+  // PayPal o Yape; sin ellos, el código: feo pero cierto.
+  const nombreDe = (productCode: string) => nombres.get(productCode) ?? productCode;
   const deCodigos = new Set(codigos.map((codigo) => codigo.id));
   const noEsCanje = (pago: { providerOrderId: string | null }) =>
     !pago.providerOrderId || !deCodigos.has(pago.providerOrderId);
 
   return [
-    ...codigos.map(deCodigo),
+    ...codigos.map((codigo) => deCodigo(codigo, nombreDe)),
     ...porRevisar.map(dePendiente),
     ...comprobantes.filter(noEsCanje).map(deComprobante),
     ...pagos

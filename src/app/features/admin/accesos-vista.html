@@ -276,12 +276,15 @@
                           @if (acceso.tieneComprobante) {
                             <button type="button" (click)="accionesAccesos().verCaptura(acceso)">Ver captura</button>
                           }
-                          <button
-                            type="button"
-                            (click)="copiarTexto()(acceso.comprador, 'Correo copiado')"
-                          >
-                            Copiar correo
-                          </button>
+                          <!-- Un código sin comprador no tiene correo que copiar. -->
+                          @if (acceso.comprador.includes('@')) {
+                            <button
+                              type="button"
+                              (click)="copiarTexto()(acceso.comprador, 'Correo copiado')"
+                            >
+                              Copiar correo
+                            </button>
+                          }
                           @if (acceso.anulable) {
                             <hr />
                             <button

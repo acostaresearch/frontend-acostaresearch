@@ -217,6 +217,21 @@
               Pégala en Claude: Configuración → Conectores → Añadir personalizado. También te la
               enviamos por correo. <a [routerLink]="'perfil' | privada">Ir a mi perfil</a>
             </p>
+          } @else if (hecho.conector) {
+            <!-- Ya tenía este producto: el código le alargó la licencia. No hay
+                 URL nueva que copiar: su conector de siempre sigue funcionando. -->
+            <h2>¡Listo! Tu acceso a {{ hecho.producto }} está renovado</h2>
+            <p>
+              @if (hecho.hasta) {
+                Ahora vence el {{ hecho.hasta | date: 'd MMM y' }}.
+              } @else {
+                No tiene fecha de vencimiento.
+              }
+              No hay nada que instalar: tu conector de siempre sigue funcionando.
+            </p>
+            <p class="canje-pie">
+              <a [routerLink]="'perfil' | privada">Ir a mi perfil</a>
+            </p>
           } @else {
             <!-- Una membresía de «Preparar documento»: no hay URL que copiar ni
                  nada que instalar, así que lo único que hace falta aquí es la
