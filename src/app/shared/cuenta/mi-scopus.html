@@ -1145,23 +1145,23 @@
                     type="button"
                     class="sc-orden-boton"
                     aria-haspopup="listbox"
-                    [attr.aria-expanded]="menuExportar()"
-                    [disabled]="aExportar().length === 0"
-                    (click)="menuExportar.set(!menuExportar())"
+                    [attr.aria-expanded]="exportacion.menuExportar()"
+                    [disabled]="exportacion.aExportar().length === 0"
+                    (click)="exportacion.menuExportar.set(!exportacion.menuExportar())"
                   >
                     @if (cuantosMarcados() > 0) {
                       Exportar {{ cuantosMarcados() }} seleccionadas
                     } @else {
-                      Exportar esta página ({{ aExportar().length }})
+                      Exportar esta página ({{ exportacion.aExportar().length }})
                     }
                     <span class="sc-orden-flecha" aria-hidden="true"></span>
                   </button>
-                  @if (menuExportar()) {
-                    <div class="sc-orden-capa" (click)="menuExportar.set(false)"></div>
+                  @if (exportacion.menuExportar()) {
+                    <div class="sc-orden-capa" (click)="exportacion.menuExportar.set(false)"></div>
                     <ul class="sc-orden-lista" role="listbox" aria-label="Formato de exportación">
-                      @for (formato of formatos; track formato.valor) {
+                      @for (formato of exportacion.formatos; track formato.valor) {
                         <li>
-                          <button type="button" role="option" (click)="exportar(formato.valor)">
+                          <button type="button" role="option" (click)="exportacion.exportar(formato.valor)">
                             <span class="sc-orden-marca" aria-hidden="true"></span>
                             {{ formato.texto }}
                             <small class="sc-exportar-para">{{ formato.detalle }}</small>
@@ -1387,9 +1387,9 @@
                                 type="button"
                                 class="sc-doi-copiar"
                                 [attr.aria-label]="'Copiar el DOI ' + doi"
-                                (click)="copiarDoi(doi)"
+                                (click)="exportacion.copiarDoi(doi)"
                               >
-                                {{ doiCopiado() === doi ? '✓ Copiado' : 'Copiar' }}
+                                {{ exportacion.doiCopiado() === doi ? '✓ Copiado' : 'Copiar' }}
                               </button>
                             </span>
                           }

@@ -1,0 +1,93 @@
+      @if (promociones().formularioDescuentoAbierto()) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-descuento">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-descuento">Crear código promocional</h3>
+              <button
+                type="button"
+                class="cerrar"
+                aria-label="Cerrar"
+                (click)="promociones().cerrarFormularioDescuento()"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="ventana-cuerpo">
+              <p class="nota">
+                Rebaja el precio en la web. El mínimo es S/ 10. Si lo dejas sin plan, sirve para
+                cualquiera; si lo limitas, solo funcionará en ese.
+              </p>
+              <form [formGroup]="promociones().formDescuento" (ngSubmit)="promociones().crearDescuento()" novalidate>
+                <div class="fila">
+                  <div class="campo estrecho">
+                    <label for="soles">Descuenta (S/)</label>
+                    <input id="soles" type="number" min="10" step="5" formControlName="soles" />
+                  </div>
+                  <div class="campo">
+                    <label for="plan-promo">Válido para</label>
+                    <select id="plan-promo" formControlName="planCode">
+                      <option value="">Cualquier producto (en un carrito, rebaja el total una vez)</option>
+                      @for (plan of planes(); track plan.code) {
+                        <option [value]="plan.code">{{ plan.name }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <div class="fila tres">
+                  <div class="campo">
+                    <label for="code-promo">Código <span class="opcional">(opcional)</span></label>
+                    <input
+                      id="code-promo"
+                      type="text"
+                      formControlName="code"
+                      placeholder="se inventa solo"
+                    />
+                  </div>
+                  <div class="campo estrecho">
+                    <label for="usos">Usos máx.</label>
+                    <input id="usos" type="number" min="0" formControlName="maxUses" />
+                    <span class="ayuda">0 = sin tope</span>
+                  </div>
+                  <div class="campo estrecho">
+                    <label for="caduca">Caduca en (días)</label>
+                    <input
+                      id="caduca"
+                      type="number"
+                      min="0"
+                      max="365"
+                      formControlName="expiraEnDias"
+                    />
+                    <span class="ayuda">0 = no caduca</span>
+                  </div>
+                </div>
+
+                <div class="campo">
+                  <label for="nota-promo">Nota <span class="opcional">(opcional)</span></label>
+                  <input
+                    id="nota-promo"
+                    type="text"
+                    formControlName="note"
+                    placeholder="promo TikTok septiembre"
+                  />
+                </div>
+              </form>
+            </div>
+
+            <div class="ventana-pie">
+              <button type="button" class="boton secundario" (click)="promociones().cerrarFormularioDescuento()">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="boton"
+                [disabled]="trabajando()"
+                (click)="promociones().crearDescuento()"
+              >
+                {{ trabajando() ? 'Creando…' : 'Crear código' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }

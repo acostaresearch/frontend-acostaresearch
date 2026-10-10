@@ -1,0 +1,101 @@
+      @if (ventas().ventasAbierto()) {
+        <div class="ventana-fondo" (click)="ventas().cerrarVentas()">
+          <div
+            class="ventana"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-ventas"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="ventana-cabecera">
+              <div>
+                <h3 id="titulo-ventas">Ventas mensuales</h3>
+                <p class="nota ventas-subtitulo">
+                  Al terminar cada mes (hora de Lima) sus ventas se guardan en un PDF que ya no
+                  cambia.
+                </p>
+              </div>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="ventas().cerrarVentas()">
+                ✕
+              </button>
+            </div>
+
+            <div class="ventana-cuerpo">
+              <app-aviso-flotante [(error)]="ventas().errorVentas" />
+
+              @if (ventas().cargandoVentas()) {
+                <p class="nota">Cargando los meses…</p>
+              } @else if (ventas().ventasMensuales(); as resumenVentas) {
+                <ul class="meses-ventas">
+                  <li class="mes-venta en-curso">
+                    <div class="mes-datos">
+                      <span class="mes-nombre">
+                        {{ ventas().nombreDeMes(resumenVentas.enCurso.anio, resumenVentas.enCurso.mes) }}
+                        <span class="pastilla espera">En curso</span>
+                      </span>
+                      <span class="mes-detalle">
+                        {{ resumenVentas.enCurso.ventas }}
+                        {{ resumenVentas.enCurso.ventas === 1 ? 'venta' : 'ventas' }}
+                        @if (resumenVentas.enCurso.ventas > 0) {
+                          · {{ ventas().porMoneda(resumenVentas.enCurso.totalesPorMoneda) }}
+                        }
+                      </span>
+                    </div>
+                    <span class="mes-total">{{ soles(resumenVentas.enCurso.totalSolesCents) }}</span>
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      [disabled]="ventas().bajandoMes() !== null"
+                      (click)="ventas().descargarMes(resumenVentas.enCurso.anio, resumenVentas.enCurso.mes)"
+                    >
+                      {{
+                        ventas().bajandoMes() === resumenVentas.enCurso.anio + '-' + resumenVentas.enCurso.mes
+                          ? 'Generando…'
+                          : 'PDF borrador'
+                      }}
+                    </button>
+                  </li>
+
+                  @for (cierre of resumenVentas.cierres; track cierre.id) {
+                    <li class="mes-venta">
+                      <div class="mes-datos">
+                        <span class="mes-nombre">
+                          {{ ventas().nombreDeMes(cierre.anio, cierre.mes) }}
+                          <span class="pastilla buena">Cerrado</span>
+                        </span>
+                        <span class="mes-detalle">
+                          {{ cierre.ventas }} {{ cierre.ventas === 1 ? 'venta' : 'ventas' }}
+                          @if (cierre.ventas > 0) {
+                            · {{ ventas().porMoneda(cierre.totalesPorMoneda) }}
+                          }
+                          · cerrado el {{ cierre.creadoEn | date: 'd MMM y' }}
+                        </span>
+                      </div>
+                      <span class="mes-total">{{ soles(cierre.totalSolesCents) }}</span>
+                      <button
+                        type="button"
+                        class="boton"
+                        [disabled]="ventas().bajandoMes() !== null"
+                        (click)="ventas().descargarMes(cierre.anio, cierre.mes)"
+                      >
+                        {{
+                          ventas().bajandoMes() === cierre.anio + '-' + cierre.mes ? 'Bajando…' : 'Ver PDF'
+                        }}
+                      </button>
+                    </li>
+                  } @empty {
+                    <li class="nota">Todavía no hay meses cerrados.</li>
+                  }
+                </ul>
+
+                <p class="grafico-pie">
+                  Reporte interno: no reemplaza a boletas ni facturas electrónicas. Los dólares se
+                  pasan a soles al tipo de referencia de la web. La conexión con SUNAT se añadirá
+                  más adelante sobre estos mismos cierres.
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+

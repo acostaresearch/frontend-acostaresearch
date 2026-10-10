@@ -1,0 +1,401 @@
+<div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-codigos">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-codigos">Vender el método (código de activación)</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="ventasManuales().cerrarFormularioCodigos()"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <form [formGroup]="ventasManuales().formCodigos" class="formulario" (ngSubmit)="ventasManuales().generarCodigos()">
+              <div class="modo-compradores" role="group" aria-label="A quién se vende">
+                <button
+                  type="button"
+                  [class.activo]="!ventasManuales().variosCompradores()"
+                  [attr.aria-pressed]="!ventasManuales().variosCompradores()"
+                  (click)="ventasManuales().cambiarModoCompradores(false)"
+                >
+                  Un comprador
+                </button>
+                <button
+                  type="button"
+                  [class.activo]="ventasManuales().variosCompradores()"
+                  [attr.aria-pressed]="ventasManuales().variosCompradores()"
+                  (click)="ventasManuales().cambiarModoCompradores(true)"
+                >
+                  Varios compradores
+                </button>
+              </div>
+
+              <div class="fila">
+                <div class="campo estrecho">
+                  <label for="cantidad">
+                    {{ ventasManuales().variosCompradores() ? 'Códigos por correo' : 'Cantidad' }}
+                  </label>
+                  <input id="cantidad" type="number" min="1" max="100" formControlName="cantidad" />
+                </div>
+                <div class="campo">
+                  <label for="producto">Producto</label>
+                  <select id="producto" formControlName="productCode">
+                    @for (producto of ventasManuales().productosCodigos(); track producto.productCode) {
+                      <option [value]="producto.productCode">{{ producto.nombre }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <!-- El plazo cuenta desde el canje, no desde hoy: un código vendido
+                 hoy y canjeado la semana que viene da sus días enteros. -->
+              <div class="campo">
+                <label for="duracion-codigo">Duración de la membresía</label>
+                <div class="duracion-elegir" role="group" aria-label="Plazos habituales">
+                  <button
+                    type="button"
+                    [class.activo]="!ventasManuales().valoresCodigos().duracion"
+                    [attr.aria-pressed]="!ventasManuales().valoresCodigos().duracion"
+                    (click)="ventasManuales().elegirDuracion(null)"
+                  >
+                    Del plan
+                  </button>
+                  @for (plazo of ventasManuales().plazosRapidos; track plazo.dias) {
+                    <button
+                      type="button"
+                      [class.activo]="ventasManuales().valoresCodigos().duracion === plazo.dias"
+                      [attr.aria-pressed]="ventasManuales().valoresCodigos().duracion === plazo.dias"
+                      (click)="ventasManuales().elegirDuracion(plazo.dias)"
+                    >
+                      {{ plazo.nombre }}
+                    </button>
+                  }
+                  <span class="duracion-otra">
+                    <input
+                      id="duracion-codigo"
+                      type="number"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      formControlName="duracion"
+                      placeholder="Otro"
+                      aria-label="Otro plazo, en días"
+                    />
+                    <span>días</span>
+                  </span>
+                </div>
+                <span class="ayuda">
+                  @if (ventasManuales().valoresCodigos().duracion; as dias) {
+                    Este código dará <b>{{ dias }} {{ dias === 1 ? 'día' : 'días' }}</b> de acceso,
+                    contados desde que lo canjee.
+                  } @else {
+                    Dará lo que dura el plan: <b>{{ ventasManuales().duracionDelPlan() }}</b>, contados desde que
+                    lo canjee.
+                  }
+                </span>
+              </div>
+
+              @if (!ventasManuales().variosCompradores()) {
+                <div class="campo">
+                  <label for="comprador">
+                    Correo del comprador <span class="opcional">(se lo enviamos ahí)</span>
+                  </label>
+                  <input
+                    id="comprador"
+                    type="email"
+                    formControlName="buyerEmail"
+                    placeholder="Déjalo vacío y solo lo verás aquí"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                  @if (ventasManuales().revisionCorreo(); as r) {
+                    @if (
+                      r.problema &&
+                      (ventasManuales().formCodigos.controls.buyerEmail.touched ||
+                        ventasManuales().revisionesServidor().has(r.correo))
+                    ) {
+                      <span class="ayuda correo-mal">
+                        {{ r.problema }}
+                        @if (r.sugerencia) {
+                          <button
+                            type="button"
+                            class="enlace-sugerencia"
+                            (click)="ventasManuales().usarSugerenciaDeCorreo(r.sugerencia)"
+                          >
+                            Usar {{ r.sugerencia }}
+                          </button>
+                        }
+                      </span>
+                    }
+                  }
+                  @if (ventasManuales().comprobandoCorreos()) {
+                    <span class="ayuda">Comprobando que esa cuenta de correo existe…</span>
+                  } @else if (ventasManuales().revisionCorreo(); as r) {
+                    <!-- Un dígito cambiado pasa la forma y el dominio: solo el
+                       servidor de correo del comprador sabe si la cuenta existe. -->
+                    @if (!r.problema && r.buzon === true) {
+                      <span class="ayuda correo-bien">✓ La cuenta existe: su servidor de correo lo confirmó.</span>
+                    } @else if (!r.problema && r.buzon === null) {
+                      <span class="ayuda correo-dudoso">
+                        No se pudo comprobar que esa cuenta exista. Léesela letra por letra al
+                        comprador antes de generar.
+                      </span>
+                    }
+                  }
+                </div>
+              } @else {
+                <!-- La misma venta para toda la lista: cada correo recibe sus
+                   propios códigos, al importe de abajo cada uno. -->
+                <div class="campo">
+                  <label for="compradores">
+                    Correos de los compradores
+                    <span class="opcional">(uno por línea, o separados por comas)</span>
+                  </label>
+                  <textarea
+                    id="compradores"
+                    rows="6"
+                    formControlName="buyerEmails"
+                    placeholder="ana@gmail.com&#10;luis@hotmail.com&#10;maria@outlook.com"
+                    autocomplete="off"
+                    spellcheck="false"
+                  ></textarea>
+
+                  @if (ventasManuales().resumenLista(); as resumen) {
+                    @if (resumen.correos > 0) {
+                      <span class="ayuda">
+                        {{ resumen.correos }} {{ resumen.correos === 1 ? 'correo' : 'correos' }} ·
+                        {{ resumen.codigos }} {{ resumen.codigos === 1 ? 'código' : 'códigos' }}
+                        @if (resumen.porCodigoCents > 0) {
+                          · S/ {{ resumen.porCodigoCents / 100 | number: '1.2-2' }} cada uno, S/
+                          {{ resumen.totalCents / 100 | number: '1.2-2' }} en total
+                        } @else {
+                          · sin cobro
+                        }
+                        @if (ventasManuales().listaCorreos().repetidos > 0) {
+                          · {{ ventasManuales().listaCorreos().repetidos }}
+                          {{ ventasManuales().listaCorreos().repetidos === 1 ? 'repetido' : 'repetidos' }}, cuenta
+                          una vez
+                        }
+                        @if (ventasManuales().comprobandoCorreos()) {
+                          · comprobando que las cuentas existen…
+                        } @else if (ventasManuales().correosSinComprobar() > 0) {
+                          · {{ ventasManuales().correosSinComprobar() }} sin poder comprobar que la cuenta exista:
+                          revísalos a mano
+                        }
+                      </span>
+                    } @else if (ventasManuales().formCodigos.controls.buyerEmails.touched) {
+                      <span class="ayuda correo-mal">Pega al menos un correo.</span>
+                    }
+                    @if (resumen.excede) {
+                      <span class="ayuda correo-mal">
+                        Son {{ resumen.codigos }} códigos; el máximo por venta es 100.
+                      </span>
+                    }
+                  }
+
+                  @if (ventasManuales().correosConProblema().length > 0) {
+                    <div class="correos-mal">
+                      <p class="correos-mal-titulo">
+                        {{
+                          ventasManuales().correosConProblema().length === 1
+                            ? '1 correo mal escrito'
+                            : ventasManuales().correosConProblema().length + ' correos mal escritos'
+                        }}. Corrígelos para poder generar.
+                        <button
+                          type="button"
+                          class="enlace-sugerencia"
+                          (click)="ventasManuales().corregirTodosEnLista()"
+                        >
+                          Corregir los que tienen arreglo
+                        </button>
+                      </p>
+                      <ul>
+                        @for (r of ventasManuales().correosConProblema(); track r.correo) {
+                          <li>
+                            <span class="correo-mal-texto">{{ r.correo }}</span>
+                            <span class="tenue">{{ r.problema }}</span>
+                            @if (r.sugerencia) {
+                              <button
+                                type="button"
+                                class="enlace-sugerencia"
+                                (click)="ventasManuales().corregirEnLista(r.correo, r.sugerencia)"
+                              >
+                                Cambiar a {{ r.sugerencia }}
+                              </button>
+                            }
+                            <button
+                              type="button"
+                              class="enlace-peligro"
+                              (click)="ventasManuales().quitarDeLista(r.correo)"
+                            >
+                              Quitar
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- El cobro. Se apunta aquí, al vender, porque es el único momento
+                 en que alguien sabe cuánto entró y por dónde; el pago se crea
+                 solo cuando el comprador canjea, que es cuando ya hay cuenta. -->
+              <div class="fila">
+                <div class="campo">
+                  <label for="metodo-codigo">Cómo te pagó</label>
+                  <select id="metodo-codigo" formControlName="paymentMethod">
+                    @for (metodo of metodos(); track metodo) {
+                      <option [value]="metodo">{{ metodo }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="campo estrecho">
+                  <label for="importe-codigo">
+                    Importe S/ <span class="opcional">(vacío = precio del plan)</span>
+                  </label>
+                  <input
+                    id="importe-codigo"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    formControlName="importe"
+                  />
+                </div>
+              </div>
+
+              <!-- ── Código de descuento ─────────────────────────────────────
+                 No se guarda en el código de activación: lo que queda apuntado
+                 es el importe final, que es el dinero que entró. Esto solo
+                 evita restar el descuento a mano, y restar mal un descuento es
+                 cuadrar mal el mes. -->
+              <div class="campo">
+                <label for="descuento-codigo">
+                  Código de descuento <span class="opcional">(opcional)</span>
+                </label>
+                <div class="fila-descuento">
+                  <input
+                    id="descuento-codigo"
+                    type="text"
+                    formControlName="descuento"
+                    placeholder="TESIS20"
+                    autocomplete="off"
+                    [disabled]="ventasManuales().descuentoAplicado() !== null"
+                  />
+                  @if (ventasManuales().descuentoAplicado()) {
+                    <button type="button" class="boton secundario" (click)="ventasManuales().quitarDescuento()">
+                      Quitar
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      (click)="ventasManuales().aplicarDescuento()"
+                      [disabled]="ventasManuales().comprobandoDescuento() || !ventasManuales().formCodigos.controls.descuento.value"
+                    >
+                      {{ ventasManuales().comprobandoDescuento() ? 'Comprobando…' : 'Aplicar' }}
+                    </button>
+                  }
+                </div>
+
+                @if (ventasManuales().descuentoAplicado(); as d) {
+                  <span class="ayuda descuento-ok">
+                    <b>{{ d.code }}</b> aplicado: −S/ {{ d.amountCents / 100 | number: '1.2-2' }}.
+                    El importe queda en <b>S/ {{ d.finalPriceCents / 100 | number: '1.2-2' }}</b
+                    >.
+                  </span>
+                } @else if (ventasManuales().errorDescuento(); as mensaje) {
+                  <span class="ayuda descuento-mal">{{ mensaje }}</span>
+                } @else {
+                  <span class="ayuda">
+                    Lo calcula el servidor, igual que en una compra por la web, y el cupón queda
+                    anotado en la nota para saber después por qué se cobró esa cifra.
+                  </span>
+                }
+              </div>
+
+              <!-- ── Comprobante ─────────────────────────────────────────────
+                 Opcional de verdad: una cortesía no tiene captura y una
+                 transferencia que ya se vio en el extracto tampoco la
+                 necesita. Cuando la hay, es lo que permite reconstruir meses
+                 después de dónde salió ese dinero. -->
+              <div class="campo">
+                <label>Comprobante <span class="opcional">(opcional)</span></label>
+
+                @if (ventasManuales().capturaCodigoPrevia(); as previa) {
+                  <div class="captura-codigo">
+                    <img [src]="previa" alt="Comprobante de esta venta" />
+                    <div class="captura-codigo-datos">
+                      <span class="tenue">{{ ventasManuales().capturaCodigo()?.name }}</span>
+                      <button type="button" class="enlace-peligro" (click)="ventasManuales().quitarCapturaCodigo()">
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <label class="captura-elegir">
+                    <input
+                      type="file"
+                      class="entrada-archivo"
+                      accept="image/png,image/jpeg,image/webp"
+                      (change)="ventasManuales().elegirCapturaCodigo($event)"
+                    />
+                    <span>Adjuntar una captura del pago</span>
+                  </label>
+                  <span class="ayuda">
+                    Si no la tienes o no hace falta, déjalo así: el código se genera igual.
+                  </span>
+                }
+              </div>
+
+              <div class="campo">
+                <label for="operacion-codigo">
+                  Nº de operación <span class="opcional">(MTCN, opcional)</span>
+                </label>
+                <input
+                  id="operacion-codigo"
+                  type="text"
+                  formControlName="paymentRef"
+                  placeholder="para cuadrarlo con tu extracto"
+                />
+              </div>
+
+              <div class="campo">
+                <label for="nota">Nota <span class="opcional">(opcional)</span></label>
+                <input
+                  id="nota"
+                  type="text"
+                  formControlName="note"
+                  placeholder="Yape 3 sep · Ana G."
+                />
+              </div>
+            </form>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="ventasManuales().cerrarFormularioCodigos()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              [disabled]="trabajando()() || ventasManuales().comprobandoCorreos()"
+              (click)="ventasManuales().generarCodigos()"
+            >
+              @if (trabajando()()) {
+                Generando…
+              } @else if (ventasManuales().comprobandoCorreos()) {
+                Comprobando correos…
+              } @else if (ventasManuales().variosCompradores() && ventasManuales().resumenLista().codigos > 0) {
+                Generar {{ ventasManuales().resumenLista().codigos }}
+                {{ ventasManuales().resumenLista().codigos === 1 ? 'código' : 'códigos' }}
+              } @else {
+                Generar código
+              }
+            </button>
+          </div>
+        </div>
+      </div>

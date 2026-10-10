@@ -1,0 +1,160 @@
+<section class="tarjeta">
+        @if (licencias()().length > 0) {
+          <app-filtros-lista
+            [lista]="listaLicencias()"
+            placeholder="Correo, nombre, producto o final del token"
+          />
+        }
+
+        @if (licencias()().length === 0) {
+          <p class="nota">Aún no hay ninguna licencia emitida.</p>
+        } @else if (listaLicencias().filtrado().length === 0) {
+          <p class="tenue">Ninguna licencia coincide con lo que buscas.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Comprador</th>
+                  <th>Producto</th>
+                  <th>Consultas</th>
+                  <th>Último uso</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (licencia of listaLicencias().visible(); track licencia.id) {
+                  <tr [class.revocada]="licencia.status === 'REVOKED'">
+                    <td>
+                      <strong>{{ licencia.user.firstName }} {{ licencia.user.lastName }}</strong>
+                      <span class="tenue bloque">{{ licencia.user.email }}</span>
+                    </td>
+                    <td>
+                      {{ accionesAccesos().nombreDeProducto(licencia.productCode) }}
+                      <span class="tenue bloque mono">…{{ licencia.tokenHint }}</span>
+                    </td>
+                    <td class="numero">{{ licencia.callsTotal | number }}</td>
+                    <td class="tenue">
+                      {{
+                        licencia.lastUsedAt ? (licencia.lastUsedAt | date: 'd MMM HH:mm') : 'nunca'
+                      }}
+                    </td>
+                    <td>
+                      <span
+                        class="pastilla"
+                        [class.buena]="licencia.status === 'ACTIVE'"
+                        [class.mala]="licencia.status !== 'ACTIVE'"
+                      >
+                        {{ estadoLicencia()(licencia.status) }}
+                      </span>
+                      @if (licencia.revokedReason) {
+                        <span class="tenue bloque">{{ licencia.revokedReason }}</span>
+                      }
+                    </td>
+                    <!-- «Revocar» ya no va en rojo en cada fila: es irreversible
+                       para el comprador y no debe ser lo único que se ve. -->
+                    <td class="fila-acciones">
+                      @if (licencia.status === 'ACTIVE') {
+                        <button
+                          type="button"
+                          class="enlace"
+                          (click)="verAccesosDe()(licencia.user.email)"
+                        >
+                          Ver compras
+                        </button>
+                      } @else {
+                        <button type="button" class="enlace" (click)="accionesAccesos().reactivar(licencia)">
+                          Reactivar
+                        </button>
+                      }
+                      <app-menu-fila>
+                        <button type="button" (click)="accionesAccesos().verHistorial(licencia)">Ver historial</button>
+                        @if (licencia.status !== 'ACTIVE') {
+                          <button type="button" (click)="verAccesosDe()(licencia.user.email)">
+                            Ver compras
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          (click)="copiarTexto()(licencia.user.email, 'Correo copiado')"
+                        >
+                          Copiar correo
+                        </button>
+                        @if (licencia.status === 'ACTIVE') {
+                          <hr />
+                          <button type="button" class="peligro" (click)="accionesAccesos().revocar(licencia)">
+                            Revocar
+                          </button>
+                        }
+                      </app-menu-fila>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <app-pie-lista [lista]="listaLicencias()" nombre="licencias" />
+        }
+      </section>
+
+      <!-- ── Historial de una licencia ─────────────────────────────────────── -->
+      @if (accionesAccesos().viendoHistorial(); as licencia) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-historial">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-historial">
+                Historial de {{ licencia.user.firstName }} {{ licencia.user.lastName }}
+              </h3>
+              <button
+                type="button"
+                class="cerrar"
+                aria-label="Cerrar"
+                (click)="accionesAccesos().viendoHistorial.set(null)"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="ventana-cuerpo">
+              <p class="tenue">
+                {{ licencia.user.email }} · {{ accionesAccesos().nombreDeProducto(licencia.productCode) }} ·
+                <span class="mono">…{{ licencia.tokenHint }}</span>
+              </p>
+              @if (accionesAccesos().historialLicencia(); as entradas) {
+                <ol class="historial">
+                  @for (entrada of entradas; track $index) {
+                    <li [attr.data-tipo]="entrada.tipo">
+                      <span class="tenue historial-fecha">
+                        {{ entrada.fecha | date: 'd MMM yyyy, HH:mm' }}
+                      </span>
+                      <strong>{{ entrada.titulo }}</strong>
+                      @if (entrada.detalle) {
+                        <span class="tenue bloque">{{ entrada.detalle }}</span>
+                      }
+                    </li>
+                  }
+                </ol>
+              } @else {
+                <p class="nota">Cargando…</p>
+              }
+            </div>
+
+            <div class="ventana-pie">
+              @if (licencia.status !== 'ACTIVE') {
+                <button
+                  type="button"
+                  class="boton"
+                  (click)="accionesAccesos().reactivar(licencia); accionesAccesos().viendoHistorial.set(null)"
+                >
+                  Reactivar
+                </button>
+              }
+              <button type="button" class="boton secundario" (click)="accionesAccesos().viendoHistorial.set(null)">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      }

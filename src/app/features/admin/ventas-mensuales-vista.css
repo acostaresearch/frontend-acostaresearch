@@ -1,0 +1,97 @@
+.pastilla {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border-radius: 999px;
+}
+
+.pastilla.buena {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.pastilla.mala {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.pastilla.espera {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.ventas-subtitulo {
+  margin: 4px 0 0;
+}
+
+.meses-ventas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mes-venta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  background: var(--color-superficie);
+}
+
+.mes-venta.en-curso {
+  background: var(--color-fondo);
+}
+
+.mes-datos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mes-nombre {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mes-detalle {
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
+.mes-total {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .mes-venta {
+    flex-wrap: wrap;
+  }
+
+  .mes-venta .boton {
+    width: 100%;
+  }
+}
+
+.grafico-pie {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+

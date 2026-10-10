@@ -1,0 +1,116 @@
+<section class="tarjeta">
+        @if (promociones().descuentoNuevo(); as promo) {
+          <div class="codigos-nuevos">
+            <p class="codigos-titulo">
+              Listo. Este sí lo puedes volver a consultar cuando quieras.
+            </p>
+            <ul>
+              <li>{{ promo.code }}</li>
+            </ul>
+            <button type="button" class="boton" (click)="promociones().copiarDescuento(promo.code)">
+              {{ copiados()() ? '¡Copiado!' : 'Copiar' }}
+            </button>
+          </div>
+        }
+        @if (promociones().descuentos().length > 0) {
+          <app-filtros-lista [lista]="promociones().listaDescuentos" placeholder="Código, producto o nota" />
+        }
+
+        @if (promociones().descuentos().length === 0) {
+          <p class="nota">Todavía no has creado ninguno.</p>
+        } @else if (promociones().listaDescuentos.filtrado().length === 0) {
+          <p class="tenue">Ningún código coincide con lo que buscas.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descuenta</th>
+                  <th>Válido para</th>
+                  <th>Usos</th>
+                  <th>Caduca</th>
+                  <th>Nota</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (promo of promociones().listaDescuentos.visible(); track promo.id) {
+                  <tr>
+                    <td class="mono">
+                      <strong>{{ promo.code }}</strong>
+                    </td>
+                    <td class="numero">{{ importe()(promo.amountCents) }}</td>
+                    <td>{{ promo.planCode ?? 'Cualquiera' }}</td>
+                    <td class="numero">
+                      {{ promo.usedCount }}{{ promo.maxUses > 0 ? ' / ' + promo.maxUses : '' }}
+                    </td>
+                    <td class="tenue">
+                      {{ promo.expiresAt ? (promo.expiresAt | date: 'd MMM yy') : 'sin fecha' }}
+                    </td>
+                    <td class="tenue">{{ promo.note ?? '—' }}</td>
+                    <td>
+                      <span
+                        class="pastilla"
+                        [class.buena]="promociones().estadoDescuento(promo) === 'activo'"
+                        [class.espera]="
+                          promociones().estadoDescuento(promo) === 'agotado' ||
+                          promociones().estadoDescuento(promo) === 'caducado'
+                        "
+                        [class.mala]="promociones().estadoDescuento(promo) === 'apagado'"
+                      >
+                        {{ promociones().etiquetaDescuento(promo) }}
+                      </span>
+                    </td>
+                    <!-- Publicar y encender son dos cosas distintas: un código
+                       vivo puede no anunciarse —el negociado con alguien
+                       concreto— y uno anunciado que se apaga deja de salir sin
+                       tener que despublicarlo. A la vista, la que toca: publicar
+                       uno encendido, encender uno apagado. -->
+                    <td class="fila-acciones">
+                      @if (promo.active) {
+                        <button
+                          type="button"
+                          class="enlace"
+                          title="Sale o no en la página de precios, junto a su plan"
+                          (click)="promociones().alternarPublicacion(promo)"
+                        >
+                          {{ promo.publico ? 'Quitar de la web' : 'Publicar' }}
+                        </button>
+                      } @else {
+                        <button type="button" class="enlace" (click)="promociones().alternarDescuento(promo)">
+                          Encender
+                        </button>
+                      }
+                      <app-menu-fila>
+                        <button type="button" (click)="promociones().copiarDescuento(promo.code)">
+                          Copiar código
+                        </button>
+                        @if (promo.active) {
+                          <hr />
+                          <button type="button" class="peligro" (click)="promociones().alternarDescuento(promo)">
+                            Apagar
+                          </button>
+                        }
+                      </app-menu-fila>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <app-pie-lista [lista]="promociones().listaDescuentos" nombre="códigos" />
+        }
+      </section>
+
+      <!-- ── Ventana de crear ────────────────────────────────────────────────
+         Igual que la de los códigos de activación y la de los grupos: crear es
+         algo puntual, y la pantalla es el listado de lo que ya existe. -->
+      <!-- Ventas mensuales: cada mes terminado, con el PDF que se guardó al
+       cerrarlo; el mes en curso, como borrador. Base para el contador y, más
+       adelante, para declarar a SUNAT. -->
+      <app-ventas-mensuales-vista [ventas]="ventas()" />
+
+      <app-descuentos-formulario [promociones]="promociones()" [planes]="planes()()" [trabajando]="trabajando()()" />

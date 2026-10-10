@@ -1,0 +1,434 @@
+<!-- Videos y guías: dos pestañas de una misma tarjeta, cada una con su
+           dirección (/admin/tutoriales y /admin/guias). Los videos salen en
+           acostaresearch.com/tutoriales y las guías en /guias-de-instalacion,
+           al instante y sin desplegar. -->
+      <section class="tarjeta">
+        <nav class="pestanas-pagina" aria-label="Tutoriales y guías">
+          <a [routerLink]="direccion()('tutoriales')" [class.activa]="seccion()() === 'tutoriales'">
+            Videos <span class="cuenta">{{ ayuda().tutoriales().length }}</span>
+          </a>
+          <a [routerLink]="direccion()('guias')" [class.activa]="seccion()() === 'guias'">
+            Guías en PDF <span class="cuenta">{{ ayuda().guias().length }}</span>
+          </a>
+        </nav>
+
+        @if (seccion()() === 'tutoriales') {
+          <app-filtros-lista [lista]="ayuda().listaTutoriales" placeholder="Título del video">
+            <button type="button" class="boton boton-fila" (click)="ayuda().editarTutorial(null)">
+              Añadir video
+            </button>
+          </app-filtros-lista>
+
+          @if (ayuda().tutoriales().length === 0) {
+            <p class="tenue">Todavía no hay ninguno.</p>
+          } @else if (ayuda().listaTutoriales.filtrado().length === 0) {
+            <p class="tenue">Ningún video coincide con lo que buscas.</p>
+          } @else {
+            <div class="tabla-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Video</th>
+                    <th>Duración</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tutorial of ayuda().listaTutoriales.visible(); track tutorial.id) {
+                    <tr
+                      [class.apagado]="!tutorial.active"
+                      [class.arrastrando]="ayuda().arrastrandoTutorial() === tutorial.id"
+                      [class.destino-arrastre]="
+                        ayuda().destinoTutorial() === tutorial.id && ayuda().arrastrandoTutorial() !== tutorial.id
+                      "
+                      draggable="true"
+                      (dragstart)="ayuda().empezarArrastreTutorial($event, tutorial)"
+                      (dragover)="ayuda().sobreTutorial($event, tutorial)"
+                      (drop)="ayuda().soltarTutorial($event, tutorial)"
+                      (dragend)="ayuda().terminarArrastreTutorial()"
+                    >
+                      <td class="tenue numero">
+                        <span
+                          class="asa-arrastre"
+                          title="Arrastra para cambiar el orden"
+                          aria-hidden="true"
+                          (mousedown)="ayuda().agarrarTutorial()"
+                          (touchstart)="ayuda().agarrarTutorial()"
+                          >⠿</span
+                        >
+                        {{ tutorial.orden }}
+                      </td>
+                      <td>
+                        <b>{{ tutorial.titulo }}</b>
+                        @if (!tutorial.active) {
+                          <span class="pastilla">Oculto</span>
+                        }
+                        <span class="bloque">
+                          @if (tutorial.videoUrl) {
+                            <a [href]="tutorial.videoUrl" target="_blank" rel="noopener"
+                              >ver en YouTube</a
+                            >
+                          } @else {
+                            <span class="sin-doi">sin video: sale como «en grabación»</span>
+                          }
+                        </span>
+                        <span class="bloque productos-fila">
+                          @for (codigo of tutorial.productos; track codigo) {
+                            <span class="pastilla producto">{{ ayuda().nombreDeAyuda(codigo) }}</span>
+                          } @empty {
+                            <span class="pastilla">Todos los productos</span>
+                          }
+                        </span>
+                      </td>
+                      <td class="sin-salto">
+                        @if (tutorial.duracion) {
+                          {{ tutorial.duracion }}
+                        } @else {
+                          <span class="pastilla espera">sin duración</span>
+                        }
+                      </td>
+                      <td class="fila-acciones">
+                        <button type="button" class="enlace" (click)="ayuda().editarTutorial(tutorial)">
+                          Editar
+                        </button>
+                        <app-menu-fila>
+                          @if (tutorial.videoUrl) {
+                            <a [href]="tutorial.videoUrl" target="_blank" rel="noopener"
+                              >Ver en YouTube</a
+                            >
+                          }
+                          <hr />
+                          <button
+                            type="button"
+                            class="peligro"
+                            (click)="ayuda().borrarTutorial(tutorial)"
+                          >
+                            Borrar
+                          </button>
+                        </app-menu-fila>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <app-pie-lista [lista]="ayuda().listaTutoriales" nombre="videos" />
+          }
+        }
+
+        @if (seccion()() === 'guias') {
+          <app-filtros-lista [lista]="ayuda().listaGuias" placeholder="Título de la guía">
+            <button type="button" class="boton boton-fila" (click)="ayuda().editarGuia(null)">
+              Añadir guía
+            </button>
+          </app-filtros-lista>
+
+          @if (ayuda().guias().length === 0) {
+            <p class="tenue">
+              Todavía no hay ninguna. Mientras no haya, se ofrece la guía de siempre.
+            </p>
+          } @else if (ayuda().listaGuias.filtrado().length === 0) {
+            <p class="tenue">Ninguna guía coincide con lo que buscas.</p>
+          } @else {
+            <div class="tabla-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Guía</th>
+                    <th>Archivo</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (guia of ayuda().listaGuias.visible(); track guia.id) {
+                    <tr [class.apagado]="!guia.active">
+                      <td class="tenue numero">{{ guia.orden }}</td>
+                      <td>
+                        <b>{{ guia.titulo }}</b>
+                        @if (!guia.active) {
+                          <span class="pastilla">Oculta</span>
+                        }
+                        <span class="bloque productos-fila">
+                          @for (codigo of guia.productos; track codigo) {
+                            <span class="pastilla producto">{{ ayuda().nombreDeAyuda(codigo) }}</span>
+                          } @empty {
+                            <span class="pastilla">Todos los productos</span>
+                          }
+                        </span>
+                      </td>
+                      <td class="tenue">
+                        {{ guia.archivoNombre }} · {{ ayuda().pesoGuia(guia.bytes) }}
+                        @if (guia.active) {
+                          ·
+                          <a [href]="ayuda().enlaceGuia(guia)" target="_blank" rel="noopener">descargar</a>
+                        }
+                      </td>
+                      <td class="fila-acciones">
+                        <button type="button" class="enlace" (click)="ayuda().editarGuia(guia)">
+                          Editar
+                        </button>
+                        <app-menu-fila>
+                          @if (guia.active) {
+                            <a [href]="ayuda().enlaceGuia(guia)" target="_blank" rel="noopener"
+                              >Descargar</a
+                            >
+                            <hr />
+                          }
+                          <button type="button" class="peligro" (click)="ayuda().borrarGuia(guia)">
+                            Borrar
+                          </button>
+                        </app-menu-fila>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <app-pie-lista [lista]="ayuda().listaGuias" nombre="guías" />
+          }
+        }
+      </section>
+
+      @if (ayuda().formularioTutorial()) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-tutorial">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-tutorial">
+                {{ ayuda().tutorialAbierto()?.id ? 'Editar video' : 'Video nuevo' }}
+              </h3>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="ayuda().cerrarTutorial()">
+                ✕
+              </button>
+            </div>
+
+            <form [formGroup]="ayuda().formTutorial" (ngSubmit)="ayuda().guardarTutorial()">
+              <div class="ventana-cuerpo">
+                <!-- El enlace va PRIMERO. Es lo único a lo que se entra la mayoría
+                   de las veces: el texto se escribe una vez y la URL se pega
+                   cuando por fin se grabó. -->
+                <label class="campo">
+                  <span>Enlace de YouTube</span>
+                  <input
+                    type="url"
+                    formControlName="videoUrl"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    (input)="ayuda().alCambiarEnlaceVideo()"
+                  />
+                  @if (ayuda().videoLeido(); as leido) {
+                    <small class="ayuda" [class.video-listo]="leido.estado === 'listo'">
+                      {{ leido.texto }}
+                    </small>
+                  } @else {
+                    <small class="ayuda">
+                      Vale cualquier forma: la de la barra, la de «Compartir» o solo el código. Al
+                      pegarlo, el título y la duración se toman solos del video.
+                    </small>
+                  }
+                </label>
+
+                <div class="fila">
+                  <label class="campo">
+                    <span>Título</span>
+                    <input type="text" formControlName="titulo" />
+                  </label>
+                  <label class="campo estrecho">
+                    <span>Duración</span>
+                    <!-- Solo lectura: la pone el propio video al pegar el enlace. -->
+                    <input
+                      type="text"
+                      formControlName="duracion"
+                      placeholder="Del video"
+                      readonly
+                      tabindex="-1"
+                    />
+                  </label>
+                </div>
+
+                <!-- Sin «Orden», «Grupo» ni «Etiqueta» (5-oct, a pedido): eran
+                     tres conceptos para algo que nadie usaba. Uno nuevo va al
+                     final y el orden se cambia arrastrando en la lista. Los
+                     campos siguen en la base, vacíos; la página se ve igual. -->
+
+                <!-- «Escribir con IA»: Gemini ve el video y rellena los dos
+                     cuadros. Solo al pulsarlo, nunca solo: gasta tokens. -->
+                @if (ayuda().hayVideoParaResumir()) {
+                  <p class="ayuda resumen-ia" [class.video-listo]="ayuda().resumenVideo()?.estado === 'listo'">
+                    <button
+                      type="button"
+                      class="boton secundario pequeno"
+                      [disabled]="ayuda().resumenVideo()?.estado === 'leyendo'"
+                      (click)="ayuda().escribirConIa()"
+                    >
+                      {{
+                        ayuda().resumenVideo()?.estado === 'leyendo'
+                          ? 'Viendo el video…'
+                          : '✨ Escribir «De qué va» y los puntos con IA'
+                      }}
+                    </button>
+                    @if (ayuda().resumenVideo(); as resumen) {
+                      <span>{{ resumen.texto }}</span>
+                    }
+                  </p>
+                }
+
+                <label class="campo">
+                  <span>De qué va</span>
+                  <textarea formControlName="entrada" rows="3"></textarea>
+                </label>
+
+                <label class="campo">
+                  <span>Puntos que cubre</span>
+                  <textarea formControlName="puntos" rows="7"></textarea>
+                  <small class="ayuda">
+                    Uno por línea. Salen como lista debajo del video, y te sirven de guion al
+                    grabar.
+                  </small>
+                </label>
+
+                <!-- En qué productos sale. Varios a la vez valen: el del marco
+                     teórico sirve a tesis y a suficiencia. Ninguno = en todos. -->
+                <fieldset class="productos-de-ayuda">
+                  <legend>Para qué producto es</legend>
+                  <div class="casillas-producto">
+                      @for (producto of ayuda().productosDeAyuda; track producto.codigo) {
+                      <label class="chip-producto">
+                        <input
+                          type="checkbox"
+                          [checked]="ayuda().formTutorial.controls.productos.value.includes(producto.codigo)"
+                          (change)="ayuda().alternarProducto(ayuda().formTutorial.controls.productos, producto.codigo)"
+                        />
+                        <span>{{ producto.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">
+                    @if (ayuda().formTutorial.controls.productos.value.length === 0) {
+                      Sin marcar ninguno, sale en todos. Marca varios si sirve a más de uno.
+                    } @else {
+                      Solo lo verá quien elija {{ ayuda().formTutorial.controls.productos.value.length === 1 ? 'ese producto' : 'alguno de esos productos' }} en la página de videos.
+                    }
+                  </small>
+                </fieldset>
+
+                <label class="casilla">
+                  <input type="checkbox" formControlName="active" />
+                  <span>
+                    Visible en la web.
+                    <small
+                      >Desactívalo para retirarlo mientras lo regrabas, sin perder el texto.</small
+                    >
+                  </span>
+                </label>
+              </div>
+
+              <div class="ventana-pie">
+                <button type="button" class="boton secundario" (click)="ayuda().cerrarTutorial()">
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="boton"
+                  [disabled]="ayuda().formTutorial.invalid || ayuda().guardandoTutorial()"
+                >
+                  {{ ayuda().guardandoTutorial() ? 'Guardando…' : 'Guardar' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      @if (ayuda().formularioGuia()) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-guia">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-guia">{{ ayuda().guiaAbierta() ? 'Editar guía' : 'Guía nueva' }}</h3>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="ayuda().cerrarGuia()">
+                ✕
+              </button>
+            </div>
+
+            <form [formGroup]="ayuda().formGuia" (ngSubmit)="ayuda().guardarGuia()">
+              <div class="ventana-cuerpo">
+                <label class="campo">
+                  <span>Archivo PDF</span>
+                  <input type="file" accept="application/pdf,.pdf" (change)="ayuda().elegirPdf($event)" />
+                  <small class="ayuda">
+                    @if (ayuda().guiaAbierta(); as abierta) {
+                      Ahora: {{ abierta.archivoNombre }} ({{ ayuda().pesoGuia(abierta.bytes) }}). Elige otro
+                      solo si quieres cambiarlo.
+                    } @else {
+                      Máximo 25 MB.
+                    }
+                  </small>
+                </label>
+
+                <div class="fila">
+                  <label class="campo">
+                    <span>Título</span>
+                    <input type="text" formControlName="titulo" placeholder="Guía de instalación" />
+                  </label>
+                  <label class="campo estrecho">
+                    <span>Orden</span>
+                    <input type="number" formControlName="orden" min="0" />
+                  </label>
+                </div>
+
+                <label class="campo">
+                  <span>Qué trae</span>
+                  <textarea
+                    formControlName="descripcion"
+                    rows="3"
+                    placeholder="Cómo conectarlo a Claude, paso a paso y con pagosManuales.capturas."
+                  ></textarea>
+                  <small class="ayuda">Una o dos frases, para que sepan cuál elegir.</small>
+                </label>
+
+                <fieldset class="productos-de-ayuda">
+                  <legend>Para qué producto es</legend>
+                  <div class="casillas-producto">
+                      @for (producto of ayuda().productosDeAyuda; track producto.codigo) {
+                      <label class="chip-producto">
+                        <input
+                          type="checkbox"
+                          [checked]="ayuda().formGuia.controls.productos.value.includes(producto.codigo)"
+                          (change)="ayuda().alternarProducto(ayuda().formGuia.controls.productos, producto.codigo)"
+                        />
+                        <span>{{ producto.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">
+                    @if (ayuda().formGuia.controls.productos.value.length === 0) {
+                      Sin marcar ninguno, sale en todos. Marca varios si sirve a más de uno.
+                    } @else {
+                      Solo la verá quien elija {{ ayuda().formGuia.controls.productos.value.length === 1 ? 'ese producto' : 'alguno de esos productos' }} en la página de guías.
+                    }
+                  </small>
+                </fieldset>
+
+                <label class="casilla">
+                  <input type="checkbox" formControlName="active" />
+                  <span>
+                    Visible en la web.
+                    <small>Desactívala para retirarla un tiempo sin perder el PDF.</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="ventana-pie">
+                <button type="button" class="boton secundario" (click)="ayuda().cerrarGuia()">
+                  Cancelar
+                </button>
+                <button type="submit" class="boton" [disabled]="!ayuda().puedeGuardarGuia()">
+                  {{ ayuda().guardandoGuia() ? 'Subiendo…' : 'Guardar' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }

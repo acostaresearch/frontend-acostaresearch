@@ -1,0 +1,122 @@
+<!-- Mientras trabaja hay que ver que avanza. Una pasada completa son unas
+         450 peticiones a Zotero y varios minutos: sin un número que se mueva,
+         un botón desactivado durante diez minutos parece un panel roto. -->
+      @if (bibliografia().avanceDelCorpus(); as avance) {
+        <p class="aviso-espera" role="status">
+          {{ avance }} · puedes cerrar esta página, el servidor sigue por su cuenta.
+        </p>
+      }
+
+      @if (bibliografia().corpus(); as estado) {
+        @if (estado.configurado) {
+          <!-- Las tres cifras en tarjetas, como las del resumen. -->
+          <section class="cifras tres">
+            <article class="cifra-tarjeta">
+              <p class="cifra-rotulo">Fuentes en el corpus</p>
+              <p class="cifra-valor">{{ estado.total | number }}</p>
+            </article>
+            <article class="cifra-tarjeta">
+              <p class="cifra-rotulo">Biblioteca de Zotero</p>
+              <p class="cifra-valor cifra-texto">{{ estado.biblioteca }}</p>
+            </article>
+            <article class="cifra-tarjeta">
+              <p class="cifra-rotulo">Última sincronización</p>
+              <p class="cifra-valor cifra-texto">
+                {{ estado.lastRunAt ? (estado.lastRunAt | date: 'd MMM, HH:mm') : 'nunca' }}
+              </p>
+            </article>
+          </section>
+        }
+      }
+
+      <section class="tarjeta">
+        @if (bibliografia().corpus(); as estado) {
+          @if (!estado.configurado) {
+            <p class="tenue">
+              El corpus no está configurado: falta <code>ZOTERO_API_KEY</code> en el servidor.
+            </p>
+          } @else {
+            <div class="buscador-corpus">
+              <input
+                type="search"
+                [formControl]="bibliografia().buscadorCorpus"
+                placeholder="Autor, título o tema"
+                aria-label="Buscar en el corpus"
+                (keyup.enter)="bibliografia().cargarCorpus(1)"
+              />
+            </div>
+
+            @if (bibliografia().referencias().length === 0) {
+              <p class="tenue">
+                Ninguna fuente todavía. Captúralas en Zotero y pulsa «Sincronizar». Etiqueta con
+                <strong>tesis</strong> o <strong>articulo</strong> las que sean de una ruta
+                concreta; las que dejes sin etiqueta las verán todas las licencias, que es lo que
+                quieres para la metodología.
+              </p>
+            } @else {
+              <ul class="referencias">
+                @for (fuente of bibliografia().referencias(); track fuente.id) {
+                  <li>
+                    <p class="referencia-cita">
+                      <strong>{{ fuente.authors || '(sin autor)' }}</strong>
+                      ({{ fuente.year ?? 's. f.' }}). {{ fuente.title }}.
+                      @if (fuente.source) {
+                        <em>{{ fuente.source }}</em>
+                      }
+                      <!-- El DOI va pegado a la cita, que es donde se busca. -->
+                      @if (fuente.doi) {
+                        <a [href]="'https://doi.org/' + fuente.doi" target="_blank" rel="noopener">
+                          {{ fuente.doi }}
+                        </a>
+                      } @else if (fuente.url) {
+                        <a [href]="fuente.url" target="_blank" rel="noopener">enlace</a>
+                      } @else {
+                        <!-- Sin DOI ni enlace la cita no se puede comprobar, y una
+                           cita que el jurado no puede seguir vale poco. Se marca
+                           para que se arregle en Zotero. -->
+                        <span class="sin-doi">sin DOI ni enlace</span>
+                      }
+                    </p>
+
+                    <!-- Los temas, en una sola línea hasta que se pide verlos
+                       todos. A quién le sale la fuente va delante. -->
+                    @if (fuente.tags) {
+                      <p class="referencia-temas" [class.abiertos]="bibliografia().temasAbiertos().has(fuente.id)">
+                        <span class="referencia-temas-texto">
+                          <span class="etiqueta-producto">{{ bibliografia().productosDe(fuente) }}</span>
+                          {{ fuente.tags }}
+                        </span>
+                        @if (bibliografia().cuantosTemas(fuente.tags) > 3) {
+                          <button
+                            type="button"
+                            class="enlace-texto"
+                            (click)="bibliografia().alternarTemas(fuente.id)"
+                          >
+                            {{
+                              bibliografia().temasAbiertos().has(fuente.id)
+                                ? 'ver menos'
+                                : 'ver ' + bibliografia().cuantosTemas(fuente.tags) + ' temas'
+                            }}
+                          </button>
+                        }
+                      </p>
+                    }
+
+                    <!-- La nota se enseña porque es lo que de verdad prefiere el
+                       conector: lo que escribiste tú sobre la fuente vale más
+                       que el resumen que la revista puso para vender su
+                       artículo. -->
+                    @if (fuente.notes) {
+                      <p class="referencia-nota">{{ fuente.notes }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+
+              <p class="tenue">{{ bibliografia().referencias().length }} de {{ bibliografia().totalReferencias() }} fuentes.</p>
+            }
+          }
+        } @else {
+          <p class="tenue">Cargando el corpus…</p>
+        }
+      </section>

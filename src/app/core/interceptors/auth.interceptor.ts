@@ -44,7 +44,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       setHeaders: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
-  const peticion = autorizar(req, auth.accessToken());
+  const token = auth.accessToken();
+  const peticion = autorizar(req, token);
 
   return next(peticion).pipe(
     catchError((error: unknown) => {
@@ -53,13 +54,32 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         error.status === 401 &&
         codigoDeError(error) === ERROR_CODE.TOKEN_EXPIRED;
 
+      // El servidor comprueba la cuenta en cada petición: si la suspendieron o
+      // le cambiaron el rol, la sesión ya no vale y renovarla tampoco serviría.
+      // Solo cuenta cuando la petición llevaba token: el mismo código lo
+      // devuelve el login a quien todavía no ha entrado.
+      const invalidada =
+        error instanceof HttpErrorResponse &&
+        token !== null &&
+        !esRutaDeSesion(req) &&
+        ((error.status === 401 && codigoDeError(error) === ERROR_CODE.INVALID_TOKEN) ||
+          (error.status === 403 && codigoDeError(error) === ERROR_CODE.ACCOUNT_SUSPENDED));
+
+      if (invalidada) {
+        auth.clearSession();
+        void router.navigate(['/auth/login'], {
+          queryParams: { returnUrl: router.url, expirada: '1' },
+        });
+        return throwError(() => error);
+      }
+
       if (!expirado || esRutaDeSesion(req)) {
         return throwError(() => error);
       }
 
       // Un solo refresh compartido para todas las peticiones que fallen a la vez.
       return auth.refreshAccessToken().pipe(
-        switchMap((token) => next(autorizar(req, token))),
+        switchMap((nuevo) => next(autorizar(req, nuevo))),
         catchError((errorDeRefresh: unknown) => {
           // Con la base caída el refresh falla aunque la sesión esté bien. Echar
           // a la persona al login sería perderle la sesión por un corte de

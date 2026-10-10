@@ -1,0 +1,634 @@
+<!-- Arriba, solo lo que pide algo HOY: comprobantes esperando y los
+           códigos recién generados, que no se vuelven a enseñar. Sin nada de
+           eso, la tabla empieza arriba del todo. «Generar código» está en la
+           cabecera de la sección. -->
+      @if (pagosManuales().porRevisar().length > 0 || ventasManuales().codigosNuevos().length > 0) {
+      <div class="columnas accesos-cabecera">
+        @if (pagosManuales().porRevisar().length > 0) {
+        <section class="tarjeta">
+          <h2>Comprobantes por revisar</h2>
+          <p class="nota">
+            Cotéjalo con tu Yape (o cobra el Western Union con su MTCN) antes de aprobar. La captura
+            demuestra que existe una pantalla, no que el dinero haya entrado: lo que cuadra con el
+            extracto es el número de operación.
+          </p>
+
+          @if (pagosManuales().porRevisar().length === 0) {
+            <p class="vacio-ok">No hay ningún comprobante esperando.</p>
+          } @else {
+            <ul class="comprobantes">
+              @for (pago of pagosManuales().porRevisar(); track pago.id) {
+                <li class="comprobante" [class.ocupado]="pagosManuales().revisando() === pago.id">
+                  <div class="comprobante-imagen">
+                    @if (pagosManuales().captura(pago.id); as imagen) {
+                      <a [href]="imagen" target="_blank" rel="noopener">
+                        <img [src]="imagen" alt="Comprobante enviado por {{ pago.user.email }}" />
+                      </a>
+                    } @else {
+                      <span class="sin-imagen">sin vista previa</span>
+                    }
+                  </div>
+
+                  <div class="comprobante-datos">
+                    <p class="comprobante-quien">
+                      <strong>{{ pago.user.firstName }} {{ pago.user.lastName }}</strong>
+                      <span class="tenue">{{ pago.user.email }}</span>
+                    </p>
+
+                    <dl class="comprobante-detalle">
+                      <div>
+                        @if (pago.carrito; as carrito) {
+                          <!-- Un carrito: una sola captura por la suma. Aprobarlo
+                               entrega todo lo que lleva. -->
+                          <dt>Carrito · {{ carrito.productos.length }} productos</dt>
+                          <dd>{{ carrito.productos.join(' + ') }}</dd>
+                        } @else {
+                          <dt>Plan</dt>
+                          <dd>{{ pago.plan.name }}</dd>
+                        }
+                      </div>
+                      <div>
+                        <dt>Importe</dt>
+                        <dd>
+                          {{ pago.currency === 'USD' ? 'US$' : 'S/' }}
+                          {{ pago.amountCents / 100 | number: '1.2-2' }}
+                          @if (pago.provider === 'WESTERN_UNION') {
+                            <span class="tenue">· Western Union</span>
+                          }
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{{ pago.provider === 'WESTERN_UNION' ? 'MTCN' : 'Nº de operación' }}</dt>
+                        <dd [class.falta]="!pago.operationCode">
+                          {{ pago.operationCode ?? 'no lo indicó' }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Enviado</dt>
+                        <dd>{{ pago.createdAt | date: 'd MMM, HH:mm' }}</dd>
+                      </div>
+                      <!-- Lo que leyó el OCR en la pagosManuales().captura. Es una pista para
+                           mirar con más cuidado, no una decisión. -->
+                      @if (pago.revision; as revision) {
+                        @if (revision.veredicto !== 'SIN_LEER') {
+                          <div class="revision-auto">
+                            <dt>Lectura automática</dt>
+                            <dd [class.falta]="revision.veredicto !== 'OK'">
+                              @switch (revision.veredicto) {
+                                @case ('OK') { parece una constancia }
+                                @case ('DUDOSO') { no se lee bien }
+                                @default { no parece un comprobante }
+                              }
+                              @if (revision.veredicto !== 'NO_PARECE' && revision.montoVisto === false) {
+                                · no se ve el importe
+                              }
+                              @if (revision.operacionCoincide === false) {
+                                · el nº escrito no aparece en la imagen
+                              }
+                            </dd>
+                          </div>
+                        }
+                      }
+                      @if (pago.discountCents > 0) {
+                        <div>
+                          <dt>Descuento</dt>
+                          <dd>
+                            − {{ pago.currency === 'USD' ? 'US$' : 'S/' }}
+                            {{ pago.discountCents / 100 | number: '1.2-2' }}
+                          </dd>
+                        </div>
+                      }
+                    </dl>
+
+                    <div class="comprobante-acciones">
+                      <button
+                        type="button"
+                        class="boton"
+                        [disabled]="pagosManuales().revisando() !== null"
+                        (click)="pagosManuales().aprobarComprobante(pago)"
+                      >
+                        {{ pagosManuales().revisando() === pago.id ? 'Aprobando…' : 'Aprobar y entregar' }}
+                      </button>
+
+                      <div class="rechazo">
+                        <input
+                          type="text"
+                          [value]="pagosManuales().motivo(pago.id)"
+                          (input)="pagosManuales().escribirMotivo(pago.id, $event)"
+                          placeholder="Motivo del rechazo (lo lee el comprador)"
+                          maxlength="255"
+                        />
+                        <button
+                          type="button"
+                          class="boton peligro"
+                          [disabled]="pagosManuales().revisando() !== null"
+                          (click)="pagosManuales().rechazarComprobante(pago)"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+        }
+        @if (ventasManuales().codigosNuevos().length > 0) {
+        <section class="tarjeta">
+          <h2>Códigos generados</h2>
+            <div class="codigos-nuevos">
+              <p class="codigos-titulo">
+                Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+              </p>
+              @if (ventasManuales().enviosNuevos().length > 1) {
+                <p class="codigos-enviado">
+                  A cada uno de los {{ ventasManuales().enviosNuevos().length }} compradores le mandamos los suyos
+                  por correo. Al copiarlos, cada código va con su correo al lado.
+                </p>
+              } @else if (ventasManuales().codigoEnviadoA(); as correo) {
+                <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+              }
+              @if (ventasManuales().cobroApuntado(); as cobro) {
+                <p class="codigos-enviado">
+                  Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }}
+                  @if (ventasManuales().codigosNuevos().length > 1) {
+                    cada código (S/
+                    {{ (cobro.amountCents * ventasManuales().codigosNuevos().length) / 100 | number: '1.2-2' }} en
+                    total)
+                  }
+                  por {{ cobro.paymentMethod }}. Entrará en tus ventas a medida que los canjeen.
+                </p>
+              } @else {
+                <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
+              }
+              <ul>
+                @if (ventasManuales().enviosNuevos().length > 1) {
+                  @for (envio of ventasManuales().enviosNuevos(); track envio.email) {
+                    @for (codigo of envio.codes; track codigo) {
+                      <li class="codigo-con-correo">
+                        <span class="codigo-correo">{{ envio.email }}</span>
+                        {{ codigo }}
+                      </li>
+                    }
+                  }
+                } @else {
+                  @for (codigo of ventasManuales().codigosNuevos(); track codigo) {
+                    <li>{{ codigo }}</li>
+                  }
+                }
+              </ul>
+              <button type="button" class="boton" (click)="ventasManuales().copiarCodigos()">
+                {{ copiados()() ? '¡Copiados!' : 'Copiar todos' }}
+              </button>
+            </div>
+        </section>
+        }
+      </div>
+      }
+
+      <!-- Todo lo que se ha emitido o cobrado, sin importar la vía. Los Yape
+           salen por su comprobante y no se repiten como pasarela. -->
+      <section class="tarjeta">
+
+        @if (accesos()().length === 0) {
+          <p class="nota">Todavía no hay nada que enseñar aquí.</p>
+        } @else {
+          <app-filtros-lista
+            [lista]="listaAccesos()"
+            placeholder="Correo, código o nº de operación"
+          />
+
+          @if (listaAccesos().filtrado().length === 0) {
+            <p class="tenue">Nada coincide con lo que buscas.</p>
+          } @else {
+            <div class="tabla-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Comprador</th>
+                    <th>Producto</th>
+                    <th class="derecha">Importe</th>
+                    <th>Referencia</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (acceso of listaAccesos().visible(); track acceso.canal + acceso.id) {
+                    <tr class="pulsable" (click)="accionesAccesos().abrirAcceso(acceso)">
+                      <td class="sin-salto">{{ acceso.fecha | date: 'd MMM, HH:mm' }}</td>
+                      <td>{{ acceso.comprador }}</td>
+                      <!-- El nombre del producto y, debajo en gris, por dónde
+                         entró. Lo que esa persona tiene HOY, que no siempre es lo
+                         que compró: una licencia se puede mover de producto
+                         después. Lo vendido no se pisa —falsearía la venta y el
+                         gráfico de ingresos—, se enseña debajo y tachado. -->
+                      <td>
+                        @if (acceso.productoActual) {
+                          <span class="producto-hoy">{{
+                            accionesAccesos().nombreDeProducto(acceso.productoActual)
+                          }}</span>
+                          <span class="producto-antes">{{ acceso.producto }}</span>
+                        } @else {
+                          {{ acceso.producto }}
+                        }
+                        <span class="bloque tenue">{{ acceso.canalNombre }}</span>
+                      </td>
+                      <td class="derecha numero sin-salto">
+                        @if (acceso.amountCents) {
+                          {{ importe()(acceso.amountCents, acceso.moneda) }}
+                        } @else {
+                          <span class="tenue">cortesía</span>
+                        }
+                      </td>
+                      <td class="mono tenue">{{ acceso.referencia ?? '—' }}</td>
+                      <td>
+                        <span
+                          class="pastilla"
+                          [class.buena]="acceso.tono === 'buena'"
+                          [class.espera]="acceso.tono === 'espera'"
+                          [class.mala]="acceso.tono === 'mala'"
+                        >
+                          {{ acceso.estado }}
+                        </span>
+                      </td>
+                      <!-- La fila entera abre la ficha; lo de aquí no debe abrirla
+                         además, de ahí el stopPropagation. -->
+                      <td class="fila-acciones" (click)="$event.stopPropagation()">
+                        @if (acceso.licenseId) {
+                          <button
+                            type="button"
+                            class="enlace"
+                            (click)="verLicenciasDe()(acceso.comprador)"
+                          >
+                            Ver licencia
+                          </button>
+                        } @else {
+                          <button type="button" class="enlace" (click)="accionesAccesos().abrirAcceso(acceso)">
+                            Ver detalle
+                          </button>
+                        }
+                        <app-menu-fila>
+                          <button type="button" (click)="accionesAccesos().abrirAcceso(acceso)">Ver detalle</button>
+                          @if (acceso.tieneComprobante) {
+                            <button type="button" (click)="accionesAccesos().verCaptura(acceso)">Ver captura</button>
+                          }
+                          <button
+                            type="button"
+                            (click)="copiarTexto()(acceso.comprador, 'Correo copiado')"
+                          >
+                            Copiar correo
+                          </button>
+                          @if (acceso.anulable) {
+                            <hr />
+                            <button
+                              type="button"
+                              class="peligro"
+                              (click)="accionesAccesos().anularDesdeFicha(acceso)"
+                            >
+                              Anular código
+                            </button>
+                          }
+                        </app-menu-fila>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <app-pie-lista [lista]="listaAccesos()" nombre="accesos" />
+          }
+        }
+      </section>
+
+      <!-- ── Ficha de un acceso ──────────────────────────────────────────────
+         La tabla enseña lo que se compara de un vistazo; aquí va lo que hay que
+         mirar de uno concreto, la captura incluida. Estrecha a propósito: es
+         una consulta, no un formulario. -->
+      @if (accionesAccesos().accesoAbierto(); as acceso) {
+        <div class="ventana-fondo">
+          <div
+            class="ventana estrecha"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-acceso"
+          >
+            <div class="ventana-cabecera">
+              <h3 id="titulo-acceso">{{ acceso.comprador }}</h3>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="accionesAccesos().cerrarAcceso()">
+                ✕
+              </button>
+            </div>
+
+            <div class="ventana-cuerpo">
+              <dl class="ficha">
+                <div>
+                  <dt>Canal</dt>
+                  <dd>
+                    <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Estado</dt>
+                  <dd>
+                    <span
+                      class="pastilla"
+                      [class.buena]="acceso.tono === 'buena'"
+                      [class.espera]="acceso.tono === 'espera'"
+                      [class.mala]="acceso.tono === 'mala'"
+                    >
+                      {{ acceso.estado }}
+                    </span>
+                  </dd>
+                </div>
+                <!-- Un código guarda el código del producto, no su nombre: ahí se
+                   traduce. Un cobro ya trae el nombre del plan que se vendió, y
+                   ese se deja tal cual. -->
+                <div class="ficha-ancha">
+                  <dt>Producto</dt>
+                  <dd>
+                    {{
+                      acceso.producto === acceso.productCode
+                        ? accionesAccesos().nombreDeProducto(acceso.productCode)
+                        : acceso.producto
+                    }}
+                  </dd>
+                </div>
+                <!-- Solo cuando se movió. Se dice «Tiene ahora» y no se sustituye
+                   lo de arriba: lo de arriba es la venta —qué se cobró y por
+                   cuánto— y sigue siendo verdad. -->
+                @if (acceso.productoActual) {
+                  <div>
+                    <dt>Tiene ahora</dt>
+                    <dd>{{ accionesAccesos().nombreDeProducto(acceso.productoActual) }}</dd>
+                  </div>
+                }
+                <div>
+                  <dt>Importe</dt>
+                  <dd>
+                    @if (acceso.amountCents) {
+                      {{ importe()(acceso.amountCents, acceso.moneda) }}
+                    } @else {
+                      <span class="tenue">cortesía · sin cobro</span>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Referencia</dt>
+                  <dd class="mono">{{ acceso.referencia ?? '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Fecha</dt>
+                  <dd>{{ acceso.fecha | date: 'd MMM y, HH:mm' }}</dd>
+                </div>
+              </dl>
+
+              @if (acceso.tieneComprobante) {
+                <div class="ficha-captura">
+                  @if (accionesAccesos().cargandoCaptura()) {
+                    <p class="tenue">Cargando la captura…</p>
+                  } @else if (accionesAccesos().capturaAbierta(); as imagen) {
+                    <!-- Se abre a tamaño real en otra pestaña: aquí entra pequeña y
+                       el número de operación de una captura de móvil no se lee. -->
+                    <a [href]="imagen" target="_blank" rel="noopener">
+                      <img [src]="imagen" alt="Comprobante de {{ acceso.comprador }}" />
+                    </a>
+                    <p class="tenue">Pulsa la imagen para verla a tamaño completo.</p>
+                  } @else {
+                    <p class="tenue">No se pudo cargar la pagosManuales().captura.</p>
+                  }
+                </div>
+              }
+              <!-- ── Lo que se puede hacer con el acceso ─────────────────────────
+                 Una tarjeta con tres filas cortas, y no tres bloques con su
+                 párrafo cada uno: la ficha se hacía larguísima y lo de abajo
+                 quedaba fuera de la vista. «Varias tesis» es un interruptor y
+                 va a la vista; cambiar el correo o el producto son formularios
+                 que se usan poco, y se despliegan al pulsarlos, de uno en uno.
+
+                 Todo cuelga de la licencia: un código sin canjear o un
+                 comprobante en revisión todavía no tienen nada que tocar. Ni
+                 el correo ni el producto le cambian la URL del conector. -->
+              @if (acceso.licenseId) {
+                <div class="acciones-acceso">
+                  <div class="accion">
+                    <div class="accion-fila">
+                      <span class="accion-texto">
+                        <span class="accion-titulo" id="rotulo-varias-tesis">Varias tesis</span>
+                        <span
+                          class="accion-nota"
+                          [class.encendido]="accionesAccesos().variasTesis()"
+                          role="status"
+                          title="Que pueda abrir más de una tesis de este método desde su perfil y elegir con cuál trabaja Claude. Su URL no cambia."
+                        >
+                          @if (accionesAccesos().guardandoVariasTesis()) {
+                            Guardando…
+                          } @else if (accionesAccesos().avisoVariasTesis(); as mensaje) {
+                            {{ mensaje }}
+                          } @else if (accionesAccesos().variasTesis() === true) {
+                            Puede abrir varias tesis desde su perfil
+                          } @else if (accionesAccesos().variasTesis() === false) {
+                            Una sola tesis, como se vende
+                          } @else if (!accionesAccesos().errorVariasTesis()) {
+                            Consultando…
+                          }
+                        </span>
+                      </span>
+
+                      @if (accionesAccesos().variasTesis() !== null) {
+                        <button
+                          type="button"
+                          role="switch"
+                          class="interruptor"
+                          aria-labelledby="rotulo-varias-tesis"
+                          [attr.aria-checked]="accionesAccesos().variasTesis()"
+                          [disabled]="accionesAccesos().guardandoVariasTesis()"
+                          (click)="accionesAccesos().cambiarVariasTesis()"
+                        >
+                          <span class="interruptor-bola" aria-hidden="true"></span>
+                        </button>
+                      }
+                    </div>
+                    <app-aviso-flotante [(error)]="accionesAccesos().errorVariasTesis" />
+                  </div>
+
+                  <!-- Días desde el canje, como al vender el método. Vacío = que
+                     no caduque. Sale tras consultar la licencia. -->
+                  @if (accionesAccesos().vigencia(); as vig) {
+                    <div class="accion">
+                      <button
+                        type="button"
+                        class="accion-fila accion-boton"
+                        [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'duracion'"
+                        (click)="accionesAccesos().alternarAccion('duracion')"
+                      >
+                        <span class="accion-texto">
+                          <span class="accion-titulo">Duración de la membresía</span>
+                          <span class="accion-nota" role="status">
+                            @if (vig.expiresAt) {
+                              Vence el {{ vig.expiresAt | date: 'd MMM y' }}
+                            } @else {
+                              Sin caducidad
+                            }
+                          </span>
+                        </span>
+                        <span class="accion-flecha" aria-hidden="true"></span>
+                      </button>
+
+                      @if (accionesAccesos().accionAbierta() === 'duracion') {
+                        <div class="accion-cuerpo">
+                          <div class="mover-fila">
+                            <input
+                              type="number"
+                              min="1"
+                              max="3650"
+                              step="1"
+                              inputmode="numeric"
+                              aria-label="Duración en días desde el canje"
+                              placeholder="Sin caducidad"
+                              [value]="accionesAccesos().diasDuracion()"
+                              (input)="accionesAccesos().diasDuracion.set($any($event.target).value)"
+                              (keyup.enter)="accionesAccesos().cambiarDuracionDelAcceso()"
+                            />
+                            <button
+                              type="button"
+                              class="boton"
+                              [disabled]="!accionesAccesos().duracionCambia() || accionesAccesos().guardandoDuracion()"
+                              (click)="accionesAccesos().cambiarDuracionDelAcceso()"
+                            >
+                              {{ accionesAccesos().guardandoDuracion() ? 'Guardando…' : 'Guardar' }}
+                            </button>
+                          </div>
+                          <p class="accion-ayuda">
+                            Días desde el canje ({{ vig.createdAt | date: 'd MMM y' }}).
+                            @if (accionesAccesos().vencimientoPrevisto(); as fecha) {
+                              Vencería el {{ fecha | date: 'd MMM y' }}.
+                            } @else if (!accionesAccesos().diasDuracion().trim()) {
+                              Vacío: no caduca.
+                            }
+                            Su URL no cambia.
+                          </p>
+                          <app-aviso-flotante [(error)]="accionesAccesos().errorDuracion" [(aviso)]="accionesAccesos().avisoDuracion" />
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="accion">
+                    <button
+                      type="button"
+                      class="accion-fila accion-boton"
+                      [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'correo'"
+                      (click)="accionesAccesos().alternarAccion('correo')"
+                    >
+                      <span class="accion-texto">
+                        <span class="accion-titulo">Cambiar el correo</span>
+                        <span class="accion-nota">Con el que entra y le llegan los códigos</span>
+                      </span>
+                      <span class="accion-flecha" aria-hidden="true"></span>
+                    </button>
+
+                    @if (accionesAccesos().accionAbierta() === 'correo') {
+                      <div class="accion-cuerpo">
+                        <div class="mover-fila">
+                          <input
+                            type="email"
+                            aria-label="Correo nuevo"
+                            placeholder="correo.nuevo@gmail.com"
+                            autocomplete="off"
+                            spellcheck="false"
+                            [value]="accionesAccesos().correoNuevo()"
+                            (input)="accionesAccesos().correoNuevo.set($any($event.target).value)"
+                            (keyup.enter)="accionesAccesos().cambiarCorreoDelAcceso()"
+                          />
+                          <button
+                            type="button"
+                            class="boton"
+                            [disabled]="!accionesAccesos().correoNuevo().trim() || accionesAccesos().cambiandoCorreo()"
+                            (click)="accionesAccesos().cambiarCorreoDelAcceso()"
+                          >
+                            {{ accionesAccesos().cambiandoCorreo() ? 'Cambiando…' : 'Cambiar' }}
+                          </button>
+                        </div>
+                        <p class="accion-ayuda">
+                          Avisamos al correo viejo y al nuevo. Su URL, su licencia y su tesis siguen
+                          igual.
+                        </p>
+                        <app-aviso-flotante [(error)]="accionesAccesos().errorCorreo" [(aviso)]="accionesAccesos().avisoCorreo" />
+                      </div>
+                    }
+                  </div>
+
+                  @if (accionesAccesos().productosDestino().length > 0) {
+                    <div class="accion">
+                      <button
+                        type="button"
+                        class="accion-fila accion-boton"
+                        [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'producto'"
+                        (click)="accionesAccesos().alternarAccion('producto')"
+                      >
+                        <span class="accion-texto">
+                          <span class="accion-titulo">Ampliar o cambiar el producto</span>
+                          <span class="accion-nota">Sin cobrarle de nuevo</span>
+                        </span>
+                        <span class="accion-flecha" aria-hidden="true"></span>
+                      </button>
+
+                      @if (accionesAccesos().accionAbierta() === 'producto') {
+                        <div class="accion-cuerpo">
+                          <div class="mover-fila">
+                            <select
+                              aria-label="Producto de destino"
+                              [value]="accionesAccesos().productoElegido()"
+                              (change)="accionesAccesos().productoElegido.set($any($event.target).value)"
+                            >
+                              <option value="">Elige el producto…</option>
+                              @for (destino of accionesAccesos().productosDestino(); track destino.productCode) {
+                                <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              class="boton"
+                              [disabled]="!accionesAccesos().productoElegido() || accionesAccesos().moviendoProducto()"
+                              (click)="accionesAccesos().cambiarProductoDelAcceso()"
+                            >
+                              {{ accionesAccesos().moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
+                            </button>
+                          </div>
+                          <p class="accion-ayuda">
+                            Le llega un correo avisándole, y la URL que ya tiene instalada sigue
+                            funcionando.
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="ventana-pie">
+              <button type="button" class="boton secundario" (click)="accionesAccesos().cerrarAcceso()">
+                Cerrar
+              </button>
+              <!-- Aquí NO se borra. El historial es el rastro de lo que pasó, y
+                 un rastro con un botón de «que no haya pasado» al lado no sirve
+                 para lo que se consulta: cuadrar el extracto y responder a
+                 quien reclama. Lo que sí se puede es anular, que deja la fila
+                 marcada y con su venta apuntada. -->
+              @if (acceso.anulable) {
+                <!-- Anular deja el código en la lista, marcado, con su venta
+                   apuntada. No lo borra: el rastro de qué se emitió se queda. -->
+                <button type="button" class="boton destructivo" (click)="accionesAccesos().anularDesdeFicha(acceso)">
+                  Anular acceso
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }

@@ -315,11 +315,11 @@
            Desde el 8-oct-2026 (maqueta del usuario): rejilla de tres, cada
            tarjeta con la portada arriba sobre un fondo de color, el nombre,
            lo que trae en una línea azul, el lema, «Ver qué incluye» (que
-           despliega la lista dentro de la propia tarjeta) y, abajo, el precio
-           con «Comprar». La última casilla es «Cómo pagar», en oscuro. -->
+           abre la ventana de más abajo) y, abajo, el precio con «Comprar».
+           La última casilla es «Cómo pagar», en oscuro. -->
       @if (metodo().length > 0 && vitrina() === 'skills') {
         <div data-tour="planes-lista" class="rejilla-paquetes">
-          @for (plan of ordenSkills(); track plan.code) {
+          @for (plan of catalogo.ordenSkills(); track plan.code) {
             <ng-container *ngTemplateOutlet="tarjetaPlan; context: { $implicit: plan }" />
           }
           <ng-container *ngTemplateOutlet="comoPagar" />
@@ -355,11 +355,11 @@
           <p class="como-pagar-titulo">Sin suscripciones ni cobros automáticos.</p>
           <p class="como-pagar-medios">
             Paga con
-            @for (medio of mediosDePago(); track medio; let primero = $first, ultimo = $last) {
+            @for (medio of catalogo.mediosDePago(); track medio; let primero = $first, ultimo = $last) {
               {{ primero ? '' : ultimo ? ' o ' : ', ' }}<strong>{{ medio }}</strong>
             }.
           </p>
-          @if (hayOfertas()) {
+          @if (catalogo.hayOfertas()) {
             <p class="como-pagar-nota">Precios por tiempo limitado.</p>
           }
         </aside>
@@ -369,14 +369,13 @@
            membresía. -->
       <ng-template #tarjetaPlan let-plan>
         @let mia = miLicencia(plan);
-        @let abierta = estaAbierta(plan);
         @let destacada = esElMasElegido(plan);
-        <article class="paquete" [class.destacada]="destacada" [class.abierta]="abierta">
-          <div class="paquete-portada" [class]="'tono-' + tonoDe(plan)" aria-hidden="true">
+        <article class="paquete" [class.destacada]="destacada">
+          <div class="paquete-portada" [class]="'tono-' + catalogo.tonoDe(plan)" aria-hidden="true">
             @if (destacada) {
               <span class="paquete-cinta">El más elegido</span>
             }
-            @if (imagenDe(plan); as imagen) {
+            @if (catalogo.imagenDe(plan); as imagen) {
               <img [src]="imagen" alt="" width="88" height="98" loading="lazy" decoding="async" />
             } @else {
               <svg viewBox="0 0 120 152" role="presentation">
@@ -389,49 +388,23 @@
           </div>
 
           <div class="paquete-cuerpo">
-            <h3 class="paquete-nombre">{{ nombreFila(plan) }}</h3>
-            @if (etiquetasDe(plan).length > 0) {
-              <p class="paquete-trae">{{ etiquetasDe(plan).join(' + ') }}</p>
+            <h3 class="paquete-nombre">{{ catalogo.nombreFila(plan) }}</h3>
+            @if (catalogo.etiquetasDe(plan).length > 0) {
+              <p class="paquete-trae">{{ catalogo.etiquetasDe(plan).join(' + ') }}</p>
             }
-            @if (lemaDe(plan); as lema) {
+            @if (catalogo.lemaDe(plan); as lema) {
               <p class="paquete-lema">{{ lema }}</p>
             }
 
             <button
               type="button"
               class="ver-incluye"
-              [attr.aria-expanded]="abierta"
-              (click)="alternarFila(plan)"
+              aria-haspopup="dialog"
+              (click)="catalogo.abrirFila(plan)"
             >
-              {{ abierta ? 'Ocultar qué incluye' : 'Ver qué incluye' }}
-              <span aria-hidden="true">{{ abierta ? '↑' : '↓' }}</span>
+              Ver qué incluye
+              <span aria-hidden="true">→</span>
             </button>
-
-            @if (abierta) {
-              <div class="paquete-detalle">
-                <ul class="paquete-incluye">
-                  @for (item of loQueIncluye(plan); track item) {
-                    <li>{{ item }}</li>
-                  }
-                </ul>
-                @if (fasesDe(plan); as fases) {
-                  <p class="paquete-rotulo">{{ fases.titulo }}</p>
-                  <ol class="paquete-fases">
-                    @for (fase of fases.lista; track fase; let n = $index) {
-                      <li><span class="fase-numero">{{ n + 1 }}</span>{{ fase }}</li>
-                    }
-                    @for (extra of fases.extras; track extra) {
-                      <li class="fase-extra"><span class="fase-numero">+</span>{{ extra }}</li>
-                    }
-                  </ol>
-                }
-                @if ((!mia || mia.renovable) && !enCarrito(plan)) {
-                  <button type="button" class="paquete-carrito" (click)="alternarCarrito(plan)">
-                    + Añadir al carrito sin pagar todavía
-                  </button>
-                }
-              </div>
-            }
 
             <!-- Quien ya lo compró lo ve aquí, en una línea. La renovación se
                  abre un mes antes del fin (`miLicencia`). -->
@@ -526,6 +499,117 @@
       "
     />
 
+    <!-- ── La ventana «Qué incluye» ───────────────────────────────────────
+         Desde el 10-oct-2026. Antes la lista se desplegaba dentro de la
+         tarjeta: esa crecía al triple, las de al lado quedaban con un hueco
+         en blanco y el precio se iba fuera de la pantalla. Aquí la rejilla no
+         se mueve, la lista scrollea por dentro y el precio con «Comprar» se
+         queda fijo abajo, que es lo que se busca después de leerla. Se cierra
+         pulsando fuera o con Escape: no hay nada a medio hacer que perder. -->
+    @if (catalogo.planAbierto(); as plan) {
+      @let mia = miLicencia(plan);
+      <div class="incluye-fondo" (click)="catalogo.cerrarFila()">
+        <section
+          class="incluye"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-incluye"
+          (click)="$event.stopPropagation()"
+        >
+          <header class="incluye-barra">
+            @if (catalogo.imagenDe(plan); as imagen) {
+              <img [src]="imagen" alt="" width="52" height="58" decoding="async" />
+            }
+            <div class="incluye-titulos">
+              <h2 id="titulo-incluye">{{ catalogo.nombreFila(plan) }}</h2>
+              @if (catalogo.etiquetasDe(plan).length > 0) {
+                <p class="paquete-trae">{{ catalogo.etiquetasDe(plan).join(' + ') }}</p>
+              }
+            </div>
+            <button
+              type="button"
+              class="cajon-cerrar"
+              aria-label="Cerrar qué incluye"
+              (click)="catalogo.cerrarFila()"
+            >
+              ✕
+            </button>
+          </header>
+
+          <div class="incluye-cuerpo">
+            <ul class="paquete-incluye">
+              @for (item of catalogo.loQueIncluye(plan); track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+            <!-- Las etapas son un camino y se leen como tal: numeradas, en dos
+                 columnas que se recorren de arriba abajo. Lo que viene además
+                 no es una etapa, y por eso va aparte y con otra forma: el
+                 nombre en negrita y, si lo tiene, para qué sirve. -->
+            @if (catalogo.fasesDe(plan); as fases) {
+              <p class="paquete-rotulo">{{ fases.titulo }}</p>
+              <ol
+                class="incluye-etapas"
+                [style.--filas]="mitad(fases.lista.length)"
+              >
+                @for (fase of fases.lista; track fase; let n = $index) {
+                  <li><span class="etapa-numero">{{ n + 1 }}</span>{{ fase }}</li>
+                }
+              </ol>
+
+              @if (fases.extras.length > 0) {
+                <p class="paquete-rotulo">Además incluye</p>
+                <ul class="incluye-extras">
+                  @for (extra of fases.extras; track extra) {
+                    @let partes = catalogo.partirExtra(extra);
+                    <li>
+                      <strong>{{ partes[0] }}</strong>
+                      @if (partes[1]) {
+                        <span>{{ partes[1] }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+
+          <footer class="incluye-pie">
+            <div class="paquete-precio">
+              <span class="importe">{{ precioTarjeta(plan) }}</span>
+              <span class="paquete-detalle-precio">
+                @if (precioTachado(plan); as antes) {
+                  <s>{{ antes }}</s> ·
+                }
+                {{ vigencia(plan) }}
+                @if (promoDe(plan); as promo) {
+                  · <strong>código {{ promo.code }}</strong>
+                }
+              </span>
+            </div>
+
+            <!-- Los mismos tres casos que el pie de la tarjeta. -->
+            <div class="incluye-botones">
+              @if (mia && !mia.renovable) {
+                <a class="paquete-boton contorno" [routerLink]="'perfil' | privada">Ir a mi perfil</a>
+              } @else if (enCarrito(plan)) {
+                <button type="button" class="paquete-boton contorno en-carrito" (click)="comprarAhora(plan)">
+                  ✓ En el carrito
+                </button>
+              } @else {
+                <button type="button" class="paquete-carrito" (click)="alternarCarrito(plan)">
+                  + Añadir al carrito
+                </button>
+                <button type="button" class="paquete-boton" (click)="comprarAhora(plan)">
+                  {{ mia ? 'Renovar' : 'Comprar' }}
+                </button>
+              }
+            </div>
+          </footer>
+        </section>
+      </div>
+    }
+
     <!-- ── El cajón «Tu carrito» ──────────────────────────────────────────
          Entra por la derecha al pulsar «Comprar ahora» o el «Carrito» de la
          cabecera. Cada producto con su precio y «Quitar»; abajo el subtotal
@@ -565,7 +649,7 @@
               @for (plan of carrito(); track plan.code) {
                 <li class="cajon-item">
                   <div class="cajon-mini" aria-hidden="true">
-                    @if (imagenDe(plan); as imagen) {
+                    @if (catalogo.imagenDe(plan); as imagen) {
                       <img [src]="imagen" alt="" width="48" height="53" decoding="async" />
                     }
                   </div>

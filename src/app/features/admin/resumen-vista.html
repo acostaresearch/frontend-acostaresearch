@@ -1,0 +1,233 @@
+<section data-tour="admin-cifras" class="cifras">
+        <article class="cifra-tarjeta">
+          <p class="cifra-rotulo">Ingresos del mes ({{ resumen().mesEnCurso().mes }})</p>
+          <p class="cifra-valor">{{ resumen().soles(resumen().mesEnCurso().valor) }}</p>
+          <p class="cifra-nota">
+            @if (resumen().mesEnCurso().dias === 1) {
+              Solo lo de hoy.
+            } @else {
+              Lo de {{ resumen().mesEnCurso().dias }} días.
+            }
+            {{ resumen().mesEnCurso().mesAnterior }} cerró en {{ resumen().soles(resumen().mesEnCurso().anterior) }}; su PDF,
+            en
+            <button type="button" class="enlace-texto" (click)="ventas().abrirVentas()">
+              «Ventas mensuales»</button
+            >.
+          </p>
+        </article>
+
+        <article class="cifra-tarjeta">
+          <p class="cifra-rotulo">Esta semana, desde el lunes {{ resumen().semanaEnCurso().desde }}</p>
+          <p class="cifra-valor">{{ resumen().soles(resumen().semanaEnCurso().valor) }}</p>
+          <p class="cifra-nota">
+            @if (resumen().semanaCruzaMes(); as dias) {
+              Incluye {{ dias }}, que no cuentan en el mes.
+            }
+            La anterior cerró en {{ resumen().soles(resumen().semanaEnCurso().anterior) }}.
+          </p>
+        </article>
+
+        <article class="cifra-tarjeta">
+          <p class="cifra-rotulo">Comprobantes por revisar</p>
+          <p class="cifra-valor" [class.urgente]="pagosManuales().porRevisar().length > 0">
+            {{ pagosManuales().porRevisar().length }}
+          </p>
+          <p class="cifra-nota">
+            @if (pagosManuales().porRevisar().length === 0) {
+              No hay ninguno esperando.
+            } @else {
+              <a class="enlace-texto" [routerLink]="direccion()('accesos')">Revísalos en Accesos</a>:
+              cotéjalos con tu Yape antes de aprobar.
+            }
+          </p>
+        </article>
+
+        <article class="cifra-tarjeta">
+          <p class="cifra-rotulo">Licencias que vencen en 8 semanas</p>
+          <p class="cifra-valor">{{ resumen().vencimientos().total }}</p>
+          <p class="cifra-nota">
+            @if (resumen().vencimientos().total === 0) {
+              Ninguna caduca en las próximas ocho semanas.
+            } @else {
+              Escríbeles antes de que caduque, no después.
+              <a class="enlace-texto" [routerLink]="direccion()('licencias')">Ver licencias</a>
+            }
+          </p>
+        </article>
+      </section>
+
+      <div class="resumen-graficos">
+        <!-- La semana va de lunes a domingo: el lunes arranca un punto nuevo en cero. -->
+        <article class="grafico">
+          <h2>Ingresos por semana</h2>
+          <p class="grafico-sub">
+            Últimas 8 semanas, de lunes a domingo; la última es la semana en curso.
+          </p>
+
+          @if (resumen().ingresosPorSemana().total === 0) {
+            <p class="nota">Todavía no hay cobros confirmados en estas semanas.</p>
+          } @else {
+            <div class="lienzo">
+              @if (resumen().pistaDe('semanas'); as p) {
+                <span class="pista" [style.left.%]="p.centro">{{ p.texto }}</span>
+              }
+              <svg
+                [attr.viewBox]="'0 0 ' + resumen().ingresosPorSemana().ancho + ' ' + resumen().ingresosPorSemana().alto"
+                role="img"
+                aria-label="Ingresos cobrados por semana"
+              >
+                @for (guia of resumen().ingresosPorSemana().guias; track guia.y) {
+                  <line
+                    class="guia"
+                    [attr.x1]="resumen().ingresosPorSemana().canal"
+                    [attr.y1]="guia.y"
+                    [attr.x2]="resumen().ingresosPorSemana().ancho"
+                    [attr.y2]="guia.y"
+                  />
+                  <text
+                    class="marca"
+                    [attr.x]="resumen().ingresosPorSemana().canal - 6"
+                    [attr.y]="guia.y + 3"
+                  >
+                    {{ guia.texto }}
+                  </text>
+                }
+
+                <path class="semana-area" [attr.d]="resumen().ingresosPorSemana().area" />
+                <path class="semana-linea" [attr.d]="resumen().ingresosPorSemana().trazo" />
+
+                @for (barra of resumen().ingresosPorSemana().barras; track barra.etiqueta; let i = $index, ultimo = $last) {
+                  <g
+                    class="semana-punto"
+                    [class.en-curso]="ultimo"
+                    tabindex="0"
+                    (mouseenter)="resumen().mostrarPista(barra, 'semanas')"
+                    (mouseleave)="resumen().ocultarPista()"
+                    (focus)="resumen().mostrarPista(barra, 'semanas')"
+                    (blur)="resumen().ocultarPista()"
+                  >
+                    <rect
+                      class="zona"
+                      [attr.x]="barra.x - 4"
+                      y="0"
+                      [attr.width]="barra.ancho + 8"
+                      [attr.height]="resumen().ingresosPorSemana().base"
+                    />
+                    <circle
+                      [attr.cx]="resumen().ingresosPorSemana().puntos[i].cx"
+                      [attr.cy]="resumen().ingresosPorSemana().puntos[i].cy"
+                      [attr.r]="ultimo ? 4 : 3"
+                    />
+                  </g>
+                }
+
+                @for (barra of resumen().ingresosPorSemana().barras; track barra.etiqueta) {
+                  <text
+                    class="eje"
+                    [attr.x]="barra.x + barra.ancho / 2"
+                    [attr.y]="resumen().ingresosPorSemana().alto - 5"
+                  >
+                    {{ barra.etiqueta }}
+                  </text>
+                }
+              </svg>
+            </div>
+          }
+        </article>
+
+        <article class="grafico">
+          <h2>Por dónde entra el dinero</h2>
+          <p class="grafico-sub">
+            {{ resumen().ingresosPorMedio().length }}
+            {{ resumen().ingresosPorMedio().length === 1 ? 'vía' : 'vías' }} de cobro. Los códigos cuentan
+            desde que se venden, sin esperar al canje.
+          </p>
+
+          @if (resumen().ingresosPorMedio().length === 0) {
+            <p class="nota">Todavía no hay cobros confirmados.</p>
+          } @else {
+            <ul class="barras">
+              @for (medio of resumen().ingresosPorMedio(); track medio.etiqueta) {
+                <li>
+                  <span class="barra-nombre">{{ medio.etiqueta }}</span>
+                  <span class="barra-pista">
+                    <span class="barra-relleno" [style.width.%]="medio.parte"></span>
+                  </span>
+                  <span class="barra-valor">{{ resumen().soles(medio.valor) }}</span>
+                </li>
+              }
+            </ul>
+          }
+
+          <h2 class="grafico-segundo">Ingresos por mes</h2>
+          <p class="grafico-sub">
+            Últimos 12 meses.
+            @if (resumen().mesesConCobros() === 1) {
+              Solo {{ resumen().mesEnCurso().mes }} tiene cobros registrados.
+            } @else {
+              Cobros de todas las vías; los de PayPal, pasados a soles.
+            }
+          </p>
+
+          @if (resumen().ingresosPorMes().total === 0) {
+            <p class="nota">Todavía no hay cobros confirmados en estos meses.</p>
+          } @else {
+            <div class="lienzo">
+              @if (resumen().pistaDe('ingresos'); as p) {
+                <span class="pista" [style.left.%]="p.centro">{{ p.texto }}</span>
+              }
+              <svg
+                [attr.viewBox]="'0 0 ' + resumen().ingresosPorMes().ancho + ' ' + resumen().ingresosPorMes().alto"
+                role="img"
+                aria-label="Ingresos cobrados por mes"
+              >
+                @for (guia of resumen().ingresosPorMes().guias; track guia.y) {
+                  <line
+                    class="guia"
+                    [attr.x1]="resumen().ingresosPorMes().canal"
+                    [attr.y1]="guia.y"
+                    [attr.x2]="resumen().ingresosPorMes().ancho"
+                    [attr.y2]="guia.y"
+                  />
+                  <text class="marca" [attr.x]="resumen().ingresosPorMes().canal - 6" [attr.y]="guia.y + 3">
+                    {{ guia.texto }}
+                  </text>
+                }
+
+                @for (barra of resumen().ingresosPorMes().barras; track barra.etiqueta) {
+                  <g
+                    tabindex="0"
+                    (mouseenter)="resumen().mostrarPista(barra, 'ingresos')"
+                    (mouseleave)="resumen().ocultarPista()"
+                    (focus)="resumen().mostrarPista(barra, 'ingresos')"
+                    (blur)="resumen().ocultarPista()"
+                  >
+                    <!-- Zona sensible del alto del gráfico: apuntar a una barra de
+                     dos píxeles con el ratón no es razonable. -->
+                    <rect
+                      class="zona"
+                      [attr.x]="barra.x - 4"
+                      y="0"
+                      [attr.width]="barra.ancho + 8"
+                      [attr.height]="resumen().ingresosPorMes().base"
+                    />
+                    @if (barra.forma) {
+                      <path class="barra" [attr.d]="barra.forma" />
+                    }
+                  </g>
+                }
+
+                @for (barra of resumen().ingresosPorMes().barras; track barra.etiqueta) {
+                  <text
+                    class="eje"
+                    [attr.x]="barra.x + barra.ancho / 2"
+                    [attr.y]="resumen().ingresosPorMes().alto - 5"
+                  >
+                    {{ barra.etiqueta }}
+                  </text>
+                }
+              </svg>
+            </div>
+          }
+        </article>
+      </div>

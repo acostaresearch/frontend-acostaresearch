@@ -250,8 +250,8 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ancla: '[data-tour="planes-lista"]',
       titulo: 'Lo que se vende, y a cuánto',
       texto:
-        'Una tarjeta por paquete: cuánto cuesta y cuánto dura. «Ver qué incluye» la despliega ' +
-        'con todo lo que te llevas. Se paga una vez: no hay suscripción ni cobros automáticos.',
+        'Una tarjeta por paquete: cuánto cuesta y cuánto dura. «Ver qué incluye» abre una ' +
+        'ventana con todo lo que te llevas. Se paga una vez: no hay suscripción ni cobros automáticos.',
     },
     {
       seccion: 'Los paquetes',

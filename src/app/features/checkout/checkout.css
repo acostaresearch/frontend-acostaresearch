@@ -1465,30 +1465,6 @@ h1 {
   text-decoration: underline;
 }
 
-.fase-numero {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  background: var(--color-primario);
-  border-radius: 6px;
-}
-
-/* Lo que viene con el paquete sin ser una etapa: el «+» en el azul suave,
-   para que no se lea como un paso más de la ruta. */
-.fase-extra {
-  grid-column: 1 / -1;
-}
-
-.fase-extra .fase-numero {
-  color: var(--color-primario);
-  background: var(--color-primario-suave);
-}
-
 @media (max-width: 860px) {
   .cabecera {
     flex-direction: column;
@@ -2264,9 +2240,218 @@ h1 {
   color: var(--p-azul);
 }
 
-/* «Qué incluye», desplegado dentro de la tarjeta. */
-.paquete-detalle {
-  margin-top: 12px;
+/* ── La ventana «Qué incluye» ─────────────────────────────────────────────
+ *
+ * Centrada, con el mismo velo que el cajón. Tres franjas: la barra con el
+ * nombre, el cuerpo que scrollea y el pie con el precio y «Comprar», que no
+ * se mueve. En móvil sube desde abajo y ocupa casi toda la pantalla.
+ */
+.incluye-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 24, 40, 0.28);
+  animation: cajon-velo 0.2s ease-out;
+}
+
+.incluye {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: min(680px, 100%);
+  overflow: hidden;
+  background: var(--color-superficie);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.22);
+  animation: incluye-entra 0.2s ease-out;
+}
+
+@keyframes incluye-entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .incluye-fondo,
+  .incluye {
+    animation: none;
+  }
+}
+
+.incluye-barra {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--p-linea);
+}
+
+.incluye-barra img {
+  flex: none;
+  width: 52px;
+  height: auto;
+}
+
+.incluye-titulos {
+  flex: 1;
+  min-width: 0;
+}
+
+.incluye-titulos h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.incluye-titulos .paquete-trae {
+  margin: 4px 0 0;
+}
+
+.incluye-barra .cajon-cerrar {
+  flex: none;
+  align-self: flex-start;
+}
+
+.incluye-cuerpo {
+  flex: 1;
+  min-height: 0;
+  padding: 18px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.incluye-cuerpo .paquete-incluye li {
+  font-size: 13.5px;
+}
+
+.incluye-cuerpo .paquete-rotulo {
+  margin: 20px 0 10px;
+}
+
+/* Las etapas: dos columnas que se leen de arriba abajo (1-5 a la izquierda,
+ * 6-9 a la derecha), cada una en su casilla. `--filas` la pone la plantilla
+ * con la mitad de las que haya, para que la columna parta donde debe. */
+.incluye-etapas {
+  display: grid;
+  grid-template-rows: repeat(var(--filas, 5), auto);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.incluye-etapas li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--p-gris-1);
+  background: var(--color-fondo);
+  border-radius: 10px;
+}
+
+.etapa-numero {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--p-azul);
+  border-radius: 50%;
+}
+
+/* Lo que viene además: recuadro con borde, el nombre arriba y debajo para
+ * qué sirve. Distinto de las etapas a propósito: no es un paso del camino. */
+.incluye-extras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.incluye-extras li {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 10px 12px;
+  border: 1px solid var(--p-linea);
+  border-left: 3px solid var(--p-azul);
+  border-radius: 10px;
+}
+
+.incluye-extras strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-gris-1);
+}
+
+.incluye-extras span {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--p-gris-2);
+}
+
+.incluye-pie {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--p-linea);
+}
+
+.incluye-botones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.incluye-botones .paquete-carrito {
+  margin-top: 0;
+}
+
+@media (max-width: 620px) {
+  .incluye-fondo {
+    place-items: end stretch;
+    padding: 0;
+  }
+
+  .incluye {
+    width: 100%;
+    max-height: 92%;
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+/* En pantallas estrechas las etapas y los extras van en una sola columna. */
+@media (max-width: 460px) {
+  .incluye-etapas {
+    grid-template-rows: none;
+    grid-auto-flow: row;
+  }
+
+  .incluye-extras {
+    grid-template-columns: 1fr;
+  }
 }
 
 .paquete-incluye {
@@ -2304,34 +2489,6 @@ h1 {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--p-gris-3);
-}
-
-.paquete-fases {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.paquete-fases li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  color: var(--p-gris-1);
-}
-
-.paquete-fases .fase-numero {
-  width: 18px;
-  height: 18px;
-  font-size: 10px;
-  background: var(--p-azul);
-}
-
-.paquete-fases .fase-extra .fase-numero {
-  color: var(--p-azul);
-  background: var(--p-pildora);
 }
 
 .paquete-carrito {

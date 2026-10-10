@@ -1,0 +1,60 @@
+.fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Tres campos en una fila: el primero se lleva el hueco y los dos estrechos
+   —cifras de dos dígitos— van detrás sin estirarse. */
+.fila.tres {
+  grid-template-columns: 1fr auto auto;
+}
+
+.fila .estrecho {
+  max-width: 110px;
+}
+
+.campo {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.campo label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.opcional {
+  font-weight: 400;
+  color: var(--color-texto-tenue);
+}
+
+.campo input,
+.campo select,
+.campo textarea,
+.buscador,
+.filtro-estado {
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus,
+.buscador:focus,
+.filtro-estado:focus {
+  outline: 2px solid var(--color-primario);
+  outline-offset: -1px;
+}
+
+.campo.estrecho {
+  flex: 0 1 120px;
+}
+
