@@ -2,7 +2,9 @@
   <section class="al" aria-labelledby="al-titulo">
     <header class="al-cabecera">
       <h3 id="al-titulo" class="al-titulo">Tesis y revistas peruanas</h3>
-      <span class="al-fuente">ALICIA · CONCYTEC</span>
+      <span class="al-fuente">{{
+        busqueda()?.fuente === 'lareferencia' ? 'LA Referencia · Perú' : 'ALICIA · CONCYTEC'
+      }}</span>
       @if (busqueda(); as b) {
         <span class="al-total"
           >{{ b.total | number }} {{ b.total === 1 ? 'resultado' : 'resultados' }}</span
@@ -17,6 +19,16 @@
         Tu misma búsqueda, en los repositorios de las universidades del Perú y en RENATI: sirven
         como antecedentes nacionales.
       </p>
+
+      <!-- ALICIA no contestó y la lista viene del respaldo: se dice, porque
+           ahí no están las tesis de pregrado. -->
+      @if (busqueda()?.fuente === 'lareferencia') {
+        <p class="al-respaldo" role="status">
+          <strong>ALICIA no responde ahora.</strong> Estos resultados vienen de LA Referencia, que
+          recoge los mismos repositorios peruanos: tesis de maestría y de doctorado, y artículos.
+          Las tesis de pregrado solo están en ALICIA; vuelve a buscar en unos minutos para verlas.
+        </p>
+      }
 
       @if (busqueda(); as b) {
         <div class="al-consulta">
@@ -97,7 +109,8 @@
           </p>
         } @else if (b.total === 0) {
           <p class="al-vacio">
-            ALICIA no tiene nada con esas palabras. Prueba con menos términos o cámbialos a mano.
+            {{ b.fuente === 'lareferencia' ? 'LA Referencia' : 'ALICIA' }} no tiene nada con esas
+            palabras. Prueba con menos términos o cámbialos a mano.
           </p>
         } @else {
           <!-- Lo mismo que encima de la tabla de Scopus: marcar y añadir sin

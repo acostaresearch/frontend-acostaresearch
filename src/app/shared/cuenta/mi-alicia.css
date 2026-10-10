@@ -44,6 +44,16 @@
   color: var(--color-texto-suave);
 }
 
+.al-respaldo {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--color-aviso);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-aviso) 8%, transparent);
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
 .al-consulta {
   display: flex;
   flex-wrap: wrap;

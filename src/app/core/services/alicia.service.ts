@@ -31,6 +31,12 @@ export interface BusquedaDeAlicia {
   consulta: string;
   desde: number | null;
   hasta: number | null;
+  /**
+   * De dónde viene la lista. `lareferencia` cuando ALICIA no contesta: los
+   * mismos repositorios peruanos servidos por LA Referencia, sin las tesis de
+   * pregrado. Falta en las búsquedas sin palabras.
+   */
+  fuente?: 'alicia' | 'lareferencia';
   total: number;
   pagina: number;
   paginas: number;

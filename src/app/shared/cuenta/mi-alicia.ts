@@ -30,6 +30,10 @@ import { AliciaService, BusquedaDeAlicia, TipoDeAlicia } from '../../core/servic
  * No se escribe nada: toma la ecuación de los resultados de Scopus y el
  * servidor la lleva a ALICIA con los términos también en español. Si la
  * traducción no le convence, puede cambiar la consulta a mano.
+ *
+ * Cuando ALICIA no contesta, el servidor busca lo mismo en LA Referencia y lo
+ * dice en `fuente`: aquí solo se avisa, porque ahí faltan las tesis de
+ * pregrado. Lo demás —marcar, añadir, paginar— es igual.
  */
 @Component({
   selector: 'app-mi-alicia',
