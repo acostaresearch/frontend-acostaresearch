@@ -53,6 +53,11 @@ import { EstadoCorpus, Referencia, ReferenceService } from '../../core/services/
 import { AnalisisBundle, Skill, SkillService } from '../../core/services/skill.service';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { User } from '../../core/models/user.model';
+import {
+  PRODUCTOS_DE_AYUDA,
+  nombreDeProducto,
+  saleEn,
+} from '../../shared/contenido/productos-de-ayuda';
 import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 import {
@@ -403,6 +408,9 @@ const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
 ];
 
 /** Rebaja mínima que acepta el servidor, en céntimos de sol. */
+/** Una pestaña por producto en las listas de videos y de guías, detrás de «Todos». */
+const FILTROS_POR_PRODUCTO = PRODUCTOS_DE_AYUDA.map((p) => ({ valor: p.codigo, etiqueta: p.nombre }));
+
 const DESCUENTO_MINIMO = 1000;
 
 /**
@@ -3622,16 +3630,42 @@ export class Admin implements OnInit {
    * ocultos ya se ven marcados en la fila.
    */
   readonly listaTutoriales = new Listado(this.tutoriales, {
-    filtros: [{ valor: 'todos', etiqueta: 'Todos' }],
+    filtros: [{ valor: 'todos', etiqueta: 'Todos' }, ...FILTROS_POR_PRODUCTO],
     texto: (t: Tutorial) => [t.titulo, t.grupo, t.entrada],
+    pasa: (t: Tutorial, producto) => saleEn(t.productos, producto),
   });
   readonly listaGuias = new Listado(
     computed(() => this.guias()),
     {
-      filtros: [{ valor: 'todas', etiqueta: 'Todas' }],
+      filtros: [{ valor: 'todas', etiqueta: 'Todas' }, ...FILTROS_POR_PRODUCTO],
       texto: (g: Guia) => [g.titulo, g.archivoNombre],
+      pasa: (g: Guia, producto) => saleEn(g.productos, producto),
     },
   );
+
+  // ── Productos de un video o una guía ──
+  //
+  // Cada uno puede ir en varios productos (tesis, informes, suficiencia…), y
+  // sin ninguno marcado sale en todos. Las pestañas de arriba de cada lista
+  // enseñan lo que verá quien elija ese producto en la web: lo suyo y lo común.
+
+  readonly productosDeAyuda = PRODUCTOS_DE_AYUDA;
+  /** «tsp» → «Suficiencia Profesional», para las pastillas de cada fila. */
+  readonly nombreDeAyuda = nombreDeProducto;
+
+  /** El producto de la pestaña abierta, como lista; en «Todos», ninguno. */
+  private productoMirado(filtro: string): string[] {
+    return PRODUCTOS_DE_AYUDA.some((p) => p.codigo === filtro) ? [filtro] : [];
+  }
+
+  /** Marca o desmarca un producto en la ventana del video o de la guía. */
+  alternarProducto(control: FormControl<string[]>, codigo: string): void {
+    const marcados = control.value;
+    control.setValue(
+      marcados.includes(codigo) ? marcados.filter((c) => c !== codigo) : [...marcados, codigo],
+    );
+    control.markAsDirty();
+  }
   readonly guardandoTutorial = signal(false);
 
   /**
@@ -3656,6 +3690,7 @@ export class Admin implements OnInit {
     entrada: [''],
     puntos: [''],
     videoUrl: [''],
+    productos: this.fb.nonNullable.control<string[]>([]),
     active: [true],
   });
 
@@ -3691,6 +3726,8 @@ export class Admin implements OnInit {
       // línea por punto, sin corchetes que cerrar.
       puntos: (tutorial?.puntos ?? []).join('\n'),
       videoUrl: tutorial?.videoUrl ?? '',
+      // Uno nuevo nace en el producto que se está mirando en la lista.
+      productos: tutorial?.productos ?? this.productoMirado(this.listaTutoriales.filtro()),
       active: tutorial?.active ?? true,
     });
   }
@@ -3966,6 +4003,7 @@ export class Admin implements OnInit {
     orden: [1, [Validators.required]],
     titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
     descripcion: ['', [Validators.maxLength(600)]],
+    productos: this.fb.nonNullable.control<string[]>([]),
     active: [true],
   });
 
@@ -3996,6 +4034,7 @@ export class Admin implements OnInit {
       orden: guia?.orden ?? this.guias().length + 1,
       titulo: guia?.titulo ?? '',
       descripcion: guia?.descripcion ?? '',
+      productos: guia?.productos ?? this.productoMirado(this.listaGuias.filtro()),
       active: guia?.active ?? true,
     });
   }

@@ -34,6 +34,31 @@
         Todavía no hay videos publicados. Lo de más abajo te saca de casi cualquier atasco.
       </p>
     } @else {
+      <!-- A quien compró se le dice de qué son: así entiende por qué no ve los
+           de otros productos. -->
+      @if (deLoTuyo()) {
+        <p class="de-lo-tuyo">Los videos de lo que compraste: <b>{{ deLoTuyo() }}</b></p>
+      }
+
+      <!-- Una pestaña por producto con videos propios, solo si hay dos o más.
+           Quien compró ve nada más que las suyas. Lo que es de todos (conectar
+           Claude) sale en cada una. -->
+      @if (pestanas().length > 1) {
+        <div class="productos" role="group" aria-label="Videos por producto">
+          @for (pestana of pestanas(); track pestana.codigo) {
+            <button
+              type="button"
+              class="producto"
+              [class.activo]="producto() === pestana.codigo"
+              [attr.aria-pressed]="producto() === pestana.codigo"
+              (click)="elegirProducto(pestana.codigo)"
+            >
+              {{ pestana.nombre }}
+            </button>
+          }
+        </div>
+      }
+
       <div data-tour="videos" class="sala">
         @if (seleccionado(); as video) {
           <div class="reproductor" #reproductor>

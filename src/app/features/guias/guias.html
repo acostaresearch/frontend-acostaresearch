@@ -44,6 +44,29 @@
           <a routerLink="/tutoriales">videos</a> enseñan lo mismo.
         </p>
       } @else {
+        @if (deLoTuyo()) {
+          <p class="de-lo-tuyo">Las guías de lo que compraste: <b>{{ deLoTuyo() }}</b></p>
+        }
+
+        <!-- Una pestaña por producto con guías propias, solo si hay dos o más.
+             Quien compró ve nada más que las suyas. Lo que es de todos sale en
+             cada una. -->
+        @if (pestanas().length > 1) {
+          <div class="productos" role="group" aria-label="Guías por producto">
+            @for (pestana of pestanas(); track pestana.codigo) {
+              <button
+                type="button"
+                class="producto"
+                [class.activo]="producto() === pestana.codigo"
+                [attr.aria-pressed]="producto() === pestana.codigo"
+                (click)="elegirProducto(pestana.codigo)"
+              >
+                {{ pestana.nombre }}
+              </button>
+            }
+          </div>
+        }
+
      <ul data-tour="guias-pdf" class="lista">
           @for (guia of tarjetas(); track guia.enlace) {
             <li class="fila">

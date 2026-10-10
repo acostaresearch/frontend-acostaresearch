@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
@@ -20,6 +20,8 @@ export interface Tutorial {
   puntos: string[];
   /** Vacío = todavía no grabado. La tarjeta lo dice en lugar de dejar un hueco. */
   videoUrl: string;
+  /** A qué productos les sirve (códigos de `productos-de-ayuda.ts`). Vacío = a todos. */
+  productos: string[];
   active: boolean;
 }
 
@@ -33,8 +35,15 @@ export interface TutorialEnvio {
   entrada: string;
   puntos: string;
   videoUrl: string;
+  productos: string[];
   active: boolean;
 }
+
+/** Un servidor anterior a separar por producto no manda la lista: vacía = en todos. */
+const conProductos = (tutorial: Tutorial): Tutorial => ({
+  ...tutorial,
+  productos: tutorial.productos ?? [],
+});
 
 @Injectable({ providedIn: 'root' })
 export class TutorialService {
@@ -45,26 +54,43 @@ export class TutorialService {
   publicos(): Observable<Tutorial[]> {
     return this.http
       .get<ApiResponse<{ tutoriales: Tutorial[] }>>(this.base)
-      .pipe(map((res) => res.data.tutoriales));
+      .pipe(map((res) => res.data.tutoriales.map(conProductos)));
+  }
+
+  /**
+   * Los productos que compró quien tiene la sesión, para enseñarle solo sus
+   * videos y sus guías. Null = sin filtro: el administrador, quien no compró
+   * nada todavía, o un fallo (antes verlo todo que quedarse sin ayuda).
+   * Pide sesión: sin ella no se llama.
+   */
+  misProductos(): Observable<string[] | null> {
+    return this.http
+      .get<ApiResponse<{ todos: boolean; productos: string[] }>>(`${this.base}/mis-productos`)
+      .pipe(
+        map((res) =>
+          res.data.todos || res.data.productos.length === 0 ? null : res.data.productos,
+        ),
+        catchError(() => of(null)),
+      );
   }
 
   /** Panel: todo, incluido lo apagado. */
   todos(): Observable<Tutorial[]> {
     return this.http
       .get<ApiResponse<{ tutoriales: Tutorial[] }>>(`${this.base}/todos`)
-      .pipe(map((res) => res.data.tutoriales));
+      .pipe(map((res) => res.data.tutoriales.map(conProductos)));
   }
 
   crear(datos: TutorialEnvio): Observable<Tutorial> {
     return this.http
       .post<ApiResponse<{ tutorial: Tutorial }>>(this.base, datos)
-      .pipe(map((res) => res.data.tutorial));
+      .pipe(map((res) => conProductos(res.data.tutorial)));
   }
 
   actualizar(id: string, datos: Partial<TutorialEnvio>): Observable<Tutorial> {
     return this.http
       .patch<ApiResponse<{ tutorial: Tutorial }>>(`${this.base}/${id}`, datos)
-      .pipe(map((res) => res.data.tutorial));
+      .pipe(map((res) => conProductos(res.data.tutorial)));
   }
 
   /** El título del video según YouTube (oEmbed, por el servidor). Null si no contesta. */
@@ -87,7 +113,7 @@ export class TutorialService {
   reordenar(ids: string[]): Observable<Tutorial[]> {
     return this.http
       .put<ApiResponse<{ tutoriales: Tutorial[] }>>(`${this.base}/orden`, { ids })
-      .pipe(map((res) => res.data.tutoriales));
+      .pipe(map((res) => res.data.tutoriales.map(conProductos)));
   }
 
   borrar(id: string): Observable<void> {

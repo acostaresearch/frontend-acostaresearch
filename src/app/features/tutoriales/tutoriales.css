@@ -45,6 +45,51 @@
   color: var(--color-primario);
 }
 
+/* Las pestañas de producto: cápsulas, como las salidas de la página de guías.
+ * Solo existen cuando algún video es de un producto concreto. */
+/* A quien compró: de qué producto es lo que está viendo. */
+.de-lo-tuyo {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+}
+
+.de-lo-tuyo b {
+  color: var(--color-texto);
+}
+
+.productos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.producto {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.producto:hover {
+  border-color: var(--color-primario);
+}
+
+.producto.activo {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
 /* La sala: un reproductor y la lista al lado, como en un curso. Uno solo y no
  * uno por video: con ocho apilados la página era eterna y cargaba ocho
  * reproductores de YouTube. */

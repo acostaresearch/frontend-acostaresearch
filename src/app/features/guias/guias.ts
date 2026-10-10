@@ -1,7 +1,17 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import {
+  loQueLeToca,
+  nombreDeProducto,
+  pestanaElegida,
+  pestanasDeProducto,
+  saleEn,
+} from '../../shared/contenido/productos-de-ayuda';
+import { AuthService } from '../../core/services/auth.service';
+import { TutorialService } from '../../core/services/tutorial.service';
 import { Guia, GuiaService } from '../../core/services/guia.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
@@ -12,6 +22,8 @@ interface Tarjeta {
   descripcion: string;
   enlace: string;
   peso: string | null;
+  /** A qué productos sirve. Vacío = a todos. */
+  productos: string[];
 }
 
 /**
@@ -33,21 +45,72 @@ interface Tarjeta {
 })
 export class Guias implements OnInit {
   private readonly api = inject(GuiaService);
+  private readonly auth = inject(AuthService);
+  private readonly ayuda = inject(TutorialService);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly whatsappUrl = environment.whatsappUrl;
   readonly cargando = signal(true);
-  readonly tarjetas = signal<Tarjeta[]>([]);
+
+  /** Todas las publicadas, de todos los productos. */
+  private readonly publicadas = signal<Tarjeta[]>([]);
+
+  /**
+   * Por producto, igual que los videos (ver `tutoriales.ts`): cada guía dice a
+   * cuáles sirve y la que no dice ninguno sale en todos. Con sesión y algo
+   * comprado, solo las de lo comprado; el visitante y el administrador, todas.
+   * Pestañas solo con dos productos o más, siempre una marcada, y la elegida va
+   * en la dirección (`?producto=tsp`).
+   */
+  private readonly mios = signal<string[] | null>(null);
+  private readonly pedido = signal<string | null>(null);
+
+  private readonly visibles = computed(() => loQueLeToca(this.publicadas(), this.mios()));
+
+  readonly pestanas = computed(() => {
+    const mios = this.mios();
+    return pestanasDeProducto(this.visibles()).filter((p) => !mios || mios.includes(p.codigo));
+  });
+
+  readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
+
+  /** Los nombres de lo que compró. Vacío si ve todo. */
+  readonly deLoTuyo = computed(() => (this.mios() ?? []).map(nombreDeProducto).join(' · '));
+
+  /** Lo que se ve: lo de la pestaña elegida más lo que es de todos. */
+  readonly tarjetas = computed(() => {
+    const producto = this.producto();
+    const lista = this.visibles();
+    return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
+  });
 
   ngOnInit(): void {
-    this.api.publicas().subscribe({
-      next: (lista) => {
-        this.tarjetas.set(lista.length > 0 ? lista.map((g) => this.tarjeta(g)) : this.deSiempre());
-        this.cargando.set(false);
-      },
-      error: () => {
-        this.tarjetas.set(this.deSiempre());
-        this.cargando.set(false);
-      },
+    // Sin lista del servidor sale la guía de siempre, para no dejar la página vacía.
+    const guias = this.api.publicas().pipe(
+      map((lista) => (lista.length > 0 ? lista.map((g) => this.tarjeta(g)) : this.deSiempre())),
+      catchError(() => of(this.deSiempre())),
+    );
+    forkJoin({
+      guias,
+      mios: this.auth.isAuthenticated() ? this.ayuda.misProductos() : of(null),
+    }).subscribe(({ guias, mios }) => {
+      this.mios.set(mios);
+      this.publicadas.set(guias);
+      this.pedido.set(this.ruta.snapshot.queryParamMap.get('producto'));
+      this.cargando.set(false);
+    });
+  }
+
+  /** Cambia de producto y lo deja en la dirección. */
+  elegirProducto(codigo: string): void {
+    if (!this.pestanas().some((p) => p.codigo === codigo)) return;
+    this.pedido.set(codigo);
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { producto: codigo },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
@@ -57,6 +120,7 @@ export class Guias implements OnInit {
       descripcion: guia.descripcion,
       enlace: this.api.enlace(guia),
       peso: this.peso(guia.bytes),
+      productos: guia.productos,
     };
   }
 
@@ -69,6 +133,7 @@ export class Guias implements OnInit {
         descripcion: 'Cómo conectarlo a Claude, paso a paso y con capturas.',
         enlace: environment.guiaUrl,
         peso: null,
+        productos: [],
       },
     ];
   }

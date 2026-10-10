@@ -1,8 +1,17 @@
 import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import {
+  loQueLeToca,
+  nombreDeProducto,
+  pestanaElegida,
+  pestanasDeProducto,
+  saleEn,
+} from '../../shared/contenido/productos-de-ayuda';
+import { AuthService } from '../../core/services/auth.service';
 import { TROPIEZOS } from '../../shared/contenido/tutoriales';
 import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
@@ -46,14 +55,58 @@ interface Grupo {
 export class Tutoriales implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly api = inject(TutorialService);
+  private readonly auth = inject(AuthService);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   private readonly reproductor = viewChild<ElementRef<HTMLElement>>('reproductor');
   private readonly fallas = viewChild<ElementRef<HTMLElement>>('fallas');
 
   readonly whatsappUrl = environment.whatsappUrl;
 
-  readonly tutoriales = signal<Tutorial[]>([]);
+  /** Todo lo publicado, de todos los productos. */
+  private readonly publicados = signal<Tutorial[]>([]);
   readonly cargando = signal(true);
+
+  /**
+   * POR PRODUCTO
+   * ------------
+   * Quien compró Informes no tiene por qué cruzarse con los videos de la tesis.
+   * Cada video dice a qué productos sirve —puede ser a varios— y el que no dice
+   * ninguno sale en todos, como el de conectar Claude.
+   *
+   * CON SESIÓN Y ALGO COMPRADO, SOLO LO SUYO: los videos de otros productos ni
+   * aparecen ni tienen pestaña. El visitante, quien aún no compró y el
+   * administrador lo ven todo, repartido en pestañas. No es un candado —la
+   * lista es pública y los videos están en YouTube—, es orden.
+   *
+   * Hay pestañas solo con dos productos o más, y siempre una marcada: no existe
+   * «Todos», que era la mezcla. La elegida va en la dirección
+   * (`?producto=informe`), para mandar a alguien directo a lo suyo.
+   */
+  private readonly mios = signal<string[] | null>(null);
+  private readonly pedido = signal<string | null>(null);
+
+  /** Lo que le toca: todo, o solo lo de lo que compró más lo que es de todos. */
+  private readonly visibles = computed(() => loQueLeToca(this.publicados(), this.mios()));
+
+  /** Los productos con algún video propio entre los que le tocan. */
+  readonly pestanas = computed(() => {
+    const mios = this.mios();
+    return pestanasDeProducto(this.visibles()).filter((p) => !mios || mios.includes(p.codigo));
+  });
+
+  readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
+
+  /** Los nombres de lo que compró, para decirle de qué son los videos. Vacío si ve todo. */
+  readonly deLoTuyo = computed(() => (this.mios() ?? []).map(nombreDeProducto).join(' · '));
+
+  /** Lo que se ve: lo de la pestaña elegida más lo que es de todos. */
+  readonly tutoriales = computed(() => {
+    const producto = this.producto();
+    const lista = this.visibles();
+    return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
+  });
 
   /** El video que está en la pantalla, por su posición en la lista. */
   readonly actual = signal(0);
@@ -117,14 +170,36 @@ export class Tutoriales implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.publicos().subscribe({
-      next: (lista) => {
-        this.tutoriales.set(lista);
+    // Las dos cosas a la vez, y se pinta cuando están ambas: si llegara antes
+    // la lista, el comprador vería un instante los videos de todos.
+    forkJoin({
+      lista: this.api.publicos(),
+      mios: this.auth.isAuthenticated() ? this.api.misProductos() : of(null),
+    }).subscribe({
+      next: ({ lista, mios }) => {
+        this.mios.set(mios);
+        this.publicados.set(lista);
+        // El producto de la dirección; si no es de los suyos, `producto` lo ignora.
+        this.pedido.set(this.ruta.snapshot.queryParamMap.get('producto'));
         this.cargando.set(false);
       },
       // Sin lista no se enseña un error: los tropiezos escritos de más abajo
       // siguen sirviendo, que es la mitad útil de esta página.
       error: () => this.cargando.set(false),
+    });
+  }
+
+  /** Cambia de producto y vuelve al primer video de esa lista. */
+  elegirProducto(codigo: string): void {
+    if (!this.pestanas().some((p) => p.codigo === codigo)) return;
+    this.pedido.set(codigo);
+    this.actual.set(0);
+    this.reproduciendo.set(false);
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { producto: codigo },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 

@@ -95,6 +95,54 @@
   color: var(--color-exito);
 }
 
+/* ── Por producto ───────────────────────────────────────────────────────
+   Las mismas cápsulas que en /tutoriales. Solo salen cuando alguna guía es de
+   un producto concreto. */
+/* A quien compró: de qué producto es lo que está viendo. */
+.de-lo-tuyo {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+.de-lo-tuyo b {
+  color: var(--color-texto);
+}
+
+.productos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.producto {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.producto:hover {
+  border-color: var(--color-primario);
+}
+
+.producto.activo {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
 /* ── Las guías ────────────────────────────────────────────────────────── */
 .lista {
   padding: 0;

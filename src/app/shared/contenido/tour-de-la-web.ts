@@ -271,7 +271,8 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       titulo: 'Los videos guía',
       texto:
         'Del correo de compra al primer capítulo, en video. Es la página a la que vuelve quien ' +
-        'compró y no sabe seguir.',
+        'compró y no sabe seguir. Con tu sesión abierta solo ves los de lo que compraste; si ' +
+        'tienes más de un producto, arriba sale una pestaña por cada uno.',
     },
     {
       seccion: 'Los videos',
@@ -287,7 +288,9 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ruta: '/guias-de-instalacion',
       ancla: '[data-tour="guias-pdf"]',
       titulo: 'Las guías en PDF',
-      texto: 'Lo mismo, paso a paso y con capturas, para tenerlo a mano sin conexión.',
+      texto:
+        'Lo mismo, paso a paso y con capturas, para tenerlo a mano sin conexión. Igual que ' +
+        'los videos: con tu sesión abierta solo salen las de lo que compraste.',
     },
 
     // ── El panel, solo si hay algo que enseñar en él ───────────────────────

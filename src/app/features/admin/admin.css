@@ -506,6 +506,97 @@ td.acciones {
   accent-color: var(--color-primario);
 }
 
+/* ── Productos de un video o una guía ─────────────────────────────────────
+   Varias casillas en vez de un desplegable: uno puede ir en dos productos. */
+.productos-de-ayuda {
+  min-width: 0;
+  padding: 0;
+  margin: 0 0 14px;
+  border: 0;
+}
+
+/* Como el rótulo de los demás campos de la ventana, que no llevan estilo propio. */
+.productos-de-ayuda legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.casillas-producto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Cada producto es una pastilla que se enciende, no una casilla suelta: se ve
+   de un vistazo en cuáles está. La casilla sigue ahí para el teclado. */
+.chip-producto {
+  position: relative;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  user-select: none;
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  transition:
+    background var(--transicion),
+    border-color var(--transicion),
+    color var(--transicion);
+}
+
+.chip-producto:hover {
+  border-color: var(--color-primario);
+}
+
+.chip-producto input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.chip-producto:has(input:checked) {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.chip-producto:has(input:checked)::before {
+  content: '✓';
+}
+
+.chip-producto:has(input:focus-visible) {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+/* El formulario va entre la ventana y su cuerpo: sin esto corta la columna y
+   el cuerpo no scrollea, así que una ventana alta se sale por abajo y tapa
+   «Guardar». */
+.ventana > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.productos-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.pastilla.producto {
+  color: var(--color-primario);
+  background: color-mix(in srgb, var(--color-primario) 10%, transparent);
+}
+
 .acciones-formulario {
   display: flex;
   flex-wrap: wrap;

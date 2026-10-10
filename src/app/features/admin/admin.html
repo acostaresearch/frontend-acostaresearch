@@ -3053,6 +3053,13 @@
                             <span class="sin-doi">sin video: sale como «en grabación»</span>
                           }
                         </span>
+                        <span class="bloque productos-fila">
+                          @for (codigo of tutorial.productos; track codigo) {
+                            <span class="pastilla producto">{{ nombreDeAyuda(codigo) }}</span>
+                          } @empty {
+                            <span class="pastilla">Todos los productos</span>
+                          }
+                        </span>
                       </td>
                       <td class="sin-salto">
                         @if (tutorial.duracion) {
@@ -3124,6 +3131,13 @@
                         @if (!guia.active) {
                           <span class="pastilla">Oculta</span>
                         }
+                        <span class="bloque productos-fila">
+                          @for (codigo of guia.productos; track codigo) {
+                            <span class="pastilla producto">{{ nombreDeAyuda(codigo) }}</span>
+                          } @empty {
+                            <span class="pastilla">Todos los productos</span>
+                          }
+                        </span>
                       </td>
                       <td class="tenue">
                         {{ guia.archivoNombre }} · {{ pesoGuia(guia.bytes) }}
@@ -3255,6 +3269,31 @@
                   </small>
                 </label>
 
+                <!-- En qué productos sale. Varios a la vez valen: el del marco
+                     teórico sirve a tesis y a suficiencia. Ninguno = en todos. -->
+                <fieldset class="productos-de-ayuda">
+                  <legend>Para qué producto es</legend>
+                  <div class="casillas-producto">
+                    @for (producto of productosDeAyuda; track producto.codigo) {
+                      <label class="chip-producto">
+                        <input
+                          type="checkbox"
+                          [checked]="formTutorial.controls.productos.value.includes(producto.codigo)"
+                          (change)="alternarProducto(formTutorial.controls.productos, producto.codigo)"
+                        />
+                        <span>{{ producto.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">
+                    @if (formTutorial.controls.productos.value.length === 0) {
+                      Sin marcar ninguno, sale en todos. Marca varios si sirve a más de uno.
+                    } @else {
+                      Solo lo verá quien elija {{ formTutorial.controls.productos.value.length === 1 ? 'ese producto' : 'alguno de esos productos' }} en la página de videos.
+                    }
+                  </small>
+                </fieldset>
+
                 <label class="casilla">
                   <input type="checkbox" formControlName="active" />
                   <span>
@@ -3328,6 +3367,29 @@
                   ></textarea>
                   <small class="ayuda">Una o dos frases, para que sepan cuál elegir.</small>
                 </label>
+
+                <fieldset class="productos-de-ayuda">
+                  <legend>Para qué producto es</legend>
+                  <div class="casillas-producto">
+                    @for (producto of productosDeAyuda; track producto.codigo) {
+                      <label class="chip-producto">
+                        <input
+                          type="checkbox"
+                          [checked]="formGuia.controls.productos.value.includes(producto.codigo)"
+                          (change)="alternarProducto(formGuia.controls.productos, producto.codigo)"
+                        />
+                        <span>{{ producto.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">
+                    @if (formGuia.controls.productos.value.length === 0) {
+                      Sin marcar ninguno, sale en todos. Marca varios si sirve a más de uno.
+                    } @else {
+                      Solo la verá quien elija {{ formGuia.controls.productos.value.length === 1 ? 'ese producto' : 'alguno de esos productos' }} en la página de guías.
+                    }
+                  </small>
+                </fieldset>
 
                 <label class="casilla">
                   <input type="checkbox" formControlName="active" />

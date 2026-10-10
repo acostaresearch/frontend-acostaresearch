@@ -16,6 +16,8 @@ export interface Guia {
   archivoNombre: string;
   /** Lo que pesa el PDF. Cero = todavía sin archivo. */
   bytes: number;
+  /** A qué productos les sirve (códigos de `productos-de-ayuda.ts`). Vacío = a todos. */
+  productos: string[];
   active: boolean;
   updatedAt: string;
 }
@@ -25,8 +27,12 @@ export interface GuiaEnvio {
   orden: number;
   titulo: string;
   descripcion: string;
+  productos: string[];
   active: boolean;
 }
+
+/** Un servidor anterior a separar por producto no manda la lista: vacía = en todos. */
+const conProductos = (guia: Guia): Guia => ({ ...guia, productos: guia.productos ?? [] });
 
 @Injectable({ providedIn: 'root' })
 export class GuiaService {
@@ -35,14 +41,14 @@ export class GuiaService {
 
   /** Público: solo las visibles y con PDF. */
   publicas(): Observable<Guia[]> {
-    return this.http.get<ApiResponse<{ guias: Guia[] }>>(this.base).pipe(map((r) => r.data.guias));
+    return this.http.get<ApiResponse<{ guias: Guia[] }>>(this.base).pipe(map((r) => r.data.guias.map(conProductos)));
   }
 
   /** Panel: todas, incluidas las ocultas. */
   todas(): Observable<Guia[]> {
     return this.http
       .get<ApiResponse<{ guias: Guia[] }>>(`${this.base}/todas`)
-      .pipe(map((r) => r.data.guias));
+      .pipe(map((r) => r.data.guias.map(conProductos)));
   }
 
   /** Dónde se descarga. Un enlace normal: el servidor la manda como adjunto. */
@@ -59,6 +65,8 @@ export class GuiaService {
       .set('orden', String(datos.orden))
       .set('titulo', datos.titulo)
       .set('descripcion', datos.descripcion)
+      // En la query no cabe una lista: van con comas y el servidor las separa.
+      .set('productos', datos.productos.join(','))
       .set('active', String(datos.active));
 
     return this.http
@@ -66,13 +74,13 @@ export class GuiaService {
         params,
         headers: this.cabeceras(archivo),
       })
-      .pipe(map((r) => r.data.guia));
+      .pipe(map((r) => conProductos(r.data.guia)));
   }
 
   actualizar(id: string, datos: Partial<GuiaEnvio>): Observable<Guia> {
     return this.http
       .patch<ApiResponse<{ guia: Guia }>>(`${this.base}/${id}`, datos)
-      .pipe(map((r) => r.data.guia));
+      .pipe(map((r) => conProductos(r.data.guia)));
   }
 
   /** Cambia el PDF de una guía que ya existe, sin tocar su ficha. */
@@ -81,7 +89,7 @@ export class GuiaService {
       .put<ApiResponse<{ guia: Guia }>>(`${this.base}/${id}/pdf`, archivo, {
         headers: this.cabeceras(archivo),
       })
-      .pipe(map((r) => r.data.guia));
+      .pipe(map((r) => conProductos(r.data.guia)));
   }
 
   borrar(id: string): Observable<void> {
