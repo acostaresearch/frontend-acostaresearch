@@ -749,7 +749,9 @@
 
        Solo se cierra con la ✕ o con Cancelar: pulsar fuera no hace nada, o un
        descuido con el ratón se lleva por delante lo escrito. -->
-      <app-codigos-formulario-vista [ventasManuales]="ventasManuales" [trabajando]="trabajando" [metodos]="metodos" />
+      @if (ventasManuales.formularioCodigosAbierto()) {
+        <app-codigos-formulario-vista [ventasManuales]="ventasManuales" [trabajando]="trabajando" [metodos]="metodos" />
+      }
     </div>
   </main>
 </div>
