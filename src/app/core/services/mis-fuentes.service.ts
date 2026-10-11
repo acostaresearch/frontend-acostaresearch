@@ -50,6 +50,32 @@ export interface ImportacionPorDoi {
   sinResumenEnTotal: number;
 }
 
+/** Los tipos de fuente que se ofrecen al escribir una ficha a mano. */
+export type TipoDeFuente = 'articulo' | 'tesis' | 'libro' | 'informe' | 'otro';
+
+/** Una fuente sin DOI, descrita por quien la sube. */
+export interface FuenteAMano {
+  titulo: string;
+  /** «Apellido, N.; Apellido, N.», como va en la referencia. */
+  autores: string;
+  anio: number | null;
+  /** La revista, la universidad o la editorial. */
+  fuente: string;
+  tipo: TipoDeFuente;
+  url: string;
+  resumen: string;
+}
+
+/** Qué pasó al guardar fichas escritas a mano. */
+export interface ImportacionAMano {
+  pedidas: number;
+  guardadas: number;
+  repetidas: number;
+  sinResumen: number;
+  total: number;
+  sinResumenEnTotal: number;
+}
+
 /**
  * La biblioteca propia del comprador.
  *
@@ -116,6 +142,16 @@ export class MisFuentesService {
   porDoi(dois: string[]): Observable<ImportacionPorDoi> {
     return this.http
       .post<ApiResponse<ImportacionPorDoi>>(`${this.base}/doi`, { dois })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Fuentes sin DOI —una tesis, un libro, un informe—, con la ficha escrita a
+   * mano. Viaja la ficha, no el archivo.
+   */
+  aMano(fuentes: FuenteAMano[]): Observable<ImportacionAMano> {
+    return this.http
+      .post<ApiResponse<ImportacionAMano>>(`${this.base}/a-mano`, { fuentes })
       .pipe(map((res) => res.data));
   }
 

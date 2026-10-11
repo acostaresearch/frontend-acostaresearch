@@ -112,7 +112,6 @@
           <input
             type="file"
             multiple
-            [accept]="acepta"
             [disabled]="subiendo()"
             (change)="elegir($event)"
           />
@@ -127,7 +126,8 @@
             } @else {
               <strong>Arrastra aquí tus archivos, o pulsa para buscarlos</strong>
               <span>
-                El export de tu base de datos (CSV, RIS, BibTeX o TXT) o los PDF de los artículos.
+                El export de tu base de datos (CSV, RIS, BibTeX o TXT), los PDF de tus artículos, o
+                cualquier otra fuente: un libro, una tesis en Word, un informe.
               </span>
             }
           </span>
@@ -139,7 +139,9 @@
           <strong>¿Tienes los PDF?</strong> Suéltalos también. Se leen en tu navegador para sacarles
           el DOI —<strong>el archivo no se sube a ningún sitio</strong>— y de ahí salen los datos de
           la ficha. Después, cuando Claude busque, recibe esa ficha en vez de cuarenta páginas: unas
-          cien veces menos de conversación gastada por fuente.
+          cien veces menos de conversación gastada por fuente. Lo que no tiene DOI también vale, en
+          el formato que sea —un libro en EPUB, una tesis en Word, un informe—: suéltalo y te
+          pedimos su ficha aquí mismo, sin subir el archivo.
         </p>
 
         <!-- El parte de los PDF. -->
@@ -181,8 +183,9 @@
               }
             </ul>
             <p class="tenue">
-              Ábrelos y copia el DOI de la primera página — tiene esta forma:
-              <code>10.1145/3770762.3772598</code>. Pega uno por línea.
+              Si es un artículo, ábrelo y copia el DOI de la primera página — tiene esta forma:
+              <code>10.1145/3770762.3772598</code>. Si es una tesis, un libro o un informe, no tiene
+              DOI: llena su ficha más abajo.
             </p>
             <div class="canje-fila">
               <input
@@ -203,6 +206,131 @@
               </button>
             </div>
           </div>
+        }
+
+        <!-- Las fuentes sin DOI (11-oct-2026). Una tesis de repositorio, un
+             libro o un informe no tienen DOI que pegar, y antes la ventana se
+             quedaba ahí. Ahora cada PDF sin DOI deja una ficha con el título
+             que el propio PDF declara, y cualquier otro archivo —EPUB, Word,
+             una imagen— deja la suya con el nombre del archivo; también se
+             puede añadir una sin tener el archivo. Ninguno se sube. -->
+        @if (fichas().length > 0) {
+          <div class="fichas">
+            <p class="sin-doi-titulo">
+              @if (fichas().length === 1) {
+                Llena la ficha de esta fuente
+              } @else {
+                Llena la ficha de estas {{ fichas().length }} fuentes
+              }
+            </p>
+            <p class="tenue">
+              Con estos datos Claude la cita y arma tu referencia. Cópialos de la portada: el
+              título completo, y los autores así: <code>Apellido, N.; Apellido, N.</code>
+            </p>
+
+            @for (ficha of fichas(); track $index; let i = $index) {
+              <fieldset class="ficha-a-mano">
+                <legend>
+                  {{ ficha.archivo || 'Fuente sin archivo' }}
+                </legend>
+                <button
+                  type="button"
+                  class="ficha-quitar"
+                  aria-label="Quitar esta ficha"
+                  title="Quitar esta ficha"
+                  (click)="quitarFicha(i)"
+                >
+                  ×
+                </button>
+
+                <label class="campo ancho">
+                  <span>Título</span>
+                  <input
+                    type="text"
+                    [value]="ficha.titulo"
+                    (input)="escribirEnFicha(i, 'titulo', $event)"
+                    placeholder="El título completo, como sale en la portada"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="campo ancho">
+                  <span>Autores</span>
+                  <input
+                    type="text"
+                    [value]="ficha.autores"
+                    (input)="escribirEnFicha(i, 'autores', $event)"
+                    placeholder="Quispe, R.; Flores, M."
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="campo">
+                  <span>Tipo</span>
+                  <select [value]="ficha.tipo" (change)="escribirEnFicha(i, 'tipo', $event)">
+                    @for (tipo of tipos; track tipo.clave) {
+                      <option [value]="tipo.clave" [selected]="tipo.clave === ficha.tipo">
+                        {{ tipo.texto }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label class="campo">
+                  <span>Año</span>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="4"
+                    [value]="ficha.anio"
+                    (input)="escribirEnFicha(i, 'anio', $event)"
+                    placeholder="2021"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="campo ancho">
+                  <span>{{ rotuloDeFuente(ficha.tipo) }}</span>
+                  <input
+                    type="text"
+                    [value]="ficha.fuente"
+                    (input)="escribirEnFicha(i, 'fuente', $event)"
+                    autocomplete="off"
+                  />
+                </label>
+              </fieldset>
+            }
+
+            <button type="button" class="boton" [disabled]="subiendo()" (click)="guardarFichas()">
+              @if (subiendo()) {
+                Guardando…
+              } @else if (fichas().length === 1) {
+                Guardar esta fuente
+              } @else {
+                Guardar las {{ fichas().length }} fuentes
+              }
+            </button>
+          </div>
+        }
+
+        <!-- El parte de las fichas a mano. Sin resumen, y se dice: se pueden
+             citar, pero Claude solo las encuentra por el título. -->
+        @if (aMano(); as parte) {
+          <div class="parte">
+            <p class="parte-titulo">
+              @if (parte.guardadas > 0) {
+                Añadimos {{ parte.guardadas }} fuentes a tu biblioteca.
+              } @else {
+                Ya tenías esas fuentes: se actualizó su ficha.
+              }
+            </p>
+            <p class="tenue">
+              Van sin resumen, así que para que Claude las use pídeselas por su título o su autor.
+            </p>
+          </div>
+        }
+
+        <!-- La misma ficha, sin tener el PDF: un libro en papel, una norma. -->
+        @if (fichas().length < maximoFichas) {
+          <button type="button" class="boton enlace anadir-a-mano" (click)="nuevaFicha()">
+            + Añadir una fuente sin DOI a mano
+          </button>
         }
 
         <!-- El parte de la subida. Un import que no dice nada deja al
@@ -255,7 +383,7 @@
 
       <footer class="ventana-pie">
         <button type="button" class="boton" [disabled]="subiendo()" (click)="cerrar()">
-          {{ resultado() || porDoi() ? 'Listo' : 'Cerrar' }}
+          {{ resultado() || porDoi() || aMano() ? 'Listo' : 'Cerrar' }}
         </button>
       </footer>
     </div>

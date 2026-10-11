@@ -21,6 +21,12 @@
  * llame tiene que ofrecer pegar el DOI a mano: son diez segundos, con el
  * artículo ya abierto en pantalla, y siguen siendo mejores que subir el PDF
  * entero a una conversación.
+ *
+ * Y LOS QUE NO TIENEN DOI (11-oct-2026)
+ * -------------------------------------
+ * Una tesis de repositorio, un libro o un informe no tienen DOI que pegar. Para
+ * esos se devuelve además lo que el PDF declara de su título y sus autores,
+ * como propuesta para una ficha que la persona completa a mano.
  */
 
 /**
@@ -93,27 +99,104 @@ async function extremos(archivo: File): Promise<string> {
  * «este archivo no lo dice, pregúntaselo a la persona». Ver la nota de `CAMPOS`.
  */
 export async function doiDelPdf(archivo: File): Promise<string | null> {
+  return (await mirar(archivo)).doi;
+}
+
+/**
+ * El XMP va en UTF-8 y los bytes se leyeron como latin1 (para buscar en ellos
+ * sin decodificar megas): un título con tildes sale como «AnÃ¡lisis». Se
+ * devuelve a bytes y se lee como lo que es. Si no era UTF-8, se deja como vino.
+ */
+function comoUtf8(latin1: string): string {
+  try {
+    const bytes = Uint8Array.from(latin1, (c) => c.charCodeAt(0) & 0xff);
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return latin1;
+  }
+}
+
+/** Texto de un campo XMP: sin etiquetas, sin entidades y en una línea. */
+function limpio(crudo: string | undefined): string {
+  return comoUtf8(crudo ?? '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Un título que no es un título: lo que el procesador de textos puso solo.
+ * «Microsoft Word - cap2_final.docx» es lo más común en una tesis de repositorio.
+ */
+const NO_ES_TITULO = /microsoft word|\.docx?\b|\.pdf\b|\.indd\b|^untitled|^sin t[ií]tulo|^document\d*$/i;
+
+/**
+ * El título y los autores que el PDF DECLARA de sí mismo, para proponerlos.
+ *
+ * Solo el XMP, por lo mismo que el DOI: es lo que el documento afirma ser, no
+ * texto suelto. Aquí además el riesgo es menor —se PROPONE en un formulario que
+ * la persona revisa, no se guarda solo—, pero una propuesta mala cuesta más de
+ * corregir que un campo vacío. Si no hay nada fiable, el título propuesto es el
+ * nombre del archivo, que casi siempre lo puso quien lo descargó.
+ */
+function sugerencia(bytes: string, archivo: string): { titulo: string; autores: string } {
+  const bloqueTitulo = /<dc:title>([\s\S]{0,2000}?)<\/dc:title>/i.exec(bytes)?.[1];
+  const declarado = limpio(bloqueTitulo);
+
+  const bloqueAutores = /<dc:creator>([\s\S]{0,3000}?)<\/dc:creator>/i.exec(bytes)?.[1] ?? '';
+  const autores = [...bloqueAutores.matchAll(/<rdf:li[^>]*>([\s\S]*?)<\/rdf:li>/gi)]
+    .map((m) => limpio(m[1]))
+    // El «autor» de muchos PDF es el usuario de Windows o el programa.
+    .filter((a) => a.length > 2 && a.length < 80 && !/^(user|usuario|admin|owner|pc)\b/i.test(a))
+    .slice(0, 12)
+    .join('; ');
+
+  const delArchivo = archivo
+    .replace(/\.pdf$/i, '')
+    .replace(/[_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const sirve = declarado.length >= 12 && declarado.length <= 400 && !NO_ES_TITULO.test(declarado);
+  return { titulo: sirve ? declarado : delArchivo, autores };
+}
+
+/** Una sola lectura del archivo para las dos cosas: el DOI y la propuesta. */
+async function mirar(archivo: File): Promise<Leido> {
   let bytes: string;
 
   try {
     bytes = await extremos(archivo);
   } catch {
     // Un archivo que el navegador no puede leer no es un fallo de la página.
-    return null;
+    return { archivo: archivo.name, doi: null, titulo: archivo.name.replace(/\.pdf$/i, ''), autores: '' };
   }
 
+  let doi: string | null = null;
   for (const campo of CAMPOS) {
-    const encontrado = normalizarDoi(campo.exec(bytes)?.[1]);
-    if (encontrado) return encontrado;
+    doi = normalizarDoi(campo.exec(bytes)?.[1]);
+    if (doi) break;
   }
 
-  return null;
+  return { archivo: archivo.name, doi, ...sugerencia(bytes, archivo.name) };
 }
 
-/** Lo que sale de mirar un archivo: su DOI, o el archivo que se resistió. */
+/**
+ * Lo que sale de mirar un archivo: su DOI, o el archivo que se resistió.
+ *
+ * `titulo` y `autores` son la propuesta para la ficha a mano de los que no
+ * tienen DOI (una tesis, un libro, un informe). Ver `sugerencia`.
+ */
 export interface Leido {
   archivo: string;
   doi: string | null;
+  titulo: string;
+  autores: string;
 }
 
 /**
@@ -131,7 +214,7 @@ export async function doisDeLosPdf(
   const leidos: Leido[] = [];
 
   for (const archivo of archivos) {
-    leidos.push({ archivo: archivo.name, doi: await doiDelPdf(archivo) });
+    leidos.push(await mirar(archivo));
     alAvanzar?.(leidos.length, archivos.length);
   }
 

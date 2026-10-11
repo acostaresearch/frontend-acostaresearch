@@ -5,19 +5,53 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toApiError } from '../../core/http/api-error';
 import { doisDeLosPdf, normalizarDoi } from '../../core/pdf/doi-del-pdf';
 import {
+  ImportacionAMano,
   ImportacionPorDoi,
   MisFuentes,
   MisFuentesService,
   ResultadoDeImportacion,
+  TipoDeFuente,
 } from '../../core/services/mis-fuentes.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
 
-/** Lo que el navegador ofrece al abrir el diálogo. El servidor lo recomprueba. */
-const ACEPTA = '.csv,.ris,.bib,.bibtex,.txt,.pdf';
+/**
+ * Los archivos que son un EXPORT de una base de datos: esos sí se suben, y los
+ * lee el servidor. El `.xls` está porque el CSV de Scopus renombrado a `.xls`
+ * es de lo que más se suelta aquí.
+ */
+const ES_EXPORT = /\.(csv|ris|bib|bibtex|txt|tsv|nbib|enw|xls)$/i;
+
+/** Los formatos de libro electrónico: su ficha se abre ya como «Libro». */
+const ES_LIBRO = /\.(epub|mobi|azw3?|djvu|fb2)$/i;
 
 /** Techo local, para no subir ocho megas y que el servidor los rechace. */
 const MAXIMO_BYTES = 8 * 1024 * 1024;
+
+/** Cuántas fichas a mano se guardan de una vez. El servidor lo recomprueba. */
+const MAXIMO_FICHAS = 20;
+
+/**
+ * Una fuente sin DOI a medio describir. El año va como texto mientras se
+ * escribe; `archivo` es de qué PDF salió, o vacío si se añadió sin archivo.
+ */
+export interface FichaPendiente {
+  archivo: string;
+  titulo: string;
+  autores: string;
+  anio: string;
+  fuente: string;
+  tipo: TipoDeFuente;
+}
+
+/** Los tipos que se ofrecen, y cómo se llama en cada uno «de dónde sale». */
+const TIPOS: { clave: TipoDeFuente; texto: string; fuente: string }[] = [
+  { clave: 'tesis', texto: 'Tesis', fuente: 'Universidad' },
+  { clave: 'articulo', texto: 'Artículo', fuente: 'Revista' },
+  { clave: 'libro', texto: 'Libro', fuente: 'Editorial' },
+  { clave: 'informe', texto: 'Informe', fuente: 'Institución' },
+  { clave: 'otro', texto: 'Otro', fuente: 'Quién lo publica' },
+];
 
 /**
  * Las fuentes que el tesista sube de su propio export.
@@ -49,7 +83,6 @@ export class MisFuentesPanel {
   private readonly fuentes = inject(MisFuentesService);
   private readonly dialogos = inject(DialogoService);
 
-  readonly acepta = ACEPTA;
 
   readonly resumen = signal<MisFuentes | null>(null);
   readonly subiendo = signal(false);
@@ -89,6 +122,8 @@ export class MisFuentesPanel {
     this.resultado.set(null);
     this.porDoi.set(null);
     this.sinDoi.set([]);
+    this.fichas.set([]);
+    this.aMano.set(null);
     this.error.set(null);
   }
 
@@ -141,22 +176,53 @@ export class MisFuentesPanel {
   /**
    * Reparte lo que llegó según lo que sea.
    *
-   * Los PDF y los exports son dos caminos distintos: del PDF solo se saca el
-   * DOI, aquí en el navegador, y el archivo no sale del equipo; el export sí se
-   * sube y lo lee el servidor. Se aceptan por la misma caja porque para el
-   * tesista es lo mismo —«tengo esto, tómalo»— y saber cuál va por dónde es
-   * problema nuestro.
+   * Hay tres caminos. Del PDF solo se saca el DOI, aquí en el navegador, y el
+   * archivo no sale del equipo. El export de una base de datos sí se sube y lo
+   * lee el servidor. Y CUALQUIER OTRA COSA —un libro en EPUB, una tesis en
+   * Word, una foto de la portada, una presentación— tampoco se sube: deja
+   * abierta su ficha para llenarla a mano (11-oct-2026; antes se mandaba al
+   * servidor como si fuera un export y volvía con «ese tipo de archivo no lo
+   * leemos»). Se aceptan por la misma caja porque para el tesista es lo mismo
+   * —«tengo esto, tómalo»— y saber cuál va por dónde es problema nuestro.
    */
   private recibir(archivos: File[]): void {
     if (archivos.length === 0 || this.subiendo()) return;
 
     const pdfs = archivos.filter((a) => /\.pdf$/i.test(a.name) || a.type === 'application/pdf');
-    const exports = archivos.filter((a) => !pdfs.includes(a));
+    const exports = archivos.filter((a) => !pdfs.includes(a) && ES_EXPORT.test(a.name));
+    const otros = archivos.filter((a) => !pdfs.includes(a) && !exports.includes(a));
+
+    this.error.set(null);
+    this.abrirFichas(
+      otros.map((a) => ({
+        archivo: a.name,
+        // El nombre del archivo, sin extensión: casi siempre lo puso quien lo
+        // descargó y es lo más parecido al título que hay sin abrirlo.
+        titulo: a.name.replace(/\.[a-z0-9]{1,5}$/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim(),
+        autores: '',
+        anio: '',
+        fuente: '',
+        tipo: ES_LIBRO.test(a.name) ? 'libro' : 'tesis',
+      })),
+    );
 
     if (pdfs.length > 0) return void this.desdePdf(pdfs);
     // Los exports van de uno en uno: cada uno es una biblioteca entera y su
     // parte por separado, y juntarlos escondería cuál vino mal.
-    this.subir(exports[0]);
+    if (exports.length > 0) this.subir(exports[0]);
+  }
+
+  /**
+   * Añade fichas a las que ya hay abiertas, sin repetir archivo y sin pasar
+   * del tope: soltar en dos tandas suma, no pisa lo que ya se había escrito.
+   */
+  private abrirFichas(nuevas: FichaPendiente[]): void {
+    if (nuevas.length === 0) return;
+    this.aMano.set(null);
+    this.fichas.update((lista) => {
+      const yaEstan = new Set(lista.map((f) => f.archivo).filter(Boolean));
+      return [...lista, ...nuevas.filter((f) => !yaEstan.has(f.archivo))].slice(0, MAXIMO_FICHAS);
+    });
   }
 
   arrastraEncima(evento: DragEvent): void {
@@ -197,7 +263,7 @@ export class MisFuentesPanel {
   /** Por dónde va la lectura de los archivos, para que se vea que pasa algo. */
   readonly leyendo = signal<{ hechos: number; total: number } | null>(null);
   readonly porDoi = signal<ImportacionPorDoi | null>(null);
-  /** Los archivos que no declaran su DOI. Se piden a mano. */
+  /** Los archivos que no declaran su DOI, o los DOI que el catálogo no conoce. */
   readonly sinDoi = signal<string[]>([]);
   readonly doiAMano = new FormControl('', { nonNullable: true });
 
@@ -223,21 +289,116 @@ export class MisFuentesPanel {
     this.leyendo.set(null);
 
     const dois = leidos.map((l) => l.doi).filter((d): d is string => d !== null);
-    this.sinDoi.set(leidos.filter((l) => l.doi === null).map((l) => l.archivo));
+    const sinDoi = leidos.filter((l) => l.doi === null);
+    this.sinDoi.set(sinDoi.map((l) => l.archivo));
+
+    // Los que no dicen su DOI no son un error (hasta el 11-oct-2026 lo eran:
+    // «pégalo abajo», y una tesis o un libro no tienen DOI que pegar). Cada
+    // uno deja su ficha abierta, con el título que el PDF declara, para
+    // completarla a mano; quien sí tenga el DOI lo pega arriba y quita la ficha.
+    this.abrirFichas(
+      sinDoi.map((l) => ({
+        archivo: l.archivo,
+        titulo: l.titulo,
+        autores: l.autores,
+        anio: '',
+        fuente: '',
+        tipo: 'tesis',
+      })),
+    );
 
     if (dois.length === 0) {
       this.subiendo.set(false);
-      this.error.set(
-        pdfs.length === 1
-          ? 'Ese PDF no lleva su DOI escrito dentro. Ábrelo, cópialo de la primera página y ' +
-            'pégalo abajo.'
-          : 'Ninguno de esos PDF lleva su DOI escrito dentro. Puedes pegarlos abajo, uno por ' +
-            'línea.',
-      );
       return;
     }
 
     this.pedirPorDoi(dois);
+  }
+
+  // ── Las fuentes sin DOI, a mano ──────────────────────────────────────────
+  readonly tipos = TIPOS;
+  readonly maximoFichas = MAXIMO_FICHAS;
+  /** Las fichas abiertas: una por PDF sin DOI, más las que se añadan sueltas. */
+  readonly fichas = signal<FichaPendiente[]>([]);
+  /** El parte de las fichas guardadas a mano. */
+  readonly aMano = signal<ImportacionAMano | null>(null);
+
+  /** «Universidad», «Revista», «Editorial»… según el tipo elegido. */
+  rotuloDeFuente(tipo: TipoDeFuente): string {
+    return TIPOS.find((t) => t.clave === tipo)?.fuente ?? 'Quién lo publica';
+  }
+
+  /** Una ficha en blanco, para una fuente de la que no se tiene el PDF. */
+  nuevaFicha(): void {
+    if (this.fichas().length >= MAXIMO_FICHAS) return;
+    this.aMano.set(null);
+    this.fichas.update((lista) => [
+      ...lista,
+      { archivo: '', titulo: '', autores: '', anio: '', fuente: '', tipo: 'tesis' },
+    ]);
+  }
+
+  quitarFicha(indice: number): void {
+    this.fichas.update((lista) => lista.filter((_, i) => i !== indice));
+  }
+
+  escribirEnFicha(indice: number, campo: keyof FichaPendiente, evento: Event): void {
+    const valor = (evento.target as HTMLInputElement | HTMLSelectElement).value;
+    this.fichas.update((lista) =>
+      lista.map((ficha, i) => (i === indice ? { ...ficha, [campo]: valor } : ficha)),
+    );
+  }
+
+  /**
+   * Guarda las fichas escritas a mano.
+   *
+   * Solo se exige el título: es con lo que se cita y con lo que se encuentra.
+   * Autores y año se piden en la pantalla, pero una fuente institucional sin
+   * autor o sin fecha existe, y APA sabe citarla («s. f.»).
+   */
+  guardarFichas(): void {
+    if (this.subiendo() || this.fichas().length === 0) return;
+
+    const fichas = this.fichas();
+    if (fichas.some((f) => f.titulo.trim().length < 5)) {
+      this.error.set('A alguna ficha le falta el título. Escríbelo completo, como sale en la portada.');
+      return;
+    }
+    const anioMalo = fichas.some((f) => f.anio.trim() && !/^(1[5-9]|20)\d{2}$/.test(f.anio.trim()));
+    if (anioMalo) {
+      this.error.set('El año va con cuatro cifras, por ejemplo 2021. Si no lo tiene, déjalo vacío.');
+      return;
+    }
+
+    this.subiendo.set(true);
+    this.error.set(null);
+
+    this.fuentes
+      .aMano(
+        fichas.map((f) => ({
+          titulo: f.titulo.trim(),
+          autores: f.autores.trim(),
+          anio: f.anio.trim() ? Number(f.anio.trim()) : null,
+          fuente: f.fuente.trim(),
+          tipo: f.tipo,
+          url: '',
+          resumen: '',
+        })),
+      )
+      .subscribe({
+        next: (resultado) => {
+          this.aMano.set(resultado);
+          this.fichas.set([]);
+          // Las que quedaban en «no dicen su DOI» eran estos mismos archivos.
+          this.sinDoi.set([]);
+          this.subiendo.set(false);
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.error.set(toApiError(error).message);
+          this.subiendo.set(false);
+        },
+      });
   }
 
   /** Los DOI que el tesista pega a mano, uno por línea o separados por comas. */
