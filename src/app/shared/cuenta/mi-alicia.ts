@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -13,7 +14,15 @@ import { DecimalPipe } from '@angular/common';
 import { toApiError } from '../../core/http/api-error';
 import { AvisosService } from '../../core/services/avisos.service';
 import { MisFuentesService } from '../../core/services/mis-fuentes.service';
-import { AliciaService, BusquedaDeAlicia, TipoDeAlicia } from '../../core/services/alicia.service';
+import {
+  AliciaService,
+  BusquedaDeAlicia,
+  PeticionDeAlicia,
+  TipoDeAlicia,
+} from '../../core/services/alicia.service';
+
+/** Cuánto se tarda en decirle que ALICIA va lenta, si sigue buscando. */
+const AVISAR_DE_LENTITUD_MS = 6000;
 
 /**
  * Lo que encuentra ALICIA (CONCYTEC) con la búsqueda que el tesista acaba de
@@ -34,6 +43,12 @@ import { AliciaService, BusquedaDeAlicia, TipoDeAlicia } from '../../core/servic
  * Cuando ALICIA no contesta, el servidor busca lo mismo en LA Referencia y lo
  * dice en `fuente`: aquí solo se avisa, porque ahí faltan las tesis de
  * pregrado. Lo demás —marcar, añadir, paginar— es igual.
+ *
+ * Y cuando va LENTA (medio minuto por búsqueda, 10-oct-2026), el servidor
+ * enseña LA Referencia a los seis segundos y sigue esperando a ALICIA
+ * (`aliciaEnCamino`). Aquí se la espera con una segunda petición, y al llegar
+ * su lista sustituye sola a la del respaldo; si el tesista ya había marcado
+ * algo, no se le quita de delante: se le ofrece con un botón.
  */
 @Component({
   selector: 'app-mi-alicia',
@@ -74,10 +89,23 @@ export class MiAlicia {
   readonly guardando = signal(false);
   readonly resumenesAbiertos = signal<ReadonlySet<string>>(new Set());
 
+  /** Se enseñó el respaldo y ALICIA sigue de camino. */
+  readonly esperandoAlicia = signal(false);
+  /** ALICIA llegó, pero había casillas marcadas: se guarda hasta que la pida. */
+  readonly listaDeAlicia = signal<BusquedaDeAlicia | null>(null);
+  /** Lleva un rato buscando: se le dice que ALICIA va lenta. */
+  readonly tarda = signal(false);
+  private relojDeLentitud: ReturnType<typeof setTimeout> | null = null;
+
   /** Solo vale la respuesta de la última petición: un filtro rápido no la pisa. */
   private turno = 0;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.turno += 1;
+      this.pararReloj();
+    });
+
     // Cada búsqueda nueva en Scopus empieza de cero aquí: sin la consulta que
     // corrigió para la anterior y sin filtros que ya no vienen al caso.
     effect(() => {
@@ -107,33 +135,95 @@ export class MiAlicia {
     this.error.set(null);
     this.marcados.set(new Set());
     this.resumenesAbiertos.set(new Set());
+    this.esperandoAlicia.set(false);
+    this.listaDeAlicia.set(null);
+    this.tarda.set(false);
+    this.pararReloj();
+    this.relojDeLentitud = setTimeout(() => this.tarda.set(true), AVISAR_DE_LENTITUD_MS);
 
+    const peticion: PeticionDeAlicia = {
+      ecuacion,
+      pagina,
+      tipos: [...this.tiposElegidos()],
+      // Con la consulta suya se mandan también los años que salieron de la
+      // ecuación: corregir las palabras no tiene por qué quitar el filtro.
+      ...(propia
+        ? { consulta: propia, desde: anterior?.desde ?? null, hasta: anterior?.hasta ?? null }
+        : {}),
+    };
+
+    this.alicia.buscar(peticion).subscribe({
+      next: (resultado) => {
+        // Si mientras tanto buscó otra cosa, esta respuesta ya no es la de
+        // lo que ve.
+        if (turno !== this.turno) return;
+        this.pararReloj();
+        this.busqueda.set(resultado);
+        this.buscando.set(false);
+        this.total.emit(resultado.consulta ? resultado.total : 0);
+        if (resultado.aliciaEnCamino) this.esperarAAlicia(turno, peticion, resultado);
+      },
+      error: (fallo: unknown) => {
+        if (turno !== this.turno) return;
+        this.pararReloj();
+        this.buscando.set(false);
+        this.error.set(toApiError(fallo).message);
+      },
+    });
+  }
+
+  private pararReloj(): void {
+    if (this.relojDeLentitud) clearTimeout(this.relojDeLentitud);
+    this.relojDeLentitud = null;
+  }
+
+  /**
+   * ALICIA va lenta y lo que se ve es el respaldo: se la espera con otra
+   * petición, que vuelve cuando ella conteste. Si no contesta, se queda lo que
+   * hay y no se dice nada más.
+   */
+  private esperarAAlicia(
+    turno: number,
+    peticion: PeticionDeAlicia,
+    mostrada: BusquedaDeAlicia,
+  ): void {
+    this.esperandoAlicia.set(true);
     this.alicia
-      .buscar({
-        ecuacion,
-        pagina,
-        tipos: [...this.tiposElegidos()],
-        // Con la consulta suya se mandan también los años que salieron de la
-        // ecuación: corregir las palabras no tiene por qué quitar el filtro.
-        ...(propia
-          ? { consulta: propia, desde: anterior?.desde ?? null, hasta: anterior?.hasta ?? null }
-          : {}),
+      .esperar({
+        ...peticion,
+        // La que se buscó de verdad, no la que saldría de traducir otra vez.
+        consulta: mostrada.consulta,
+        desde: mostrada.desde,
+        hasta: mostrada.hasta,
       })
       .subscribe({
-        next: (resultado) => {
-          // Si mientras tanto buscó otra cosa, esta respuesta ya no es la de
-          // lo que ve.
+        next: (deAlicia) => {
           if (turno !== this.turno) return;
-          this.busqueda.set(resultado);
-          this.buscando.set(false);
-          this.total.emit(resultado.consulta ? resultado.total : 0);
+          this.esperandoAlicia.set(false);
+          if (!deAlicia) return;
+          // Con casillas marcadas o guardando, cambiarle la lista sería
+          // quitarle de delante lo que está eligiendo.
+          if (this.marcados().size > 0 || this.guardando()) this.listaDeAlicia.set(deAlicia);
+          else this.ponerLaDeAlicia(deAlicia);
         },
-        error: (fallo: unknown) => {
-          if (turno !== this.turno) return;
-          this.buscando.set(false);
-          this.error.set(toApiError(fallo).message);
+        error: () => {
+          if (turno === this.turno) this.esperandoAlicia.set(false);
         },
       });
+  }
+
+  /** Cambia la lista del respaldo por la de ALICIA, que ya llegó. */
+  ponerLaDeAlicia(deAlicia = this.listaDeAlicia()): void {
+    if (!deAlicia) return;
+    const veniaDelRespaldo = this.busqueda()?.fuente === 'lareferencia';
+    this.listaDeAlicia.set(null);
+    this.marcados.set(new Set());
+    this.resumenesAbiertos.set(new Set());
+    this.busqueda.set(deAlicia);
+    this.total.emit(deAlicia.total);
+    if (veniaDelRespaldo) {
+      this.avisos.info('ALICIA ya contestó: la lista incluye ahora las tesis de pregrado.');
+    }
   }
 
   alternarTipo(tipo: TipoDeAlicia): void {

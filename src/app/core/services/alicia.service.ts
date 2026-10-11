@@ -37,6 +37,11 @@ export interface BusquedaDeAlicia {
    * pregrado. Falta en las búsquedas sin palabras.
    */
   fuente?: 'alicia' | 'lareferencia';
+  /**
+   * La lista no es la de ALICIA de ahora —va lenta—, pero el servidor le
+   * preguntó y puede llegar: se la espera con `esperar`.
+   */
+  aliciaEnCamino?: boolean;
   total: number;
   pagina: number;
   paginas: number;
@@ -77,6 +82,20 @@ export class AliciaService {
     return this.http
       .post<ApiResponse<BusquedaDeAlicia>>(this.base, peticion)
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Se queda esperando lo que ALICIA conteste a una búsqueda que se enseñó con
+   * el respaldo. Va con la `consulta` que devolvió esa búsqueda, para que sea
+   * la misma. `null` si ALICIA al final no contestó. Puede tardar medio minuto.
+   */
+  esperar(peticion: PeticionDeAlicia): Observable<BusquedaDeAlicia | null> {
+    return this.http
+      .post<ApiResponse<BusquedaDeAlicia & { llego: boolean }>>(this.base, {
+        ...peticion,
+        esperar: true,
+      })
+      .pipe(map((res) => (res.data.llego ? res.data : null)));
   }
 
   importar(ids: string[]): Observable<{ datos: ImportacionDeAlicia; mensaje: string | null }> {

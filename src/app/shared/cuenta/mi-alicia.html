@@ -20,14 +20,32 @@
         como antecedentes nacionales.
       </p>
 
-      <!-- ALICIA no contestó y la lista viene del respaldo: se dice, porque
-           ahí no están las tesis de pregrado. -->
-      @if (busqueda()?.fuente === 'lareferencia') {
+      <!-- La lista viene del respaldo: se dice, porque ahí no están las tesis
+           de pregrado. Tres casos: ALICIA ya llegó pero había casillas
+           marcadas, va lenta y se la espera, o no contesta. -->
+      @if (listaDeAlicia()) {
         <p class="al-respaldo" role="status">
-          <strong>ALICIA no responde ahora.</strong> Estos resultados vienen de LA Referencia, que
-          recoge los mismos repositorios peruanos: tesis de maestría y de doctorado, y artículos.
-          Las tesis de pregrado solo están en ALICIA; vuelve a buscar en unos minutos para verlas.
+          <strong>ALICIA ya contestó</strong>, con las tesis de pregrado. Añade primero las que
+          marcaste, o pasa ya a su lista (se quitan las marcas).
+          <button type="button" class="al-enlace" (click)="ponerLaDeAlicia()">
+            Ver la lista de ALICIA
+          </button>
         </p>
+      } @else if (busqueda()?.fuente === 'lareferencia') {
+        @if (esperandoAlicia()) {
+          <p class="al-respaldo" role="status">
+            <strong>ALICIA va lenta ahora.</strong> Mientras contesta, estos resultados vienen de LA
+            Referencia, que recoge los mismos repositorios peruanos: tesis de maestría y de
+            doctorado, y artículos. Las tesis de pregrado solo están en ALICIA: aparecerán aquí
+            solas en cuanto conteste (puede tardar medio minuto).
+          </p>
+        } @else {
+          <p class="al-respaldo" role="status">
+            <strong>ALICIA no responde ahora.</strong> Estos resultados vienen de LA Referencia, que
+            recoge los mismos repositorios peruanos: tesis de maestría y de doctorado, y artículos.
+            Las tesis de pregrado solo están en ALICIA; vuelve a buscar en unos minutos para verlas.
+          </p>
+        }
       }
 
       @if (busqueda(); as b) {
@@ -91,6 +109,12 @@
           </button>
         }
       </div>
+
+      <!-- Solo se llega aquí esperando a ALICIA de verdad: al filtrar solo
+           pregrado, que no está en el respaldo. -->
+      @if (buscando() && tarda()) {
+        <p class="al-vacio" role="status">ALICIA va lenta ahora: puede tardar medio minuto.</p>
+      }
 
       @if (error(); as mensaje) {
         <p class="al-aviso" role="alert">
