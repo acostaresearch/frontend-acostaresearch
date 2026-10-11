@@ -40,15 +40,13 @@ const AVISAR_DE_LENTITUD_MS = 6000;
  * servidor la lleva a ALICIA con los términos también en español. Si la
  * traducción no le convence, puede cambiar la consulta a mano.
  *
- * Cuando ALICIA no contesta, el servidor busca lo mismo en LA Referencia y lo
- * dice en `fuente`: aquí solo se avisa, porque ahí faltan las tesis de
- * pregrado. Lo demás —marcar, añadir, paginar— es igual.
+ * El servidor usa LA Referencia como respaldo inmediato y mantiene la fuente
+ * interna. La pantalla no nombra los catálogos, pero explica la disponibilidad
+ * de pregrado. Lo demás —marcar, añadir, paginar— es igual.
  *
- * Y cuando va LENTA (medio minuto por búsqueda, 10-oct-2026), el servidor
- * enseña LA Referencia a los seis segundos y sigue esperando a ALICIA
- * (`aliciaEnCamino`). Aquí se la espera con una segunda petición, y al llegar
- * su lista sustituye sola a la del respaldo; si el tesista ya había marcado
- * algo, no se le quita de delante: se le ofrece con un botón.
+ * ALICIA sigue por detrás (`aliciaEnCamino`). Aquí se la espera con una segunda
+ * petición. Una lista con resultados se conserva y ofrece la actualización
+ * con un botón. Una lista vacía se actualiza sola, salvo que esté guardando.
  */
 @Component({
   selector: 'app-mi-alicia',
@@ -201,9 +199,10 @@ export class MiAlicia {
           if (turno !== this.turno) return;
           this.esperandoAlicia.set(false);
           if (!deAlicia) return;
-          // Con casillas marcadas o guardando, cambiarle la lista sería
-          // quitarle de delante lo que está eligiendo.
-          if (this.marcados().size > 0 || this.guardando()) this.listaDeAlicia.set(deAlicia);
+          // Conserva los resultados que está leyendo o eligiendo; si no había
+          // ninguno, incorpora los nuevos sin exigir otra acción.
+          if (mostrada.resultados.length > 0 || this.marcados().size > 0 || this.guardando())
+            this.listaDeAlicia.set(deAlicia);
           else this.ponerLaDeAlicia(deAlicia);
         },
         error: () => {
@@ -215,15 +214,11 @@ export class MiAlicia {
   /** Cambia la lista del respaldo por la de ALICIA, que ya llegó. */
   ponerLaDeAlicia(deAlicia = this.listaDeAlicia()): void {
     if (!deAlicia) return;
-    const veniaDelRespaldo = this.busqueda()?.fuente === 'lareferencia';
     this.listaDeAlicia.set(null);
     this.marcados.set(new Set());
     this.resumenesAbiertos.set(new Set());
     this.busqueda.set(deAlicia);
     this.total.emit(deAlicia.total);
-    if (veniaDelRespaldo) {
-      this.avisos.info('ALICIA ya contestó: la lista incluye ahora las tesis de pregrado.');
-    }
   }
 
   alternarTipo(tipo: TipoDeAlicia): void {

@@ -2,9 +2,7 @@
   <section class="al" aria-labelledby="al-titulo">
     <header class="al-cabecera">
       <h3 id="al-titulo" class="al-titulo">Tesis y revistas peruanas</h3>
-      <span class="al-fuente">{{
-        busqueda()?.fuente === 'lareferencia' ? 'LA Referencia · Perú' : 'ALICIA · CONCYTEC'
-      }}</span>
+      <span class="al-fuente">Repositorios del Perú</span>
       @if (busqueda(); as b) {
         <span class="al-total"
           >{{ b.total | number }} {{ b.total === 1 ? 'resultado' : 'resultados' }}</span
@@ -25,25 +23,27 @@
            marcadas, va lenta y se la espera, o no contesta. -->
       @if (listaDeAlicia()) {
         <p class="al-respaldo" role="status">
-          <strong>ALICIA ya contestó</strong>, con las tesis de pregrado. Añade primero las que
-          marcaste, o pasa ya a su lista (se quitan las marcas).
+          <strong>Hay una lista actualizada disponible.</strong>
+          @if (marcados().size > 0) {
+            Añade primero las que marcaste: al cambiar de lista se quitan las marcas.
+          } @else if (busqueda()?.fuente === 'lareferencia') {
+            Incluye las tesis de pregrado.
+          }
           <button type="button" class="al-enlace" (click)="ponerLaDeAlicia()">
-            Ver la lista de ALICIA
+            Ver resultados actualizados
           </button>
         </p>
       } @else if (busqueda()?.fuente === 'lareferencia') {
         @if (esperandoAlicia()) {
           <p class="al-respaldo" role="status">
-            <strong>ALICIA va lenta ahora.</strong> Mientras contesta, estos resultados vienen de LA
-            Referencia, que recoge los mismos repositorios peruanos: tesis de maestría y de
-            doctorado, y artículos. Las tesis de pregrado solo están en ALICIA: aparecerán aquí
-            solas en cuanto conteste (puede tardar medio minuto).
+            <strong>Buscando más resultados.</strong> Ya puedes consultar tesis de maestría, de
+            doctorado y artículos. Cuando termine la búsqueda podrás ver la lista completa, con las
+            tesis de pregrado (puede tardar un minuto).
           </p>
         } @else {
           <p class="al-respaldo" role="status">
-            <strong>ALICIA no responde ahora.</strong> Estos resultados vienen de LA Referencia, que
-            recoge los mismos repositorios peruanos: tesis de maestría y de doctorado, y artículos.
-            Las tesis de pregrado solo están en ALICIA; vuelve a buscar en unos minutos para verlas.
+            Puedes consultar tesis de maestría, de doctorado y artículos. Las tesis de pregrado no
+            están disponibles ahora; vuelve a buscar en unos minutos.
           </p>
         }
       }
@@ -52,7 +52,7 @@
         <div class="al-consulta">
           @if (editando()) {
             <label class="al-consulta-editar">
-              <span>Buscar en ALICIA con:</span>
+              <span>Buscar con:</span>
               <textarea
                 rows="2"
                 [value]="borrador()"
@@ -113,7 +113,7 @@
       <!-- Solo se llega aquí esperando a ALICIA de verdad: al filtrar solo
            pregrado, que no está en el respaldo. -->
       @if (buscando() && tarda()) {
-        <p class="al-vacio" role="status">ALICIA va lenta ahora: puede tardar medio minuto.</p>
+        <p class="al-vacio" role="status">La búsqueda está tardando más de lo habitual.</p>
       }
 
       @if (error(); as mensaje) {
@@ -124,17 +124,17 @@
           </button>
         </p>
       } @else if (buscando() && !busqueda()) {
-        <p class="al-vacio">Buscando en ALICIA…</p>
+        <p class="al-vacio">Buscando en los repositorios…</p>
       } @else if (busqueda(); as b) {
         @if (!b.consulta) {
           <p class="al-vacio">
-            Tu búsqueda de Scopus no tiene palabras que llevar a ALICIA (solo autor, revista o
-            filtros). Usa «Cambiar palabras» o busca por temas.
+            Tu búsqueda de Scopus no tiene palabras para buscar en los repositorios (solo autor,
+            revista o filtros). Usa «Cambiar palabras» o busca por temas.
           </p>
         } @else if (b.total === 0) {
           <p class="al-vacio">
-            {{ b.fuente === 'lareferencia' ? 'LA Referencia' : 'ALICIA' }} no tiene nada con esas
-            palabras. Prueba con menos términos o cámbialos a mano.
+            No se encontraron resultados con esas palabras. Prueba con menos términos o cámbialos a
+            mano.
           </p>
         } @else {
           <!-- Lo mismo que encima de la tabla de Scopus: marcar y añadir sin
@@ -233,7 +233,7 @@
             </button>
 
             @if (b.paginas > 1) {
-              <nav class="al-paginas" aria-label="Páginas de ALICIA">
+              <nav class="al-paginas" aria-label="Páginas de resultados">
                 <button
                   type="button"
                   class="al-boton"
