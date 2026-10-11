@@ -58,6 +58,17 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
   CANCELLED: 'Cancelado',
 };
 
+const CLAVE_BARRA = 'ar.perfil.barra-plegada';
+
+/** localStorage puede no estar (ventana privada, bloqueado): nunca rompe. */
+function leerBarraPlegada(): boolean {
+  try {
+    return localStorage.getItem(CLAVE_BARRA) === '1';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Cuenta del usuario: sus datos, el saldo del humanizador, las licencias del
  * conector, lo que ha comprado y el cierre de sesión. Todo lo que antes estaba
@@ -100,6 +111,23 @@ export class Perfil implements OnInit {
 
   /** El cajón de la cuenta, que se abre con el botón ☰ en cualquier pantalla. */
   readonly cuentaAbierta = signal(false);
+
+  /**
+   * La barra lateral plegada a una tira de iconos (solo en escritorio; en un
+   * teléfono ya es una fila de pestañas). Se recuerda en el navegador.
+   */
+  readonly barraPlegada = signal(leerBarraPlegada());
+
+  alternarBarra(): void {
+    const plegada = !this.barraPlegada();
+    this.barraPlegada.set(plegada);
+    try {
+      if (plegada) localStorage.setItem(CLAVE_BARRA, '1');
+      else localStorage.removeItem(CLAVE_BARRA);
+    } catch {
+      // Sin almacenamiento vale solo para esta visita.
+    }
+  }
 
   /** Las ventanas del nombre (el lápiz) y de la contraseña, que salen del cajón. */
   readonly editandoNombre = signal(false);

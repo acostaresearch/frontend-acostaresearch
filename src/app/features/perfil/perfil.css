@@ -215,6 +215,73 @@
   .cuenta-pie .ficha {
     margin-top: 0;
   }
+
+  /* ── Plegar la barra (11-oct) ─────────────────────────────────────────────
+     El ☰ va arriba a la derecha, a la altura del avatar. Plegada, la barra es
+     una tira con el ☰ y los iconos de las secciones: la cuenta se esconde y el
+     contenido gana el ancho. */
+  .perfil {
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .plegar-barra {
+    position: absolute;
+    top: 20px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    color: var(--color-texto-suave);
+    background: none;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+  }
+
+  .plegar-barra:hover {
+    color: var(--color-primario);
+    border-color: var(--color-primario);
+  }
+
+  .plegar-barra:focus-visible {
+    outline: 2px solid var(--color-primario);
+    outline-offset: 2px;
+  }
+
+  .perfil.plegada {
+    --ancho-navegacion: 64px;
+  }
+
+  .perfil.plegada .navegacion {
+    align-items: center;
+    padding: 20px 10px;
+  }
+
+  .perfil.plegada .plegar-barra {
+    position: static;
+    flex: none;
+  }
+
+  .perfil.plegada .identidad,
+  .perfil.plegada .cuenta-pie,
+  .perfil.plegada .seccion-texto,
+  .perfil.plegada .seccion-cuenta {
+    display: none;
+  }
+
+  .perfil.plegada .seccion {
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+/* En un teléfono la barra ya es una fila de pestañas: no hay qué plegar. */
+@media (max-width: 1000px) {
+  .plegar-barra {
+    display: none;
+  }
 }
 
 /* En un teléfono o una tableta, en cambio, no cabe: sigue siendo el cajón que
@@ -328,7 +395,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lateral,
-  .lateral.abierta {
+  .lateral.abierta,
+  .perfil {
     transition: none;
   }
 }

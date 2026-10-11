@@ -1,7 +1,7 @@
 <app-site-header />
 
 @if (usuario(); as user) {
-  <div class="perfil">
+  <div class="perfil" [class.plegada]="barraPlegada()">
     <!-- ── Quién eres ─────────────────────────────────────────────────────────
          La misma barra lateral del panel del administrador, con otro contenido:
          aquí no hay a dónde navegar —todo cabe a la vista— así que la columna
@@ -24,6 +24,22 @@
          Cada botón lleva un `data-tour` para que el recorrido guiado pueda
          llevar a la sección de lo que va a señalar. -->
     <nav class="navegacion" aria-label="Tu panel" [class.cuenta-abierta]="cuentaAbierta()">
+      <!-- Solo en escritorio: pliega la barra a una tira con los iconos de las
+           secciones, para dejarle el ancho al contenido. La cuenta se esconde;
+           las secciones siguen ahí, que el recorrido guiado las pulsa. -->
+      <button
+        type="button"
+        class="plegar-barra"
+        [attr.aria-expanded]="!barraPlegada()"
+        [attr.aria-label]="barraPlegada() ? 'Mostrar el menú' : 'Esconder el menú'"
+        [attr.title]="barraPlegada() ? 'Mostrar el menú' : 'Esconder el menú'"
+        (click)="alternarBarra()"
+      >
+        <span class="icono-menu" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+
       <button
         type="button"
         class="abrir-cuenta"
@@ -176,6 +192,8 @@
               [class.activa]="vista.seccion() === s.id"
               [attr.aria-current]="vista.seccion() === s.id ? 'page' : null"
               [attr.data-tour]="'ir-' + s.id"
+              [attr.aria-label]="s.texto"
+              [attr.title]="barraPlegada() ? s.texto : null"
               (click)="irA(s.id)"
             >
               <span class="seccion-icono" aria-hidden="true">
