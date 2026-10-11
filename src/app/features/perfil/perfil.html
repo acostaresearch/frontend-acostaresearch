@@ -1,7 +1,7 @@
 <app-site-header />
 
 @if (usuario(); as user) {
-  <div class="perfil" [class.plegada]="barraPlegada()">
+  <div class="perfil" [class.plegada]="barraPlegada()" [class.partida]="partida()">
     <!-- ── Quién eres ─────────────────────────────────────────────────────────
          La misma barra lateral del panel del administrador, con otro contenido:
          aquí no hay a dónde navegar —todo cabe a la vista— así que la columna
@@ -218,6 +218,30 @@
       </ul>
     </nav>
 
+    <!-- ── Pantalla partida (11-oct) ─────────────────────────────────────────
+         El video curso a la izquierda y «Por dónde vas» a la derecha, mitad y
+         mitad: se sigue el video viendo cómo se marca el avance. También en
+         «Tus herramientas», y al pasar de una a otra el panel sigue vivo: el
+         video no se reinicia. Solo si se pidió (`ponerVideo`). Se DESTRUYE al
+         quitarlo o al ir a otra sección, no se esconde: un video escondido seguiría
+         sonando. En un teléfono va encima del avance, no al lado. -->
+    @if (partida()) {
+      <aside class="panel-video" aria-label="Video curso paso a paso">
+        <div class="panel-video-cabecera">
+          <h2>Video curso paso a paso</h2>
+          <button
+            type="button"
+            class="cerrar-ventana"
+            aria-label="Quitar el video"
+            title="Quitar el video"
+            (click)="ponerVideo(false)"
+          >
+            ×
+          </button>
+        </div>
+        <app-sala-de-videos [estrecha]="true" />
+      </aside>
+    }
 
     <!-- ── Lo que tienes ──────────────────────────────────────────────────────
          Solo la sección elegida en la barra lateral, a todo el ancho; las
@@ -232,6 +256,30 @@
          una salida hasta allí, para quien sigue buscándolo aquí por un correo
          antiguo. -->
     <main class="contenido rejilla">
+      <!-- El botón de la pantalla partida, arriba de las dos secciones a las
+           que une: en la del video lleva a «Por dónde vas» con el video al
+           lado; en «Por dónde vas» y en «Tus herramientas» lo pone o lo quita. -->
+      <div
+        class="tramo-6 video-al-lado"
+        [class.fuera]="vista.seccion() !== 'ayuda' && !conVideo()"
+      >
+        <button
+          type="button"
+          class="boton secundario"
+          data-tour="video-al-lado"
+          [attr.aria-pressed]="partida()"
+          (click)="ponerVideo(!partida())"
+        >
+          <span aria-hidden="true">{{ partida() ? '×' : '▶' }}</span>
+          @if (partida()) {
+            Quitar el video
+          } @else if (vista.seccion() === 'ayuda') {
+            Ver el video junto a «Por dónde vas»
+          } @else {
+            Ver el video curso al lado
+          }
+        </button>
+      </div>
 
       <!-- El conector: sus licencias, sus fuentes y la ayuda. El mismo
            componente que usa el panel del administrador, que también es una

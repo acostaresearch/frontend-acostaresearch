@@ -125,6 +125,16 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
   },
   {
     ruta: '/perfil',
+    parte: 'avance',
+    abrir: '[data-tour="ir-avance"]',
+    ancla: '[data-tour="video-al-lado"]',
+    titulo: 'El video, al lado de tu avance',
+    texto:
+      'Este botón parte la pantalla: el video curso a la izquierda y tu avance a la derecha, ' +
+      'para seguir el video sin salir de aquí. Con la × lo quitas.',
+  },
+  {
+    ruta: '/perfil',
     parte: 'herramientas',
     abrir: '[data-tour="ir-herramientas"]',
     ancla: '[data-tour="herramientas"]',

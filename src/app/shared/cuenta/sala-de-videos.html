@@ -1,0 +1,232 @@
+@if (cargando()) {
+  <p class="cargando">Cargando los videos…</p>
+} @else if (tutoriales().length === 0) {
+  <p class="cargando">
+    Todavía no hay videos publicados.
+    @if (!estrecha()) {
+      Lo de más abajo te saca de casi cualquier atasco.
+    }
+  </p>
+} @else {
+  <!-- A quien compró se le dice de qué son: así entiende por qué no ve los
+       de otros productos. -->
+  @if (deLoTuyo() && !estrecha()) {
+    <p class="de-lo-tuyo">Los videos de lo que compraste: <b>{{ deLoTuyo() }}</b></p>
+  }
+
+  <!-- Una pestaña por producto con videos propios, solo si hay dos o más.
+       Quien compró ve nada más que las suyas. Lo que es de todos (conectar
+       Claude) sale en cada una. -->
+  @if (pestanas().length > 1) {
+    <div class="productos" role="group" aria-label="Videos por producto">
+      @for (pestana of pestanas(); track pestana.codigo) {
+        <button
+          type="button"
+          class="producto"
+          [class.activo]="producto() === pestana.codigo"
+          [attr.aria-pressed]="producto() === pestana.codigo"
+          (click)="elegirProducto(pestana.codigo)"
+        >
+          {{ pestana.nombre }}
+        </button>
+      }
+    </div>
+  }
+
+  <div data-tour="videos" class="sala">
+    @if (seleccionado(); as video) {
+      <div class="reproductor" #reproductor>
+        <div class="pantalla" [class.en-marcha]="reproduciendo()">
+          <!-- En la media pantalla del perfil, pasar de video se hace desde el
+               propio video: una flecha a cada lado, a media altura, como en
+               un carrusel. Van por encima del reproductor de YouTube. -->
+          @if (estrecha()) {
+            <button
+              type="button"
+              class="pasar anterior"
+              aria-label="Video anterior"
+              title="Video anterior"
+              [disabled]="actual() === 0"
+              (click)="elegir(actual() - 1)"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              class="pasar siguiente"
+              aria-label="Siguiente video"
+              title="Siguiente video"
+              [disabled]="actual() === tutoriales().length - 1"
+              (click)="elegir(actual() + 1)"
+            >
+              ›
+            </button>
+          }
+
+          @if (reproduciendo() && embedActual()) {
+            <iframe
+              [src]="embedActual()"
+              [title]="video.titulo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          } @else {
+            @if (miniaturaActual(); as miniatura) {
+              <img class="miniatura" [src]="miniatura" alt="" />
+            }
+            <div class="pantalla-titulo">
+              {{ video.titulo }}
+              <small>Acosta | IA &amp; Research</small>
+            </div>
+            <!-- La duración en la esquina, como en cualquier lista de videos. -->
+            @if (estrecha() && video.duracion) {
+              <span class="insignia-duracion">{{ corta(video.duracion) }}</span>
+            }
+
+            <!-- Sin video grabado no hay play que no lleve a nada: se dice
+                 que está en grabación y que lo escrito debajo ya sirve. -->
+            @if (reproducible(video.videoUrl)) {
+              <button
+                type="button"
+                class="play"
+                [attr.aria-label]="'Reproducir: ' + video.titulo"
+                (click)="reproducir()"
+              >
+                <span aria-hidden="true">▶</span>
+              </button>
+            } @else {
+              <p class="pantalla-pendiente">
+                <span aria-hidden="true">🎬</span>
+                En grabación. Mientras tanto, lo de abajo es exactamente lo que se ve en el video.
+              </p>
+            }
+          }
+        </div>
+
+        <!-- En la media pantalla del perfil no va nada bajo el video: de video
+             se pasa con las flechas de encima o en la lista. La descripción y
+             los puntos se leen en `/tutoriales`. -->
+        @if (!estrecha()) {
+          <div class="info-video">
+            <div class="meta">
+              @if (video.grupo) {
+                <span class="etiqueta-grupo">{{ video.grupo }}</span>
+              }
+              @if (video.duracion) {
+                <span>{{ video.duracion }}</span>
+              }
+            </div>
+            <h2>{{ video.titulo }}</h2>
+            @if (video.entrada) {
+              <p class="entrada">{{ video.entrada }}</p>
+            }
+
+            @if (video.puntos.length) {
+              <ul class="puntos">
+                @for (punto of video.puntos; track $index) {
+                  <li>{{ punto }}</li>
+                }
+              </ul>
+            }
+
+            <div class="nav-video">
+              <button
+                type="button"
+                class="boton secundario"
+                [disabled]="actual() === 0"
+                (click)="elegir(actual() - 1)"
+              >
+                Video anterior
+              </button>
+              <button
+                type="button"
+                class="boton"
+                [disabled]="actual() === tutoriales().length - 1"
+                (click)="elegir(actual() + 1)"
+              >
+                Siguiente video
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- La lista de la media pantalla: por bloques, cada uno con su rótulo y
+         cuánto dura. Los videos sueltos van en filas; los de «una skill por
+         capítulo», en fichas a dos columnas, que son muchos y cortos de
+         nombre (ver `bloques`). -->
+    @if (estrecha()) {
+      <nav class="lista" aria-label="Videos">
+        @for (bloque of bloques(); track $index) {
+          <div class="bloque">
+            <div class="bloque-cabecera">
+              <h3>{{ $index + 1 }} · {{ bloque.nombre }}</h3>
+              <span>{{ bloque.resumen }}</span>
+            </div>
+            <ol [class.rejilla-skills]="bloque.enRejilla">
+              @for (item of bloque.videos; track item.tutorial.id) {
+                <li>
+                  <button
+                    type="button"
+                    [class]="bloque.enRejilla ? 'ficha' : 'item'"
+                    [class.activo]="item.indice === actual()"
+                    [class.pendiente]="!reproducible(item.tutorial.videoUrl)"
+                    [attr.aria-current]="item.indice === actual() ? 'true' : null"
+                    [attr.title]="item.tutorial.titulo"
+                    (click)="elegir(item.indice)"
+                  >
+                    @if (bloque.enRejilla) {
+                      <b class="ficha-numero">{{ item.numero }}</b>
+                    } @else {
+                      <span class="numero" aria-hidden="true">
+                        {{ item.indice === actual() ? '▶' : '' }}
+                      </span>
+                    }
+                    <span class="item-titulo">{{ item.titulo }}</span>
+                    <span class="duracion">
+                      {{ reproducible(item.tutorial.videoUrl) ? corta(item.tutorial.duracion) : 'Pronto' }}
+                    </span>
+                  </button>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+      </nav>
+    } @else {
+      <nav class="lista" aria-label="Videos">
+        @for (grupo of grupos(); track $index) {
+          <div class="grupo">
+            @if (grupo.nombre) {
+              <h3>{{ grupo.nombre }}</h3>
+            }
+            <ol>
+              @for (item of grupo.videos; track item.tutorial.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="item"
+                    [class.activo]="item.indice === actual()"
+                    [class.pendiente]="!reproducible(item.tutorial.videoUrl)"
+                    [attr.aria-current]="item.indice === actual() ? 'true' : null"
+                    (click)="elegir(item.indice)"
+                  >
+                    <span class="numero">{{ etiqueta(item.tutorial, item.indice) }}</span>
+                    <span class="item-titulo">
+                      {{ item.tutorial.titulo }}
+                      @if (!reproducible(item.tutorial.videoUrl)) {
+                        <small>En grabación</small>
+                      }
+                    </span>
+                    <span class="duracion">{{ item.tutorial.duracion }}</span>
+                  </button>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+      </nav>
+    }
+  </div>
+}

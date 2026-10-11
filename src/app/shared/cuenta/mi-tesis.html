@@ -41,26 +41,176 @@
         </div>
       }
 
-      @if (licenciaActual(); as licencia) {
-        <div class="acceso" data-tour="acceso">
-          <!-- El gasto, del producto elegido. El número solo —«12 consultas»—
-               no dice si eso es mucho: contra el tope contratado, sí. -->
-          @if (licencia.callsPerDay && licencia.usage) {
-            <span class="acceso-uso" title="Consultas de hoy, de tu tope diario">
-              Consultas de hoy
-              <b>{{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }}</b>
-            </span>
+      <!-- «Lo siguiente» al lado del acceso (11-oct): por dónde se sigue y
+           la URL con la que se sigue, en la misma fila. Antes el recuadro
+           iba debajo de la barra de fases, una pantalla más abajo. Si no
+           caben juntos —un teléfono, o la media pantalla con el video— el
+           acceso sube a su propia fila, a la derecha, como estaba. -->
+      <div class="acceso-y-retomar">
+        <!-- El recuadro se pinta siempre, terminado o no: dentro va también lo de
+             empezar de cero, y con dos recuadros distintos habría que repetirlo. -->
+        <div class="retomar" data-tour="retomar" [class.completo]="!p.siguiente">
+          @if (p.siguiente; as siguiente) {
+            <div class="retomar-fila">
+              <div>
+                <p class="retomar-marca">
+                  @if (p.retomarElegido) {
+                    Retomas por aquí, como elegiste
+                  } @else if (siguiente.estado === 'EN_CURSO') {
+                    Continúa donde te quedaste
+                  } @else if (p.avance.listos === 0) {
+                    Empieza por aquí
+                  } @else {
+                    Lo siguiente
+                  }
+                </p>
+                <p class="retomar-fase">
+                  {{ siguiente.displayName }}
+                  <!-- Con una sola fase abierta no hay nada que elegir. -->
+                  @if (abiertasParaRetomar().length > 1) {
+                    <button
+                      type="button"
+                      class="boton enlace"
+                      [attr.aria-expanded]="eligiendoRetomar()"
+                      [disabled]="guardandoRetomar()"
+                      (click)="eligiendoRetomar.set(!eligiendoRetomar())"
+                    >
+                      {{ eligiendoRetomar() ? 'Cerrar' : 'Cambiar' }}
+                    </button>
+                  }
+                </p>
+              </div>
+              <button
+                type="button"
+                class="boton"
+                [attr.aria-expanded]="retomarAbierto()"
+                (click)="retomarAbierto.set(!retomarAbierto())"
+              >
+                Cómo retomarlo en Claude
+              </button>
+            </div>
+
+            <!-- Elegir por dónde retomar. Solo fases sin terminar: una cerrada no
+                 se retoma, y las herramientas de apoyo no son un sitio donde
+                 quedarse. Lo guarda el servidor, así que Claude dice la misma. -->
+            @if (eligiendoRetomar()) {
+              <div class="retomar-elegir">
+                <p>¿Por cuál quieres seguir?</p>
+                <ul>
+                  @for (f of abiertasParaRetomar(); track f.code) {
+                    <li>
+                      <button
+                        type="button"
+                        [class]="'opcion ' + marca(f.estado)"
+                        [class.actual]="f.code === siguiente.code"
+                        [attr.aria-pressed]="f.code === siguiente.code"
+                        [disabled]="guardandoRetomar()"
+                        (click)="elegirRetomar(p, f.code)"
+                      >
+                        <span class="icono" aria-hidden="true"></span>
+                        <span class="nombre">{{ f.displayName }}</span>
+                        @if (f.estado === 'EN_CURSO') {
+                          <span class="estado">En curso</span>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+                @if (p.retomarElegido) {
+                  <button
+                    type="button"
+                    class="boton enlace"
+                    [disabled]="guardandoRetomar()"
+                    (click)="elegirRetomar(p, null)"
+                  >
+                    Volver a la que toca por orden
+                  </button>
+                }
+                @if (guardandoRetomar()) {
+                  <p class="plantilla-nota">Guardando…</p>
+                }
+              </div>
+            }
+
+            @if (retomarAbierto()) {
+              <div class="retomar-como">
+                <p>Abre una conversación nueva en Claude y escríbele:</p>
+                <p class="frase">{{ frase(p) }}</p>
+                <div class="retomar-acciones">
+                  <button type="button" class="boton secundario" (click)="copiarFrase(p)">
+                    {{ copiado() ? 'Copiada' : 'Copiar la frase' }}
+                  </button>
+                  <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
+                    Abrir Claude
+                  </a>
+                </div>
+                <p class="retomar-nota">
+                  El conector le cuenta solo por dónde vas. Si le hablas sin mencionar el método, Claude
+                  contesta por su cuenta y no lo usa.
+                </p>
+              </div>
+            }
           } @else {
-            <span class="acceso-uso">Consultas <b>{{ licencia.callsTotal }}</b></span>
+            <p class="retomar-listo">Tienes todas las fases terminadas.</p>
           }
 
-          @if (puedeRotar(licencia)) {
-            <button type="button" class="boton" [disabled]="rotando()" (click)="generarUrl(p, licencia)">
-              {{ rotando() ? 'Generando…' : 'Generar nueva URL' }}
-            </button>
+          <!-- Empezar de cero. Va aquí, debajo de «Cómo retomarlo en Claude»,
+               porque es la otra respuesta a la misma pregunta —«¿sigo o vuelvo a
+               empezar?»— y al final de la pantalla no lo encontraba quien acababa
+               de enterarse de que le cambiaron el tema. En pequeño y a un lado: no
+               es algo que se pulse de paso. La confirmación, con su palabra escrita,
+               va en la ventana del sitio.
+
+               Solo si hay algo guardado: un método que sale en blanco por tener
+               licencia no tiene nada que borrar. -->
+          @if (p.guardado) {
+            @if (reiniciosRestantes(p) === 0) {
+              <p class="borrar-entrada">
+                Ya usaste las tres veces que podías empezar de cero esta tesis. Si te cambiaron el tema,
+                escríbenos y lo vemos contigo.
+              </p>
+            } @else {
+              <p class="borrar-entrada">
+                ¿Te cambiaron el tema?
+                <button
+                  type="button"
+                  class="boton enlace"
+                  [disabled]="borrando()"
+                  (click)="borrarProgreso(p)"
+                >
+                  {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
+                </button>
+                @if (reiniciosRestantes(p); as quedan) {
+                  <span class="borrar-quedan">
+                    ({{ quedan === 1 ? 'te queda 1 vez' : 'te quedan ' + quedan + ' veces' }})
+                  </span>
+                }
+              </p>
+            }
           }
         </div>
-      }
+
+        @if (licenciaActual(); as licencia) {
+          <div class="acceso" data-tour="acceso">
+            <!-- El gasto, del producto elegido. El número solo —«12 consultas»—
+                 no dice si eso es mucho: contra el tope contratado, sí. -->
+            @if (licencia.callsPerDay && licencia.usage) {
+              <span class="acceso-uso" title="Consultas de hoy, de tu tope diario">
+                Consultas de hoy
+                <b>{{ licencia.usage.callsToday }} de {{ licencia.callsPerDay }}</b>
+              </span>
+            } @else {
+              <span class="acceso-uso">Consultas <b>{{ licencia.callsTotal }}</b></span>
+            }
+
+            @if (puedeRotar(licencia)) {
+              <button type="button" class="boton" [disabled]="rotando()" (click)="generarUrl(p, licencia)">
+                {{ rotando() ? 'Generando…' : 'Generar nueva URL' }}
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
 
     <!-- Lo único que quedaba de la lista de accesos y hace falta saber: que a
@@ -69,6 +219,12 @@
       <p class="acceso-aviso">{{ aviso }}</p>
     }
 
+    <!-- Qué tesis se usa y, debajo, cómo va ESA tesis: una sola tarjeta
+         (11-oct). Eran un recuadro y, suelto debajo, el avance, y no se veía
+         que lo de abajo fuera de la tesis marcada arriba. La tarjeta solo se
+         dibuja cuando hay lista de tesis (`:has` en el CSS); sin ella el
+         avance sigue suelto, como siempre. -->
+    <div class="tesis-y-fases">
     <!-- Varias tesis del mismo método. Abren más el administrador y quien
          tenga el permiso en su licencia (lo da el administrador desde la
          ficha del acceso); el bloque sale también a quien ya tiene varias,
@@ -239,149 +395,6 @@
       <li><span class="icono pendiente"></span>Sin empezar</li>
     </ul>
 
-    <!-- El recuadro se pinta siempre, terminado o no: dentro va también lo de
-         empezar de cero, y con dos recuadros distintos habría que repetirlo. -->
-    <div class="retomar" data-tour="retomar" [class.completo]="!p.siguiente">
-      @if (p.siguiente; as siguiente) {
-        <div class="retomar-fila">
-          <div>
-            <p class="retomar-marca">
-              @if (p.retomarElegido) {
-                Retomas por aquí, como elegiste
-              } @else if (siguiente.estado === 'EN_CURSO') {
-                Continúa donde te quedaste
-              } @else if (p.avance.listos === 0) {
-                Empieza por aquí
-              } @else {
-                Lo siguiente
-              }
-            </p>
-            <p class="retomar-fase">
-              {{ siguiente.displayName }}
-              <!-- Con una sola fase abierta no hay nada que elegir. -->
-              @if (abiertasParaRetomar().length > 1) {
-                <button
-                  type="button"
-                  class="boton enlace"
-                  [attr.aria-expanded]="eligiendoRetomar()"
-                  [disabled]="guardandoRetomar()"
-                  (click)="eligiendoRetomar.set(!eligiendoRetomar())"
-                >
-                  {{ eligiendoRetomar() ? 'Cerrar' : 'Cambiar' }}
-                </button>
-              }
-            </p>
-          </div>
-          <button
-            type="button"
-            class="boton"
-            [attr.aria-expanded]="retomarAbierto()"
-            (click)="retomarAbierto.set(!retomarAbierto())"
-          >
-            Cómo retomarlo en Claude
-          </button>
-        </div>
-
-        <!-- Elegir por dónde retomar. Solo fases sin terminar: una cerrada no
-             se retoma, y las herramientas de apoyo no son un sitio donde
-             quedarse. Lo guarda el servidor, así que Claude dice la misma. -->
-        @if (eligiendoRetomar()) {
-          <div class="retomar-elegir">
-            <p>¿Por cuál quieres seguir?</p>
-            <ul>
-              @for (f of abiertasParaRetomar(); track f.code) {
-                <li>
-                  <button
-                    type="button"
-                    [class]="'opcion ' + marca(f.estado)"
-                    [class.actual]="f.code === siguiente.code"
-                    [attr.aria-pressed]="f.code === siguiente.code"
-                    [disabled]="guardandoRetomar()"
-                    (click)="elegirRetomar(p, f.code)"
-                  >
-                    <span class="icono" aria-hidden="true"></span>
-                    <span class="nombre">{{ f.displayName }}</span>
-                    @if (f.estado === 'EN_CURSO') {
-                      <span class="estado">En curso</span>
-                    }
-                  </button>
-                </li>
-              }
-            </ul>
-            @if (p.retomarElegido) {
-              <button
-                type="button"
-                class="boton enlace"
-                [disabled]="guardandoRetomar()"
-                (click)="elegirRetomar(p, null)"
-              >
-                Volver a la que toca por orden
-              </button>
-            }
-            @if (guardandoRetomar()) {
-              <p class="plantilla-nota">Guardando…</p>
-            }
-          </div>
-        }
-
-        @if (retomarAbierto()) {
-          <div class="retomar-como">
-            <p>Abre una conversación nueva en Claude y escríbele:</p>
-            <p class="frase">{{ frase(p) }}</p>
-            <div class="retomar-acciones">
-              <button type="button" class="boton secundario" (click)="copiarFrase(p)">
-                {{ copiado() ? 'Copiada' : 'Copiar la frase' }}
-              </button>
-              <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
-                Abrir Claude
-              </a>
-            </div>
-            <p class="retomar-nota">
-              El conector le cuenta solo por dónde vas. Si le hablas sin mencionar el método, Claude
-              contesta por su cuenta y no lo usa.
-            </p>
-          </div>
-        }
-      } @else {
-        <p class="retomar-listo">Tienes todas las fases terminadas.</p>
-      }
-
-      <!-- Empezar de cero. Va aquí, debajo de «Cómo retomarlo en Claude»,
-           porque es la otra respuesta a la misma pregunta —«¿sigo o vuelvo a
-           empezar?»— y al final de la pantalla no lo encontraba quien acababa
-           de enterarse de que le cambiaron el tema. En pequeño y a un lado: no
-           es algo que se pulse de paso. La confirmación, con su palabra escrita,
-           va en la ventana del sitio.
-
-           Solo si hay algo guardado: un método que sale en blanco por tener
-           licencia no tiene nada que borrar. -->
-      @if (p.guardado) {
-        @if (reiniciosRestantes(p) === 0) {
-          <p class="borrar-entrada">
-            Ya usaste las tres veces que podías empezar de cero esta tesis. Si te cambiaron el tema,
-            escríbenos y lo vemos contigo.
-          </p>
-        } @else {
-          <p class="borrar-entrada">
-            ¿Te cambiaron el tema?
-            <button
-              type="button"
-              class="boton enlace"
-              [disabled]="borrando()"
-              (click)="borrarProgreso(p)"
-            >
-              {{ borrando() ? 'Borrando…' : 'Borrar mi progreso y empezar de cero' }}
-            </button>
-            @if (reiniciosRestantes(p); as quedan) {
-              <span class="borrar-quedan">
-                ({{ quedan === 1 ? 'te queda 1 vez' : 'te quedan ' + quedan + ' veces' }})
-              </span>
-            }
-          </p>
-        }
-      }
-    </div>
-
     <div class="columnas">
       @for (columna of columnas(); track columna.rotulo) {
         <div>
@@ -454,6 +467,7 @@
           }
         </div>
       }
+    </div>
     </div>
 
     <!-- La descarga solo aparece cuando hay algo que descargar. Un botón que

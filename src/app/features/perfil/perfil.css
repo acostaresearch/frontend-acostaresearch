@@ -277,6 +277,71 @@
   }
 }
 
+/* ── Pantalla partida (11-oct) ───────────────────────────────────────────────
+   El video curso a la izquierda y «Por dónde vas» a la derecha, mitad y mitad.
+   El video se queda pegado bajo la cabecera, con su propio desplazamiento,
+   mientras se baja por el avance. En un teléfono o una tableta no cabe al
+   lado: va encima, a todo el ancho. */
+.panel-video {
+  min-width: 0;
+  padding: 14px 16px 16px;
+  background: var(--color-superficie);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-video-cabecera {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.panel-video app-sala-de-videos {
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-video-cabecera h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.video-al-lado {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.video-al-lado .boton {
+  width: auto;
+}
+
+@media (min-width: 1001px) {
+  .perfil.partida {
+    grid-template-columns: var(--ancho-navegacion) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .panel-video {
+    position: sticky;
+    top: var(--alto-cabecera);
+    height: calc(var(--alto-ventana) - var(--alto-cabecera));
+    /* En columna: la cabecera arriba y la sala con el alto que queda, para
+       que su lista se desplace por dentro y el video no se mueva. */
+    display: flex;
+    flex-direction: column;
+    padding: 14px 20px 16px;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-borde);
+    border-bottom: 0;
+  }
+
+  .perfil.partida .contenido {
+    padding: 30px 26px 56px;
+  }
+}
+
 /* En un teléfono la barra ya es una fila de pestañas: no hay qué plegar. */
 @media (max-width: 1000px) {
   .plegar-barra {

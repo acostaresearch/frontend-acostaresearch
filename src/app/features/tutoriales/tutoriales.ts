@@ -1,28 +1,12 @@
-import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { Component, ElementRef, viewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
-import {
-  loQueLeToca,
-  nombreDeProducto,
-  pestanaElegida,
-  pestanasDeProducto,
-  saleEn,
-} from '../../shared/contenido/productos-de-ayuda';
-import { AuthService } from '../../core/services/auth.service';
 import { TROPIEZOS } from '../../shared/contenido/tutoriales';
-import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
+import { SalaDeVideos } from '../../shared/cuenta/sala-de-videos';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { PrivadaPipe } from '../../core/router/privada.pipe';
-
-/** Un bloque de la lista: su rótulo y los videos que lleva, con su posición. */
-interface Grupo {
-  nombre: string;
-  videos: { tutorial: Tutorial; indice: number }[];
-}
 
 /**
  * Cómo usar el conector: los videos y los tropiezos por escrito.
@@ -39,196 +23,24 @@ interface Grupo {
  * Por eso el enlace vive en tres sitios: aquí, en el panel del comprador junto a
  * su URL, y en el correo de entrega.
  *
- * UN REPRODUCTOR, NO UNO POR VIDEO
- * --------------------------------
- * Con ocho videos apilados la página se hacía eterna y cargaba ocho iframes de
- * YouTube. Ahora hay uno solo, con la lista al lado como en un curso, y el
- * iframe no existe hasta que se pulsa play: antes se enseña la miniatura, que es
- * una imagen y no un reproductor entero.
+ * El reproductor y la lista son `SalaDeVideos` (en `shared`), que desde el
+ * 11-oct también se pone en el perfil al lado de «Por dónde vas».
  */
 @Component({
   selector: 'app-tutoriales',
-  imports: [PrivadaPipe, RouterLink, SiteHeader, SiteFooter],
+  imports: [PrivadaPipe, RouterLink, SalaDeVideos, SiteHeader, SiteFooter],
   templateUrl: './tutoriales.html',
   styleUrl: './tutoriales.css',
 })
-export class Tutoriales implements OnInit {
-  private readonly sanitizer = inject(DomSanitizer);
-  private readonly api = inject(TutorialService);
-  private readonly auth = inject(AuthService);
-  private readonly ruta = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-
-  private readonly reproductor = viewChild<ElementRef<HTMLElement>>('reproductor');
+export class Tutoriales {
   private readonly fallas = viewChild<ElementRef<HTMLElement>>('fallas');
 
   readonly whatsappUrl = environment.whatsappUrl;
-
-  /** Todo lo publicado, de todos los productos. */
-  private readonly publicados = signal<Tutorial[]>([]);
-  readonly cargando = signal(true);
-
-  /**
-   * POR PRODUCTO
-   * ------------
-   * Quien compró Informes no tiene por qué cruzarse con los videos de la tesis.
-   * Cada video dice a qué productos sirve —puede ser a varios— y el que no dice
-   * ninguno sale en todos, como el de conectar Claude.
-   *
-   * CON SESIÓN Y ALGO COMPRADO, SOLO LO SUYO: los videos de otros productos ni
-   * aparecen ni tienen pestaña. El visitante, quien aún no compró y el
-   * administrador lo ven todo, repartido en pestañas. No es un candado —la
-   * lista es pública y los videos están en YouTube—, es orden.
-   *
-   * Hay pestañas solo con dos productos o más, y siempre una marcada: no existe
-   * «Todos», que era la mezcla. La elegida va en la dirección
-   * (`?producto=informe`), para mandar a alguien directo a lo suyo.
-   */
-  private readonly mios = signal<string[] | null>(null);
-  private readonly pedido = signal<string | null>(null);
-
-  /** Lo que le toca: todo, o solo lo de lo que compró más lo que es de todos. */
-  private readonly visibles = computed(() => loQueLeToca(this.publicados(), this.mios()));
-
-  /** Los productos con algún video propio entre los que le tocan. */
-  readonly pestanas = computed(() => {
-    const mios = this.mios();
-    return pestanasDeProducto(this.visibles()).filter((p) => !mios || mios.includes(p.codigo));
-  });
-
-  readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
-
-  /** Los nombres de lo que compró, para decirle de qué son los videos. Vacío si ve todo. */
-  readonly deLoTuyo = computed(() => (this.mios() ?? []).map(nombreDeProducto).join(' · '));
-
-  /** Lo que se ve: lo de la pestaña elegida más lo que es de todos. */
-  readonly tutoriales = computed(() => {
-    const producto = this.producto();
-    const lista = this.visibles();
-    return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
-  });
-
-  /** El video que está en la pantalla, por su posición en la lista. */
-  readonly actual = signal(0);
-
-  /** Si ya se pulsó play. Hasta entonces no hay iframe, solo la miniatura. */
-  readonly reproduciendo = signal(false);
 
   // Los tropiezos siguen en código: es texto que cambia cuando cambia el
   // producto, no cuando se graba un video, y no hay nadie esperando para
   // editarlos sin desplegar.
   readonly tropiezos = TROPIEZOS;
-
-  readonly seleccionado = computed(() => this.tutoriales()[this.actual()] ?? null);
-
-  /**
-   * Los videos seguidos con el mismo grupo, juntos.
-   *
-   * Seguidos y no todos los del mismo nombre: el orden manda. Si alguien pone
-   * «Para empezar» en el 1 y en el 9, salen dos bloques, que es lo que ve en el
-   * panel, en vez de un 9 que salta a la cabeza de la lista sin que nadie lo
-   * haya movido.
-   */
-  readonly grupos = computed<Grupo[]>(() => {
-    const grupos: Grupo[] = [];
-    this.tutoriales().forEach((tutorial, indice) => {
-      const ultimo = grupos.at(-1);
-      if (ultimo && ultimo.nombre === tutorial.grupo) {
-        ultimo.videos.push({ tutorial, indice });
-      } else {
-        grupos.push({ nombre: tutorial.grupo, videos: [{ tutorial, indice }] });
-      }
-    });
-    return grupos;
-  });
-
-  /**
-   * La URL del iframe, calculada una vez por video.
-   *
-   * En un `computed` y no en un método llamado desde la plantilla: cada
-   * `bypassSecurityTrust…` devuelve un objeto nuevo, y un objeto nuevo en
-   * `[src]` es un iframe que se recarga en cada ciclo de detección de cambios.
-   */
-  readonly embedActual = computed<SafeResourceUrl | null>(() => {
-    const id = this.identificador(this.seleccionado()?.videoUrl ?? '');
-    if (!id) return null;
-
-    // Angular bloquea cualquier `src` de iframe sin marcar. Aquí la URL se
-    // construye con un identificador ya validado, no con lo que venga. Con
-    // autoplay porque solo se pinta después de pulsar play: pedir dos clics
-    // para ver un video es uno de más. Por youtube-nocookie, como promete la
-    // política de privacidad.
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
-      `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
-    );
-  });
-
-  /** La miniatura de YouTube del video en pantalla, o null si no está grabado. */
-  readonly miniaturaActual = computed(() => {
-    const id = this.identificador(this.seleccionado()?.videoUrl ?? '');
-    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
-  });
-
-  ngOnInit(): void {
-    // Las dos cosas a la vez, y se pinta cuando están ambas: si llegara antes
-    // la lista, el comprador vería un instante los videos de todos.
-    forkJoin({
-      lista: this.api.publicos(),
-      mios: this.auth.isAuthenticated() ? this.api.misProductos() : of(null),
-    }).subscribe({
-      next: ({ lista, mios }) => {
-        this.mios.set(mios);
-        this.publicados.set(lista);
-        // El producto de la dirección; si no es de los suyos, `producto` lo ignora.
-        this.pedido.set(this.ruta.snapshot.queryParamMap.get('producto'));
-        this.cargando.set(false);
-      },
-      // Sin lista no se enseña un error: los tropiezos escritos de más abajo
-      // siguen sirviendo, que es la mitad útil de esta página.
-      error: () => this.cargando.set(false),
-    });
-  }
-
-  /** Cambia de producto y vuelve al primer video de esa lista. */
-  elegirProducto(codigo: string): void {
-    if (!this.pestanas().some((p) => p.codigo === codigo)) return;
-    this.pedido.set(codigo);
-    this.actual.set(0);
-    this.reproduciendo.set(false);
-    void this.router.navigate([], {
-      relativeTo: this.ruta,
-      queryParams: { producto: codigo },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
-  }
-
-  /** Lo que va en el círculo: la etiqueta si la tiene («S4»), si no su número. */
-  etiqueta(tutorial: Tutorial, indice: number): string {
-    return tutorial.etiqueta || String(indice + 1);
-  }
-
-  /** Si ese enlace se puede reproducir. Decide si se pinta el play o el aviso. */
-  reproducible(enlace: string): boolean {
-    return this.identificador(enlace) !== null;
-  }
-
-  elegir(indice: number): void {
-    if (indice < 0 || indice >= this.tutoriales().length) return;
-    this.actual.set(indice);
-    this.reproduciendo.set(false);
-
-    // En pantalla estrecha la lista queda DEBAJO del reproductor: quien toca el
-    // último video cambia algo que ya no ve y cree que no pasó nada. Se sube
-    // hasta la pantalla. En escritorio el reproductor está al lado y fijo.
-    if (window.matchMedia('(max-width: 1100px)').matches) {
-      this.reproductor()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  reproducir(): void {
-    if (this.embedActual()) this.reproduciendo.set(true);
-  }
 
   /**
    * Baja a «Si algo falla».
@@ -239,22 +51,5 @@ export class Tutoriales implements OnInit {
   irAFallas(evento: Event): void {
     evento.preventDefault();
     this.fallas()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  /**
-   * El identificador del video, o null si el enlace no lleva ninguno.
-   *
-   * El null importa. Antes esto daba por hecho que lo que no encajara con
-   * ningún patrón YA era un identificador suelto, y así una URL de Studio de
-   * 165 caracteres —la de la barra del navegador, que es la que uno copia sin
-   * darse cuenta— pasó por identificador y produjo un reproductor en negro con
-   * un error de YouTube que no explicaba nada.
-   */
-  private identificador(enlace: string): string | null {
-    const texto = (enlace ?? '').trim();
-    if (/^[\w-]{11}$/.test(texto)) return texto;
-
-    const encontrado = /(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/.exec(texto);
-    return encontrado ? encontrado[1] : null;
   }
 }

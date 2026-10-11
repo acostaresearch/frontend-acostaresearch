@@ -1,0 +1,635 @@
+:host {
+  display: block;
+}
+
+/* Las pestañas de producto: cápsulas, como las salidas de la página de guías.
+ * Solo existen cuando algún video es de un producto concreto. */
+/* A quien compró: de qué producto es lo que está viendo. */
+.de-lo-tuyo {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+}
+
+.de-lo-tuyo b {
+  color: var(--color-texto);
+}
+
+.productos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.producto {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto);
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.producto:hover {
+  border-color: var(--color-primario);
+}
+
+.producto.activo {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+/* La sala: un reproductor y la lista al lado, como en un curso. Uno solo y no
+ * uno por video: con ocho apilados la página era eterna y cargaba ocho
+ * reproductores de YouTube. */
+.sala {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Fijo mientras se recorre la lista: al elegir un video se ve cambiar. */
+.reproductor {
+  position: sticky;
+  top: 92px;
+  scroll-margin-top: 84px;
+}
+
+.pantalla {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--noche-2);
+  border-radius: 16px;
+}
+
+.pantalla.en-marcha {
+  background: #000;
+}
+
+.pantalla iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* La miniatura del propio video, oscurecida para que el título y el play se
+ * lean encima. Es una imagen: no carga nada de YouTube hasta pulsar play. */
+.miniatura {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55);
+}
+
+.pantalla-titulo {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  left: 22px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+}
+
+.pantalla-titulo small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gris-noche);
+}
+
+.play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  padding-left: 6px;
+  font-size: 28px;
+  color: var(--noche);
+  cursor: pointer;
+  background: var(--dorado);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition:
+    transform var(--transicion),
+    background var(--transicion);
+}
+
+.play:hover {
+  background: var(--dorado-claro);
+  transform: scale(1.06);
+}
+
+.pantalla-pendiente {
+  position: relative;
+  max-width: 440px;
+  margin: 0 24px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--gris-noche);
+  border: 1px dashed rgba(224, 185, 115, 0.5);
+  border-radius: var(--radio);
+}
+
+.info-video {
+  margin-top: 20px;
+}
+
+.meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 14.5px;
+  color: var(--color-texto-tenue);
+}
+
+.etiqueta-grupo {
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 999px;
+}
+
+.info-video h2 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.entrada {
+  max-width: 760px;
+  margin: 8px 0 0;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+/* Lo que se ve, punto por punto. Sirve aunque el video no esté grabado, y se
+ * busca con Ctrl+F, que un video no. */
+.puntos {
+  max-width: 760px;
+  margin: 14px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.nav-video {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* La lista de videos. */
+.lista {
+  padding: 18px;
+  background: var(--color-fondo);
+  border-radius: 16px;
+}
+
+.grupo + .grupo {
+  margin-top: 18px;
+}
+
+.grupo h3 {
+  margin: 0;
+  padding: 4px 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+}
+
+.grupo ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radio);
+  transition: background var(--transicion);
+}
+
+.item:hover {
+  background: var(--color-superficie);
+}
+
+.item.activo {
+  background: var(--color-superficie);
+  box-shadow: inset 3px 0 0 var(--color-primario);
+}
+
+.numero {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 50%;
+}
+
+.item.activo .numero {
+  color: var(--color-sobre-relleno);
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.item-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.item.activo .item-titulo {
+  color: var(--color-primario);
+}
+
+.item-titulo small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-texto-tenue);
+}
+
+.duracion {
+  font-size: 13.5px;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+}
+
+.nav-video .boton {
+  width: auto;
+}
+
+/* Pantalla estrecha: la lista baja debajo del reproductor, que deja de ir fijo
+ * —fijo taparía la lista entera—. Al elegir un video la página sube sola. */
+@media (max-width: 1100px) {
+  .sala {
+    grid-template-columns: 1fr;
+  }
+
+  .reproductor {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .info-video h2 {
+    font-size: 22px;
+  }
+
+  .pantalla-titulo {
+    font-size: 15px;
+  }
+
+  .play {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  /* En un móvil el aviso no cabe encima de la miniatura con el título. */
+  .pantalla-pendiente {
+    font-size: 12.5px;
+  }
+}
+
+/* ── En la media pantalla del perfil (11-oct) ───────────────────────────────
+ * Comprimida, para que el video y la lista quepan sin bajar: las pestañas de
+ * producto en un solo renglón que se desliza, nada bajo el video, y la lista por bloques con desplazamiento
+ * propio —el video se queda quieto arriba y solo se mueve ella—. */
+:host(.estrecha) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  container-type: inline-size;
+}
+
+:host(.estrecha) .de-lo-tuyo {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+:host(.estrecha) .productos {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+:host(.estrecha) .producto {
+  flex: none;
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+/* `stretch` a propósito: la sala a todo el ancho trae `align-items: start`
+   (es una rejilla de dos columnas) y, en columna, eso encogía cada pieza a su
+   contenido: el video, el título y la lista salían con tres anchos distintos. */
+:host(.estrecha) .sala {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+:host(.estrecha) .reproductor {
+  position: static;
+  flex: none;
+  scroll-margin-top: 0;
+}
+
+/* El video a todo el ancho pero con tope de alto: en una columna ancha, a
+   16:9 se comía media ventana y la lista quedaba en tres renglones. Con el
+   tope la caja es más apaisada; la miniatura se recorta y YouTube centra el
+   video dentro con sus franjas. */
+:host(.estrecha) .pantalla {
+  width: 100%;
+  max-height: 40vh;
+  border-radius: 12px;
+}
+
+/* El título ya va en la línea de debajo: encima del video sobraba. */
+:host(.estrecha) .pantalla-titulo {
+  display: none;
+}
+
+:host(.estrecha) .play {
+  width: 60px;
+  height: 60px;
+  font-size: 22px;
+}
+
+/* Las flechas de pasar de video, sobre el video y a media altura. Oscuras y
+   translúcidas para verse sobre cualquier fotograma; la que no lleva a
+   ninguna parte —el primero, el último— desaparece. */
+.pasar {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0 0 4px;
+  font: inherit;
+  font-size: 28px;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(16, 24, 40, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition:
+    background var(--transicion),
+    transform var(--transicion);
+}
+
+.pasar.anterior {
+  left: 10px;
+}
+
+.pasar.siguiente {
+  right: 10px;
+}
+
+.pasar:hover:not(:disabled) {
+  background: var(--color-primario);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.pasar:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.pasar:disabled {
+  display: none;
+}
+/* La duración, en la esquina de la miniatura. */
+.insignia-duracion {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 2px 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.78);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La lista se lleva el alto que sobre y se desplaza por dentro. El mínimo es
+   para una ventana baja: ahí manda el desplazamiento del panel entero. Sin
+   caja gris: los bloques van sobre el blanco del panel. */
+:host(.estrecha) .lista {
+  flex: 1;
+  min-height: 170px;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  background: none;
+  border-radius: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+}
+
+.bloque + .bloque {
+  margin-top: 10px;
+}
+
+.bloque-cabecera {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 6px 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+}
+
+.bloque-cabecera h3 {
+  margin: 0;
+  font: inherit;
+}
+
+.bloque ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Las filas: un círculo vacío, que en la que se está viendo se llena y lleva
+   el triángulo de «en marcha». */
+:host(.estrecha) .item {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+:host(.estrecha) .item:hover {
+  background: var(--color-fondo);
+}
+
+:host(.estrecha) .item.activo {
+  background: var(--color-primario-suave);
+  box-shadow: none;
+}
+
+:host(.estrecha) .numero {
+  width: 24px;
+  height: 24px;
+  font-size: 9px;
+  border-color: var(--color-borde-fuerte);
+}
+
+:host(.estrecha) .item-titulo {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+:host(.estrecha) .activo .item-titulo {
+  font-weight: 650;
+  color: var(--color-primario);
+}
+
+:host(.estrecha) .duracion {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+:host(.estrecha) .activo .duracion {
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+/* Las fichas: una skill por casilla, a dos columnas. */
+.rejilla-skills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ficha {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  padding: 9px 11px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.ficha:hover {
+  border-color: var(--color-primario);
+}
+
+.ficha.activo {
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.ficha.pendiente {
+  border-style: dashed;
+}
+
+.ficha-numero {
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+/* Hasta dos renglones: los nombres de «Empieza aquí» son largos, y en media
+   ficha un solo renglón los dejaba en tres palabras. */
+:host(.estrecha) .ficha .item-titulo {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* En una columna muy angosta, dos fichas por renglón ya no dejan leer. */
+@container (max-width: 380px) {
+  .rejilla-skills {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* En un teléfono el panel va encima del avance y no tiene alto fijo: sin un
+   tope, la lista entera empujaría «Por dónde vas» dos pantallas abajo. */
+@media (max-width: 1000px) {
+  :host(.estrecha) .lista {
+    flex: none;
+    max-height: 260px;
+  }
+}

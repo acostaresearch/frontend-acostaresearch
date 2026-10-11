@@ -31,6 +31,7 @@ import { AjustesDeCuenta } from '../../shared/cuenta/ajustes-de-cuenta';
 import { SeccionDelPerfil, VistaDelPerfil } from '../../shared/cuenta/vista-del-perfil';
 import { InvitarResena, VentanaResena } from '../../shared/cuenta/invitar-resena';
 import { MiConector } from '../../shared/cuenta/mi-conector';
+import { SalaDeVideos } from '../../shared/cuenta/sala-de-videos';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 
@@ -60,12 +61,23 @@ const ESTADOS_PAGO: Record<Payment['status'], string> = {
 
 const CLAVE_BARRA = 'ar.perfil.barra-plegada';
 
+const CLAVE_VIDEO = 'ar.perfil.video-al-lado';
+
 /** localStorage puede no estar (ventana privada, bloqueado): nunca rompe. */
-function leerBarraPlegada(): boolean {
+function recordado(clave: string): boolean {
   try {
-    return localStorage.getItem(CLAVE_BARRA) === '1';
+    return localStorage.getItem(clave) === '1';
   } catch {
     return false;
+  }
+}
+
+function recordar(clave: string, valor: boolean): void {
+  try {
+    if (valor) localStorage.setItem(clave, '1');
+    else localStorage.removeItem(clave);
+  } catch {
+    // Sin almacenamiento vale solo para esta visita.
   }
 }
 
@@ -85,6 +97,7 @@ function leerBarraPlegada(): boolean {
     InvitarResena,
     VentanaResena,
     MiConector,
+    SalaDeVideos,
     SiteHeader,
     MiInvitacion,
     MisGrupos,
@@ -116,17 +129,46 @@ export class Perfil implements OnInit {
    * La barra lateral plegada a una tira de iconos (solo en escritorio; en un
    * teléfono ya es una fila de pestañas). Se recuerda en el navegador.
    */
-  readonly barraPlegada = signal(leerBarraPlegada());
+  readonly barraPlegada = signal(recordado(CLAVE_BARRA));
 
   alternarBarra(): void {
-    const plegada = !this.barraPlegada();
+    this.plegarBarra(!this.barraPlegada());
+  }
+
+  private plegarBarra(plegada: boolean): void {
     this.barraPlegada.set(plegada);
-    try {
-      if (plegada) localStorage.setItem(CLAVE_BARRA, '1');
-      else localStorage.removeItem(CLAVE_BARRA);
-    } catch {
-      // Sin almacenamiento vale solo para esta visita.
-    }
+    recordar(CLAVE_BARRA, plegada);
+  }
+
+  /**
+   * El video curso al lado de «Por dónde vas», mitad y mitad (11-oct): quien
+   * sigue el video ve a la vez cómo se le va marcando el avance, sin ir y
+   * volver de `/tutoriales`. Se recuerda en el navegador.
+   */
+  readonly videoAlLado = signal(recordado(CLAVE_VIDEO));
+
+  /**
+   * La pantalla partida existe en «Por dónde vas» y en «Tus herramientas». Al
+   * pasar de una a otra el panel del video no se destruye: el video sigue
+   * por donde iba.
+   */
+  readonly conVideo = computed(
+    () => this.vista.seccion() === 'avance' || this.vista.seccion() === 'herramientas',
+  );
+  readonly partida = computed(() => this.videoAlLado() && this.conVideo());
+
+  /**
+   * Pone o quita el video. Al ponerlo se pliega la barra lateral —en un
+   * portátil, con ella abierta, cada mitad se queda en nada— y se va a «Por
+   * dónde vas» si se pidió desde la sección del video.
+   */
+  ponerVideo(puesto: boolean): void {
+    this.videoAlLado.set(puesto);
+    recordar(CLAVE_VIDEO, puesto);
+    if (!puesto) return;
+
+    this.plegarBarra(true);
+    if (!this.conVideo()) this.irA('avance');
   }
 
   /** Las ventanas del nombre (el lápiz) y de la contraseña, que salen del cajón. */
