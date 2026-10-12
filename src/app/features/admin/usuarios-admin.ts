@@ -5,6 +5,7 @@ import { mensajeDeError } from '../../core/http/api-error';
 import { User } from '../../core/models/user.model';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { DialogoService } from '../../core/services/dialogo.service';
+import { PAISES, nombreDePais } from '../../shared/contenido/paises';
 
 /** Búsqueda paginada de cuentas y formulario para crear administradores. */
 export class UsuariosAdmin {
@@ -35,7 +36,9 @@ export class UsuariosAdmin {
    * pasa, y montar una consulta aparte para un caso que no existe todavía sería
    * pagar por adelantado.
    */
-  readonly administradores = computed(() => this.usuarios().filter((u) => u.role === 'ADMIN'));
+  readonly administradores = computed(() =>
+    this.usuarios().filter((u) => u.role === 'ADMIN' || u.role === 'ADMIN_PAIS'),
+  );
 
   private busquedaPendiente?: ReturnType<typeof setTimeout>;
 
@@ -130,6 +133,69 @@ export class UsuariosAdmin {
     });
   }
 
+  // ── Dar y quitar el acceso de administrador ──────────────────────────────
+
+  /** La cuenta a la que se le está dando acceso: abre la ventana de elegir país. */
+  readonly dandoAcceso = signal<User | null>(null);
+  /** El país elegido en esa ventana. Vacío = administrador general. */
+  readonly paisDelAcceso = signal('');
+  /** La cuenta cuyo rol se está cambiando, para apagar sus botones. */
+  readonly cambiandoRol = signal<string | null>(null);
+
+  abrirAcceso(usuario: User): void {
+    this.paisDelAcceso.set('');
+    this.error.set(null);
+    this.dandoAcceso.set(usuario);
+  }
+
+  cerrarAcceso(): void {
+    this.dandoAcceso.set(null);
+  }
+
+  /** Convierte en administrador la cuenta de la ventana, con el país elegido. */
+  darAcceso(): void {
+    const usuario = this.dandoAcceso();
+    if (!usuario || this.cambiandoRol()) return;
+    this.cambiarRol(usuario, 'ADMIN', this.paisDelAcceso() || undefined, () => this.cerrarAcceso());
+  }
+
+  /**
+   * Le quita el acceso de administrador y la deja como cuenta de usuario.
+   *
+   * Pide confirmación porque corta al momento: deja de ver el panel en la
+   * petición siguiente. Su cuenta, sus licencias y sus compras no se tocan.
+   */
+  async quitarAcceso(usuario: User): Promise<void> {
+    if (this.cambiandoRol()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: '¿Quitarle el acceso de administrador?',
+      mensaje: `${usuario.email} dejará de entrar al panel ahora mismo y volverá a ser una cuenta de usuario.`,
+      nota: 'No se borra nada: su cuenta, sus licencias y sus compras se quedan como están. Puedes devolvérselo cuando quieras.',
+      confirmar: 'Quitar el acceso',
+    });
+    if (!seguro) return;
+
+    this.cambiarRol(usuario, 'USER');
+  }
+
+  private cambiarRol(usuario: User, rol: 'ADMIN' | 'USER', pais?: string, alTerminar?: () => void): void {
+    this.cambiandoRol.set(usuario.id);
+    this.error.set(null);
+    this.usuariosApi.cambiarRol(usuario.id, rol, pais).subscribe({
+      next: ({ user, mensaje }) => {
+        this.usuarios.update((lista) => lista.map((u) => (u.id === user.id ? { ...u, ...user } : u)));
+        this.aviso.set(mensaje || 'Rol cambiado.');
+        this.cambiandoRol.set(null);
+        alTerminar?.();
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.cambiandoRol.set(null);
+      },
+    });
+  }
+
   // ── Crear administrador ──────────────────────────────────────────────────
 
   readonly formularioAdminAbierto = signal(false);
@@ -149,7 +215,13 @@ export class UsuariosAdmin {
     email: ['', [Validators.required, Validators.email]],
     // Vacía a propósito: lo normal es que la genere el servidor y la mande.
     password: [''],
+    // Vacío = administrador como el de siempre, que lo ve todo. Con un país,
+    // la cuenta solo ve lo de ese país.
+    pais: [''],
   });
+
+  readonly paises = PAISES;
+  readonly nombreDePais = nombreDePais;
 
   abrirFormularioAdmin(): void {
     this.formAdmin.reset();
@@ -171,7 +243,7 @@ export class UsuariosAdmin {
       return;
     }
 
-    const { firstName, lastName, email, password } = this.formAdmin.getRawValue();
+    const { firstName, lastName, email, password, pais } = this.formAdmin.getRawValue();
 
     this.creandoAdmin.set(true);
     this.usuariosApi
@@ -181,6 +253,7 @@ export class UsuariosAdmin {
         email,
         // Vacío significa «genérala tú», no «contraseña en blanco».
         password: password.trim() || undefined,
+        pais: pais || undefined,
       })
       .subscribe({
         next: (creado) => {
@@ -211,6 +284,7 @@ export class UsuariosAdmin {
       USER: 'Usuario',
       EDITOR: 'Editor',
       ADMIN: 'Administrador',
+      ADMIN_PAIS: 'Administrador de país',
     };
     return nombres[rol] ?? rol;
   }

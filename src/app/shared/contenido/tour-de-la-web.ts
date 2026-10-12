@@ -325,6 +325,16 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
           {
             seccion: 'Administración',
             ruta: '/admin/resumen',
+            ancla: '[data-tour="admin-pais"]',
+            titulo: 'Por país',
+            texto:
+              'Aquí eliges qué miras: todos los países juntos, uno solo o lo de la casa. Las ' +
+              'cifras y las listas del panel cambian con él. Un administrador de país ve aquí el ' +
+              'suyo, y solo lo suyo.',
+          },
+          {
+            seccion: 'Administración',
+            ruta: '/admin/resumen',
             ancla: '[data-tour="admin-panel-usuario"]',
             titulo: 'Tu panel de usuario',
             texto:

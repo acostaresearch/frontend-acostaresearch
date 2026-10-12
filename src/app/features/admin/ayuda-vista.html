@@ -14,7 +14,7 @@
 
         @if (seccion()() === 'tutoriales') {
           <app-filtros-lista [lista]="ayuda().listaTutoriales" placeholder="Título del video">
-            <button type="button" class="boton boton-fila" (click)="ayuda().editarTutorial(null)">
+            <button data-solo-casa type="button" class="boton boton-fila" (click)="ayuda().editarTutorial(null)">
               Añadir video
             </button>
           </app-filtros-lista>
@@ -42,7 +42,7 @@
                       [class.destino-arrastre]="
                         ayuda().destinoTutorial() === tutorial.id && ayuda().arrastrandoTutorial() !== tutorial.id
                       "
-                      draggable="true"
+                      [attr.draggable]="soloLectura() ? null : 'true'"
                       (dragstart)="ayuda().empezarArrastreTutorial($event, tutorial)"
                       (dragover)="ayuda().sobreTutorial($event, tutorial)"
                       (drop)="ayuda().soltarTutorial($event, tutorial)"
@@ -89,7 +89,7 @@
                         }
                       </td>
                       <td class="fila-acciones">
-                        <button type="button" class="enlace" (click)="ayuda().editarTutorial(tutorial)">
+                        <button data-solo-casa type="button" class="enlace" (click)="ayuda().editarTutorial(tutorial)">
                           Editar
                         </button>
                         <app-menu-fila>
@@ -102,6 +102,7 @@
                           <button
                             type="button"
                             class="peligro"
+                            data-solo-casa
                             (click)="ayuda().borrarTutorial(tutorial)"
                           >
                             Borrar
@@ -120,7 +121,7 @@
 
         @if (seccion()() === 'guias') {
           <app-filtros-lista [lista]="ayuda().listaGuias" placeholder="Título de la guía">
-            <button type="button" class="boton boton-fila" (click)="ayuda().editarGuia(null)">
+            <button data-solo-casa type="button" class="boton boton-fila" (click)="ayuda().editarGuia(null)">
               Añadir guía
             </button>
           </app-filtros-lista>
@@ -167,7 +168,7 @@
                         }
                       </td>
                       <td class="fila-acciones">
-                        <button type="button" class="enlace" (click)="ayuda().editarGuia(guia)">
+                        <button data-solo-casa type="button" class="enlace" (click)="ayuda().editarGuia(guia)">
                           Editar
                         </button>
                         <app-menu-fila>
@@ -177,7 +178,7 @@
                             >
                             <hr />
                           }
-                          <button type="button" class="peligro" (click)="ayuda().borrarGuia(guia)">
+                          <button data-solo-casa type="button" class="peligro" (click)="ayuda().borrarGuia(guia)">
                             Borrar
                           </button>
                         </app-menu-fila>

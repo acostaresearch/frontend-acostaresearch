@@ -130,7 +130,7 @@ export class Home implements OnInit {
    */
   readonly saludo = computed<'admin' | 'cliente' | 'nuevo' | 'cargando' | null>(() => {
     if (!this.auth.isAuthenticated()) return null;
-    if (this.auth.hasRole('ADMIN')) return 'admin';
+    if (this.auth.hasRole('ADMIN', 'ADMIN_PAIS')) return 'admin';
 
     const conector = this.tieneConector();
     if (conector === null) return 'cargando';
@@ -254,7 +254,7 @@ export class Home implements OnInit {
       () =>
         this.recorrido.ofrecerElCompleto({
           conSesion: this.auth.isAuthenticated(),
-          esAdmin: this.auth.hasRole('ADMIN'),
+          esAdmin: this.auth.hasRole('ADMIN', 'ADMIN_PAIS'),
           tieneConector: this.tieneConector() === true,
         }),
       1200,

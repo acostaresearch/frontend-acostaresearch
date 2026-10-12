@@ -100,7 +100,7 @@
                       }
                     </dl>
 
-                    <div class="comprobante-acciones">
+                    <div data-solo-casa class="comprobante-acciones">
                       <button
                         type="button"
                         class="boton"
@@ -450,6 +450,7 @@
                           aria-labelledby="rotulo-varias-tesis"
                           [attr.aria-checked]="accionesAccesos().variasTesis()"
                           [disabled]="accionesAccesos().guardandoVariasTesis()"
+                          data-solo-casa
                           (click)="accionesAccesos().cambiarVariasTesis()"
                         >
                           <span class="interruptor-bola" aria-hidden="true"></span>
@@ -467,6 +468,7 @@
                         type="button"
                         class="accion-fila accion-boton"
                         [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'duracion'"
+                        data-solo-casa
                         (click)="accionesAccesos().alternarAccion('duracion')"
                       >
                         <span class="accion-texto">
@@ -526,6 +528,7 @@
                       type="button"
                       class="accion-fila accion-boton"
                       [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'correo'"
+                      data-solo-casa
                       (click)="accionesAccesos().alternarAccion('correo')"
                     >
                       <span class="accion-texto">
@@ -572,6 +575,7 @@
                         type="button"
                         class="accion-fila accion-boton"
                         [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'producto'"
+                        data-solo-casa
                         (click)="accionesAccesos().alternarAccion('producto')"
                       >
                         <span class="accion-texto">

@@ -19,6 +19,7 @@ import { catchError, of, switchMap } from 'rxjs';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { mantenimientoInterceptor } from './core/interceptors/mantenimiento.interceptor';
+import { paisInterceptor } from './core/interceptors/pais.interceptor';
 import { PreloadDelRecorrido } from './core/router/preload-del-recorrido';
 import { AuthService } from './core/services/auth.service';
 import { MantenimientoService, esCaidaDelServicio } from './core/services/mantenimiento.service';
@@ -70,7 +71,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     // El de mantenimiento, primero: así ve el error que queda después del
     // intento de refresh del de sesión.
-    provideHttpClient(withFetch(), withInterceptors([mantenimientoInterceptor, authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([mantenimientoInterceptor, authInterceptor, paisInterceptor])),
     // El panel es una sección de la portada: sin `anchorScrolling` los enlaces
     // «Mi panel» llegarían al inicio de la página en vez de a la sección.
     provideRouter(

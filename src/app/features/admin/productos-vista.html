@@ -53,7 +53,7 @@
                        rojo: es lo único sin vuelta atrás. -->
                     <td class="fila-acciones">
                       @if (grupo.active) {
-                        <button type="button" class="enlace" (click)="productos().editarGrupo(grupo)">
+                        <button data-solo-casa type="button" class="enlace" (click)="productos().editarGrupo(grupo)">
                           Editar
                         </button>
                       } @else {
@@ -61,6 +61,7 @@
                           type="button"
                           class="enlace"
                           [disabled]="trabajando()()"
+                          data-solo-casa
                           (click)="productos().alternarGrupo(grupo)"
                         >
                           Poner a la venta
@@ -69,11 +70,12 @@
                       <app-menu-fila>
                         <button type="button" (click)="productos().verCapitulos(grupo)">Ver capítulos</button>
                         @if (!grupo.active) {
-                          <button type="button" (click)="productos().editarGrupo(grupo)">Editar</button>
+                          <button data-solo-casa type="button" (click)="productos().editarGrupo(grupo)">Editar</button>
                         } @else {
                           <button
                             type="button"
                             [disabled]="trabajando()()"
+                            data-solo-casa
                             (click)="productos().alternarGrupo(grupo)"
                           >
                             Retirar de la venta
@@ -84,6 +86,7 @@
                           type="button"
                           class="peligro"
                           [disabled]="trabajando()()"
+                          data-solo-casa
                           (click)="productos().pedirBorrarGrupo(grupo)"
                         >
                           Eliminar
@@ -657,6 +660,7 @@
               <button
                 type="button"
                 class="boton"
+                data-solo-casa
                 (click)="productos().cerrarCapitulos(); productos().editarGrupo(grupoVisto)"
               >
                 Cambiar capítulos

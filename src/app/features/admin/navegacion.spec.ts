@@ -1,4 +1,4 @@
-import { MENU, seccionDe } from './navegacion';
+import { MENU, SECCIONES_DE_PAIS, seccionDe } from './navegacion';
 
 describe('Enlaces guardados del administrador', () => {
   it.each([
@@ -17,6 +17,15 @@ describe('Enlaces guardados del administrador', () => {
     const visibles = MENU.flatMap((grupo) => grupo.entradas.map((entrada) => entrada.seccion));
     expect(visibles).not.toContain('pedidos');
     expect(visibles).not.toContain('asesores');
+  });
+
+  it('al administrador de país no se le enseña lo que no es suyo', () => {
+    for (const cerrada of ['instituciones', 'sorteos', 'whatsapp', 'corpus', 'admins', 'pedidos', 'asesores']) {
+      expect(SECCIONES_DE_PAIS).not.toContain(cerrada);
+    }
+    for (const abierta of ['resumen', 'embudo', 'accesos', 'descuentos', 'pruebas', 'grupos', 'licencias', 'tutoriales', 'guias', 'alertas', 'resenas', 'reclamos', 'usuarios', 'perfil']) {
+      expect(SECCIONES_DE_PAIS).toContain(abierta);
+    }
   });
 
   it('una sección desconocida queda sin resolver para que el panel vuelva al resumen', () => {

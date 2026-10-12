@@ -1,4 +1,5 @@
-export type Role = 'USER' | 'EDITOR' | 'ADMIN';
+/** `ADMIN_PAIS` es el administrador de un país: entra al panel y solo ve lo de su `pais`. */
+export type Role = 'USER' | 'EDITOR' | 'ADMIN' | 'ADMIN_PAIS';
 export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
 
 export interface User {
@@ -7,6 +8,11 @@ export interface User {
   firstName: string;
   lastName: string;
   role: Role;
+  /**
+   * Etiqueta de país (ISO de dos letras): en un administrador de país, el que
+   * administra; en un cliente, el que lo consiguió. Nula = de la casa.
+   */
+  pais?: string | null;
   status: UserStatus;
   emailVerifiedAt: string | null;
   lastLoginAt: string | null;

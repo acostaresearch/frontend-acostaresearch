@@ -40,6 +40,7 @@ const ROLES: Record<Role, string> = {
   USER: 'Usuario',
   EDITOR: 'Editor',
   ADMIN: 'Administrador',
+  ADMIN_PAIS: 'Administrador de país',
 };
 
 const ESTADOS: Record<UserStatus, string> = {

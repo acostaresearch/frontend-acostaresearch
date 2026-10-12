@@ -184,6 +184,29 @@ export function seccionDe(direccion: string): Seccion | undefined {
   );
 }
 
+/**
+ * Lo que ve un administrador de país. Lo demás —universidades, sorteos,
+ * WhatsApp, bibliografía, la pestaña de administradores— no le sale en el menú,
+ * y si escribe la dirección a mano vuelve al resumen. Es solo lo que se enseña:
+ * quien decide de verdad es el servidor (`panelDePais.js`).
+ */
+export const SECCIONES_DE_PAIS: Seccion[] = [
+  'resumen',
+  'embudo',
+  'accesos',
+  'descuentos',
+  'pruebas',
+  'grupos',
+  'licencias',
+  'tutoriales',
+  'guias',
+  'alertas',
+  'resenas',
+  'reclamos',
+  'usuarios',
+  'perfil',
+];
+
 /** Un destino de la barra lateral. */
 interface EntradaDelMenu {
   seccion: Seccion;

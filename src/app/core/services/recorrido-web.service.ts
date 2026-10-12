@@ -134,7 +134,7 @@ export class RecorridoWeb {
    */
   private conQuienMira(seguir: (quien: QuienMira) => void): void {
     const conSesion = this.auth.isAuthenticated();
-    const esAdmin = this.auth.hasRole('ADMIN');
+    const esAdmin = this.auth.hasRole('ADMIN', 'ADMIN_PAIS');
 
     if (!conSesion) {
       seguir({ conSesion, esAdmin, tieneConector: false });

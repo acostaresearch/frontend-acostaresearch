@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { User } from '../../core/models/user.model';
 import { DialogoService } from '../../core/services/dialogo.service';
@@ -13,6 +13,7 @@ describe('Usuarios del administrador', () => {
     list: ReturnType<typeof vi.fn>;
     crearAdministrador: ReturnType<typeof vi.fn>;
     cambiarEstado: ReturnType<typeof vi.fn>;
+    cambiarRol: ReturnType<typeof vi.fn>;
   };
   let dialogos: { confirmar: ReturnType<typeof vi.fn> };
   const aviso = signal<string | null>(null);
@@ -26,6 +27,7 @@ describe('Usuarios del administrador', () => {
       list: vi.fn(() => of({ users: [], meta: { totalPages: 3, total: 120 } })),
       crearAdministrador: vi.fn(),
       cambiarEstado: vi.fn(),
+      cambiarRol: vi.fn(),
     };
     dialogos = { confirmar: vi.fn(() => Promise.resolve(true)) };
     aviso.set(null);
@@ -114,6 +116,65 @@ describe('Usuarios del administrador', () => {
     cuentas.crearAdministrador();
     expect(api.crearAdministrador).toHaveBeenCalledTimes(2);
   });
+  it('hacer administrador a un cliente manda el país elegido, cambia la fila y cierra la ventana', () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE', role: 'USER' } as User;
+    cuentas.usuarios.set([ana]);
+    api.cambiarRol.mockReturnValue(
+      of({ user: { ...ana, role: 'ADMIN_PAIS', pais: 'EC' }, mensaje: 'Listo: ya es administrador.' }),
+    );
+
+    cuentas.abrirAcceso(ana);
+    expect(cuentas.dandoAcceso()).toBe(ana);
+    cuentas.paisDelAcceso.set('EC');
+    cuentas.darAcceso();
+
+    expect(api.cambiarRol).toHaveBeenCalledWith('u1', 'ADMIN', 'EC');
+    expect(cuentas.usuarios()[0].role).toBe('ADMIN_PAIS');
+    expect(cuentas.administradores().length).toBe(1);
+    expect(cuentas.dandoAcceso()).toBeNull();
+    expect(aviso()).toBe('Listo: ya es administrador.');
+  });
+
+  it('sin país es administrador general, y la ventana se abre siempre sin país', () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE', role: 'USER' } as User;
+    cuentas.paisDelAcceso.set('EC');
+    cuentas.abrirAcceso(ana);
+    expect(cuentas.paisDelAcceso()).toBe('');
+
+    api.cambiarRol.mockReturnValue(of({ user: { ...ana, role: 'ADMIN' }, mensaje: '' }));
+    cuentas.darAcceso();
+    expect(api.cambiarRol).toHaveBeenCalledWith('u1', 'ADMIN', undefined);
+  });
+
+  it('quitar el acceso pide confirmación, y sin confirmar no se toca nada', async () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE', role: 'ADMIN' } as User;
+    cuentas.usuarios.set([ana]);
+
+    dialogos.confirmar.mockResolvedValueOnce(false);
+    await cuentas.quitarAcceso(ana);
+    expect(api.cambiarRol).not.toHaveBeenCalled();
+
+    api.cambiarRol.mockReturnValue(of({ user: { ...ana, role: 'USER' }, mensaje: '' }));
+    await cuentas.quitarAcceso(ana);
+    expect(api.cambiarRol).toHaveBeenCalledWith('u1', 'USER', undefined);
+    expect(cuentas.usuarios()[0].role).toBe('USER');
+    expect(cuentas.administradores().length).toBe(0);
+  });
+
+  it('si el servidor rechaza el cambio de rol, la ventana sigue abierta con el error', () => {
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE', role: 'USER' } as User;
+    cuentas.usuarios.set([ana]);
+    api.cambiarRol.mockReturnValue(throwError(() => new Error('No puedes cambiar tu propio rol.')));
+
+    cuentas.abrirAcceso(ana);
+    cuentas.darAcceso();
+
+    expect(cuentas.dandoAcceso()).toBe(ana);
+    expect(cuentas.usuarios()[0].role).toBe('USER');
+    expect(error()).not.toBeNull();
+    expect(cuentas.cambiandoRol()).toBeNull();
+  });
+
   it('suspender pide confirmación, cambia la fila y avisa', async () => {
     const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE' } as User;
     cuentas.usuarios.set([ana, { id: 'u2', email: 'luis@example.com', status: 'ACTIVE' } as User]);

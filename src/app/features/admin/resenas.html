@@ -24,6 +24,7 @@
         type="button"
         class="boton secundario alta-abrir"
         title="Para las que llegan por WhatsApp o por correo, con o sin video"
+        data-solo-casa
         (click)="dandoDeAlta.set(true)"
       >
         Añadir una reseña a mano
@@ -232,7 +233,7 @@
       }
 
       <p class="subir-video">
-        <label class="boton secundario subir-video-boton">
+        <label data-solo-casa class="boton secundario subir-video-boton">
           {{ subiendoVideo() ? 'Subiendo…' : r.video ? 'Cambiar el video' : 'Subir un video' }}
           <input
             type="file"
@@ -292,7 +293,7 @@
 
       <app-aviso-flotante [(error)]="error" />
 
-      <div class="acciones-resena">
+      <div data-solo-casa class="acciones-resena">
         @if (r.estado !== 'APROBADA') {
           <button
             type="button"
@@ -356,7 +357,7 @@
            decisión más sobre una reseña —publicarla, retirarla, no publicarla—,
            es tirar lo que nunca fue una. Quien revisa no se lo encuentra en la
            misma fila de lo que va a pulsar. -->
-      <p class="borrar-del-todo">
+      <p data-solo-casa class="borrar-del-todo">
         <button type="button" [disabled]="guardando()" (click)="borrar(r)">
           Borrar esta reseña
         </button>

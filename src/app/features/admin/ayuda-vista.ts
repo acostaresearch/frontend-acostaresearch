@@ -17,4 +17,6 @@ export class AyudaVista {
   readonly ayuda = input.required<ContenidoAyudaAdmin>();
   readonly seccion = input.required<Signal<Seccion>>();
   readonly direccion = input.required<(seccion: Seccion) => string>();
+  /** Quien mira no puede editar ni reordenar: los videos no se arrastran. */
+  readonly soloLectura = input(false);
 }

@@ -94,7 +94,7 @@
         </div>
       } @else {
         <app-aviso-flotante [(error)]="error" />
-        <div class="campo">
+        <div data-solo-casa class="campo">
           <label for="respuesta-reclamo">Lo que se le contesta</label>
           <textarea
             id="respuesta-reclamo"
@@ -114,6 +114,7 @@
             type="button"
             class="boton"
             [disabled]="respuesta().trim().length < 10 || enviando()"
+            data-solo-casa
             (click)="responder()"
           >
             {{ enviando() ? 'Enviando…' : 'Enviar respuesta' }}

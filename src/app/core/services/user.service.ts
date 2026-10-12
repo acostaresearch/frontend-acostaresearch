@@ -90,10 +90,22 @@ export class UserService {
     lastName: string;
     email: string;
     password?: string;
+    /** Con país, la cuenta es de un administrador de ese país. */
+    pais?: string;
   }): Observable<AdminCreado> {
     return this.http
       .post<ApiResponse<AdminCreado>>(`${this.base}/admins`, datos)
       .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Le da a una cuenta que ya existe acceso de administrador (`ADMIN`, con
+   * `pais` si es de un país) o se lo quita (`USER`). Solo el dueño.
+   */
+  cambiarRol(id: string, role: 'ADMIN' | 'USER', pais?: string) {
+    return this.http
+      .patch<ApiResponse<{ user: User }>>(`${this.base}/${id}/role`, { role, pais })
+      .pipe(map((res) => ({ user: res.data.user, mensaje: res.message ?? '' })));
   }
 
   /** Listado paginado. Solo accesible con rol ADMIN. */

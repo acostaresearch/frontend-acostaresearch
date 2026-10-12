@@ -326,13 +326,13 @@ export const routes: Routes = [
     path: 'admin',
     pathMatch: 'full',
     redirectTo: () => {
-      if (!inject(AuthService).hasRole('ADMIN')) return '/';
+      if (!inject(AuthService).hasRole('ADMIN', 'ADMIN_PAIS')) return '/';
       return rutaDeSeccion('resumen');
     },
   },
   {
     matcher: casaPrivada('admin'),
-    canActivate: [authGuard, roleGuard('ADMIN')],
+    canActivate: [authGuard, roleGuard('ADMIN', 'ADMIN_PAIS')],
     title: 'Administración · Acosta Research',
     loadComponent: () => import('./features/admin/admin').then((m) => m.Admin),
   },

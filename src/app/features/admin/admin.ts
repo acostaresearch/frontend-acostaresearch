@@ -44,7 +44,9 @@ import { VentasManualesAdmin } from './ventas-manuales';
 import { ProductosAdmin } from './productos-admin';
 import { AccionesAccesosAdmin } from './acciones-accesos';
 import { PagosManualesAdmin } from './pagos-manuales';
-import { DIRECCIONES, MENU, PAGINAS, Seccion, seccionDe } from './navegacion';
+import { DIRECCIONES, MENU, PAGINAS, SECCIONES_DE_PAIS, Seccion, seccionDe } from './navegacion';
+import { FiltroDePais } from '../../core/services/filtro-de-pais.service';
+import { PAISES, nombreDePais } from '../../shared/contenido/paises';
 import { Acceso, unirAccesos } from './accesos';
 import { ResumenIngresosAdmin, soles } from './resumen-ingresos';
 import { FiltrosLista } from './filtros-lista';
@@ -114,6 +116,27 @@ export class Admin implements OnInit {
 
   /** La cuenta con la que se está administrando ahora mismo. */
   readonly yo = this.auth.user;
+
+  /**
+   * Quien mira es un administrador de país: ve el panel recortado a lo suyo.
+   * Aquí solo se decide qué se enseña; lo que puede hacer lo decide el servidor.
+   */
+  readonly dePais = computed(() => this.yo()?.role === 'ADMIN_PAIS');
+
+  /** El país por el que el dueño está mirando: todos, uno o solo la casa. */
+  protected readonly filtroPais = inject(FiltroDePais);
+  readonly paises = PAISES;
+  readonly nombreDePais = nombreDePais;
+
+  /** Cambia el país del selector de arriba y vuelve a pedirlo todo con él. */
+  verPais(valor: string): void {
+    this.filtroPais.valor.set(valor);
+    this.recargar();
+    // Los contadores de la barra lateral salen de estas dos, que la recarga
+    // general no trae.
+    this.seguimiento.cargarReclamos(false);
+    this.seguimiento.cargarResenas(false);
+  }
 
   readonly metodos = METODOS;
   /**
@@ -367,6 +390,7 @@ export class Admin implements OnInit {
         this.pruebasConector.viendoInvitados() !== null ||
         this.accionesAccesos.viendoHistorial() !== null ||
         this.cuentas.formularioAdminAbierto() ||
+        this.cuentas.dandoAcceso() !== null ||
         this.productos.viendoCapitulos() !== null ||
         this.productos.editando() !== null ||
         this.productos.borrandoGrupo() !== null ||
@@ -392,7 +416,7 @@ export class Admin implements OnInit {
 
     // Las fichas de asesor, por lo mismo: el contador lateral es lo que avisa de
     // que hay alguien esperando respuesta sin tener que abrir la sección.
-    this.seguimiento.cargarAsesores(false);
+    if (!this.dePais()) this.seguimiento.cargarAsesores(false);
 
     // Y las reseñas: no tienen plazo legal, pero mientras no se apruebe una no
     // se ve en ninguna parte, y quien la escribió está esperándola.
@@ -400,7 +424,7 @@ export class Admin implements OnInit {
 
     // Y los pedidos, por lo mismo: un capítulo esperando sin asignar es alguien
     // mirando su seguimiento sin que se mueva nada.
-    this.seguimiento.cargarPedidos(false);
+    if (!this.dePais()) this.seguimiento.cargarPedidos(false);
 
     // La ficha de «Datos de la cuenta» sale de la sesión, y la sesión se llenó al
     // entrar: el último acceso o la verificación pueden haber cambiado desde
@@ -452,7 +476,8 @@ export class Admin implements OnInit {
       licencias: tolerante('licencias', this.admin.licenciasTodas()),
       alertas: tolerante('alertas', this.admin.alertas()),
       codigos: tolerante('códigos', this.admin.codigos()),
-      bolsas: tolerante('bolsas', this.admin.bolsasRecientes()),
+      // Las bolsas no son de ningún país: al administrador de país no se le piden.
+      bolsas: this.dePais() ? of(null) : tolerante('bolsas', this.admin.bolsasRecientes()),
       pagos: tolerante('ventas', this.admin.pagosRecientes()),
       descuentos: tolerante('descuentos', this.admin.descuentos()),
       porRevisar: tolerante('yapes por revisar', this.payments.porRevisar()),
@@ -639,7 +664,15 @@ export class Admin implements OnInit {
       this.seguimiento.resenasPendientes(),
   );
 
-  readonly menu = MENU;
+  /** La barra lateral. Al administrador de país, solo con sus secciones. */
+  readonly menu = computed(() =>
+    this.dePais()
+      ? MENU.map((bloque) => ({
+          ...bloque,
+          entradas: bloque.entradas.filter((entrada) => SECCIONES_DE_PAIS.includes(entrada.seccion)),
+        })).filter((bloque) => bloque.entradas.length > 0)
+      : MENU,
+  );
 
   /** El número rojo de una entrada del menú, o 0 si no lleva. */
   contador(seccion: Seccion): number {
@@ -699,7 +732,7 @@ export class Admin implements OnInit {
    */
   private leerSeccion(direccion: string | null): void {
     const seccion = direccion ? seccionDe(direccion) : undefined;
-    if (!seccion) {
+    if (!seccion || (this.dePais() && !SECCIONES_DE_PAIS.includes(seccion))) {
       void this.router.navigateByUrl(this.direccion('resumen'), { replaceUrl: true });
       return;
     }

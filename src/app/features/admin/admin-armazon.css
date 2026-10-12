@@ -219,6 +219,33 @@
   gap: 8px;
 }
 
+/* El selector de país del dueño: misma altura y mismo borde que los botones
+   de al lado. */
+.filtro-pais {
+  height: 38px;
+  max-width: 190px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.barra-superior-acciones .pastilla {
+  align-self: center;
+}
+
+/* Al administrador de país no se le enseña lo que no puede hacer: editar el
+   catálogo, aprobar pagos, moderar reseñas. Va con ::ng-deep porque casi todo
+   lo marcado vive en las vistas hijas. Es solo presentación: quien lo impide
+   de verdad es el servidor. */
+.panel-admin.de-pais ::ng-deep [data-solo-casa] {
+  display: none !important;
+}
+
 .boton-icono {
   display: grid;
   place-items: center;

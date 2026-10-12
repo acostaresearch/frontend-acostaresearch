@@ -1,4 +1,4 @@
-<div class="panel-admin">
+<div class="panel-admin" [class.de-pais]="dePais()">
   <!-- ── Barra lateral ───────────────────────────────────────────────────
        Toda la altura de la ventana, sin la cabecera del sitio: el panel es una
        herramienta de trabajo y la marca de arriba lleva a la portada. Agrupada
@@ -11,7 +11,7 @@
     </a>
 
     <nav data-tour="admin-menu" class="lateral-nav" aria-label="Secciones del panel">
-      @for (bloque of menu; track bloque.grupo) {
+      @for (bloque of menu(); track bloque.grupo) {
         @if (bloque.grupo) {
           <p class="lateral-grupo">{{ bloque.grupo }}</p>
         }
@@ -79,6 +79,31 @@
         <strong>{{ pagina().titulo }}</strong>
       </p>
       <div class="barra-superior-acciones">
+        <!-- Por qué país se mira. El dueño elige: todos (el total), uno, o solo
+             lo de la casa; cambiarlo vuelve a pedir los datos. Al administrador
+             de país se le enseña el suyo, que no puede cambiar. -->
+        @if (dePais()) {
+          <span class="pastilla" data-tour="admin-pais">{{ nombreDePais(yo()?.pais) }}</span>
+        } @else {
+          <select
+            class="filtro-pais"
+            data-tour="admin-pais"
+            aria-label="Ver por país"
+            title="Ver por país"
+            [disabled]="recargando()"
+            (change)="verPais($any($event.target).value)"
+          >
+            <option value="" [selected]="filtroPais.valor() === ''">Todos los países</option>
+            <option value="ninguno" [selected]="filtroPais.valor() === 'ninguno'">
+              Solo la casa (sin país)
+            </option>
+            @for (pais of paises; track pais.codigo) {
+              <option [value]="pais.codigo" [selected]="filtroPais.valor() === pais.codigo">
+                {{ pais.nombre }}
+              </option>
+            }
+          </select>
+        }
         <!-- El recorrido guiado: la brújula, como en la cabecera del sitio, que
              aquí no está. Empieza por la sección que se está mirando. -->
         <button
@@ -165,7 +190,7 @@
               </button>
             }
             @case ('grupos') {
-              <button type="button" class="boton" (click)="productos.nuevoGrupo()">Crear producto</button>
+              <button data-solo-casa type="button" class="boton" (click)="productos.nuevoGrupo()">Crear producto</button>
             }
             @case ('pruebas') {
               <button type="button" class="boton" (click)="pruebasConector.abrirFormularioPrueba()">
@@ -173,12 +198,12 @@
               </button>
             }
             @case ('usuarios') {
-              <button type="button" class="boton" (click)="cuentas.abrirFormularioAdmin()">
+              <button data-solo-casa type="button" class="boton" (click)="cuentas.abrirFormularioAdmin()">
                 Crear administrador
               </button>
             }
             @case ('admins') {
-              <button type="button" class="boton" (click)="cuentas.abrirFormularioAdmin()">
+              <button data-solo-casa type="button" class="boton" (click)="cuentas.abrirFormularioAdmin()">
                 Crear administrador
               </button>
             }
@@ -240,7 +265,10 @@
        De /planes a la primera fase, los correos de avance y los referidos. En
        su propio componente, que carga lo suyo al abrirse. -->
     @if (seccion() === 'embudo') {
-      <app-embudo-admin />
+      <!-- Carga lo suyo al nacer: se vuelve a crear al cambiar de país. -->
+      @for (pais of [filtroPais.valor()]; track pais) {
+        <app-embudo-admin />
+      }
     }
 
     <!-- ══ UNIVERSIDADES Y ASESORES ═══════════════════════════════════════════
@@ -406,7 +434,7 @@
        código porque quien los graba no despliega: antes había que tocar
        TypeScript y empujar a git para publicar una URL de YouTube. -->
     @if (enTutoriales()) {
-      <app-ayuda-vista [ayuda]="ayuda" [seccion]="seccion" [direccion]="direccion.bind(this)" />
+      <app-ayuda-vista [ayuda]="ayuda" [seccion]="seccion" [direccion]="direccion.bind(this)" [soloLectura]="dePais()" />
     }
 
     @if (seccion() === 'perfil') {
@@ -488,7 +516,7 @@
           <a [routerLink]="direccion('usuarios')" [class.activa]="seccion() === 'usuarios'">
             Todos
           </a>
-          <a [routerLink]="direccion('admins')" [class.activa]="seccion() === 'admins'">
+          <a data-solo-casa [routerLink]="direccion('admins')" [class.activa]="seccion() === 'admins'">
             Administradores <span class="cuenta">{{ cuentas.administradores().length }}</span>
           </a>
         </nav>
@@ -514,6 +542,9 @@
                       <b>{{ admin.firstName }} {{ admin.lastName }}</b>
                       @if (admin.id === yo()?.id) {
                         <span class="pastilla">tú</span>
+                      }
+                      @if (admin.role === 'ADMIN_PAIS') {
+                        <span class="pastilla">{{ nombreDePais(admin.pais) }}</span>
                       }
                       @if (admin.status !== 'ACTIVE') {
                         <span class="pastilla mala">{{ cuentas.estadoUsuario(admin.status) }}</span>
@@ -569,7 +600,12 @@
                    administradores tienen su pestaña. -->
                 @for (u of cuentas.usuarios(); track u.id) {
                   <tr>
-                    <td><b>{{ u.firstName }} {{ u.lastName }}</b></td>
+                    <td>
+                      <b>{{ u.firstName }} {{ u.lastName }}</b>
+                      @if (u.role === 'ADMIN' || u.role === 'ADMIN_PAIS') {
+                        <span class="pastilla">{{ cuentas.rolUsuario(u.role) }}</span>
+                      }
+                    </td>
                     <td>{{ u.email }}</td>
                     <td class="sin-salto">{{ u.createdAt | date: 'd MMM y' }}</td>
                     <td class="sin-salto">
@@ -598,10 +634,33 @@
                         <button type="button" (click)="copiarTexto(u.email, 'Correo copiado')">
                           Copiar correo
                         </button>
+                        <!-- Darle a una cuenta que ya existe acceso de administrador,
+                             o quitárselo. Solo el dueño, y nunca a sí mismo. -->
+                        @if (!dePais() && u.id !== yo()?.id && (u.status === 'ACTIVE' || u.status === 'SUSPENDED')) {
+                          <hr />
+                          @if (u.role === 'ADMIN' || u.role === 'ADMIN_PAIS') {
+                            <button
+                              type="button"
+                              class="peligro"
+                              [disabled]="cuentas.cambiandoRol() === u.id"
+                              (click)="cuentas.quitarAcceso(u)"
+                            >
+                              Quitar acceso de administrador
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              [disabled]="cuentas.cambiandoRol() === u.id"
+                              (click)="cuentas.abrirAcceso(u)"
+                            >
+                              Hacer administrador
+                            </button>
+                          }
+                        }
                         <!-- Suspender corta sus sesiones y su conector al momento.
                              Nadie se suspende a sí mismo, y una cuenta eliminada
                              por su dueño no se reabre. -->
-                        @if (u.id !== yo()?.id && (u.status === 'ACTIVE' || u.status === 'SUSPENDED')) {
+                        @if (!dePais() && u.id !== yo()?.id && (u.status === 'ACTIVE' || u.status === 'SUSPENDED')) {
                           <hr />
                           <button
                             type="button"
@@ -652,6 +711,62 @@
     }
       </section>
     }
+    <!-- ── Ventana de hacer administrador a una cuenta que ya existe ────────── -->
+    @if (cuentas.dandoAcceso(); as elegido) {
+      <div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-acceso">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-acceso">Hacer administrador</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cuentas.cerrarAcceso()">
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            <p class="nota">
+              <b>{{ elegido.firstName }} {{ elegido.lastName }}</b> ({{ elegido.email }}) entrará al
+              panel con la cuenta que ya tiene: misma contraseña, mismas licencias y mismas compras.
+              Tendrá que volver a iniciar sesión.
+            </p>
+
+            <div class="formulario">
+              <div class="campo">
+                <label for="acceso-pais">País <span class="opcional">· opcional</span></label>
+                <select
+                  id="acceso-pais"
+                  [value]="cuentas.paisDelAcceso()"
+                  (change)="cuentas.paisDelAcceso.set($any($event.target).value)"
+                >
+                  <option value="">Todos: administrador general</option>
+                  @for (pais of paises; track pais.codigo) {
+                    <option [value]="pais.codigo">{{ pais.nombre }}</option>
+                  }
+                </select>
+                <span class="ayuda">
+                  Con un país, solo ve y solo toca lo de ese país: sus accesos, sus descuentos, sus
+                  enlaces de prueba y sus clientes. Sin país, lo ve todo, como tú.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cuentas.cerrarAcceso()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="boton"
+              [disabled]="cuentas.cambiandoRol() !== null"
+              (click)="cuentas.darAcceso()"
+            >
+              {{ cuentas.cambiandoRol() ? 'Guardando…' : 'Hacer administrador' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- ── Ventana de crear administrador ──────────────────────────────────── -->
     @if (cuentas.formularioAdminAbierto()) {
       <div class="ventana-fondo">
@@ -714,7 +829,21 @@
                   />
                   <span class="ayuda">
                     Tiene que ser un correo sin cuenta. Si ya tiene una, hay que darle acceso sobre
-                    esa, no crear otra.
+                    esa, no crear otra: en su fila de la lista, «…» → «Hacer administrador».
+                  </span>
+                </div>
+
+                <div class="campo">
+                  <label for="a-pais">País <span class="opcional">· opcional</span></label>
+                  <select id="a-pais" formControlName="pais">
+                    <option value="">Todos: administrador general</option>
+                    @for (pais of paises; track pais.codigo) {
+                      <option [value]="pais.codigo">{{ pais.nombre }}</option>
+                    }
+                  </select>
+                  <span class="ayuda">
+                    Con un país, la cuenta solo ve y solo toca lo de ese país: sus accesos, sus
+                    descuentos, sus enlaces de prueba y sus clientes. Sin país, lo ve todo, como tú.
                   </span>
                 </div>
 

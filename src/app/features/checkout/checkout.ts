@@ -1266,7 +1266,7 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
 
     // Los códigos los genera el administrador: canjearse uno a sí mismo
     // apuntaría una venta que no existió.
-    if (this.auth.hasRole('ADMIN')) {
+    if (this.auth.hasRole('ADMIN', 'ADMIN_PAIS')) {
       this.errorCanje.set('Con la cuenta de administrador no se canjean códigos.');
       return;
     }
