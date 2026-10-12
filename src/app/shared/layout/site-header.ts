@@ -53,7 +53,7 @@ export class SiteHeader {
       .subscribe(() => {
         this.menuAbierto.set(false);
         this.productosAbierto.set(false);
-        this.enProducto.set(/^\/(metodo|articulo|preparar-documento)(\/|\?|#|$)/.test(this.router.url));
+        this.enProducto.set(/^\/(metodo|articulo|suficiencia-profesional|informes|humanizador-academico|preparar-documento)(\/|\?|#|$)/.test(this.router.url));
       });
   }
 

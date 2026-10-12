@@ -1,10 +1,10 @@
-<div class="dif" [class.abierto]="abierto()">
+<div class="dif">
   <button
     type="button"
     class="dif-boton"
+    aria-haspopup="dialog"
     [attr.aria-expanded]="abierto()"
-    aria-controls="dif-panel"
-    (click)="abierto.set(!abierto())"
+    (click)="abierto.set(true)"
   >
     <span>¿En qué se diferencian los dos productos de artículos?</span>
     <svg class="dif-flecha" viewBox="0 0 24 24" aria-hidden="true">
@@ -12,18 +12,34 @@
     </svg>
   </button>
 
+  <!-- La comparación, en una ventana encima de la página. Se cierra con la
+       ✕, pulsando fuera, con Escape o al elegir «Ver sus fases». -->
   @if (abierto()) {
-    <div id="dif-panel" class="dif-panel">
+    <div class="dif-fondo" (click)="cerrar()">
+    <div
+      class="dif-ventana"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dif-titulo"
+      (click)="$event.stopPropagation()"
+    >
+    <header class="dif-barra">
+      <h2 id="dif-titulo">¿En qué se diferencian los dos productos de artículos?</h2>
+      <button type="button" class="dif-cerrar" aria-label="Cerrar la comparación" (click)="cerrar()">
+        ✕
+      </button>
+    </header>
+    <div class="dif-panel">
       <div class="dif-tabla" role="table" aria-label="Artículo empírico frente a artículo de revisión">
         <div class="dif-fila dif-cab" role="row">
           <span role="columnheader"></span>
           <span role="columnheader" [class.actual]="actual() === 'empirico'">
             <b>Artículos Científicos (Empíricos)</b>
-            <a routerLink="/articulo" [queryParams]="{ tipo: null }">Ver sus fases</a>
+            <a routerLink="/articulo" [queryParams]="{ tipo: null }" (click)="cerrar()">Ver sus fases</a>
           </span>
           <span role="columnheader" [class.actual]="actual() === 'revision'">
             <b>Artículos de Revisión (Sistemática y Bibliométrica)</b>
-            <a routerLink="/articulo" [queryParams]="{ tipo: 'revision' }">Ver sus fases</a>
+            <a routerLink="/articulo" [queryParams]="{ tipo: 'revision' }" (click)="cerrar()">Ver sus fases</a>
           </span>
         </div>
 
@@ -40,6 +56,8 @@
         }
       </div>
       <p class="dif-nota">Los dos incluyen el Humanizador académico, tu panel y Zotero o Mendeley.</p>
+    </div>
+    </div>
     </div>
   }
 </div>

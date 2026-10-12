@@ -71,8 +71,9 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ruta: '/',
       ancla: '[data-tour="menu"]',
       titulo: 'Todo está aquí arriba',
-      texto: 'Estas entradas son el sitio entero. «Productos» agrupa Tesis, Artículos y Preparar ' +
-        'documento; ahora las vemos una por una.',
+      texto: 'Estas entradas son el sitio entero. «Productos» agrupa todo lo que se vende: Tesis, ' +
+        'Artículos, Suficiencia Profesional, Informes, Humanizador y Edición y Traducción; ahora ' +
+        'las vemos una por una.',
     },
     {
       seccion: 'La portada',

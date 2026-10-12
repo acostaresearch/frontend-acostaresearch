@@ -29,6 +29,16 @@
         <p class="mt-hero-entrada">{{ producto().entrada }}</p>
       </div>
 
+      <!-- La caja del producto, la misma de su tarjeta en /planes. -->
+      <img
+        class="mt-hero-caja"
+        src="/productos/02-articulos-cientificos-caja.svg"
+        alt=""
+        width="220"
+        height="245"
+        decoding="async"
+      />
+
       <ul data-tour="articulo-cifras" class="mt-cifras">
         @for (c of producto().cifras; track c.pie) {
           <li>

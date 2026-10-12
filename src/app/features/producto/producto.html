@@ -1,0 +1,151 @@
+<app-site-header />
+
+<main class="pagina mt">
+  <!-- El encabezado, igual que el de «Las 12 Skills» y el de la Ruta del
+       Artículo: azul noche a sangre, con el fondo de líneas dibujado en CSS.
+       A la derecha, la caja del producto: la misma de su tarjeta en /planes. -->
+  <header class="mt-hero">
+    <app-lineas-noche foco="derecha" />
+
+    <div class="mt-ancho mt-hero-fila">
+      <div class="mt-hero-texto">
+        <p class="mt-rotulo">{{ producto().rotulo }}</p>
+        <h1>{{ producto().titulo }}</h1>
+        <p class="mt-hero-entrada">{{ producto().entrada }}</p>
+      </div>
+
+      <img
+        class="prod-caja"
+        [src]="producto().caja"
+        alt=""
+        width="260"
+        height="289"
+        decoding="async"
+      />
+    </div>
+  </header>
+
+  <section class="mt-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cab">
+        <div>
+          <p class="mt-rotulo mt-rotulo-azul">{{ producto().pasosRotulo }}</p>
+          <h2 class="mt-titulo">{{ producto().pasosTitulo }}</h2>
+        </div>
+        <p class="mt-cab-nota">{{ producto().pasosNota }}</p>
+      </div>
+
+      <div class="mt-columnas">
+        <ol class="mt-col">
+          @for (p of columnaIzquierda(); track p.nombre) {
+            <ng-container [ngTemplateOutlet]="ficha" [ngTemplateOutletContext]="{ $implicit: p }" />
+          }
+        </ol>
+        <ol class="mt-col">
+          @for (p of columnaDerecha(); track p.nombre) {
+            <ng-container [ngTemplateOutlet]="ficha" [ngTemplateOutletContext]="{ $implicit: p }" />
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  @if (producto().incluye; as incluye) {
+    <section class="mt-seccion mt-seccion-lineas">
+      <div class="mt-ancho">
+        <div class="mt-cab">
+          <div>
+            <p class="mt-rotulo mt-rotulo-azul">Qué incluye</p>
+            <h2 class="mt-titulo">Lo que te llevas</h2>
+          </div>
+        </div>
+
+        <!-- Tarjetas, como «Lo que tienes en tu panel» del método. Con imagen
+             propia (el Humanizador) van en dos columnas y la imagen al lado; la
+             caja no se repite aquí: ya está en el encabezado. -->
+        <div [class.prod-con-imagen]="producto().imagen">
+          <ul class="mt-tarjetas">
+            @for (t of incluye; track t.titulo) {
+              <li>
+                <span class="mt-ico mt-ico-grande" aria-hidden="true">
+                  <app-icono-ruta [clave]="t.icono" />
+                </span>
+                <h3>{{ t.titulo }}</h3>
+                <p>{{ t.texto }}</p>
+              </li>
+            }
+          </ul>
+
+          @if (producto().imagen; as imagen) {
+            <img
+              class="prod-imagen"
+              [src]="imagen.src"
+              [alt]="imagen.alt"
+              width="480"
+              height="300"
+              loading="lazy"
+              decoding="async"
+            />
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  <section class="mt-seccion mt-cierre-seccion">
+    <div class="mt-ancho">
+      <div class="mt-cierre">
+        <app-lineas-noche densidad="compacta" />
+        <div>
+          <h2>{{ producto().cierre }}</h2>
+          <p>{{ vigencia() }}, renovables.</p>
+        </div>
+        <div class="mt-cierre-compra">
+          @if (precio(); as valor) {
+            <p class="mt-precio">
+              <span>desde</span>
+              <b>{{ valor }}</b>
+            </p>
+          }
+          <a
+            class="boton grande"
+            routerLink="/planes"
+            [queryParams]="plan() ? { plan: plan()!.code } : null"
+          >
+            Ver los paquetes
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />
+
+<!-- La ficha de un paso. Una sola plantilla para las dos columnas, como en la
+     Ruta del Artículo. -->
+<ng-template #ficha let-p>
+  <li class="mt-skill" [class.mt-skill-fuera]="p.fuera">
+    <span class="mt-num" aria-hidden="true">{{ p.numero }}</span>
+
+    <div class="mt-skill-cuerpo">
+      <p class="mt-skill-cab">
+        <span class="mt-ico" aria-hidden="true">
+          <app-icono-ruta [clave]="p.icono" />
+        </span>
+        <b class="mt-skill-nombre">{{ p.nombre }}</b>
+        <span class="mt-chip">{{ p.etiqueta }}</span>
+      </p>
+
+      <p class="mt-skill-texto">{{ p.texto }}</p>
+
+      @if (p.entregable) {
+        <p class="mt-entregable">
+          <span class="mt-word" aria-hidden="true">W</span>
+          <b>Entregable</b>
+          <span class="mt-entregable-texto">{{ p.entregable }}</span>
+        </p>
+      }
+    </div>
+  </li>
+</ng-template>

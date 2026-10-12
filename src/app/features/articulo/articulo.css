@@ -44,3 +44,37 @@
   display: block;
   margin-bottom: 28px;
 }
+
+/* La caja del producto en el encabezado: arriba a la derecha, con las cifras
+   debajo. El texto ocupa las dos filas, y así las cifras siguen a su pie. */
+.mt-hero-texto {
+  grid-row: 1 / span 2;
+}
+
+.mt-hero-caja {
+  display: block;
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  width: 220px;
+  height: auto;
+}
+
+.mt-cifras {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+@media (max-width: 900px) {
+  .mt-hero-texto,
+  .mt-hero-caja,
+  .mt-cifras {
+    grid-row: auto;
+    grid-column: 1;
+  }
+
+  .mt-hero-caja {
+    justify-self: start;
+    width: 160px;
+  }
+}

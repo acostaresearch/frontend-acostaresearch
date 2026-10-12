@@ -49,6 +49,27 @@ export const routes: Routes = [
     title: 'Ruta del Artículo Científico · Acosta Research',
     loadComponent: () => import('./features/articulo/articulo').then((m) => m.Articulo),
   },
+  // Los tres productos sin ruta de fases propia, con una misma página que los
+  // cuenta antes de mandar a comprar. El del Humanizador no usa `/humanizador`,
+  // que fue la dirección del reescritor retirado (ver más abajo).
+  {
+    path: 'suficiencia-profesional',
+    title: 'Suficiencia Profesional · Acosta Research',
+    data: { producto: 'tsp' },
+    loadComponent: () => import('./features/producto/producto').then((m) => m.Producto),
+  },
+  {
+    path: 'informes',
+    title: 'Informes · Acosta Research',
+    data: { producto: 'informe' },
+    loadComponent: () => import('./features/producto/producto').then((m) => m.Producto),
+  },
+  {
+    path: 'humanizador-academico',
+    title: 'Humanizador Académico · Acosta Research',
+    data: { producto: 'humanizador' },
+    loadComponent: () => import('./features/producto/producto').then((m) => m.Producto),
+  },
   // «Cómo funciona» ya no es una página aparte: el arranque y las dos
   // objeciones viven ahora debajo de las demostraciones. La ruta se conserva
   // para no romper los enlaces ya repartidos.

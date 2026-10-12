@@ -70,7 +70,7 @@
   color: var(--color-primario);
 }
 
-/* ── «Productos»: desplegable con Tesis, Artículos y Preparar documento ── */
+/* ── «Productos»: desplegable con todo lo que se vende, en dos columnas ── */
 .productos {
   position: relative;
 }
@@ -125,8 +125,9 @@
   left: -8px;
   z-index: 30;
   display: none;
-  gap: 2px;
-  width: 340px;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 6px;
+  width: 620px;
   padding: 8px;
   margin-top: 8px;
   background: var(--color-superficie);
@@ -153,14 +154,12 @@
 }
 
 .productos.abierto .productos-lista {
-  display: flex;
-  flex-direction: column;
+  display: grid;
 }
 
 @media (hover: hover) {
   .productos:hover .productos-lista {
-    display: flex;
-    flex-direction: column;
+    display: grid;
   }
 
   .productos:hover .flecha {
@@ -238,6 +237,41 @@
   font-size: 12.5px;
   line-height: 1.35;
   color: var(--color-texto-tenue);
+}
+
+/* El pie del desplegable: de lado a lado, separado por una raya, hacia los
+   precios de todo. La flecha se adelanta al pasar por encima. */
+.navegacion .productos-lista a.productos-todos {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 12px;
+  margin: 6px -8px -8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-fondo);
+  border-top: 1px solid var(--color-borde);
+  border-radius: 0 0 13px 13px;
+}
+
+.navegacion .productos-lista a.productos-todos:hover {
+  background: var(--color-primario-suave);
+}
+
+.productos-todos .flecha-ir {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transicion);
+}
+
+.productos-todos:hover .flecha-ir {
+  transform: translateX(3px);
 }
 
 .secundario {
@@ -506,6 +540,7 @@
   }
 
   .productos-lista {
+    grid-template-columns: 1fr;
     width: auto;
     padding: 6px 0;
     margin: 0;
@@ -519,6 +554,15 @@
   .navegacion .productos-lista a.producto {
     padding: 9px 4px;
     border-bottom: 0;
+  }
+
+  .navegacion .productos-lista a.productos-todos {
+    justify-content: flex-start;
+    padding: 11px 4px;
+    margin: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
   }
 
   .productos:not(.abierto) .productos-lista {

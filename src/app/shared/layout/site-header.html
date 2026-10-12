@@ -28,11 +28,13 @@
          como estaban; en móvil se convierte en el desplegable. -->
     <div id="menu-principal" class="menu" [class.abierto]="menuAbierto()">
       <nav class="navegacion" data-tour="menu">
-        <!-- «Productos»: Tesis, Artículos y Preparar documento juntos. Se abre
+        <!-- «Productos»: todo lo que se vende, en dos columnas. Se abre
              al pasar el ratón (`:hover` en el CSS) o al pulsarlo, que es lo
              único que hay en un teléfono; se cierra al elegir, al pulsar
              fuera o con Escape. En el menú de móvil la lista se despliega en
-             su sitio, sangrada, en vez de flotar. -->
+             su sitio, sangrada, en vez de flotar. Suficiencia Profesional,
+             Informes y Humanizador comparten una misma página (`Producto`),
+             cada uno con su dirección. -->
         <div class="productos" [class.abierto]="productosAbierto()" (keydown.escape)="cerrarProductos()">
           <button
             type="button"
@@ -67,6 +69,33 @@
                 <span class="producto-lema">Empíricos y de revisión, para publicar</span>
               </span>
             </a>
+            <a class="producto" routerLink="/suficiencia-profesional" routerLinkActive="activo" (click)="cerrarProductos()">
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 8h16a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a1 1 0 0 1 1-1z" /><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /><path d="M3 13h18" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Suficiencia Profesional</span>
+                <span class="producto-lema">Titúlate con tu experiencia laboral</span>
+              </span>
+            </a>
+            <a class="producto" routerLink="/informes" routerLinkActive="activo" (click)="cerrarProductos()">
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><path d="M9 3h6v4H9z" /><path d="M9 12h6M9 16h4" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Informes</span>
+                <span class="producto-lema">De curso o de empresa, de la consigna al Word</span>
+              </span>
+            </a>
+            <a class="producto" routerLink="/humanizador-academico" routerLinkActive="activo" (click)="cerrarProductos()">
+              <span class="producto-icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 20l1-4L15 6l3 3L8 19l-4 1z" /><path d="M13 8l3 3" /><path d="M19 13v4M17 15h4" /></svg>
+              </span>
+              <span class="producto-texto">
+                <span class="producto-nombre">Humanizador</span>
+                <span class="producto-lema">Un estilo más natural y claro para tu texto</span>
+              </span>
+            </a>
             <!-- Con sesión lleva a la pantalla de trabajo —la membresía cuelga
                  de la cuenta—; al visitante, a sus precios en /planes, que es
                  pública: mandarlo a /preparar-documento sería mandarlo al
@@ -89,6 +118,12 @@
                 <span class="producto-lema">Corrige tu inglés académico o traduce tu Word</span>
               </span>
             </ng-template>
+            <a class="productos-todos" routerLink="/planes" (click)="cerrarProductos()">
+              Ver todos los planes y precios
+              <svg class="flecha-ir" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
           </div>
         </div>
         <a routerLink="/en-accion" routerLinkActive="activo">Míralo en acción</a>

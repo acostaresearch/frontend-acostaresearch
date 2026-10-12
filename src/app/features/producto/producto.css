@@ -1,0 +1,60 @@
+/* Lo propio de la página de un producto (Suficiencia Profesional, Informes,
+   Humanizador). El armazón que comparte con «Las 12 Skills» y la Ruta del
+   Artículo está en `shared/estilos/ruta.css`. */
+
+/* Las fichas traen la descripción larga de cada fase, como en la Ruta del
+   Artículo: respiran un poco más que en el método. */
+.mt-skill {
+  padding-block: 22px;
+}
+
+/* La caja del producto en el encabezado, a la derecha del titular. */
+.prod-caja {
+  display: block;
+  width: 260px;
+  height: auto;
+}
+
+/* «Qué incluye»: tarjetas a todo el ancho. Con imagen propia, dos columnas
+   de tarjetas y la imagen a su lado. */
+.prod-con-imagen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px 48px;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.prod-con-imagen .mt-tarjetas {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 0;
+}
+
+.prod-imagen {
+  display: block;
+  width: 400px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+/* El mismo corte que `ruta.css`: por debajo, todo en una columna. */
+@media (max-width: 900px) {
+  .prod-caja {
+    width: 180px;
+  }
+
+  .prod-con-imagen {
+    grid-template-columns: 1fr;
+  }
+
+  .prod-imagen {
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .prod-con-imagen .mt-tarjetas {
+    grid-template-columns: 1fr;
+  }
+}

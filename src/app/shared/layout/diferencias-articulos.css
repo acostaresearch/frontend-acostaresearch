@@ -1,5 +1,5 @@
-/* El desplegable de las diferencias. Usa los tokens del sitio, así que el
-   modo oscuro sale solo. */
+/* El botón de las diferencias y su ventana emergente. Usa los tokens del
+   sitio, así que el modo oscuro sale solo. */
 .dif {
   border: 1px solid var(--color-borde);
   border-radius: 14px;
@@ -37,16 +37,98 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transition: transform 0.2s;
+  /* Apunta a la derecha: abre una ventana, no despliega nada debajo. */
+  transform: rotate(-90deg);
 }
 
-.abierto .dif-flecha {
-  transform: rotate(180deg);
+/* La ventana, con las medidas y la capa de «Qué incluye» de /planes: mismo
+   velo, misma sombra y misma entrada, para que las dos se sientan una. */
+.dif-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 24, 40, 0.28);
+  animation: dif-velo 0.2s ease-out;
+}
+
+.dif-ventana {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-height: min(680px, 100%);
+  overflow: hidden;
+  background: var(--color-superficie);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.22);
+  animation: dif-entra 0.2s ease-out;
+}
+
+@keyframes dif-velo {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dif-entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dif-fondo,
+  .dif-ventana {
+    animation: none;
+  }
+}
+
+.dif-barra {
+  display: flex;
+  flex: none;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.dif-barra h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.dif-cerrar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1rem;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+
+.dif-cerrar:hover {
+  color: var(--color-texto);
+  background: var(--color-fondo);
 }
 
 .dif-panel {
-  padding: 4px 18px 18px;
-  border-top: 1px solid var(--color-borde);
+  flex: 1;
+  min-height: 0;
+  padding: 4px 20px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .dif-fila {
