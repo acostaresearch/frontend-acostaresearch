@@ -138,56 +138,6 @@
           }
         </section>
         }
-        @if (ventasManuales().codigosNuevos().length > 0) {
-        <section class="tarjeta">
-          <h2>Códigos generados</h2>
-            <div class="codigos-nuevos">
-              <p class="codigos-titulo">
-                Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
-              </p>
-              @if (ventasManuales().enviosNuevos().length > 1) {
-                <p class="codigos-enviado">
-                  A cada uno de los {{ ventasManuales().enviosNuevos().length }} compradores le mandamos los suyos
-                  por correo. Al copiarlos, cada código va con su correo al lado.
-                </p>
-              } @else if (ventasManuales().codigoEnviadoA(); as correo) {
-                <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
-              }
-              @if (ventasManuales().cobroApuntado(); as cobro) {
-                <p class="codigos-enviado">
-                  Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }}
-                  @if (ventasManuales().codigosNuevos().length > 1) {
-                    cada código (S/
-                    {{ (cobro.amountCents * ventasManuales().codigosNuevos().length) / 100 | number: '1.2-2' }} en
-                    total)
-                  }
-                  por {{ cobro.paymentMethod }}. Entrará en tus ventas a medida que los canjeen.
-                </p>
-              } @else {
-                <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
-              }
-              <ul>
-                @if (ventasManuales().enviosNuevos().length > 1) {
-                  @for (envio of ventasManuales().enviosNuevos(); track envio.email) {
-                    @for (codigo of envio.codes; track codigo) {
-                      <li class="codigo-con-correo">
-                        <span class="codigo-correo">{{ envio.email }}</span>
-                        {{ codigo }}
-                      </li>
-                    }
-                  }
-                } @else {
-                  @for (codigo of ventasManuales().codigosNuevos(); track codigo) {
-                    <li>{{ codigo }}</li>
-                  }
-                }
-              </ul>
-              <button type="button" class="boton" (click)="ventasManuales().copiarCodigos()">
-                {{ copiados()() ? '¡Copiados!' : 'Copiar todos' }}
-              </button>
-            </div>
-        </section>
-        }
       </div>
       }
 

@@ -8,7 +8,7 @@ import { DescuentosVista } from './descuentos-vista';
 import { ProductosVista } from './productos-vista';
 import { VentasMensualesVista } from './ventas-mensuales-vista';
 import { ResumenVista } from './resumen-vista';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
@@ -89,6 +89,7 @@ const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CO
     PrivadaPipe,
     ReactiveFormsModule,
     DatePipe,
+    DecimalPipe,
     RouterLink,
     FiltrosLista,
 
@@ -383,6 +384,7 @@ export class Admin implements OnInit {
         this.accionesAccesos.accesoAbierto() !== null ||
         this.productos.formularioAbierto() ||
         this.ventasManuales.formularioCodigosAbierto() ||
+        this.ventasManuales.codigosNuevos().length > 0 ||
         this.promociones.formularioDescuentoAbierto() ||
         this.pruebasConector.formularioPruebaAbierto() ||
         this.pruebasConector.pruebaNueva() !== null ||

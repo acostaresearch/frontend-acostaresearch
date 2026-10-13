@@ -964,6 +964,80 @@
       @if (ventasManuales.formularioCodigosAbierto()) {
         <app-codigos-formulario-vista [ventasManuales]="ventasManuales" [trabajando]="trabajando" [metodos]="metodos" />
       }
+
+      <!-- Los códigos recién generados, en su ventana: es el único momento
+           en que se ven, así que salen delante y no debajo de una tabla.
+           Cerrarla los quita de la pantalla. Vive aquí y no en «Accesos» porque
+           «Generar código» también está en el resumen. -->
+      @if (ventasManuales.codigosNuevos().length > 0) {
+      <div class="ventana-fondo">
+        <div class="ventana estrecha" role="dialog" aria-modal="true" aria-labelledby="titulo-codigos-nuevos">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-codigos-nuevos">Códigos generados</h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="ventasManuales.cerrarCodigosNuevos()"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="ventana-cuerpo">
+          <div class="codigos-nuevos">
+            <p class="codigos-titulo">
+              Cópialos ahora. No se guardan en claro, así que no podremos volver a mostrarlos.
+            </p>
+            @if (ventasManuales.enviosNuevos().length > 1) {
+              <p class="codigos-enviado">
+                A cada uno de los {{ ventasManuales.enviosNuevos().length }} compradores le mandamos los suyos
+                por correo. Al copiarlos, cada código va con su correo al lado.
+              </p>
+            } @else if (ventasManuales.codigoEnviadoA(); as correo) {
+              <p class="codigos-enviado">También se los mandamos a {{ correo }}.</p>
+            }
+            @if (ventasManuales.cobroApuntado(); as cobro) {
+              <p class="codigos-enviado">
+                Cobro apuntado: S/ {{ cobro.amountCents / 100 | number: '1.2-2' }}
+                @if (ventasManuales.codigosNuevos().length > 1) {
+                  cada código (S/
+                  {{ (cobro.amountCents * ventasManuales.codigosNuevos().length) / 100 | number: '1.2-2' }} en
+                  total)
+                }
+                por {{ cobro.paymentMethod }}. Entrará en tus ventas a medida que los canjeen.
+              </p>
+            } @else {
+              <p class="codigos-enviado">Cortesía: no se registra ningún cobro.</p>
+            }
+            <ul>
+              @if (ventasManuales.enviosNuevos().length > 1) {
+                @for (envio of ventasManuales.enviosNuevos(); track envio.email) {
+                  @for (codigo of envio.codes; track codigo) {
+                    <li class="codigo-con-correo">
+                      <span class="codigo-correo">{{ envio.email }}</span>
+                      {{ codigo }}
+                    </li>
+                  }
+                }
+              } @else {
+                @for (codigo of ventasManuales.codigosNuevos(); track codigo) {
+                  <li>{{ codigo }}</li>
+                }
+              }
+            </ul>
+          </div>
+          </div>
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="ventasManuales.cerrarCodigosNuevos()">
+              Cerrar
+            </button>
+            <button type="button" class="boton" (click)="ventasManuales.copiarCodigos()">
+              {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
     </div>
   </main>
 </div>

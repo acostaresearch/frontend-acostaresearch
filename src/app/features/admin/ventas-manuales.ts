@@ -148,10 +148,7 @@ export class VentasManualesAdmin {
     this.listaCorreos().correos.filter((r) => r.problema),
   );
 
-  /** Los que el servidor miró pero cuyo servidor de correo no quiso contestar. */
-  readonly correosSinComprobar = computed(
-    () => this.listaCorreos().correos.filter((r) => !r.problema && r.buzon === null).length,
-  );
+
 
   /** Las membresías de «Preparar documento»: documentos al mes, sin conector. */
   readonly planesDocumentos = computed(() =>
@@ -254,6 +251,17 @@ export class VentasManualesAdmin {
     paymentRef: [''],
     note: [''],
   });
+  /**
+   * Cierra la ventana de los códigos recién generados. Los quita de la
+   * pantalla: no se guardan en claro, así que ya no se pueden volver a ver.
+   */
+  cerrarCodigosNuevos(): void {
+    this.codigosNuevos.set([]);
+    this.codigoEnviadoA.set(null);
+    this.enviosNuevos.set([]);
+    this.cobroApuntado.set(null);
+  }
+
   abrirFormularioCodigos(): void {
     this.error.set(null);
     // Los códigos de la vez anterior se quitan al abrir, no al generar: si
