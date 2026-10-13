@@ -641,10 +641,10 @@
                         <button
                           type="button"
                           class="enlace"
-                          [attr.aria-expanded]="cuentas.licenciasAbiertasDe() === u.id"
+                          aria-haspopup="dialog"
                           (click)="cuentas.alternarLicenciasDe(u)"
                         >
-                          {{ cuentas.licenciasAbiertasDe() === u.id ? 'Ocultar licencias' : 'Ver licencias' }}
+                          Ver licencias
                         </button>
                       }
                       <app-menu-fila>
@@ -692,17 +692,6 @@
                       </app-menu-fila>
                     </td>
                   </tr>
-                  @if (cuentas.licenciasAbiertasDe() === u.id && suyas.length > 0) {
-                    <tr>
-                      <td colspan="7">
-                        <app-licencias-vista
-                          [accionesAccesos]="accionesAccesos"
-                          [licencias]="suyas"
-                          [estadoLicencia]="estadoLicencia.bind(this)"
-                        />
-                      </td>
-                    </tr>
-                  }
                 }
               </tbody>
             </table>
@@ -740,6 +729,51 @@
     }
       </section>
     }
+    <!-- ── Las licencias de una cuenta, en su ventana ───────────────────────
+         Se abre con «Ver licencias» de su fila, y al saltar desde un acceso o
+         una alerta. Dentro: consultas, último uso, historial, revocar y
+         reactivar. -->
+    @if (cuentas.cuentaDeLicencias(); as cuenta) {
+      <div class="ventana-fondo">
+        <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-licencias-cuenta">
+          <div class="ventana-cabecera">
+            <h3 id="titulo-licencias-cuenta">
+              Licencias de {{ cuenta.firstName }} {{ cuenta.lastName }}
+              <span class="tenue bloque">{{ cuenta.email }}</span>
+            </h3>
+            <button
+              type="button"
+              class="cerrar"
+              aria-label="Cerrar"
+              (click)="cuentas.licenciasAbiertasDe.set(null)"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="ventana-cuerpo">
+            @if (licenciasDe(cuenta.id); as suyas) {
+              @if (suyas.length > 0) {
+                <app-licencias-vista
+                  [accionesAccesos]="accionesAccesos"
+                  [licencias]="suyas"
+                  [estadoLicencia]="estadoLicencia.bind(this)"
+                />
+              } @else {
+                <p class="nota">Esta cuenta no tiene ninguna licencia.</p>
+              }
+            }
+          </div>
+
+          <div class="ventana-pie">
+            <button type="button" class="boton secundario" (click)="cuentas.licenciasAbiertasDe.set(null)">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- ── Ventana de hacer administrador a una cuenta que ya existe ────────── -->
     @if (cuentas.dandoAcceso(); as elegido) {
       <div class="ventana-fondo">

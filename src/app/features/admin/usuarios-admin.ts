@@ -63,10 +63,14 @@ export class UsuariosAdmin {
     filtrar: (valor) => this.filtrarPorLicencia(valor),
   };
 
-  // ── Las licencias de una cuenta, desplegadas bajo su fila ────────────────
+  // ── Las licencias de una cuenta, en su ventana ───────────────────────────
 
   /** La cuenta cuyas licencias están abiertas. Una a la vez. */
   readonly licenciasAbiertasDe = signal<string | null>(null);
+  /** Esa cuenta, para la cabecera de la ventana. Si ya no está en la lista, se cierra. */
+  readonly cuentaDeLicencias = computed(
+    () => this.usuarios().find((u) => u.id === this.licenciasAbiertasDe()) ?? null,
+  );
   /** El correo que hay que abrir en cuanto llegue la lista (ver `verLicenciasDe`). */
   private abrirAlCargar: string | null = null;
 

@@ -390,6 +390,7 @@ export class Admin implements OnInit {
         this.accionesAccesos.viendoHistorial() !== null ||
         this.cuentas.formularioAdminAbierto() ||
         this.cuentas.dandoAcceso() !== null ||
+        this.cuentas.cuentaDeLicencias() !== null ||
         this.productos.viendoCapitulos() !== null ||
         this.productos.editando() !== null ||
         this.productos.borrandoGrupo() !== null ||
