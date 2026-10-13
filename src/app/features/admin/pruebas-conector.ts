@@ -74,7 +74,7 @@ export class PruebasConectorAdmin {
   /**
    * Los topes vienen puestos y bajos a propósito: cada consulta del conector se
    * paga, y el enlace se reparte entre gente que no ha pagado nada. Quien quiera
-   * más los sube; lo que no conviene es que el valor por defecto sea «sin tope».
+   * más no puede: las consultas al día van de 1 a 15, y el servidor lo exige igual.
    */
   readonly formPrueba = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
@@ -83,7 +83,7 @@ export class PruebasConectorAdmin {
     /** Cuánto dura la prueba desde que se crea el enlace. 0 = sin límite. */
     accesoCantidad: [24, [Validators.required, Validators.min(0), Validators.max(525600)]],
     accesoUnidad: ['horas' as 'minutos' | 'horas'],
-    callsPerDay: [20, [Validators.required, Validators.min(0), Validators.max(1000)]],
+    callsPerDay: [15, [Validators.required, Validators.min(1), Validators.max(15)]],
   });
 
   cargarPruebas(): void {
@@ -93,16 +93,56 @@ export class PruebasConectorAdmin {
     });
   }
 
+  // ── El nombre propuesto ──────────────────────────────────────────────────
+  //
+  // «Para quién es» viene ya escrito: el producto y un grupo al azar, para que
+  // crear un enlace no pida inventarse un nombre. Se puede cambiar a mano o
+  // pedir otro; lo ven los invitados, así que tiene que poder leerse.
+
+  /** Nombres de grupo: cortos, reconocibles y fáciles de decir en voz alta. */
+  private static readonly GRUPOS = [
+    'Andes', 'Cóndor', 'Inti', 'Quipu', 'Misti', 'Colca', 'Paracas', 'Tumi', 'Chakana', 'Killa',
+    'Amauta', 'Huascarán', 'Titicaca', 'Kuélap', 'Nazca', 'Caral', 'Sipán', 'Pachacámac',
+  ];
+
+  /** El último nombre que se propuso, para saber si el de la casilla es escrito a mano. */
+  private nombrePropuesto = '';
+
+  /** «Prueba Método de Tesis · grupo Cóndor 47», según el producto elegido. */
+  nombreSugerido(productCode: string): string {
+    const producto = this.productosPrueba().find((p) => p.code === productCode)?.name ?? '';
+    // De «Método de Tesis · 9 Capítulos + Humanizador» basta con lo primero.
+    const corto = producto.split(/ · | \+ | - /)[0].trim();
+    const grupos = PruebasConectorAdmin.GRUPOS;
+    const grupo = grupos[Math.floor(Math.random() * grupos.length)];
+    const numero = 10 + Math.floor(Math.random() * 90);
+    return `Prueba ${corto ? `${corto} · ` : ''}grupo ${grupo} ${numero}`;
+  }
+
+  /**
+   * Propone un nombre para el producto elegido. Al cambiar de producto solo
+   * pisa el que propuso antes: uno escrito a mano se respeta. Con `forzar`
+   * —el botón «Otro nombre»— lo cambia siempre.
+   */
+  sugerirNombre(forzar = false): void {
+    const { name, productCode } = this.formPrueba.getRawValue();
+    if (!forzar && name.trim() !== '' && name !== this.nombrePropuesto) return;
+    this.nombrePropuesto = this.nombreSugerido(productCode);
+    this.formPrueba.controls.name.setValue(this.nombrePropuesto);
+  }
+
   abrirFormularioPrueba(): void {
     this.error.set(null);
     this.pruebaNueva.set(null);
+    const productCode = this.productosPrueba()[0]?.code ?? '';
+    this.nombrePropuesto = this.nombreSugerido(productCode);
     this.formPrueba.reset({
-      name: '',
-      productCode: this.productosPrueba()[0]?.code ?? '',
+      name: this.nombrePropuesto,
+      productCode,
       seats: 30,
       accesoCantidad: 24,
       accesoUnidad: 'horas',
-      callsPerDay: 20,
+      callsPerDay: 15,
     });
     this.formularioPruebaAbierto.set(true);
   }

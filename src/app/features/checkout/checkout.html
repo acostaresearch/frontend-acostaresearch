@@ -898,17 +898,22 @@
               <!-- Con Culqi o Western Union activos, pestañas; sin ellos, directo
                    al QR. PayPal está oculto (5-oct) por las fallas de cobro: su
                    pestaña y su botón (`#paypalHost`) volverían aquí. -->
+              <!-- Desde qué país se paga, con su bandera: viene detectado y se
+                   puede cambiar. Los medios de debajo salen según él. -->
+              <app-selector-de-pais [(codigo)]="paisDePago" />
               @if (variosMedios()) {
                 <div class="pago-medios" role="tablist">
-                  <button
-                    type="button"
-                    role="tab"
-                    [attr.aria-selected]="metodoPago() === 'yape'"
-                    [class.activa]="metodoPago() === 'yape'"
-                    (click)="metodoPago.set('yape')"
-                  >
-                    Yape o Plin
-                  </button>
+                  @if (ofreceYape()) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="metodoPago() === 'yape'"
+                      [class.activa]="metodoPago() === 'yape'"
+                      (click)="metodoPago.set('yape')"
+                    >
+                      Yape o Plin
+                    </button>
+                  }
                   @if (pagoConCulqi()) {
                     <button
                       type="button"
@@ -1101,24 +1106,55 @@
                        moneda. La captura no se lee sola; la revisa el
                        administrador de ese país. -->
                   @if (billeteraElegida(); as billetera) {
-                    <!-- Su QR, si lo tiene: el mismo marco que el de Yape. -->
+                    <!-- Con QR, igual que Yape (13-oct): el código con los tres
+                         pasos al lado y, debajo, a nombre de quién y a qué
+                         número. Sin QR no hay nada que poner al lado: quedan
+                         los datos en su recuadro, como en Western Union. -->
                     @if (qrDeBilletera(); as qr) {
-                      <div class="qr-pago">
-                        <div class="qr-marco">
-                          <img [src]="qr" [alt]="'Código QR para pagar con ' + billetera.nombre" />
+                      <div class="yape-guia">
+                        <div class="qr-pago">
+                          <div class="qr-marco">
+                            <img [src]="qr" [alt]="'Código QR para pagar con ' + billetera.nombre" />
+                          </div>
+                          <a class="qr-descargar" [href]="qr" [download]="'qr-' + billetera.nombre">
+                            Descargar QR
+                          </a>
                         </div>
-                        <a class="qr-descargar" [href]="qr" [download]="'qr-' + billetera.nombre">
-                          Descargar QR
-                        </a>
+
+                        <ol class="yape-pasos">
+                          <li>Escanea el QR con {{ billetera.nombre }}</li>
+                          <!-- En un `span`: el `li` es una fila flexible y,
+                               sueltos, el texto, el importe y «(dólares)»
+                               se repartían en tres columnas. -->
+                          <li>
+                            <span>
+                              Paga exactamente <strong>{{ totalBilletera() }}</strong>
+                              @if (billetera.moneda === 'USD') {
+                                (dólares)
+                              }
+                            </span>
+                          </li>
+                          <li>Sube la captura aquí abajo</li>
+                        </ol>
                       </div>
-                    }
+
+                      <p class="yape-titular">
+                        <span>{{ billetera.titular }}</span>
+                        <span class="yape-numero">{{ billetera.numero }}</span>
+                      </p>
+                      @if (billetera.instrucciones) {
+                        <p class="tenue">{{ billetera.instrucciones }}</p>
+                      }
+                    } @else {
                     <ol class="yape-pasos wu-pasos">
                       <li>
-                        Paga exactamente <strong>{{ totalBilletera() }}</strong>
-                        @if (billetera.moneda === 'USD') {
-                          (dólares)
-                        }
-                        por {{ billetera.nombre }} a:
+                        <span>
+                          Paga exactamente <strong>{{ totalBilletera() }}</strong>
+                          @if (billetera.moneda === 'USD') {
+                            (dólares)
+                          }
+                          por {{ billetera.nombre }} a:
+                        </span>
                       </li>
                     </ol>
                     <dl class="wu-datos">
@@ -1141,6 +1177,7 @@
                     <ol class="yape-pasos wu-pasos" start="2">
                       <li>Escribe el número de operación de tu comprobante y sube su captura</li>
                     </ol>
+                    }
 
                     <ng-container *ngTemplateOutlet="subirCaptura" />
 
@@ -1167,9 +1204,13 @@
                   <!-- Western Union: los datos que el comprador lleva a la agencia
                        o escribe en la app. Se cobra en dólares, el precio de PayPal. -->
                   <ol class="yape-pasos wu-pasos">
+                    <!-- En un `span`: el `li` es una fila flexible y, sueltos,
+                         el texto y el importe se repartían en columnas. -->
                     <li>
-                      Envía <strong>{{ totalDolares() }}</strong> (dólares) por Western Union, en una
-                      agencia o desde su app, a nombre de:
+                      <span>
+                        Envía <strong>{{ totalDolares() }}</strong> (dólares) por Western Union, en
+                        una agencia o desde su app, a nombre de:
+                      </span>
                     </li>
                   </ol>
                   @if (datosWU(); as wu) {
@@ -1224,11 +1265,11 @@
                   <div class="yape-guia">
                     <div class="qr-pago">
                       <div class="qr-marco">
-                        <img src="/qr-pago/qr-code.jpeg" alt="Código QR para pagar con Yape" />
+                        <img [src]="qrDeYape()" alt="Código QR para pagar con Yape" />
                       </div>
                       <a
                         class="qr-descargar"
-                        href="/qr-pago/qr-code.jpeg"
+                        [href]="qrDeYape()"
                         download="yape-acosta-research.jpeg"
                       >
                         Descargar QR

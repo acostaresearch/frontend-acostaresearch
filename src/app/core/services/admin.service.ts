@@ -278,6 +278,13 @@ export class AdminService {
       .pipe(map((res) => res.data.discount));
   }
 
+  /** Lo borra del todo. Las rebajas que ya dio se quedan guardadas en sus pagos. */
+  borrarDescuento(id: string): Observable<void> {
+    return this.http
+      .delete<ApiResponse<unknown>>(`${this.facturacion}/discounts/${id}`)
+      .pipe(map(() => undefined));
+  }
+
   // ── Pagos ──────────────────────────────────────────────────────────────
 
   pagosRecientes(): Observable<PagoAdmin[]> {

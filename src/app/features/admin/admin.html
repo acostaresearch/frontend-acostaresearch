@@ -33,8 +33,8 @@
       }
     </nav>
 
-    <!-- Quién está mirando, su perfil y las dos salidas: a su propio panel de
-         usuario y fuera de la sesión. -->
+    <!-- Quién está mirando, su perfil y la salida de la sesión. La de su
+         propio panel de usuario está arriba, en la barra superior. -->
     @if (yo(); as user) {
       <div class="lateral-pie">
         <a class="lateral-yo" [routerLink]="direccion('perfil')">
@@ -43,16 +43,6 @@
             <strong>{{ user.firstName }} {{ user.lastName }}</strong>
             <span>{{ cuentas.rolUsuario(user.role) }} · Mi perfil</span>
           </span>
-        </a>
-        <a
-          class="lateral-salida"
-          data-tour="admin-panel-usuario"
-          [routerLink]="'perfil' | privada"
-        >
-          <svg class="lateral-icono" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3" />
-          </svg>
-          Ir a mi panel de usuario
         </a>
         <button
           type="button"
@@ -95,7 +85,7 @@
           >
             <option value="" [selected]="filtroPais.valor() === ''">Todos los países</option>
             <option value="ninguno" [selected]="filtroPais.valor() === 'ninguno'">
-              Solo la casa (sin país)
+              Perú
             </option>
             <!-- Solo los países que tienen algún administrador. -->
             @for (codigo of cuentas.paisesConAdministrador(); track codigo) {
@@ -105,6 +95,19 @@
             }
           </select>
         }
+        <!-- La salida al panel de usuario propio. Con poco ancho se queda en
+             el icono, como los botones de al lado. -->
+        <a
+          class="boton-barra"
+          data-tour="admin-panel-usuario"
+          title="Ir a mi panel de usuario"
+          [routerLink]="'perfil' | privada"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3" />
+          </svg>
+          <span>Ir a mi panel de usuario</span>
+        </a>
         <!-- El recorrido guiado: la brújula, como en la cabecera del sitio, que
              aquí no está. Empieza por la sección que se está mirando. -->
         <button
@@ -262,16 +265,6 @@
       <app-descuentos-vista [promociones]="promociones" [trabajando]="trabajando" [copiados]="copiados" [planes]="planes" [importe]="importe.bind(this)" />
     }
 
-    <!-- ══ EMBUDO ══════════════════════════════════════════════════════════════
-       De /planes a la primera fase, los correos de avance y los referidos. En
-       su propio componente, que carga lo suyo al abrirse. -->
-    @if (seccion() === 'embudo') {
-      <!-- Carga lo suyo al nacer: se vuelve a crear al cambiar de país. -->
-      @for (pais of [filtroPais.valor()]; track pais) {
-        <app-embudo-admin />
-      }
-    }
-
     <!-- ══ UNIVERSIDADES Y ASESORES ═══════════════════════════════════════════
        Cupos vendidos a un grupo. Los productos salen de los planes del panel,
        los mismos que ofrece el alta de un enlace de prueba. -->
@@ -288,10 +281,6 @@
 
     @if (seccion() === 'pruebas') {
       <app-pruebas-vista [pruebasConector]="pruebasConector" [trabajando]="trabajando" />
-    }
-
-    @if (seccion() === 'licencias') {
-<app-licencias-vista [accionesAccesos]="accionesAccesos" [listaLicencias]="listaLicencias" [licencias]="licencias" [estadoLicencia]="estadoLicencia.bind(this)" [verAccesosDe]="verAccesosDe.bind(this)" [copiarTexto]="copiarTexto.bind(this)" />
     }
 
     <!-- ══ ALERTAS ══════════════════════════════════════════════════════════ -->
@@ -576,15 +565,9 @@
     }
 
     @if (seccion() === 'usuarios') {
-        <div class="fila-busqueda">
-          <input
-            type="search"
-            [value]="cuentas.busquedaUsuarios()"
-            (input)="cuentas.buscarUsuarios($any($event.target).value)"
-            placeholder="Correo, nombre o apellido"
-            aria-label="Buscar usuarios"
-          />
-        </div>
+        <!-- El buscador y, al lado, con licencia o sin ella. Las licencias ya
+             no tienen sección: salen bajo la fila de su cuenta. -->
+        <app-filtros-lista [lista]="cuentas.filtrosDeUsuarios" placeholder="Correo, nombre o apellido" />
 
         @if (cuentas.cargandoUsuarios()) {
           <p class="nota">Cargando…</p>
@@ -599,6 +582,7 @@
                   <th>Correo</th>
                   <th>Alta</th>
                   <th>Último acceso</th>
+                  <th>Licencia</th>
                   <th>Estado</th>
                   <th></th>
                 </tr>
@@ -607,6 +591,7 @@
                 <!-- Sin columna «Rol»: casi todos son «Usuario», y los
                    administradores tienen su pestaña. -->
                 @for (u of cuentas.usuarios(); track u.id) {
+                  @let suyas = licenciasDe(u.id);
                   <tr>
                     <td>
                       <b>{{ u.firstName }} {{ u.lastName }}</b>
@@ -623,6 +608,24 @@
                         <span class="tenue">Nunca ha entrado</span>
                       }
                     </td>
+                    <!-- Qué tiene y cómo está cada una; el detalle y lo que
+                         se puede hacer con ellas, al desplegar la fila. -->
+                    <td>
+                      @for (licencia of suyas; track licencia.id) {
+                        <span class="bloque">
+                          {{ accionesAccesos.nombreDeProducto(licencia.productCode) }}
+                          <span
+                            class="pastilla"
+                            [class.buena]="licencia.status === 'ACTIVE'"
+                            [class.mala]="licencia.status !== 'ACTIVE'"
+                          >
+                            {{ estadoLicencia(licencia.status) }}
+                          </span>
+                        </span>
+                      } @empty {
+                        <span class="tenue">Sin licencia</span>
+                      }
+                    </td>
                     <td>
                       <span
                         class="pastilla"
@@ -634,9 +637,16 @@
                       </span>
                     </td>
                     <td class="fila-acciones">
-                      <button type="button" class="enlace" (click)="verLicenciasDe(u.email)">
-                        Ver licencias
-                      </button>
+                      @if (suyas.length > 0) {
+                        <button
+                          type="button"
+                          class="enlace"
+                          [attr.aria-expanded]="cuentas.licenciasAbiertasDe() === u.id"
+                          (click)="cuentas.alternarLicenciasDe(u)"
+                        >
+                          {{ cuentas.licenciasAbiertasDe() === u.id ? 'Ocultar licencias' : 'Ver licencias' }}
+                        </button>
+                      }
                       <app-menu-fila>
                         <button type="button" (click)="verAccesosDe(u.email)">Ver compras</button>
                         <button type="button" (click)="copiarTexto(u.email, 'Correo copiado')">
@@ -682,6 +692,17 @@
                       </app-menu-fila>
                     </td>
                   </tr>
+                  @if (cuentas.licenciasAbiertasDe() === u.id && suyas.length > 0) {
+                    <tr>
+                      <td colspan="7">
+                        <app-licencias-vista
+                          [accionesAccesos]="accionesAccesos"
+                          [licencias]="suyas"
+                          [estadoLicencia]="estadoLicencia.bind(this)"
+                        />
+                      </td>
+                    </tr>
+                  }
                 }
               </tbody>
             </table>

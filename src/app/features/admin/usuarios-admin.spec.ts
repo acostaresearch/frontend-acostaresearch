@@ -246,4 +246,50 @@ describe('Usuarios del administrador', () => {
     expect(error()).not.toBeNull();
     expect(cuentas.cambiandoEstado()).toBeNull();
   });
+
+  it('cribar por licencia lo pide al servidor y vuelve a la primera página', () => {
+    cuentas.paginaDeUsuarios.set(2);
+    cuentas.filtrarPorLicencia('con');
+    expect(api.list).toHaveBeenCalledWith({ page: 1, perPage: 50, search: undefined, licencia: 'con' });
+
+    cuentas.filtrarPorLicencia('sin');
+    expect(api.list).toHaveBeenLastCalledWith({ page: 1, perPage: 50, search: undefined, licencia: 'sin' });
+
+    // Repetir la misma pestaña, o una que no existe, no pide nada.
+    api.list.mockClear();
+    cuentas.filtrarPorLicencia('sin');
+    cuentas.filtrarPorLicencia('revocadas');
+    expect(api.list).not.toHaveBeenCalled();
+  });
+
+  it('las pestañas enseñan el conteo que manda el servidor', () => {
+    api.list.mockReturnValue(
+      of({ users: [], meta: { totalPages: 1, total: 4 }, conteo: { todos: 10, con: 4, sin: 6 } }),
+    );
+    cuentas.cargarUsuarios();
+    expect(cuentas.filtrosDeUsuarios.conteo()).toEqual({ todos: 10, con: 4, sin: 6 });
+    expect(cuentas.filtrosDeUsuarios.filtros.map((f) => f.etiqueta)).toEqual([
+      'Todos',
+      'Con licencia',
+      'Sin licencia',
+    ]);
+  });
+
+  it('«ver licencias» de un correo busca esa cuenta, sin criba, y la deja abierta', () => {
+    const ana = { id: 'u1', email: 'Ana@example.com' } as User;
+    api.list.mockReturnValue(of({ users: [ana], meta: { totalPages: 1, total: 1 } }));
+    cuentas.filtroLicencia.set('sin');
+
+    cuentas.verLicenciasDe('ana@example.com');
+
+    expect(api.list).toHaveBeenCalledWith({ page: 1, perPage: 50, search: 'ana@example.com', licencia: undefined });
+    expect(cuentas.filtroLicencia()).toBe('todos');
+    expect(cuentas.licenciasAbiertasDe()).toBe('u1');
+
+    // El botón de la fila la pliega y la vuelve a abrir.
+    cuentas.alternarLicenciasDe(ana);
+    expect(cuentas.licenciasAbiertasDe()).toBeNull();
+    cuentas.alternarLicenciasDe(ana);
+    expect(cuentas.licenciasAbiertasDe()).toBe('u1');
+  });
 });

@@ -56,6 +56,16 @@ export default {
       return new Response(null, { status: 302, headers: { Location: destino, 'Cache-Control': 'no-store' } });
     }
 
+    // Desde qué país entra el visitante, que Cloudflare ya lo sabe. Lo pide el
+    // checkout para enseñar solo los medios de pago de ese país. No llega al
+    // backend, y no se guarda: cada visitante tiene el suyo.
+    if (url.pathname === '/api/pais') {
+      return Response.json(
+        { pais: request.cf?.country ?? null },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+
     if (url.pathname.startsWith('/api/')) {
       return proxiarALaApi(request, url, env);
     }

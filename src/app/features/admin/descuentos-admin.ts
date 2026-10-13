@@ -168,6 +168,43 @@ export class DescuentosAdmin {
     });
   }
 
+  /** El que se está borrando, para apagar su botón. */
+  readonly borrandoDescuento = signal<string | null>(null);
+
+  /**
+   * Borra un código del todo. Se pregunta porque no se deshace: para uno que
+   * puede volver está «Apagar». Las rebajas que ya dio siguen en sus pagos.
+   */
+  async eliminarDescuento(descuento: CodigoDescuento): Promise<void> {
+    if (this.borrandoDescuento()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: `¿Eliminar el código «${descuento.code}»?`,
+      mensaje:
+        descuento.usedCount > 0
+          ? `Ya se usó ${descuento.usedCount} ${descuento.usedCount === 1 ? 'vez' : 'veces'}. ` +
+            'Esas rebajas se quedan en sus pagos, pero dejará de saberse con qué código se consiguieron.'
+          : 'Nadie lo ha usado todavía. Deja de valer ahora mismo.',
+      nota: 'No se puede deshacer. Si puede volver a hacer falta, apágalo en vez de eliminarlo.',
+      confirmar: 'Eliminar el código',
+    });
+    if (!seguro) return;
+
+    this.borrandoDescuento.set(descuento.id);
+    this.error.set(null);
+    this.admin.borrarDescuento(descuento.id).subscribe({
+      next: () => {
+        this.descuentos.update((lista) => lista.filter((d) => d.id !== descuento.id));
+        if (this.descuentoNuevo()?.id === descuento.id) this.descuentoNuevo.set(null);
+        this.borrandoDescuento.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.borrandoDescuento.set(null);
+      },
+    });
+  }
+
   async copiarDescuento(code: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(code);

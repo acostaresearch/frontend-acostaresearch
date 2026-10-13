@@ -51,7 +51,7 @@ import { Acceso, unirAccesos } from './accesos';
 import { ResumenIngresosAdmin, soles } from './resumen-ingresos';
 import { FiltrosLista } from './filtros-lista';
 import { Listado } from './listado';
-import { EmbudoAdmin } from './embudo';
+
 import { InstitucionesAdmin } from './instituciones';
 import { PieLista } from './pie-lista';
 import { MenuFila } from './menu-fila';
@@ -91,7 +91,7 @@ const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CO
     DatePipe,
     RouterLink,
     FiltrosLista,
-    EmbudoAdmin,
+
     InstitucionesAdmin,
     PieLista,
     MenuFila,
@@ -194,27 +194,23 @@ export class Admin implements OnInit {
   // diez en diez. El comportamiento vive en `Listado`; aquí solo se dice, por
   // cada una, por qué texto se busca y qué significa cada pestaña.
 
-  readonly listaLicencias = new Listado(this.licencias, {
-    filtros: [
-      { valor: 'todas', etiqueta: 'Todas' },
-      { valor: 'activas', etiqueta: 'Activas' },
-      { valor: 'suspendidas', etiqueta: 'Suspendidas' },
-      { valor: 'revocadas', etiqueta: 'Revocadas' },
-    ],
-    texto: (l) => [
-      l.user.email,
-      `${l.user.firstName} ${l.user.lastName}`,
-      l.productCode,
-      l.tokenHint,
-      l.revokedReason,
-    ],
-    pasa: (l, filtro) =>
-      filtro === 'activas'
-        ? l.status === 'ACTIVE'
-        : filtro === 'suspendidas'
-          ? l.status === 'SUSPENDED'
-          : l.status === 'REVOKED',
+  /**
+   * Las licencias de cada cuenta, por su identificador. Las licencias ya no
+   * tienen sección propia: salen bajo la fila de su dueño en «Usuarios».
+   */
+  private readonly licenciasPorUsuario = computed(() => {
+    const porUsuario = new Map<string, LicenciaAdmin[]>();
+    for (const licencia of this.licencias()) {
+      const suyas = porUsuario.get(licencia.user.id);
+      if (suyas) suyas.push(licencia);
+      else porUsuario.set(licencia.user.id, [licencia]);
+    }
+    return porUsuario;
   });
+
+  licenciasDe(usuarioId: string): LicenciaAdmin[] {
+    return this.licenciasPorUsuario().get(usuarioId) ?? [];
+  }
 
   // Se abre en «Sospecha alta», que es lo único que pide decidir algo, y
   // «Todas» va al final: es la que menos se mira.
@@ -389,6 +385,7 @@ export class Admin implements OnInit {
         this.ventasManuales.formularioCodigosAbierto() ||
         this.promociones.formularioDescuentoAbierto() ||
         this.pruebasConector.formularioPruebaAbierto() ||
+        this.pruebasConector.pruebaNueva() !== null ||
         this.pruebasConector.viendoInvitados() !== null ||
         this.accionesAccesos.viendoHistorial() !== null ||
         this.cuentas.formularioAdminAbierto() ||
@@ -702,9 +699,8 @@ export class Admin implements OnInit {
   // en el buscador: de un acceso a su licencia, de una licencia a sus compras.
 
   verLicenciasDe(correo: string): void {
-    this.listaLicencias.busca.set(correo);
-    this.listaLicencias.filtrar('todas');
-    this.ir('licencias');
+    this.cuentas.verLicenciasDe(correo);
+    this.ir('usuarios');
   }
 
   verAccesosDe(correo: string): void {
@@ -743,6 +739,11 @@ export class Admin implements OnInit {
       void this.router.navigateByUrl(this.direccion('resumen'), { replaceUrl: true });
       return;
     }
+    // Una dirección antigua (/admin/licencias) se cambia por la de ahora.
+    if (DIRECCIONES[seccion] !== direccion) {
+      void this.router.navigateByUrl(this.direccion(seccion), { replaceUrl: true });
+      return;
+    }
     this.titulo.setTitle(`${PAGINAS[seccion].titulo} · Administración · Acosta Research`);
     this.abrir(seccion);
   }
@@ -762,6 +763,9 @@ export class Admin implements OnInit {
     if ((seccion === 'admins' || seccion === 'usuarios') && this.cuentas.usuarios().length === 0) {
       this.cuentas.cargarUsuarios();
     }
+    // La pestaña de administradores sale de esa misma lista: con la criba de
+    // licencias puesta faltarían los que no la pasan.
+    if (seccion === 'admins') this.cuentas.filtrarPorLicencia('todos');
 
     // El corpus tampoco: es una llamada a la base por una lista que solo
     // mira quien viene a curar bibliografía, no quien entra a revisar cobros.

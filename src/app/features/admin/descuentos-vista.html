@@ -88,12 +88,20 @@
                         <button type="button" (click)="promociones().copiarDescuento(promo.code)">
                           Copiar código
                         </button>
+                        <hr />
                         @if (promo.active) {
-                          <hr />
                           <button type="button" class="peligro" (click)="promociones().alternarDescuento(promo)">
                             Apagar
                           </button>
                         }
+                        <button
+                          type="button"
+                          class="peligro"
+                          [disabled]="promociones().borrandoDescuento() === promo.id"
+                          (click)="promociones().eliminarDescuento(promo)"
+                        >
+                          Eliminar
+                        </button>
                       </app-menu-fila>
                     </td>
                   </tr>

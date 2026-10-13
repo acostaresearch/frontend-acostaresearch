@@ -42,6 +42,7 @@ import { BillingService, Promo } from '../../core/services/billing.service';
 import { CarritoService } from '../../core/services/carrito.service';
 import { CulqiSdkService, ResultadoCheckout } from '../../core/services/culqi-sdk.service';
 import { FondoService } from '../../core/services/fondo.service';
+import { BienvenidaService } from '../../core/services/bienvenida.service';
 import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
@@ -49,12 +50,20 @@ import { INCLUYE } from '../../shared/contenido/metodo';
 import { nombreDePais } from '../../shared/contenido/paises';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
+import { SelectorDePais } from './selector-de-pais';
+import {
+  PaisDePago,
+  billeteraSeOfreceEn,
+  detectarPaisDePago,
+  yapeSeOfreceEn,
+} from './pais-de-pago';
 // Oculto por ahora en la plantilla (1-oct).
 // import { PlanesInstituciones } from './planes-instituciones';
 import { SiteHeader } from '../../shared/layout/site-header';
 import { CuentaAtras } from '../../shared/tiempo/cuenta-atras';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 import { PrivadaPipe } from '../../core/router/privada.pipe';
+import { rutaPrivada } from '../../core/router/rutas-privadas';
 
 /**
  * Importe en soles, con los céntimos solo cuando los hay.
@@ -83,6 +92,7 @@ import { CatalogoCheckout } from './catalogo-checkout';
     SiteHeader,
     SiteFooter,
     InvitacionPlanes,
+    SelectorDePais,
     // PlanesInstituciones,
   ],
   templateUrl: './checkout.html',
@@ -92,6 +102,7 @@ import { CatalogoCheckout } from './catalogo-checkout';
 export class Checkout implements OnInit {
   private readonly billing = inject(BillingService);
   private readonly fondo = inject(FondoService);
+  private readonly bienvenida = inject(BienvenidaService);
   private readonly payments = inject(PaymentService);
   private readonly paypal = inject(PaypalSdkService);
   private readonly culqi = inject(CulqiSdkService);
@@ -304,9 +315,14 @@ export class Checkout implements OnInit {
    * Las que se pueden usar con lo que hay en el carrito: una en dólares solo
    * si todo tiene precio en dólares, igual que Western Union.
    */
-  readonly billeterasOfrecidas = computed(() =>
-    this.billeteras().filter((b) => b.moneda !== 'USD' || this.totalDolares() !== null),
-  );
+  readonly billeterasOfrecidas = computed(() => {
+    const pais = this.paisDePago();
+    return this.billeteras().filter(
+      (b) =>
+        (b.moneda !== 'USD' || this.totalDolares() !== null) &&
+        billeteraSeOfreceEn(pais, b.pais),
+    );
+  });
 
   /** Lo que hay que pagar por la billetera elegida, en su moneda. */
   readonly totalBilletera = computed(() =>
@@ -349,14 +365,62 @@ export class Checkout implements OnInit {
     () => Boolean(this.codigoDelTotal()) || this.lineas().some((linea) => linea.discountCode),
   );
 
-  /** Pestañas de medios: solo si hay más de uno que elegir. */
-  readonly variosMedios = computed(
+  // ── Desde qué país se paga ───────────────────────────────────────────
+  // Viene detectado por la conexión (`detectarPaisDePago`) y se cambia con el
+  // selector de bandera. Yape solo sale en Perú y cada billetera en su país;
+  // Culqi, Hotmart y Western Union, a todos. Solo es lo que se enseña.
+  readonly paisDePago = signal<PaisDePago>(null);
+
+  /** Algún medio además de Yape, con el carrito y el país que hay. */
+  private readonly hayOtroMedio = computed(
     () =>
       this.pagoConCulqi() ||
       this.ofreceWU() ||
       this.ofreceHotmart() ||
       this.billeterasOfrecidas().length > 0,
   );
+
+  /**
+   * Yape, solo en Perú o sin saber el país, y si el dueño no lo apagó en el
+   * panel. Y también si no queda otro medio: nadie se queda sin por dónde pagar.
+   */
+  readonly ofreceYape = computed(() => {
+    const pais = this.paisDePago();
+    const activo = this.datosYape()?.activo !== false;
+    return (activo && yapeSeOfreceEn(pais)) || !this.hayOtroMedio();
+  });
+
+  /** El QR de Yape: el que el dueño subió desde el panel o el de la web. */
+  readonly qrDeYape = computed(() => this.payments.urlDelQrDeYape(this.datosYape()?.qrVersion));
+
+  /** Pestañas de medios: solo si hay más de uno que elegir. */
+  readonly variosMedios = computed(
+    () =>
+      Number(this.ofreceYape()) +
+        Number(this.pagoConCulqi()) +
+        Number(this.ofreceWU()) +
+        Number(this.ofreceHotmart()) +
+        this.billeterasOfrecidas().length >
+      1,
+  );
+
+  /** ¿Se sigue ofreciendo el medio abierto, con el país que hay ahora? */
+  private medioOfrecido(medio: string): boolean {
+    switch (medio) {
+      case 'yape':
+        return this.ofreceYape();
+      case 'culqi':
+        return this.pagoConCulqi();
+      case 'hotmart':
+        return this.ofreceHotmart();
+      case 'western_union':
+        return this.ofreceWU();
+      case 'billetera':
+        return this.billeterasOfrecidas().some((b) => b.id === this.billeteraElegida()?.id);
+      default:
+        return true;
+    }
+  }
 
   /** Lo que el navegador acepta subir; el servidor lo vuelve a comprobar. */
   private readonly FORMATOS = ['image/png', 'image/jpeg', 'image/webp'];
@@ -562,6 +626,34 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
         this.hostMontado = elemento;
         void this.montarBoton(elemento);
       }
+    });
+
+    // Si el medio abierto deja de ofrecerse —se detectó o se eligió otro país—,
+    // se pasa al que toca: la billetera de ese país primero, que es por lo que
+    // se pregunta el país, y si no la hay, el primero de los que son para todos.
+    effect(() => {
+      const medio = this.metodoPago();
+      if (medio === null || this.medioOfrecido(medio)) return;
+
+      const billetera = this.billeterasOfrecidas()[0];
+      if (billetera) {
+        this.elegirBilletera(billetera);
+        return;
+      }
+      this.metodoPago.set(
+        this.pagoConCulqi()
+          ? 'culqi'
+          : this.ofreceHotmart()
+            ? 'hotmart'
+            : this.ofreceWU()
+              ? 'western_union'
+              : 'yape',
+      );
+    });
+
+    // El país, por la conexión. Si alguien ya eligió uno a mano, manda el suyo.
+    void detectarPaisDePago().then((pais) => {
+      if (this.paisDePago() === null) this.paisDePago.set(pais);
     });
 
     // La ventana del pago congela la página de detrás mientras está abierta.
@@ -1357,6 +1449,21 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
                 hasta: license?.expiresAt ?? null,
               },
         );
+        // Con una licencia del conector no se queda aquí: se le lleva a su
+        // panel, que le da la bienvenida —con la URL, que cruza en memoria— y
+        // arranca el recorrido (13-oct). La membresía de documentos se queda
+        // con su recuadro: su sitio es la herramienta, no el panel.
+        const hecho = this.canjeado();
+        if (hecho?.conector) {
+          this.bienvenida.anunciar({
+            producto: hecho.producto,
+            url: hecho.url,
+            renovada: hecho.renovada,
+            hasta: hecho.hasta,
+          });
+          void this.router.navigateByUrl(rutaPrivada('perfil'));
+          return;
+        }
         // Quita el código de la dirección: ya está gastado, y recargar la
         // página no debe volver a ponerlo en el campo.
         void this.router.navigate([], {

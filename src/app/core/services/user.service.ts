@@ -123,14 +123,19 @@ export class UserService {
       .pipe(map((res) => ({ user: res.data.user, mensaje: res.message ?? '' })));
   }
 
-  list(options: { page?: number; perPage?: number; search?: string } = {}) {
+  list(
+    options: { page?: number; perPage?: number; search?: string; licencia?: 'con' | 'sin' } = {},
+  ) {
     let params = new HttpParams();
     if (options.page) params = params.set('page', options.page);
     if (options.perPage) params = params.set('perPage', options.perPage);
     if (options.search) params = params.set('search', options.search);
+    if (options.licencia) params = params.set('licencia', options.licencia);
 
     return this.http
-      .get<ApiResponse<{ users: User[]; meta: PageMeta }>>(this.base, { params })
+      .get<
+        ApiResponse<{ users: User[]; meta: PageMeta; conteo?: Record<string, number> }>
+      >(this.base, { params })
       .pipe(map((res) => res.data));
   }
 }

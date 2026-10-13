@@ -1,21 +1,10 @@
-<section class="tarjeta">
-        @if (licencias()().length > 0) {
-          <app-filtros-lista
-            [lista]="listaLicencias()"
-            placeholder="Correo, nombre, producto o final del token"
-          />
-        }
-
-        @if (licencias()().length === 0) {
-          <p class="nota">Aún no hay ninguna licencia emitida.</p>
-        } @else if (listaLicencias().filtrado().length === 0) {
-          <p class="tenue">Ninguna licencia coincide con lo que buscas.</p>
-        } @else {
+<!-- Las licencias de una cuenta, bajo su fila en «Usuarios». Quién es ya lo
+     dice la fila de arriba: aquí va solo lo de cada licencia. -->
+<div class="licencias-de-cuenta">
           <div class="tabla-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Comprador</th>
                   <th>Producto</th>
                   <th>Consultas</th>
                   <th>Último uso</th>
@@ -24,12 +13,8 @@
                 </tr>
               </thead>
               <tbody>
-                @for (licencia of listaLicencias().visible(); track licencia.id) {
+                @for (licencia of licencias(); track licencia.id) {
                   <tr [class.revocada]="licencia.status === 'REVOKED'">
-                    <td>
-                      <strong>{{ licencia.user.firstName }} {{ licencia.user.lastName }}</strong>
-                      <span class="tenue bloque">{{ licencia.user.email }}</span>
-                    </td>
                     <td>
                       {{ accionesAccesos().nombreDeProducto(licencia.productCode) }}
                       <span class="tenue bloque mono">…{{ licencia.tokenHint }}</span>
@@ -56,48 +41,29 @@
                        para el comprador y no debe ser lo único que se ve. -->
                     <td class="fila-acciones">
                       @if (licencia.status === 'ACTIVE') {
-                        <button
-                          type="button"
-                          class="enlace"
-                          (click)="verAccesosDe()(licencia.user.email)"
-                        >
-                          Ver compras
+                        <button type="button" class="enlace" (click)="accionesAccesos().verHistorial(licencia)">
+                          Ver historial
                         </button>
+                        <app-menu-fila>
+                          <button type="button" class="peligro" (click)="accionesAccesos().revocar(licencia)">
+                            Revocar
+                          </button>
+                        </app-menu-fila>
                       } @else {
                         <button type="button" class="enlace" (click)="accionesAccesos().reactivar(licencia)">
                           Reactivar
                         </button>
+                        <app-menu-fila>
+                          <button type="button" (click)="accionesAccesos().verHistorial(licencia)">Ver historial</button>
+                        </app-menu-fila>
                       }
-                      <app-menu-fila>
-                        <button type="button" (click)="accionesAccesos().verHistorial(licencia)">Ver historial</button>
-                        @if (licencia.status !== 'ACTIVE') {
-                          <button type="button" (click)="verAccesosDe()(licencia.user.email)">
-                            Ver compras
-                          </button>
-                        }
-                        <button
-                          type="button"
-                          (click)="copiarTexto()(licencia.user.email, 'Correo copiado')"
-                        >
-                          Copiar correo
-                        </button>
-                        @if (licencia.status === 'ACTIVE') {
-                          <hr />
-                          <button type="button" class="peligro" (click)="accionesAccesos().revocar(licencia)">
-                            Revocar
-                          </button>
-                        }
-                      </app-menu-fila>
                     </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
-
-          <app-pie-lista [lista]="listaLicencias()" nombre="licencias" />
-        }
-      </section>
+</div>
 
       <!-- ── Historial de una licencia ─────────────────────────────────────── -->
       @if (accionesAccesos().viendoHistorial(); as licencia) {

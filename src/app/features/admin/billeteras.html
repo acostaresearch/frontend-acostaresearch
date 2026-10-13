@@ -9,8 +9,36 @@
     Lo que Yape es en Perú, para cada país: Deuna en Ecuador, Nequi en Colombia. La que crees aquí
     sale al pagar con su país delante; el comprador paga ahí y sube su comprobante, y lo aprueba el
     administrador de ese país. A ti esos comprobantes solo te salen si eliges ese país en el
-    selector de arriba. Yape y Western Union no están aquí: siguen como siempre.
+    selector de arriba. Delante salen los medios de la casa —Yape, Western Union, Hotmart y la
+    tarjeta por Culqi—: también se pueden apagar, y de Yape y Western Union cambiar a quién se
+    paga. Solo los toca el administrador general.
   </p>
+
+  @if (editandoMedio(); as medio) {
+    <form class="alta-form" [formGroup]="formMedio" (ngSubmit)="guardarMedio()">
+      <label class="campo">
+        <span>{{ medio.codigo === 'WESTERN_UNION' ? 'Beneficiario' : 'Titular de ' + medio.nombre }}</span>
+        <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
+      </label>
+      <label class="campo">
+        <span>{{ medio.codigo === 'WESTERN_UNION' ? 'DNI del beneficiario' : 'Número' }}</span>
+        <input formControlName="numero" maxlength="80" />
+      </label>
+      @if (medio.codigo === 'WESTERN_UNION') {
+        <label class="campo ancho">
+          <span>Ciudad</span>
+          <input formControlName="ciudad" placeholder="Trujillo, Perú" maxlength="120" />
+        </label>
+      }
+      <div class="ancho">
+        <button type="submit" class="boton" [disabled]="guardandoMedio()">
+          {{ guardandoMedio() ? 'Guardando…' : 'Guardar ' + medio.nombre }}
+        </button>
+        <button type="button" class="boton secundario" (click)="cerrarEdicionDeMedio()">Cancelar</button>
+      </div>
+      <p class="nota ancho">Es lo que ve el comprador al pagar. Cambia en cuanto guardas.</p>
+    </form>
+  }
 
   @if (abierto()) {
     <form class="alta-form" [formGroup]="form" (ngSubmit)="crear()">
@@ -70,11 +98,6 @@
 
   @if (cargando()) {
     <p class="nota">Cargando…</p>
-  } @else if (billeteras().length === 0) {
-    <p class="vacio">
-      Todavía no hay ninguna. Mientras no crees una, fuera de Perú se paga con tarjeta, Hotmart o
-      Western Union.
-    </p>
   } @else {
     <div class="tabla-envoltura">
       <table>
@@ -90,6 +113,67 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Lo de la casa, primero. De Hotmart y Culqi solo se enciende y se
+               apaga: sus llaves están en el servidor. -->
+          @for (m of deLaCasa(); track m.codigo) {
+            <tr>
+              <td>{{ paisDeMedio(m) }}</td>
+              <td>{{ m.nombre }}</td>
+              <td>
+                @if (m.editable) {
+                  {{ m.titular ?? 'Solo el QR' }}
+                  @if (m.numero) {
+                    <span class="tenue">
+                      {{ m.codigo === 'WESTERN_UNION' ? 'DNI ' + m.numero : m.numero }}
+                      @if (m.ciudad) {
+                        · {{ m.ciudad }}
+                      }
+                    </span>
+                  }
+                } @else {
+                  <span class="tenue">Se paga en su página</span>
+                }
+              </td>
+              <td>{{ m.moneda === 'USD' ? 'Dólares' : 'Soles' }}</td>
+              <td>
+                @if (qrDeMedio(m); as qr) {
+                  <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
+                } @else {
+                  <span class="tenue">Sin QR</span>
+                }
+              </td>
+              <td>
+                <span class="estado" [class.hecho]="m.active" [class.anulado]="!m.active">
+                  {{ m.active ? 'Se ofrece al pagar' : 'Apagado' }}
+                </span>
+              </td>
+              <td class="acciones">
+                @if (m.editable) {
+                  <button type="button" class="boton secundario" (click)="editarMedio(m)">Editar</button>
+                }
+                @if (m.codigo === 'YAPE') {
+                  <label class="boton secundario" [class.deshabilitado]="subiendoQrDeMedio() === m.codigo">
+                    {{ subiendoQrDeMedio() === m.codigo ? 'Subiendo…' : 'Cambiar QR' }}
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/png,image/jpeg,image/webp"
+                      [disabled]="subiendoQrDeMedio() === m.codigo"
+                      (change)="cambiarQrDeMedio(m, $event)"
+                    />
+                  </label>
+                }
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="cambiandoMedio() === m.codigo"
+                  (click)="encenderMedio(m)"
+                >
+                  {{ m.active ? 'Apagar' : 'Encender' }}
+                </button>
+              </td>
+            </tr>
+          }
           @for (b of billeteras(); track b.id) {
             <tr>
               <td>{{ nombreDePais(b.pais) }}</td>
@@ -142,10 +226,17 @@
         </tbody>
       </table>
     </div>
-    <p class="nota pie">
-      Apagar una billetera la quita del checkout, pero no toca lo ya cobrado por ella ni los
-      comprobantes que estén esperando.
-    </p>
+    @if (billeteras().length === 0) {
+      <p class="nota pie">
+        Todavía no hay ninguna billetera de país. Mientras no crees una, fuera de Perú se paga con
+        tarjeta, Hotmart o Western Union.
+      </p>
+    } @else {
+      <p class="nota pie">
+        Apagar una billetera la quita del checkout, pero no toca lo ya cobrado por ella ni los
+        comprobantes que estén esperando.
+      </p>
+    }
   }
 </section>
 

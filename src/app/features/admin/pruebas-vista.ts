@@ -23,7 +23,7 @@ export class PruebasVista {
     effect(() => {
       const lienzo = this.lienzoQr()?.nativeElement;
       const nueva = this.pruebasConector().pruebaNueva();
-      if (lienzo && nueva) dibujarQr(lienzo, nueva.url, 320);
+      if (lienzo && nueva) dibujarQr(lienzo, nueva.url, 720);
     });
   }
 }

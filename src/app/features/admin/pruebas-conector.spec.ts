@@ -72,7 +72,7 @@ describe('Enlaces de prueba del administrador', () => {
     expect(pruebas.formularioPruebaAbierto()).toBe(true);
     expect(api.crear).toHaveBeenCalledTimes(1);
     expect(api.crear).toHaveBeenCalledWith({
-      name: 'Taller', productCode: 'TESIS', seats: 30, callsPerDay: 20, accessMinutes: 1440,
+      name: 'Taller', productCode: 'TESIS', seats: 30, callsPerDay: 15, accessMinutes: 1440,
     });
     alta.next(enlace);
     expect(trabajando()).toBe(false);
@@ -137,5 +137,51 @@ describe('Enlaces de prueba del administrador', () => {
     api.crear.mockReturnValue(of(enlace));
     pruebas.crearPrueba();
     expect(api.crear).toHaveBeenCalledTimes(2);
+  });
+
+  describe('el nombre propuesto', () => {
+    const planes = [
+      { productCode: 'TESIS', name: 'Método de Tesis · 9 Capítulos + Humanizador' },
+      { productCode: 'ARTICULO', name: 'Artículo científico' },
+    ] as Plan[];
+    let conPlanes: PruebasConectorAdmin;
+
+    beforeEach(() => {
+      conPlanes = TestBed.runInInjectionContext(() =>
+        new PruebasConectorAdmin(error, aviso, trabajando, signal(planes)),
+      );
+    });
+
+    it('al abrir, «Para quién es» viene escrito con el producto y un grupo', () => {
+      conPlanes.abrirFormularioPrueba();
+      expect(conPlanes.formPrueba.controls.name.value).toMatch(/^Prueba Método de Tesis · grupo \S+ \d{2}$/);
+      expect(conPlanes.formPrueba.valid).toBe(true);
+    });
+
+    it('al cambiar de producto cambia el propuesto, pero respeta el escrito a mano', () => {
+      conPlanes.abrirFormularioPrueba();
+      conPlanes.formPrueba.patchValue({ productCode: 'ARTICULO' });
+      conPlanes.sugerirNombre();
+      expect(conPlanes.formPrueba.controls.name.value).toMatch(/^Prueba Artículo científico · grupo /);
+
+      conPlanes.formPrueba.patchValue({ name: 'Taller UNMSM', productCode: 'TESIS' });
+      conPlanes.sugerirNombre();
+      expect(conPlanes.formPrueba.controls.name.value).toBe('Taller UNMSM');
+
+      // «Pedir otro nombre» sí lo cambia.
+      conPlanes.sugerirNombre(true);
+      expect(conPlanes.formPrueba.controls.name.value).toMatch(/^Prueba Método de Tesis · grupo /);
+    });
+  });
+
+  it('las consultas al día van de 1 a 15', () => {
+    pruebas.abrirFormularioPrueba();
+    pruebas.formPrueba.patchValue({ name: 'Taller', productCode: 'TESIS' });
+    expect(pruebas.formPrueba.controls.callsPerDay.value).toBe(15);
+    for (const fuera of [0, 16, 20]) {
+      pruebas.formPrueba.patchValue({ callsPerDay: fuera });
+      pruebas.crearPrueba();
+    }
+    expect(api.crear).not.toHaveBeenCalled();
   });
 });

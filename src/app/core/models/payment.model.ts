@@ -226,6 +226,34 @@ export interface DatosYape {
   titular: string | null;
   numero: string | null;
   currency: string;
+  /** `false` si el dueño lo apagó en el panel. Un servidor anterior no lo manda. */
+  activo?: boolean;
+  /** Si se subió un QR desde el panel, su versión; sin él, se enseña el de la web. */
+  qrVersion?: number | null;
+}
+
+/**
+ * Un medio de pago de la casa —Yape, Western Union, Hotmart, Culqi—, como lo
+ * ve el dueño en «Billeteras». Sus datos están en el servidor; desde el panel
+ * se apaga y, en Yape y Western Union, se cambia a quién se paga.
+ */
+export interface MedioDeLaCasa {
+  codigo: 'YAPE' | 'WESTERN_UNION' | 'HOTMART' | 'CULQI';
+  nombre: string;
+  /** `PE` si es solo de Perú; null si se ofrece fuera o a todos. */
+  pais: string | null;
+  /** PEN o USD. */
+  moneda: string;
+  active: boolean;
+  /** Si tiene datos que cambiar. De Hotmart y Culqi solo se enciende y se apaga. */
+  editable: boolean;
+  /** El titular de Yape o el beneficiario de Western Union. */
+  titular: string | null;
+  /** El número de Yape o el DNI del beneficiario. */
+  numero: string | null;
+  ciudad: string | null;
+  tieneQr: boolean;
+  qrVersion: number | null;
 }
 
 /** A quién enviar el Western Union. `null` en la respuesta = no se ofrece. */

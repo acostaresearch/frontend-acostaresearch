@@ -1,14 +1,12 @@
 /** Configuración de las secciones, direcciones y menú del administrador. */
 export type Seccion =
   | 'resumen'
-  | 'embudo'
   | 'instituciones'
   | 'billeteras'
   | 'accesos'
   | 'grupos'
   | 'descuentos'
   | 'pruebas'
-  | 'licencias'
   | 'alertas'
   | 'reclamos'
   | 'resenas'
@@ -34,12 +32,6 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   resumen: {
     titulo: 'Resumen',
     nota: 'Cómo va el negocio: lo cobrado, lo que espera revisión y lo que está por vencer.',
-  },
-  embudo: {
-    titulo: 'Avance de clientes',
-    nota:
-      'De ver los precios a cerrar la primera fase: dónde se queda la gente. Y lo que se hace ' +
-      'para moverlo: los correos de avance que salen solos y los referidos.',
   },
   instituciones: {
     titulo: 'Universidades y asesores',
@@ -74,10 +66,6 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'Un grupo es un producto: sus capítulos, su precio y cuánto dura. «Método de tesis» es ' +
       'uno; «humanizar texto» puede ser otro, con otros capítulos y otro precio. Cada licencia ' +
       'solo ve los capítulos de su grupo.',
-  },
-  licencias: {
-    titulo: 'Licencias',
-    nota: 'Quién tiene el conector encendido, con qué producto y cuánto lo está usando.',
   },
   alertas: {
     titulo: 'Alertas, reseñas y reclamos',
@@ -149,7 +137,9 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   },
   usuarios: {
     titulo: 'Usuarios',
-    nota: 'Todo el que tiene cuenta en la web. Esta lista solo la ve un administrador.',
+    nota:
+      'Todo el que tiene cuenta en la web, con sus licencias: quién tiene el conector encendido, ' +
+      'con qué producto y cuánto lo está usando. Esta lista solo la ve un administrador.',
   },
   perfil: {
     titulo: 'Mi perfil',
@@ -163,14 +153,12 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
  */
 export const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
-  embudo: 'avance-de-clientes',
   instituciones: 'universidades-y-asesores',
   billeteras: 'billeteras',
   accesos: 'accesos',
   descuentos: 'descuentos',
   pruebas: 'enlaces-de-prueba',
   grupos: 'productos',
-  licencias: 'licencias',
   corpus: 'bibliografia',
   tutoriales: 'tutoriales',
   guias: 'guias',
@@ -186,10 +174,19 @@ export const DIRECCIONES: Record<Seccion, string> = {
   sorteos: 'sorteos',
 };
 
+/**
+ * Direcciones de secciones que se fundieron en otra: el enlace guardado sigue
+ * abriendo donde ahora está lo suyo. Las licencias viven en «Usuarios».
+ */
+const DIRECCIONES_ANTIGUAS: Record<string, Seccion> = {
+  licencias: 'usuarios',
+};
+
 /** Al revés: de la dirección a la sección. */
 export function seccionDe(direccion: string): Seccion | undefined {
-  return (Object.keys(DIRECCIONES) as Seccion[]).find(
-    (seccion) => DIRECCIONES[seccion] === direccion,
+  return (
+    (Object.keys(DIRECCIONES) as Seccion[]).find((seccion) => DIRECCIONES[seccion] === direccion) ??
+    (Object.hasOwn(DIRECCIONES_ANTIGUAS, direccion) ? DIRECCIONES_ANTIGUAS[direccion] : undefined)
   );
 }
 
@@ -201,12 +198,10 @@ export function seccionDe(direccion: string): Seccion | undefined {
  */
 export const SECCIONES_DE_PAIS: Seccion[] = [
   'resumen',
-  'embudo',
   'accesos',
   'descuentos',
   'pruebas',
   'grupos',
-  'licencias',
   'tutoriales',
   'guias',
   'alertas',
@@ -240,12 +235,6 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Resumen',
         icono: 'M3 10.5 12 3l9 7.5 M5 9.5V21h14V9.5',
         enciende: ['resumen'],
-      },
-      {
-        seccion: 'embudo',
-        texto: 'Avance de clientes',
-        icono: 'M3 4h18l-7 8.5V19l-4 2v-8.5z',
-        enciende: ['embudo'],
       },
     ],
   },
@@ -310,12 +299,6 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Productos',
         icono: 'M21 8 12 3 3 8v8l9 5 9-5z M3 8l9 5 9-5 M12 13v8',
         enciende: ['grupos'],
-      },
-      {
-        seccion: 'licencias',
-        texto: 'Licencias',
-        icono: 'M14.5 9.5 21 3 M18 6l3 3 M9 21a5 5 0 1 1 0-10 5 5 0 0 1 0 10z M12.5 12.5 14.5 9.5',
-        enciende: ['licencias'],
       },
     ],
   },

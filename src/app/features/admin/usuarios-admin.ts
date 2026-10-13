@@ -6,6 +6,10 @@ import { User } from '../../core/models/user.model';
 import { AdminCreado, UserService } from '../../core/services/user.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { PAISES, nombreDePais } from '../../shared/contenido/paises';
+import { ListadoFiltrable } from './listado';
+
+/** Las pestañas de la lista: todas las cuentas, o solo las que tienen licencia o no. */
+export type FiltroDeLicencia = 'todos' | 'con' | 'sin';
 
 /** Búsqueda paginada de cuentas y formulario para crear administradores. */
 export class UsuariosAdmin {
@@ -26,6 +30,62 @@ export class UsuariosAdmin {
   readonly paginaDeUsuarios = signal(1);
   readonly paginasDeUsuarios = signal(1);
   readonly totalDeUsuarios = signal(0);
+
+  /**
+   * Con licencia o sin ella. «Con» es tener alguna emitida, también revocada o
+   * suspendida: es aquí donde se viene a reactivarla. Lo criba el servidor,
+   * porque la lista va paginada.
+   */
+  readonly filtroLicencia = signal<FiltroDeLicencia>('todos');
+  /** Cuántas cuentas hay en cada pestaña, con la búsqueda que esté escrita. */
+  readonly conteoDeUsuarios = signal<Record<string, number>>({});
+
+  filtrarPorLicencia(filtro: string): void {
+    if (filtro !== 'todos' && filtro !== 'con' && filtro !== 'sin') return;
+    if (filtro === this.filtroLicencia()) return;
+    this.filtroLicencia.set(filtro);
+    this.paginaDeUsuarios.set(1);
+    this.cargarUsuarios();
+  }
+
+  /** Lo que pinta `app-filtros-lista`: el buscador y las tres pestañas. */
+  readonly filtrosDeUsuarios: ListadoFiltrable = {
+    busca: this.busquedaUsuarios,
+    filtro: this.filtroLicencia,
+    filtros: [
+      { valor: 'todos', etiqueta: 'Todos' },
+      { valor: 'con', etiqueta: 'Con licencia' },
+      { valor: 'sin', etiqueta: 'Sin licencia' },
+    ],
+    conteo: this.conteoDeUsuarios,
+    buscar: (evento) => this.buscarUsuarios((evento.target as HTMLInputElement).value),
+    limpiar: () => this.buscarUsuarios(''),
+    filtrar: (valor) => this.filtrarPorLicencia(valor),
+  };
+
+  // ── Las licencias de una cuenta, desplegadas bajo su fila ────────────────
+
+  /** La cuenta cuyas licencias están abiertas. Una a la vez. */
+  readonly licenciasAbiertasDe = signal<string | null>(null);
+  /** El correo que hay que abrir en cuanto llegue la lista (ver `verLicenciasDe`). */
+  private abrirAlCargar: string | null = null;
+
+  alternarLicenciasDe(usuario: User): void {
+    this.licenciasAbiertasDe.update((abierta) => (abierta === usuario.id ? null : usuario.id));
+  }
+
+  /**
+   * Deja la lista en esa cuenta, con sus licencias ya abiertas. Es a donde
+   * saltan «Ver licencias» de un acceso y de una alerta.
+   */
+  verLicenciasDe(correo: string): void {
+    clearTimeout(this.busquedaPendiente);
+    this.busquedaUsuarios.set(correo);
+    this.filtroLicencia.set('todos');
+    this.paginaDeUsuarios.set(1);
+    this.abrirAlCargar = correo;
+    this.cargarUsuarios();
+  }
 
   /**
    * Los administradores, sacados de la misma lista que se acaba de cargar.
@@ -81,17 +141,33 @@ export class UsuariosAdmin {
   cargarUsuarios(): void {
     this.cargandoUsuarios.set(true);
     const busqueda = this.busquedaUsuarios().trim();
+    const filtro = this.filtroLicencia();
 
     this.usuariosApi
-      .list({ page: this.paginaDeUsuarios(), perPage: 50, search: busqueda || undefined })
+      .list({
+        page: this.paginaDeUsuarios(),
+        perPage: 50,
+        search: busqueda || undefined,
+        licencia: filtro === 'todos' ? undefined : filtro,
+      })
       .subscribe({
-        next: ({ users, meta }) => {
+        next: ({ users, meta, conteo }) => {
           this.usuarios.set(users);
           this.paginasDeUsuarios.set(meta.totalPages);
           this.totalDeUsuarios.set(meta.total);
+          // Un servidor anterior no manda el conteo: las pestañas salen sin número.
+          this.conteoDeUsuarios.set(conteo ?? {});
+          if (this.abrirAlCargar) {
+            const correo = this.abrirAlCargar.toLowerCase();
+            this.abrirAlCargar = null;
+            this.licenciasAbiertasDe.set(
+              users.find((u) => u.email.toLowerCase() === correo)?.id ?? null,
+            );
+          }
           this.cargandoUsuarios.set(false);
         },
         error: (e: unknown) => {
+          this.abrirAlCargar = null;
           this.error.set(mensajeDeError(e));
           this.cargandoUsuarios.set(false);
         },

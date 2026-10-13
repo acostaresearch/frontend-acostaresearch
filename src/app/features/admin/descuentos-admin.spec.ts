@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { CodigoDescuento } from '../../core/models/admin.model';
 import { AdminService } from '../../core/services/admin.service';
@@ -14,21 +14,27 @@ const descuento: CodigoDescuento = {
 
 describe('Descuentos del administrador', () => {
   let promociones: DescuentosAdmin;
-  let api: { crearDescuento: ReturnType<typeof vi.fn>; publicarDescuento: ReturnType<typeof vi.fn> };
+  let api: {
+    crearDescuento: ReturnType<typeof vi.fn>;
+    publicarDescuento: ReturnType<typeof vi.fn>;
+    borrarDescuento: ReturnType<typeof vi.fn>;
+  };
   let dialogos: { confirmar: ReturnType<typeof vi.fn> };
   const trabajando = signal(false);
+  const error = signal<string | null>(null);
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     trabajando.set(false);
-    api = { crearDescuento: vi.fn(), publicarDescuento: vi.fn() };
+    api = { crearDescuento: vi.fn(), publicarDescuento: vi.fn(), borrarDescuento: vi.fn() };
+    error.set(null);
     dialogos = { confirmar: vi.fn(async () => false) };
     TestBed.configureTestingModule({ providers: [
       { provide: AdminService, useValue: api },
       { provide: DialogoService, useValue: dialogos },
     ] });
     promociones = TestBed.runInInjectionContext(() =>
-      new DescuentosAdmin(signal<string | null>(null), trabajando, signal(false)),
+      new DescuentosAdmin(error, trabajando, signal(false)),
     );
   });
 
@@ -87,5 +93,39 @@ describe('Descuentos del administrador', () => {
     expect(promociones.listaDescuentos.filtrado().map((d) => d.id)).toEqual(['agotado']);
     promociones.listaDescuentos.filtrar('caducados');
     expect(promociones.listaDescuentos.filtrado().map((d) => d.id)).toEqual(['vencido']);
+  });
+
+  it('eliminar pregunta antes, y sin confirmación no borra nada', async () => {
+    promociones.descuentos.set([descuento]);
+    await promociones.eliminarDescuento(descuento);
+    expect(dialogos.confirmar).toHaveBeenCalledTimes(1);
+    expect(api.borrarDescuento).not.toHaveBeenCalled();
+    expect(promociones.descuentos()).toHaveLength(1);
+  });
+
+  it('al confirmar lo borra y lo quita de la lista; si ya se usó, lo avisa', async () => {
+    const usado = { ...descuento, usedCount: 3 };
+    promociones.descuentos.set([usado, { ...descuento, id: 'otro' }]);
+    dialogos.confirmar.mockResolvedValue(true);
+    api.borrarDescuento.mockReturnValue(of(undefined));
+
+    await promociones.eliminarDescuento(usado);
+
+    expect(dialogos.confirmar.mock.calls[0][0].mensaje).toContain('3 veces');
+    expect(api.borrarDescuento).toHaveBeenCalledWith('promo');
+    expect(promociones.descuentos().map((d) => d.id)).toEqual(['otro']);
+    expect(promociones.borrandoDescuento()).toBeNull();
+  });
+
+  it('si el servidor no lo borra, se queda en la lista y se dice', async () => {
+    promociones.descuentos.set([descuento]);
+    dialogos.confirmar.mockResolvedValue(true);
+    api.borrarDescuento.mockReturnValue(throwError(() => new Error('No encontramos ese código.')));
+
+    await promociones.eliminarDescuento(descuento);
+
+    expect(promociones.descuentos()).toHaveLength(1);
+    expect(error()).not.toBeNull();
+    expect(promociones.borrandoDescuento()).toBeNull();
   });
 });

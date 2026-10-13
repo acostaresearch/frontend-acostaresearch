@@ -3,10 +3,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { mensajeDeError } from '../../core/http/api-error';
-import { Billetera } from '../../core/models/payment.model';
+import { Billetera, MedioDeLaCasa } from '../../core/models/payment.model';
+import { DialogoService } from '../../core/services/dialogo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PAISES, nombreDePais } from '../../shared/contenido/paises';
 import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
+
+
 
 /**
  * Las billeteras digitales de cada país: Deuna en Ecuador, Nequi en Colombia.
@@ -25,11 +28,144 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
 export class BilleterasAdmin implements OnInit {
   private readonly api = inject(PaymentService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialogos = inject(DialogoService);
 
   readonly paises = PAISES;
   readonly nombreDePais = nombreDePais;
 
   readonly billeteras = signal<Billetera[]>([]);
+  /**
+   * Los medios de pago de la casa: Yape, Western Union, Hotmart y Culqi (los
+   * que tengan lo suyo puesto en el servidor). Salen delante de las billeteras
+   * de país. Se pueden apagar, y de Yape y Western Union cambiar a quién se
+   * paga; las llaves de Hotmart y Culqi siguen en el servidor.
+   */
+  readonly deLaCasa = signal<MedioDeLaCasa[]>([]);
+  /** El medio de la casa que se está encendiendo o apagando. */
+  readonly cambiandoMedio = signal<string | null>(null);
+  /** El medio cuyo QR se está subiendo. */
+  readonly subiendoQrDeMedio = signal<string | null>(null);
+
+  // ── Editar a quién se paga (Yape y Western Union) ────────────────────────
+
+  /** El medio abierto en el formulario de edición. */
+  readonly editandoMedio = signal<MedioDeLaCasa | null>(null);
+  readonly guardandoMedio = signal(false);
+
+  readonly formMedio = this.fb.nonNullable.group({
+    titular: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    numero: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    // Solo Western Union: la ciudad del beneficiario.
+    ciudad: ['', Validators.maxLength(120)],
+  });
+
+  /** Dónde se ofrece un medio de la casa, como se lee en la columna «País». */
+  paisDeMedio(medio: MedioDeLaCasa): string {
+    if (medio.pais === 'PE') return 'Perú';
+    return medio.codigo === 'WESTERN_UNION' ? 'Fuera de Perú' : 'Todos los países';
+  }
+
+  /** El QR que enseña el checkout: el subido aquí o, si no hay, el de la web. */
+  qrDeMedio(medio: MedioDeLaCasa): string | null {
+    return medio.codigo === 'YAPE' ? this.api.urlDelQrDeYape(medio.qrVersion) : null;
+  }
+
+  private ponerMedio(actualizado: MedioDeLaCasa): void {
+    this.deLaCasa.update((lista) =>
+      lista.map((m) => (m.codigo === actualizado.codigo ? actualizado : m)),
+    );
+  }
+
+  editarMedio(medio: MedioDeLaCasa): void {
+    this.error.set(null);
+    this.abierto.set(false);
+    this.formMedio.reset({
+      titular: medio.titular ?? '',
+      numero: medio.numero ?? '',
+      ciudad: medio.ciudad ?? '',
+    });
+    this.editandoMedio.set(medio);
+  }
+
+  cerrarEdicionDeMedio(): void {
+    if (!this.guardandoMedio()) this.editandoMedio.set(null);
+  }
+
+  guardarMedio(): void {
+    const medio = this.editandoMedio();
+    this.formMedio.markAllAsTouched();
+    if (!medio || this.formMedio.invalid || this.guardandoMedio()) return;
+    const v = this.formMedio.getRawValue();
+
+    this.guardandoMedio.set(true);
+    this.api
+      .cambiarMedio(medio.codigo, {
+        titular: v.titular.trim(),
+        numero: v.numero.trim(),
+        ...(medio.codigo === 'WESTERN_UNION' && v.ciudad.trim() ? { ciudad: v.ciudad.trim() } : {}),
+      })
+      .subscribe({
+        next: (actualizado) => {
+          this.ponerMedio(actualizado);
+          this.guardandoMedio.set(false);
+          this.editandoMedio.set(null);
+          this.aviso.set(`«${actualizado.nombre}» actualizado. Ya sale así al pagar.`);
+        },
+        error: (e: unknown) => {
+          this.guardandoMedio.set(false);
+          this.error.set(mensajeDeError(e));
+        },
+      });
+  }
+
+  /**
+   * Apaga o enciende un medio de la casa. Apagar se pregunta: deja de ofrecerse
+   * al pagar en ese momento, y Yape es por donde paga casi todo el mundo.
+   */
+  async encenderMedio(medio: MedioDeLaCasa): Promise<void> {
+    if (this.cambiandoMedio()) return;
+
+    if (medio.active) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: `¿Apagar ${medio.nombre}?`,
+        mensaje: 'Deja de ofrecerse al pagar ahora mismo, a todo el mundo.',
+        nota: 'Lo ya pagado por ahí se sigue revisando y entregando. Puedes encenderlo cuando quieras.',
+        confirmar: `Apagar ${medio.nombre}`,
+      });
+      if (!seguro) return;
+    }
+
+    this.cambiandoMedio.set(medio.codigo);
+    this.api.cambiarMedio(medio.codigo, { active: !medio.active }).subscribe({
+      next: (actualizado) => {
+        this.ponerMedio(actualizado);
+        this.cambiandoMedio.set(null);
+      },
+      error: (e: unknown) => {
+        this.error.set(mensajeDeError(e));
+        this.cambiandoMedio.set(null);
+      },
+    });
+  }
+
+  /** Sube o cambia el QR de Yape: sustituye al de la web en el checkout. */
+  cambiarQrDeMedio(medio: MedioDeLaCasa, evento: Event): void {
+    const imagen = this.imagenDe(evento);
+    if (!imagen) return;
+
+    this.subiendoQrDeMedio.set(medio.codigo);
+    this.api.subirQrDeMedio(medio.codigo, imagen).subscribe({
+      next: (actualizado) => {
+        this.ponerMedio(actualizado);
+        this.subiendoQrDeMedio.set(null);
+        this.aviso.set(`QR de «${actualizado.nombre}» guardado. Ya sale al pagar.`);
+      },
+      error: (e: unknown) => {
+        this.subiendoQrDeMedio.set(null);
+        this.error.set(mensajeDeError(e));
+      },
+    });
+  }
   readonly cargando = signal(true);
   readonly creando = signal(false);
   readonly abierto = signal(false);
@@ -117,6 +253,12 @@ export class BilleterasAdmin implements OnInit {
   }
 
   ngOnInit(): void {
+    // Si falla, la lista se queda con las billeteras de país.
+    this.api.mediosDeLaCasa().subscribe({
+      next: (medios) => this.deLaCasa.set(medios),
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+
     this.api.billeteras().subscribe({
       next: (lista) => {
         this.billeteras.set(lista);

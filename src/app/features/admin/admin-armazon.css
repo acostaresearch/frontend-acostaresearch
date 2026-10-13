@@ -264,6 +264,31 @@
   background: var(--color-fondo);
 }
 
+/* «Ir a mi panel de usuario»: un botón de la barra con su texto, a la misma
+   altura y con el mismo borde que el selector y los iconos. */
+.boton-barra {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--color-sobre-boton);
+  text-decoration: none;
+  background: var(--color-boton);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: background var(--transicion);
+}
+
+.boton-barra:hover {
+  background: var(--color-boton-hover);
+}
+
+.boton-barra svg,
 .boton-icono svg {
   width: 18px;
   height: 18px;
@@ -469,6 +494,17 @@
   .cabecera {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  /* Sin sitio para el texto, queda el icono, del tamaño de los de al lado. */
+  .boton-barra {
+    justify-content: center;
+    width: 38px;
+    padding: 0;
+  }
+
+  .boton-barra span {
+    display: none;
   }
 }
 

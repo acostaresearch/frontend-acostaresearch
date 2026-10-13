@@ -260,8 +260,8 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ancla: '[data-tour="planes-canje"]',
       titulo: 'Si pagaste por Yape o transferencia',
       texto:
-        'Aquí se canjea el código que te llega al correo. Es el único sitio donde se hace, y no ' +
-        'hay que recorrer los paquetes para encontrarlo.',
+        'Aquí se canjea el código que te llega al correo. Es el único sitio donde se hace. Al ' +
+        'canjearlo te llevamos a tu panel, con tu URL del conector y un recorrido para empezar.',
     },
 
     // ── Lo que hace falta DESPUÉS de comprar ───────────────────────────────
@@ -328,7 +328,7 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
             ancla: '[data-tour="admin-pais"]',
             titulo: 'Por país',
             texto:
-              'Aquí eliges qué miras: todos los países juntos, uno solo o lo de la casa. Las ' +
+              'Aquí eliges qué miras: todos los países juntos, solo Perú o solo otro. Las ' +
               'cifras y las listas del panel cambian con él. Un administrador de país ve aquí el ' +
               'suyo, y solo lo suyo.',
           },
@@ -338,8 +338,8 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
             ancla: '[data-tour="admin-panel-usuario"]',
             titulo: 'Tu panel de usuario',
             texto:
-              'Lo mismo que ve un comprador, con tus propios accesos: por dónde vas, tus ' +
-              'herramientas y tus compras.',
+              'Este botón de la barra de arriba te lleva a lo mismo que ve un comprador, con tus ' +
+              'propios accesos: por dónde vas, tus herramientas y tus compras.',
           },
           {
             seccion: 'Administración',

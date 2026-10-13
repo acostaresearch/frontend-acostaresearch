@@ -12,6 +12,7 @@ import {
   LineaCarrito,
   DatosWesternUnion,
   Billetera,
+  MedioDeLaCasa,
   DatosYape,
   MetodoManual,
   PagoPorRevisar,
@@ -138,6 +139,45 @@ export class PaymentService {
     return this.http
       .post<ApiResponse<{ billetera: Billetera }>>(`${this.base}/manual/billeteras`, datos)
       .pipe(map((res) => res.data.billetera));
+  }
+
+  // ── Medios de pago de la casa (panel del dueño) ─────────────────────────
+
+  mediosDeLaCasa(): Observable<MedioDeLaCasa[]> {
+    return this.http
+      .get<ApiResponse<{ medios: MedioDeLaCasa[] }>>(`${this.base}/manual/medios`)
+      .pipe(map((res) => res.data.medios));
+  }
+
+  /** Lo enciende, lo apaga o cambia a quién se paga. */
+  cambiarMedio(
+    codigo: MedioDeLaCasa['codigo'],
+    cambios: Partial<Pick<MedioDeLaCasa, 'active'>> & {
+      titular?: string;
+      numero?: string;
+      ciudad?: string;
+    },
+  ): Observable<MedioDeLaCasa> {
+    return this.http
+      .patch<ApiResponse<{ medio: MedioDeLaCasa }>>(`${this.base}/manual/medios/${codigo}`, cambios)
+      .pipe(map((res) => res.data.medio));
+  }
+
+  /** Sube (o cambia) el QR de Yape. Va como cuerpo crudo, como el de una billetera. */
+  subirQrDeMedio(codigo: MedioDeLaCasa['codigo'], imagen: File): Observable<MedioDeLaCasa> {
+    return this.http
+      .put<ApiResponse<{ medio: MedioDeLaCasa }>>(`${this.base}/manual/medios/${codigo}/qr`, imagen, {
+        headers: { 'Content-Type': imagen.type },
+      })
+      .pipe(map((res) => res.data.medio));
+  }
+
+  /**
+   * El QR de Yape: el que el dueño subió desde el panel o, si no subió
+   * ninguno, el de siempre, que es un archivo de la web.
+   */
+  urlDelQrDeYape(qrVersion: number | null | undefined): string {
+    return qrVersion ? `${this.base}/manual/medios/YAPE/qr?v=${qrVersion}` : '/qr-pago/qr-code.jpeg';
   }
 
   /**

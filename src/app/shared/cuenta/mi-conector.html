@@ -1,3 +1,9 @@
+<!-- Quien viene de canjear su código en /planes: la bienvenida, con su URL, y
+     al cerrarla el recorrido. No pinta nada si no hay canje recién hecho. -->
+@if (modo() === 'comprador') {
+  <app-bienvenida-canje (cerrada)="trasLaBienvenida($event)" />
+}
+
 <!-- La puesta en marcha, lo primero de la pantalla. Solo para el comprador:
      el administrador no está arrancando nada, sus licencias se le emiten
      solas y ya tiene el panel entero delante. -->

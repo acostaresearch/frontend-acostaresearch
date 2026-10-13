@@ -1685,7 +1685,9 @@ h1 {
  * Estas reglas van al final y pisan las de arriba que comparten clase.
  */
 .pago-ventana {
-  max-width: 460px;
+  /* 520 desde el 13-oct: a 460 los pasos de al lado del QR se partían en dos
+     líneas en cuanto el importe llevaba la moneda escrita. */
+  max-width: 520px;
   border-radius: 20px;
 }
 

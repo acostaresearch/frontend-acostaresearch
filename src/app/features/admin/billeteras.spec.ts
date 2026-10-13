@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { ActivationCode, PagoAdmin } from '../../core/models/admin.model';
-import { Billetera, PagoPorRevisar, PagoRevisado } from '../../core/models/payment.model';
+import { Billetera, MedioDeLaCasa, PagoPorRevisar, PagoRevisado } from '../../core/models/payment.model';
+import { DialogoService } from '../../core/services/dialogo.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { unirAccesos } from './accesos';
 import { BilleterasAdmin } from './billeteras';
@@ -18,8 +19,26 @@ const deuna: Billetera = {
   active: true,
 };
 
+const yape: MedioDeLaCasa = {
+  codigo: 'YAPE', nombre: 'Yape', pais: 'PE', moneda: 'PEN', active: true, editable: true,
+  titular: 'Benicio Acosta', numero: '999111222', ciudad: null, tieneQr: false, qrVersion: null,
+};
+const westernUnion: MedioDeLaCasa = {
+  codigo: 'WESTERN_UNION', nombre: 'Western Union', pais: null, moneda: 'USD', active: true, editable: true,
+  titular: 'Benicio Acosta', numero: '12345678', ciudad: 'Trujillo', tieneQr: false, qrVersion: null,
+};
+const hotmart: MedioDeLaCasa = {
+  codigo: 'HOTMART', nombre: 'Hotmart', pais: null, moneda: 'USD', active: true, editable: false,
+  titular: null, numero: null, ciudad: null, tieneQr: false, qrVersion: null,
+};
+
 describe('Billeteras de país en el panel', () => {
+  let dialogos: { confirmar: ReturnType<typeof vi.fn> };
   let api: {
+    mediosDeLaCasa: ReturnType<typeof vi.fn>;
+    cambiarMedio: ReturnType<typeof vi.fn>;
+    subirQrDeMedio: ReturnType<typeof vi.fn>;
+    urlDelQrDeYape: ReturnType<typeof vi.fn>;
     billeteras: ReturnType<typeof vi.fn>;
     crearBilletera: ReturnType<typeof vi.fn>;
     cambiarBilletera: ReturnType<typeof vi.fn>;
@@ -31,13 +50,23 @@ describe('Billeteras de país en el panel', () => {
   beforeEach(() => {
     TestBed.resetTestingModule();
     api = {
+      mediosDeLaCasa: vi.fn(() => of([yape, westernUnion, hotmart])),
+      cambiarMedio: vi.fn(),
+      subirQrDeMedio: vi.fn(),
+      urlDelQrDeYape: vi.fn((version: number | null) => (version ? `/qr-subido?v=${version}` : '/qr-pago/qr-code.jpeg')),
       billeteras: vi.fn(() => of([deuna])),
       crearBilletera: vi.fn(),
       cambiarBilletera: vi.fn(),
       subirQrDeBilletera: vi.fn(),
       urlDelQr: vi.fn(),
     };
-    TestBed.configureTestingModule({ providers: [{ provide: PaymentService, useValue: api }] });
+    dialogos = { confirmar: vi.fn(async () => true) };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PaymentService, useValue: api },
+        { provide: DialogoService, useValue: dialogos },
+      ],
+    });
     panel = TestBed.runInInjectionContext(() => new BilleterasAdmin());
     panel.ngOnInit();
   });
@@ -47,6 +76,87 @@ describe('Billeteras de país en el panel', () => {
   it('carga las que hay al abrirse', () => {
     expect(panel.billeteras()).toEqual([deuna]);
     expect(panel.cargando()).toBe(false);
+  });
+
+  it('delante salen los medios de la casa, cada uno con dónde se ofrece', () => {
+    expect(panel.deLaCasa().map((m) => `${panel.paisDeMedio(m)} · ${m.nombre}`)).toEqual([
+      'Perú · Yape',
+      'Fuera de Perú · Western Union',
+      'Todos los países · Hotmart',
+    ]);
+    // No son billeteras de país: van en su propia lista.
+    expect(panel.billeteras()).toEqual([deuna]);
+  });
+
+  it('el QR de Yape es el de la web hasta que se sube otro; los demás no llevan', () => {
+    expect(panel.qrDeMedio(yape)).toBe('/qr-pago/qr-code.jpeg');
+    expect(panel.qrDeMedio({ ...yape, tieneQr: true, qrVersion: 7 })).toBe('/qr-subido?v=7');
+    expect(panel.qrDeMedio(hotmart)).toBeNull();
+  });
+
+  it('apagar un medio de la casa pregunta antes; sin confirmar no cambia nada', async () => {
+    dialogos.confirmar.mockResolvedValue(false);
+    await panel.encenderMedio(yape);
+    expect(dialogos.confirmar).toHaveBeenCalledTimes(1);
+    expect(api.cambiarMedio).not.toHaveBeenCalled();
+  });
+
+  it('al confirmar lo apaga, y encenderlo de nuevo no pregunta', async () => {
+    api.cambiarMedio.mockReturnValue(of({ ...hotmart, active: false }));
+    await panel.encenderMedio(hotmart);
+    expect(api.cambiarMedio).toHaveBeenCalledWith('HOTMART', { active: false });
+    expect(panel.deLaCasa()[2].active).toBe(false);
+
+    dialogos.confirmar.mockClear();
+    api.cambiarMedio.mockReturnValue(of(hotmart));
+    await panel.encenderMedio(panel.deLaCasa()[2]);
+    expect(dialogos.confirmar).not.toHaveBeenCalled();
+    expect(api.cambiarMedio).toHaveBeenLastCalledWith('HOTMART', { active: true });
+    expect(panel.deLaCasa()[2].active).toBe(true);
+  });
+
+  it('editar Western Union guarda beneficiario, DNI y ciudad, y cambia su fila', () => {
+    const cambiado = { ...westernUnion, ciudad: 'Trujillo, Perú' };
+    api.cambiarMedio.mockReturnValue(of(cambiado));
+
+    panel.editarMedio(westernUnion);
+    expect(panel.formMedio.getRawValue()).toEqual({ titular: 'Benicio Acosta', numero: '12345678', ciudad: 'Trujillo' });
+    panel.formMedio.patchValue({ ciudad: ' Trujillo, Perú ' });
+    panel.guardarMedio();
+
+    expect(api.cambiarMedio).toHaveBeenCalledWith('WESTERN_UNION', {
+      titular: 'Benicio Acosta', numero: '12345678', ciudad: 'Trujillo, Perú',
+    });
+    expect(panel.deLaCasa()[1].ciudad).toBe('Trujillo, Perú');
+    expect(panel.editandoMedio()).toBeNull();
+  });
+
+  it('editar Yape no manda ciudad, y sin titular o número no guarda', () => {
+    panel.editarMedio(yape);
+    panel.formMedio.patchValue({ titular: '' });
+    panel.guardarMedio();
+    expect(api.cambiarMedio).not.toHaveBeenCalled();
+
+    api.cambiarMedio.mockReturnValue(of({ ...yape, titular: 'Otro' }));
+    panel.formMedio.patchValue({ titular: 'Otro' });
+    panel.guardarMedio();
+    expect(api.cambiarMedio).toHaveBeenCalledWith('YAPE', { titular: 'Otro', numero: '999111222' });
+  });
+
+  it('subir el QR de Yape cambia su fila; si falla, se dice', () => {
+    const archivo = new File([new Uint8Array(10)], 'qr.png', { type: 'image/png' });
+    const eleccion = { target: { files: [archivo], value: 'x' } } as unknown as Event;
+
+    api.subirQrDeMedio.mockReturnValue(of({ ...yape, tieneQr: true, qrVersion: 9 }));
+    panel.cambiarQrDeMedio(yape, eleccion);
+    expect(api.subirQrDeMedio).toHaveBeenCalledWith('YAPE', archivo);
+    expect(panel.deLaCasa()[0].qrVersion).toBe(9);
+    expect(panel.subiendoQrDeMedio()).toBeNull();
+
+    api.subirQrDeMedio.mockReturnValue(throwError(() => new Error('No se pudo guardar.')));
+    panel.cambiarQrDeMedio(yape, { target: { files: [archivo], value: 'x' } } as unknown as Event);
+    expect(panel.error()).not.toBeNull();
+    expect(panel.subiendoQrDeMedio()).toBeNull();
   });
 
   it('sin país, titular o número no se crea nada', () => {

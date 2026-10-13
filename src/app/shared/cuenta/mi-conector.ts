@@ -12,6 +12,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
+import { BienvenidaService } from '../../core/services/bienvenida.service';
 import { LicenseService } from '../../core/services/license.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { TourService } from '../../core/services/tour.service';
@@ -27,6 +28,7 @@ import { MiAtlasTi } from './mi-atlas-ti';
 import { MiZoteroPanel } from './mi-zotero';
 import { MiMendeleyPanel } from './mi-mendeley';
 import { PasosDeArranque } from './pasos-de-arranque';
+import { BienvenidaCanje } from './bienvenida-canje';
 
 /**
  * El conector de Claude de quien está mirando: sus licencias, la URL y la guía.
@@ -55,6 +57,7 @@ import { PasosDeArranque } from './pasos-de-arranque';
     MiMendeleyPanel,
     MiMapaVosviewer,
     PasosDeArranque,
+    BienvenidaCanje,
   ],
   templateUrl: './mi-conector.html',
   styleUrl: './mi-conector.css',
@@ -63,6 +66,7 @@ export class MiConector implements OnInit {
   private readonly licencias = inject(LicenseService);
   private readonly tour = inject(TourService);
   private readonly recorrido = inject(RecorridoWeb);
+  private readonly bienvenida = inject(BienvenidaService);
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
@@ -241,11 +245,35 @@ export class MiConector implements OnInit {
    */
   private ofrecerElRecorrido(): void {
     if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
+    // Quien acaba de canjear tiene delante la ventana de bienvenida: el
+    // recorrido arranca cuando la cierra. Ver `trasLaBienvenida`.
+    if (this.bienvenida.pendiente()) return;
     if (!this.tour.leToca(TOUR_PANEL)) return;
 
     setTimeout(
       () => this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true }),
       900,
+    );
+  }
+
+  /**
+   * Se cerró la bienvenida del canje: ahora sí, el recorrido.
+   *
+   * A quien canjea un acceso nuevo se le enseña SIEMPRE, lo haya visto antes o
+   * no: acaba de llegar con una URL que pegar y es cuando hace falta (pedido
+   * del 13-oct). A quien solo renovó, como al entrar cualquier otro día: una
+   * vez, si no lo ha visto.
+   *
+   * La espera, si el servidor aún no contestó, es la misma de arriba.
+   */
+  trasLaBienvenida(renovada: boolean): void {
+    setTimeout(
+      () => {
+        if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
+        if (renovada) this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
+        else this.tour.empezar(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
+      },
+      this.cargando() ? 900 : 0,
     );
   }
 }

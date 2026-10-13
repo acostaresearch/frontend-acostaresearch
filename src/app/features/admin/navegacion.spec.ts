@@ -2,7 +2,7 @@ import { MENU, SECCIONES_DE_PAIS, seccionDe } from './navegacion';
 
 describe('Enlaces guardados del administrador', () => {
   it.each([
-    ['avance-de-clientes', 'embudo'],
+
     ['bibliografia', 'corpus'],
     ['productos', 'grupos'],
     ['administradores', 'admins'],
@@ -23,9 +23,21 @@ describe('Enlaces guardados del administrador', () => {
     for (const cerrada of ['billeteras', 'instituciones', 'sorteos', 'whatsapp', 'corpus', 'admins', 'pedidos', 'asesores']) {
       expect(SECCIONES_DE_PAIS).not.toContain(cerrada);
     }
-    for (const abierta of ['resumen', 'embudo', 'accesos', 'descuentos', 'pruebas', 'grupos', 'licencias', 'tutoriales', 'guias', 'alertas', 'resenas', 'reclamos', 'usuarios', 'perfil']) {
+    for (const abierta of ['resumen', 'accesos', 'descuentos', 'pruebas', 'grupos', 'tutoriales', 'guias', 'alertas', 'resenas', 'reclamos', 'usuarios', 'perfil']) {
       expect(SECCIONES_DE_PAIS).toContain(abierta);
     }
+  });
+
+  it('las licencias viven en «Usuarios»: su enlace antiguo abre ahí y ya no están en el menú', () => {
+    expect(seccionDe('licencias')).toBe('usuarios');
+    const visibles = MENU.flatMap((grupo) => grupo.entradas.map((entrada) => entrada.texto));
+    expect(visibles).not.toContain('Licencias');
+  });
+
+  it('«Avance de clientes» se quitó: ni está en el menú ni su enlace abre nada', () => {
+    expect(seccionDe('avance-de-clientes')).toBeUndefined();
+    const visibles = MENU.flatMap((grupo) => grupo.entradas.map((entrada) => entrada.texto));
+    expect(visibles).not.toContain('Avance de clientes');
   });
 
   it('una sección desconocida queda sin resolver para que el panel vuelva al resumen', () => {

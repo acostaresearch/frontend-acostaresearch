@@ -1,25 +1,43 @@
+<!-- ── El enlace recién creado, en su ventana ──────────────────────────────
+     Con el QR grande: es lo que se proyecta en el taller o en un directo. Se
+     cierra a mano; el enlace queda en la lista de detrás. -->
+@if (pruebasConector().pruebaNueva(); as nueva) {
+  <div class="ventana-fondo">
+    <div class="ventana enlace-listo" role="dialog" aria-modal="true" aria-labelledby="titulo-enlace-listo">
+      <div class="ventana-cabecera">
+        <h3 id="titulo-enlace-listo">Listo: enlace creado</h3>
+        <button
+          type="button"
+          class="cerrar"
+          aria-label="Cerrar"
+          (click)="pruebasConector().pruebaNueva.set(null)"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="ventana-cuerpo">
+        <p class="nota">
+          Comparte este enlace con el grupo: cada persona que lo abra recibe su propio conector,
+          hasta {{ nueva.seats }}.
+        </p>
+        <p class="enlace-listo-url">{{ nueva.url }}</p>
+        <canvas #qr class="qr-grande" role="img" aria-label="Código QR del enlace"></canvas>
+      </div>
+
+      <div class="ventana-pie">
+        <button type="button" class="boton secundario" (click)="pruebasConector().descargarQrPrueba(nueva)">
+          Descargar QR
+        </button>
+        <button type="button" class="boton" (click)="pruebasConector().copiarEnlacePrueba(nueva)">
+          {{ pruebasConector().pruebaCopiada() === nueva.id ? '¡Copiado!' : 'Copiar enlace' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <section class="tarjeta">
-        @if (pruebasConector().pruebaNueva(); as nueva) {
-          <div class="codigos-nuevos">
-            <p class="codigos-titulo">
-              Listo. Comparte este enlace con el grupo: cada persona que lo abra recibe su propio
-              conector, hasta {{ nueva.seats }}.
-            </p>
-            <ul>
-              <li>{{ nueva.url }}</li>
-            </ul>
-            <!-- El mismo enlace en QR: para proyectarlo en el taller o en un directo. -->
-            <canvas #qr class="qr" role="img" aria-label="Código QR del enlace"></canvas>
-            <div class="codigos-acciones">
-              <button type="button" class="boton" (click)="pruebasConector().copiarEnlacePrueba(nueva)">
-                {{ pruebasConector().pruebaCopiada() === nueva.id ? '¡Copiado!' : 'Copiar enlace' }}
-              </button>
-              <button type="button" class="boton secundario" (click)="pruebasConector().descargarQrPrueba(nueva)">
-                Descargar QR
-              </button>
-            </div>
-          </div>
-        }
 
         @if (pruebasConector().pruebas() === null) {
           <p class="nota">Cargando…</p>
@@ -173,12 +191,22 @@
                     formControlName="name"
                     placeholder="Taller UNMSM, septiembre"
                   />
-                  <span class="ayuda">Lo verán los invitados al abrir el enlace.</span>
+                  <span class="ayuda">
+                    Lo verán los invitados al abrir el enlace. Viene propuesto según el producto;
+                    puedes escribir el tuyo o
+                    <button type="button" class="enlace" (click)="pruebasConector().sugerirNombre(true)">
+                      pedir otro nombre</button
+                    >.
+                  </span>
                 </div>
 
                 <div class="campo">
                   <label for="producto-prueba">Producto</label>
-                  <select id="producto-prueba" formControlName="productCode">
+                  <select
+                    id="producto-prueba"
+                    formControlName="productCode"
+                    (change)="pruebasConector().sugerirNombre()"
+                  >
                     @for (producto of pruebasConector().productosPrueba(); track producto.code) {
                       <option [value]="producto.code">{{ producto.name }}</option>
                     }
@@ -224,11 +252,11 @@
                     <input
                       id="dia-prueba"
                       type="number"
-                      min="0"
-                      max="1000"
+                      min="1"
+                      max="15"
                       formControlName="callsPerDay"
                     />
-                    <span class="ayuda">Por persona. 0 = sin tope.</span>
+                    <span class="ayuda">Por persona. Como mucho 15.</span>
                   </div>
                 </div>
               </form>
