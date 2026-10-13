@@ -313,6 +313,12 @@ export class Checkout implements OnInit {
     this.billeteraElegida()?.moneda === 'USD' ? this.totalDolares() : this.total(),
   );
 
+  /** La imagen del QR de la billetera elegida, si su país subió una. */
+  readonly qrDeBilletera = computed(() => {
+    const billetera = this.billeteraElegida();
+    return billetera ? this.payments.urlDelQr(billetera) : null;
+  });
+
   elegirBilletera(billetera: Billetera): void {
     this.billeteraElegida.set(billetera);
     this.metodoPago.set('billetera');

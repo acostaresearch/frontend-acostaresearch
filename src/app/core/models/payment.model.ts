@@ -252,6 +252,10 @@ export interface Billetera {
   /** El número o la cuenta a la que se paga. */
   numero: string;
   instrucciones: string | null;
+  /** Si tiene subida la imagen de su QR, para pagar escaneando. */
+  tieneQr?: boolean;
+  /** Cambia cada vez que se sube otro QR: va en la dirección de la imagen. */
+  qrVersion?: number | null;
   /** Solo en el panel: apagada deja de ofrecerse al pagar. */
   active?: boolean;
   createdAt?: string;

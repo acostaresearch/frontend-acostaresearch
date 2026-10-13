@@ -140,6 +140,28 @@ export class PaymentService {
       .pipe(map((res) => res.data.billetera));
   }
 
+  /**
+   * Sube (o cambia) la imagen del QR de una billetera. Va como cuerpo crudo,
+   * igual que la captura de un pago.
+   */
+  subirQrDeBilletera(id: string, imagen: File): Observable<Billetera> {
+    return this.http
+      .put<ApiResponse<{ billetera: Billetera }>>(`${this.base}/manual/billeteras/${id}/qr`, imagen, {
+        headers: { 'Content-Type': imagen.type },
+      })
+      .pipe(map((res) => res.data.billetera));
+  }
+
+  /**
+   * La dirección de la imagen del QR, o null si no tiene. Es pública —la pide
+   * una etiqueta de imagen— y lleva la versión para que, al subir otro, el
+   * navegador no enseñe el anterior.
+   */
+  urlDelQr(billetera: Billetera): string | null {
+    if (!billetera.tieneQr) return null;
+    return `${this.base}/manual/billeteras/${billetera.id}/qr?v=${billetera.qrVersion ?? 0}`;
+  }
+
   /** Cambia sus datos o la apaga. El país y la moneda no se cambian. */
   cambiarBilletera(
     id: string,

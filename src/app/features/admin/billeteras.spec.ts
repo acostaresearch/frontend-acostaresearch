@@ -23,6 +23,8 @@ describe('Billeteras de país en el panel', () => {
     billeteras: ReturnType<typeof vi.fn>;
     crearBilletera: ReturnType<typeof vi.fn>;
     cambiarBilletera: ReturnType<typeof vi.fn>;
+    subirQrDeBilletera: ReturnType<typeof vi.fn>;
+    urlDelQr: ReturnType<typeof vi.fn>;
   };
   let panel: BilleterasAdmin;
 
@@ -32,6 +34,8 @@ describe('Billeteras de país en el panel', () => {
       billeteras: vi.fn(() => of([deuna])),
       crearBilletera: vi.fn(),
       cambiarBilletera: vi.fn(),
+      subirQrDeBilletera: vi.fn(),
+      urlDelQr: vi.fn(),
     };
     TestBed.configureTestingModule({ providers: [{ provide: PaymentService, useValue: api }] });
     panel = TestBed.runInInjectionContext(() => new BilleterasAdmin());
@@ -76,6 +80,62 @@ describe('Billeteras de país en el panel', () => {
     expect(panel.billeteras().map((b) => b.nombre)).toEqual(['Deuna', 'Nequi']);
     expect(panel.aviso()).toContain('Colombia');
     expect(panel.abierto()).toBe(false);
+  });
+
+  const imagen = (tipo = 'image/png', bytes = 10) => new File([new Uint8Array(bytes)], 'qr.png', { type: tipo });
+  const eleccion = (archivo: File) => ({ target: { files: [archivo], value: 'x' } }) as unknown as Event;
+
+  it('subir el QR de una billetera cambia su fila y lo dice', () => {
+    api.subirQrDeBilletera.mockReturnValue(of({ ...deuna, tieneQr: true, qrVersion: 5 }));
+    const archivo = imagen();
+
+    panel.cambiarQr(deuna, eleccion(archivo));
+
+    expect(api.subirQrDeBilletera).toHaveBeenCalledWith('b1', archivo);
+    expect(panel.billeteras()[0].tieneQr).toBe(true);
+    expect(panel.aviso()).toContain('QR');
+    expect(panel.subiendoQr()).toBeNull();
+  });
+
+  it('lo que no es una imagen, o pesa de más, no se sube', () => {
+    panel.cambiarQr(deuna, eleccion(imagen('application/pdf')));
+    expect(panel.error()).toContain('PNG');
+    panel.cambiarQr(deuna, eleccion(imagen('image/png', 6 * 1024 * 1024 + 1)));
+    expect(panel.error()).toContain('6 MB');
+    expect(api.subirQrDeBilletera).not.toHaveBeenCalled();
+  });
+
+  it('al crear con un QR elegido, se sube detrás de la billetera', () => {
+    const nequi = { ...deuna, id: 'b2', nombre: 'Nequi', pais: 'CO' };
+    api.crearBilletera.mockReturnValue(of(nequi));
+    api.subirQrDeBilletera.mockReturnValue(of({ ...nequi, tieneQr: true, qrVersion: 7 }));
+    const archivo = imagen();
+    panel.elegirQrDelAlta(eleccion(archivo));
+    panel.form.setValue({
+      nombre: 'Nequi', pais: 'CO', moneda: 'USD', titular: 'Luis Rey', numero: '3001234567', instrucciones: '',
+    });
+
+    panel.crear();
+
+    expect(api.subirQrDeBilletera).toHaveBeenCalledWith('b2', archivo);
+    expect(panel.billeteras().find((b) => b.id === 'b2')?.tieneQr).toBe(true);
+    expect(panel.aviso()).toContain('con su QR');
+    expect(panel.qrDelAlta()).toBeNull();
+  });
+
+  it('si el QR falla, la billetera queda creada y se dice que hay que subirlo otra vez', () => {
+    const nequi = { ...deuna, id: 'b2', nombre: 'Nequi', pais: 'CO' };
+    api.crearBilletera.mockReturnValue(of(nequi));
+    api.subirQrDeBilletera.mockReturnValue(throwError(() => new Error('caído')));
+    panel.elegirQrDelAlta(eleccion(imagen()));
+    panel.form.setValue({
+      nombre: 'Nequi', pais: 'CO', moneda: 'USD', titular: 'Luis Rey', numero: '3001234567', instrucciones: '',
+    });
+
+    panel.crear();
+
+    expect(panel.billeteras().some((b) => b.id === 'b2')).toBe(true);
+    expect(panel.error()).toContain('su QR no se guardó');
   });
 
   it('apagar manda lo contrario de como estaba y cambia la fila', () => {

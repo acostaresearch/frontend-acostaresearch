@@ -49,6 +49,73 @@ export class BilleterasAdmin implements OnInit {
     instrucciones: ['', Validators.maxLength(500)],
   });
 
+  // ── La imagen del QR ─────────────────────────────────────────────────────
+  // Opcional. Se puede elegir al crear la billetera o subir después desde su
+  // fila; subir otra sustituye a la anterior.
+
+  /** Lo que acepta el servidor, para avisar antes de subir en balde. */
+  private readonly FORMATOS = ['image/png', 'image/jpeg', 'image/webp'];
+  private readonly MAX_BYTES = 6 * 1024 * 1024;
+
+  /** El QR elegido en el formulario de alta, a la espera de crear la billetera. */
+  readonly qrDelAlta = signal<File | null>(null);
+  /** La billetera cuyo QR se está subiendo, para apagar su botón. */
+  readonly subiendoQr = signal<string | null>(null);
+
+  urlDelQr(billetera: Billetera): string | null {
+    return this.api.urlDelQr(billetera);
+  }
+
+  /** Lee el archivo de un `<input type="file">` y lo da por bueno o dice por qué no. */
+  private imagenDe(evento: Event): File | null {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    // Se vacía para que elegir dos veces el mismo archivo vuelva a avisar.
+    input.value = '';
+    if (!archivo) return null;
+
+    if (!this.FORMATOS.includes(archivo.type)) {
+      this.error.set('El QR tiene que ser una imagen PNG, JPG o WebP.');
+      return null;
+    }
+    if (archivo.size > this.MAX_BYTES) {
+      this.error.set('La imagen pesa más de 6 MB. Usa una captura del QR en vez de una foto.');
+      return null;
+    }
+    return archivo;
+  }
+
+  elegirQrDelAlta(evento: Event): void {
+    this.qrDelAlta.set(this.imagenDe(evento));
+  }
+
+  /** Sube o cambia el QR de una billetera que ya existe. */
+  cambiarQr(billetera: Billetera, evento: Event): void {
+    const imagen = this.imagenDe(evento);
+    if (imagen) this.subirQr(billetera, imagen);
+  }
+
+  private subirQr(billetera: Billetera, imagen: File, alTerminar?: () => void): void {
+    this.subiendoQr.set(billetera.id);
+    this.api.subirQrDeBilletera(billetera.id, imagen).subscribe({
+      next: (actualizada) => {
+        this.billeteras.update((lista) =>
+          lista.map((b) => (b.id === actualizada.id ? actualizada : b)),
+        );
+        this.subiendoQr.set(null);
+        if (alTerminar) alTerminar();
+        else this.aviso.set(`QR de «${actualizada.nombre}» guardado. Ya sale al pagar.`);
+      },
+      error: (e: unknown) => {
+        this.subiendoQr.set(null);
+        this.error.set(
+          `La billetera «${billetera.nombre}» está, pero su QR no se guardó: ${mensajeDeError(e)} ` +
+            'Súbelo otra vez desde su fila.',
+        );
+      },
+    });
+  }
+
   ngOnInit(): void {
     this.api.billeteras().subscribe({
       next: (lista) => {
@@ -83,9 +150,16 @@ export class BilleterasAdmin implements OnInit {
           this.creando.set(false);
           this.abierto.set(false);
           this.form.reset();
-          this.aviso.set(
-            `«${billetera.nombre}» creada para ${nombreDePais(billetera.pais)}. Ya sale al pagar.`,
-          );
+          const creada = `«${billetera.nombre}» creada para ${nombreDePais(billetera.pais)}.`;
+          // El QR va en una segunda petición: la imagen viaja como cuerpo
+          // crudo y hace falta que la billetera exista para colgársela.
+          const qr = this.qrDelAlta();
+          this.qrDelAlta.set(null);
+          if (qr) {
+            this.subirQr(billetera, qr, () => this.aviso.set(`${creada} Ya sale al pagar, con su QR.`));
+          } else {
+            this.aviso.set(`${creada} Ya sale al pagar.`);
+          }
         },
         error: (e: unknown) => {
           this.creando.set(false);

@@ -50,6 +50,13 @@
           maxlength="500"
         />
       </label>
+      <label class="campo ancho">
+        <span>Imagen del QR (opcional)</span>
+        <input type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirQrDelAlta($event)" />
+        @if (qrDelAlta(); as qr) {
+          <span class="tenue">Elegido: {{ qr.name }}</span>
+        }
+      </label>
       <div class="ancho">
         <button type="submit" class="boton" [disabled]="creando()">
           {{ creando() ? 'Creando…' : 'Crear billetera' }}
@@ -77,6 +84,7 @@
             <th>Billetera</th>
             <th>A quién se paga</th>
             <th>Moneda</th>
+            <th>QR</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -97,11 +105,29 @@
               </td>
               <td>{{ b.moneda === 'USD' ? 'Dólares' : 'Soles' }}</td>
               <td>
+                @if (urlDelQr(b); as qr) {
+                  <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
+                } @else {
+                  <span class="tenue">Sin QR</span>
+                }
+              </td>
+              <td>
                 <span class="estado" [class.hecho]="b.active" [class.anulado]="!b.active">
                   {{ b.active ? 'Se ofrece al pagar' : 'Apagada' }}
                 </span>
               </td>
               <td class="acciones">
+                <!-- El botón es la etiqueta de un selector de archivo escondido. -->
+                <label class="boton secundario" [class.deshabilitado]="subiendoQr() === b.id">
+                  {{ subiendoQr() === b.id ? 'Subiendo…' : b.tieneQr ? 'Cambiar QR' : 'Subir QR' }}
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/png,image/jpeg,image/webp"
+                    [disabled]="subiendoQr() === b.id"
+                    (change)="cambiarQr(b, $event)"
+                  />
+                </label>
                 <button
                   type="button"
                   class="boton secundario"

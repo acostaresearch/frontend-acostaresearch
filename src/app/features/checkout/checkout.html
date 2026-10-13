@@ -1101,6 +1101,17 @@
                        moneda. La captura no se lee sola; la revisa el
                        administrador de ese país. -->
                   @if (billeteraElegida(); as billetera) {
+                    <!-- Su QR, si lo tiene: el mismo marco que el de Yape. -->
+                    @if (qrDeBilletera(); as qr) {
+                      <div class="qr-pago">
+                        <div class="qr-marco">
+                          <img [src]="qr" [alt]="'Código QR para pagar con ' + billetera.nombre" />
+                        </div>
+                        <a class="qr-descargar" [href]="qr" [download]="'qr-' + billetera.nombre">
+                          Descargar QR
+                        </a>
+                      </div>
+                    }
                     <ol class="yape-pasos wu-pasos">
                       <li>
                         Paga exactamente <strong>{{ totalBilletera() }}</strong>
