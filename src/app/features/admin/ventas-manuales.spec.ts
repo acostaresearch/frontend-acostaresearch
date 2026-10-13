@@ -98,8 +98,9 @@ describe('Ventas manuales del administrador', () => {
     ventas.codigoEnviadoA.set('ana@gmail.com');
     const mensaje = ventas.mensajeParaTesista();
     expect(mensaje).toContain('¡Listo, bienvenido!');
-    expect(mensaje).toContain('a ana@gmail.com');
-    expect(mensaje).toContain('Spam o Promociones');
+    expect(mensaje).toContain('ya está en ana@gmail.com');
+    expect(mensaje).toContain('Spam');
+    expect(mensaje).toContain('Grupo de soporte: https://chat.whatsapp.com/');
     // Con correo, el código no viaja también por WhatsApp.
     expect(mensaje).not.toContain('ACR-AAAA-BBBB-CCCC');
   });
@@ -107,7 +108,8 @@ describe('Ventas manuales del administrador', () => {
   it('sin correo, el código va dentro del mensaje; a una lista no se nombra ningún correo', () => {
     ventas.codigosNuevos.set(['ACR-AAAA-BBBB-CCCC']);
     ventas.codigoEnviadoA.set(null);
-    expect(ventas.mensajeParaTesista()).toContain('Su código de activación es ACR-AAAA-BBBB-CCCC.');
+    expect(ventas.mensajeParaTesista()).toContain('Su código de activación: ACR-AAAA-BBBB-CCCC.');
+    expect(ventas.mensajeParaTesista()).toContain('Grupo de soporte: https://chat.whatsapp.com/');
 
     ventas.codigosNuevos.set(['UNO', 'DOS']);
     ventas.enviosNuevos.set([
@@ -115,7 +117,7 @@ describe('Ventas manuales del administrador', () => {
       { email: 'luis@gmail.com', codes: ['DOS'] },
     ]);
     const aLista = ventas.mensajeParaTesista();
-    expect(aLista).toContain('a su correo');
+    expect(aLista).toContain('ya está en su correo');
     expect(aLista).not.toContain('@');
   });
 

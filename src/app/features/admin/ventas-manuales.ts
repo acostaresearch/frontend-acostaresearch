@@ -10,6 +10,12 @@ import { AdminService } from '../../core/services/admin.service';
 import { BillingService, Grupo } from '../../core/services/billing.service';
 import { RevisionDeCorreo, leerListaDeCorreos, revisarCorreo } from '../../shared/validators/correo';
 
+/**
+ * El grupo de WhatsApp de soporte, al que se invita a cada comprador en el
+ * mensaje de bienvenida. Si el grupo cambia, se cambia aquí.
+ */
+const GRUPO_DE_SOPORTE = 'https://chat.whatsapp.com/GJY0OX3PB973UmdxwQzQqS';
+
 export class VentasManualesAdmin {
   private readonly fb = inject(FormBuilder);
   private readonly admin = inject(AdminService);
@@ -546,6 +552,7 @@ export class VentasManualesAdmin {
   /**
    * Si el código salió por correo, se le dice dónde mirar; si no hay correo,
    * el código va dentro del mensaje, que es la única forma de que le llegue.
+   * Siempre acaba con el enlace del grupo de soporte.
    */
   readonly mensajeParaTesista = computed(() => {
     const codigos = this.codigosNuevos();
@@ -553,20 +560,17 @@ export class VentasManualesAdmin {
 
     const varios = this.enviosNuevos().length > 1;
     const correo = this.codigoEnviadoA();
-    const ayuda = 'Si se traba en algo, me escribe y lo ayudamos.';
+    const soporte = `Grupo de soporte: ${GRUPO_DE_SOPORTE}`;
 
     if (varios || correo) {
-      const destino = !varios && correo ? ` a ${correo}` : ' a su correo';
-      return (
-        `¡Listo, bienvenido! 🎉 Le envié su código de activación${destino}. ` +
-        `Revise su bandeja (también Spam o Promociones): ahí vienen los pasos. ${ayuda}`
-      );
+      const destino = !varios && correo ? correo : 'su correo';
+      return `¡Listo, bienvenido! 🎉 Su código de activación ya está en ${destino} (mire también en Spam). ${soporte}`;
     }
     const suyo =
       codigos.length === 1
-        ? `Su código de activación es ${codigos[0]}.`
-        : `Sus códigos de activación son: ${codigos.join(', ')}.`;
-    return `¡Listo, bienvenido! 🎉 ${suyo} ${ayuda}`;
+        ? `Su código de activación: ${codigos[0]}.`
+        : `Sus códigos de activación: ${codigos.join(', ')}.`;
+    return `¡Listo, bienvenido! 🎉 ${suyo} ${soporte}`;
   });
 
   readonly mensajeCopiado = signal(false);
