@@ -236,6 +236,27 @@ export interface DatosWesternUnion {
   currency: string;
 }
 
+/**
+ * Una billetera digital de un país —Deuna en Ecuador, Nequi en Colombia—: lo
+ * que Yape es en Perú. La da de alta el dueño en el panel; el comprador paga
+ * ahí, sube su comprobante y lo aprueba el administrador de ese país.
+ */
+export interface Billetera {
+  id: string;
+  nombre: string;
+  /** País al que atiende (ISO de dos letras). */
+  pais: string;
+  /** PEN o USD. */
+  moneda: string;
+  titular: string;
+  /** El número o la cuenta a la que se paga. */
+  numero: string;
+  instrucciones: string | null;
+  /** Solo en el panel: apagada deja de ofrecerse al pagar. */
+  active?: boolean;
+  createdAt?: string;
+}
+
 /** Los dos cobros que se revisan a mano. */
 export type MetodoManual = 'YAPE' | 'WESTERN_UNION';
 
@@ -270,6 +291,8 @@ export interface RevisionCaptura {
 /** Una fila de la bandeja de comprobantes del panel de administración. */
 export interface PagoPorRevisar {
   id: string;
+  /** La billetera de país por la que entró, si no es un Yape ni un Western Union. */
+  billetera?: { id: string; nombre: string; pais: string } | null;
   provider: string;
   providerOrderId: string;
   status: string;
@@ -309,6 +332,8 @@ export interface PagoPorRevisar {
  */
 export interface PagoRevisado {
   id: string;
+  /** La billetera de país por la que entró, si no es un Yape ni un Western Union. */
+  billetera?: { id: string; nombre: string; pais: string } | null;
   provider: string;
   providerOrderId: string;
   status: 'PENDING' | 'IN_REVIEW' | 'PAID' | 'FAILED' | 'REJECTED' | 'CANCELLED';
@@ -397,5 +422,6 @@ export const MEDIOS_PAGO: Record<string, string> = {
   PLIN: 'Plin',
   TRANSFERENCIA: 'Transferencia',
   WESTERN_UNION: 'Western Union',
+  BILLETERA: 'Billetera digital',
   CORTESIA: 'Cortesía',
 };

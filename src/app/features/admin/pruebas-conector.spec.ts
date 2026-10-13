@@ -80,6 +80,42 @@ describe('Enlaces de prueba del administrador', () => {
     expect(pruebas.pruebaNueva()).toBe(enlace);
   });
 
+  it('descarga el QR del enlace como PNG con el nombre del grupo', async () => {
+    const pintado = { fillStyle: '', fillRect: vi.fn() };
+    const lienzo = vi.spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(pintado as unknown as CanvasRenderingContext2D);
+    const imagen = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob')
+      .mockImplementation((listo) => listo(new Blob(['png'], { type: 'image/png' })));
+    const descargas: string[] = [];
+    const clic = vi.spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) { descargas.push(this.download); });
+    const crearUrl = URL.createObjectURL;
+    URL.createObjectURL = vi.fn(() => 'blob:qr');
+
+    await pruebas.descargarQrPrueba(enlace);
+
+    expect(descargas).toEqual(['qr-taller.png']);
+    // Un QR tiene cientos de módulos negros: si no se pintó casi nada, no es un QR.
+    expect(pintado.fillRect.mock.calls.length).toBeGreaterThan(100);
+    expect(error()).toBeNull();
+    URL.createObjectURL = crearUrl;
+    lienzo.mockRestore();
+    imagen.mockRestore();
+    clic.mockRestore();
+  });
+
+  it('si el navegador no deja dibujar el QR, lo dice y no descarga nada', async () => {
+    const lienzo = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+    const clic = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    await pruebas.descargarQrPrueba(enlace);
+
+    expect(clic).not.toHaveBeenCalled();
+    expect(error()).toBe('No pudimos crear el QR. Copia el enlace y compártelo así.');
+    lienzo.mockRestore();
+    clic.mockRestore();
+  });
+
   it('rechaza una duración mayor de un año después de convertir las horas', () => {
     pruebas.formPrueba.patchValue({ name: 'Taller', productCode: 'TESIS', accesoCantidad: 9000 });
     pruebas.crearPrueba();

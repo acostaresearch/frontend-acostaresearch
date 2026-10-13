@@ -20,6 +20,7 @@ import { environment } from '../../../environments/environment';
 import { toApiError } from '../../core/http/api-error';
 import { ERROR_CODE } from '../../core/models/api.model';
 import {
+  Billetera,
   ComprobanteEnviado,
   RevisionCaptura,
   DatosDelCobro,
@@ -45,6 +46,7 @@ import { LicenseService } from '../../core/services/license.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { PaypalSdkService } from '../../core/services/paypal-sdk.service';
 import { INCLUYE } from '../../shared/contenido/metodo';
+import { nombreDePais } from '../../shared/contenido/paises';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { InvitacionPlanes } from './invitacion-planes';
 // Oculto por ahora en la plantilla (1-oct).
@@ -112,9 +114,9 @@ export class Checkout implements OnInit {
    * formulario de captura— y la página se convertía en una lista interminable.
    * Ahora se elige uno y solo se despliega ese.
    */
-  readonly metodoPago = signal<'yape' | 'western_union' | 'paypal' | 'culqi' | 'hotmart' | null>(
-    null,
-  );
+  readonly metodoPago = signal<
+    'yape' | 'western_union' | 'billetera' | 'paypal' | 'culqi' | 'hotmart' | null
+  >(null);
 
   readonly planes = signal<Plan[]>([]);
 
@@ -285,6 +287,37 @@ export class Checkout implements OnInit {
    */
   readonly ofreceWU = computed(() => Boolean(this.datosWU()) && this.totalDolares() !== null);
 
+  // ── Pago por una billetera de país ───────────────────────────────────
+  // Deuna en Ecuador, Nequi en Colombia: lo que Yape es en Perú. Mismo camino
+  // —pagar, subir la captura, esperar la revisión—, pero la revisa el
+  // administrador de ese país y la captura no se lee sola.
+  readonly billeteras = signal<Billetera[]>([]);
+  readonly billeteraElegida = signal<Billetera | null>(null);
+  readonly operacionBilletera = new FormControl('', { nonNullable: true });
+  private readonly operacionBilleteraEscrita = signal('');
+  readonly operacionBilleteraValida = computed(() =>
+    /^[A-Za-z0-9]{4,40}$/.test(this.operacionBilleteraEscrita().replace(/[\s-]/g, '')),
+  );
+  readonly nombreDePais = nombreDePais;
+
+  /**
+   * Las que se pueden usar con lo que hay en el carrito: una en dólares solo
+   * si todo tiene precio en dólares, igual que Western Union.
+   */
+  readonly billeterasOfrecidas = computed(() =>
+    this.billeteras().filter((b) => b.moneda !== 'USD' || this.totalDolares() !== null),
+  );
+
+  /** Lo que hay que pagar por la billetera elegida, en su moneda. */
+  readonly totalBilletera = computed(() =>
+    this.billeteraElegida()?.moneda === 'USD' ? this.totalDolares() : this.total(),
+  );
+
+  elegirBilletera(billetera: Billetera): void {
+    this.billeteraElegida.set(billetera);
+    this.metodoPago.set('billetera');
+  }
+
   /**
    * Hotmart: si todos los productos del carrito tienen su página de pago allí.
    * Hotmart cobra un producto por pago, así que con varios se pagan uno tras
@@ -312,7 +345,11 @@ export class Checkout implements OnInit {
 
   /** Pestañas de medios: solo si hay más de uno que elegir. */
   readonly variosMedios = computed(
-    () => this.pagoConCulqi() || this.ofreceWU() || this.ofreceHotmart(),
+    () =>
+      this.pagoConCulqi() ||
+      this.ofreceWU() ||
+      this.ofreceHotmart() ||
+      this.billeterasOfrecidas().length > 0,
   );
 
   /** Lo que el navegador acepta subir; el servidor lo vuelve a comprobar. */
@@ -575,12 +612,16 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
       next: (datos) => {
         this.datosYape.set(datos.yape);
         this.datosWU.set(datos.westernUnion);
+        this.billeteras.set(datos.billeteras);
       },
       error: () => {
         this.datosYape.set(null);
         this.datosWU.set(null);
       },
     });
+    this.operacionBilletera.valueChanges
+      .pipe(takeUntilDestroyed(this.destruir))
+      .subscribe((valor) => this.operacionBilleteraEscrita.set(valor));
     this.mtcn.valueChanges
       .pipe(takeUntilDestroyed(this.destruir))
       .subscribe((valor) => this.mtcnEscrito.set(valor));
@@ -924,7 +965,9 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
 
     this.capturaElegida.set(archivo);
     this.capturaPrevia.set(URL.createObjectURL(archivo));
-    this.revisarCaptura(archivo);
+    // La lectura automática es para las pantallas de Yape y Western Union: la
+    // de una billetera de país la mira quien la aprueba.
+    if (this.metodoPago() !== 'billetera') this.revisarCaptura(archivo);
   }
 
   /**
@@ -979,11 +1022,18 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     if (!this.capturaAceptable()) return;
 
     const porWU = this.metodoPago() === 'western_union';
+    const billetera = this.metodoPago() === 'billetera' ? this.billeteraElegida() : null;
+    if (billetera && !this.operacionBilleteraValida()) {
+      this.errorComprobante.set(
+        `Escribe el número de operación o de comprobante de tu pago por ${billetera.nombre}.`,
+      );
+      return;
+    }
     if (porWU && !this.mtcnValido()) {
       this.errorComprobante.set('Escribe el MTCN de tu envío: son 10 dígitos.');
       return;
     }
-    if (!porWU && !this.operacionValida()) {
+    if (!porWU && !billetera && !this.operacionValida()) {
       this.errorComprobante.set(
         'Escribe el número de operación de tu Yape: está en la constancia, debajo del monto.',
       );
@@ -995,11 +1045,14 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
 
     this.payments
       .enviarComprobante(lineas, archivo, {
-        operationCode: porWU
-          ? this.mtcn.value.replace(/[\s-]/g, '')
-          : this.numeroOperacion.value.replace(/[\s-]/g, ''),
+        operationCode: billetera
+          ? this.operacionBilletera.value.replace(/[\s-]/g, '')
+          : porWU
+            ? this.mtcn.value.replace(/[\s-]/g, '')
+            : this.numeroOperacion.value.replace(/[\s-]/g, ''),
         codigoDelTotal: this.codigoDelTotal(),
         metodo: porWU ? 'WESTERN_UNION' : 'YAPE',
+        billetera: billetera?.id,
       })
       .subscribe({
         next: (enviado) => {
@@ -1010,6 +1063,7 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
           this.quitarCaptura();
           this.numeroOperacion.reset();
           this.mtcn.reset();
+          this.operacionBilletera.reset();
           this.enviandoComprobante.set(false);
         },
         error: (error: unknown) => {

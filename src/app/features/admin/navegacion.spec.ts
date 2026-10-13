@@ -20,7 +20,7 @@ describe('Enlaces guardados del administrador', () => {
   });
 
   it('al administrador de país no se le enseña lo que no es suyo', () => {
-    for (const cerrada of ['instituciones', 'sorteos', 'whatsapp', 'corpus', 'admins', 'pedidos', 'asesores']) {
+    for (const cerrada of ['billeteras', 'instituciones', 'sorteos', 'whatsapp', 'corpus', 'admins', 'pedidos', 'asesores']) {
       expect(SECCIONES_DE_PAIS).not.toContain(cerrada);
     }
     for (const abierta of ['resumen', 'embudo', 'accesos', 'descuentos', 'pruebas', 'grupos', 'licencias', 'tutoriales', 'guias', 'alertas', 'resenas', 'reclamos', 'usuarios', 'perfil']) {

@@ -14,6 +14,7 @@ describe('Usuarios del administrador', () => {
     crearAdministrador: ReturnType<typeof vi.fn>;
     cambiarEstado: ReturnType<typeof vi.fn>;
     cambiarRol: ReturnType<typeof vi.fn>;
+    paisesConAdministrador: ReturnType<typeof vi.fn>;
   };
   let dialogos: { confirmar: ReturnType<typeof vi.fn> };
   const aviso = signal<string | null>(null);
@@ -28,6 +29,7 @@ describe('Usuarios del administrador', () => {
       crearAdministrador: vi.fn(),
       cambiarEstado: vi.fn(),
       cambiarRol: vi.fn(),
+      paisesConAdministrador: vi.fn(() => of(['EC'])),
     };
     dialogos = { confirmar: vi.fn(() => Promise.resolve(true)) };
     aviso.set(null);
@@ -133,6 +135,28 @@ describe('Usuarios del administrador', () => {
     expect(cuentas.administradores().length).toBe(1);
     expect(cuentas.dandoAcceso()).toBeNull();
     expect(aviso()).toBe('Listo: ya es administrador.');
+  });
+
+  it('el selector solo ofrece los países con administrador, y se refresca al dar un acceso', () => {
+    expect(cuentas.paisesConAdministrador()).toEqual([]);
+    cuentas.cargarPaises();
+    expect(cuentas.paisesConAdministrador()).toEqual(['EC']);
+
+    const ana = { id: 'u1', email: 'ana@example.com', status: 'ACTIVE', role: 'USER' } as User;
+    api.cambiarRol.mockReturnValue(of({ user: { ...ana, role: 'ADMIN_PAIS', pais: 'CO' }, mensaje: '' }));
+    api.paisesConAdministrador.mockReturnValue(of(['CO', 'EC']));
+    cuentas.abrirAcceso(ana);
+    cuentas.paisDelAcceso.set('CO');
+    cuentas.darAcceso();
+    expect(cuentas.paisesConAdministrador()).toEqual(['CO', 'EC']);
+  });
+
+  it('si no se pueden leer los países, el selector se queda como estaba', () => {
+    cuentas.paisesConAdministrador.set(['EC']);
+    api.paisesConAdministrador.mockReturnValue(throwError(() => new Error('caído')));
+    cuentas.cargarPaises();
+    expect(cuentas.paisesConAdministrador()).toEqual(['EC']);
+    expect(error()).toBeNull();
   });
 
   it('sin país es administrador general, y la ventana se abre siempre sin país', () => {

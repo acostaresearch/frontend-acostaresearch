@@ -3,6 +3,7 @@ export type Seccion =
   | 'resumen'
   | 'embudo'
   | 'instituciones'
+  | 'billeteras'
   | 'accesos'
   | 'grupos'
   | 'descuentos'
@@ -45,6 +46,13 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
     nota:
       'Cupos del método vendidos a un grupo. Cada alumno se une con su cuenta por el enlace del ' +
       'grupo; el coordinador ve el avance de todos desde su perfil.',
+  },
+  billeteras: {
+    titulo: 'Billeteras',
+    nota:
+      'La billetera digital de cada país —Deuna en Ecuador, Nequi en Colombia—: lo que Yape es en ' +
+      'Perú. Sale al pagar con su país delante, y sus comprobantes los aprueba el administrador ' +
+      'de ese país.',
   },
   accesos: {
     titulo: 'Accesos',
@@ -157,6 +165,7 @@ export const DIRECCIONES: Record<Seccion, string> = {
   resumen: 'resumen',
   embudo: 'avance-de-clientes',
   instituciones: 'universidades-y-asesores',
+  billeteras: 'billeteras',
   accesos: 'accesos',
   descuentos: 'descuentos',
   pruebas: 'enlaces-de-prueba',
@@ -260,6 +269,12 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Descuentos',
         icono: 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z M7.5 7.5h.01',
         enciende: ['descuentos'],
+      },
+      {
+        seccion: 'billeteras',
+        texto: 'Billeteras',
+        icono: 'M3 7h15a3 3 0 0 1 3 3v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M3 7V6a2 2 0 0 1 2-2h11 M17 13.5h.01',
+        enciende: ['billeteras'],
       },
       {
         seccion: 'pruebas',

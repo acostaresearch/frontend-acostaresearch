@@ -11,6 +11,7 @@ import {
   DatosDelCobro,
   LineaCarrito,
   DatosWesternUnion,
+  Billetera,
   DatosYape,
   MetodoManual,
   PagoPorRevisar,
@@ -95,12 +96,60 @@ export class PaymentService {
    * Yape y Western Union de una vez: salen de la misma petición.
    * `westernUnion` llega null cuando no se ofrece.
    */
-  datosManuales(): Observable<{ yape: DatosYape; westernUnion: DatosWesternUnion | null }> {
+  datosManuales(): Observable<{
+    yape: DatosYape;
+    westernUnion: DatosWesternUnion | null;
+    billeteras: Billetera[];
+  }> {
     return this.http
-      .get<ApiResponse<{ yape: DatosYape; westernUnion?: DatosWesternUnion | null }>>(
-        `${this.base}/manual/info`,
-      )
-      .pipe(map((res) => ({ yape: res.data.yape, westernUnion: res.data.westernUnion ?? null })));
+      .get<
+        ApiResponse<{
+          yape: DatosYape;
+          westernUnion?: DatosWesternUnion | null;
+          billeteras?: Billetera[];
+        }>
+      >(`${this.base}/manual/info`)
+      .pipe(
+        map((res) => ({
+          yape: res.data.yape,
+          westernUnion: res.data.westernUnion ?? null,
+          // Las billeteras de país activas. Un servidor anterior no las manda.
+          billeteras: res.data.billeteras ?? [],
+        })),
+      );
+  }
+
+  // ── Billeteras de país (panel del dueño) ────────────────────────────────
+
+  billeteras(): Observable<Billetera[]> {
+    return this.http
+      .get<ApiResponse<{ billeteras: Billetera[] }>>(`${this.base}/manual/billeteras`)
+      .pipe(map((res) => res.data.billeteras));
+  }
+
+  crearBilletera(datos: {
+    nombre: string;
+    pais: string;
+    moneda: string;
+    titular: string;
+    numero: string;
+    instrucciones?: string;
+  }): Observable<Billetera> {
+    return this.http
+      .post<ApiResponse<{ billetera: Billetera }>>(`${this.base}/manual/billeteras`, datos)
+      .pipe(map((res) => res.data.billetera));
+  }
+
+  /** Cambia sus datos o la apaga. El país y la moneda no se cambian. */
+  cambiarBilletera(
+    id: string,
+    cambios: Partial<Pick<Billetera, 'nombre' | 'titular' | 'numero' | 'active'>> & {
+      instrucciones?: string;
+    },
+  ): Observable<Billetera> {
+    return this.http
+      .patch<ApiResponse<{ billetera: Billetera }>>(`${this.base}/manual/billeteras/${id}`, cambios)
+      .pipe(map((res) => res.data.billetera));
   }
 
   /**
@@ -113,7 +162,13 @@ export class PaymentService {
   enviarComprobante(
     lineas: LineaCarrito[],
     archivo: File,
-    opciones: { operationCode?: string; codigoDelTotal?: string; metodo?: MetodoManual } = {},
+    opciones: {
+      operationCode?: string;
+      codigoDelTotal?: string;
+      metodo?: MetodoManual;
+      /** La billetera de país por la que pagó. Si va, manda sobre `metodo`. */
+      billetera?: string;
+    } = {},
   ): Observable<ComprobanteEnviado> {
     // Un plan, como siempre; un carrito, como `PLAN:CODIGO,PLAN2` en la query,
     // porque el cuerpo de esta petición es la imagen.
@@ -134,6 +189,7 @@ export class PaymentService {
     }
     if (opciones.operationCode) params = params.set('operationCode', opciones.operationCode);
     if (opciones.metodo) params = params.set('metodo', opciones.metodo);
+    if (opciones.billetera) params = params.set('billetera', opciones.billetera);
 
     return this.http
       .post<ApiResponse<ComprobanteEnviado>>(`${this.base}/manual`, archivo, {

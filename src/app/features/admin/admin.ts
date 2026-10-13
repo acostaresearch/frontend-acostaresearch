@@ -61,6 +61,7 @@ import { AsesoresAdmin } from './asesores';
 import { PedidosAdmin } from './pedidos';
 import { WhatsappAdmin } from './whatsapp';
 import { SorteosAdmin } from './sorteos';
+import { BilleterasAdmin } from './billeteras';
 
 
 /** Métodos de pago que acepta el backend para una activación manual. */
@@ -97,6 +98,7 @@ const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CO
     AjustesDeCuenta,
     ReclamosAdmin,
     SorteosAdmin,
+    BilleterasAdmin,
     ResenasAdmin,
     AsesoresAdmin,
     PedidosAdmin,
@@ -409,6 +411,9 @@ export class Admin implements OnInit {
     this.billing.plans().subscribe({ next: (planes) => this.planes.set(planes) });
     this.recargar();
 
+    // Los países del selector de arriba. Solo el dueño tiene selector.
+    if (!this.dePais()) this.cuentas.cargarPaises();
+
     // Las hojas del libro sí se piden al entrar, a diferencia de usuarios o
     // tutoriales: tienen un plazo legal, y el contador de la barra lateral es lo
     // que avisa de que hay una esperando sin tener que abrir la sección.
@@ -480,6 +485,8 @@ export class Admin implements OnInit {
       bolsas: this.dePais() ? of(null) : tolerante('bolsas', this.admin.bolsasRecientes()),
       pagos: tolerante('ventas', this.admin.pagosRecientes()),
       descuentos: tolerante('descuentos', this.admin.descuentos()),
+      // Al administrador de país el servidor le da solo los de la billetera de
+      // su país; al dueño, los de Yape, o los de un país si lo eligió arriba.
       porRevisar: tolerante('yapes por revisar', this.payments.porRevisar()),
       historial: tolerante('historial de yapes', this.payments.historialManual()),
     }).subscribe((datos) => {

@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
-import { Component, input, Signal } from '@angular/core';
+import { Component, effect, ElementRef, input, Signal, viewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { dibujarQr } from '../../shared/archivos/qr';
 import { FiltrosLista } from './filtros-lista';
 import { PieLista } from './pie-lista';
 import { MenuFila } from './menu-fila';
@@ -14,4 +15,15 @@ import { PruebasConectorAdmin } from './pruebas-conector';
 export class PruebasVista {
   readonly pruebasConector = input.required<PruebasConectorAdmin>();
   readonly trabajando = input.required<Signal<boolean>>();
+
+  /** El lienzo del QR del enlace recién creado; solo existe mientras se ve el aviso. */
+  private readonly lienzoQr = viewChild<ElementRef<HTMLCanvasElement>>('qr');
+
+  constructor() {
+    effect(() => {
+      const lienzo = this.lienzoQr()?.nativeElement;
+      const nueva = this.pruebasConector().pruebaNueva();
+      if (lienzo && nueva) dibujarQr(lienzo, nueva.url, 320);
+    });
+  }
 }

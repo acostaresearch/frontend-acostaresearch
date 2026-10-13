@@ -55,6 +55,9 @@
                           @if (pago.provider === 'WESTERN_UNION') {
                             <span class="tenue">· Western Union</span>
                           }
+                          @if (pago.billetera; as billetera) {
+                            <span class="tenue">· {{ billetera.nombre }}</span>
+                          }
                         </dd>
                       </div>
                       <div>
@@ -100,7 +103,7 @@
                       }
                     </dl>
 
-                    <div data-solo-casa class="comprobante-acciones">
+                    <div class="comprobante-acciones">
                       <button
                         type="button"
                         class="boton"

@@ -8,9 +8,16 @@
             <ul>
               <li>{{ nueva.url }}</li>
             </ul>
-            <button type="button" class="boton" (click)="pruebasConector().copiarEnlacePrueba(nueva)">
-              {{ pruebasConector().pruebaCopiada() === nueva.id ? '¡Copiado!' : 'Copiar enlace' }}
-            </button>
+            <!-- El mismo enlace en QR: para proyectarlo en el taller o en un directo. -->
+            <canvas #qr class="qr" role="img" aria-label="Código QR del enlace"></canvas>
+            <div class="codigos-acciones">
+              <button type="button" class="boton" (click)="pruebasConector().copiarEnlacePrueba(nueva)">
+                {{ pruebasConector().pruebaCopiada() === nueva.id ? '¡Copiado!' : 'Copiar enlace' }}
+              </button>
+              <button type="button" class="boton secundario" (click)="pruebasConector().descargarQrPrueba(nueva)">
+                Descargar QR
+              </button>
+            </div>
           </div>
         }
 
@@ -106,6 +113,9 @@
                             Copiar enlace
                           </button>
                         }
+                        <button type="button" (click)="pruebasConector().descargarQrPrueba(enlace)">
+                          Descargar QR
+                        </button>
                         <hr />
                         @if (enlace.active) {
                           <button type="button" class="peligro" (click)="pruebasConector().alternarPrueba(enlace)">

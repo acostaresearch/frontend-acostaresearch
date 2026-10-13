@@ -108,6 +108,13 @@ export class UserService {
       .pipe(map((res) => ({ user: res.data.user, mensaje: res.message ?? '' })));
   }
 
+  /** Los países (código ISO) que tienen algún administrador de país. Solo el dueño. */
+  paisesConAdministrador(): Observable<string[]> {
+    return this.http
+      .get<ApiResponse<{ paises: string[] }>>(`${this.base}/paises`)
+      .pipe(map((res) => res.data.paises));
+  }
+
   /** Listado paginado. Solo accesible con rol ADMIN. */
   /** Suspende o reactiva una cuenta (solo administradores). Devuelve la cuenta y el mensaje. */
   cambiarEstado(id: string, status: 'ACTIVE' | 'SUSPENDED') {

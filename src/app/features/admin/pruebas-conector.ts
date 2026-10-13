@@ -5,6 +5,7 @@ import { mensajeDeError } from '../../core/http/api-error';
 import { Plan } from '../../core/models/rewrite.model';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { duracionDeAcceso, EnlacePrueba, InvitadoPrueba, PruebaService } from '../../core/services/prueba.service';
+import { descargarQr } from '../../shared/archivos/qr';
 import { Listado } from './listado';
 
 /** Gestión de los enlaces de prueba, separada de las ventas y licencias de clientes. */
@@ -152,6 +153,15 @@ export class PruebasConectorAdmin {
       }, 2500);
     } catch {
       this.error.set('No pudimos copiar. Selecciona el enlace y cópialo a mano.');
+    }
+  }
+
+  /** El QR del enlace, como imagen, para proyectarlo o imprimirlo. */
+  async descargarQrPrueba(enlace: EnlacePrueba): Promise<void> {
+    try {
+      await descargarQr(enlace.url, `qr-${enlace.slug}.png`);
+    } catch {
+      this.error.set('No pudimos crear el QR. Copia el enlace y compártelo así.');
     }
   }
 

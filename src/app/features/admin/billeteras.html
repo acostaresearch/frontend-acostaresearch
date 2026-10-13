@@ -1,0 +1,126 @@
+<section class="tarjeta">
+  <div class="cabecera">
+    <h2>Billeteras por país</h2>
+    <button type="button" class="boton alta" (click)="abierto.set(!abierto())">
+      {{ abierto() ? 'Cerrar' : 'Nueva billetera' }}
+    </button>
+  </div>
+  <p class="nota">
+    Lo que Yape es en Perú, para cada país: Deuna en Ecuador, Nequi en Colombia. La que crees aquí
+    sale al pagar con su país delante; el comprador paga ahí y sube su comprobante, y lo aprueba el
+    administrador de ese país. A ti esos comprobantes solo te salen si eliges ese país en el
+    selector de arriba. Yape y Western Union no están aquí: siguen como siempre.
+  </p>
+
+  @if (abierto()) {
+    <form class="alta-form" [formGroup]="form" (ngSubmit)="crear()">
+      <label class="campo">
+        <span>Nombre de la billetera</span>
+        <input formControlName="nombre" placeholder="Deuna" maxlength="60" />
+      </label>
+      <label class="campo">
+        <span>País</span>
+        <select formControlName="pais">
+          <option value="" disabled>Elige…</option>
+          @for (pais of paises; track pais.codigo) {
+            <option [value]="pais.codigo">{{ pais.nombre }}</option>
+          }
+        </select>
+      </label>
+      <label class="campo">
+        <span>Moneda en la que cobra</span>
+        <select formControlName="moneda">
+          <option value="USD">Dólares (el precio en US$ de cada plan)</option>
+          <option value="PEN">Soles (el precio en S/ de cada plan)</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Titular</span>
+        <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
+      </label>
+      <label class="campo">
+        <span>Número o cuenta</span>
+        <input formControlName="numero" placeholder="El número al que se paga" maxlength="80" />
+      </label>
+      <label class="campo ancho">
+        <span>Instrucciones para el comprador (opcional)</span>
+        <input
+          formControlName="instrucciones"
+          placeholder="Por ejemplo: paga desde la app y guarda el comprobante"
+          maxlength="500"
+        />
+      </label>
+      <div class="ancho">
+        <button type="submit" class="boton" [disabled]="creando()">
+          {{ creando() ? 'Creando…' : 'Crear billetera' }}
+        </button>
+      </div>
+      <p class="nota ancho">
+        El país y la moneda no se cambian después: si te equivocas, apágala y crea otra.
+      </p>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p class="nota">Cargando…</p>
+  } @else if (billeteras().length === 0) {
+    <p class="vacio">
+      Todavía no hay ninguna. Mientras no crees una, fuera de Perú se paga con tarjeta, Hotmart o
+      Western Union.
+    </p>
+  } @else {
+    <div class="tabla-envoltura">
+      <table>
+        <thead>
+          <tr>
+            <th>País</th>
+            <th>Billetera</th>
+            <th>A quién se paga</th>
+            <th>Moneda</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of billeteras(); track b.id) {
+            <tr>
+              <td>{{ nombreDePais(b.pais) }}</td>
+              <td>
+                {{ b.nombre }}
+                @if (b.createdAt) {
+                  <span class="tenue">desde el {{ b.createdAt | date: 'd MMM y' }}</span>
+                }
+              </td>
+              <td>
+                {{ b.titular }}
+                <span class="tenue">{{ b.numero }}</span>
+              </td>
+              <td>{{ b.moneda === 'USD' ? 'Dólares' : 'Soles' }}</td>
+              <td>
+                <span class="estado" [class.hecho]="b.active" [class.anulado]="!b.active">
+                  {{ b.active ? 'Se ofrece al pagar' : 'Apagada' }}
+                </span>
+              </td>
+              <td class="acciones">
+                <button
+                  type="button"
+                  class="boton secundario"
+                  [disabled]="cambiando() === b.id"
+                  (click)="encender(b)"
+                >
+                  {{ b.active ? 'Apagar' : 'Encender' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="nota pie">
+      Apagar una billetera la quita del checkout, pero no toca lo ya cobrado por ella ni los
+      comprobantes que estén esperando.
+    </p>
+  }
+</section>
+
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />

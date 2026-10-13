@@ -97,9 +97,10 @@
             <option value="ninguno" [selected]="filtroPais.valor() === 'ninguno'">
               Solo la casa (sin país)
             </option>
-            @for (pais of paises; track pais.codigo) {
-              <option [value]="pais.codigo" [selected]="filtroPais.valor() === pais.codigo">
-                {{ pais.nombre }}
+            <!-- Solo los países que tienen algún administrador. -->
+            @for (codigo of cuentas.paisesConAdministrador(); track codigo) {
+              <option [value]="codigo" [selected]="filtroPais.valor() === codigo">
+                {{ nombreDePais(codigo) }}
               </option>
             }
           </select>
@@ -276,6 +277,13 @@
        los mismos que ofrece el alta de un enlace de prueba. -->
     @if (seccion() === 'instituciones') {
       <app-instituciones-admin [productos]="pruebasConector.productosPrueba()" />
+    }
+
+    <!-- ══ BILLETERAS ═════════════════════════════════════════════════════════
+       La billetera digital de cada país. Solo el dueño; en su propio
+       componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'billeteras') {
+      <app-billeteras-admin />
     }
 
     @if (seccion() === 'pruebas') {

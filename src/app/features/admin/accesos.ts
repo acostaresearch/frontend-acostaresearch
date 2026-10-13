@@ -109,7 +109,7 @@ function deCodigo(codigo: ActivationCode, nombreDe: (productCode: string) => str
 }
 
 /** Los que se revisan a mano: ya vienen del historial de comprobantes. */
-const MANUALES = new Set(['YAPE', 'WESTERN_UNION']);
+const MANUALES = new Set(['YAPE', 'WESTERN_UNION', 'BILLETERA']);
 
 function deComprobante(pago: PagoRevisado): Acceso {
   // Un Yape aprobado se dice «Aprobado» y no «Pagado»: lo que ocurrió es que
@@ -121,7 +121,7 @@ function deComprobante(pago: PagoRevisado): Acceso {
     id: pago.id,
     // El canal es el de los pagos revisados a mano; el nombre, el de verdad.
     canal: 'yape',
-    canalNombre: MEDIOS_PAGO[pago.provider] ?? 'Yape',
+    canalNombre: pago.billetera?.nombre ?? MEDIOS_PAGO[pago.provider] ?? 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
     producto: pago.plan.name,
@@ -158,7 +158,7 @@ function dePendiente(pago: PagoPorRevisar): Acceso {
     id: pago.id,
     // El canal es el de los pagos revisados a mano; el nombre, el de verdad.
     canal: 'yape',
-    canalNombre: MEDIOS_PAGO[pago.provider] ?? 'Yape',
+    canalNombre: pago.billetera?.nombre ?? MEDIOS_PAGO[pago.provider] ?? 'Yape',
     fecha: pago.createdAt,
     comprador: pago.user.email,
     // Un carrito sale una vez, con todo lo que lleva y la suma.

@@ -86,6 +86,19 @@ td.fila-acciones > * + * {
   background: var(--color-superficie);
   border-radius: var(--radio-sm);
 }
+.codigos-nuevos .qr {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 0 0 12px;
+  border-radius: var(--radio-sm);
+}
+
+.codigos-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .tabla-scroll {
   overflow-x: auto;
 }

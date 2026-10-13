@@ -942,6 +942,18 @@
                       Western Union
                     </button>
                   }
+                  <!-- Las billeteras de país, cada una con su país delante. -->
+                  @for (billetera of billeterasOfrecidas(); track billetera.id) {
+                    <button
+                      type="button"
+                      role="tab"
+                      [attr.aria-selected]="metodoPago() === 'billetera' && billeteraElegida()?.id === billetera.id"
+                      [class.activa]="metodoPago() === 'billetera' && billeteraElegida()?.id === billetera.id"
+                      (click)="elegirBilletera(billetera)"
+                    >
+                      {{ nombreDePais(billetera.pais) }} · {{ billetera.nombre }}
+                    </button>
+                  }
                 </div>
               }
 
@@ -1065,7 +1077,7 @@
                    Los dos acaban igual: una captura que un administrador revisa.
                    Cambia lo de arriba (QR o datos del beneficiario) y el número
                    de operación, que en Western Union es el MTCN obligatorio. -->
-              @if (metodoPago() === 'yape' || metodoPago() === 'western_union') {
+              @if (metodoPago() === 'yape' || metodoPago() === 'western_union' || metodoPago() === 'billetera') {
                 @if (comprobanteEnviado(); as enviado) {
                   <div class="yape-enviado">
                     <p class="yape-enviado-titulo">Comprobante recibido</p>
@@ -1084,6 +1096,62 @@
                       </a>
                     }
                   </div>
+                } @else if (metodoPago() === 'billetera') {
+                  <!-- Una billetera de país: a quién se paga y cuánto, en su
+                       moneda. La captura no se lee sola; la revisa el
+                       administrador de ese país. -->
+                  @if (billeteraElegida(); as billetera) {
+                    <ol class="yape-pasos wu-pasos">
+                      <li>
+                        Paga exactamente <strong>{{ totalBilletera() }}</strong>
+                        @if (billetera.moneda === 'USD') {
+                          (dólares)
+                        }
+                        por {{ billetera.nombre }} a:
+                      </li>
+                    </ol>
+                    <dl class="wu-datos">
+                      <div>
+                        <dt>Titular</dt>
+                        <dd>{{ billetera.titular }}</dd>
+                      </div>
+                      <div>
+                        <dt>Número o cuenta</dt>
+                        <dd>{{ billetera.numero }}</dd>
+                      </div>
+                      <div>
+                        <dt>País</dt>
+                        <dd>{{ nombreDePais(billetera.pais) }}</dd>
+                      </div>
+                    </dl>
+                    @if (billetera.instrucciones) {
+                      <p class="tenue">{{ billetera.instrucciones }}</p>
+                    }
+                    <ol class="yape-pasos wu-pasos" start="2">
+                      <li>Escribe el número de operación de tu comprobante y sube su captura</li>
+                    </ol>
+
+                    <ng-container *ngTemplateOutlet="subirCaptura" />
+
+                    <input
+                      class="pago-operacion"
+                      type="text"
+                      maxlength="40"
+                      [formControl]="operacionBilletera"
+                      placeholder="Nº de operación · está en tu comprobante"
+                      [attr.aria-label]="'Número de operación de tu pago por ' + billetera.nombre"
+                      autocomplete="off"
+                    />
+
+                    <button
+                      type="button"
+                      class="boton oro grande bloque"
+                      [disabled]="!capturaElegida() || !operacionBilleteraValida() || enviandoComprobante()"
+                      (click)="enviarComprobante()"
+                    >
+                      {{ enviandoComprobante() ? 'Enviando…' : 'Enviar comprobante' }}
+                    </button>
+                  }
                 } @else if (metodoPago() === 'western_union') {
                   <!-- Western Union: los datos que el comprador lleva a la agencia
                        o escribe en la app. Se cobra en dólares, el precio de PayPal. -->

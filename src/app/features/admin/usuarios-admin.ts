@@ -63,6 +63,21 @@ export class UsuariosAdmin {
     this.cargarUsuarios();
   }
 
+  /**
+   * Los países que tienen algún administrador: lo que ofrece el selector «ver
+   * por país» de la barra de arriba. Sale de su propia petición y no de la
+   * lista de usuarios, que va paginada y puede no traerlos a todos.
+   */
+  readonly paisesConAdministrador = signal<string[]>([]);
+
+  /** Si falla se queda como estaba: el selector sigue con «Todos» y «la casa». */
+  cargarPaises(): void {
+    this.usuariosApi.paisesConAdministrador().subscribe({
+      next: (paises) => this.paisesConAdministrador.set(paises),
+      error: () => undefined,
+    });
+  }
+
   cargarUsuarios(): void {
     this.cargandoUsuarios.set(true);
     const busqueda = this.busquedaUsuarios().trim();
@@ -187,6 +202,7 @@ export class UsuariosAdmin {
         this.usuarios.update((lista) => lista.map((u) => (u.id === user.id ? { ...u, ...user } : u)));
         this.aviso.set(mensaje || 'Rol cambiado.');
         this.cambiandoRol.set(null);
+        this.cargarPaises();
         alTerminar?.();
       },
       error: (e: unknown) => {
@@ -261,6 +277,7 @@ export class UsuariosAdmin {
           this.creandoAdmin.set(false);
           // La lista se recarga para que la cuenta nueva aparezca detrás.
           this.cargarUsuarios();
+          this.cargarPaises();
         },
         error: (e: unknown) => {
           this.error.set(mensajeDeError(e));
