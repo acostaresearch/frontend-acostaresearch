@@ -608,21 +608,20 @@
                         <span class="tenue">Nunca ha entrado</span>
                       }
                     </td>
-                    <!-- Qué tiene y cómo está cada una; el detalle y lo que
-                         se puede hacer con ellas, al desplegar la fila. -->
+                    <!-- Si tiene alguna, el botón que abre su ventana: qué
+                         producto, cómo está y lo que se puede hacer va ahí
+                         dentro, no en la fila. -->
                     <td>
-                      @for (licencia of suyas; track licencia.id) {
-                        <span class="bloque">
-                          {{ accionesAccesos.nombreDeProducto(licencia.productCode) }}
-                          <span
-                            class="pastilla"
-                            [class.buena]="licencia.status === 'ACTIVE'"
-                            [class.mala]="licencia.status !== 'ACTIVE'"
-                          >
-                            {{ estadoLicencia(licencia.status) }}
-                          </span>
-                        </span>
-                      } @empty {
+                      @if (suyas.length > 0) {
+                        <button
+                          type="button"
+                          class="enlace"
+                          aria-haspopup="dialog"
+                          (click)="cuentas.alternarLicenciasDe(u)"
+                        >
+                          {{ suyas.length === 1 ? 'Ver licencia' : 'Ver ' + suyas.length + ' licencias' }}
+                        </button>
+                      } @else {
                         <span class="tenue">Sin licencia</span>
                       }
                     </td>
@@ -637,16 +636,6 @@
                       </span>
                     </td>
                     <td class="fila-acciones">
-                      @if (suyas.length > 0) {
-                        <button
-                          type="button"
-                          class="enlace"
-                          aria-haspopup="dialog"
-                          (click)="cuentas.alternarLicenciasDe(u)"
-                        >
-                          Ver licencias
-                        </button>
-                      }
                       <app-menu-fila>
                         <button type="button" (click)="verAccesosDe(u.email)">Ver compras</button>
                         <button type="button" (click)="copiarTexto(u.email, 'Correo copiado')">
