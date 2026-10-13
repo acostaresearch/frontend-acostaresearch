@@ -92,4 +92,39 @@ describe('Ventas manuales del administrador', () => {
     expect(revocar).toHaveBeenCalledWith('blob:previa');
     expect(ventas.trabajando()).toBe(false);
   });
+
+  it('el mensaje para el tesista dice a qué correo se envió el código', () => {
+    ventas.codigosNuevos.set(['ACR-AAAA-BBBB-CCCC']);
+    ventas.codigoEnviadoA.set('ana@gmail.com');
+    const mensaje = ventas.mensajeParaTesista();
+    expect(mensaje).toContain('¡Listo, bienvenido!');
+    expect(mensaje).toContain('a ana@gmail.com');
+    expect(mensaje).toContain('Spam o Promociones');
+    // Con correo, el código no viaja también por WhatsApp.
+    expect(mensaje).not.toContain('ACR-AAAA-BBBB-CCCC');
+  });
+
+  it('sin correo, el código va dentro del mensaje; a una lista no se nombra ningún correo', () => {
+    ventas.codigosNuevos.set(['ACR-AAAA-BBBB-CCCC']);
+    ventas.codigoEnviadoA.set(null);
+    expect(ventas.mensajeParaTesista()).toContain('Su código de activación es ACR-AAAA-BBBB-CCCC.');
+
+    ventas.codigosNuevos.set(['UNO', 'DOS']);
+    ventas.enviosNuevos.set([
+      { email: 'ana@gmail.com', codes: ['UNO'] },
+      { email: 'luis@gmail.com', codes: ['DOS'] },
+    ]);
+    const aLista = ventas.mensajeParaTesista();
+    expect(aLista).toContain('a su correo');
+    expect(aLista).not.toContain('@');
+  });
+
+  it('«generar otro código» quita los de antes y abre el formulario', () => {
+    ventas.codigosNuevos.set(['CODIGO']);
+    ventas.codigoEnviadoA.set('ana@gmail.com');
+    ventas.generarOtroCodigo();
+    expect(ventas.codigosNuevos()).toEqual([]);
+    expect(ventas.mensajeParaTesista()).toBe('');
+    expect(ventas.formularioCodigosAbierto()).toBe(true);
+  });
 });

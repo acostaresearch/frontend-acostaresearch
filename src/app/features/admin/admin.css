@@ -164,6 +164,35 @@
   color: var(--color-texto-suave);
 }
 
+/* Tres botones en una ventana estrecha: en el móvil bajan de línea. */
+.pie-codigos {
+  flex-wrap: wrap;
+}
+
+/* El mensaje para el tesista, bajo los códigos de la misma ventana. */
+.mensaje-tesista {
+  margin-top: 16px;
+}
+
+.mensaje-tesista-titulo {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.mensaje-tesista-texto {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
 .codigos-nuevos ul {
   display: grid;
   gap: 6px;

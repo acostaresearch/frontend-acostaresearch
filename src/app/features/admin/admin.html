@@ -1015,10 +1015,21 @@
               }
             </ul>
           </div>
+          <!-- Lo que se le escribe al tesista por WhatsApp, ya redactado. -->
+          <div class="mensaje-tesista">
+            <p class="mensaje-tesista-titulo">Mensaje para el tesista</p>
+            <p class="mensaje-tesista-texto">{{ ventasManuales.mensajeParaTesista() }}</p>
+            <button type="button" class="boton secundario" (click)="ventasManuales.copiarMensajeParaTesista()">
+              {{ ventasManuales.mensajeCopiado() ? '¡Copiado!' : 'Copiar mensaje' }}
+            </button>
           </div>
-          <div class="ventana-pie">
+          </div>
+          <div class="ventana-pie pie-codigos">
             <button type="button" class="boton secundario" (click)="ventasManuales.cerrarCodigosNuevos()">
               Cerrar
+            </button>
+            <button type="button" class="boton secundario" (click)="ventasManuales.generarOtroCodigo()">
+              Generar otro código
             </button>
             <button type="button" class="boton" (click)="ventasManuales.copiarCodigos()">
               {{ copiados() ? '¡Copiados!' : 'Copiar todos' }}

@@ -538,6 +538,56 @@ export class VentasManualesAdmin {
       });
   }
 
+  // ── El mensaje para el tesista ───────────────────────────────────────────
+  //
+  // Lo que se le escribe por WhatsApp nada más generar: ya escrito, para
+  // copiarlo y pegarlo. Corto a propósito: se lee en el móvil, entre otros.
+
+  /**
+   * Si el código salió por correo, se le dice dónde mirar; si no hay correo,
+   * el código va dentro del mensaje, que es la única forma de que le llegue.
+   */
+  readonly mensajeParaTesista = computed(() => {
+    const codigos = this.codigosNuevos();
+    if (codigos.length === 0) return '';
+
+    const varios = this.enviosNuevos().length > 1;
+    const correo = this.codigoEnviadoA();
+    const ayuda = 'Si se traba en algo, me escribe y lo ayudamos.';
+
+    if (varios || correo) {
+      const destino = !varios && correo ? ` a ${correo}` : ' a su correo';
+      return (
+        `¡Listo, bienvenido! 🎉 Le envié su código de activación${destino}. ` +
+        `Revise su bandeja (también Spam o Promociones): ahí vienen los pasos. ${ayuda}`
+      );
+    }
+    const suyo =
+      codigos.length === 1
+        ? `Su código de activación es ${codigos[0]}.`
+        : `Sus códigos de activación son: ${codigos.join(', ')}.`;
+    return `¡Listo, bienvenido! 🎉 ${suyo} ${ayuda}`;
+  });
+
+  readonly mensajeCopiado = signal(false);
+
+  async copiarMensajeParaTesista(): Promise<void> {
+    const mensaje = this.mensajeParaTesista();
+    if (!mensaje) return;
+    try {
+      await navigator.clipboard.writeText(mensaje);
+      this.mensajeCopiado.set(true);
+      setTimeout(() => this.mensajeCopiado.set(false), 2500);
+    } catch {
+      this.error.set('No pudimos copiar. Selecciona el mensaje y cópialo a mano.');
+    }
+  }
+
+  /** «Generar otro código»: cierra estos y abre el formulario otra vez. */
+  generarOtroCodigo(): void {
+    this.abrirFormularioCodigos();
+  }
+
   async copiarCodigos(): Promise<void> {
     const codigos = this.codigosNuevos();
     if (codigos.length === 0) return;
