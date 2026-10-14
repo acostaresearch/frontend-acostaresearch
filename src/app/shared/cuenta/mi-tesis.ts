@@ -117,6 +117,27 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
  */
 const SOLO_HUMANIZADOR = /^HUMANIZ/i;
 
+/**
+ * Más formas de pedirle el Humanizador a Claude (14-oct). Salen debajo de la
+ * frase general en el recuadro «Empieza por aquí» de quien compró solo el
+ * Humanizador. Cada una entra por un camino que la skill ya atiende: el Word
+ * subido, los capítulos guardados, subir uno nuevo o texto pegado. Todas acaban
+ * en «con el método» para que Claude use el conector. Lo de «solo lo rojo» no
+ * se ofrece aquí (14-oct, decisión del dueño), aunque el conector lo entienda.
+ */
+interface FraseParaClaude {
+  /** De qué va, en dos o tres palabras, para la ficha. */
+  rotulo: string;
+  texto: string;
+}
+
+const FRASES_DEL_HUMANIZADOR: readonly FraseParaClaude[] = [
+  { rotulo: 'Word subido', texto: 'Humaniza el documento que subí, con el método.' },
+  { rotulo: 'Capítulos guardados', texto: 'Humaniza los capítulos guardados en mi proyecto, con el método.' },
+  { rotulo: 'Documento nuevo', texto: 'Quiero subir un documento nuevo para humanizarlo, con el método.' },
+  { rotulo: 'Texto pegado', texto: 'Humaniza este texto, con el método:' },
+];
+
 const TEXTOS_DE_DOCUMENTO: TextosDeVarias = {
   titulo: 'Qué documento usar',
   explicacion:
@@ -443,6 +464,21 @@ export class MiTesis implements OnInit {
     );
   }
 
+  /** Las otras frases del Humanizador; en los demás productos, ninguna. */
+  frasesMas(p: Proyecto): readonly FraseParaClaude[] {
+    return this.soloHumanizador(p) ? FRASES_DEL_HUMANIZADOR : [];
+  }
+
+  /** La última de esas frases que se copió, para marcar solo su botón. */
+  readonly textoCopiado = signal<string | null>(null);
+
+  copiarTexto(texto: string): void {
+    navigator.clipboard?.writeText(texto).then(
+      () => this.textoCopiado.set(texto),
+      () => this.textoCopiado.set(null),
+    );
+  }
+
   /** «7 · Capítulo IV…» → «7»; «Fase 3B — …» → «3B». */
   private numero(fase: EtapaDelProyecto): string {
     return /^\s*(?:fase\s+)?(\d+[a-z]?)/i.exec(fase.displayName)?.[1] ?? '';
@@ -740,6 +776,7 @@ export class MiTesis implements OnInit {
     this.copiado.set(false);
     this.apoyoAbierto.set(null);
     this.apoyoCopiado.set(false);
+    this.textoCopiado.set(null);
     this.avanceSubido.set(null);
     this.errorAvance.set(null);
     this.errorBorrado.set(null);

@@ -120,8 +120,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="retomar"]',
     titulo: 'Sigue donde lo dejaste',
     texto:
-      'Este botón abre Claude en la fase que toca (o en el Humanizador, si es lo que compraste). ' +
-      'Si prefieres retomar por otra, cámbiala aquí mismo y la respetará.',
+      'Este botón abre Claude en la fase que toca. Si prefieres retomar por otra, cámbiala aquí ' +
+      'mismo y la respetará. (Si compraste solo el Humanizador, aquí ves ya las frases para pedírselo.)',
   },
   {
     ruta: '/perfil',
