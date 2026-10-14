@@ -226,6 +226,85 @@
   box-shadow: var(--sombra);
 }
 
+/* «Ver fuentes»: una bibliografía se lee mejor a lo ancho. */
+.ventana-ancha {
+  max-width: 820px;
+}
+
+.lista-buscar {
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.lista-vacia {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-texto-suave);
+}
+
+.lista-fuentes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-fuentes li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.lista-fuentes li:last-child {
+  border-bottom: 0;
+}
+
+.lista-fuentes p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.lista-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-texto);
+}
+
+.lista-datos {
+  margin-top: 3px !important;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.lista-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 6px !important;
+  font-size: 12.5px;
+}
+
+.lista-pie a {
+  color: var(--color-primario);
+}
+
+.lista-clave {
+  font-family: ui-monospace, monospace;
+  color: var(--color-texto-suave);
+}
+
+.lista-sin-resumen {
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
 .ventana-cabecera {
   display: flex;
   align-items: center;
@@ -317,6 +396,8 @@
     width: 100%;
     margin-left: 0;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 18px;
   }
 }
 

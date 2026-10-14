@@ -1,10 +1,11 @@
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
-import { Component, HostListener, effect, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
 import { doisDeLosPdf, normalizarDoi } from '../../core/pdf/doi-del-pdf';
 import {
+  FuenteGuardada,
   ImportacionAMano,
   ImportacionPorDoi,
   MisFuentes,
@@ -29,6 +30,14 @@ const ES_LIBRO = /\.(epub|mobi|azw3?|djvu|fb2)$/i;
 
 /** Techo local, para no subir ocho megas y que el servidor los rechace. */
 const MAXIMO_BYTES = 8 * 1024 * 1024;
+
+/** Para buscar en «Ver fuentes»: «Gestión» y «gestion» son lo mismo. */
+function sinTildes(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
 
 /** Cuántas fichas a mano se guardan de una vez. El servidor lo recomprueba. */
 const MAXIMO_FICHAS = 20;
@@ -132,6 +141,7 @@ export class MisFuentesPanel {
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
     this.menuDescargar.set(false);
+    this.cerrarLista();
     if (this.ventanaAbierta()) this.cerrar();
   }
 
@@ -442,6 +452,46 @@ export class MisFuentesPanel {
         this.subiendo.set(false);
       },
     });
+  }
+
+  /**
+   * «Ver fuentes»: la lista entera en una ventana, con buscador. Pedido de un
+   * cliente (14-oct): veía «56 fuentes tuyas» y no había dónde mirarlas.
+   * Null = ventana cerrada.
+   */
+  readonly lista = signal<FuenteGuardada[] | null>(null);
+  readonly cargandoLista = signal(false);
+  readonly filtro = signal('');
+  readonly filtradas = computed(() => {
+    const todas = this.lista() ?? [];
+    const buscado = sinTildes(this.filtro().trim());
+    if (!buscado) return todas;
+    return todas.filter((f) =>
+      sinTildes([f.titulo, f.autores, f.anio ?? '', f.clave ?? '', f.fuente ?? '', f.doi ?? ''].join(' ')).includes(
+        buscado,
+      ),
+    );
+  });
+
+  verFuentes(): void {
+    if (this.cargandoLista()) return;
+    this.cargandoLista.set(true);
+    this.error.set(null);
+    this.fuentes.paraDescargar().subscribe({
+      next: (fuentes) => {
+        this.cargandoLista.set(false);
+        this.filtro.set('');
+        this.lista.set(fuentes);
+      },
+      error: (error: unknown) => {
+        this.error.set(toApiError(error).message);
+        this.cargandoLista.set(false);
+      },
+    });
+  }
+
+  cerrarLista(): void {
+    this.lista.set(null);
   }
 
   /** Los formatos de «Descargar», los mismos que «Exportar» de Scopus. */

@@ -44,6 +44,12 @@
   }
 
   <span class="franja-acciones">
+    @if ((resumen()?.total ?? 0) > 0) {
+      <button type="button" class="franja-subir" [disabled]="cargandoLista()" (click)="verFuentes()">
+        <span aria-hidden="true">☰</span>
+        {{ cargandoLista() ? 'Cargando…' : 'Ver fuentes' }}
+      </button>
+    }
     <button type="button" class="franja-subir" (click)="abrir()">
       <span aria-hidden="true">⬆</span>
       {{ (resumen()?.total ?? 0) > 0 ? 'Cargar más fuentes' : 'Subir export de Scopus' }}
@@ -87,6 +93,66 @@
 <!-- Lo que sale de subir o de «Borrar todas», flotando arriba: se ve igual
      con la ventana abierta que cerrada. -->
 <app-aviso-flotante [(error)]="error" [(info)]="conservadas" />
+
+<!-- ── La ventana de ver sus fuentes ───────────────────────────────────────────
+     La lista entera, con un buscador. Los datos son los mismos de «Descargar». -->
+@if (lista(); as fuentesGuardadas) {
+  <div class="ventana-fondo" (click)="cerrarLista()">
+    <div
+      class="ventana ventana-ancha"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-ver-fuentes"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="ventana-cabecera">
+        <h3 id="titulo-ver-fuentes">Tus fuentes ({{ fuentesGuardadas.length | number }})</h3>
+        <button type="button" class="ventana-cerrar" aria-label="Cerrar" (click)="cerrarLista()">
+          ×
+        </button>
+      </header>
+
+      <div class="ventana-cuerpo">
+        <input
+          type="search"
+          class="lista-buscar"
+          placeholder="Buscar por título, autor, año o clave"
+          aria-label="Buscar en tus fuentes"
+          [value]="filtro()"
+          (input)="filtro.set($any($event.target).value)"
+        />
+
+        @if (filtradas().length === 0) {
+          <p class="lista-vacia">Ninguna fuente coincide con «{{ filtro() }}».</p>
+        } @else {
+          <ol class="lista-fuentes">
+            @for (f of filtradas(); track f.clave ?? $index) {
+              <li>
+                <p class="lista-titulo">{{ f.titulo }}</p>
+                <p class="lista-datos">
+                  {{ f.autores || 'Sin autores' }} ({{ f.anio ?? 's. f.' }})@if (f.fuente) {. <em>{{ f.fuente }}</em>}
+                </p>
+                <p class="lista-pie">
+                  @if (f.clave) {
+                    <span class="lista-clave">{{ f.clave }}</span>
+                  }
+                  @if (f.doi) {
+                    <a [href]="'https://doi.org/' + f.doi" target="_blank" rel="noopener">DOI {{ f.doi }}</a>
+                  } @else if (f.enlace) {
+                    <a [href]="f.enlace" target="_blank" rel="noopener">Enlace</a>
+                  }
+                  @if (!f.resumen) {
+                    <span class="lista-sin-resumen">sin resumen</span>
+                  }
+                </p>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+    </div>
+  </div>
+}
 
 <!-- ── La ventana de subir ─────────────────────────────────────────────────── -->
 @if (ventanaAbierta()) {
