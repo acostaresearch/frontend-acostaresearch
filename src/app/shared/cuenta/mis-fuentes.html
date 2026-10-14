@@ -113,14 +113,47 @@
       </header>
 
       <div class="ventana-cuerpo">
-        <input
-          type="search"
-          class="lista-buscar"
-          placeholder="Buscar por título, autor, año o clave"
-          aria-label="Buscar en tus fuentes"
-          [value]="filtro()"
-          (input)="filtro.set($any($event.target).value)"
-        />
+        <div class="lista-barra">
+          <input
+            type="search"
+            class="lista-buscar"
+            placeholder="Buscar por título, autor, año o clave"
+            aria-label="Buscar en tus fuentes"
+            [value]="filtro()"
+            (input)="filtro.set($any($event.target).value)"
+          />
+          <!-- Baja lo que se ve: todas, o lo que deja el buscador. -->
+          <span class="franja-descargar">
+            <button
+              type="button"
+              class="franja-subir"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="menuLista()"
+              [disabled]="filtradas().length === 0"
+              (click)="menuLista.set(!menuLista())"
+            >
+              <span aria-hidden="true">⬇</span>
+              @if (filtro().trim() && filtradas().length < fuentesGuardadas.length) {
+                Descargar {{ filtradas().length }}
+              } @else {
+                Descargar
+              }
+            </button>
+            @if (menuLista()) {
+              <div class="franja-menu-capa" (click)="menuLista.set(false)"></div>
+              <ul class="franja-menu" role="listbox" aria-label="Formato de descarga">
+                @for (formato of formatos; track formato.valor) {
+                  <li>
+                    <button type="button" role="option" (click)="descargarLista(formato.valor)">
+                      <strong>{{ formato.texto }}</strong>
+                      <small>{{ formato.detalle }}</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </span>
+        </div>
 
         @if (filtradas().length === 0) {
           <p class="lista-vacia">Ninguna fuente coincide con «{{ filtro() }}».</p>

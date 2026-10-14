@@ -491,6 +491,7 @@ export class MisFuentesPanel {
   }
 
   cerrarLista(): void {
+    this.menuLista.set(false);
     this.lista.set(null);
   }
 
@@ -514,21 +515,36 @@ export class MisFuentesPanel {
     this.fuentes.paraDescargar().subscribe({
       next: (lista) => {
         this.descargando.set(false);
-        if (lista.length === 0) return;
-        const tipo = FORMATOS.find((f) => f.valor === formato);
-        const blob = new Blob([contenidoDeDescarga(formato, lista)], { type: tipo?.mime ?? 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const enlace = document.createElement('a');
-        enlace.href = url;
-        enlace.download = nombreDeDescarga(formato);
-        enlace.click();
-        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        this.guardarArchivo(formato, lista);
       },
       error: (error: unknown) => {
         this.error.set(toApiError(error).message);
         this.descargando.set(false);
       },
     });
+  }
+
+  /**
+   * «Descargar» dentro de «Ver fuentes»: ya están en pantalla, así que no se
+   * vuelven a pedir. Baja lo que se ve: todas, o solo lo que deja el buscador.
+   */
+  descargarLista(formato: FormatoDeExportacion): void {
+    this.menuLista.set(false);
+    this.guardarArchivo(formato, this.filtradas());
+  }
+
+  readonly menuLista = signal(false);
+
+  private guardarArchivo(formato: FormatoDeExportacion, lista: readonly FuenteGuardada[]): void {
+    if (lista.length === 0) return;
+    const tipo = FORMATOS.find((f) => f.valor === formato);
+    const blob = new Blob([contenidoDeDescarga(formato, lista)], { type: tipo?.mime ?? 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombreDeDescarga(formato);
+    enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
   /**
