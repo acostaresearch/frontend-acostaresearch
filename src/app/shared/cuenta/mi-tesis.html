@@ -93,7 +93,7 @@
       <div class="acceso-y-retomar">
         <!-- El recuadro se pinta siempre, terminado o no: dentro va también lo de
              empezar de cero, y con dos recuadros distintos habría que repetirlo. -->
-        <div class="retomar" data-tour="retomar" [class.completo]="!p.siguiente">
+        <div class="retomar" data-tour="retomar" [class.completo]="!p.siguiente && !sinFases()">
           @if (p.siguiente; as siguiente) {
             <div class="retomar-fila">
               <div>
@@ -183,6 +183,47 @@
                 <div class="retomar-acciones">
                   <button type="button" class="boton secundario" (click)="copiarFrase(p)">
                     {{ copiado() ? 'Copiada' : 'Copiar la frase' }}
+                  </button>
+                  <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
+                    Abrir Claude
+                  </a>
+                </div>
+                <p class="retomar-nota">
+                  El conector le cuenta solo por dónde vas. Si le hablas sin mencionar el método, Claude
+                  contesta por su cuenta y no lo usa.
+                </p>
+              </div>
+            }
+          } @else if (sinFases()) {
+            <!-- Un producto sin fases (solo el Humanizador): no hay «siguiente»,
+                 y el recuadro salía vacío y en verde, como si estuviera todo
+                 terminado. Se enseña la herramienta como si fuera la fase por la
+                 que empezar, con la misma frase que en las herramientas de apoyo
+                 de los demás productos. -->
+            @for (h of apoyos(); track h.code) {
+              <div class="retomar-fila">
+                <div>
+                  <p class="retomar-marca">Empieza por aquí</p>
+                  <p class="retomar-fase">{{ h.displayName }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="boton"
+                  [attr.aria-expanded]="apoyoAbierto() === h.code"
+                  (click)="abrirApoyo(h.code)"
+                >
+                  Cómo usarlo en Claude
+                </button>
+              </div>
+            }
+
+            @if (apoyoElegido(); as h) {
+              <div class="retomar-como">
+                <p>Abre una conversación nueva en Claude y escríbele:</p>
+                <p class="frase">{{ fraseDeApoyo(h) }}</p>
+                <div class="retomar-acciones">
+                  <button type="button" class="boton secundario" (click)="copiarFraseDeApoyo(h)">
+                    {{ apoyoCopiado() ? 'Copiada' : 'Copiar la frase' }}
                   </button>
                   <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
                     Abrir Claude

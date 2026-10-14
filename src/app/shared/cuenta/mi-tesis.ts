@@ -189,6 +189,13 @@ export class MiTesis implements OnInit {
   readonly apoyos = computed(() => this.proyecto()?.etapas.filter((e) => e.apoyo) ?? []);
 
   /**
+   * Un producto que solo tiene herramientas de apoyo (el Humanizador suelto):
+   * sin fases no hay «siguiente», y el recuadro de retomar enseña la
+   * herramienta como lo que toca empezar.
+   */
+  readonly sinFases = computed(() => this.fases().length === 0 && this.apoyos().length > 0);
+
+  /**
    * Las fases en dos columnas, partidas por la mitad.
    *
    * Por la mitad y no por capítulos: el artículo tiene once fases con una 3B
