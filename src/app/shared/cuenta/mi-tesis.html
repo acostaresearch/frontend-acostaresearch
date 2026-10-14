@@ -21,24 +21,21 @@
          accesos aparte porque es de lo que se está mirando: con tres métodos
          comprados, aquella lista obligaba a emparejar a mano cuál era cuál. -->
     <div class="fila-superior">
-      <!-- Una pestaña por proyecto, también con uno solo: así la página se ve
-           igual tenga uno o seis, y el acceso cae siempre en el mismo sitio,
-           por debajo del emergente de la reseña (8-oct). -->
+      <!-- Un desplegable con los proyectos, también con uno solo: así la página
+           se ve igual tenga uno o seis, y el acceso cae siempre en el mismo
+           sitio. Eran pestañas hasta el 13-oct: con seis productos de nombre
+           largo ocupaban dos renglones. -->
       @if (lista().length > 0) {
-        <div class="pestanas">
-          @for (otro of lista(); track otro.productCode) {
-            <button
-              type="button"
-              class="pestana"
-              [class.activa]="otro.productCode === p.productCode"
-              [attr.aria-pressed]="otro.productCode === p.productCode"
-              (click)="elegir(otro.productCode)"
-            >
-              {{ nombreCorto(otro) }}
-              <small>{{ otro.avance.listos }} de {{ otro.avance.total }}</small>
-            </button>
-          }
-        </div>
+        <label class="selector">
+          <span class="selector-rotulo">Producto</span>
+          <select (change)="elegir($any($event.target).value)">
+            @for (otro of lista(); track otro.productCode) {
+              <option [value]="otro.productCode" [selected]="otro.productCode === p.productCode">
+                {{ nombreCorto(otro) }} · {{ otro.avance.listos }} de {{ otro.avance.total }}
+              </option>
+            }
+          </select>
+        </label>
       }
 
       <!-- «Lo siguiente» al lado del acceso (11-oct): por dónde se sigue y
@@ -251,45 +248,31 @@
         </div>
 
         @if (p.tesis.length > 0) {
-          <ul class="lista-tesis">
-            @for (t of p.tesis; track t.id) {
-              <li class="una-tesis" [class.activa]="t.activa">
-                <div class="una-tesis-datos">
-                  <p class="una-tesis-nombre">
-                    {{ nombreDeTesis(p, t) }}
-                    @if (t.activa) {
-                      <span class="en-uso">En uso</span>
-                    }
-                  </p>
-                  <p class="una-tesis-tema">
-                    {{ t.tema ?? 'Sin tema todavía' }}@if (t.palabras > 0) { · {{ t.palabras }} palabras }
-                  </p>
-                </div>
-                <div class="una-tesis-acciones">
-                  @if (!t.activa) {
-                    <button
-                      type="button"
-                      class="boton secundario"
-                      [disabled]="cambiandoTesis()"
-                      (click)="usarTesis(p, t)"
-                    >
-                      {{ textos(p).usar }}
-                    </button>
-                  }
-                  @if (p.tesis.length > 1) {
-                    <button
-                      type="button"
-                      class="boton enlace"
-                      [disabled]="cambiandoTesis()"
-                      (click)="borrarTesis(p, t)"
-                    >
-                      Borrar
-                    </button>
-                  }
-                </div>
-              </li>
+          <!-- Un desplegable (13-oct): elegir una es usarla, y «Borrar» actúa
+               sobre la elegida. Eran fichas con su «Usar esta» y su «Borrar». -->
+          <div class="elegir-tesis">
+            <select
+              [attr.aria-label]="textos(p).titulo"
+              [disabled]="cambiandoTesis()"
+              (change)="elegirTesis(p, $any($event.target))"
+            >
+              @for (t of p.tesis; track t.id) {
+                <option [value]="t.id" [selected]="t.activa">
+                  {{ nombreDeTesis(p, t) }} — {{ t.tema ?? 'Sin tema todavía' }}@if (t.palabras > 0) { · {{ t.palabras }} palabras }
+                </option>
+              }
+            </select>
+            @if (p.tesis.length > 1) {
+              <button
+                type="button"
+                class="boton enlace"
+                [disabled]="cambiandoTesis()"
+                (click)="borrarTesisActiva(p)"
+              >
+                {{ textos(p).borrar }}
+              </button>
             }
-          </ul>
+          </div>
         }
 
         @if (cambiandoTesis()) {

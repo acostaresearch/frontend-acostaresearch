@@ -770,7 +770,26 @@ export class MiTesis implements OnInit {
     });
   }
 
-  usarTesis(p: Proyecto, t: TesisDelMetodo): void {
+  /**
+   * Elegir en el desplegable es «usar esta». Si el servidor no la cambia, el
+   * desplegable vuelve a la que sigue activa: si no, diría una y se trabajaría con otra.
+   */
+  elegirTesis(p: Proyecto, campo: HTMLSelectElement): void {
+    const activa = p.tesis.find((t) => t.activa);
+    const elegida = p.tesis.find((t) => t.id === campo.value);
+    if (!elegida) return;
+    this.usarTesis(p, elegida, () => {
+      if (activa) campo.value = activa.id;
+    });
+  }
+
+  /** «Borrar» del desplegable: la que está elegida, que es la activa. */
+  borrarTesisActiva(p: Proyecto): void {
+    const activa = p.tesis.find((t) => t.activa);
+    if (activa) void this.borrarTesis(p, activa);
+  }
+
+  usarTesis(p: Proyecto, t: TesisDelMetodo, alFallar?: () => void): void {
     if (this.cambiandoTesis() || t.activa) return;
 
     this.limpiarAvisos();
@@ -779,6 +798,7 @@ export class MiTesis implements OnInit {
       next: () =>
         this.trasCambiarTesis(p, `Ahora usas «${this.nombreDeTesis(p, t)}». ${this.textos(p).trabajara}.`),
       error: (e) => {
+        alFallar?.();
         this.cambiandoTesis.set(false);
         this.errorTesis.set(toApiError(e).message);
       },
