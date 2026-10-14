@@ -55,34 +55,7 @@
       {{ (resumen()?.total ?? 0) > 0 ? 'Cargar más fuentes' : 'Subir export de Scopus' }}
     </button>
     @if ((resumen()?.total ?? 0) > 0) {
-      <!-- Descargar: llevarse sus fuentes a Zotero, Excel o al asesor. Ver
-           `mis-fuentes-exportar`. -->
-      <span class="franja-descargar">
-        <button
-          type="button"
-          class="franja-subir"
-          aria-haspopup="listbox"
-          [attr.aria-expanded]="menuDescargar()"
-          [disabled]="descargando()"
-          (click)="menuDescargar.set(!menuDescargar())"
-        >
-          <span aria-hidden="true">⬇</span>
-          {{ descargando() ? 'Preparando…' : 'Descargar' }}
-        </button>
-        @if (menuDescargar()) {
-          <div class="franja-menu-capa" (click)="menuDescargar.set(false)"></div>
-          <ul class="franja-menu" role="listbox" aria-label="Formato de descarga">
-            @for (formato of formatos; track formato.valor) {
-              <li>
-                <button type="button" role="option" (click)="descargar(formato.valor)">
-                  <strong>{{ formato.texto }}</strong>
-                  <small>{{ formato.detalle }}</small>
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </span>
+      <!-- «Descargar» vive dentro de «Ver fuentes» (14-oct). -->
       <button type="button" class="franja-borrar" [disabled]="vaciando()" (click)="vaciar()">
         {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
       </button>
@@ -122,21 +95,24 @@
             [value]="filtro()"
             (input)="filtro.set($any($event.target).value)"
           />
-          <!-- Baja lo que se ve: todas, o lo que deja el buscador. -->
+          <!-- Baja las marcadas; sin marcar ninguna, lo que se ve (todas o lo
+               que deja el buscador). -->
           <span class="franja-descargar">
             <button
               type="button"
               class="franja-subir"
               aria-haspopup="listbox"
               [attr.aria-expanded]="menuLista()"
-              [disabled]="filtradas().length === 0"
+              [disabled]="aDescargar().length === 0"
               (click)="menuLista.set(!menuLista())"
             >
               <span aria-hidden="true">⬇</span>
-              @if (filtro().trim() && filtradas().length < fuentesGuardadas.length) {
+              @if (elegidas().size > 0) {
+                Descargar {{ elegidas().size }} {{ elegidas().size === 1 ? 'seleccionada' : 'seleccionadas' }}
+              } @else if (filtro().trim() && filtradas().length < fuentesGuardadas.length) {
                 Descargar {{ filtradas().length }}
               } @else {
-                Descargar
+                Descargar todas
               }
             </button>
             @if (menuLista()) {
@@ -158,9 +134,26 @@
         @if (filtradas().length === 0) {
           <p class="lista-vacia">Ninguna fuente coincide con «{{ filtro() }}».</p>
         } @else {
+          <div class="lista-todas">
+            <label>
+              <input type="checkbox" [checked]="todasElegidas()" (change)="alternarTodas()" />
+              Seleccionar {{ filtro().trim() ? 'las ' + filtradas().length + ' que se ven' : 'todas' }}
+            </label>
+            @if (elegidas().size > 0) {
+              <button type="button" class="lista-limpiar" (click)="quitarSeleccion()">Quitar selección</button>
+            }
+          </div>
           <ol class="lista-fuentes">
             @for (f of filtradas(); track f.clave ?? $index) {
-              <li>
+              <li [class.lista-elegida]="elegidas().has(f)">
+                <input
+                  type="checkbox"
+                  class="lista-casilla"
+                  [checked]="elegidas().has(f)"
+                  (change)="alternar(f)"
+                  [attr.aria-label]="'Seleccionar «' + f.titulo + '»'"
+                />
+                <div class="lista-texto">
                 <p class="lista-titulo">{{ f.titulo }}</p>
                 <p class="lista-datos">
                   {{ f.autores || 'Sin autores' }} ({{ f.anio ?? 's. f.' }})@if (f.fuente) {. <em>{{ f.fuente }}</em>}
@@ -178,6 +171,7 @@
                     <span class="lista-sin-resumen">sin resumen</span>
                   }
                 </p>
+                </div>
               </li>
             }
           </ol>

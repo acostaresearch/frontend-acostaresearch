@@ -140,7 +140,6 @@ export class MisFuentesPanel {
 
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
-    this.menuDescargar.set(false);
     this.cerrarLista();
     if (this.ventanaAbierta()) this.cerrar();
   }
@@ -492,45 +491,64 @@ export class MisFuentesPanel {
 
   cerrarLista(): void {
     this.menuLista.set(false);
+    this.elegidas.set(new Set());
     this.lista.set(null);
   }
 
   /** Los formatos de «Descargar», los mismos que «Exportar» de Scopus. */
   readonly formatos = FORMATOS;
-  readonly menuDescargar = signal(false);
-  readonly descargando = signal(false);
 
   /**
-   * Descarga toda su biblioteca en el formato elegido.
-   *
-   * Los datos los da el servidor (solo los suyos) y el archivo se arma aquí,
-   * igual que el de la búsqueda de Scopus. Ver `mis-fuentes-exportar`.
-   */
-  descargar(formato: FormatoDeExportacion): void {
-    this.menuDescargar.set(false);
-    if (this.descargando()) return;
-    this.descargando.set(true);
-    this.error.set(null);
-
-    this.fuentes.paraDescargar().subscribe({
-      next: (lista) => {
-        this.descargando.set(false);
-        this.guardarArchivo(formato, lista);
-      },
-      error: (error: unknown) => {
-        this.error.set(toApiError(error).message);
-        this.descargando.set(false);
-      },
-    });
-  }
-
-  /**
-   * «Descargar» dentro de «Ver fuentes»: ya están en pantalla, así que no se
-   * vuelven a pedir. Baja lo que se ve: todas, o solo lo que deja el buscador.
+   * «Descargar», dentro de «Ver fuentes» (en la franja ya no está: 14-oct).
+   * Las fuentes ya están en pantalla, así que no se vuelven a pedir. Baja lo
+   * que se ve: todas, o solo lo que deja el buscador. El archivo se arma aquí;
+   * ver `mis-fuentes-exportar`.
    */
   descargarLista(formato: FormatoDeExportacion): void {
     this.menuLista.set(false);
-    this.guardarArchivo(formato, this.filtradas());
+    this.guardarArchivo(formato, this.aDescargar());
+  }
+
+  /**
+   * Las que marcó con la casilla. Si no marcó ninguna, se baja lo que se ve,
+   * igual que «Exportar» de la búsqueda de Scopus.
+   */
+  readonly elegidas = signal<ReadonlySet<FuenteGuardada>>(new Set());
+  readonly aDescargar = computed(() => {
+    const elegidas = this.elegidas();
+    return elegidas.size > 0 ? (this.lista() ?? []).filter((f) => elegidas.has(f)) : this.filtradas();
+  });
+  /** Todas las que se ven están marcadas: la casilla de arriba sale marcada. */
+  readonly todasElegidas = computed(() => {
+    const vistas = this.filtradas();
+    return vistas.length > 0 && vistas.every((f) => this.elegidas().has(f));
+  });
+
+  alternar(fuente: FuenteGuardada): void {
+    this.elegidas.update((antes) => {
+      const despues = new Set(antes);
+      if (despues.has(fuente)) despues.delete(fuente);
+      else despues.add(fuente);
+      return despues;
+    });
+  }
+
+  quitarSeleccion(): void {
+    this.elegidas.set(new Set());
+  }
+
+  /** La casilla de arriba marca o desmarca las que se ven (respeta el buscador). */
+  alternarTodas(): void {
+    const vistas = this.filtradas();
+    const marcar = !this.todasElegidas();
+    this.elegidas.update((antes) => {
+      const despues = new Set(antes);
+      for (const f of vistas) {
+        if (marcar) despues.add(f);
+        else despues.delete(f);
+      }
+      return despues;
+    });
   }
 
   readonly menuLista = signal(false);
