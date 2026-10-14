@@ -14,6 +14,8 @@ import {
 } from '../../core/services/mis-fuentes.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
+import { contenido as contenidoDeDescarga, nombreDelArchivo as nombreDeDescarga } from './mis-fuentes-exportar';
+import { FORMATOS, FormatoDeExportacion } from './scopus-exportar';
 
 /**
  * Los archivos que son un EXPORT de una base de datos: esos sí se suben, y los
@@ -129,6 +131,7 @@ export class MisFuentesPanel {
 
   @HostListener('document:keydown.escape')
   alPulsarEscape(): void {
+    this.menuDescargar.set(false);
     if (this.ventanaAbierta()) this.cerrar();
   }
 
@@ -437,6 +440,43 @@ export class MisFuentesPanel {
       error: (error: unknown) => {
         this.error.set(toApiError(error).message);
         this.subiendo.set(false);
+      },
+    });
+  }
+
+  /** Los formatos de «Descargar», los mismos que «Exportar» de Scopus. */
+  readonly formatos = FORMATOS;
+  readonly menuDescargar = signal(false);
+  readonly descargando = signal(false);
+
+  /**
+   * Descarga toda su biblioteca en el formato elegido.
+   *
+   * Los datos los da el servidor (solo los suyos) y el archivo se arma aquí,
+   * igual que el de la búsqueda de Scopus. Ver `mis-fuentes-exportar`.
+   */
+  descargar(formato: FormatoDeExportacion): void {
+    this.menuDescargar.set(false);
+    if (this.descargando()) return;
+    this.descargando.set(true);
+    this.error.set(null);
+
+    this.fuentes.paraDescargar().subscribe({
+      next: (lista) => {
+        this.descargando.set(false);
+        if (lista.length === 0) return;
+        const tipo = FORMATOS.find((f) => f.valor === formato);
+        const blob = new Blob([contenidoDeDescarga(formato, lista)], { type: tipo?.mime ?? 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.download = nombreDeDescarga(formato);
+        enlace.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      },
+      error: (error: unknown) => {
+        this.error.set(toApiError(error).message);
+        this.descargando.set(false);
       },
     });
   }

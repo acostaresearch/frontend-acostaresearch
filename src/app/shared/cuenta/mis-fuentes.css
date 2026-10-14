@@ -125,6 +125,61 @@
   background: var(--color-primario-suave);
 }
 
+.franja-subir:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* «Descargar»: el mismo desplegable que «Exportar» de la búsqueda de Scopus. */
+.franja-descargar {
+  position: relative;
+}
+
+.franja-menu-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.franja-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  min-width: 200px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--color-superficie-alta);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+  box-shadow: var(--sombra);
+}
+
+.franja-menu button {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-texto);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.franja-menu button:hover {
+  background: var(--color-fondo);
+}
+
+.franja-menu small {
+  color: var(--color-texto-suave);
+}
+
 /* «Borrar todas» va como texto rojo y no como botón: es la salida de
    emergencia de quien subió el archivo equivocado, no una acción que se
    ofrezca. */

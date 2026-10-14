@@ -49,6 +49,34 @@
       {{ (resumen()?.total ?? 0) > 0 ? 'Cargar más fuentes' : 'Subir export de Scopus' }}
     </button>
     @if ((resumen()?.total ?? 0) > 0) {
+      <!-- Descargar: llevarse sus fuentes a Zotero, Excel o al asesor. Ver
+           `mis-fuentes-exportar`. -->
+      <span class="franja-descargar">
+        <button
+          type="button"
+          class="franja-subir"
+          aria-haspopup="listbox"
+          [attr.aria-expanded]="menuDescargar()"
+          [disabled]="descargando()"
+          (click)="menuDescargar.set(!menuDescargar())"
+        >
+          <span aria-hidden="true">⬇</span>
+          {{ descargando() ? 'Preparando…' : 'Descargar' }}
+        </button>
+        @if (menuDescargar()) {
+          <div class="franja-menu-capa" (click)="menuDescargar.set(false)"></div>
+          <ul class="franja-menu" role="listbox" aria-label="Formato de descarga">
+            @for (formato of formatos; track formato.valor) {
+              <li>
+                <button type="button" role="option" (click)="descargar(formato.valor)">
+                  <strong>{{ formato.texto }}</strong>
+                  <small>{{ formato.detalle }}</small>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </span>
       <button type="button" class="franja-borrar" [disabled]="vaciando()" (click)="vaciar()">
         {{ vaciando() ? 'Borrando…' : 'Borrar todas' }}
       </button>

@@ -66,6 +66,26 @@ export interface FuenteAMano {
   resumen: string;
 }
 
+/** Una fuente de su biblioteca, tal como llega para descargarla. */
+export interface FuenteGuardada {
+  /** La clave con la que la cita Claude: «AR…». */
+  clave: string | null;
+  /** El tipo de Zotero: «journalArticle», «thesis», «book»… */
+  tipo: string;
+  titulo: string;
+  autores: string;
+  anio: number | null;
+  fuente: string | null;
+  volumen: string | null;
+  numero: string | null;
+  paginas: string | null;
+  doi: string | null;
+  enlace: string | null;
+  resumen: string | null;
+  /** De dónde entró: SCOPUS, ZOTERO, MENDELEY… */
+  origen: string;
+}
+
 /** Qué pasó al guardar fichas escritas a mano. */
 export interface ImportacionAMano {
   pedidas: number;
@@ -153,6 +173,13 @@ export class MisFuentesService {
     return this.http
       .post<ApiResponse<ImportacionAMano>>(`${this.base}/a-mano`, { fuentes })
       .pipe(map((res) => res.data));
+  }
+
+  /** Todas sus fuentes, para armar el archivo de «Descargar». Ver `mis-fuentes-exportar`. */
+  paraDescargar(): Observable<FuenteGuardada[]> {
+    return this.http
+      .get<ApiResponse<{ fuentes: FuenteGuardada[] }>>(`${this.base}/descargar`)
+      .pipe(map((res) => res.data.fuentes));
   }
 
   /** `conservadas`: las que se quedan porque están citadas en sus capítulos. */
