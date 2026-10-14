@@ -25,6 +25,7 @@
            se ve igual tenga uno o seis, y el acceso cae siempre en el mismo
            sitio. Eran pestañas hasta el 13-oct: con seis productos de nombre
            largo ocupaban dos renglones. -->
+      <div class="selectores">
       @if (lista().length > 0) {
         <label class="selector">
           <span class="selector-rotulo">Producto</span>
@@ -37,6 +38,52 @@
           </select>
         </label>
       }
+
+      <!-- Qué tesis se usa, al lado del producto (13-oct): las dos elecciones
+           juntas, y debajo solo lo de la elegida. Elegir una es usarla, y
+           «Borrar» actúa sobre la elegida. -->
+      @if (p.tesis.length > 0 && (p.puedeCrearTesis || p.tesis.length > 1)) {
+        <div class="selector">
+          <span class="selector-rotulo">{{ textos(p).titulo }}</span>
+          <div class="elegir-tesis">
+            <select
+              [attr.aria-label]="textos(p).titulo"
+              [disabled]="cambiandoTesis()"
+              (change)="elegirTesis(p, $any($event.target))"
+            >
+              @for (t of p.tesis; track t.id) {
+                <option [value]="t.id" [selected]="t.activa">
+                  {{ nombreDeTesis(p, t) }} — {{ t.tema ?? 'Sin tema todavía' }}@if (t.palabras > 0) { · {{ t.palabras }} palabras }
+                </option>
+              }
+            </select>
+            @if (p.puedeCrearTesis) {
+              <button
+                type="button"
+                class="boton enlace"
+                [disabled]="cambiandoTesis()"
+                (click)="nuevaTesis(p)"
+              >
+                {{ textos(p).nueva }}
+              </button>
+            }
+            @if (p.tesis.length > 1) {
+              <button
+                type="button"
+                class="boton enlace"
+                [disabled]="cambiandoTesis()"
+                (click)="borrarTesisActiva(p)"
+              >
+                Borrar
+              </button>
+            }
+            @if (cambiandoTesis()) {
+              <span class="plantilla-nota">Un momento…</span>
+            }
+          </div>
+        </div>
+      }
+      </div>
 
       <!-- «Lo siguiente» al lado del acceso (11-oct): por dónde se sigue y
            la URL con la que se sigue, en la misma fila. Antes el recuadro
@@ -147,7 +194,7 @@
                 </p>
               </div>
             }
-          } @else {
+          } @else if (p.avance.total > 0) {
             <p class="retomar-listo">Tienes todas las fases terminadas.</p>
           }
 
@@ -227,59 +274,8 @@
          ficha del acceso); el bloque sale también a quien ya tiene varias,
          para poder elegir aunque le hayan quitado el permiso. Un método sin
          nada guardado no lo enseña: no hay ninguna que elegir, y la primera
-         nace sola al trabajar con Claude. -->
-    @if (p.tesis.length > 0 && (p.puedeCrearTesis || p.tesis.length > 1)) {
-      <div class="caja varias">
-        <div class="caja-fila">
-          <div>
-            <p class="caja-titulo">{{ textos(p).titulo }}</p>
-            <p class="caja-texto">{{ textos(p).explicacion }}</p>
-          </div>
-          @if (p.puedeCrearTesis) {
-            <button
-              type="button"
-              class="boton secundario"
-              [disabled]="cambiandoTesis()"
-              (click)="nuevaTesis(p)"
-            >
-              {{ textos(p).nueva }}
-            </button>
-          }
-        </div>
-
-        @if (p.tesis.length > 0) {
-          <!-- Un desplegable (13-oct): elegir una es usarla, y «Borrar» actúa
-               sobre la elegida. Eran fichas con su «Usar esta» y su «Borrar». -->
-          <div class="elegir-tesis">
-            <select
-              [attr.aria-label]="textos(p).titulo"
-              [disabled]="cambiandoTesis()"
-              (change)="elegirTesis(p, $any($event.target))"
-            >
-              @for (t of p.tesis; track t.id) {
-                <option [value]="t.id" [selected]="t.activa">
-                  {{ nombreDeTesis(p, t) }} — {{ t.tema ?? 'Sin tema todavía' }}@if (t.palabras > 0) { · {{ t.palabras }} palabras }
-                </option>
-              }
-            </select>
-            @if (p.tesis.length > 1) {
-              <button
-                type="button"
-                class="boton enlace"
-                [disabled]="cambiandoTesis()"
-                (click)="borrarTesisActiva(p)"
-              >
-                {{ textos(p).borrar }}
-              </button>
-            }
-          </div>
-        }
-
-        @if (cambiandoTesis()) {
-          <p class="plantilla-nota">Un momento…</p>
-        }
-      </div>
-    }
+         nace sola al trabajar con Claude.
+         Desde el 13-oct el desplegable va arriba, junto al de producto. -->
 
     <div class="cabecera">
       <div class="titulo">
@@ -352,10 +348,13 @@
         }
       </div>
 
-      <div class="cuenta">
-        <span class="numero">{{ p.avance.listos }}</span>
-        <span class="de">de {{ p.avance.total }} terminadas</span>
-      </div>
+      <!-- Sin fases (quien compró solo el Humanizador) no hay nada que contar. -->
+      @if (p.avance.total > 0) {
+        <div class="cuenta">
+          <span class="numero">{{ p.avance.listos }}</span>
+          <span class="de">de {{ p.avance.total }} terminadas</span>
+        </div>
+      }
     </div>
 
     <!-- Un tramo por fase, en su orden. Se ve de un vistazo DÓNDE está lo
@@ -371,12 +370,6 @@
         <span [class]="'tramo ' + marca(fase.estado)"></span>
       }
     </div>
-
-    <ul class="leyenda" aria-hidden="true">
-      <li><span class="icono listo"></span>Terminada</li>
-      <li><span class="icono en-curso"></span>En curso</li>
-      <li><span class="icono pendiente"></span>Sin empezar</li>
-    </ul>
 
     <div class="columnas">
       @for (columna of columnas(); track columna.rotulo) {
@@ -534,7 +527,9 @@
     <!-- Su avance: lo sube aquí, cada capítulo reconocido pasa a su fase, y lo que
          después guarda Claude se suma solo. La descarga es el Word armado con lo
          que hay HOY en sus fases, no el archivo que subió. Humanizar o citar un
-         Word va por el enlace que da Claude en la conversación. -->
+         Word va por el enlace que da Claude en la conversación.
+         Sin fases no hay adónde llevar los capítulos: el recuadro no sale. -->
+    @if (p.avance.total > 0) {
     <div class="caja plantilla documento">
       <div class="caja-fila">
         <div>
@@ -602,6 +597,7 @@
         <p class="plantilla-nota">Leyendo tu avance…</p>
       }
     </div>
+    }
 
   </section>
 }

@@ -111,7 +111,7 @@
   background: var(--dorado-claro);
 }
 /* El recuadro ya no separa la barra de fases de la lista: lo hace este margen. */
-.leyenda + .columnas {
+.tramos + .columnas {
   margin-top: 26px;
 }
 
@@ -184,17 +184,28 @@
   box-shadow: 0 0 0 3px var(--color-primario-suave);
 }
 
+/* Producto y tesis, uno al lado del otro; el segundo baja si no caben. */
+.selectores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  align-items: flex-end;
+  max-width: 100%;
+}
+
 .elegir-tesis {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
   align-items: center;
-  margin-top: 8px;
 }
 
 .elegir-tesis select {
-  flex: 0 1 420px;
-  font-size: 13px;
+  flex: 0 1 360px;
+}
+
+.elegir-tesis .plantilla-nota {
+  margin: 0;
 }
 
 /* ── Cabecera del proyecto ────────────────────────────────────────────────── */
@@ -273,28 +284,6 @@
     var(--color-primario) 50%,
     color-mix(in srgb, var(--color-primario) 30%, white) 50%
   );
-}
-
-.leyenda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin: 0 0 22px;
-  padding: 0;
-  list-style: none;
-  font-size: 12px;
-  color: var(--color-texto-suave);
-}
-
-.leyenda li {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.leyenda .icono {
-  width: 11px;
-  height: 11px;
 }
 
 /* ── El icono de estado ───────────────────────────────────────────────────── */
@@ -768,63 +757,6 @@
 
 .plantilla .aviso-descarga,
 .documento .aviso-borrado {
-  margin: 10px 0 0;
-}
-
-/* ── Qué tesis usar (varias del mismo método) ─────────────────────────────── */
-.varias {
-  margin-bottom: 22px;
-  background: var(--color-fondo);
-  border: 1px solid var(--color-borde);
-}
-
-/* ── La lista de tesis y el avance de la elegida, en UNA tarjeta (11-oct) ───
-   Arriba, cuál se usa; tras una raya, cómo va esa. El recuadro de la lista
-   pierde su caja: la caja es la tarjeta. Sin lista de tesis no hay tarjeta. */
-.tesis-y-fases:has(> .varias) {
-  margin-bottom: 22px;
-  padding: 14px 18px 2px;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
-}
-
-/* Apretado: la lista de tesis es una fila de fichas pequeñas justo encima del
-   título, no un bloque aparte. Solo una raya fina la separa del avance. */
-.tesis-y-fases > .varias {
-  margin: 0 0 12px;
-  padding: 0 0 12px;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid var(--color-borde);
-  border-radius: 0;
-}
-
-/* La explicación sobra aquí: la ficha marcada «En uso» está pegada a lo suyo. */
-.tesis-y-fases > .varias .caja-texto {
-  display: none;
-}
-
-.tesis-y-fases > .varias .caja-titulo {
-  margin: 0;
-  font-size: 13px;
-}
-
-.tesis-y-fases > .varias .boton.secundario {
-  width: auto;
-  padding: 6px 12px;
-  font-size: 12.5px;
-}
-
-.tesis-y-fases:has(> .varias) > .cabecera {
-  margin-bottom: 12px;
-}
-
-.tesis-y-fases:has(> .varias) > .columnas {
-  margin-bottom: 14px;
-}
-
-.varias .aviso-descarga {
   margin: 10px 0 0;
 }
 
