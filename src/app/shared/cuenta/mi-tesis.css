@@ -603,13 +603,30 @@
 
 .apoyo {
   display: inline-flex;
-  gap: 9px;
-  align-items: center;
-  padding: 9px 13px 9px 11px;
   font-size: 13.5px;
   color: var(--color-texto-suave);
   background: var(--color-fondo);
   border-radius: 9px;
+}
+
+/* La ficha entera es el botón que enseña la frase para Claude. */
+.apoyo button {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 13px 9px 11px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: inherit;
+}
+
+.apoyo button:hover,
+.apoyo.abierto button {
+  color: var(--color-texto);
+  border-color: color-mix(in srgb, var(--color-primario) 45%, transparent);
 }
 
 .apoyo .icono {

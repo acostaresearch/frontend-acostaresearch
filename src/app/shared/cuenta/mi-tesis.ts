@@ -111,6 +111,30 @@ const TEXTOS: Record<NonNullable<Proyecto['tipo']>, TextosDeVarias> = {
 };
 
 /**
+ * Quien compró solo el Humanizador no trae una tesis: trae un documento, el que
+ * sea. El servidor lo sigue mandando como `tesis`, así que se reconoce por el
+ * código del producto, como hace allí `traeHerramientas`.
+ */
+const SOLO_HUMANIZADOR = /^HUMANIZ/i;
+
+const TEXTOS_DE_DOCUMENTO: TextosDeVarias = {
+  titulo: 'Qué documento usar',
+  explicacion:
+    'Claude trabaja con el activo, y lo que ves debajo es de él. Elige otro para cambiar.',
+  nueva: 'Nuevo documento',
+  usar: 'Usar este',
+  principal: 'Documento principal',
+  otra: 'Otro documento',
+  activa: 'tu documento activo',
+  trabajara: 'Claude trabajará con él',
+  deEsta: 'de este documento. Tus otros documentos no se tocan.',
+  borrar: 'Borrar este documento',
+  subirTitulo: '¿Ya avanzaste tu documento por tu cuenta?',
+  subirTexto: TEXTOS.tesis.subirTexto,
+  avanceTitulo: 'El avance de tu documento',
+};
+
+/**
  * Por dónde va su tesis.
  *
  * Esto lo escribe el conector, no esta pantalla: según el tesista va cerrando
@@ -183,6 +207,19 @@ export class MiTesis implements OnInit {
   readonly retomarAbierto = signal(false);
   readonly copiado = signal(false);
 
+  /** La herramienta de apoyo cuya frase está a la vista, o ninguna. */
+  readonly apoyoAbierto = signal<string | null>(null);
+  readonly apoyoCopiado = signal(false);
+  readonly apoyoElegido = computed(
+    () => this.apoyos().find((h) => h.code === this.apoyoAbierto()) ?? null,
+  );
+
+  /** Pulsar la que ya está abierta la cierra. */
+  abrirApoyo(code: string): void {
+    this.apoyoAbierto.set(this.apoyoAbierto() === code ? null : code);
+    this.apoyoCopiado.set(false);
+  }
+
   /**
    * Elegir por qué fase retomar.
    *
@@ -238,6 +275,8 @@ export class MiTesis implements OnInit {
     this.eligiendoRetomar.set(false);
     this.errorRetomar.set(null);
     this.copiado.set(false);
+    this.apoyoAbierto.set(null);
+    this.apoyoCopiado.set(false);
     this.errorBorrado.set(null);
     this.avisoBorrado.set(null);
     // El fallo al generar la URL era del acceso de la OTRA pestaña.
@@ -382,6 +421,18 @@ export class MiTesis implements OnInit {
       // Sin permiso para el portapapeles la frase sigue a la vista para
       // copiarla a mano, que es lo que se haría de todos modos.
       () => this.copiado.set(false),
+    );
+  }
+
+  /** Lo que se le escribe a Claude para usar una herramienta de apoyo. */
+  fraseDeApoyo(h: EtapaDelProyecto): string {
+    return `Quiero usar «${h.displayName}», con el método.`;
+  }
+
+  copiarFraseDeApoyo(h: EtapaDelProyecto): void {
+    navigator.clipboard?.writeText(this.fraseDeApoyo(h)).then(
+      () => this.apoyoCopiado.set(true),
+      () => this.apoyoCopiado.set(false),
     );
   }
 
@@ -659,7 +710,12 @@ export class MiTesis implements OnInit {
    * El recuadro sale igual en el artículo y en el informe, y decirle «tesis» a
    * quien escribe un artículo parecía que la pestaña no había cambiado.
    */
+  soloHumanizador(p: Proyecto): boolean {
+    return SOLO_HUMANIZADOR.test(p.productCode);
+  }
+
   textos(p: Proyecto): TextosDeVarias {
+    if (this.soloHumanizador(p)) return TEXTOS_DE_DOCUMENTO;
     return TEXTOS[p.tipo ?? 'tesis'];
   }
 
@@ -675,6 +731,8 @@ export class MiTesis implements OnInit {
     this.eligiendoRetomar.set(false);
     this.errorRetomar.set(null);
     this.copiado.set(false);
+    this.apoyoAbierto.set(null);
+    this.apoyoCopiado.set(false);
     this.avanceSubido.set(null);
     this.errorAvance.set(null);
     this.errorBorrado.set(null);

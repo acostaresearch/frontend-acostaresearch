@@ -166,7 +166,7 @@
           @if (p.guardado) {
             @if (reiniciosRestantes(p) === 0) {
               <p class="borrar-entrada">
-                Ya usaste las tres veces que podías empezar de cero esta tesis. Si te cambiaron el tema,
+                Ya usaste las tres veces que podías empezar de cero {{ soloHumanizador(p) ? 'este documento' : 'esta tesis' }}. Si te cambiaron el tema,
                 escríbenos y lo vemos contigo.
               </p>
             } @else {
@@ -457,12 +457,43 @@
               <p class="rotulo">Herramientas de apoyo, cuando las necesites</p>
               <ul>
                 @for (h of apoyos(); track h.code) {
-                  <li [class]="'apoyo ' + marca(h.estado)" [attr.title]="etiqueta(h.estado)">
-                    <span class="icono" aria-hidden="true"></span>
-                    {{ h.displayName }}
+                  <li
+                    [class]="'apoyo ' + marca(h.estado)"
+                    [class.abierto]="apoyoAbierto() === h.code"
+                    [attr.title]="etiqueta(h.estado)"
+                  >
+                    <button
+                      type="button"
+                      [attr.aria-expanded]="apoyoAbierto() === h.code"
+                      (click)="abrirApoyo(h.code)"
+                    >
+                      <span class="icono" aria-hidden="true"></span>
+                      {{ h.displayName }}
+                    </button>
                   </li>
                 }
               </ul>
+
+              <!-- Qué escribirle a Claude para usar la herramienta pulsada. Mismo
+                   recuadro que «Cómo retomarlo en Claude»: sin la frase, quien
+                   veía «Humanizador académico» aquí no sabía cómo se pedía. -->
+              @if (apoyoElegido(); as h) {
+                <div class="retomar-como">
+                  <p>Para usarla, abre una conversación nueva en Claude y escríbele:</p>
+                  <p class="frase">{{ fraseDeApoyo(h) }}</p>
+                  <div class="retomar-acciones">
+                    <button type="button" class="boton secundario" (click)="copiarFraseDeApoyo(h)">
+                      {{ apoyoCopiado() ? 'Copiada' : 'Copiar la frase' }}
+                    </button>
+                    <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
+                      Abrir Claude
+                    </a>
+                  </div>
+                  <p class="retomar-nota">
+                    No hace falta haber terminado las fases. Claude te dirá qué necesita para empezar.
+                  </p>
+                </div>
+              }
             </div>
           }
         </div>
