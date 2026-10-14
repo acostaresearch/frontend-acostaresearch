@@ -247,8 +247,9 @@
             } @else {
               <strong>Arrastra aquí tus archivos, o pulsa para buscarlos</strong>
               <span>
-                El export de tu base de datos (CSV, RIS, BibTeX o TXT), los PDF de tus artículos, o
-                cualquier otra fuente: un libro, una tesis en Word, un informe.
+                El export de tu base de datos (CSV, RIS, BibTeX o TXT), los PDF de tus artículos, tu
+                lista de referencias en .md (tomamos sus DOI) o cualquier otra fuente: un libro, una
+                tesis en Word, un informe.
               </span>
             }
           </span>
@@ -264,6 +265,47 @@
           el formato que sea —un libro en EPUB, una tesis en Word, un informe—: suéltalo y te
           pedimos su ficha aquí mismo, sin subir el archivo.
         </p>
+
+        <!-- El parte de un .md: solo entran sus DOI, con la ficha del catálogo.
+             Lo que no tiene DOI o no existe se dice, no se importa. -->
+        @if (desdeMd(); as md) {
+          <div class="parte" [class.parte-incompleta]="md.dois === 0">
+            <p class="parte-titulo">
+              @if (md.dois === 0) {
+                «{{ md.archivos }}» no trae ningún DOI.
+              } @else {
+                Encontramos {{ md.dois }} DOI en «{{ md.archivos }}».
+              }
+            </p>
+            <p class="tenue">
+              De un .md solo tomamos los DOI, y la ficha la pone el catálogo abierto, no el texto
+              del archivo: así no entra ninguna referencia mal escrita o inventada.
+              @if (md.recortados > 0) {
+                Traía {{ md.recortados }} DOI más: se toman 60 por vez, súbelo otra vez con el resto.
+              }
+              @if (md.sinDoi > 0) {
+                {{ md.sinDoi === 1 ? 'Una referencia no trae' : 'Unas ' + md.sinDoi + ' referencias no traen' }}
+                DOI y no se importó: búscala en Scopus o añádela a mano.
+              }
+            </p>
+            @if (porDoi(); as parte) {
+              @if (parte.noEncontrados.length > 0) {
+                <p class="tenue">
+                  <strong>
+                    {{ parte.noEncontrados.length === 1 ? 'Este DOI no aparece' : 'Estos ' + parte.noEncontrados.length + ' DOI no aparecen' }}
+                    en ningún catálogo.
+                  </strong>
+                  Puede estar mal copiado o ser una fuente que no existe; revísalo antes de citarlo.
+                </p>
+                <ul class="sin-doi-lista">
+                  @for (doi of parte.noEncontrados; track doi) {
+                    <li>{{ doi }}</li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        }
 
         <!-- El parte de los PDF. -->
         @if (porDoi(); as parte) {
@@ -289,7 +331,7 @@
              archivo: hay editoriales que no lo escriben dentro, y los
              escaneados no llevan texto. Se pide a mano porque son diez
              segundos con el artículo ya abierto. -->
-        @if (sinDoi().length > 0) {
+        @if (sinDoi().length > 0 && !desdeMd()) {
           <div class="sin-doi">
             <p class="sin-doi-titulo">
               @if (sinDoi().length === 1) {

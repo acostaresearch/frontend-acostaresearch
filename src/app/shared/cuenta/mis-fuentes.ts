@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { toApiError } from '../../core/http/api-error';
 import { doisDeLosPdf, normalizarDoi } from '../../core/pdf/doi-del-pdf';
+import { doisDelTexto } from '../../core/pdf/dois-del-texto';
 import {
   FuenteGuardada,
   ImportacionAMano,
@@ -24,6 +25,12 @@ import { FORMATOS, FormatoDeExportacion } from './scopus-exportar';
  * es de lo que más se suelta aquí.
  */
 const ES_EXPORT = /\.(csv|ris|bib|bibtex|txt|tsv|nbib|enw|xls)$/i;
+
+/** Una lista de referencias en Markdown. Ver `desdeTexto`. */
+const ES_MARKDOWN = /\.(md|markdown)$/i;
+
+/** Cuántos DOI acepta el servidor de una vez (`MAXIMO_DOIS` en `propias.service`). */
+const MAXIMO_DOIS = 60;
 
 /** Los formatos de libro electrónico: su ficha se abre ya como «Libro». */
 const ES_LIBRO = /\.(epub|mobi|azw3?|djvu|fb2)$/i;
@@ -133,6 +140,7 @@ export class MisFuentesPanel {
     this.resultado.set(null);
     this.porDoi.set(null);
     this.sinDoi.set([]);
+    this.desdeMd.set(null);
     this.fichas.set([]);
     this.aMano.set(null);
     this.error.set(null);
@@ -201,10 +209,14 @@ export class MisFuentesPanel {
     if (archivos.length === 0 || this.subiendo()) return;
 
     const pdfs = archivos.filter((a) => /\.pdf$/i.test(a.name) || a.type === 'application/pdf');
-    const exports = archivos.filter((a) => !pdfs.includes(a) && ES_EXPORT.test(a.name));
-    const otros = archivos.filter((a) => !pdfs.includes(a) && !exports.includes(a));
+    // Un .md con referencias (lo que suele dar una IA): solo se toman sus DOI.
+    // Ver `dois-del-texto`.
+    const textos = archivos.filter((a) => !pdfs.includes(a) && ES_MARKDOWN.test(a.name));
+    const exports = archivos.filter((a) => !pdfs.includes(a) && !textos.includes(a) && ES_EXPORT.test(a.name));
+    const otros = archivos.filter((a) => !pdfs.includes(a) && !textos.includes(a) && !exports.includes(a));
 
     this.error.set(null);
+    this.desdeMd.set(null);
     this.abrirFichas(
       otros.map((a) => ({
         archivo: a.name,
@@ -218,6 +230,7 @@ export class MisFuentesPanel {
       })),
     );
 
+    if (textos.length > 0) return void this.desdeTexto(textos);
     if (pdfs.length > 0) return void this.desdePdf(pdfs);
     // Los exports van de uno en uno: cada uno es una biblioteca entera y su
     // parte por separado, y juntarlos escondería cuál vino mal.
@@ -325,6 +338,48 @@ export class MisFuentesPanel {
     }
 
     this.pedirPorDoi(dois);
+  }
+
+  // ── Un .md de referencias ────────────────────────────────────────────────
+  /**
+   * Lo que salió del último .md: cuántos DOI traía y cuántas referencias
+   * venían sin él. Null si lo último no fue un .md.
+   */
+  readonly desdeMd = signal<{ archivos: string; dois: number; sinDoi: number; recortados: number } | null>(
+    null,
+  );
+
+  /**
+   * De un .md a fuentes: SOLO por sus DOI, y la ficha la pone el catálogo.
+   * El texto de las referencias no se importa nunca; puede venir de una IA y
+   * traer fuentes inventadas. Ver `dois-del-texto`.
+   */
+  private async desdeTexto(archivos: File[]): Promise<void> {
+    this.error.set(null);
+    this.resultado.set(null);
+    this.porDoi.set(null);
+    this.sinDoi.set([]);
+    this.desdeMd.set(null);
+
+    let dois: string[] = [];
+    let sinDoi = 0;
+    try {
+      for (const archivo of archivos) {
+        const leido = doisDelTexto(await archivo.text());
+        dois.push(...leido.dois.filter((d) => !dois.some((y) => y.toLowerCase() === d.toLowerCase())));
+        sinDoi += leido.sinDoi;
+      }
+    } catch {
+      this.error.set('No pudimos leer ese archivo. Ábrelo y guárdalo otra vez como texto (.md).');
+      return;
+    }
+
+    // El servidor admite 60 de una vez: los demás, en otra subida.
+    const recortados = Math.max(0, dois.length - MAXIMO_DOIS);
+    dois = dois.slice(0, MAXIMO_DOIS);
+    this.desdeMd.set({ archivos: archivos.map((a) => a.name).join(', '), dois: dois.length, sinDoi, recortados });
+
+    if (dois.length > 0) this.pedirPorDoi(dois);
   }
 
   // ── Las fuentes sin DOI, a mano ──────────────────────────────────────────
