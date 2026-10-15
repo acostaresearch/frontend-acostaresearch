@@ -860,3 +860,14 @@ tbody tr:last-child td {
 .accion-cuerpo .aviso {
   margin: 8px 0 0;
 }
+
+/* «Borrar los fallidos», encima de la tabla y a la derecha. */
+.barra-fallidos {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0 4px;
+}
+
+.boton.secundario.borrar-fallidos {
+  color: var(--color-error);
+}

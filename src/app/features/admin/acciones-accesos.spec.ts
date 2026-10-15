@@ -16,14 +16,16 @@ const licencia = { id: 'licencia', variasTesis: false, createdAt: '2026-01-01T00
 describe('Acciones de accesos del administrador', () => {
   let acciones: AccionesAccesosAdmin;
   let api: { licenciaDe: ReturnType<typeof vi.fn>; cambiarDuracion: ReturnType<typeof vi.fn>;
-    cambiarCorreo: ReturnType<typeof vi.fn>; reactivar: ReturnType<typeof vi.fn> };
+    cambiarCorreo: ReturnType<typeof vi.fn>; reactivar: ReturnType<typeof vi.fn>;
+    eliminarPago: ReturnType<typeof vi.fn> };
   let confirmar: ReturnType<typeof vi.fn>;
   let recargar: () => void;
 
   beforeEach(() => {
     api = { licenciaDe: vi.fn(() => of(licencia)), cambiarDuracion: vi.fn(),
       cambiarCorreo: vi.fn(() => of({ email: 'nuevo@example.com', mensaje: 'Actualizado' })),
-      reactivar: vi.fn(() => of({ id: 'licencia', status: 'ACTIVE' })) };
+      reactivar: vi.fn(() => of({ id: 'licencia', status: 'ACTIVE' })),
+      eliminarPago: vi.fn(() => of(undefined)) };
     confirmar = vi.fn(async () => true);
     recargar = vi.fn();
     TestBed.configureTestingModule({ providers: [
@@ -89,5 +91,19 @@ describe('Acciones de accesos del administrador', () => {
     expect(acciones.licencias()[0]).toEqual(expect.objectContaining({
       status: 'ACTIVE', user: licencia.user,
     }));
+  });
+
+  it('borra solo los cobros fallidos que no entregaron nada', async () => {
+    const fallido = { ...acceso, id: 'hm_1', canal: 'paypal', estado: 'Fallido', licenseId: null } as Acceso;
+    await acciones.eliminarFallidos([
+      fallido,
+      { ...fallido, id: 'hm_2' },
+      { ...fallido, id: 'pagado', estado: 'Pagado' },
+      { ...fallido, id: 'con-licencia', licenseId: 'licencia' },
+      { ...fallido, id: 'codigo', canal: 'codigo' },
+    ]);
+    expect(api.eliminarPago.mock.calls.map(([id]) => id)).toEqual(['hm_1', 'hm_2']);
+    expect(acciones.borrandoFallidos()).toBe(false);
+    expect(recargar).toHaveBeenCalledTimes(1);
   });
 });

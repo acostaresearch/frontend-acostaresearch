@@ -153,6 +153,22 @@
             placeholder="Correo, código o nº de operación"
           />
 
+          <!-- Los intentos de cobro que fallaron (sobre todo Hotmart, una fila
+               por reintento) se acumulan y tapan las ventas. No entregaron
+               nada: se pueden quitar todos de una vez. -->
+          @if (fallidos().length > 0) {
+            <div class="barra-fallidos">
+              <button
+                type="button"
+                class="boton secundario borrar-fallidos"
+                [disabled]="accionesAccesos().borrandoFallidos()"
+                (click)="accionesAccesos().eliminarFallidos(fallidos())"
+              >
+                {{ accionesAccesos().borrandoFallidos() ? 'Borrando…' : 'Borrar los fallidos (' + fallidos().length + ')' }}
+              </button>
+            </div>
+          }
+
           @if (listaAccesos().filtrado().length === 0) {
             <p class="tenue">Nada coincide con lo que buscas.</p>
           } @else {
@@ -246,6 +262,17 @@
                               (click)="accionesAccesos().anularDesdeFicha(acceso)"
                             >
                               Anular código
+                            </button>
+                          }
+                          @if (accionesAccesos().esFallido(acceso)) {
+                            <hr />
+                            <button
+                              type="button"
+                              class="peligro"
+                              [disabled]="accionesAccesos().borrandoFallidos()"
+                              (click)="accionesAccesos().eliminarFallido(acceso)"
+                            >
+                              Borrar
                             </button>
                           }
                         </app-menu-fila>

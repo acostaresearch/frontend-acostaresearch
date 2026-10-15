@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, input, Signal } from '@angular/core';
+import { Component, computed, input, Signal } from '@angular/core';
 import { Acceso } from './accesos';
 import { PagosManualesAdmin } from './pagos-manuales';
 import { VentasManualesAdmin } from './ventas-manuales';
@@ -20,4 +20,8 @@ export class AccesosVista {
   readonly importe = input.required<(cents: number | null, moneda?: string) => string>();
   readonly verLicenciasDe = input.required<(correo: string) => void>();
   readonly copiarTexto = input.required<(texto: string, que?: string) => Promise<void>>();
+  /** Los cobros fallidos que se pueden quitar de la lista de una vez. */
+  readonly fallidos = computed(() =>
+    this.accesos()().filter((acceso) => this.accionesAccesos().esFallido(acceso)),
+  );
 }

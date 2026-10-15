@@ -1,4 +1,5 @@
 import { computed, inject, signal, Signal, WritableSignal } from '@angular/core';
+import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { ActivationCode, EntradaHistorial, LicenciaAdmin } from '../../core/models/admin.model';
 import { Plan } from '../../core/models/rewrite.model';
 import { AdminService } from '../../core/services/admin.service';
@@ -449,6 +450,78 @@ export class AccionesAccesosAdmin {
         this.borrandoCodigo.set(null);
       },
     });
+  }
+
+  // ── Cobros fallidos ──────────────────────────────────────────────────────
+  //
+  // Hotmart apunta un cobro por cada vez que alguien abre su pago, y si la
+  // tarjeta no pasa queda «Fallido». Una sola persona que reintenta deja nueve
+  // filas iguales que tapan las ventas de verdad. No entregaron nada, así que
+  // borrarlas solo limpia la lista.
+
+  /** Un cobro que falló y no entregó nada. Los códigos nunca son «Fallido». */
+  esFallido(acceso: Acceso): boolean {
+    return acceso.canal !== 'codigo' && acceso.estado === 'Fallido' && !acceso.licenseId;
+  }
+
+  readonly borrandoFallidos = signal(false);
+
+  async eliminarFallido(acceso: Acceso): Promise<void> {
+    if (!this.esFallido(acceso) || this.borrandoFallidos()) return;
+    await this.eliminarFallidos([acceso]);
+  }
+
+  async eliminarFallidos(accesos: readonly Acceso[]): Promise<void> {
+    const fallidos = accesos.filter((a) => this.esFallido(a));
+    if (fallidos.length === 0 || this.borrandoFallidos()) return;
+
+    const uno = fallidos.length === 1;
+    const seguro = await this.dialogos.confirmar({
+      titulo: uno ? 'Borrar este cobro fallido' : `Borrar los ${fallidos.length} cobros fallidos`,
+      mensaje: uno
+        ? `El intento de ${fallidos[0].comprador} por ${this.importe(fallidos[0].amountCents)} ` +
+          'no llegó a cobrarse. Se quita de la lista.'
+        : 'Ninguno llegó a cobrarse ni entregó un acceso. Se quitan de la lista.',
+      nota: 'No toca ventas, licencias ni los gráficos de ingresos. No se puede deshacer.',
+      confirmar: uno ? 'Borrar' : 'Borrar los fallidos',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.borrandoFallidos.set(true);
+    this.error.set(null);
+
+    // De uno en uno: el servidor no tiene borrado en bloque, y en paralelo una
+    // lista larga chocaba con el límite de peticiones.
+    from(fallidos)
+      .pipe(
+        concatMap((acceso) =>
+          this.admin.eliminarPago(acceso.id).pipe(
+            map(() => true),
+            catchError(() => of(false)),
+          ),
+        ),
+        toArray(),
+      )
+      .subscribe((resultados) => {
+        const borrados = resultados.filter(Boolean).length;
+        const fallaron = resultados.length - borrados;
+        this.borrandoFallidos.set(false);
+        if (this.accesoAbierto() && fallidos.includes(this.accesoAbierto()!)) this.cerrarAcceso();
+        if (borrados > 0) {
+          this.aviso.set(
+            borrados === 1 ? 'Cobro fallido borrado.' : `${borrados} cobros fallidos borrados.`,
+          );
+        }
+        if (fallaron > 0) {
+          this.error.set(
+            fallaron === 1
+              ? 'Uno no se pudo borrar. Vuelve a intentarlo.'
+              : `${fallaron} no se pudieron borrar. Vuelve a intentarlo.`,
+          );
+        }
+        this.recargar();
+      });
   }
 
   // ── Licencias ────────────────────────────────────────────────────────────
