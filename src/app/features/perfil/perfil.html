@@ -302,7 +302,10 @@
             <span class="compras-cuenta">{{ compras().length }}</span>
           }
         </div>
-        <p class="nota">Tus pagos, del más reciente al más antiguo.</p>
+        <p class="nota">
+          Tus pagos, del más reciente al más antiguo. Desde el 19 de octubre de 2026 cada compra trae
+          su boleta electrónica; las anteriores, su constancia de pago.
+        </p>
 
         @if (cargandoCompras()) {
           <p class="nota">Cargando tus compras…</p>
@@ -343,7 +346,16 @@
                       >
                         {{ estadoPago(pago) }}
                       </span>
-                      @if (tieneConstancia(pago)) {
+                      @if (boletaDe(pago); as boleta) {
+                        <button
+                          type="button"
+                          class="constancia"
+                          [disabled]="bajandoConstancia() === pago.id"
+                          (click)="descargarBoleta(pago)"
+                        >
+                          {{ bajandoConstancia() === pago.id ? 'Descargando…' : 'Boleta ' + boleta.numero + ' (PDF)' }}
+                        </button>
+                      } @else if (tieneConstancia(pago)) {
                         <button
                           type="button"
                           class="constancia"

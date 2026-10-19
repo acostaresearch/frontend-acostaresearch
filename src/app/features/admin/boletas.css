@@ -1,0 +1,151 @@
+/* Las boletas en el panel. Las clases globales —tarjeta, boton— vienen de
+   styles.css; las del panel (tablas) no llegan hasta aquí y se repiten. */
+
+:host {
+  display: block;
+}
+
+.tarjeta {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.buscar {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 10px;
+}
+
+.buscar:focus {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.tenue {
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-texto-tenue);
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+thead th {
+  padding: 0 12px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+tbody td {
+  padding: 11px 12px;
+  vertical-align: top;
+  color: var(--color-texto);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr.anulada td {
+  color: var(--color-texto-suave);
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.derecha {
+  text-align: right;
+}
+
+.detalle span {
+  display: block;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo-suave);
+}
+
+.etiqueta.buena {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.etiqueta.mala {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.etiqueta.espera {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.acciones {
+  white-space: nowrap;
+}
+
+.enlace {
+  padding: 0;
+  margin-right: 10px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  cursor: pointer;
+}
+
+.enlace:last-child {
+  margin-right: 0;
+}
+
+.enlace:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.enlace:disabled {
+  color: var(--color-texto-tenue);
+  cursor: progress;
+}
+
+.enlace.peligro {
+  color: var(--color-error);
+}

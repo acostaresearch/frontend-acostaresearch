@@ -161,7 +161,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     titulo: 'Mis compras',
     texto:
       'Todos tus pagos, del más reciente al más antiguo, con su estado. Los cobrados traen su ' +
-      'constancia en PDF para descargar.',
+      'boleta electrónica en PDF para descargar (las compras anteriores al 19 de octubre de 2026, ' +
+      'su constancia de pago).',
   },
   {
     ruta: '/perfil',

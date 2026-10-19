@@ -419,6 +419,13 @@
       <app-whatsapp-admin />
     }
 
+    <!-- ══ BOLETAS ════════════════════════════════════════════════════════════
+       Las boletas y notas de crédito de SUNAT: descargar, reenviar, anular. En
+       su propio componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'boletas') {
+      <app-boletas-admin />
+    }
+
     <!-- ══ SORTEOS ════════════════════════════════════════════════════════════
        Sortear una matrícula: el enlace para apuntarse, los inscritos y la
        ruleta. En su propio componente, que carga lo suyo al abrirse. -->

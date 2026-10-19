@@ -21,6 +21,8 @@ import { BillingService } from '../../core/services/billing.service';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { FondoService } from '../../core/services/fondo.service';
 import { PaymentService } from '../../core/services/payment.service';
+import { BoletaDeCompra } from '../../core/models/comprobante.model';
+import { ComprobantesService, guardarArchivo } from '../../core/services/comprobantes.service';
 import { UserService } from '../../core/services/user.service';
 import { GrupoQueCoordino, GruposService } from '../../core/services/grupos.service';
 import { MisReferidos, RetencionService } from '../../core/services/retencion.service';
@@ -112,6 +114,7 @@ export class Perfil implements OnInit {
   private readonly dialogos = inject(DialogoService);
   private readonly fondo = inject(FondoService);
   private readonly pagos = inject(PaymentService);
+  private readonly comprobantes = inject(ComprobantesService);
   private readonly usuarios = inject(UserService);
   private readonly retencion = inject(RetencionService);
   private readonly grupos = inject(GruposService);
@@ -279,6 +282,8 @@ export class Perfil implements OnInit {
   /** El pago cuya constancia se está descargando, para no pedirla dos veces. */
   readonly bajandoConstancia = signal<string | null>(null);
   readonly errorConstancia = signal<string | null>(null);
+  /** La boleta electrónica de cada pago (desde el 19-oct-2026), por id de pago. */
+  readonly boletas = signal<ReadonlyMap<string, BoletaDeCompra>>(new Map());
 
   // ── Sesión ───────────────────────────────────────────────────────────────
   readonly cerrando = signal(false);
@@ -332,6 +337,12 @@ export class Perfil implements OnInit {
         this.compras.set([]);
         this.cargandoCompras.set(false);
       },
+    });
+
+    // Sin boletas (error o compras anteriores) sigue la constancia de siempre.
+    this.comprobantes.misBoletas().subscribe({
+      next: (lista) => this.boletas.set(new Map(lista.map((b) => [b.paymentId, b]))),
+      error: () => this.boletas.set(new Map()),
     });
 
     // Si fallan, sus secciones no salen en la barra y ya está.
@@ -423,6 +434,30 @@ export class Perfil implements OnInit {
   /** Solo los pagos cobrados de verdad tienen constancia; una cortesía a 0, no. */
   tieneConstancia(pago: Payment): boolean {
     return pago.status === 'PAID' && pago.amountCents > 0 && Boolean(pago.paidAt);
+  }
+
+  /** La boleta electrónica vigente de un pago, si la tiene. */
+  boletaDe(pago: Payment): BoletaDeCompra | undefined {
+    return this.boletas().get(pago.id);
+  }
+
+  /** Descarga la boleta en PDF. Comparte el «Descargando…» con la constancia. */
+  descargarBoleta(pago: Payment): void {
+    const boleta = this.boletaDe(pago);
+    if (!boleta || this.bajandoConstancia()) return;
+    this.bajandoConstancia.set(pago.id);
+    this.errorConstancia.set(null);
+
+    this.comprobantes.archivo(boleta.id, 'pdf').subscribe({
+      next: (respuesta) => {
+        guardarArchivo(respuesta, `boleta-${boleta.numero}.pdf`);
+        this.bajandoConstancia.set(null);
+      },
+      error: () => {
+        this.errorConstancia.set('No pudimos descargar la boleta. Inténtalo de nuevo.');
+        this.bajandoConstancia.set(null);
+      },
+    });
   }
 
   /**

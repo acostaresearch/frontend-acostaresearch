@@ -4,6 +4,7 @@ export type Seccion =
   | 'instituciones'
   | 'billeteras'
   | 'accesos'
+  | 'boletas'
   | 'grupos'
   | 'descuentos'
   | 'pruebas'
@@ -106,6 +107,13 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'panel y la ficha de la web. Aquí lees las conversaciones, tomas las que piden una ' +
       'persona, lo pruebas y le das indicaciones.',
   },
+  boletas: {
+    titulo: 'Boletas',
+    nota:
+      'Las boletas y notas de crédito electrónicas que el servidor emite solo ante SUNAT, cada ' +
+      'cinco minutos, por cada venta. Descarga el PDF, el XML o la constancia de SUNAT, reenvía ' +
+      'el correo al cliente o anula una boleta con nota de crédito.',
+  },
   sorteos: {
     titulo: 'Sorteos',
     nota:
@@ -172,6 +180,7 @@ export const DIRECCIONES: Record<Seccion, string> = {
   asesores: 'asesores',
   whatsapp: 'whatsapp',
   sorteos: 'sorteos',
+  boletas: 'boletas',
 };
 
 /**
@@ -246,6 +255,12 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Accesos',
         icono: 'M3 6h18v12H3z M3 10h18',
         enciende: ['accesos'],
+      },
+      {
+        seccion: 'boletas',
+        texto: 'Boletas',
+        icono: 'M6 2h9l5 5v15H6z M14 2v6h6 M9 13h8 M9 17h8',
+        enciende: ['boletas'],
       },
       {
         seccion: 'instituciones',

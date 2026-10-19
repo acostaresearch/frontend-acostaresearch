@@ -61,6 +61,7 @@ import { AsesoresAdmin } from './asesores';
 import { PedidosAdmin } from './pedidos';
 import { WhatsappAdmin } from './whatsapp';
 import { SorteosAdmin } from './sorteos';
+import { BoletasAdmin } from './boletas';
 import { BilleterasAdmin } from './billeteras';
 
 
@@ -99,6 +100,7 @@ const METODOS = ['YAPE', 'PLIN', 'TRANSFERENCIA', 'PAYPAL', 'WESTERN_UNION', 'CO
     AjustesDeCuenta,
     ReclamosAdmin,
     SorteosAdmin,
+    BoletasAdmin,
     BilleterasAdmin,
     ResenasAdmin,
     AsesoresAdmin,
