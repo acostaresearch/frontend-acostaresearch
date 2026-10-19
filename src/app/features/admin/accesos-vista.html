@@ -235,33 +235,17 @@
                           >
                             Ver licencia
                           </button>
-                        } @else {
-                          <button type="button" class="enlace" (click)="accionesAccesos().abrirAcceso(acceso)">
-                            Ver detalle
-                          </button>
                         }
                         <app-menu-fila>
-                          <button type="button" (click)="accionesAccesos().abrirAcceso(acceso)">Ver detalle</button>
                           @if (acceso.tieneComprobante) {
                             <button type="button" (click)="accionesAccesos().verCaptura(acceso)">Ver captura</button>
                           }
-                          <!-- Un código sin comprador no tiene correo que copiar. -->
-                          @if (acceso.comprador.includes('@')) {
-                            <button
-                              type="button"
-                              (click)="copiarTexto()(acceso.comprador, 'Correo copiado')"
-                            >
-                              Copiar correo
-                            </button>
-                          }
-                          @if (acceso.anulable) {
+                          <!-- Anular: un código sin canjear, o una venta ya hecha que fue
+                             un error (el cliente conserva su acceso). Pide escribir ANULAR. -->
+                          @if (acceso.anulable || acceso.ventaAnulable) {
                             <hr />
-                            <button
-                              type="button"
-                              class="peligro"
-                              (click)="accionesAccesos().anularDesdeFicha(acceso)"
-                            >
-                              Anular código
+                            <button type="button" class="peligro" (click)="accionesAccesos().anularVenta(acceso)">
+                              Anular
                             </button>
                           }
                           @if (accionesAccesos().esFallido(acceso)) {

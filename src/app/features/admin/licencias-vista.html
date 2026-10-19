@@ -41,9 +41,6 @@
                        para el comprador y no debe ser lo único que se ve. -->
                     <td class="fila-acciones">
                       @if (licencia.status === 'ACTIVE') {
-                        <button type="button" class="enlace" (click)="accionesAccesos().verHistorial(licencia)">
-                          Ver historial
-                        </button>
                         <app-menu-fila>
                           <button type="button" class="peligro" (click)="accionesAccesos().revocar(licencia)">
                             Revocar
@@ -53,9 +50,30 @@
                         <button type="button" class="enlace" (click)="accionesAccesos().reactivar(licencia)">
                           Reactivar
                         </button>
-                        <app-menu-fila>
-                          <button type="button" (click)="accionesAccesos().verHistorial(licencia)">Ver historial</button>
-                        </app-menu-fila>
+                      }
+                    </td>
+                  </tr>
+                  <!-- Su historial, a la vista: antes había que pulsar «Ver historial». -->
+                  <tr class="fila-historial">
+                    <td colspan="5">
+                      @if (accionesAccesos().historiales()[licencia.id]; as entradas) {
+                        @if (entradas.length === 0) {
+                          <p class="tenue">Sin movimientos.</p>
+                        } @else {
+                          <ol class="historial">
+                            @for (entrada of entradas; track $index) {
+                              <li [attr.data-tipo]="entrada.tipo">
+                                <span class="tenue historial-fecha">{{ entrada.fecha | date: 'd MMM yyyy, HH:mm' }}</span>
+                                <strong>{{ entrada.titulo }}</strong>
+                                @if (entrada.detalle) {
+                                  <span class="tenue bloque">{{ entrada.detalle }}</span>
+                                }
+                              </li>
+                            }
+                          </ol>
+                        }
+                      } @else {
+                        <p class="tenue">Cargando el historial…</p>
                       }
                     </td>
                   </tr>

@@ -28,6 +28,11 @@ export class AccionesAccesosAdmin {
   /** La licencia cuyo historial está abierto, y lo que el servidor contó de ella. */
   readonly viendoHistorial = signal<LicenciaAdmin | null>(null);
   readonly historialLicencia = signal<EntradaHistorial[] | null>(null);
+  /**
+   * El historial de cada licencia, a la vista en «Licencias de …» sin pulsar
+   * nada. `null` = cargando; `undefined` (sin clave) = aún no pedido.
+   */
+  readonly historiales = signal<Record<string, EntradaHistorial[] | null>>({});
 
   readonly accesoAbierto = signal<Acceso | null>(null);
 
@@ -381,6 +386,56 @@ export class AccionesAccesosAdmin {
     this.abrirPago(acceso.id);
   }
 
+  /**
+   * «Anular» del menú de Accesos. Un código sin canjear deja de poder canjearse;
+   * una venta ya hecha (código canjeado o pago aprobado) deja de contar como
+   * venta, el cliente conserva su acceso y, si tenía boleta, se anula con nota
+   * de crédito. Hay que escribir ANULAR para confirmarlo.
+   */
+  async anularVenta(acceso: Acceso): Promise<void> {
+    const sinCanjear = acceso.anulable;
+    const texto = await this.dialogos.pedirTexto({
+      titulo: sinCanjear ? 'Anular este código' : 'Anular esta venta',
+      mensaje: sinCanjear
+        ? 'El código dejará de poder canjearse y no contará como venta.'
+        : 'Deja de contar como venta (ingresos, cierre del mes y declaración). El cliente conserva ' +
+          'su acceso; para quitárselo, revoca su licencia.\nSi la venta tiene boleta, se anula ' +
+          'con nota de crédito ante SUNAT.',
+      nota: 'No se puede deshacer.',
+      campo: { etiqueta: 'Escribe ANULAR para confirmar', obligatorio: true, maxlength: 20 },
+      confirmar: 'Anular',
+      tono: 'peligro',
+    });
+    if (texto === null) return;
+    if (texto.trim().toUpperCase() !== 'ANULAR') {
+      this.error.set('No se anuló: para confirmar hay que escribir ANULAR.');
+      return;
+    }
+
+    if (sinCanjear) {
+      this.admin.anularCodigo(acceso.id).subscribe({
+        next: () => {
+          this.aviso.set('Código anulado.');
+          this.recargar();
+        },
+        error: (e: unknown) => this.error.set(mensajeDeError(e)),
+      });
+      return;
+    }
+
+    this.admin.anularVenta(acceso.canal === 'codigo' ? 'codigo' : 'pago', acceso.id).subscribe({
+      next: (r) => {
+        const partes = ['Venta anulada.'];
+        if (r.nota) partes.push(`La boleta ${r.boleta} se anuló con la nota ${r.nota}.`);
+        if (r.refacturada) partes.push('Lo que queda del carrito se volverá a facturar.');
+        this.aviso.set(partes.join(' '));
+        if (r.avisoBoleta) this.error.set(r.avisoBoleta);
+        this.recargar();
+      },
+      error: (e: unknown) => this.error.set(mensajeDeError(e)),
+    });
+  }
+
   anularAcceso(acceso: Acceso): void {
     const codigo = this.codigos().find((c) => c.id === acceso.id);
     if (codigo) void this.anularCodigo(codigo);
@@ -571,6 +626,24 @@ export class AccionesAccesosAdmin {
         this.error.set(mensajeDeError(e));
       },
     });
+  }
+
+  /** Pide el historial de las licencias que aún no lo tienen (una vez cada una). */
+  cargarHistoriales(licencias: LicenciaAdmin[]): void {
+    const faltan = licencias.filter((l) => !(l.id in this.historiales()));
+    if (faltan.length === 0) return;
+    this.historiales.update((h) => ({ ...h, ...Object.fromEntries(faltan.map((l) => [l.id, null])) }));
+    for (const licencia of faltan) {
+      this.admin.historialDe(licencia.id).subscribe({
+        next: (entradas) => this.historiales.update((h) => ({ ...h, [licencia.id]: entradas })),
+        // Sin historial la fila se queda como estaba; se vuelve a pedir al reabrir.
+        error: () =>
+          this.historiales.update((h) => {
+            const { [licencia.id]: _, ...resto } = h;
+            return resto;
+          }),
+      });
+    }
   }
 
   /** La respuesta no trae el comprador, así que se conserva el que ya teníamos. */

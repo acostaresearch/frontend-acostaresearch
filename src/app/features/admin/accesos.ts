@@ -54,8 +54,13 @@ export interface Acceso {
   referencia: string | null;
   /** Si queda una imagen que abrir. Decide si se ofrece «Ver captura». */
   tieneComprobante: boolean;
-  /** Solo un código sin canjear se puede anular. */
+  /** Solo un código sin canjear se puede anular como código (deja de poder canjearse). */
   anulable: boolean;
+  /**
+   * Una venta ya hecha que se puede anular por error: un código canjeado o un
+   * pago aprobado. Deja de contar como venta; el cliente conserva su acceso.
+   */
+  ventaAnulable: boolean;
   /**
    * La licencia que entregó este acceso, si llegó a entregarse.
    *
@@ -103,6 +108,7 @@ function deCodigo(codigo: ActivationCode, nombreDe: (productCode: string) => str
     referencia: `…${codigo.hint}`,
     tieneComprobante: Boolean(codigo.proofMime),
     anulable: codigo.status === 'AVAILABLE',
+    ventaAnulable: codigo.status === 'REDEEMED',
     licenseId: codigo.license?.id ?? null,
     ...estadoDe(ESTADO_CODIGO, codigo.status),
   };
@@ -135,6 +141,7 @@ function deComprobante(pago: PagoRevisado): Acceso {
     referencia: pago.operationCode,
     tieneComprobante: pago.tieneComprobante,
     anulable: false,
+    ventaAnulable: pago.status === 'PAID',
     licenseId: pago.licenseId ?? null,
     estado: pago.status === 'PAID' ? 'Aprobado' : base.estado,
     tono: base.tono,
@@ -171,6 +178,7 @@ function dePendiente(pago: PagoPorRevisar): Acceso {
     licenseId: null,
     tieneComprobante: Boolean(pago.proofMime),
     anulable: false,
+    ventaAnulable: false,
     estado: 'En revisión',
     tono: 'espera',
   };
@@ -196,6 +204,7 @@ function dePasarela(pago: PagoAdmin): Acceso {
     referencia: pago.providerCaptureId ?? pago.providerOrderId,
     tieneComprobante: false,
     anulable: false,
+    ventaAnulable: pago.status === 'PAID',
     licenseId: pago.licenseId ?? null,
     // Una orden abierta de PayPal no es una deuda ni un cobro: es alguien que
     // abrió la ventana y no terminó (o su banco rechazó la tarjeta). «Sin

@@ -102,6 +102,22 @@ export class AdminService {
       .pipe(map((res) => res.data.codes));
   }
 
+  /**
+   * Anula una venta registrada por error: un código (aunque esté canjeado) o un
+   * pago aprobado. El cliente conserva su acceso; si había boleta, se anula con
+   * nota de crédito.
+   */
+  anularVenta(
+    canal: 'codigo' | 'pago',
+    id: string,
+  ): Observable<{ boleta: string | null; nota?: string; estadoNota?: string; refacturada?: boolean; avisoBoleta?: string }> {
+    return this.http
+      .post<
+        ApiResponse<{ boleta: string | null; nota?: string; estadoNota?: string; refacturada?: boolean; avisoBoleta?: string }>
+      >(`${this.ventas}/anular`, { canal, id })
+      .pipe(map((res) => res.data));
+  }
+
   anularCodigo(id: string): Observable<void> {
     return this.http.delete<void>(`${this.licencias}/codes/${id}`);
   }
