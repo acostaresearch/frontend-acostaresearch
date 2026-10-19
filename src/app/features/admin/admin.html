@@ -426,6 +426,13 @@
       <app-boletas-admin />
     }
 
+    <!-- ══ DECLARACIONES ══════════════════════════════════════════════════════
+       El 621 de cada mes: cifras, compras, avisos y «Ya declaré». En su propio
+       componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'declaraciones') {
+      <app-declaraciones-admin />
+    }
+
     <!-- ══ SORTEOS ════════════════════════════════════════════════════════════
        Sortear una matrícula: el enlace para apuntarse, los inscritos y la
        ruleta. En su propio componente, que carga lo suyo al abrirse. -->

@@ -1,0 +1,242 @@
+/* La declaración mensual del 621 en el panel. Las clases globales —tarjeta,
+   boton, campo— vienen de styles.css; las del panel no llegan hasta aquí. */
+
+:host {
+  display: block;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .rejilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.detalle-mes {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.tarjeta {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  min-width: 0;
+}
+
+.tarjeta h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.tenue {
+  display: block;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-texto-suave);
+}
+
+.meses {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mes {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mes:hover {
+  border-color: var(--color-borde-fuerte);
+}
+
+.mes.activo {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.mes .nombre {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.mes .detalle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo-suave);
+}
+
+.etiqueta.buena {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+.etiqueta.mala {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+}
+
+.etiqueta.espera {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+thead th {
+  padding: 0 12px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--color-texto-tenue);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+tbody td {
+  padding: 9px 12px;
+  vertical-align: top;
+  color: var(--color-texto);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.derecha {
+  text-align: right;
+}
+
+.total {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-texto);
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.campo {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 170px;
+  min-width: 0;
+}
+
+.campo.corto {
+  flex: 0 1 110px;
+}
+
+.campo.ancho {
+  flex: 2 1 260px;
+}
+
+.campo label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}
+
+.campo input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.campo input:focus {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 1px;
+}
+
+.ayuda {
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.boton {
+  justify-self: start;
+}
+
+.enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  cursor: pointer;
+}
+
+.enlace.peligro {
+  color: var(--color-error);
+}
+
+.enlace:hover {
+  text-decoration: underline;
+}

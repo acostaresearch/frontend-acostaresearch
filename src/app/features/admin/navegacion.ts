@@ -5,6 +5,7 @@ export type Seccion =
   | 'billeteras'
   | 'accesos'
   | 'boletas'
+  | 'declaraciones'
   | 'grupos'
   | 'descuentos'
   | 'pruebas'
@@ -114,6 +115,13 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'cinco minutos, por cada venta. Descarga el PDF, el XML o la constancia de SUNAT, reenvía ' +
       'el correo al cliente o anula una boleta con nota de crédito.',
   },
+  declaraciones: {
+    titulo: 'Declaraciones',
+    nota:
+      'El 621 de cada mes (IGV y renta del 1.5 %) calculado con las boletas y las facturas de ' +
+      'compra que registres aquí. Te avisa antes del vencimiento con cada casilla; lo presentas ' +
+      'en SOL y lo marcas como declarado.',
+  },
   sorteos: {
     titulo: 'Sorteos',
     nota:
@@ -181,6 +189,7 @@ export const DIRECCIONES: Record<Seccion, string> = {
   whatsapp: 'whatsapp',
   sorteos: 'sorteos',
   boletas: 'boletas',
+  declaraciones: 'declaraciones',
 };
 
 /**
@@ -261,6 +270,12 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Boletas',
         icono: 'M6 2h9l5 5v15H6z M14 2v6h6 M9 13h8 M9 17h8',
         enciende: ['boletas'],
+      },
+      {
+        seccion: 'declaraciones',
+        texto: 'Declaraciones',
+        icono: 'M4 4h16v16H4z M8 8h8 M8 12h8 M8 16h4',
+        enciende: ['declaraciones'],
       },
       {
         seccion: 'instituciones',

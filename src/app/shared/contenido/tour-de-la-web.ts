@@ -361,6 +361,16 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
               'constancia de SUNAT, reenvías el correo y, si una salió mal, la anulas con una nota ' +
               'de crédito.',
           },
+          {
+            seccion: 'Declaraciones',
+            ruta: '/admin/declaraciones',
+            ancla: '[data-tour="admin-declaraciones"]',
+            titulo: 'La declaración del mes',
+            texto:
+              'Aquí está el 621 de cada mes ya calculado: el IGV y la renta del 1.5 %, con las ' +
+              'boletas y las facturas de compra que registres. Antes del vencimiento te llega un ' +
+              'aviso con cada casilla; lo presentas en SOL y lo marcas como declarado.',
+          },
         ]
       : []),
 

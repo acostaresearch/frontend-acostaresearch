@@ -1,0 +1,224 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+
+<div class="rejilla" data-tour="admin-declaraciones">
+  <!-- ── Los meses ──────────────────────────────────────────────────────── -->
+  <aside class="tarjeta lista">
+    <h2>Meses</h2>
+    @if (cargando() && meses().length === 0) {
+      <p class="tenue">Cargando…</p>
+    } @else {
+      <ul class="meses">
+        @for (m of meses(); track m.anio + '-' + m.mes) {
+          <li>
+            <button
+              type="button"
+              class="mes"
+              [class.activo]="abierto()?.anio === m.anio && abierto()?.mes === m.mes"
+              (click)="abrir(m)"
+            >
+              <span class="nombre">{{ m.nombre }}</span>
+              <span class="detalle">
+                <span [class]="'etiqueta ' + estadoClase(m)">{{ estadoTexto(m) }}</span>
+                {{ soles(m.calculo.totalAPagarCents) }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    <p class="tenue">
+      SUNAT no deja presentar el 621 por internet desde otro sistema: se presenta en SOL → Declara
+      Fácil. Aquí tienes las cifras, los avisos y el registro de lo declarado.
+    </p>
+  </aside>
+
+  <!-- ── El mes abierto ─────────────────────────────────────────────────── -->
+  @if (abierto(); as d) {
+    <div class="detalle-mes">
+      <section class="tarjeta">
+        <div class="cabecera">
+          <h2>{{ d.nombre }}</h2>
+          <span [class]="'etiqueta ' + estadoClase(d)">{{ estadoTexto(d) }}</span>
+        </div>
+        @if (d.enCurso) {
+          <p class="tenue">El mes aún no termina: las cifras cambian con cada venta.</p>
+        }
+
+        <table class="casillas">
+          <thead>
+            <tr>
+              <th>Casilla</th>
+              <th>Concepto</th>
+              <th class="derecha">Soles</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of d.calculo.casillas; track $index) {
+              <tr>
+                <td class="numero">{{ c.casilla ?? '—' }}</td>
+                <td>{{ c.texto }}</td>
+                <td class="numero derecha"><b>{{ c.soles }}</b></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="total">
+          A pagar: <b>{{ soles(d.calculo.totalAPagarCents) }}</b>
+          <span class="tenue">
+            IGV {{ soles(d.calculo.igvAPagarCents) }} + renta {{ soles(d.calculo.rentaCents) }}
+            @if (d.calculo.saldoSiguienteCents > 0) {
+              · pasa {{ soles(d.calculo.saldoSiguienteCents) }} de saldo a favor al mes siguiente
+            }
+          </span>
+        </p>
+        <p class="tenue">
+          {{ d.calculo.ventas.boletas }} boletas y {{ d.calculo.ventas.notas }} notas de crédito ·
+          {{ d.calculo.compras.cantidad }} compras. Los números de casilla están por confirmar con el
+          contador.
+        </p>
+      </section>
+
+      @if (d.estado === 'PENDIENTE') {
+        <section class="tarjeta">
+          <h2>Datos del mes</h2>
+          <div class="campos">
+            <div class="campo">
+              <label for="dec-venc">Vence el</label>
+              <input id="dec-venc" type="date" name="venc" [(ngModel)]="vencimiento" />
+              <span class="ayuda">Según el cronograma de SUNAT, RUC terminado en 0.</span>
+            </div>
+            <div class="campo">
+              <label for="dec-ajuste">Ventas sin boleta (base, S/)</label>
+              <input id="dec-ajuste" inputmode="decimal" name="ajuste" [(ngModel)]="ajuste" placeholder="0.00" />
+            </div>
+            <div class="campo ancho">
+              <label for="dec-nota">Por qué</label>
+              <input id="dec-nota" name="nota" maxlength="255" [(ngModel)]="ajusteNota" placeholder="Ej.: ventas del 1 al 18 de octubre" />
+            </div>
+            <div class="campo">
+              <label for="dec-saldo">Saldo a favor inicial (S/)</label>
+              <input id="dec-saldo" inputmode="decimal" name="saldo" [(ngModel)]="saldoInicial" placeholder="El del mes anterior" />
+            </div>
+          </div>
+          <button type="button" class="boton" [disabled]="guardando()" (click)="guardarDatos()">Guardar</button>
+        </section>
+      }
+
+      <section class="tarjeta">
+        <h2>Compras del mes (crédito fiscal)</h2>
+        @if (d.compras.length === 0) {
+          <p class="tenue">Sin compras registradas. Solo cuentan las facturas a tu RUC.</p>
+        } @else {
+          <div class="tabla-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Proveedor</th>
+                  <th>Factura</th>
+                  <th class="derecha">Base</th>
+                  <th class="derecha">IGV</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of d.compras; track c.id) {
+                  <tr>
+                    <td class="numero">{{ c.fecha | date: 'd MMM' : 'UTC' }}</td>
+                    <td>
+                      {{ c.razonSocial || c.rucProveedor }}
+                      @if (c.descripcion) {
+                        <span class="tenue">{{ c.descripcion }}</span>
+                      }
+                    </td>
+                    <td class="numero">{{ c.serie }}-{{ c.numero }}</td>
+                    <td class="numero derecha">{{ soles(c.baseCents) }}</td>
+                    <td class="numero derecha">{{ soles(c.igvCents) }}</td>
+                    <td>
+                      @if (d.estado === 'PENDIENTE') {
+                        <button type="button" class="enlace peligro" (click)="borrarCompra(c.id)">Quitar</button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (d.estado === 'PENDIENTE') {
+          <form class="campos" (ngSubmit)="agregarCompra()">
+            <div class="campo">
+              <label for="c-fecha">Fecha</label>
+              <input id="c-fecha" type="date" name="fecha" required [(ngModel)]="compra.fecha" />
+            </div>
+            <div class="campo">
+              <label for="c-ruc">RUC del proveedor</label>
+              <input id="c-ruc" name="ruc" inputmode="numeric" maxlength="11" required [(ngModel)]="compra.rucProveedor" />
+            </div>
+            <div class="campo">
+              <label for="c-razon">Razón social</label>
+              <input id="c-razon" name="razon" maxlength="200" [(ngModel)]="compra.razonSocial" />
+            </div>
+            <div class="campo corto">
+              <label for="c-serie">Serie</label>
+              <input id="c-serie" name="serie" maxlength="4" required [(ngModel)]="compra.serie" placeholder="F001" />
+            </div>
+            <div class="campo corto">
+              <label for="c-numero">Número</label>
+              <input id="c-numero" name="numero" inputmode="numeric" required [(ngModel)]="compra.numero" />
+            </div>
+            <div class="campo corto">
+              <label for="c-base">Base (S/)</label>
+              <input id="c-base" name="base" inputmode="decimal" required [(ngModel)]="compra.base" (blur)="proponerIgv()" />
+            </div>
+            <div class="campo corto">
+              <label for="c-igv">IGV (S/)</label>
+              <input id="c-igv" name="igv" inputmode="decimal" required [(ngModel)]="compra.igv" />
+            </div>
+            <div class="campo ancho">
+              <label for="c-desc">Qué es</label>
+              <input id="c-desc" name="desc" maxlength="200" [(ngModel)]="compra.descripcion" />
+            </div>
+            <button type="submit" class="boton secundario" [disabled]="guardando()">Añadir compra</button>
+          </form>
+        }
+      </section>
+
+      @if (!d.enCurso) {
+        <section class="tarjeta">
+          @if (d.estado === 'PENDIENTE') {
+            <h2>Ya presenté el 621</h2>
+            <div class="campos">
+              <div class="campo">
+                <label for="dec-orden">N.º de orden de SUNAT</label>
+                <input id="dec-orden" name="orden" maxlength="30" [(ngModel)]="numeroOrden" />
+              </div>
+              <div class="campo corto">
+                <label for="dec-igv">IGV pagado (S/)</label>
+                <input id="dec-igv" name="igvp" inputmode="decimal" [(ngModel)]="igvPagado" />
+              </div>
+              <div class="campo corto">
+                <label for="dec-renta">Renta pagada (S/)</label>
+                <input id="dec-renta" name="rentap" inputmode="decimal" [(ngModel)]="rentaPagada" />
+              </div>
+            </div>
+            <button type="button" class="boton" [disabled]="guardando()" (click)="declarar()">Ya declaré</button>
+          } @else {
+            <h2>Declarado</h2>
+            <p>
+              El {{ d.declaradaEn | date: 'd MMM y, HH:mm' }}
+              @if (d.numeroOrden) {
+                · orden {{ d.numeroOrden }}
+              }
+              @if (d.igvPagadoCents !== null) {
+                · pagado IGV {{ soles(d.igvPagadoCents) }} y renta {{ soles(d.rentaPagadaCents) }}
+              }
+            </p>
+            <button type="button" class="boton secundario" [disabled]="guardando()" (click)="reabrir()">Reabrir</button>
+          }
+        </section>
+      }
+    </div>
+  }
+</div>
