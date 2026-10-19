@@ -242,9 +242,16 @@
                           }
                           <!-- Anular: un código sin canjear, o una venta ya hecha que fue
                              un error (el cliente conserva su acceso). Pide escribir ANULAR. -->
-                          @if (acceso.anulable || acceso.ventaAnulable) {
+                          @if (acceso.anulable) {
                             <hr />
                             <button type="button" class="peligro" (click)="accionesAccesos().anularVenta(acceso)">
+                              Anular
+                            </button>
+                          } @else if (acceso.ventaAnulable) {
+                            <!-- Anular una venta hecha es del administrador general: el de
+                               país no la ve (y el servidor se la niega, ver panelDePais). -->
+                            <hr data-solo-casa />
+                            <button type="button" class="peligro" data-solo-casa (click)="accionesAccesos().anularVenta(acceso)">
                               Anular
                             </button>
                           }
