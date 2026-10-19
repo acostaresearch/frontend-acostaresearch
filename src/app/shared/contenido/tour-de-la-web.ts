@@ -351,17 +351,6 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
               'por la sección donde estés.',
           },
           {
-            seccion: 'Boletas',
-            ruta: '/admin/boletas',
-            ancla: '[data-tour="admin-boletas"]',
-            titulo: 'Las boletas de SUNAT',
-            texto:
-              'Cada venta recibe su boleta electrónica sola, a los pocos minutos, y al cliente le ' +
-              'llega por correo. Aquí las ves con su estado, descargas el PDF, el XML o la ' +
-              'constancia de SUNAT, reenvías el correo y, si una salió mal, la anulas con una nota ' +
-              'de crédito.',
-          },
-          {
             seccion: 'Declaraciones',
             ruta: '/admin/declaraciones',
             ancla: '[data-tour="admin-declaraciones"]',

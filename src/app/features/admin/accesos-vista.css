@@ -871,3 +871,373 @@ tbody tr:last-child td {
 .boton.secundario.borrar-fallidos {
   color: var(--color-error);
 }
+
+/* ── Ficha de una venta (20-oct-2026) ──────────────────────────────────────
+   Dos columnas: la venta a la izquierda y su comprobante a la derecha. En el
+   móvil se apila. Solo variables de color: el modo oscuro las cambia solas. */
+.ventana.ficha-venta {
+  max-width: 980px;
+  overflow: hidden;
+}
+
+.fv-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.fv-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  font-weight: 700;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: 50%;
+}
+
+.fv-quien {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.fv-quien h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.fv-cabecera .cerrar {
+  margin-left: 4px;
+}
+
+.fv-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.fv-venta {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 20px;
+  background: var(--color-fondo-suave);
+  border-right: 1px solid var(--color-borde);
+}
+
+.fv-rotulo {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+.fv-importe {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.fv-cifra {
+  font-size: 1.9rem;
+  line-height: 1.15;
+  color: var(--color-texto);
+}
+
+.fv-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.fv-datos dt,
+.fv-ficha-sunat dt {
+  font-size: 12px;
+  color: var(--color-texto-tenue);
+}
+
+.fv-datos dd,
+.fv-ficha-sunat dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  color: var(--color-texto);
+  overflow-wrap: anywhere;
+}
+
+.fv-venta .acciones-acceso {
+  margin-top: 0;
+  background: var(--color-superficie);
+}
+
+.fv-comprobante {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 20px 24px;
+  min-width: 0;
+}
+
+.fv-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fv-pestanas button {
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.fv-pestanas button.activa {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-color: var(--color-primario);
+}
+
+.fv-titulo-comprobante {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fv-icono {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border-radius: var(--radio-sm);
+}
+
+.fv-titulo-texto {
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.fv-titulo-texto strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fv-ficha-sunat {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.fv-ficha-sunat .fv-ancha {
+  grid-column: span 2;
+}
+
+.fv-detalle-y-seguimiento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 16px;
+  align-items: start;
+}
+
+.fv-detalle {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.fv-detalle table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.fv-detalle thead th {
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--color-texto-tenue);
+  background: var(--color-fondo-suave);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.fv-detalle tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.fv-detalle .derecha {
+  text-align: right;
+}
+
+.fv-detalle > .tenue {
+  margin: 0;
+  padding: 0 14px 12px;
+}
+
+.fv-totales {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.fv-totales > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.fv-totales dd {
+  margin: 0;
+}
+
+.fv-totales .fv-total {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.fv-seguimiento {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--color-fondo-suave);
+  border-radius: var(--radio);
+}
+
+.fv-seguimiento ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fv-seguimiento li {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+.fv-seguimiento li::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-borde-fuerte);
+}
+
+.fv-seguimiento li[data-tono='hecho']::before {
+  background: var(--color-exito);
+}
+
+.fv-seguimiento li[data-tono='espera']::before {
+  background: var(--color-aviso);
+}
+
+.fv-seguimiento li[data-tono='mal']::before {
+  background: var(--color-error);
+}
+
+.fv-seguimiento .tenue {
+  font-size: 12px;
+}
+
+.fv-sin-boleta {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: var(--radio);
+}
+
+.fv-sin-boleta p {
+  margin: 0;
+}
+
+.fv-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.fv-pie-boleta,
+.fv-pie-fin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fv-pie-fin {
+  margin-left: auto;
+}
+
+.boton.fv-peligro {
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-color: transparent;
+}
+
+@media (max-width: 860px) {
+  .fv-cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fv-venta {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .fv-detalle-y-seguimiento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fv-ficha-sunat {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .fv-cabecera {
+    flex-wrap: wrap;
+  }
+}

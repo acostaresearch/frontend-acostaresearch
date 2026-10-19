@@ -4,7 +4,13 @@ import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
-import { BoletaDeCompra, Comprobante, CorreoComprobante, ResultadoAnulacion } from '../models/comprobante.model';
+import {
+  BoletaDeCompra,
+  Comprobante,
+  ComprobantesDeVenta,
+  CorreoComprobante,
+  ResultadoAnulacion,
+} from '../models/comprobante.model';
 
 /**
  * Boletas y notas de crédito electrónicas (SUNAT). El cliente pide las suyas y
@@ -28,6 +34,13 @@ export class ComprobantesService {
       responseType: 'blob',
       observe: 'response',
     });
+  }
+
+  /** Las boletas y notas de una venta de Accesos: un código o un pago. */
+  deVenta(canal: 'codigo' | 'pago', id: string): Observable<ComprobantesDeVenta> {
+    return this.http
+      .get<ApiResponse<ComprobantesDeVenta>>(`${this.base}/de-venta`, { params: { canal, id } })
+      .pipe(map((res) => res.data));
   }
 
   listar(): Observable<Comprobante[]> {

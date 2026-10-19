@@ -24,6 +24,13 @@ export interface Comprobante {
   fechaEmision: string;
   clienteNombre: string;
   clienteTipoDoc: string;
+  /** Solo en la ficha de una venta (`/sunat/de-venta`). */
+  clienteNumDoc?: string;
+  moneda?: string;
+  valorCents?: number;
+  igvCents?: number;
+  /** Cuándo la aceptó SUNAT (o la rechazó). */
+  enviadoEn?: string | null;
   totalCents: number;
   monedaOriginal: string;
   importeOriginalCents: number;
@@ -34,6 +41,12 @@ export interface Comprobante {
   intentos: number;
   correo: CorreoComprobante;
   correoEnviadoEn: string | null;
+}
+
+/** Las boletas y notas de una venta, para su ficha en Accesos. */
+export interface ComprobantesDeVenta {
+  comprobantes: Comprobante[];
+  correoDestinatario: string | null;
 }
 
 export interface ResultadoAnulacion {

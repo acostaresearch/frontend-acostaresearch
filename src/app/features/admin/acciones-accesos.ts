@@ -8,6 +8,7 @@ import { DialogoService } from '../../core/services/dialogo.service';
 import { Grupo } from '../../core/services/billing.service';
 import { mensajeDeError } from '../../core/http/api-error';
 import { Acceso } from './accesos';
+import { BoletasDeVenta } from './boletas-de-venta';
 
 export class AccionesAccesosAdmin {
   private readonly admin = inject(AdminService);
@@ -24,7 +25,9 @@ export class AccionesAccesosAdmin {
     private readonly abrirCodigo: (codigo: ActivationCode) => void,
     private readonly abrirPago: (id: string) => void,
     readonly importe: (cents: number | null) => string,
-  ) {}
+  ) {
+    this.boletas = new BoletasDeVenta(error, aviso);
+  }
   /** La licencia cuyo historial está abierto, y lo que el servidor contó de ella. */
   readonly viendoHistorial = signal<LicenciaAdmin | null>(null);
   readonly historialLicencia = signal<EntradaHistorial[] | null>(null);
@@ -35,6 +38,8 @@ export class AccionesAccesosAdmin {
   readonly historiales = signal<Record<string, EntradaHistorial[] | null>>({});
 
   readonly accesoAbierto = signal<Acceso | null>(null);
+  /** Las boletas y notas de la venta abierta, en su ficha. */
+  readonly boletas: BoletasDeVenta;
 
   // ── Mover una licencia de producto ───────────────────────────────────────
   //
@@ -129,10 +134,12 @@ export class AccionesAccesosAdmin {
     this.limpiarCorreo();
     if (acceso.tieneComprobante) this.descargarCaptura(acceso);
     if (acceso.licenseId) this.consultarLicencia(acceso.licenseId);
+    this.boletas.cargar(acceso);
   }
 
   cerrarAcceso(): void {
     this.accesoAbierto.set(null);
+    this.boletas.limpiar();
     this.productoElegido.set('');
     this.soltarCaptura();
     this.limpiarVariasTesis();

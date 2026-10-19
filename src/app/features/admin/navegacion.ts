@@ -4,7 +4,6 @@ export type Seccion =
   | 'instituciones'
   | 'billeteras'
   | 'accesos'
-  | 'boletas'
   | 'declaraciones'
   | 'grupos'
   | 'descuentos'
@@ -50,7 +49,9 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   },
   accesos: {
     titulo: 'Accesos',
-    nota: 'Lo que entra, lo que falta revisar y todo lo emitido o cobrado.',
+    nota:
+      'Lo que entra, lo que falta revisar y todo lo emitido o cobrado. Al abrir una venta ves su ' +
+      'boleta electrónica: PDF, XML, CDR, reenviarla o anularla.',
   },
   descuentos: {
     titulo: 'Descuentos',
@@ -107,13 +108,6 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'El bot que contesta las consultas del WhatsApp de atención con Gemini, los precios del ' +
       'panel y la ficha de la web. Aquí lees las conversaciones, tomas las que piden una ' +
       'persona, lo pruebas y le das indicaciones.',
-  },
-  boletas: {
-    titulo: 'Boletas',
-    nota:
-      'Las boletas y notas de crédito electrónicas que el servidor emite solo ante SUNAT, cada ' +
-      'cinco minutos, por cada venta. Descarga el PDF, el XML o la constancia de SUNAT, reenvía ' +
-      'el correo al cliente o anula una boleta con nota de crédito.',
   },
   declaraciones: {
     titulo: 'Declaraciones',
@@ -188,7 +182,6 @@ export const DIRECCIONES: Record<Seccion, string> = {
   asesores: 'asesores',
   whatsapp: 'whatsapp',
   sorteos: 'sorteos',
-  boletas: 'boletas',
   declaraciones: 'declaraciones',
 };
 
@@ -198,6 +191,8 @@ export const DIRECCIONES: Record<Seccion, string> = {
  */
 const DIRECCIONES_ANTIGUAS: Record<string, Seccion> = {
   licencias: 'usuarios',
+  // Las boletas se miran desde cada venta, en Accesos (20-oct-2026).
+  boletas: 'accesos',
 };
 
 /** Al revés: de la dirección a la sección. */
@@ -264,12 +259,6 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Accesos',
         icono: 'M3 6h18v12H3z M3 10h18',
         enciende: ['accesos'],
-      },
-      {
-        seccion: 'boletas',
-        texto: 'Boletas',
-        icono: 'M6 2h9l5 5v15H6z M14 2v6h6 M9 13h8 M9 17h8',
-        enciende: ['boletas'],
       },
       {
         seccion: 'declaraciones',
