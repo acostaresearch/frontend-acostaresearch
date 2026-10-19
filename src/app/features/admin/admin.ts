@@ -710,6 +710,27 @@ export class Admin implements OnInit {
     this.ir('usuarios');
   }
 
+  /**
+   * «Ver licencia» de Accesos: la misma ventana «Licencias de …», ahí mismo,
+   * sin saltar a Usuarios. Sale de las licencias que el panel ya tiene cargadas.
+   */
+  readonly licenciasEnAccesos = signal<string | null>(null);
+  readonly ventanaLicenciasAccesos = computed(() => {
+    const correo = this.licenciasEnAccesos()?.toLowerCase();
+    if (!correo) return null;
+    const suyas = this.licencias().filter((l) => l.user.email.toLowerCase() === correo);
+    const quien = suyas[0]?.user;
+    return {
+      correo: quien?.email ?? correo,
+      nombre: quien ? `${quien.firstName} ${quien.lastName}`.trim() : correo,
+      licencias: suyas,
+    };
+  });
+
+  abrirLicenciasEnAccesos(correo: string): void {
+    this.licenciasEnAccesos.set(correo);
+  }
+
   verAccesosDe(correo: string): void {
     this.listaAccesos.busca.set(correo);
     this.listaAccesos.filtrar('todos');

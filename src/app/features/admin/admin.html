@@ -254,7 +254,7 @@
     }
 
     @if (seccion() === 'accesos') {
-<app-accesos-vista [pagosManuales]="pagosManuales" [ventasManuales]="ventasManuales" [accionesAccesos]="accionesAccesos" [listaAccesos]="listaAccesos" [copiados]="copiados" [accesos]="accesos" [importe]="importe.bind(this)" [verLicenciasDe]="verLicenciasDe.bind(this)" [copiarTexto]="copiarTexto.bind(this)" />
+<app-accesos-vista [pagosManuales]="pagosManuales" [ventasManuales]="ventasManuales" [accionesAccesos]="accionesAccesos" [listaAccesos]="listaAccesos" [copiados]="copiados" [accesos]="accesos" [importe]="importe.bind(this)" [verLicenciasDe]="abrirLicenciasEnAccesos.bind(this)" [copiarTexto]="copiarTexto.bind(this)" />
     }
 
     @if (seccion() === 'grupos') {
@@ -963,6 +963,38 @@
        por lo mismo que la de arriba: se abre desde «Resumen», y metida en
        «Descuentos» —donde estuvo— el enlace no abría nada. -->
       <app-ventas-mensuales-vista [ventas]="ventas" />
+
+      <!-- «Ver licencia» de Accesos: la misma ventana de «Usuarios», abierta ahí
+         mismo sin cambiar de sección. Fuera de las secciones, como la de arriba. -->
+      @if (ventanaLicenciasAccesos(); as ventana) {
+        <div class="ventana-fondo">
+          <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-licencias-acceso">
+            <div class="ventana-cabecera">
+              <h3 id="titulo-licencias-acceso">
+                Licencias de {{ ventana.nombre }}
+                <span class="tenue bloque">{{ ventana.correo }}</span>
+              </h3>
+              <button type="button" class="cerrar" aria-label="Cerrar" (click)="licenciasEnAccesos.set(null)">
+                ✕
+              </button>
+            </div>
+            <div class="ventana-cuerpo">
+              @if (ventana.licencias.length > 0) {
+                <app-licencias-vista
+                  [accionesAccesos]="accionesAccesos"
+                  [licencias]="ventana.licencias"
+                  [estadoLicencia]="estadoLicencia.bind(this)"
+                />
+              } @else {
+                <p class="nota">Esta cuenta no tiene ninguna licencia.</p>
+              }
+            </div>
+            <div class="ventana-pie">
+              <button type="button" class="boton secundario" (click)="licenciasEnAccesos.set(null)">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      }
 
       @if (ventasManuales.formularioCodigosAbierto()) {
         <app-codigos-formulario-vista [ventasManuales]="ventasManuales" [trabajando]="trabajando" [metodos]="metodos" />
