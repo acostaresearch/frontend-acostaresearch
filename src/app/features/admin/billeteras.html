@@ -1,206 +1,250 @@
-<section class="tarjeta">
-  <div class="cabecera">
-    <h2>Billeteras por país</h2>
-    <button type="button" class="boton alta" (click)="abierto.set(!abierto())">
-      {{ abierto() ? 'Cerrar' : 'Nueva billetera' }}
+<!-- Billeteras por país (rediseño del 20-oct-2026): cada medio es una fila que
+     se despliega para editarlo; «Nueva billetera» también se despliega. Se
+     abre una cosa a la vez. -->
+<section class="tarjeta bl">
+  <div class="bl-cabecera">
+    <div>
+      <h2>Billeteras por país</h2>
+      <p class="bl-intro">
+        Lo que Yape es en Perú, para cada país: Deuna en Ecuador, Nequi en Colombia. La que crees
+        aquí sale al pagar con su país delante; el comprador paga ahí y sube su comprobante, y lo
+        aprueba el administrador de ese país. A ti esos comprobantes solo te salen si eliges ese país
+        en el selector de arriba. Delante salen los medios de la casa —Yape, Western Union, Hotmart y
+        la tarjeta por Culqi—: también se pueden apagar, y de Yape y Western Union cambiar a quién se
+        paga. Solo los toca el administrador general.
+      </p>
+    </div>
+    <button type="button" class="boton" [class.secundario]="abierto()" [attr.aria-expanded]="abierto()" (click)="alternarAlta()">
+      {{ abierto() ? 'Cerrar' : '+ Nueva billetera' }}
     </button>
   </div>
-  <p class="nota">
-    Lo que Yape es en Perú, para cada país: Deuna en Ecuador, Nequi en Colombia. La que crees aquí
-    sale al pagar con su país delante; el comprador paga ahí y sube su comprobante, y lo aprueba el
-    administrador de ese país. A ti esos comprobantes solo te salen si eliges ese país en el
-    selector de arriba. Delante salen los medios de la casa —Yape, Western Union, Hotmart y la
-    tarjeta por Culqi—: también se pueden apagar, y de Yape y Western Union cambiar a quién se
-    paga. Solo los toca el administrador general.
-  </p>
 
-  @if (editandoMedio(); as medio) {
-    <form class="alta-form" [formGroup]="formMedio" (ngSubmit)="guardarMedio()">
-      <label class="campo">
-        <span>{{ medio.codigo === 'WESTERN_UNION' ? 'Beneficiario' : 'Titular de ' + medio.nombre }}</span>
-        <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
-      </label>
-      <label class="campo">
-        <span>{{ medio.codigo === 'WESTERN_UNION' ? 'DNI del beneficiario' : 'Número' }}</span>
-        <input formControlName="numero" maxlength="80" />
-      </label>
-      @if (medio.codigo === 'WESTERN_UNION') {
-        <label class="campo ancho">
-          <span>Ciudad</span>
-          <input formControlName="ciudad" placeholder="Trujillo, Perú" maxlength="120" />
-        </label>
-      }
-      <div class="ancho">
-        <button type="submit" class="boton" [disabled]="guardandoMedio()">
-          {{ guardandoMedio() ? 'Guardando…' : 'Guardar ' + medio.nombre }}
-        </button>
-        <button type="button" class="boton secundario" (click)="cerrarEdicionDeMedio()">Cancelar</button>
-      </div>
-      <p class="nota ancho">Es lo que ve el comprador al pagar. Cambia en cuanto guardas.</p>
-    </form>
-  }
-
+  <!-- ── Alta, desplegable ───────────────────────────────────────────────── -->
   @if (abierto()) {
-    <form class="alta-form" [formGroup]="form" (ngSubmit)="crear()">
-      <label class="campo">
-        <span>Nombre de la billetera</span>
-        <input formControlName="nombre" placeholder="Deuna" maxlength="60" />
-      </label>
-      <label class="campo">
-        <span>País</span>
-        <select formControlName="pais">
-          <option value="" disabled>Elige…</option>
-          @for (pais of paises; track pais.codigo) {
-            <option [value]="pais.codigo">{{ pais.nombre }}</option>
+    <form class="bl-panel bl-alta" [formGroup]="form" (ngSubmit)="crear()">
+      <h3>Nueva billetera</h3>
+      <div class="bl-campos">
+        <label class="bl-campo">
+          <span>Nombre de la billetera</span>
+          <input formControlName="nombre" placeholder="Deuna" maxlength="60" />
+        </label>
+        <label class="bl-campo">
+          <span>País</span>
+          <select formControlName="pais">
+            <option value="" disabled>Elige…</option>
+            @for (pais of paises; track pais.codigo) {
+              <option [value]="pais.codigo">{{ pais.nombre }}</option>
+            }
+          </select>
+        </label>
+        <label class="bl-campo">
+          <span>Moneda en la que cobra</span>
+          <select formControlName="moneda">
+            <option value="USD">Dólares (el precio en US$ de cada plan)</option>
+            <option value="PEN">Soles (el precio en S/ de cada plan)</option>
+          </select>
+        </label>
+        <label class="bl-campo">
+          <span>Titular</span>
+          <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
+        </label>
+        <label class="bl-campo">
+          <span>Número o cuenta</span>
+          <input formControlName="numero" placeholder="El número al que se paga" maxlength="80" />
+        </label>
+        <label class="bl-campo bl-ancho">
+          <span>Instrucciones para el comprador (opcional)</span>
+          <input
+            formControlName="instrucciones"
+            placeholder="Por ejemplo: paga desde la app y guarda el comprobante"
+            maxlength="500"
+          />
+        </label>
+        <label class="bl-campo bl-ancho">
+          <span>Imagen del QR (opcional)</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirQrDelAlta($event)" />
+          @if (qrDelAlta(); as qr) {
+            <span class="tenue">Elegido: {{ qr.name }}</span>
           }
-        </select>
-      </label>
-      <label class="campo">
-        <span>Moneda en la que cobra</span>
-        <select formControlName="moneda">
-          <option value="USD">Dólares (el precio en US$ de cada plan)</option>
-          <option value="PEN">Soles (el precio en S/ de cada plan)</option>
-        </select>
-      </label>
-      <label class="campo">
-        <span>Titular</span>
-        <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
-      </label>
-      <label class="campo">
-        <span>Número o cuenta</span>
-        <input formControlName="numero" placeholder="El número al que se paga" maxlength="80" />
-      </label>
-      <label class="campo ancho">
-        <span>Instrucciones para el comprador (opcional)</span>
-        <input
-          formControlName="instrucciones"
-          placeholder="Por ejemplo: paga desde la app y guarda el comprobante"
-          maxlength="500"
-        />
-      </label>
-      <label class="campo ancho">
-        <span>Imagen del QR (opcional)</span>
-        <input type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirQrDelAlta($event)" />
-        @if (qrDelAlta(); as qr) {
-          <span class="tenue">Elegido: {{ qr.name }}</span>
-        }
-      </label>
-      <div class="ancho">
+        </label>
+      </div>
+      <div class="bl-botones">
         <button type="submit" class="boton" [disabled]="creando()">
           {{ creando() ? 'Creando…' : 'Crear billetera' }}
         </button>
+        <button type="button" class="boton secundario" (click)="alternarAlta()">Cancelar</button>
+        <span class="tenue">El país y la moneda no se cambian después: si te equivocas, apágala y crea otra.</span>
       </div>
-      <p class="nota ancho">
-        El país y la moneda no se cambian después: si te equivocas, apágala y crea otra.
-      </p>
     </form>
   }
 
   @if (cargando()) {
     <p class="nota">Cargando…</p>
   } @else {
-    <div class="tabla-envoltura">
-      <table>
-        <thead>
-          <tr>
-            <th>País</th>
-            <th>Billetera</th>
-            <th>A quién se paga</th>
-            <th>Moneda</th>
-            <th>QR</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Lo de la casa, primero. De Hotmart y Culqi solo se enciende y se
-               apaga: sus llaves están en el servidor. -->
-          @for (m of deLaCasa(); track m.codigo) {
-            <tr>
-              <td>{{ paisDeMedio(m) }}</td>
-              <td>{{ m.nombre }}</td>
-              <td>
-                @if (m.editable) {
-                  {{ m.titular ?? 'Solo el QR' }}
-                  @if (m.numero) {
-                    <span class="tenue">
-                      {{ m.codigo === 'WESTERN_UNION' ? 'DNI ' + m.numero : m.numero }}
-                      @if (m.ciudad) {
-                        · {{ m.ciudad }}
-                      }
-                    </span>
-                  }
-                } @else {
-                  <span class="tenue">Se paga en su página</span>
+    <ul class="bl-lista">
+      <!-- Lo de la casa, primero. De Hotmart y Culqi solo se enciende y se
+           apaga: sus llaves están en el servidor. -->
+      @for (m of deLaCasa(); track m.codigo) {
+        <li class="bl-item" [class.abierto]="desplegada() === 'medio:' + m.codigo" [class.apagado]="!m.active">
+          <div class="bl-fila">
+            <span class="bl-pais">{{ paisDeMedio(m) }}</span>
+            <span class="bl-nombre">
+              <strong>{{ m.nombre }}</strong>
+              <span class="tenue">De la casa</span>
+            </span>
+            <span class="bl-quien">
+              @if (m.editable) {
+                {{ m.titular ?? 'Solo el QR' }}
+                @if (m.numero) {
+                  <span class="tenue">
+                    {{ m.codigo === 'WESTERN_UNION' ? 'DNI ' + m.numero : m.numero }}
+                    @if (m.ciudad) {
+                      · {{ m.ciudad }}
+                    }
+                  </span>
                 }
-              </td>
-              <td>{{ m.moneda === 'USD' ? 'Dólares' : 'Soles' }}</td>
-              <td>
-                @if (qrDeMedio(m); as qr) {
-                  <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
-                } @else {
-                  <span class="tenue">Sin QR</span>
-                }
-              </td>
-              <td>
-                <span class="estado" [class.hecho]="m.active" [class.anulado]="!m.active">
-                  {{ m.active ? 'Se ofrece al pagar' : 'Apagado' }}
-                </span>
-              </td>
-              <td class="acciones">
-                @if (m.editable) {
-                  <button type="button" class="boton secundario" (click)="editarMedio(m)">Editar</button>
-                }
-                @if (m.codigo === 'YAPE') {
-                  <label class="boton secundario" [class.deshabilitado]="subiendoQrDeMedio() === m.codigo">
-                    {{ subiendoQrDeMedio() === m.codigo ? 'Subiendo…' : 'Cambiar QR' }}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/png,image/jpeg,image/webp"
-                      [disabled]="subiendoQrDeMedio() === m.codigo"
-                      (change)="cambiarQrDeMedio(m, $event)"
-                    />
-                  </label>
-                }
-                <button
-                  type="button"
-                  class="boton secundario"
-                  [disabled]="cambiandoMedio() === m.codigo"
-                  (click)="encenderMedio(m)"
-                >
-                  {{ m.active ? 'Apagar' : 'Encender' }}
-                </button>
-              </td>
-            </tr>
+              } @else {
+                <span class="tenue">Se paga en su página</span>
+              }
+            </span>
+            <span class="bl-moneda">{{ m.moneda === 'USD' ? 'Dólares' : 'Soles' }}</span>
+            <span class="bl-qr">
+              @if (qrDeMedio(m); as qr) {
+                <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
+              } @else {
+                <span class="tenue">Sin QR</span>
+              }
+            </span>
+            <span class="estado" [class.hecho]="m.active" [class.anulado]="!m.active">
+              {{ m.active ? 'Se ofrece al pagar' : 'Apagado' }}
+            </span>
+            <button
+              type="button"
+              class="bl-desplegar"
+              [attr.aria-expanded]="desplegada() === 'medio:' + m.codigo"
+              (click)="alternarMedio(m)"
+            >
+              {{ m.editable ? 'Editar' : 'Opciones' }}
+              <span class="bl-flecha" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          @if (desplegada() === 'medio:' + m.codigo) {
+            <div class="bl-panel">
+              @if (editandoMedio(); as medio) {
+                <form [formGroup]="formMedio" (ngSubmit)="guardarMedio()">
+                  <div class="bl-campos">
+                    <label class="bl-campo">
+                      <span>{{ medio.codigo === 'WESTERN_UNION' ? 'Beneficiario' : 'Titular de ' + medio.nombre }}</span>
+                      <input formControlName="titular" placeholder="A nombre de quién está" maxlength="120" />
+                    </label>
+                    <label class="bl-campo">
+                      <span>{{ medio.codigo === 'WESTERN_UNION' ? 'DNI del beneficiario' : 'Número' }}</span>
+                      <input formControlName="numero" maxlength="80" />
+                    </label>
+                    @if (medio.codigo === 'WESTERN_UNION') {
+                      <label class="bl-campo">
+                        <span>Ciudad</span>
+                        <input formControlName="ciudad" placeholder="Trujillo, Perú" maxlength="120" />
+                      </label>
+                    }
+                  </div>
+                  <div class="bl-botones">
+                    <button type="submit" class="boton" [disabled]="guardandoMedio()">
+                      {{ guardandoMedio() ? 'Guardando…' : 'Guardar' }}
+                    </button>
+                    @if (m.codigo === 'YAPE') {
+                      <label class="boton secundario" [class.deshabilitado]="subiendoQrDeMedio() === m.codigo">
+                        {{ subiendoQrDeMedio() === m.codigo ? 'Subiendo…' : 'Cambiar QR' }}
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/png,image/jpeg,image/webp"
+                          [disabled]="subiendoQrDeMedio() === m.codigo"
+                          (change)="cambiarQrDeMedio(m, $event)"
+                        />
+                      </label>
+                    }
+                    <button type="button" class="boton secundario" [disabled]="cambiandoMedio() === m.codigo" (click)="encenderMedio(m)">
+                      {{ m.active ? 'Apagar' : 'Encender' }}
+                    </button>
+                    <button type="button" class="boton secundario" (click)="cerrarEdicionDeMedio()">Cancelar</button>
+                    <span class="tenue">Es lo que ve el comprador al pagar. Cambia en cuanto guardas.</span>
+                  </div>
+                </form>
+              } @else {
+                <div class="bl-botones">
+                  <button type="button" class="boton secundario" [disabled]="cambiandoMedio() === m.codigo" (click)="encenderMedio(m)">
+                    {{ m.active ? 'Apagar ' + m.nombre : 'Encender ' + m.nombre }}
+                  </button>
+                  <span class="tenue">Sus llaves están en el servidor: aquí solo se enciende o se apaga.</span>
+                </div>
+              }
+            </div>
           }
-          @for (b of billeteras(); track b.id) {
-            <tr>
-              <td>{{ nombreDePais(b.pais) }}</td>
-              <td>
-                {{ b.nombre }}
-                @if (b.createdAt) {
-                  <span class="tenue">desde el {{ b.createdAt | date: 'd MMM y' }}</span>
-                }
-              </td>
-              <td>
-                {{ b.titular }}
-                <span class="tenue">{{ b.numero }}</span>
-              </td>
-              <td>{{ b.moneda === 'USD' ? 'Dólares' : 'Soles' }}</td>
-              <td>
-                @if (urlDelQr(b); as qr) {
-                  <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
-                } @else {
-                  <span class="tenue">Sin QR</span>
-                }
-              </td>
-              <td>
-                <span class="estado" [class.hecho]="b.active" [class.anulado]="!b.active">
-                  {{ b.active ? 'Se ofrece al pagar' : 'Apagada' }}
-                </span>
-              </td>
-              <td class="acciones">
+        </li>
+      }
+
+      @for (b of billeteras(); track b.id) {
+        <li class="bl-item" [class.abierto]="desplegada() === 'billetera:' + b.id" [class.apagado]="!b.active">
+          <div class="bl-fila">
+            <span class="bl-pais">{{ nombreDePais(b.pais) }}</span>
+            <span class="bl-nombre">
+              <strong>{{ b.nombre }}</strong>
+              @if (b.createdAt) {
+                <span class="tenue">desde el {{ b.createdAt | date: 'd MMM y' }}</span>
+              }
+            </span>
+            <span class="bl-quien">
+              {{ b.titular }}
+              <span class="tenue">{{ b.numero }}</span>
+            </span>
+            <span class="bl-moneda">{{ b.moneda === 'USD' ? 'Dólares' : 'Soles' }}</span>
+            <span class="bl-qr">
+              @if (urlDelQr(b); as qr) {
+                <a [href]="qr" target="_blank" rel="noopener">Ver QR</a>
+              } @else {
+                <span class="tenue">Sin QR</span>
+              }
+            </span>
+            <span class="estado" [class.hecho]="b.active" [class.anulado]="!b.active">
+              {{ b.active ? 'Se ofrece al pagar' : 'Apagada' }}
+            </span>
+            <button
+              type="button"
+              class="bl-desplegar"
+              [attr.aria-expanded]="desplegada() === 'billetera:' + b.id"
+              (click)="alternarBilletera(b)"
+            >
+              Editar
+              <span class="bl-flecha" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          @if (desplegada() === 'billetera:' + b.id) {
+            <form class="bl-panel" [formGroup]="formBilletera" (ngSubmit)="guardarBilletera()">
+              <div class="bl-campos">
+                <label class="bl-campo">
+                  <span>Nombre</span>
+                  <input formControlName="nombre" maxlength="60" />
+                </label>
+                <label class="bl-campo">
+                  <span>Titular</span>
+                  <input formControlName="titular" maxlength="120" />
+                </label>
+                <label class="bl-campo">
+                  <span>Número o cuenta</span>
+                  <input formControlName="numero" maxlength="80" />
+                </label>
+                <label class="bl-campo bl-ancho">
+                  <span>Instrucciones para el comprador (opcional)</span>
+                  <input formControlName="instrucciones" maxlength="500" />
+                </label>
+              </div>
+              <div class="bl-botones">
+                <button type="submit" class="boton" [disabled]="guardandoBilletera()">
+                  {{ guardandoBilletera() ? 'Guardando…' : 'Guardar' }}
+                </button>
                 <!-- El botón es la etiqueta de un selector de archivo escondido. -->
                 <label class="boton secundario" [class.deshabilitado]="subiendoQr() === b.id">
                   {{ subiendoQr() === b.id ? 'Subiendo…' : b.tieneQr ? 'Cambiar QR' : 'Subir QR' }}
@@ -212,20 +256,18 @@
                     (change)="cambiarQr(b, $event)"
                   />
                 </label>
-                <button
-                  type="button"
-                  class="boton secundario"
-                  [disabled]="cambiando() === b.id"
-                  (click)="encender(b)"
-                >
+                <button type="button" class="boton secundario" [disabled]="cambiando() === b.id" (click)="encender(b)">
                   {{ b.active ? 'Apagar' : 'Encender' }}
                 </button>
-              </td>
-            </tr>
+                <button type="button" class="boton secundario" (click)="alternarBilletera(b)">Cancelar</button>
+                <span class="tenue">{{ nombreDePais(b.pais) }} · {{ b.moneda === 'USD' ? 'dólares' : 'soles' }}: no se cambian.</span>
+              </div>
+            </form>
           }
-        </tbody>
-      </table>
-    </div>
+        </li>
+      }
+    </ul>
+
     @if (billeteras().length === 0) {
       <p class="nota pie">
         Todavía no hay ninguna billetera de país. Mientras no crees una, fuera de Perú se paga con

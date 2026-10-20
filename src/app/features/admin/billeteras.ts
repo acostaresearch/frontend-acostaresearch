@@ -23,7 +23,7 @@ import { AvisoFlotante } from '../../shared/layout/aviso-flotante';
   selector: 'app-billeteras-admin',
   imports: [AvisoFlotante, DatePipe, ReactiveFormsModule],
   templateUrl: './billeteras.html',
-  styleUrls: ['./embudo.css', './instituciones.css'],
+  styleUrls: ['./embudo.css', './instituciones.css', './billeteras.css'],
 })
 export class BilleterasAdmin implements OnInit {
   private readonly api = inject(PaymentService);
@@ -76,6 +76,101 @@ export class BilleterasAdmin implements OnInit {
     );
   }
 
+  // ── Filas desplegables (20-oct-2026) ─────────────────────────────────────
+  //
+  // Cada medio y cada billetera se edita desplegando su propia fila, de una en
+  // una: `desplegada` es `medio:YAPE` o `billetera:<id>`. «Nueva billetera»
+  // también se despliega, y abrir una cierra lo demás.
+
+  readonly desplegada = signal<string | null>(null);
+
+  alternarMedio(medio: MedioDeLaCasa): void {
+    const clave = `medio:${medio.codigo}`;
+    if (this.desplegada() === clave) {
+      this.desplegada.set(null);
+      this.editandoMedio.set(null);
+      return;
+    }
+    this.editandoBilletera.set(null);
+    if (medio.editable) this.editarMedio(medio);
+    else {
+      this.abierto.set(false);
+      this.editandoMedio.set(null);
+    }
+    this.desplegada.set(clave);
+  }
+
+  readonly editandoBilletera = signal<Billetera | null>(null);
+  readonly guardandoBilletera = signal(false);
+
+  readonly formBilletera = this.fb.nonNullable.group({
+    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
+    titular: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    numero: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    instrucciones: ['', Validators.maxLength(500)],
+  });
+
+  alternarBilletera(billetera: Billetera): void {
+    const clave = `billetera:${billetera.id}`;
+    if (this.desplegada() === clave) {
+      this.desplegada.set(null);
+      this.editandoBilletera.set(null);
+      return;
+    }
+    this.error.set(null);
+    this.abierto.set(false);
+    this.editandoMedio.set(null);
+    this.formBilletera.reset({
+      nombre: billetera.nombre,
+      titular: billetera.titular,
+      numero: billetera.numero,
+      instrucciones: billetera.instrucciones ?? '',
+    });
+    this.editandoBilletera.set(billetera);
+    this.desplegada.set(clave);
+  }
+
+  /** País y moneda no se cambian: si están mal, se apaga y se crea otra. */
+  guardarBilletera(): void {
+    const billetera = this.editandoBilletera();
+    this.formBilletera.markAllAsTouched();
+    if (!billetera || this.formBilletera.invalid || this.guardandoBilletera()) return;
+    const v = this.formBilletera.getRawValue();
+
+    this.guardandoBilletera.set(true);
+    this.api
+      .cambiarBilletera(billetera.id, {
+        nombre: v.nombre.trim(),
+        titular: v.titular.trim(),
+        numero: v.numero.trim(),
+        instrucciones: v.instrucciones.trim(),
+      })
+      .subscribe({
+        next: (actualizada) => {
+          this.billeteras.update((lista) => lista.map((b) => (b.id === actualizada.id ? actualizada : b)));
+          this.guardandoBilletera.set(false);
+          this.editandoBilletera.set(null);
+          this.desplegada.set(null);
+          this.aviso.set(`«${actualizada.nombre}» actualizada. Ya sale así al pagar.`);
+        },
+        error: (e: unknown) => {
+          this.guardandoBilletera.set(false);
+          this.error.set(mensajeDeError(e));
+        },
+      });
+  }
+
+  /** «Nueva billetera»: se despliega arriba y cierra cualquier fila abierta. */
+  alternarAlta(): void {
+    const abrir = !this.abierto();
+    this.abierto.set(abrir);
+    if (abrir) {
+      this.desplegada.set(null);
+      this.editandoMedio.set(null);
+      this.editandoBilletera.set(null);
+    }
+  }
+
   editarMedio(medio: MedioDeLaCasa): void {
     this.error.set(null);
     this.abierto.set(false);
@@ -88,7 +183,9 @@ export class BilleterasAdmin implements OnInit {
   }
 
   cerrarEdicionDeMedio(): void {
-    if (!this.guardandoMedio()) this.editandoMedio.set(null);
+    if (this.guardandoMedio()) return;
+    this.editandoMedio.set(null);
+    this.desplegada.set(null);
   }
 
   guardarMedio(): void {
@@ -109,6 +206,7 @@ export class BilleterasAdmin implements OnInit {
           this.ponerMedio(actualizado);
           this.guardandoMedio.set(false);
           this.editandoMedio.set(null);
+          this.desplegada.set(null);
           this.aviso.set(`«${actualizado.nombre}» actualizado. Ya sale así al pagar.`);
         },
         error: (e: unknown) => {

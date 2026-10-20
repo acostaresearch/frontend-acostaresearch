@@ -248,6 +248,46 @@ describe('Billeteras de país en el panel', () => {
     expect(panel.error()).toContain('su QR no se guardó');
   });
 
+  it('una fila se despliega para editarla, de una en una; «Nueva billetera» las cierra', () => {
+    panel.alternarBilletera(deuna);
+    expect(panel.desplegada()).toBe('billetera:b1');
+    expect(panel.formBilletera.getRawValue().titular).toBe('Ana Paz');
+
+    panel.alternarMedio(yape);
+    expect(panel.desplegada()).toBe('medio:YAPE');
+    expect(panel.editandoBilletera()).toBeNull();
+    expect(panel.editandoMedio()).toEqual(yape);
+
+    panel.alternarMedio(hotmart);
+    expect(panel.desplegada()).toBe('medio:HOTMART');
+    expect(panel.editandoMedio()).toBeNull();
+
+    panel.alternarAlta();
+    expect(panel.abierto()).toBe(true);
+    expect(panel.desplegada()).toBeNull();
+  });
+
+  it('editar una billetera guarda nombre, titular, número e instrucciones y cierra la fila', () => {
+    api.cambiarBilletera.mockReturnValue(of({ ...deuna, titular: 'Luis Ruiz', instrucciones: 'Desde la app' }));
+    panel.alternarBilletera(deuna);
+    panel.formBilletera.patchValue({ titular: ' Luis Ruiz ', instrucciones: 'Desde la app' });
+    panel.guardarBilletera();
+    expect(api.cambiarBilletera).toHaveBeenCalledWith('b1', {
+      nombre: 'Deuna',
+      titular: 'Luis Ruiz',
+      numero: '0991234567',
+      instrucciones: 'Desde la app',
+    });
+    expect(panel.billeteras()[0].titular).toBe('Luis Ruiz');
+    expect(panel.desplegada()).toBeNull();
+
+    panel.alternarBilletera(deuna);
+    panel.formBilletera.patchValue({ numero: '' });
+    api.cambiarBilletera.mockClear();
+    panel.guardarBilletera();
+    expect(api.cambiarBilletera).not.toHaveBeenCalled();
+  });
+
   it('apagar manda lo contrario de como estaba y cambia la fila', () => {
     api.cambiarBilletera.mockReturnValue(of({ ...deuna, active: false }));
     panel.encender(deuna);
