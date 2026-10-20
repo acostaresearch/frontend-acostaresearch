@@ -314,8 +314,15 @@
   justify-content: flex-end;
 }
 
-.video-al-lado .boton {
+.video-al-lado .boton,
+.boton-al-lado {
   width: auto;
+}
+
+/* Los recordatorios, debajo del video curso y no encima: es un ajuste, no lo
+   primero que hay que ver. */
+.recordatorios {
+  order: 1;
 }
 
 @media (min-width: 1001px) {

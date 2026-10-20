@@ -259,10 +259,9 @@
       <!-- El botón de la pantalla partida, arriba de las dos secciones a las
            que une: en la del video lleva a «Por dónde vas» con el video al
            lado; en «Por dónde vas» y en «Tus herramientas» lo pone o lo quita. -->
-      <div
-        class="tramo-6 video-al-lado"
-        [class.fuera]="vista.seccion() !== 'ayuda' && !conVideo()"
-      >
+      <!-- En la sección del video curso no va aquí suelto: va en la cabecera
+           del video curso (ver más abajo, dentro de `app-mi-conector`). -->
+      <div class="tramo-6 video-al-lado" [class.fuera]="!conVideo()">
         <button
           type="button"
           class="boton secundario"
@@ -415,15 +414,27 @@
 
       <!-- El interruptor de los correos de avance, junto a la ayuda: es donde
            el enlace de baja del correo dice que está. -->
+      <!-- Al final de la sección, debajo del video curso (`order`). -->
       <section
-        class="tarjeta tramo-6"
+        class="tarjeta tramo-6 recordatorios"
         data-tour="recordatorios"
         [class.fuera]="vista.seccion() !== 'ayuda'"
       >
         <app-mis-recordatorios />
       </section>
 
-      <app-mi-conector />
+      <app-mi-conector>
+        <!-- El mismo botón de arriba, en la cabecera del video curso. -->
+        <button
+          accion-videocurso
+          type="button"
+          class="boton secundario boton-al-lado"
+          (click)="ponerVideo(true)"
+        >
+          <span aria-hidden="true">▶</span>
+          Ver el video junto a «Por dónde vas»
+        </button>
+      </app-mi-conector>
 
       <!-- «Tus datos» y «Contraseña» ya no son tarjetas de aquí: se abren como
            ventana desde el cajón de la cuenta (el lápiz junto al nombre y

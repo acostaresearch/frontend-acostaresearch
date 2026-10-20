@@ -5,9 +5,12 @@
     <h2>Video curso paso a paso</h2>
     <p>Todo lo que te sirve para conectar y usar tus skills.</p>
   </div>
-  <button type="button" class="vc-recorrido" data-tour="ayuda-recorrido" (click)="recorrido.emit()">
-    Ver el recorrido del panel
-  </button>
+  <div class="vc-acciones">
+    <button type="button" class="vc-recorrido" data-tour="ayuda-recorrido" (click)="recorrido.emit()">
+      Ver el recorrido del panel
+    </button>
+    <ng-content select="[accion-videocurso]" />
+  </div>
 </header>
 
 <!-- ── El video que le toca ────────────────────────────────────────────── -->
@@ -44,6 +47,9 @@
     } @else if (actual(); as video) {
       <p class="vc-rotulo">{{ todosVistos() ? 'Ya los viste todos · repasa' : 'Tu siguiente video' }}</p>
       <h3>{{ video.titulo }}</h3>
+      @if (video.entrada) {
+        <p class="vc-entrada">{{ video.entrada }}</p>
+      }
       <p class="vc-tenue">
         Video {{ indice() + 1 }} de {{ videos().length }}
         @if (video.duracion) {

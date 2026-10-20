@@ -265,7 +265,11 @@
     [class.fuera]="oculta('ayuda')"
     [conGuias]="tieneAccesoVigente()"
     (recorrido)="verElRecorrido()"
-  />
+  >
+    <!-- Lo que el perfil pone en la cabecera (el video al lado). El panel del
+         administrador no pone nada. -->
+    <ng-content select="[accion-videocurso]" ngProjectAs="[accion-videocurso]" />
+  </app-videocurso>
 } @else if (modo() === 'administrador') {
   <!-- No debería verse nunca: las licencias del administrador se emiten solas
        al pedir esta lista. Si aparece, es que el catálogo no tiene ningún plan

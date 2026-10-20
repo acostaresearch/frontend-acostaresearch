@@ -20,18 +20,18 @@ import { RetencionService } from '../../core/services/retencion.service';
         (change)="cambiar($any($event.target).checked)"
       />
       <span>
-        Avísame si llevo días sin avanzar, si me falta subir el formato de mi universidad o si mi
-        acceso está por terminar.
+        Avísame si me atraso o mi acceso está por vencer
+        <small>· máximo uno cada 3 días</small>
       </span>
     </label>
-    <p class="nota">Como mucho un correo cada tres días. Los de tus compras llegan siempre.</p>
     @if (error(); as e) {
       <p class="error">{{ e }}</p>
     }
   `,
   styles: `
-    h2 { margin: 0 0 10px; }
-    .interruptor { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; line-height: 1.5; cursor: pointer; }
+    h2 { margin: 0 0 8px; }
+    .interruptor { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: pointer; }
+    .interruptor small { font-size: 13px; color: var(--color-texto-suave); }
     .interruptor input { width: 18px; height: 18px; margin-top: 2px; flex: 0 0 auto; }
     .error { margin: 8px 0 0; font-size: 13.5px; color: var(--color-error); }
   `,
