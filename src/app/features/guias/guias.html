@@ -48,9 +48,9 @@
           <p class="de-lo-tuyo">Las guías de lo que compraste: <b>{{ deLoTuyo() }}</b></p>
         }
 
-        <!-- Una pestaña por producto con guías propias, solo si hay dos o más.
-             Quien compró ve nada más que las suyas. Lo que es de todos sale en
-             cada una. -->
+        <!-- Una pestaña por producto con guías propias y, detrás, «Instalación»
+             y «Herramientas» (21-oct), solo si hay dos o más. Quien compró ve
+             nada más que las suyas. -->
         @if (pestanas().length > 1) {
           <div class="productos" role="group" aria-label="Guías por producto">
             @for (pestana of pestanas(); track pestana.codigo) {
@@ -67,10 +67,12 @@
           </div>
         }
 
-        <!-- Por bloques: de instalación y de herramientas (20-oct). -->
+        <!-- Lo de la pestaña elegida, por bloques (21-oct). -->
         <div data-tour="guias-pdf">
         @for (bloque of bloques(); track bloque.codigo) {
-          <h2 class="bloque-titulo">{{ bloque.nombre }}</h2>
+          @if (bloques().length > 1) {
+            <h2 class="bloque-titulo">{{ bloque.nombre }}</h2>
+          }
           <ul class="lista">
           @for (guia of bloque.guias; track guia.enlace) {
             <li class="fila">
@@ -113,8 +115,6 @@
                 </span>
               </a>
             </li>
-          } @empty {
-            <li class="fila vacia">Todavía no hay guías de este grupo para este producto.</li>
           }
           </ul>
         }

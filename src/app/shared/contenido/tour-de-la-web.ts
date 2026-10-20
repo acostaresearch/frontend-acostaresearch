@@ -271,8 +271,9 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ancla: '[data-tour="guias-pdf"]',
       titulo: 'Las guías en PDF',
       texto:
-        'Lo mismo, paso a paso y con capturas, para tenerlo a mano sin conexión. Igual que ' +
-        'los videos: con tu sesión abierta solo salen las de lo que compraste.',
+        'Lo mismo, paso a paso y con capturas, para tenerlo a mano sin conexión. Arriba eliges ' +
+        'tu producto, «Instalación» o «Herramientas». Igual que los videos: con tu sesión ' +
+        'abierta solo salen las de lo que compraste.',
     },
 
     // ── El panel, solo si hay algo que enseñar en él ───────────────────────

@@ -4,11 +4,12 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  APARTADOS_DEL_CURSO,
   loQueLeToca,
   nombreDeProducto,
   pestanaElegida,
-  pestanasDeProducto,
-  saleEn,
+  pestanasDelCurso,
+  saleEnLaPestana,
 } from '../../shared/contenido/productos-de-ayuda';
 import { AuthService } from '../../core/services/auth.service';
 import { TutorialService } from '../../core/services/tutorial.service';
@@ -69,9 +70,17 @@ export class Guias implements OnInit {
 
   private readonly visibles = computed(() => loQueLeToca(this.publicadas(), this.mios()));
 
+  /**
+   * Una por producto y, detrás, «Instalación» y «Herramientas» (21-oct), como
+   * en el videocurso: así esas dos se eligen igual que un producto en vez de
+   * salir siempre por delante.
+   */
   readonly pestanas = computed(() => {
     const mios = this.mios();
-    return pestanasDeProducto(this.visibles()).filter((p) => !mios || mios.includes(p.codigo));
+    const esApartado = (codigo: string) => APARTADOS_DEL_CURSO.some((a) => a.codigo === codigo);
+    return pestanasDelCurso(this.visibles().map((t) => ({ apartado: t.grupo, productos: t.productos }))).filter(
+      (p) => !mios || esApartado(p.codigo) || mios.includes(p.codigo),
+    );
   });
 
   readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
@@ -79,23 +88,27 @@ export class Guias implements OnInit {
   /** Los nombres de lo que compró. Vacío si ve todo. */
   readonly deLoTuyo = computed(() => (this.mios() ?? []).map(nombreDeProducto).join(' · '));
 
-  /** Lo que se ve: lo de la pestaña elegida más lo que es de todos. */
+  /**
+   * Lo que se ve: lo de la pestaña elegida. En la de un producto, sus guías de
+   * uso más las de uso que son de todos; en «Instalación» o «Herramientas»,
+   * las de ese apartado. Sin barra de pestañas, todas.
+   */
   readonly tarjetas = computed(() => {
-    const producto = this.producto();
     const lista = this.visibles();
-    return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
+    if (this.pestanas().length <= 1) return lista;
+    const pestana = this.producto();
+    return lista.filter((t) => saleEnLaPestana({ apartado: t.grupo, productos: t.productos }, pestana));
   });
 
   /**
-   * Lo que se ve, en sus bloques (instalación, herramientas). Salen siempre
-   * los dos, aunque uno esté vacío, para que se vea que existen. El de
-   * «Guías de uso» (21-oct), solo si trae alguna.
+   * Lo que se ve, en sus bloques (instalación, herramientas, uso), solo los
+   * que traen algo. Con un bloque solo no lleva rótulo: ya lo dice la pestaña.
    */
   readonly bloques = computed(() =>
     GRUPOS_DE_GUIA.map((g) => ({
       ...g,
       guias: this.tarjetas().filter((t) => t.grupo === g.codigo),
-    })).filter((b) => b.codigo !== 'producto' || b.guias.length > 0),
+    })).filter((b) => b.guias.length > 0),
   );
 
   ngOnInit(): void {
