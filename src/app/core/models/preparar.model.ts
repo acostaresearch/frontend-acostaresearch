@@ -12,8 +12,11 @@
  * `RESUMEN` se retiró el 22-sep-2026 y por eso no está aquí, pero sigue en el
  * enum de la base: hay trabajos entregados con ese servicio y tienen que poder
  * leerse en el historial.
+ *
+ * `HUMANIZAR` (20-oct-2026) está en prueba: solo sale a quien el panel le dice
+ * `humanizar: true`, que son los administradores y los usuarios beta.
  */
-export type ServicioPreparar = 'EDICION' | 'TRADUCCION';
+export type ServicioPreparar = 'EDICION' | 'TRADUCCION' | 'HUMANIZAR';
 
 /** Los cuatro idiomas de la traducción. */
 export type IdiomaPreparar = 'es' | 'en' | 'pt' | 'zh';
@@ -132,6 +135,8 @@ export interface PanelPreparar {
   disponible: boolean;
   /** Usuario beta: prepara sin tope y sin membresía. Ver `PREPARAR_ILIMITADO_EMAILS`. */
   ilimitado?: boolean;
+  /** Puede encargar «Humanizar», en prueba. Sin cupo: no gasta de la membresía. */
+  humanizar?: boolean;
   membresia: MembresiaPreparar | null;
   cupo: CupoPreparar | null;
   /** Por qué no puede mandar un documento ahora mismo. Null = sí puede. */

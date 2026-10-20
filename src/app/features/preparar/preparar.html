@@ -385,8 +385,7 @@
                       <div class="cifra">
                         <strong>{{ t.tocados | number: '1.0-0' }}</strong>
                         <span
-                          >párrafos
-                          {{ t.servicio === 'TRADUCCION' ? 'traducidos' : 'editados' }}</span
+                          >párrafos {{ hechoDe(t) }}</span
                         >
                       </div>
                       <div class="cifra">
@@ -458,7 +457,7 @@
               <section class="tarjeta subir">
                 <div class="subir-servicio">
                   <div class="segmentos" role="tablist" aria-label="Qué quieres que hagamos">
-                    @for (p of pestanas; track p.id) {
+                    @for (p of pestanas(); track p.id) {
                       <button
                         type="button"
                         role="tab"

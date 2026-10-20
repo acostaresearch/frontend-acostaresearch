@@ -59,6 +59,15 @@ const PESTANAS: readonly Pestana[] = [
       'siglas y bibliografía se quedan como están.',
     promesas: ['Citas y referencias protegidas', 'El índice sale traducido'],
   },
+  {
+    // En prueba (20-oct-2026): solo sale si el panel dice `humanizar`.
+    id: 'HUMANIZAR',
+    titulo: 'Humanizar',
+    descripcion:
+      'Para textos en español redactados con ayuda de IA. Quita la redacción de modelo con el ' +
+      'método del Humanizador Académico y lo devuelve limpio, listo para Turnitin.',
+    promesas: ['Citas, cifras y bibliografía protegidas', 'Word limpio, sin marcas'],
+  },
 ];
 
 /** Por qué estado se puede filtrar la lista. */
@@ -143,7 +152,10 @@ export class Preparar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
-  readonly pestanas = PESTANAS;
+  /** «Humanizar» solo a quien puede encargarlo mientras esté en prueba. */
+  readonly pestanas = computed(() =>
+    PESTANAS.filter((p) => p.id !== 'HUMANIZAR' || this.panel()?.humanizar),
+  );
   readonly filtros = FILTROS;
   readonly modos = MODOS;
 
@@ -175,9 +187,13 @@ export class Preparar implements OnInit, OnDestroy {
 
   readonly pestana = computed(() => PESTANAS.find((p) => p.id === this.elegida()) ?? PESTANAS[0]);
 
-  /** Puede mandar un documento: hay membresía con cupo y el servicio está en pie. */
+  /**
+   * Puede mandar un documento: hay membresía con cupo y el servicio está en pie.
+   * «Humanizar», en prueba, no pide membresía: basta con que el panel lo deje.
+   */
   readonly puede = computed(() => {
     const panel = this.panel();
+    if (this.elegida() === 'HUMANIZAR') return Boolean(panel?.disponible && panel.humanizar);
     return Boolean(panel?.disponible && panel.motivo === null);
   });
 
@@ -600,6 +616,7 @@ export class Preparar implements OnInit, OnDestroy {
   private nombreDeDescarga(trabajo: Preparacion): string {
     const base = trabajo.nombre.replace(/\.docx$/i, '');
     if (trabajo.servicio === 'EDICION') return `${base} (inglés corregido).docx`;
+    if (trabajo.servicio === 'HUMANIZAR') return `${base} (humanizado).docx`;
     return `${base} (traducido al ${this.nombreDelIdioma(trabajo.idioma)}).docx`;
   }
 
@@ -641,18 +658,28 @@ export class Preparar implements OnInit, OnDestroy {
     if (trabajo.servicio === 'EDICION') return 'Edición en inglés';
     if (trabajo.servicio === 'TRADUCCION')
       return `Traducción → ${(trabajo.idioma ?? '').toUpperCase()}`;
+    if (trabajo.servicio === 'HUMANIZAR') return 'Humanizado';
     return 'Resumen';
   }
 
   /** El paso de editar se llama distinto traduciendo. */
   pasoEditar(trabajo: Preparacion): string {
+    if (trabajo.servicio === 'HUMANIZAR') return 'Humanizando el texto';
     return trabajo.servicio === 'TRADUCCION' ? 'Traduciendo el texto' : 'Editando el texto';
   }
 
   pasoArmar(trabajo: Preparacion): string {
+    if (trabajo.servicio === 'HUMANIZAR') return 'Armando el Word humanizado';
     return trabajo.servicio === 'TRADUCCION'
       ? 'Armando el Word traducido'
       : 'Armando el Word con control de cambios';
+  }
+
+  /** «párrafos editados», «traducidos» o «humanizados». */
+  hechoDe(trabajo: Preparacion): string {
+    if (trabajo.servicio === 'TRADUCCION') return 'traducidos';
+    if (trabajo.servicio === 'HUMANIZAR') return 'humanizados';
+    return 'editados';
   }
 
   /** Qué se le dice de un trabajo terminado, en el resumen. */
@@ -660,7 +687,7 @@ export class Preparar implements OnInit, OnDestroy {
     if (trabajo.estado !== 'LISTO') return null;
 
     const tocados = `${trabajo.tocados} párrafo${trabajo.tocados === 1 ? '' : 's'}`;
-    const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : 'traducidos';
+    const hecho = trabajo.servicio === 'EDICION' ? 'con correcciones' : this.hechoDe(trabajo);
 
     // El índice sale traducido desde el servidor; los números de página los rehace Word.
     const indice =
