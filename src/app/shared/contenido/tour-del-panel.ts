@@ -40,8 +40,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="ayuda-video"]',
     titulo: 'Empieza por el video curso',
     texto:
-      'Te enseña paso a paso a conectar Claude y usar tus skills: tu primer capítulo, tus ' +
-      'fuentes y qué hacer si algo falla.',
+      'Aquí sale siempre tu siguiente video, y debajo los que vienen después. Te enseñan paso ' +
+      'a paso a conectar Claude y usar tus skills.',
   },
   {
     ruta: '/perfil',
@@ -62,6 +62,16 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     texto:
       'Si un día no encuentras algo, vuelve a pulsar aquí y te enseño otra vez dónde está cada ' +
       'cosa.',
+  },
+  {
+    ruta: '/perfil',
+    parte: 'ayuda',
+    abrir: '[data-tour="ir-ayuda"]',
+    ancla: '[data-tour="ayuda-fallas"]',
+    titulo: 'Si algo no funciona',
+    texto:
+      'Aquí están por escrito las soluciones a lo que le pasa a casi todo el mundo: se leen en ' +
+      'un minuto, sin ver un video entero.',
   },
   {
     ruta: '/perfil',

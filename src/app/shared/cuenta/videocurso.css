@@ -1,0 +1,327 @@
+/* La sección «Video curso paso a paso» (20-oct). Todo sale de las variables de
+   `styles.css`: el modo oscuro solo las cambia. Las columnas se deciden por el
+   ancho de la sección y no por el de la pantalla, porque en el panel del
+   administrador va a media anchura. */
+:host {
+  display: grid;
+  gap: 16px;
+  container-type: inline-size;
+}
+
+.tarjeta {
+  margin: 0;
+}
+
+.vc-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.vc-cabecera h2 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.vc-cabecera p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+}
+
+.vc-recorrido {
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.vc-tenue {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+/* ── El video que le toca ── */
+.vc-siguiente {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.vc-pantalla {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--noche-2);
+  border-radius: var(--radio);
+}
+
+.vc-pantalla img,
+.vc-pantalla iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 0;
+}
+
+/* Oscurece la miniatura para que el botón se vea encima. */
+.vc-pantalla img {
+  opacity: 0.55;
+}
+
+.vc-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 0 0 0 4px;
+  color: var(--color-boton);
+  background: var(--color-sobre-relleno);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--transicion);
+}
+
+.vc-play:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.vc-play:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.vc-ficha {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.vc-rotulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primario);
+}
+
+.vc-ficha h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.vc-ficha .boton {
+  width: auto;
+  margin-top: 6px;
+}
+
+/* ── Las dos tarjetas de cada fila ── */
+.vc-par {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.vc-par.solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.vc-lista-cabecera {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.vc-lista-cabecera h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.vc-lista-cabecera a {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.vc-lista .vc-tenue {
+  padding-top: 12px;
+}
+
+.vc-fila {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.vc-fila:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+button.vc-fila {
+  cursor: pointer;
+}
+
+button.vc-fila:hover .vc-fila-titulo {
+  color: var(--color-primario);
+}
+
+.vc-numero {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 50%;
+}
+
+.vc-fila-titulo {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.vc-fila-titulo small {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.vc-fila-dato {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.vc-pdf {
+  display: grid;
+  place-items: end center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 28px;
+  padding-bottom: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--color-error);
+  background: var(--color-error-suave);
+  border-radius: 3px;
+}
+
+.vc-bajar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  color: var(--color-primario);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  transition: border-color var(--transicion);
+}
+
+.vc-bajar:hover {
+  border-color: var(--color-primario);
+}
+
+/* ── Cuando algo falla ── */
+.vc-salida {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 20px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--transicion);
+}
+
+.vc-salida:hover {
+  border-color: var(--color-primario);
+}
+
+.vc-salida > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.vc-salida strong {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.vc-salida > span:last-child > span {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.vc-salida-icono {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radio-sm);
+}
+
+.vc-salida-icono.aviso {
+  color: var(--color-aviso);
+  background: var(--color-aviso-suave);
+}
+
+.vc-salida-icono.exito {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+}
+
+/* En media pantalla o en el móvil, una columna. */
+@container (max-width: 720px) {
+  .vc-siguiente,
+  .vc-par {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vc-ficha h3 {
+    font-size: 19px;
+  }
+
+  .vc-cabecera h2 {
+    font-size: 22px;
+  }
+}

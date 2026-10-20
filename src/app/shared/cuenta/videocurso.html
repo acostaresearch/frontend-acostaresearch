@@ -1,0 +1,166 @@
+<!-- El título va fuera de las tarjetas, como el de «Tus herramientas». El
+     recorrido se queda aquí, discreto: es para quien ya no encuentra algo. -->
+<header class="vc-cabecera">
+  <div>
+    <h2>Video curso paso a paso</h2>
+    <p>Todo lo que te sirve para conectar y usar tus skills.</p>
+  </div>
+  <button type="button" class="vc-recorrido" data-tour="ayuda-recorrido" (click)="recorrido.emit()">
+    Ver el recorrido del panel
+  </button>
+</header>
+
+<!-- ── El video que le toca ────────────────────────────────────────────── -->
+<section class="tarjeta vc-siguiente" data-tour="ayuda-video">
+  <div class="vc-pantalla">
+    @if (reproduciendo() && embed()) {
+      <iframe
+        [src]="embed()"
+        [title]="actual()?.titulo ?? 'Video curso'"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    } @else {
+      @if (miniatura(); as imagen) {
+        <img [src]="imagen" alt="" loading="lazy" />
+      }
+      <button
+        type="button"
+        class="vc-play"
+        [disabled]="!embed()"
+        [attr.aria-label]="'Reproducir: ' + (actual()?.titulo ?? '')"
+        (click)="reproducir()"
+      >
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+          <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <div class="vc-ficha">
+    @if (cargando()) {
+      <p class="vc-tenue">Cargando los videos…</p>
+    } @else if (actual(); as video) {
+      <p class="vc-rotulo">{{ todosVistos() ? 'Ya los viste todos · repasa' : 'Tu siguiente video' }}</p>
+      <h3>{{ video.titulo }}</h3>
+      <p class="vc-tenue">
+        Video {{ indice() + 1 }} de {{ videos().length }}
+        @if (video.duracion) {
+          · {{ duracion(video.duracion) }}
+        }
+      </p>
+      @if (embed()) {
+        <button type="button" class="boton" (click)="reproducir()">Ver video</button>
+      } @else {
+        <p class="vc-tenue">Este video todavía no está grabado.</p>
+      }
+    } @else {
+      <p class="vc-tenue">Todavía no hay videos publicados.</p>
+      <a class="boton" routerLink="/tutoriales">Ir a los tutoriales</a>
+    }
+  </div>
+</section>
+
+<!-- ── Lo que viene después y las guías ─────────────────────────────────── -->
+<div class="vc-par" [class.solo]="!conGuias()">
+  <section class="tarjeta vc-lista">
+    <div class="vc-lista-cabecera">
+      <h3>Después de este</h3>
+      <a routerLink="/tutoriales">Ver los {{ videos().length }} videos</a>
+    </div>
+    @for (fila of despues(); track fila.video.id) {
+      <button type="button" class="vc-fila" (click)="elegir(fila.video)">
+        <span class="vc-numero">{{ fila.numero }}</span>
+        <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
+        @if (fila.video.duracion) {
+          <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
+        }
+      </button>
+    } @empty {
+      <p class="vc-tenue">
+        {{ cargando() ? 'Cargando…' : 'Es el último. En la lista completa puedes repasar cualquiera.' }}
+      </p>
+    }
+  </section>
+
+  @if (conGuias()) {
+    <section class="tarjeta vc-lista" data-tour="ayuda-guias">
+      <div class="vc-lista-cabecera">
+        <h3>Guías en PDF</h3>
+        <a routerLink="/guias-de-instalacion">Ver todas</a>
+      </div>
+      @for (guia of guias(); track guia.enlace) {
+        <div class="vc-fila">
+          <span class="vc-pdf" aria-hidden="true">PDF</span>
+          <span class="vc-fila-titulo">
+            {{ guia.titulo }}
+            @if (guia.peso) {
+              <small>{{ guia.peso }}</small>
+            }
+          </span>
+          <a class="vc-bajar" [href]="guia.enlace" download [attr.aria-label]="'Descargar ' + guia.titulo">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path
+                d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
+      } @empty {
+        <p class="vc-tenue">{{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas.' }}</p>
+      }
+    </section>
+  }
+</div>
+
+<!-- ── Cuando algo falla ────────────────────────────────────────────────── -->
+<div class="vc-par">
+  <a class="tarjeta vc-salida" routerLink="/tutoriales" fragment="fallas" data-tour="ayuda-fallas">
+    <span class="vc-salida-icono aviso" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5v5.5M12 16.5v.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </svg>
+    </span>
+    <span>
+      <strong>¿Algo no funciona?</strong>
+      <span>Soluciones a lo más común</span>
+    </span>
+  </a>
+
+  <!-- Una persona al otro lado, no una página de ayuda más. -->
+  <a
+    class="tarjeta vc-salida"
+    data-tour="ayuda-whatsapp"
+    [href]="whatsappUrl"
+    target="_blank"
+    rel="noopener"
+  >
+    <span class="vc-salida-icono exito" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M4.5 19.5l1.2-3.6A7.5 7.5 0 1 1 8.4 18.6z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </span>
+    <span>
+      <strong>Escríbenos</strong>
+      <span>WhatsApp {{ whatsappTexto }}</span>
+    </span>
+  </a>
+</div>

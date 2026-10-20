@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { environment } from '../../../environments/environment';
 import { License, ProgresoDeArranque } from '../../core/models/payment.model';
 import { BienvenidaService } from '../../core/services/bienvenida.service';
 import { LicenseService } from '../../core/services/license.service';
@@ -29,6 +28,7 @@ import { MiZoteroPanel } from './mi-zotero';
 import { MiMendeleyPanel } from './mi-mendeley';
 import { PasosDeArranque } from './pasos-de-arranque';
 import { BienvenidaCanje } from './bienvenida-canje';
+import { Videocurso } from './videocurso';
 
 /**
  * El conector de Claude de quien está mirando: sus licencias, la URL y la guía.
@@ -58,6 +58,7 @@ import { BienvenidaCanje } from './bienvenida-canje';
     MiMapaVosviewer,
     PasosDeArranque,
     BienvenidaCanje,
+    Videocurso,
   ],
   templateUrl: './mi-conector.html',
   styleUrl: './mi-conector.css',
@@ -161,26 +162,6 @@ export class MiConector implements OnInit {
     });
   }
 
-
-  /** El WhatsApp de la casa, para quien ya probó el video y la guía. */
-  readonly whatsappUrl = environment.whatsappUrl;
-
-  /**
-   * El mismo número, escrito para leerlo.
-   *
-   * Sale del enlace y no de una constante aparte para que no puedan
-   * discrepar: el que se enseña es siempre al que se llama.
-   */
-  readonly whatsappTexto = MiConector.telefonoDe(environment.whatsappUrl);
-
-  private static telefonoDe(url: string): string {
-    const digitos = url.replace(/\D/g, '');
-    if (digitos.length < 8) return '';
-    // +51 923 095 940: prefijo de dos y el resto en grupos de tres.
-    const pais = digitos.slice(0, digitos.length - 9);
-    const resto = digitos.slice(-9);
-    return `+${pais} ${resto.slice(0, 3)} ${resto.slice(3, 6)} ${resto.slice(6)}`;
-  }
 
   /**
    * ¿Tiene acceso vigente?
