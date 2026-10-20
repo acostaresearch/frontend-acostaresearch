@@ -40,8 +40,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="ayuda-video"]',
     titulo: 'Empieza por el video curso',
     texto:
-      'Aquí sale siempre tu siguiente video, y debajo los que vienen después. Te enseñan paso ' +
-      'a paso a conectar Claude y usar tus skills.',
+      'Aquí sale siempre tu siguiente video; con las flechas pasas al anterior o al siguiente, ' +
+      'y al lado tienes todos tus videos. Te enseñan a conectar Claude y usar tus skills.',
   },
   {
     ruta: '/perfil',

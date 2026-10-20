@@ -113,7 +113,6 @@ export class Videocurso implements OnInit {
     return bloques;
   });
 
-  readonly verTodos = signal(false);
   private readonly pantalla = viewChild<ElementRef<HTMLElement>>('pantalla');
   private readonly todasLasGuias = signal<GuiaEnLista[]>([]);
 
@@ -152,11 +151,9 @@ export class Videocurso implements OnInit {
     () => this.videos().length > 0 && this.videos().every((v) => this.vistos().includes(v.id)),
   );
 
-  /** Los tres que vienen después del de arriba, con su número en la lista. */
-  readonly despues = computed(() =>
-    this.videos()
-      .map((video, i) => ({ video, numero: i + 1 }))
-      .slice(this.indice() + 1, this.indice() + 4),
+  /** Cuántos de esta lista ya se pusieron, para la cabecera de «Tus videos». */
+  readonly cuantosVistos = computed(
+    () => this.videos().filter((v) => this.vistos().includes(v.id)).length,
   );
 
   readonly miniatura = computed(() => {
@@ -192,6 +189,9 @@ export class Videocurso implements OnInit {
   reproducir(): void {
     const video = this.actual();
     if (!video || !this.embed()) return;
+    // Se fija el que suena: si no, al apuntarlo como visto «tu siguiente»
+    // pasaría al próximo y el reproductor cambiaría de video a media función.
+    this.elegido.set(video.id);
     this.reproduciendo.set(true);
     if (!this.vistos().includes(video.id)) {
       this.vistos.update((lista) => [...lista, video.id]);
@@ -203,10 +203,21 @@ export class Videocurso implements OnInit {
     }
   }
 
-  /** Vuelve al video de antes, para repetirlo. */
+  /** Las flechas del reproductor. Si estaba sonando, el nuevo arranca solo. */
   anterior(): void {
-    const previo = this.videos()[this.indice() - 1];
-    if (previo) this.elegir(previo);
+    this.pasarA(this.indice() - 1);
+  }
+
+  siguiente(): void {
+    this.pasarA(this.indice() + 1);
+  }
+
+  private pasarA(posicion: number): void {
+    const video = this.videos()[posicion];
+    if (!video) return;
+    const sonaba = this.reproduciendo();
+    this.elegir(video);
+    if (sonaba) this.reproducir();
   }
 
   /** Repite el que está en pantalla desde el principio: el iframe se vuelve a montar. */
@@ -238,10 +249,13 @@ export class Videocurso implements OnInit {
     this.reproduciendo.set(false);
   }
 
-  /** Desde la lista entera: lo pone arriba y sube hasta él. */
+  /**
+   * Desde «Tus videos»: lo pone en el reproductor. En escritorio la lista va
+   * al lado y no se mueve nada; en el móvil va debajo y se sube hasta él.
+   */
   verDesdeLaLista(video: Tutorial): void {
     this.elegir(video);
-    this.pantalla()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.pantalla()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   alternarFallas(): void {

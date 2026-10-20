@@ -90,14 +90,21 @@
   border-color: var(--color-boton);
 }
 
-/* ── El video que le toca ── */
-.vc-siguiente {
+/* ── La sala: el video grande y, al lado, tus videos ──
+   La lista toma el alto del reproductor (altura 0 y mínimo 100 % en la
+   rejilla) y se desplaza dentro: así no estira la fila ni deja hueco. */
+.vc-sala {
   display: grid;
-  /* El video con tope: a todo el ancho de un monitor grande se comía la
-     pantalla y dejaba la ficha flotando en un hueco. */
-  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
-  gap: 28px;
-  align-items: center;
+  /* El video un poco más pequeño y la lista más ancha (pedido del 20-oct):
+     con 1fr / 380 px el video se comía la pantalla en un monitor grande. */
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.vc-reproductor {
+  padding: 0;
+  overflow: hidden;
 }
 
 .vc-pantalla {
@@ -107,7 +114,6 @@
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--noche-2);
-  border-radius: var(--radio);
 }
 
 .vc-pantalla img,
@@ -122,21 +128,22 @@
 
 /* Oscurece la miniatura para que el botón se vea encima. */
 .vc-pantalla img {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 .vc-play {
   position: relative;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   padding: 0 0 0 4px;
   color: var(--color-boton);
   background: var(--color-sobre-relleno);
   border: 0;
   border-radius: 50%;
   cursor: pointer;
+  box-shadow: var(--sombra);
   transition: transform var(--transicion);
 }
 
@@ -149,10 +156,61 @@
   opacity: 0.6;
 }
 
-.vc-ficha {
+/* Las flechas de anterior y siguiente, a media altura sobre el video. Van
+   encima también del reproductor de YouTube, que no tiene las suyas. */
+.vc-pasar {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
   display: grid;
-  gap: 10px;
-  justify-items: start;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0 0 3px;
+  font: inherit;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--color-sobre-relleno);
+  background: rgba(10, 17, 40, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: background var(--transicion);
+}
+
+.vc-pasar.anterior {
+  left: 14px;
+}
+
+.vc-pasar.siguiente {
+  right: 14px;
+}
+
+.vc-pasar:hover:not(:disabled) {
+  background: rgba(10, 17, 40, 0.85);
+}
+
+.vc-pasar:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* La ficha corta, debajo del video. */
+.vc-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 20px;
+}
+
+.vc-info-texto {
+  display: grid;
+  flex: 1 1 360px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .vc-rotulo {
@@ -165,29 +223,51 @@
   color: var(--color-primario);
 }
 
-.vc-ficha h3 {
+.vc-rotulo span {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-texto-suave);
+}
+
+.vc-info h3 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
 }
 
-/* De qué va el video, en tres líneas como mucho. */
+/* De qué va el video, en dos líneas como mucho. */
 .vc-entrada {
   display: -webkit-box;
-  max-width: 60ch;
   margin: 0;
   overflow: hidden;
   font-size: 14px;
   line-height: 1.55;
   color: var(--color-texto-suave);
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
-.vc-ficha .boton {
+.vc-info .boton {
   width: auto;
-  margin-top: 6px;
+}
+
+/* «Tus videos», al lado. */
+.vc-lateral {
+  display: flex;
+  flex-direction: column;
+  height: 0;
+  min-height: 100%;
+  padding-bottom: 8px;
+}
+
+.vc-lateral .vc-lista-cabecera {
+  align-items: center;
+}
+
+.vc-lateral .vc-lista-cabecera .vc-tenue {
+  font-size: 12.5px;
 }
 
 /* ── Las dos tarjetas de cada fila ── */
@@ -196,10 +276,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
-}
-
-.vc-par.solo {
-  grid-template-columns: minmax(0, 1fr);
 }
 
 .vc-lista-cabecera {
@@ -407,14 +483,14 @@ button.vc-salida {
   background: var(--color-exito-suave);
 }
 
-/* ── La lista entera, dentro de «Después de este» ──
-   Con tope de alto y su propio desplazamiento: trece videos no deben empujar
-   las guías de al lado ni el resto de la página. */
+/* ── La lista de «Tus videos» ──
+   Ocupa lo que queda de la tarjeta y se desplaza dentro. */
 .vc-todos {
-  max-height: 460px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  margin-right: -8px;
-  padding-right: 8px;
+  margin-right: -10px;
+  padding-right: 10px;
   overscroll-behavior: contain;
 }
 
@@ -439,6 +515,21 @@ button.vc-salida {
 
 .vc-todos .vc-fila:last-child {
   padding-bottom: 10px;
+}
+
+.vc-todos .vc-fila-titulo {
+  font-size: 13.5px;
+}
+
+/* ── Las guías, a todo el ancho y en dos columnas ── */
+.vc-guias-rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+}
+
+.vc-guias-rejilla .vc-fila:last-child {
+  padding-bottom: 12px;
 }
 
 .vc-fila.activo {
@@ -511,14 +602,32 @@ button.vc-salida {
 }
 
 /* En media pantalla o en el móvil, una columna. */
-@container (max-width: 720px) {
-  .vc-siguiente,
-  .vc-par {
+@container (max-width: 900px) {
+  /* La lista debajo del video, con su propio tope de alto. */
+  .vc-sala {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .vc-ficha h3 {
-    font-size: 19px;
+  .vc-lateral {
+    height: auto;
+    max-height: 420px;
+  }
+}
+
+@container (max-width: 720px) {
+  .vc-par,
+  .vc-guias-rejilla {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vc-info h3 {
+    font-size: 18px;
+  }
+
+  .vc-pasar {
+    width: 36px;
+    height: 36px;
+    font-size: 24px;
   }
 
   .vc-cabecera h2 {

@@ -31,131 +31,140 @@
   </div>
 }
 
-<!-- ── El video que le toca ────────────────────────────────────────────── -->
-<section class="tarjeta vc-siguiente" data-tour="ayuda-video">
-  <div class="vc-pantalla" #pantalla>
-    @if (reproduciendo() && embed()) {
-      <iframe
-        [src]="embed()"
-        [title]="actual()?.titulo ?? 'Video curso'"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen
-      ></iframe>
-    } @else {
-      @if (miniatura(); as imagen) {
-        <img [src]="imagen" alt="" loading="lazy" />
-      }
-      <button
-        type="button"
-        class="vc-play"
-        [disabled]="!embed()"
-        [attr.aria-label]="'Reproducir: ' + (actual()?.titulo ?? '')"
-        (click)="reproducir()"
-      >
-        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
-          <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
-        </svg>
-      </button>
-    }
-  </div>
-
-  <div class="vc-ficha">
-    @if (cargando()) {
-      <p class="vc-tenue">Cargando los videos…</p>
-    } @else if (actual(); as video) {
-      <p class="vc-rotulo">{{ todosVistos() ? 'Ya los viste todos · repasa' : 'Tu siguiente video' }}</p>
-      <h3>{{ video.titulo }}</h3>
-      @if (video.entrada) {
-        <p class="vc-entrada">{{ video.entrada }}</p>
-      }
-      <p class="vc-tenue">
-        Video {{ indice() + 1 }} de {{ videos().length }}
-        @if (video.duracion) {
-          · {{ duracion(video.duracion) }}
+<!-- ── La sala: el video grande y, al lado, tus videos ────────────────────
+     Como una plataforma de cursos: el reproductor manda, con flechas para
+     pasar de video encima, una ficha corta debajo, y la lista entera a la
+     derecha con su propio desplazamiento (21-oct). -->
+<div class="vc-sala">
+  <section class="tarjeta vc-reproductor" data-tour="ayuda-video">
+    <div class="vc-pantalla" #pantalla>
+      @if (reproduciendo() && embed()) {
+        <iframe
+          [src]="embed()"
+          [title]="actual()?.titulo ?? 'Video curso'"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      } @else {
+        @if (miniatura(); as imagen) {
+          <img [src]="imagen" alt="" loading="lazy" />
         }
-      </p>
-      <div class="vc-botones">
-        @if (!embed()) {
-          <p class="vc-tenue">Este video todavía no está grabado.</p>
-        } @else if (reproduciendo()) {
-          <button type="button" class="boton" (click)="repetir()">↺ Repetir video</button>
-        } @else {
-          <button type="button" class="boton" (click)="reproducir()">Ver video</button>
-        }
-        @if (indice() > 0) {
-          <button type="button" class="vc-enlace" (click)="anterior()">← Ver el anterior</button>
-        }
-        @if (todosVistos()) {
-          <button type="button" class="vc-enlace" (click)="empezarDeCero()">Empezar de cero</button>
-        }
-      </div>
-    } @else {
-      <p class="vc-tenue">Todavía no hay videos publicados.</p>
-    }
-  </div>
-</section>
-
-<!-- ── Lo que viene después y las guías ─────────────────────────────────── -->
-<div class="vc-par" [class.solo]="!conGuias()">
-  <!-- «Después de este» y la lista entera son la misma tarjeta: «Ver los N
-       videos» la despliega ahí mismo, por bloques y con lo ya visto marcado. -->
-  <section class="tarjeta vc-lista" [class.abierta]="verTodos()">
-    <div class="vc-lista-cabecera">
-      <h3>{{ verTodos() ? 'Los ' + videos().length + ' videos' : 'Después de este' }}</h3>
-      <button type="button" class="vc-enlace" [attr.aria-expanded]="verTodos()" (click)="verTodos.set(!verTodos())">
-        {{ verTodos() ? 'Ver solo los siguientes' : 'Ver los ' + videos().length + ' videos' }}
-      </button>
-    </div>
-    @if (verTodos()) {
-      <div class="vc-todos">
-        @for (bloque of bloques(); track $index) {
-          @if (bloque.nombre) {
-            <p class="vc-bloque">{{ bloque.nombre }}</p>
-          }
-          @for (fila of bloque.videos; track fila.video.id) {
-            <button
-              type="button"
-              class="vc-fila"
-              [class.activo]="fila.video.id === actual()?.id"
-              [attr.aria-current]="fila.video.id === actual()?.id ? 'true' : null"
-              (click)="verDesdeLaLista(fila.video)"
-            >
-              <span class="vc-numero" [class.hecho]="visto(fila.video)">
-                {{ visto(fila.video) ? '✓' : fila.numero }}
-              </span>
-              <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
-              @if (fila.video.duracion) {
-                <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
-              }
-            </button>
-          }
-        }
-      </div>
-    } @else {
-      @for (fila of despues(); track fila.video.id) {
-        <button type="button" class="vc-fila" (click)="elegir(fila.video)">
-          <span class="vc-numero" [class.hecho]="visto(fila.video)">
-            {{ visto(fila.video) ? '✓' : fila.numero }}
-          </span>
-          <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
-          @if (fila.video.duracion) {
-            <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
-          }
+        <button
+          type="button"
+          class="vc-play"
+          [disabled]="!embed()"
+          [attr.aria-label]="'Reproducir: ' + (actual()?.titulo ?? '')"
+          (click)="reproducir()"
+        >
+          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+            <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+          </svg>
         </button>
-      } @empty {
-        <p class="vc-tenue">
-          {{ cargando() ? 'Cargando…' : 'Es el último. Con «Ver los ' + videos().length + ' videos» puedes repasar cualquiera.' }}
-        </p>
       }
-    }
+      @if (videos().length > 1) {
+        <button
+          type="button"
+          class="vc-pasar anterior"
+          aria-label="Video anterior"
+          title="Video anterior"
+          [disabled]="indice() === 0"
+          (click)="anterior()"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="vc-pasar siguiente"
+          aria-label="Siguiente video"
+          title="Siguiente video"
+          [disabled]="indice() >= videos().length - 1"
+          (click)="siguiente()"
+        >
+          ›
+        </button>
+      }
+    </div>
+
+    <div class="vc-info">
+      @if (cargando()) {
+        <p class="vc-tenue">Cargando los videos…</p>
+      } @else if (actual(); as video) {
+        <div class="vc-info-texto">
+          <p class="vc-rotulo">
+            {{ todosVistos() ? 'Ya los viste todos · repasa' : 'Tu siguiente video' }}
+            <span>· Video {{ indice() + 1 }} de {{ videos().length }}
+              @if (video.duracion) {
+                · {{ duracion(video.duracion) }}
+              }
+            </span>
+          </p>
+          <h3>{{ video.titulo }}</h3>
+          @if (video.entrada) {
+            <p class="vc-entrada">{{ video.entrada }}</p>
+          }
+        </div>
+        <div class="vc-botones">
+          @if (!embed()) {
+            <p class="vc-tenue">Este video todavía no está grabado.</p>
+          } @else if (reproduciendo()) {
+            <button type="button" class="boton secundario" (click)="repetir()">↺ Repetir</button>
+          } @else {
+            <button type="button" class="boton" (click)="reproducir()">Ver video</button>
+          }
+          @if (todosVistos()) {
+            <button type="button" class="vc-enlace" (click)="empezarDeCero()">Empezar de cero</button>
+          }
+        </div>
+      } @else {
+        <p class="vc-tenue">Todavía no hay videos publicados.</p>
+      }
+    </div>
   </section>
 
-  @if (conGuias()) {
-    <section class="tarjeta vc-lista" data-tour="ayuda-guias">
-      <div class="vc-lista-cabecera">
-        <h3>Guías en PDF</h3>
-        <a routerLink="/guias-de-instalacion">Ver todas</a>
-      </div>
+  <!-- Tus videos: la lista entera, por bloques, con lo visto marcado ✓ y el
+       que está en pantalla resaltado. -->
+  <section class="tarjeta vc-lateral">
+    <div class="vc-lista-cabecera">
+      <h3>Tus videos</h3>
+      <span class="vc-tenue">{{ cuantosVistos() }} de {{ videos().length }} vistos</span>
+    </div>
+    <div class="vc-todos">
+      @for (bloque of bloques(); track $index) {
+        @if (bloque.nombre) {
+          <p class="vc-bloque">{{ bloque.nombre }}</p>
+        }
+        @for (fila of bloque.videos; track fila.video.id) {
+          <button
+            type="button"
+            class="vc-fila"
+            [class.activo]="fila.video.id === actual()?.id"
+            [attr.aria-current]="fila.video.id === actual()?.id ? 'true' : null"
+            (click)="verDesdeLaLista(fila.video)"
+          >
+            <span class="vc-numero" [class.hecho]="visto(fila.video)">
+              {{ visto(fila.video) ? '✓' : fila.numero }}
+            </span>
+            <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
+            @if (fila.video.duracion) {
+              <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
+            }
+          </button>
+        }
+      } @empty {
+        <p class="vc-tenue">{{ cargando() ? 'Cargando…' : 'Todavía no hay videos publicados.' }}</p>
+      }
+    </div>
+  </section>
+</div>
+
+<!-- ── Las guías, a todo el ancho y en dos columnas ─────────────────────── -->
+@if (conGuias()) {
+  <section class="tarjeta vc-lista vc-guias" data-tour="ayuda-guias">
+    <div class="vc-lista-cabecera">
+      <h3>Guías en PDF</h3>
+      <a routerLink="/guias-de-instalacion">Ver todas</a>
+    </div>
+    <div class="vc-guias-rejilla">
       @for (guia of guias(); track guia.enlace) {
         <div class="vc-fila">
           <span class="vc-pdf" aria-hidden="true">PDF</span>
@@ -181,9 +190,9 @@
       } @empty {
         <p class="vc-tenue">{{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas.' }}</p>
       }
-    </section>
-  }
-</div>
+    </div>
+  </section>
+}
 
 <!-- ── Cuando algo falla ────────────────────────────────────────────────── -->
 <div class="vc-par">
