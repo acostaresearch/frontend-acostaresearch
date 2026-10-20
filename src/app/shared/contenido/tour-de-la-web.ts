@@ -266,25 +266,6 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
 
     // ── Lo que hace falta DESPUÉS de comprar ───────────────────────────────
     {
-      seccion: 'Los videos',
-      ruta: '/tutoriales',
-      ancla: '[data-tour="videos"]',
-      titulo: 'Los videos guía',
-      texto:
-        'Del correo de compra al primer capítulo, en video. Es la página a la que vuelve quien ' +
-        'compró y no sabe seguir. Con tu sesión abierta solo ves los de lo que compraste; si ' +
-        'tienes más de un producto, arriba sale una pestaña por cada uno.',
-    },
-    {
-      seccion: 'Los videos',
-      ruta: '/tutoriales',
-      ancla: '#fallas',
-      titulo: 'Cuando algo no sale',
-      texto:
-        'Lo que le pasa a todo el mundo alguna vez, con su arreglo. Míralo aquí antes de pensar ' +
-        'que se rompió algo.',
-    },
-    {
       seccion: 'Guías en PDF',
       ruta: '/guias-de-instalacion',
       ancla: '[data-tour="guias-pdf"]',

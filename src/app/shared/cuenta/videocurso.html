@@ -13,9 +13,27 @@
   </div>
 </header>
 
+<!-- Una pestaña por producto con videos propios, solo con dos o más. Lo que es
+     de todos (conectar Claude) sale en cada una. -->
+@if (pestanas().length > 1) {
+  <div class="vc-productos" role="group" aria-label="Videos por producto">
+    @for (pestana of pestanas(); track pestana.codigo) {
+      <button
+        type="button"
+        class="vc-producto"
+        [class.activo]="producto() === pestana.codigo"
+        [attr.aria-pressed]="producto() === pestana.codigo"
+        (click)="elegirProducto(pestana.codigo)"
+      >
+        {{ pestana.nombre }}
+      </button>
+    }
+  </div>
+}
+
 <!-- ── El video que le toca ────────────────────────────────────────────── -->
 <section class="tarjeta vc-siguiente" data-tour="ayuda-video">
-  <div class="vc-pantalla">
+  <div class="vc-pantalla" #pantalla>
     @if (reproduciendo() && embed()) {
       <iframe
         [src]="embed()"
@@ -56,37 +74,79 @@
           · {{ duracion(video.duracion) }}
         }
       </p>
-      @if (embed()) {
-        <button type="button" class="boton" (click)="reproducir()">Ver video</button>
-      } @else {
-        <p class="vc-tenue">Este video todavía no está grabado.</p>
-      }
+      <div class="vc-botones">
+        @if (!embed()) {
+          <p class="vc-tenue">Este video todavía no está grabado.</p>
+        } @else if (reproduciendo()) {
+          <button type="button" class="boton" (click)="repetir()">↺ Repetir video</button>
+        } @else {
+          <button type="button" class="boton" (click)="reproducir()">Ver video</button>
+        }
+        @if (indice() > 0) {
+          <button type="button" class="vc-enlace" (click)="anterior()">← Ver el anterior</button>
+        }
+        @if (todosVistos()) {
+          <button type="button" class="vc-enlace" (click)="empezarDeCero()">Empezar de cero</button>
+        }
+      </div>
     } @else {
       <p class="vc-tenue">Todavía no hay videos publicados.</p>
-      <a class="boton" routerLink="/tutoriales">Ir a los tutoriales</a>
     }
   </div>
 </section>
 
 <!-- ── Lo que viene después y las guías ─────────────────────────────────── -->
 <div class="vc-par" [class.solo]="!conGuias()">
-  <section class="tarjeta vc-lista">
+  <!-- «Después de este» y la lista entera son la misma tarjeta: «Ver los N
+       videos» la despliega ahí mismo, por bloques y con lo ya visto marcado. -->
+  <section class="tarjeta vc-lista" [class.abierta]="verTodos()">
     <div class="vc-lista-cabecera">
-      <h3>Después de este</h3>
-      <a routerLink="/tutoriales">Ver los {{ videos().length }} videos</a>
-    </div>
-    @for (fila of despues(); track fila.video.id) {
-      <button type="button" class="vc-fila" (click)="elegir(fila.video)">
-        <span class="vc-numero">{{ fila.numero }}</span>
-        <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
-        @if (fila.video.duracion) {
-          <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
-        }
+      <h3>{{ verTodos() ? 'Los ' + videos().length + ' videos' : 'Después de este' }}</h3>
+      <button type="button" class="vc-enlace" [attr.aria-expanded]="verTodos()" (click)="verTodos.set(!verTodos())">
+        {{ verTodos() ? 'Ver solo los siguientes' : 'Ver los ' + videos().length + ' videos' }}
       </button>
-    } @empty {
-      <p class="vc-tenue">
-        {{ cargando() ? 'Cargando…' : 'Es el último. En la lista completa puedes repasar cualquiera.' }}
-      </p>
+    </div>
+    @if (verTodos()) {
+      <div class="vc-todos">
+        @for (bloque of bloques(); track $index) {
+          @if (bloque.nombre) {
+            <p class="vc-bloque">{{ bloque.nombre }}</p>
+          }
+          @for (fila of bloque.videos; track fila.video.id) {
+            <button
+              type="button"
+              class="vc-fila"
+              [class.activo]="fila.video.id === actual()?.id"
+              [attr.aria-current]="fila.video.id === actual()?.id ? 'true' : null"
+              (click)="verDesdeLaLista(fila.video)"
+            >
+              <span class="vc-numero" [class.hecho]="visto(fila.video)">
+                {{ visto(fila.video) ? '✓' : fila.numero }}
+              </span>
+              <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
+              @if (fila.video.duracion) {
+                <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
+              }
+            </button>
+          }
+        }
+      </div>
+    } @else {
+      @for (fila of despues(); track fila.video.id) {
+        <button type="button" class="vc-fila" (click)="elegir(fila.video)">
+          <span class="vc-numero" [class.hecho]="visto(fila.video)">
+            {{ visto(fila.video) ? '✓' : fila.numero }}
+          </span>
+          <span class="vc-fila-titulo">{{ fila.video.titulo }}</span>
+          @if (fila.video.duracion) {
+            <span class="vc-fila-dato">{{ duracion(fila.video.duracion) }}</span>
+          }
+        </button>
+      } @empty {
+        <p class="vc-tenue">
+          {{ cargando() ? 'Cargando…' : 'Es el último. Con «Ver los ' + videos().length + ' videos» puedes repasar cualquiera.' }}
+        </p>
+      }
     }
   </section>
 
@@ -127,7 +187,13 @@
 
 <!-- ── Cuando algo falla ────────────────────────────────────────────────── -->
 <div class="vc-par">
-  <a class="tarjeta vc-salida" routerLink="/tutoriales" fragment="fallas" data-tour="ayuda-fallas">
+  <button
+    type="button"
+    class="tarjeta vc-salida"
+    data-tour="ayuda-fallas"
+    [attr.aria-expanded]="verFallas()"
+    (click)="alternarFallas()"
+  >
     <span class="vc-salida-icono aviso" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="18" height="18">
         <path
@@ -143,7 +209,8 @@
       <strong>¿Algo no funciona?</strong>
       <span>Soluciones a lo más común</span>
     </span>
-  </a>
+    <span class="vc-flecha" aria-hidden="true">{{ verFallas() ? '–' : '+' }}</span>
+  </button>
 
   <!-- Una persona al otro lado, no una página de ayuda más. -->
   <a
@@ -170,3 +237,19 @@
     </span>
   </a>
 </div>
+
+<!-- Los tropiezos, aquí mismo. Ver `verFallas`. -->
+@if (verFallas()) {
+  <section class="tarjeta vc-fallas" #fallas>
+    <div class="vc-lista-cabecera">
+      <h3>Lo que le pasa a todo el mundo alguna vez</h3>
+      <button type="button" class="vc-enlace" (click)="verFallas.set(false)">Cerrar</button>
+    </div>
+    @for (tropiezo of tropiezos; track tropiezo.problema; let primero = $first) {
+      <details [open]="primero">
+        <summary>{{ tropiezo.problema }}</summary>
+        <p>{{ tropiezo.solucion }}</p>
+      </details>
+    }
+  </section>
+}

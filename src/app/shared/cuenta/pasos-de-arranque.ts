@@ -60,7 +60,7 @@ export class PasosDeArranque {
           'Copia tu URL de aquí abajo y pégala en Claude: Configuración → Conectores → Añadir ' +
           'personalizado. Se hace una vez.',
         hecho: p.conectado,
-        accion: { texto: 'Ver cómo se hace', ruta: '/tutoriales' },
+        accion: { texto: 'Ver cómo se hace', ruta: '/perfil/ayuda' },
       },
       {
         titulo: 'Trabajaste tu primer capítulo',
@@ -68,7 +68,7 @@ export class PasosDeArranque {
           'Escríbele a Claude «trabajemos el capítulo I con el método» y respóndele con tu ' +
           'tema. Sale con su entregable en Word.',
         hecho: p.capitulo,
-        accion: { texto: 'Ver un capítulo entero', ruta: '/tutoriales' },
+        accion: { texto: 'Ver un capítulo entero', ruta: '/perfil/ayuda' },
       },
     ];
   });

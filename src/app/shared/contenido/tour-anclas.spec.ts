@@ -61,7 +61,6 @@ describe('Anclas del recorrido', () => {
     '/quien-soy',
     '/preguntas',
     '/planes',
-    '/tutoriales',
     '/guias-de-instalacion',
     '/perfil',
     '/admin/resumen',

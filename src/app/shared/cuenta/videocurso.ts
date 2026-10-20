@@ -1,13 +1,29 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
 import { Guia, GuiaService } from '../../core/services/guia.service';
 import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
-import { loQueLeToca } from '../contenido/productos-de-ayuda';
+import {
+  loQueLeToca,
+  pestanaElegida,
+  pestanasDeProducto,
+  saleEn,
+} from '../contenido/productos-de-ayuda';
+import { TROPIEZOS } from '../contenido/tutoriales';
 
 /** Una guía como se pinta en la lista: su nombre, su peso y dónde se baja. */
 interface GuiaEnLista {
@@ -34,8 +50,14 @@ const CLAVE_VISTOS = 'videocurso-vistos';
  * apunta en `localStorage` y no en el servidor: es una comodidad, no un
  * registro, y si el navegador no deja guardar se empieza por el primero.
  *
- * Los videos y las guías son los mismos de /tutoriales y /guias-de-instalacion,
- * con el mismo filtro: con algo comprado, solo los de lo suyo más los de todos.
+ * Los videos y las guías son los mismos de /guias-de-instalacion y del video
+ * al lado, con el mismo filtro: con algo comprado, solo los de lo suyo más los
+ * de todos.
+ *
+ * DESDE EL 20-OCT ES LA ÚNICA PÁGINA DE VIDEOS: /tutoriales se retiró y
+ * redirige aquí. Por eso trae lo que tenía aquella: una pestaña por producto
+ * (con dos o más; `?producto=tesis` elige una), la lista entera por bloques
+ * («Ver los N videos») y los tropiezos por escrito («¿Algo no funciona?»).
  */
 @Component({
   selector: 'app-videocurso',
@@ -48,6 +70,7 @@ export class Videocurso implements OnInit {
   private readonly tutoriales = inject(TutorialService);
   private readonly guiasApi = inject(GuiaService);
   private readonly auth = inject(AuthService);
+  private readonly ruta = inject(ActivatedRoute);
 
   /** Las guías solo con acceso vigente: ver `MiConector.tieneAccesoVigente`. */
   readonly conGuias = input(true);
@@ -59,7 +82,39 @@ export class Videocurso implements OnInit {
   readonly whatsappTexto = Videocurso.telefonoDe(environment.whatsappUrl);
 
   readonly cargando = signal(true);
-  readonly videos = signal<Tutorial[]>([]);
+  /** Todo lo que le toca, de todos sus productos. */
+  private readonly publicados = signal<Tutorial[]>([]);
+  private readonly pedido = signal<string | null>(
+    this.ruta.snapshot.queryParamMap.get('producto'),
+  );
+
+  /** Las pestañas, igual que en `SalaDeVideos`: solo con dos productos o más. */
+  readonly pestanas = computed(() => pestanasDeProducto(this.publicados()));
+  readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
+
+  /** Los de la pestaña elegida más los que son de todos. */
+  readonly videos = computed(() => {
+    const producto = this.producto();
+    const lista = this.publicados();
+    return producto ? lista.filter((v) => saleEn(v.productos, producto)) : lista;
+  });
+
+  /**
+   * La lista entera, por bloques: los videos seguidos con el mismo grupo van
+   * juntos, como en `SalaDeVideos.grupos`.
+   */
+  readonly bloques = computed(() => {
+    const bloques: { nombre: string; videos: { video: Tutorial; numero: number }[] }[] = [];
+    this.videos().forEach((video, i) => {
+      const ultimo = bloques.at(-1);
+      if (ultimo && ultimo.nombre === video.grupo) ultimo.videos.push({ video, numero: i + 1 });
+      else bloques.push({ nombre: video.grupo, videos: [{ video, numero: i + 1 }] });
+    });
+    return bloques;
+  });
+
+  readonly verTodos = signal(false);
+  private readonly pantalla = viewChild<ElementRef<HTMLElement>>('pantalla');
   private readonly todasLasGuias = signal<GuiaEnLista[]>([]);
 
   /** Las cuatro primeras: el resto está en «Ver todas». */
@@ -71,6 +126,15 @@ export class Videocurso implements OnInit {
   private readonly elegido = signal<string | null>(null);
 
   readonly reproduciendo = signal(false);
+
+  /**
+   * «¿Algo no funciona?» se abre aquí mismo y no en /tutoriales#fallas: quien
+   * tiene el problema no tiene por qué salir de su panel (pedido del 20-oct).
+   * Son los mismos tropiezos de la página de tutoriales.
+   */
+  readonly tropiezos = TROPIEZOS;
+  readonly verFallas = signal(false);
+  private readonly fallas = viewChild<ElementRef<HTMLElement>>('fallas');
 
   /** La posición del video grande en la lista. */
   readonly indice = computed(() => {
@@ -119,7 +183,7 @@ export class Videocurso implements OnInit {
       guias,
       mios: this.auth.isAuthenticated() ? this.tutoriales.misProductos() : of(null),
     }).subscribe(({ videos, guias, mios }) => {
-      this.videos.set(loQueLeToca(videos, mios));
+      this.publicados.set(loQueLeToca(videos, mios));
       this.todasLasGuias.set(loQueLeToca(guias, mios));
       this.cargando.set(false);
     });
@@ -136,6 +200,56 @@ export class Videocurso implements OnInit {
       } catch {
         // Sin dónde guardar, la próxima vez vuelve a salir este. No pasa nada.
       }
+    }
+  }
+
+  /** Vuelve al video de antes, para repetirlo. */
+  anterior(): void {
+    const previo = this.videos()[this.indice() - 1];
+    if (previo) this.elegir(previo);
+  }
+
+  /** Repite el que está en pantalla desde el principio: el iframe se vuelve a montar. */
+  repetir(): void {
+    this.reproduciendo.set(false);
+    setTimeout(() => this.reproducir());
+  }
+
+  /** Olvida lo visto: «tu siguiente» vuelve a ser el primero. */
+  empezarDeCero(): void {
+    this.vistos.set([]);
+    this.elegido.set(null);
+    this.reproduciendo.set(false);
+    try {
+      localStorage.removeItem(CLAVE_VISTOS);
+    } catch {
+      // Sin dónde guardar, ya estaba en cero.
+    }
+  }
+
+  /** Si ese video ya se puso en este navegador. Para la marca de la lista. */
+  visto(video: Tutorial): boolean {
+    return this.vistos().includes(video.id);
+  }
+
+  elegirProducto(codigo: string): void {
+    this.pedido.set(codigo);
+    this.elegido.set(null);
+    this.reproduciendo.set(false);
+  }
+
+  /** Desde la lista entera: lo pone arriba y sube hasta él. */
+  verDesdeLaLista(video: Tutorial): void {
+    this.elegir(video);
+    this.pantalla()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  alternarFallas(): void {
+    this.verFallas.update((v) => !v);
+    if (this.verFallas()) {
+      setTimeout(() =>
+        this.fallas()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      );
     }
   }
 

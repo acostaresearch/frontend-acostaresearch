@@ -130,13 +130,13 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
   tutoriales: {
     titulo: 'Tutoriales y guías',
     nota:
-      'Los videos de acostaresearch.com/tutoriales y los PDF de ' +
+      'Los videos del video curso del perfil (/perfil/ayuda) y los PDF de ' +
       'acostaresearch.com/guias-de-instalacion. Se publican al instante, sin desplegar.',
   },
   guias: {
     titulo: 'Tutoriales y guías',
     nota:
-      'Los videos de acostaresearch.com/tutoriales y los PDF de ' +
+      'Los videos del video curso del perfil (/perfil/ayuda) y los PDF de ' +
       'acostaresearch.com/guias-de-instalacion. Se publican al instante, sin desplegar.',
   },
   admins: {

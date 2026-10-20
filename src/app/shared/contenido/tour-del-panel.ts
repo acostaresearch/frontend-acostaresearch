@@ -70,8 +70,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="ayuda-fallas"]',
     titulo: 'Si algo no funciona',
     texto:
-      'Aquí están por escrito las soluciones a lo que le pasa a casi todo el mundo: se leen en ' +
-      'un minuto, sin ver un video entero.',
+      'Púlsalo y se abren aquí mismo las soluciones a lo que le pasa a casi todo el mundo: se ' +
+      'leen en un minuto, sin ver un video entero.',
   },
   {
     ruta: '/perfil',

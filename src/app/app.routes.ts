@@ -74,12 +74,15 @@ export const routes: Routes = [
   // objeciones viven ahora debajo de las demostraciones. La ruta se conserva
   // para no romper los enlaces ya repartidos.
   { path: 'como-funciona', pathMatch: 'full', redirectTo: 'en-accion' },
-  // Pública a propósito: la alcanza quien compró y no ha vuelto a entrar a la
-  // web, que es justo quien necesita el primer video. Ver la nota del componente.
+  // /tutoriales se retiró el 20-oct: los videos viven solo en el video curso
+  // del perfil (`Videocurso`). La ruta se queda para los correos de compra y
+  // los marcadores ya repartidos, con su `?producto=`; sin sesión, el
+  // `authGuard` del perfil manda a entrar y luego vuelve.
   {
     path: 'tutoriales',
-    title: 'Cómo usar tu conector · Acosta Research',
-    loadComponent: () => import('./features/tutoriales/tutoriales').then((m) => m.Tutoriales),
+    pathMatch: 'full',
+    redirectTo: ({ queryParams }) =>
+      inject(Router).createUrlTree([rutaDelPerfil('ayuda')], { queryParams: queryParams as Params }),
   },
   // Las guías en PDF, para elegir cuál bajar. Pública como los tutoriales. No
   // se llama «guias» a secas porque /guias/ ya es la carpeta del PDF de siempre

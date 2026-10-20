@@ -15,7 +15,7 @@
 
         <!-- Las dos salidas para quien no quiere leer: el video o una persona. -->
         <div class="salidas">
-          <a class="salida" routerLink="/tutoriales">
+          <a class="salida" routerLink="/perfil/ayuda">
             <svg class="salida-icono video" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M5 3.5v9L12.5 8z" fill="currentColor" />
             </svg>
@@ -41,7 +41,7 @@
       } @else if (tarjetas().length === 0) {
         <p class="vacio">
           Todavía no hay guías publicadas. Mientras tanto, los
-          <a routerLink="/tutoriales">videos</a> enseñan lo mismo.
+          <a routerLink="/perfil/ayuda">videos</a> enseñan lo mismo.
         </p>
       } @else {
         @if (deLoTuyo()) {
@@ -89,7 +89,7 @@
                   @if (guia.peso) {
                     {{ guia.peso }} ·
                   }
-                  <a routerLink="/tutoriales">Ver el video</a>
+                  <a routerLink="/perfil/ayuda">Ver el video</a>
                 </p>
               </div>
 

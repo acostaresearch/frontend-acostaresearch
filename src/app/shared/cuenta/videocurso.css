@@ -58,6 +58,38 @@
   color: var(--color-texto-suave);
 }
 
+/* ── Pestañas por producto ── */
+.vc-productos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vc-producto {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color var(--transicion),
+    background var(--transicion);
+}
+
+.vc-producto:hover {
+  border-color: var(--color-primario);
+}
+
+.vc-producto.activo {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+  border-color: var(--color-boton);
+}
+
 /* ── El video que le toca ── */
 .vc-siguiente {
   display: grid;
@@ -284,6 +316,34 @@ button.vc-fila:hover .vc-fila-titulo {
   border-color: var(--color-primario);
 }
 
+/* «Ver video» y, al lado, las salidas para repetir. */
+.vc-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.vc-botones .boton {
+  margin-top: 0;
+}
+
+.vc-enlace {
+  padding: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.vc-enlace:hover {
+  text-decoration: underline;
+}
+
 /* ── Cuando algo falla ── */
 .vc-salida {
   display: flex;
@@ -293,6 +353,20 @@ button.vc-fila:hover .vc-fila-titulo {
   color: inherit;
   text-decoration: none;
   transition: border-color var(--transicion);
+}
+
+button.vc-salida {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vc-flecha {
+  margin-left: auto;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-primario);
 }
 
 .vc-salida:hover {
@@ -331,6 +405,109 @@ button.vc-fila:hover .vc-fila-titulo {
 .vc-salida-icono.exito {
   color: var(--color-exito);
   background: var(--color-exito-suave);
+}
+
+/* ── La lista entera, dentro de «Después de este» ──
+   Con tope de alto y su propio desplazamiento: trece videos no deben empujar
+   las guías de al lado ni el resto de la página. */
+.vc-todos {
+  max-height: 460px;
+  overflow-y: auto;
+  margin-right: -8px;
+  padding-right: 8px;
+  overscroll-behavior: contain;
+}
+
+.vc-bloque {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 12px 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+}
+
+.vc-todos .vc-fila {
+  padding: 10px 8px;
+  border-radius: var(--radio-sm);
+}
+
+.vc-todos .vc-fila:last-child {
+  padding-bottom: 10px;
+}
+
+.vc-fila.activo {
+  background: var(--color-primario-suave);
+  border-bottom-color: transparent;
+}
+
+.vc-fila.activo .vc-fila-titulo {
+  font-weight: 600;
+  color: var(--color-primario);
+}
+
+.vc-fila.activo .vc-numero {
+  color: var(--color-sobre-boton);
+  background: var(--color-boton);
+  border-color: var(--color-boton);
+}
+
+.vc-numero.hecho {
+  color: var(--color-exito);
+  background: var(--color-exito-suave);
+  border-color: transparent;
+}
+
+/* Los tropiezos, abiertos aquí mismo. */
+.vc-fallas details {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.vc-fallas details:last-child {
+  border-bottom: 0;
+}
+
+.vc-fallas summary {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 14px 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.vc-fallas summary::-webkit-details-marker {
+  display: none;
+}
+
+.vc-fallas summary::after {
+  content: '+';
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-primario);
+}
+
+.vc-fallas details[open] summary {
+  color: var(--color-primario);
+}
+
+.vc-fallas details[open] summary::after {
+  content: '–';
+}
+
+.vc-fallas details p {
+  margin: 0;
+  padding: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
 }
 
 /* En media pantalla o en el móvil, una columna. */
