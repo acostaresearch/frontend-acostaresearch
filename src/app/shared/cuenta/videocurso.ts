@@ -118,16 +118,29 @@ export class Videocurso implements OnInit {
   private readonly todasLasGuias = signal<GuiaEnLista[]>([]);
 
   /**
+   * Las guías del producto elegido arriba, igual que los videos: el producto
+   * decide a quién le sale; el grupo, solo en qué bloque (pedido del 20-oct).
+   */
+  private readonly guiasDelProducto = computed(() => {
+    const producto = this.producto();
+    const lista = this.todasLasGuias();
+    return producto ? lista.filter((g) => saleEn(g.productos, producto)) : lista;
+  });
+
+  /**
    * Por bloques (instalación, herramientas), cada uno en su columna y con
-   * cuatro como mucho: el resto está en «Ver todas». Sin bloques vacíos.
+   * cuatro como mucho: el resto está en «Ver todas». Salen siempre los dos,
+   * aunque uno esté vacío, para que se vea que existen.
    */
   readonly bloquesDeGuias = computed(() =>
-    GRUPOS_DE_GUIA.map((g) => ({
-      ...g,
-      guias: this.todasLasGuias()
-        .filter((guia) => guia.grupo === g.codigo)
-        .slice(0, 4),
-    })).filter((b) => b.guias.length > 0),
+    this.guiasDelProducto().length === 0
+      ? []
+      : GRUPOS_DE_GUIA.map((g) => ({
+          ...g,
+          guias: this.guiasDelProducto()
+            .filter((guia) => guia.grupo === g.codigo)
+            .slice(0, 4),
+        })),
   );
 
   private readonly vistos = signal<string[]>(Videocurso.leerVistos());

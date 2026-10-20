@@ -151,6 +151,11 @@
   font-weight: 700;
 }
 
+.fila.vacia {
+  color: var(--color-texto-suave);
+  font-size: 14px;
+}
+
 .bloque-titulo:first-child {
   margin-top: 8px;
 }

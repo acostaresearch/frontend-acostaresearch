@@ -162,7 +162,9 @@
   <section class="tarjeta vc-lista vc-guias" data-tour="ayuda-guias">
     <div class="vc-lista-cabecera">
       <h3>Guías en PDF</h3>
-      <a routerLink="/guias-de-instalacion">Ver todas</a>
+      <a routerLink="/guias-de-instalacion" [queryParams]="producto() ? { producto: producto() } : {}">
+        Ver todas
+      </a>
     </div>
     <!-- Un bloque por columna: de instalación y de herramientas. -->
     <div class="vc-guias-rejilla">
@@ -191,10 +193,14 @@
                 </svg>
               </a>
             </div>
+          } @empty {
+            <p class="vc-tenue">Todavía no hay guías de este grupo para este producto.</p>
           }
         </div>
       } @empty {
-        <p class="vc-tenue">{{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas.' }}</p>
+        <p class="vc-tenue">
+          {{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas para este producto.' }}
+        </p>
       }
     </div>
   </section>
