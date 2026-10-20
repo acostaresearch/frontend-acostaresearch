@@ -4,6 +4,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
+import { GrupoDeGuia, grupoConocido } from './guia.service';
 
 /** Un video de la página de tutoriales. */
 export interface Tutorial {
@@ -22,6 +23,8 @@ export interface Tutorial {
   videoUrl: string;
   /** A qué productos les sirve (códigos de `productos-de-ayuda.ts`). Vacío = a todos. */
   productos: string[];
+  /** La pestaña del video curso: la de su producto, instalación o herramientas (21-oct). */
+  apartado: GrupoDeGuia;
   active: boolean;
 }
 
@@ -36,13 +39,18 @@ export interface TutorialEnvio {
   puntos: string;
   videoUrl: string;
   productos: string[];
+  apartado: GrupoDeGuia;
   active: boolean;
 }
 
-/** Un servidor anterior a separar por producto no manda la lista: vacía = en todos. */
+/**
+ * Un servidor anterior a separar por producto no manda la lista: vacía = en
+ * todos. Ni la pestaña: entonces es la de su producto.
+ */
 const conProductos = (tutorial: Tutorial): Tutorial => ({
   ...tutorial,
   productos: tutorial.productos ?? [],
+  apartado: grupoConocido(tutorial.apartado, 'producto'),
 });
 
 @Injectable({ providedIn: 'root' })

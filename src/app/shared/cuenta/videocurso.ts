@@ -18,10 +18,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { GRUPOS_DE_GUIA, GrupoDeGuia, Guia, GuiaService } from '../../core/services/guia.service';
 import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
 import {
+  APARTADOS_DEL_CURSO,
+  EnApartado,
+  PRODUCTOS_DE_AYUDA,
   loQueLeToca,
-  pestanaElegida,
-  pestanasDeProducto,
-  saleEn,
+  pestanasDelCurso,
+  saleEnLaPestana,
 } from '../contenido/productos-de-ayuda';
 import { TROPIEZOS } from '../contenido/tutoriales';
 
@@ -59,6 +61,10 @@ const CLAVE_VISTOS = 'videocurso-vistos';
  * redirige aquí. Por eso trae lo que tenía aquella: una pestaña por producto
  * (con dos o más; `?producto=tesis` elige una), la lista entera por bloques
  * («Ver los N videos») y los tropiezos por escrito («¿Algo no funciona?»).
+ *
+ * Desde el 21-oct, detrás de las de producto van «Instalación» y
+ * «Herramientas», con los videos y las guías marcados así en el panel; en la
+ * de cada producto queda solo lo de uso de ese producto.
  */
 @Component({
   selector: 'app-videocurso',
@@ -89,16 +95,30 @@ export class Videocurso implements OnInit {
     this.ruta.snapshot.queryParamMap.get('producto'),
   );
 
-  /** Las pestañas, igual que en `SalaDeVideos`: solo con dos productos o más. */
-  readonly pestanas = computed(() => pestanasDeProducto(this.publicados()));
-  readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
+  /**
+   * Las pestañas: una por producto, y detrás «Instalación» y «Herramientas»
+   * (21-oct), para que en cada producto salga solo lo suyo. Cada una, solo si
+   * tiene algo que enseñar a esta persona; la barra, solo con dos o más.
+   */
+  readonly pestanas = computed(() =>
+    pestanasDelCurso([
+      ...this.publicados(),
+      ...(this.conGuias() ? this.todasLasGuias().map(Videocurso.enApartado) : []),
+    ]),
+  );
 
-  /** Los de la pestaña elegida más los que son de todos. */
-  readonly videos = computed(() => {
-    const producto = this.producto();
-    const lista = this.publicados();
-    return producto ? lista.filter((v) => saleEn(v.productos, producto)) : lista;
+  /** La elegida: la pedida (`?producto=`), o la primera. Null = no hay ninguna. */
+  readonly producto = computed(() => {
+    const pestanas = this.pestanas();
+    const pedida = this.pedido();
+    if (pestanas.length === 0) return null;
+    return pestanas.some((p) => p.codigo === pedida) ? pedida : pestanas[0].codigo;
   });
+
+  /** Los de la pestaña elegida. */
+  readonly videos = computed(() =>
+    this.publicados().filter((v) => saleEnLaPestana(v, this.producto())),
+  );
 
   /**
    * La lista entera, por bloques: los videos seguidos con el mismo grupo van
@@ -118,30 +138,32 @@ export class Videocurso implements OnInit {
   private readonly todasLasGuias = signal<GuiaEnLista[]>([]);
 
   /**
-   * Las guías del producto elegido arriba, igual que los videos: el producto
-   * decide a quién le sale; el grupo, solo en qué bloque (pedido del 20-oct).
+   * Las guías de la pestaña elegida, igual que los videos: las de uso en la
+   * de su producto; las de instalación y de herramientas, en la suya (21-oct).
    */
-  private readonly guiasDelProducto = computed(() => {
-    const producto = this.producto();
-    const lista = this.todasLasGuias();
-    return producto ? lista.filter((g) => saleEn(g.productos, producto)) : lista;
-  });
+  private readonly guiasDeLaPestana = computed(() =>
+    this.todasLasGuias().filter((g) => saleEnLaPestana(Videocurso.enApartado(g), this.producto())),
+  );
 
   /**
-   * Por bloques (instalación, herramientas), cada uno en su columna y con
-   * cuatro como mucho: el resto está en «Ver todas». Salen siempre los dos,
-   * aunque uno esté vacío, para que se vea que existen.
+   * Un solo bloque, el de la pestaña, repartido en dos columnas y con ocho
+   * como mucho: el resto está en «Ver todas».
    */
-  readonly bloquesDeGuias = computed(() =>
-    this.guiasDelProducto().length === 0
-      ? []
-      : GRUPOS_DE_GUIA.map((g) => ({
-          ...g,
-          guias: this.guiasDelProducto()
-            .filter((guia) => guia.grupo === g.codigo)
-            .slice(0, 4),
-        })),
-  );
+  readonly bloquesDeGuias = computed(() => {
+    const guias = this.guiasDeLaPestana();
+    if (guias.length === 0) return [];
+    const producto = this.producto();
+    const grupo = APARTADOS_DEL_CURSO.some((a) => a.codigo === producto) ? producto : 'producto';
+    const nombre = GRUPOS_DE_GUIA.find((g) => g.codigo === grupo)?.nombre ?? '';
+    // Sin pestañas (nada asignado) todo va junto: no se le pone rótulo.
+    return [{ codigo: grupo ?? '', nombre: producto ? nombre : '', guias: guias.slice(0, 8) }];
+  });
+
+  /** Lo que «Ver todas» filtra en la página de guías: solo un producto de verdad. */
+  readonly productoDeGuias = computed(() => {
+    const producto = this.producto();
+    return PRODUCTOS_DE_AYUDA.some((p) => p.codigo === producto) ? producto : null;
+  });
 
   private readonly vistos = signal<string[]>(Videocurso.leerVistos());
 
@@ -300,6 +322,11 @@ export class Videocurso implements OnInit {
   duracion(texto: string): string {
     const hallado = /(\d+)\s*[:.]\s*(\d{2})/.exec(texto ?? '');
     return hallado ? `${hallado[1]}:${hallado[2]} min` : (texto ?? '');
+  }
+
+  /** Una guía con su grupo hace de apartado: los mismos códigos (21-oct). */
+  private static enApartado(guia: GuiaEnLista): EnApartado {
+    return { apartado: guia.grupo, productos: guia.productos };
   }
 
   private guiaEnLista(guia: Guia): GuiaEnLista {

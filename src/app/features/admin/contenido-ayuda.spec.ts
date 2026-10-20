@@ -9,7 +9,7 @@ import { ContenidoAyudaAdmin } from './contenido-ayuda';
 
 const video = (id: string, orden: number): Tutorial => ({
   id, orden, grupo: '', etiqueta: '', titulo: `Vídeo ${id}`, duracion: '',
-  entrada: '', puntos: [], videoUrl: '', productos: [], active: true,
+  entrada: '', puntos: [], videoUrl: '', productos: [], apartado: 'producto', active: true,
 });
 const guia: Guia = {
   id: 'guia', orden: 1, titulo: 'Guía de tesis', descripcion: '',

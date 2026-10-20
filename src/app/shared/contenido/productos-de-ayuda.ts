@@ -74,3 +74,52 @@ export function pestanaElegida(
   if (pestanas.length < 2) return null;
   return pestanas.some((p) => p.codigo === pedida) ? pedida : pestanas[0].codigo;
 }
+
+// ── Las pestañas del video curso (21-oct) ──
+//
+// Detrás de las de producto van «Instalación» y «Herramientas». Cada video y
+// cada guía dice en cuál sale con su apartado: «producto» (la de cada producto
+// marcado), «instalacion» o «herramientas». Así la de Tesis trae solo las
+// skills de tesis y no también cómo crear la cuenta de Claude o usar Zotero.
+
+/** Lo que va en una pestaña: su apartado y sus productos. */
+export interface EnApartado {
+  apartado: string;
+  productos: readonly string[];
+}
+
+/** Las dos pestañas que no son de un producto, en su orden. */
+export const APARTADOS_DEL_CURSO: readonly ProductoDeAyuda[] = [
+  { codigo: 'instalacion', nombre: 'Instalación' },
+  { codigo: 'herramientas', nombre: 'Herramientas' },
+];
+
+/** La pestaña de lo de uso cuando nada está asignado a un producto. */
+export const SIN_PRODUCTO: ProductoDeAyuda = { codigo: 'producto', nombre: 'Tu curso' };
+
+/**
+ * Las pestañas que tiene: una por producto con algo de uso propio, y detrás
+ * las de apartado que traigan algo. Sin nada asignado a un producto, lo de uso
+ * va junto en una sola, para que no se quede sin pestaña.
+ */
+export function pestanasDelCurso(elementos: readonly EnApartado[]): readonly ProductoDeAyuda[] {
+  const deUso = elementos.filter((e) => e.apartado === 'producto');
+  const lista: ProductoDeAyuda[] = [...pestanasDeProducto(deUso)];
+  if (lista.length === 0 && deUso.length > 0) lista.push(SIN_PRODUCTO);
+  for (const apartado of APARTADOS_DEL_CURSO) {
+    if (elementos.some((e) => e.apartado === apartado.codigo)) lista.push(apartado);
+  }
+  return lista;
+}
+
+/**
+ * Si algo sale en esa pestaña. En «Instalación» y «Herramientas», lo de ese
+ * apartado; en la de un producto, lo de uso de ese producto más lo de uso que
+ * es de todos. Sin pestaña (null), todo.
+ */
+export function saleEnLaPestana(elemento: EnApartado, pestana: string | null): boolean {
+  if (pestana === null) return true;
+  if (APARTADOS_DEL_CURSO.some((a) => a.codigo === pestana)) return elemento.apartado === pestana;
+  if (elemento.apartado !== 'producto') return false;
+  return pestana === SIN_PRODUCTO.codigo || saleEn(elemento.productos, pestana);
+}

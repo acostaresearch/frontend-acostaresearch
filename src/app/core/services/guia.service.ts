@@ -5,14 +5,30 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 
-/** El bloque en el que sale una guía. Los mismos códigos que el servidor (`guia.schema.js`). */
-export type GrupoDeGuia = 'instalacion' | 'herramientas';
+/**
+ * El bloque en el que sale una guía. Los mismos códigos que el servidor
+ * (`guia.schema.js`). Los videos usan los mismos para su pestaña (`apartado`).
+ */
+export type GrupoDeGuia = 'instalacion' | 'herramientas' | 'producto';
 
 /** Los bloques, en el orden en que se enseñan. */
 export const GRUPOS_DE_GUIA: readonly { codigo: GrupoDeGuia; nombre: string }[] = [
   { codigo: 'instalacion', nombre: 'Guías de instalación' },
   { codigo: 'herramientas', nombre: 'Guías de herramientas' },
+  { codigo: 'producto', nombre: 'Guías de uso' },
 ];
+
+/** Las pestañas de un video en el panel, con el nombre corto que se ve en la ficha (21-oct). */
+export const APARTADOS_DE_VIDEO: readonly { codigo: GrupoDeGuia; nombre: string }[] = [
+  { codigo: 'producto', nombre: 'Del producto' },
+  { codigo: 'instalacion', nombre: 'Instalación' },
+  { codigo: 'herramientas', nombre: 'Herramientas' },
+];
+
+/** Un código que no se conoce (un servidor anterior no lo manda) queda en `porDefecto`. */
+export function grupoConocido(codigo: unknown, porDefecto: GrupoDeGuia): GrupoDeGuia {
+  return GRUPOS_DE_GUIA.some((g) => g.codigo === codigo) ? (codigo as GrupoDeGuia) : porDefecto;
+}
 
 /** Una guía en PDF de la página de guías. */
 export interface Guia {
@@ -47,7 +63,7 @@ export interface GuiaEnvio {
 const conProductos = (guia: Guia): Guia => ({
   ...guia,
   productos: guia.productos ?? [],
-  grupo: guia.grupo === 'herramientas' ? 'herramientas' : 'instalacion',
+  grupo: grupoConocido(guia.grupo, 'instalacion'),
 });
 
 @Injectable({ providedIn: 'root' })

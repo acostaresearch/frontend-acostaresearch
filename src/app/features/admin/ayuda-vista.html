@@ -292,6 +292,24 @@
                   </small>
                 </label>
 
+                <!-- La pestaña del video curso en la que sale (21-oct). Una sola
+                     elección, como el grupo de las guías. -->
+                <fieldset class="productos-de-ayuda">
+                  <legend>Pestaña</legend>
+                  <div class="casillas-producto">
+                    @for (apartado of ayuda().apartadosDeVideo; track apartado.codigo) {
+                      <label class="chip-producto">
+                        <input type="radio" formControlName="apartado" [value]="apartado.codigo" />
+                        <span>{{ apartado.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">
+                    En el video curso, «Del producto» sale en la pestaña de cada producto marcado
+                    abajo; «Instalación» y «Herramientas» tienen su propia pestaña.
+                  </small>
+                </fieldset>
+
                 <!-- En qué productos sale. Varios a la vez valen: el del marco
                      teórico sirve a tesis y a suficiencia. Ninguno = en todos. -->
                 <fieldset class="productos-de-ayuda">
@@ -403,7 +421,10 @@
                       </label>
                     }
                   </div>
-                  <small class="ayuda">En la web, las guías salen separadas en estos dos bloques.</small>
+                  <small class="ayuda">
+                    En la web, las guías salen separadas en estos bloques. En el video curso,
+                    «Guías de uso» va en la pestaña de cada producto marcado abajo.
+                  </small>
                 </fieldset>
 
                 <fieldset class="productos-de-ayuda">

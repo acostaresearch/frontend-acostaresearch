@@ -13,10 +13,10 @@
   </div>
 </header>
 
-<!-- Una pestaña por producto con videos propios, solo con dos o más. Lo que es
-     de todos (conectar Claude) sale en cada una. -->
+<!-- Una pestaña por producto con videos propios y, detrás, «Instalación» y
+     «Herramientas» (21-oct). Solo con dos o más. -->
 @if (pestanas().length > 1) {
-  <div class="vc-productos" role="group" aria-label="Videos por producto">
+  <div class="vc-productos" role="group" aria-label="Videos por producto" data-tour="ayuda-pestanas">
     @for (pestana of pestanas(); track pestana.codigo) {
       <button
         type="button"
@@ -162,15 +162,17 @@
   <section class="tarjeta vc-lista vc-guias" data-tour="ayuda-guias">
     <div class="vc-lista-cabecera">
       <h3>Guías en PDF</h3>
-      <a routerLink="/guias-de-instalacion" [queryParams]="producto() ? { producto: producto() } : {}">
+      <a routerLink="/guias-de-instalacion" [queryParams]="productoDeGuias() ? { producto: productoDeGuias() } : {}">
         Ver todas
       </a>
     </div>
-    <!-- Un bloque por columna: de instalación y de herramientas. -->
+    <!-- Las de la pestaña elegida, repartidas en dos columnas. -->
     <div class="vc-guias-rejilla">
       @for (bloque of bloquesDeGuias(); track bloque.codigo) {
         <div class="vc-guias-bloque">
-          <p class="vc-bloque">{{ bloque.nombre }}</p>
+          @if (bloque.nombre) {
+            <p class="vc-bloque">{{ bloque.nombre }}</p>
+          }
           @for (guia of bloque.guias; track guia.enlace) {
             <div class="vc-fila">
               <span class="vc-pdf" aria-hidden="true">PDF</span>
@@ -193,13 +195,11 @@
                 </svg>
               </a>
             </div>
-          } @empty {
-            <p class="vc-tenue">Todavía no hay guías de este grupo para este producto.</p>
           }
         </div>
       } @empty {
         <p class="vc-tenue">
-          {{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas para este producto.' }}
+          {{ cargando() ? 'Cargando…' : 'Todavía no hay guías en PDF en esta pestaña.' }}
         </p>
       }
     </div>

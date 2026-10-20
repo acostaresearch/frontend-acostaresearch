@@ -6,6 +6,7 @@ import { mensajeDeError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
 import {
+  APARTADOS_DE_VIDEO,
   GRUPOS_DE_GUIA,
   Guia,
   GuiaEnvio,
@@ -105,8 +106,12 @@ export class ContenidoAyudaAdmin {
     puntos: [''],
     videoUrl: [''],
     productos: this.fb.nonNullable.control<string[]>([]),
+    apartado: this.fb.nonNullable.control<GrupoDeGuia>('producto'),
     active: [true],
   });
+
+  /** Las pestañas del video curso, para las fichas de «Pestaña» (21-oct). */
+  readonly apartadosDeVideo = APARTADOS_DE_VIDEO;
 
   cargarTutoriales(): void {
     this.tutorialesApi.todos().subscribe({
@@ -142,6 +147,7 @@ export class ContenidoAyudaAdmin {
       videoUrl: tutorial?.videoUrl ?? '',
       // Uno nuevo nace en el producto que se está mirando en la lista.
       productos: tutorial?.productos ?? this.productoMirado(this.listaTutoriales.filtro()),
+      apartado: tutorial?.apartado ?? 'producto',
       active: tutorial?.active ?? true,
     });
   }

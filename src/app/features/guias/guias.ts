@@ -88,13 +88,14 @@ export class Guias implements OnInit {
 
   /**
    * Lo que se ve, en sus bloques (instalación, herramientas). Salen siempre
-   * los dos, aunque uno esté vacío, para que se vea que existen.
+   * los dos, aunque uno esté vacío, para que se vea que existen. El de
+   * «Guías de uso» (21-oct), solo si trae alguna.
    */
   readonly bloques = computed(() =>
     GRUPOS_DE_GUIA.map((g) => ({
       ...g,
       guias: this.tarjetas().filter((t) => t.grupo === g.codigo),
-    })),
+    })).filter((b) => b.codigo !== 'producto' || b.guias.length > 0),
   );
 
   ngOnInit(): void {

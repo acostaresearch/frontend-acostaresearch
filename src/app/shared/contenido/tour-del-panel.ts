@@ -47,6 +47,16 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ruta: '/perfil',
     parte: 'ayuda',
     abrir: '[data-tour="ir-ayuda"]',
+    ancla: '[data-tour="ayuda-pestanas"]',
+    titulo: 'Tus videos, por pestañas',
+    texto:
+      'En la de tu producto, solo sus skills. Lo de dejar todo listo está en «Instalación», y ' +
+      'Zotero, Mendeley y las demás, en «Herramientas».',
+  },
+  {
+    ruta: '/perfil',
+    parte: 'ayuda',
+    abrir: '[data-tour="ir-ayuda"]',
     ancla: '[data-tour="ayuda-guias"]',
     titulo: 'Las guías en PDF',
     texto:
