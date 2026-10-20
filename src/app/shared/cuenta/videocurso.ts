@@ -15,7 +15,7 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
-import { Guia, GuiaService } from '../../core/services/guia.service';
+import { GRUPOS_DE_GUIA, GrupoDeGuia, Guia, GuiaService } from '../../core/services/guia.service';
 import { Tutorial, TutorialService } from '../../core/services/tutorial.service';
 import {
   loQueLeToca,
@@ -32,6 +32,7 @@ interface GuiaEnLista {
   enlace: string;
   /** A qué productos sirve. Vacía = a todos. */
   productos: string[];
+  grupo: GrupoDeGuia;
 }
 
 /** Dónde se apuntan, en este navegador, los videos que ya se pusieron. */
@@ -116,8 +117,18 @@ export class Videocurso implements OnInit {
   private readonly pantalla = viewChild<ElementRef<HTMLElement>>('pantalla');
   private readonly todasLasGuias = signal<GuiaEnLista[]>([]);
 
-  /** Las cuatro primeras: el resto está en «Ver todas». */
-  readonly guias = computed(() => this.todasLasGuias().slice(0, 4));
+  /**
+   * Por bloques (instalación, herramientas), cada uno en su columna y con
+   * cuatro como mucho: el resto está en «Ver todas». Sin bloques vacíos.
+   */
+  readonly bloquesDeGuias = computed(() =>
+    GRUPOS_DE_GUIA.map((g) => ({
+      ...g,
+      guias: this.todasLasGuias()
+        .filter((guia) => guia.grupo === g.codigo)
+        .slice(0, 4),
+    })).filter((b) => b.guias.length > 0),
+  );
 
   private readonly vistos = signal<string[]>(Videocurso.leerVistos());
 
@@ -284,13 +295,14 @@ export class Videocurso implements OnInit {
       peso: Videocurso.peso(guia.bytes),
       enlace: this.guiasApi.enlace(guia),
       productos: guia.productos,
+      grupo: guia.grupo,
     };
   }
 
   /** La de antes del panel, si el build la encontró. Ver `Guias.deSiempre`. */
   private guiaDeSiempre(): GuiaEnLista[] {
     return environment.guiaUrl
-      ? [{ titulo: 'Guía de instalación', peso: null, enlace: environment.guiaUrl, productos: [] }]
+      ? [{ titulo: 'Guía de instalación', peso: null, enlace: environment.guiaUrl, productos: [], grupo: 'instalacion' }]
       : [];
   }
 

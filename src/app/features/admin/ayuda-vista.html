@@ -154,6 +154,7 @@
                           <span class="pastilla">Oculta</span>
                         }
                         <span class="bloque productos-fila">
+                          <span class="pastilla">{{ ayuda().nombreDeGrupo(guia.grupo) }}</span>
                           @for (codigo of guia.productos; track codigo) {
                             <span class="pastilla producto">{{ ayuda().nombreDeAyuda(codigo) }}</span>
                           } @empty {
@@ -385,10 +386,25 @@
                   <textarea
                     formControlName="descripcion"
                     rows="3"
-                    placeholder="Cómo conectarlo a Claude, paso a paso y con pagosManuales.capturas."
+                    placeholder="Cómo conectarlo a Claude, paso a paso y con capturas."
                   ></textarea>
                   <small class="ayuda">Una o dos frases, para que sepan cuál elegir.</small>
                 </label>
+
+                <!-- El bloque en el que sale en la web. Una sola elección: son
+                     radios con el mismo aspecto de pastilla que los productos. -->
+                <fieldset class="productos-de-ayuda">
+                  <legend>Grupo</legend>
+                  <div class="casillas-producto">
+                    @for (grupo of ayuda().gruposDeGuia; track grupo.codigo) {
+                      <label class="chip-producto">
+                        <input type="radio" formControlName="grupo" [value]="grupo.codigo" />
+                        <span>{{ grupo.nombre }}</span>
+                      </label>
+                    }
+                  </div>
+                  <small class="ayuda">En la web, las guías salen separadas en estos dos bloques.</small>
+                </fieldset>
 
                 <fieldset class="productos-de-ayuda">
                   <legend>Para qué producto es</legend>

@@ -5,6 +5,15 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 
+/** El bloque en el que sale una guía. Los mismos códigos que el servidor (`guia.schema.js`). */
+export type GrupoDeGuia = 'instalacion' | 'herramientas';
+
+/** Los bloques, en el orden en que se enseñan. */
+export const GRUPOS_DE_GUIA: readonly { codigo: GrupoDeGuia; nombre: string }[] = [
+  { codigo: 'instalacion', nombre: 'Guías de instalación' },
+  { codigo: 'herramientas', nombre: 'Guías de herramientas' },
+];
+
 /** Una guía en PDF de la página de guías. */
 export interface Guia {
   id: string;
@@ -18,6 +27,8 @@ export interface Guia {
   bytes: number;
   /** A qué productos les sirve (códigos de `productos-de-ayuda.ts`). Vacío = a todos. */
   productos: string[];
+  /** Su bloque. Un servidor anterior no lo manda: entonces es de instalación. */
+  grupo: GrupoDeGuia;
   active: boolean;
   updatedAt: string;
 }
@@ -28,11 +39,16 @@ export interface GuiaEnvio {
   titulo: string;
   descripcion: string;
   productos: string[];
+  grupo: GrupoDeGuia;
   active: boolean;
 }
 
 /** Un servidor anterior a separar por producto no manda la lista: vacía = en todos. */
-const conProductos = (guia: Guia): Guia => ({ ...guia, productos: guia.productos ?? [] });
+const conProductos = (guia: Guia): Guia => ({
+  ...guia,
+  productos: guia.productos ?? [],
+  grupo: guia.grupo === 'herramientas' ? 'herramientas' : 'instalacion',
+});
 
 @Injectable({ providedIn: 'root' })
 export class GuiaService {
@@ -67,6 +83,7 @@ export class GuiaService {
       .set('descripcion', datos.descripcion)
       // En la query no cabe una lista: van con comas y el servidor las separa.
       .set('productos', datos.productos.join(','))
+      .set('grupo', datos.grupo)
       .set('active', String(datos.active));
 
     return this.http

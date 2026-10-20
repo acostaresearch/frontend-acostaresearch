@@ -67,8 +67,12 @@
           </div>
         }
 
-     <ul data-tour="guias-pdf" class="lista">
-          @for (guia of tarjetas(); track guia.enlace) {
+        <!-- Por bloques: de instalación y de herramientas (20-oct). -->
+        <div data-tour="guias-pdf">
+        @for (bloque of bloques(); track bloque.codigo) {
+          <h2 class="bloque-titulo">{{ bloque.nombre }}</h2>
+          <ul class="lista">
+          @for (guia of bloque.guias; track guia.enlace) {
             <li class="fila">
               <svg class="icono-pdf" viewBox="0 0 44 52" aria-hidden="true">
                 <path d="M4 0h26l14 14v34a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4z" fill="#e5322d" />
@@ -110,7 +114,9 @@
               </a>
             </li>
           }
-        </ul>
+          </ul>
+        }
+        </div>
 
         <p class="cuenta">
           {{ tarjetas().length }} {{ tarjetas().length === 1 ? 'guía' : 'guías' }} · se abren en

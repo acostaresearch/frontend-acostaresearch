@@ -5,7 +5,13 @@ import { catchError, firstValueFrom, of, switchMap } from 'rxjs';
 import { mensajeDeError } from '../../core/http/api-error';
 import { DialogoService } from '../../core/services/dialogo.service';
 import { Tutorial, TutorialEnvio, TutorialService } from '../../core/services/tutorial.service';
-import { Guia, GuiaEnvio, GuiaService } from '../../core/services/guia.service';
+import {
+  GRUPOS_DE_GUIA,
+  Guia,
+  GuiaEnvio,
+  GuiaService,
+  GrupoDeGuia,
+} from '../../core/services/guia.service';
 import { duracionLegible, idDeYouTube, leerDatosDeYouTube } from '../../core/services/youtube-datos';
 import { PRODUCTOS_DE_AYUDA, nombreDeProducto, saleEn } from '../../shared/contenido/productos-de-ayuda';
 import { Listado } from './listado';
@@ -412,8 +418,16 @@ export class ContenidoAyudaAdmin {
     titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(160)]],
     descripcion: ['', [Validators.maxLength(600)]],
     productos: this.fb.nonNullable.control<string[]>([]),
+    grupo: this.fb.nonNullable.control<GrupoDeGuia>('instalacion'),
     active: [true],
   });
+
+  /** Los bloques de la página de guías, para las fichas de «Grupo». */
+  readonly gruposDeGuia = GRUPOS_DE_GUIA;
+
+  nombreDeGrupo(codigo: GrupoDeGuia): string {
+    return GRUPOS_DE_GUIA.find((g) => g.codigo === codigo)?.nombre ?? codigo;
+  }
 
   cargarGuias(): void {
     this.guiasApi.todas().subscribe({
@@ -443,6 +457,7 @@ export class ContenidoAyudaAdmin {
       titulo: guia?.titulo ?? '',
       descripcion: guia?.descripcion ?? '',
       productos: guia?.productos ?? this.productoMirado(this.listaGuias.filtro()),
+      grupo: guia?.grupo ?? 'instalacion',
       active: guia?.active ?? true,
     });
   }

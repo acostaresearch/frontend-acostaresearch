@@ -12,7 +12,7 @@ import {
 } from '../../shared/contenido/productos-de-ayuda';
 import { AuthService } from '../../core/services/auth.service';
 import { TutorialService } from '../../core/services/tutorial.service';
-import { Guia, GuiaService } from '../../core/services/guia.service';
+import { GRUPOS_DE_GUIA, GrupoDeGuia, Guia, GuiaService } from '../../core/services/guia.service';
 import { SiteFooter } from '../../shared/layout/site-footer';
 import { SiteHeader } from '../../shared/layout/site-header';
 
@@ -24,6 +24,7 @@ interface Tarjeta {
   peso: string | null;
   /** A qué productos sirve. Vacío = a todos. */
   productos: string[];
+  grupo: GrupoDeGuia;
 }
 
 /**
@@ -85,6 +86,14 @@ export class Guias implements OnInit {
     return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
   });
 
+  /** Lo que se ve, en sus bloques (instalación, herramientas). Sin bloques vacíos. */
+  readonly bloques = computed(() =>
+    GRUPOS_DE_GUIA.map((g) => ({
+      ...g,
+      guias: this.tarjetas().filter((t) => t.grupo === g.codigo),
+    })).filter((b) => b.guias.length > 0),
+  );
+
   ngOnInit(): void {
     // Sin lista del servidor sale la guía de siempre, para no dejar la página vacía.
     const guias = this.api.publicas().pipe(
@@ -121,6 +130,7 @@ export class Guias implements OnInit {
       enlace: this.api.enlace(guia),
       peso: this.peso(guia.bytes),
       productos: guia.productos,
+      grupo: guia.grupo,
     };
   }
 
@@ -134,6 +144,7 @@ export class Guias implements OnInit {
         enlace: environment.guiaUrl,
         peso: null,
         productos: [],
+        grupo: 'instalacion',
       },
     ];
   }

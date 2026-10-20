@@ -13,7 +13,7 @@ const video = (id: string, orden: number): Tutorial => ({
 });
 const guia: Guia = {
   id: 'guia', orden: 1, titulo: 'Guía de tesis', descripcion: '',
-  archivoNombre: 'tesis.pdf', bytes: 100, productos: ['tesis'], active: true, updatedAt: '',
+  archivoNombre: 'tesis.pdf', bytes: 100, productos: ['tesis'], grupo: 'instalacion', active: true, updatedAt: '',
 };
 
 describe('Tutoriales y guías del administrador', () => {
@@ -57,6 +57,14 @@ describe('Tutoriales y guías del administrador', () => {
     ayuda.listaGuias.filtrar('todas');
     ayuda.editarGuia(null);
     expect(ayuda.formGuia.controls.productos.value).toEqual([]);
+  });
+
+  it('una guía nueva es de instalación; al editar conserva su grupo', () => {
+    ayuda.editarGuia(null);
+    expect(ayuda.formGuia.controls.grupo.value).toBe('instalacion');
+    ayuda.editarGuia({ ...guia, grupo: 'herramientas' });
+    expect(ayuda.formGuia.controls.grupo.value).toBe('herramientas');
+    expect(ayuda.nombreDeGrupo('herramientas')).toBe('Guías de herramientas');
   });
 
   it('una guía nueva exige PDF; editar una existente permite conservarlo', () => {

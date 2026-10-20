@@ -164,28 +164,34 @@
       <h3>Guías en PDF</h3>
       <a routerLink="/guias-de-instalacion">Ver todas</a>
     </div>
+    <!-- Un bloque por columna: de instalación y de herramientas. -->
     <div class="vc-guias-rejilla">
-      @for (guia of guias(); track guia.enlace) {
-        <div class="vc-fila">
-          <span class="vc-pdf" aria-hidden="true">PDF</span>
-          <span class="vc-fila-titulo">
-            {{ guia.titulo }}
-            @if (guia.peso) {
-              <small>{{ guia.peso }}</small>
-            }
-          </span>
-          <a class="vc-bajar" [href]="guia.enlace" download [attr.aria-label]="'Descargar ' + guia.titulo">
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-              <path
-                d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </a>
+      @for (bloque of bloquesDeGuias(); track bloque.codigo) {
+        <div class="vc-guias-bloque">
+          <p class="vc-bloque">{{ bloque.nombre }}</p>
+          @for (guia of bloque.guias; track guia.enlace) {
+            <div class="vc-fila">
+              <span class="vc-pdf" aria-hidden="true">PDF</span>
+              <span class="vc-fila-titulo">
+                {{ guia.titulo }}
+                @if (guia.peso) {
+                  <small>{{ guia.peso }}</small>
+                }
+              </span>
+              <a class="vc-bajar" [href]="guia.enlace" download [attr.aria-label]="'Descargar ' + guia.titulo">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                  <path
+                    d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
+            </div>
+          }
         </div>
       } @empty {
         <p class="vc-tenue">{{ cargando() ? 'Cargando…' : 'Todavía no hay guías publicadas.' }}</p>

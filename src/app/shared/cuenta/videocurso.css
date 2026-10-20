@@ -528,7 +528,28 @@ button.vc-salida {
   column-gap: 32px;
 }
 
-.vc-guias-rejilla .vc-fila:last-child {
+.vc-guias-bloque {
+  min-width: 0;
+}
+
+/* Un solo bloque: sus guías se reparten en las dos columnas. */
+.vc-guias-rejilla:has(> .vc-guias-bloque:only-child) > .vc-guias-bloque {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+}
+
+.vc-guias-bloque:only-child .vc-bloque {
+  grid-column: 1 / -1;
+}
+
+.vc-guias-bloque .vc-bloque {
+  position: static;
+}
+
+.vc-guias-bloque .vc-fila:last-child {
+  border-bottom: 0;
   padding-bottom: 12px;
 }
 
