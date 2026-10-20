@@ -1,0 +1,64 @@
+/*
+ * Abajo a la izquierda: a la derecha está el botón del asistente (z-index 60).
+ * Por encima de él y por debajo de la ventana de confirmar (80) y del tour.
+ */
+.ac-aviso {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 70;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: var(--radio-sm);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
+}
+
+.ac-aviso p {
+  margin: 0;
+}
+
+.ac-aviso a {
+  color: var(--color-primario);
+}
+
+.ac-botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Iguales a propósito: rechazar no puede costar más que aceptar. */
+.ac-boton {
+  flex: 1;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-sobre-boton);
+  cursor: pointer;
+  background: var(--color-boton);
+  border: 0;
+  border-radius: var(--radio-sm);
+}
+
+.ac-boton:hover {
+  background: var(--color-boton-hover);
+}
+
+.ac-boton:focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .ac-aviso {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+  }
+}

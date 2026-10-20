@@ -37,6 +37,7 @@ import {
   ProductoEntregado,
 } from '../../core/models/payment.model';
 import { Balance, Plan, WordPack } from '../../core/models/rewrite.model';
+import { AnaliticaService } from '../../core/services/analitica.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BillingService, Promo } from '../../core/services/billing.service';
 import { CarritoService } from '../../core/services/carrito.service';
@@ -111,6 +112,7 @@ export class Checkout implements OnInit {
   private readonly licencias = inject(LicenseService);
   private readonly carritoGuardado = inject(CarritoService);
   private readonly destruir = inject(DestroyRef);
+  private readonly analitica = inject(AnaliticaService);
   protected readonly auth = inject(AuthService);
 
   readonly whatsappUrl = environment.whatsappUrl;
@@ -1792,7 +1794,7 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
         );
       }
 
-      this.mostrarCompra(cobro);
+      this.mostrarCompra(cobro, orden);
     } catch (error: unknown) {
       this.errorCulqi.set(toApiError(error).message);
     } finally {
@@ -1807,7 +1809,8 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
    * pantalla: cada licencia llega con su URL, y una pantalla pensada para una
    * sola se quedaría con la primera.
    */
-  private mostrarCompra(resultado: PaymentResult): void {
+  private mostrarCompra(resultado: PaymentResult, orden: PaymentOrder | null): void {
+    if (orden && !resultado.alreadyProcessed) this.medirCompra(orden);
     if (resultado.balance) this.saldo.set(resultado.balance);
     this.sacarDelCarrito(this.enPago().map((plan) => plan.code));
 
@@ -1834,10 +1837,30 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     }
   }
 
+  /**
+   * La compra, para Google Analytics (si la persona lo aceptó). Con el importe
+   * que fijó el servidor y el número de la orden, que GA4 usa para no contar
+   * dos veces la misma; nada del comprador.
+   */
+  private medirCompra(orden: PaymentOrder): void {
+    const productos = orden.items
+      ? orden.items.map((linea) => ({ codigo: linea.plan.code, nombre: linea.plan.name, centimos: linea.amountCents }))
+      : [{ codigo: orden.plan.code, nombre: orden.plan.name, centimos: orden.amountCents }];
+    this.analitica.evento('purchase', {
+      transaction_id: orden.orderId,
+      value: orden.amountCents / 100,
+      currency: orden.currency,
+      ...(orden.discount ? { coupon: orden.discount.code } : {}),
+      items: productos.map((p) => ({ item_id: p.codigo, item_name: p.nombre, price: p.centimos / 100, quantity: 1 })),
+    });
+  }
+
   private async montarBoton(contenedor: HTMLElement): Promise<void> {
     // La orden abierta en este momento. `onError` no dice cuál era, y sin
     // cerrarla quedaba «pendiente» en el servidor para siempre.
     let ordenAbierta: string | null = null;
+    // La misma orden entera, para medir la compra con su importe al aprobarse.
+    let ordenDelBoton: PaymentOrder | null = null;
 
     try {
       const sdk = await this.paypal.load(this.pasarelaPaypal()?.currency ?? 'USD');
@@ -1852,6 +1875,7 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
             try {
               const orden = await firstValueFrom(this.payments.createOrder(this.lineas(), 'PAYPAL', this.codigoDelTotal()));
               ordenAbierta = orden.orderId;
+              ordenDelBoton = orden;
               return orden.orderId;
             } catch (error: unknown) {
               this.procesando.set(false);
@@ -1864,7 +1888,7 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
             try {
               const resultado = await firstValueFrom(this.payments.capture(data.orderID));
               ordenAbierta = null;
-              this.mostrarCompra(resultado);
+              this.mostrarCompra(resultado, ordenDelBoton?.orderId === data.orderID ? ordenDelBoton : null);
             } catch (error: unknown) {
               const apiError = toApiError(error);
               this.error.set(apiError.message);

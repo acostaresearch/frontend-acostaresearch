@@ -113,6 +113,9 @@
       <a routerLink="/terminos">Términos y Condiciones</a>
       <a routerLink="/terminos" fragment="reembolsos">Política de reembolsos</a>
       <a routerLink="/privacidad">Política de Privacidad</a>
+      @if (hayAnalitica) {
+        <button type="button" (click)="preferenciasDeCookies()">Preferencias de cookies</button>
+      }
       <!-- Con su recuadro y su icono de libro: la ley pide que el acceso esté
            a la vista, y es lo que el consumidor busca con los ojos en
            cualquier web peruana. -->

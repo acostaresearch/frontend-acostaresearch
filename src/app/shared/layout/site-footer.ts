@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AnaliticaService } from '../../core/services/analitica.service';
 import { RecorridoWeb } from '../../core/services/recorrido-web.service';
 import { LineasNoche } from './lineas-noche';
 
@@ -26,7 +27,17 @@ interface Red {
 export class SiteFooter {
   private readonly recorrido = inject(RecorridoWeb);
 
+  private readonly analitica = inject(AnaliticaService);
+
   readonly whatsappUrl = environment.whatsappUrl;
+
+  /** Sin Google Analytics configurado no hay cookies que elegir. */
+  readonly hayAnalitica = Boolean(environment.analyticsId);
+
+  /** Vuelve a sacar el aviso de cookies para cambiar lo que se eligió. */
+  preferenciasDeCookies(): void {
+    this.analitica.reabrir();
+  }
 
   /** El recorrido guiado. Lo mismo que la brújula de la cabecera. */
   verElRecorrido(): void {

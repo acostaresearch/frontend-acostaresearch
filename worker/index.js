@@ -223,7 +223,7 @@ const CSP = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://*.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com https://static.cloudflareinsights.com",
+  "script-src 'self' 'sha256-iLMfOYw9eEM62gABbbgl+dbIfwNvx27jn1gpVTlnH7w=' https://accounts.google.com https://*.paypal.com https://*.paypalobjects.com https://js.culqi.com https://3ds.culqi.com https://static.cloudflareinsights.com https://www.googletagmanager.com",
   // Angular inyecta los estilos de cada componente como <style> en la página.
   // cdnjs: la hoja de animaciones que carga la verificación 3DS de Culqi.
   // accounts.google.com/gsi/style: la hoja del botón «Continuar con Google»
@@ -232,10 +232,10 @@ const CSP = [
   "font-src 'self' data: https://fonts.gstatic.com",
   // gstatic: los iconos que mete el botón de Google. Los videos van SOLO por
   // youtube-nocookie (ver `tutoriales` y `demos`); youtube.com es solo enlace.
-  "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com",
+  "img-src 'self' data: blob: https://i.ytimg.com https://ssl.gstatic.com https://www.gstatic.com https://*.paypal.com https://*.paypalobjects.com https://*.culqi.com https://*.google-analytics.com https://www.googletagmanager.com",
   // Culqi: su API y la verificación del banco (3-D Secure), que hace Cardinal
   // Commerce. Los dominios salen de los propios scripts de Culqi (21-sep-2026).
-  "connect-src 'self' https://accounts.google.com https://cloudflareinsights.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
+  "connect-src 'self' https://accounts.google.com https://cloudflareinsights.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
   "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
   // El visor de VOSviewer calcula la disposición y los clústeres en un Worker
   // que crea desde un `blob:`. Sin esto, con la CSP activa el mapa no se pinta.

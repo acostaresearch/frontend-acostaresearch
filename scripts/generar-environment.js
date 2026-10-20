@@ -83,7 +83,7 @@ const RSTUDIO = v('RSTUDIO_URL', '');
 /** `JSON.stringify` escapa comillas y acentos sin que haya que pensarlo. */
 const s = (valor) => JSON.stringify(valor);
 
-function contenido({ produccion, apiUrl, googleClientId, paypalClientId }) {
+function contenido({ produccion, apiUrl, googleClientId, paypalClientId, analyticsId }) {
   const cabecera = produccion
     ? '/** Configuración de producción. La reemplaza `environment.development.ts` al servir en local. */'
     : '/** Configuración de desarrollo. */';
@@ -113,6 +113,8 @@ export const environment = {
   googleClientId: ${s(googleClientId)},
   /** Client ID de PayPal. Vacío = no se muestra el botón y la venta sigue siendo manual. */
   paypalClientId: ${s(paypalClientId)},
+  /** ID de medición de Google Analytics 4. Vacío = sin aviso de cookies ni medición. */
+  analyticsId: ${s(analyticsId)},
   /** Guía de instalación en PDF. Vacío = no se ofrece la descarga. */
   guiaUrl: ${s(GUIA)},
   /**
@@ -144,6 +146,7 @@ fs.writeFileSync(
     apiUrl: v('API_URL', '/api/v1'),
     googleClientId: v('GOOGLE_CLIENT_ID'),
     paypalClientId: v('PAYPAL_CLIENT_ID'),
+    analyticsId: v('GA_MEASUREMENT_ID', 'G-K8NB9FYLQW'),
   }),
 );
 
@@ -162,6 +165,9 @@ fs.writeFileSync(
     // en local con ese mismo identificador significaría enseñar botones que
     // cobran de verdad. La variante _DEV mantiene el sandbox separado.
     paypalClientId: vDev('PAYPAL_CLIENT_ID'),
+    // Solo con GA_MEASUREMENT_ID_DEV: las visitas de `ng serve` no se mezclan
+    // con las de los clientes.
+    analyticsId: v('GA_MEASUREMENT_ID_DEV'),
   }),
 );
 
@@ -174,4 +180,5 @@ console.log(`environments generados desde ${origen}`);
 console.log(`  api           ${v('API_URL', '/api/v1')}`);
 console.log(`  google        ${v('GOOGLE_CLIENT_ID') || '(sin configurar)'}`);
 console.log(`  paypal        ${v('PAYPAL_CLIENT_ID') ? 'configurado' : '(sin configurar)'}`);
-console.log(`  guía PDF      ${GUIA || '(no encontrada en public/' + GUIA_LOCAL + ')'}`);
+console.log(`  analytics     ${v('GA_MEASUREMENT_ID', 'G-K8NB9FYLQW')}`);
+console.log(`  guía PDF     ${GUIA || '(no encontrada en public/' + GUIA_LOCAL + ')'}`);

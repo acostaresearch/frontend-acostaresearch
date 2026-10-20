@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { toApiError } from '../../../core/http/api-error';
 import { ERROR_CODE } from '../../../core/models/api.model';
+import { AnaliticaService } from '../../../core/services/analitica.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthCard } from '../auth-card/auth-card';
 import { AvisoFlotante } from '../../../shared/layout/aviso-flotante';
@@ -23,6 +24,7 @@ export class VerifyEmail implements OnInit {
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly analitica = inject(AnaliticaService);
 
   readonly formulario = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -117,6 +119,8 @@ export class VerifyEmail implements OnInit {
         this.auth.olvidarAlta();
         this.enviando.set(false);
         this.verificado.set(true);
+        // La cuenta nace aquí, al acertar el código, no al rellenar el registro.
+        this.analitica.evento('sign_up', { method: 'email' });
       },
       error: (error: unknown) => {
         const apiError = toApiError(error);
