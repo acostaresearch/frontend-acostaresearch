@@ -9,7 +9,9 @@ import {
   Comprobante,
   ComprobantesDeVenta,
   CorreoComprobante,
+  NuevoServicio,
   ResultadoAnulacion,
+  ServicioRegistrado,
 } from '../models/comprobante.model';
 
 /**
@@ -59,6 +61,22 @@ export class ComprobantesService {
     return this.http
       .post<ApiResponse<ResultadoAnulacion>>(`${this.base}/comprobantes/${id}/anular`, { motivo, refacturar })
       .pipe(map((res) => res.data));
+  }
+
+  /** Los servicios cobrados fuera de la web registrados en un mes, con su boleta. */
+  servicios(anio: number, mes: number): Observable<ServicioRegistrado[]> {
+    return this.http
+      .get<ApiResponse<{ servicios: ServicioRegistrado[] }>>(`${this.base}/servicios`, { params: { anio, mes } })
+      .pipe(map((res) => res.data.servicios));
+  }
+
+  registrarServicio(servicio: NuevoServicio): Observable<void> {
+    return this.http.post<unknown>(`${this.base}/servicios`, servicio).pipe(map(() => undefined));
+  }
+
+  /** Solo mientras no tenga boleta. */
+  quitarServicio(id: string): Observable<void> {
+    return this.http.delete<unknown>(`${this.base}/servicios/${id}`).pipe(map(() => undefined));
   }
 }
 

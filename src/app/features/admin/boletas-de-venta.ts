@@ -137,6 +137,23 @@ export class BoletasDeVenta {
     }
   }
 
+  /** El estado en la cabecera de la boleta de la ficha: «Aceptada por SUNAT». */
+  estadoFicha(c: Comprobante): string {
+    if (!this.esNota(c) && this.anuladaPor(c)) return `Anulada con la nota ${this.anuladaPor(c)}`;
+    switch (c.estado) {
+      case 'ACEPTADO':
+        return '✓ Aceptada por SUNAT';
+      case 'OBSERVADO':
+        return '✓ Aceptada con observaciones';
+      case 'PENDIENTE':
+        return c.intentos ? `Esperando a SUNAT (${c.intentos} intentos)` : 'Enviándose a SUNAT';
+      case 'RECHAZADO':
+        return 'Rechazada por SUNAT';
+      default:
+        return 'Revisar en SOL';
+    }
+  }
+
   /** Lo que la pastilla de cambio dice de cada uno: «B001-2 · anulada». */
   etiqueta(c: Comprobante): string {
     if (this.esNota(c)) return `${this.numero(c)} · nota`;
@@ -211,7 +228,8 @@ export class BoletasDeVenta {
     return !this.esNota(c) && this.aceptado(c) && !this.anuladaPor(c);
   }
 
-  async anular(c: Comprobante): Promise<void> {
+  /** `refacturar` ya decidido (desde «Anular» de la ficha) se salta la pregunta. */
+  async anular(c: Comprobante, refacturarDecidido?: boolean): Promise<void> {
     const motivo = await this.dialogos.pedirTexto({
       titulo: `Anular la boleta ${this.numero(c)}`,
       mensaje: 'Se emite una nota de crédito que la anula ante SUNAT. Una nota aceptada no se puede deshacer.',
@@ -222,7 +240,7 @@ export class BoletasDeVenta {
     });
     if (!motivo?.trim()) return;
 
-    const refacturar = await this.dialogos.confirmar({
+    const refacturar = refacturarDecidido ?? await this.dialogos.confirmar({
       titulo: '¿Hay que volver a facturar esta venta?',
       mensaje:
         'Sí, si la venta es buena pero la boleta salió mal (por ejemplo, el producto): se emite una ' +

@@ -342,6 +342,17 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
               'boletas y las facturas de compra que registres. Antes del vencimiento te llega un ' +
               'aviso con cada casilla; lo presentas en SOL y lo marcas como declarado.',
           },
+          {
+            seccion: 'Declaraciones',
+            ruta: '/admin/declaraciones',
+            ancla: '[data-tour="admin-declaraciones-servicios"]',
+            titulo: 'Lo que se cobra por WhatsApp',
+            texto:
+              'Las asesorías, correcciones, Turnitin o estadística cobradas fuera de la web se ' +
+              'registran con «Registrar servicio», un pago cada vez. Cada uno lleva su boleta con ' +
+              'IGV, que se envía a SUNAT en minutos, le llega al cliente por correo y suma en las ' +
+              'casillas del mes.',
+          },
         ]
       : []),
 

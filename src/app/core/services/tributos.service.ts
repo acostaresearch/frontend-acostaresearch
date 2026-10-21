@@ -54,13 +54,40 @@ export interface CompraRegistrada {
   baseCents: number;
   igvCents: number;
   descripcion: string | null;
+  /** FACTURA (proveedor peruano) o EXTRANJERO (su IGV se paga con el 1662). */
+  tipo: 'FACTURA' | 'EXTRANJERO';
+  /** N.º de factura o recibo del proveedor extranjero. */
+  documento: string | null;
+  monedaOriginal: 'USD' | 'PEN' | null;
+  importeOriginalCents: number | null;
+  tipoCambio: string | number | null;
+  ordenPago: string | null;
+  /** Día en que se pagó su IGV con el 1662; null = aún no. */
+  igvPagadoEn: string | null;
 }
 
 export interface DetalleDeclaracion extends MesDeclaracion {
   compras: CompraRegistrada[];
+  /** Compras del extranjero cuyo IGV falta pagar con el 1662 (de cualquier mes). */
+  porPagar1662: CompraRegistrada[];
+}
+
+/** Un servicio de un proveedor del extranjero (Claude, Google, Canva…). */
+export interface NuevaCompraExtranjera {
+  tipo: 'EXTRANJERO';
+  fecha: string;
+  razonSocial: string;
+  documento: string;
+  monedaOriginal: 'USD' | 'PEN';
+  importeOriginalCents: number;
+  tipoCambio?: number;
+  ordenPago?: string;
+  igvPagadoEn?: string;
+  descripcion?: string;
 }
 
 export interface NuevaCompra {
+  tipo?: 'FACTURA';
   fecha: string;
   rucProveedor: string;
   razonSocial?: string;
@@ -111,8 +138,13 @@ export class TributosService {
       .pipe(map((r) => r.data));
   }
 
-  agregarCompra(compra: NuevaCompra): Observable<void> {
+  agregarCompra(compra: NuevaCompra | NuevaCompraExtranjera): Observable<void> {
     return this.http.post<unknown>(`${this.base}/compras`, compra).pipe(map(() => undefined));
+  }
+
+  /** «Ya pagué el IGV con el 1662» de una compra del extranjero. */
+  pagar1662(id: string, datos: { ordenPago?: string; fecha: string; igvCents?: number }): Observable<void> {
+    return this.http.post<unknown>(`${this.base}/compras/${id}/pago-1662`, datos).pipe(map(() => undefined));
   }
 
   borrarCompra(id: string): Observable<void> {

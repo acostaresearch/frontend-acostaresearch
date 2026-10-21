@@ -1,213 +1,294 @@
 <app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
 
-<div class="rejilla" data-tour="admin-declaraciones">
-  <!-- ── Los meses ──────────────────────────────────────────────────────── -->
-  <aside class="tarjeta lista">
-    <h2>Meses</h2>
-    @if (cargando() && meses().length === 0) {
-      <p class="tenue">Cargando…</p>
-    } @else {
-      <ul class="meses">
-        @for (m of meses(); track m.anio + '-' + m.mes) {
-          <li>
-            <button
-              type="button"
-              class="mes"
-              [class.activo]="abierto()?.anio === m.anio && abierto()?.mes === m.mes"
-              (click)="abrir(m)"
-            >
-              <span class="nombre">{{ m.nombre }}</span>
-              <span class="detalle">
-                <span [class]="'etiqueta ' + estadoClase(m)">{{ estadoTexto(m) }}</span>
-                {{ soles(m.calculo.totalAPagarCents) }}
-              </span>
-            </button>
-          </li>
-        }
-      </ul>
-    }
-    <p class="tenue">
-      SUNAT no deja presentar el 621 por internet desde otro sistema: se presenta en SOL → Declara
-      Fácil. Aquí tienes las cifras, los avisos y el registro de lo declarado.
-    </p>
-  </aside>
-
-  <!-- ── El mes abierto ─────────────────────────────────────────────────── -->
-  @if (abierto(); as d) {
-    <div class="detalle-mes">
-      <section class="tarjeta">
-        <div class="cabecera">
-          <h2>{{ d.nombre }}</h2>
-          <span [class]="'etiqueta ' + estadoClase(d)">{{ estadoTexto(d) }}</span>
+<div class="declaraciones" data-tour="admin-declaraciones">
+  @if (cargando() && meses().length === 0) {
+    <p class="tenue">Cargando…</p>
+  } @else if (abierto(); as d) {
+    <!-- ── Cabecera: el mes y las acciones ──────────────────────────────── -->
+    <header class="barra">
+      <div class="barra-mes">
+        <div class="selector-mes">
+          <button type="button" class="flecha" aria-label="Mes anterior" [disabled]="!mesAnterior()" (click)="irA(mesAnterior())">
+            ‹
+          </button>
+          <span class="mes-nombre">{{ d.nombre }}</span>
+          <button type="button" class="flecha" aria-label="Mes siguiente" [disabled]="!mesSiguiente()" (click)="irA(mesSiguiente())">
+            ›
+          </button>
         </div>
-        @if (d.enCurso) {
-          <p class="tenue">El mes aún no termina: las cifras cambian con cada venta.</p>
+        <span [class]="'etiqueta ' + estadoClase(d)">{{ estadoTexto(d) }}</span>
+        <p class="tenue subtitulo">IGV y Renta mensual (formulario 621). Se presenta en SUNAT SOL → Declara Fácil.</p>
+      </div>
+      <div class="barra-acciones">
+        @if (d.estado === 'PENDIENTE') {
+          <button type="button" class="boton secundario" (click)="abrirVentana('ajustes')">Ajustes del mes</button>
+          <button type="button" class="boton secundario contorno" (click)="abrirVentana('compra')">+ Añadir compra</button>
         }
+        @if (d.enCurso) {
+          <button type="button" class="boton" (click)="abrirVentana('servicio')">+ Registrar servicio</button>
+        }
+      </div>
+    </header>
 
-        <table class="casillas">
-          <thead>
-            <tr>
-              <th>Casilla</th>
-              <th>Concepto</th>
-              <th class="derecha">Soles</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of d.calculo.casillas; track $index) {
-              <tr>
-                <td class="numero">{{ c.casilla ?? '—' }}</td>
-                <td>{{ c.texto }}</td>
-                <td class="numero derecha"><b>{{ c.soles }}</b></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <p class="total">
-          A pagar: <b>{{ soles(d.calculo.totalAPagarCents) }}</b>
-          <span class="tenue">
-            IGV {{ soles(d.calculo.igvAPagarCents) }} + renta {{ soles(d.calculo.rentaCents) }}
-            @if (d.calculo.saldoSiguienteCents > 0) {
-              · pasa {{ soles(d.calculo.saldoSiguienteCents) }} de saldo a favor al mes siguiente
+    <!-- ── Las cifras del mes ───────────────────────────────────────────── -->
+    <section class="cifras">
+      <div class="cifra destacada">
+        <span class="cifra-titulo">Total a pagar</span>
+        <b class="cifra-valor">{{ soles(d.calculo.totalAPagarCents) }}</b>
+        <span class="cifra-pie">
+          IGV {{ soles(d.calculo.igvAPagarCents) }} · Renta {{ soles(d.calculo.rentaCents) }}
+        </span>
+      </div>
+      <div class="cifra">
+        <span class="cifra-titulo">Ventas gravadas (base)</span>
+        <b class="cifra-valor">{{ solesEnteros(d.calculo.ventas.baseCents) }}</b>
+        <span class="cifra-pie">{{ d.calculo.ventas.boletas }} boletas · {{ d.calculo.ventas.notas }} notas de crédito</span>
+      </div>
+      <div class="cifra">
+        <span class="cifra-titulo">Compras con crédito fiscal</span>
+        <b class="cifra-valor">{{ solesEnteros(d.calculo.compras.baseCents) }}</b>
+        <span class="cifra-pie">
+          @if (d.calculo.compras.cantidad === 0) {
+            Sin facturas registradas
+          } @else {
+            {{ d.calculo.compras.cantidad }} facturas · IGV {{ soles(d.calculo.compras.igvCents) }}
+          }
+        </span>
+      </div>
+      <div class="cifra" [class.alerta]="!d.vencimiento && d.estado === 'PENDIENTE'">
+        <span class="cifra-titulo">Vence el</span>
+        @if (d.vencimiento) {
+          <b class="cifra-valor">{{ d.vencimiento | date: 'd MMM y' : 'UTC' }}</b>
+          <span class="cifra-pie">
+            @if (d.estado !== 'PENDIENTE') {
+              Ya declarado
+            } @else if (d.diasParaVencer !== null && d.diasParaVencer >= 0) {
+              Faltan {{ d.diasParaVencer }} días
+            } @else if (d.diasParaVencer !== null) {
+              Vencido
             }
           </span>
-        </p>
-        <p class="tenue">
-          {{ d.calculo.ventas.boletas }} boletas y {{ d.calculo.ventas.notas }} notas de crédito ·
-          {{ d.calculo.compras.cantidad }} compras. Los números de casilla están por confirmar con el
-          contador.
-        </p>
-      </section>
-
-      @if (d.estado === 'PENDIENTE') {
-        <section class="tarjeta">
-          <h2>Datos del mes</h2>
-          <div class="campos">
-            <div class="campo">
-              <label for="dec-venc">Vence el</label>
-              <input id="dec-venc" type="date" name="venc" [(ngModel)]="vencimiento" />
-              <span class="ayuda">Según el cronograma de SUNAT, RUC terminado en 0.</span>
-            </div>
-            <div class="campo">
-              <label for="dec-ajuste">Ventas sin boleta (base, S/)</label>
-              <input id="dec-ajuste" inputmode="decimal" name="ajuste" [(ngModel)]="ajuste" placeholder="0.00" />
-            </div>
-            <div class="campo ancho">
-              <label for="dec-nota">Por qué</label>
-              <input id="dec-nota" name="nota" maxlength="255" [(ngModel)]="ajusteNota" placeholder="Ej.: ventas del 1 al 18 de octubre" />
-            </div>
-            <div class="campo">
-              <label for="dec-saldo">Saldo a favor inicial (S/)</label>
-              <input id="dec-saldo" inputmode="decimal" name="saldo" [(ngModel)]="saldoInicial" placeholder="El del mes anterior" />
-            </div>
-          </div>
-          <button type="button" class="boton" [disabled]="guardando()" (click)="guardarDatos()">Guardar</button>
-        </section>
-      }
-
-      <section class="tarjeta">
-        <h2>Compras del mes (crédito fiscal)</h2>
-        @if (d.compras.length === 0) {
-          <p class="tenue">Sin compras registradas. Solo cuentan las facturas a tu RUC.</p>
         } @else {
-          <div class="tabla-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Proveedor</th>
-                  <th>Factura</th>
-                  <th class="derecha">Base</th>
-                  <th class="derecha">IGV</th>
-                  <th></th>
-                </tr>
-              </thead>
+          <b class="cifra-valor aviso-texto">Sin fecha</b>
+          @if (d.estado === 'PENDIENTE') {
+            <button type="button" class="enlace" (click)="abrirVentana('ajustes')">Definir fecha de vencimiento</button>
+          }
+        }
+      </div>
+    </section>
+
+    <div class="cuerpo">
+      <!-- ── Las casillas ──────────────────────────────────────────────── -->
+      <section class="tarjeta casillas-tarjeta">
+        <div class="tarjeta-cabecera">
+          <div>
+            <h2>Casillas para el 621</h2>
+            @if (d.enCurso) {
+              <p class="tenue">El mes aún no termina: las cifras cambian con cada venta.</p>
+            }
+          </div>
+          <button type="button" class="boton secundario chico" (click)="copiarCifras()">Copiar cifras</button>
+        </div>
+
+        <div class="tabla-scroll">
+          <table class="casillas">
+            <thead>
+              <tr>
+                <th>Casilla</th>
+                <th>Concepto</th>
+                <th class="derecha">Soles</th>
+              </tr>
+            </thead>
+            @for (g of grupos(); track g.nombre) {
               <tbody>
-                @for (c of d.compras; track c.id) {
-                  <tr>
-                    <td class="numero">{{ c.fecha | date: 'd MMM' : 'UTC' }}</td>
+                <tr class="grupo">
+                  <td colspan="3">{{ g.nombre }}</td>
+                </tr>
+                @for (c of g.casillas; track $index) {
+                  <tr [class.total-fila]="esTotal(c)" [class.apagada]="c.soles === 0 && !esTotal(c)">
                     <td>
-                      {{ c.razonSocial || c.rucProveedor }}
-                      @if (c.descripcion) {
-                        <span class="tenue">{{ c.descripcion }}</span>
+                      @if (c.casilla) {
+                        <code class="chip">{{ c.casilla }}</code>
+                      } @else {
+                        —
                       }
                     </td>
-                    <td class="numero">{{ c.serie }}-{{ c.numero }}</td>
-                    <td class="numero derecha">{{ soles(c.baseCents) }}</td>
-                    <td class="numero derecha">{{ soles(c.igvCents) }}</td>
-                    <td>
-                      @if (d.estado === 'PENDIENTE') {
-                        <button type="button" class="enlace peligro" (click)="borrarCompra(c.id)">Quitar</button>
-                      }
-                    </td>
+                    <td>{{ c.texto }}</td>
+                    <td class="numero derecha">{{ c.soles | number: '1.0-0' }}</td>
                   </tr>
                 }
               </tbody>
-            </table>
-          </div>
-        }
-
-        @if (d.estado === 'PENDIENTE') {
-          <form class="campos" (ngSubmit)="agregarCompra()">
-            <div class="campo">
-              <label for="c-fecha">Fecha</label>
-              <input id="c-fecha" type="date" name="fecha" required [(ngModel)]="compra.fecha" />
-            </div>
-            <div class="campo">
-              <label for="c-ruc">RUC del proveedor</label>
-              <input id="c-ruc" name="ruc" inputmode="numeric" maxlength="11" required [(ngModel)]="compra.rucProveedor" />
-            </div>
-            <div class="campo">
-              <label for="c-razon">Razón social</label>
-              <input id="c-razon" name="razon" maxlength="200" [(ngModel)]="compra.razonSocial" />
-            </div>
-            <div class="campo corto">
-              <label for="c-serie">Serie</label>
-              <input id="c-serie" name="serie" maxlength="4" required [(ngModel)]="compra.serie" placeholder="F001" />
-            </div>
-            <div class="campo corto">
-              <label for="c-numero">Número</label>
-              <input id="c-numero" name="numero" inputmode="numeric" required [(ngModel)]="compra.numero" />
-            </div>
-            <div class="campo corto">
-              <label for="c-base">Base (S/)</label>
-              <input id="c-base" name="base" inputmode="decimal" required [(ngModel)]="compra.base" (blur)="proponerIgv()" />
-            </div>
-            <div class="campo corto">
-              <label for="c-igv">IGV (S/)</label>
-              <input id="c-igv" name="igv" inputmode="decimal" required [(ngModel)]="compra.igv" />
-            </div>
-            <div class="campo ancho">
-              <label for="c-desc">Qué es</label>
-              <input id="c-desc" name="desc" maxlength="200" [(ngModel)]="compra.descripcion" />
-            </div>
-            <button type="submit" class="boton secundario" [disabled]="guardando()">Añadir compra</button>
-          </form>
-        }
+            }
+          </table>
+        </div>
+        <p class="tenue pie-tarjeta">
+          Números de casilla por confirmar con el contador
+          @if (d.calculo.ventas.ajusteBaseCents) {
+            · incluye {{ soles(d.calculo.ventas.ajusteBaseCents) }} de ventas sin boleta
+          }
+          @if (d.calculo.saldoSiguienteCents > 0) {
+            · pasa {{ soles(d.calculo.saldoSiguienteCents) }} de saldo a favor al mes siguiente
+          }
+        </p>
       </section>
 
-      @if (!d.enCurso) {
+      <aside class="lateral">
+        <!-- ── Movimientos del mes ─────────────────────────────────────── -->
         <section class="tarjeta">
-          @if (d.estado === 'PENDIENTE') {
-            <h2>Ya presenté el 621</h2>
-            <div class="campos">
-              <div class="campo">
-                <label for="dec-orden">N.º de orden de SUNAT</label>
-                <input id="dec-orden" name="orden" maxlength="30" [(ngModel)]="numeroOrden" />
+          <h2>Movimientos del mes</h2>
+
+          <div class="bloque" [class.mal]="errorServicios()" data-tour="admin-declaraciones-servicios">
+            <div class="bloque-cabecera">
+              <div>
+                <b>Servicios fuera de la web</b>
+                @if (errorServicios()) {
+                  <span class="tenue error-texto">No se pudo cargar la lista.</span>
+                } @else if (servicios().length === 0) {
+                  <span class="tenue">Ninguno este mes</span>
+                } @else {
+                  <span class="tenue">{{ servicios().length }} registrados</span>
+                }
               </div>
-              <div class="campo corto">
-                <label for="dec-igv">IGV pagado (S/)</label>
-                <input id="dec-igv" name="igvp" inputmode="decimal" [(ngModel)]="igvPagado" />
-              </div>
-              <div class="campo corto">
-                <label for="dec-renta">Renta pagada (S/)</label>
-                <input id="dec-renta" name="rentap" inputmode="decimal" [(ngModel)]="rentaPagada" />
-              </div>
+              @if (errorServicios()) {
+                <button type="button" class="boton secundario chico" (click)="actualizarServicios()">Reintentar</button>
+              } @else if (d.enCurso) {
+                <button type="button" class="boton secundario chico" (click)="abrirVentana('servicio')">Añadir</button>
+              }
             </div>
-            <button type="button" class="boton" [disabled]="guardando()" (click)="declarar()">Ya declaré</button>
+            @if (!errorServicios() && servicios().length) {
+              <ul class="movimientos">
+                @for (s of servicios(); track s.id) {
+                  <li>
+                    <div class="mov-linea">
+                      <span class="mov-nombre">{{ s.clienteNombre }}</span>
+                      <span class="numero">{{ importe(s) }}</span>
+                    </div>
+                    <span class="tenue">
+                      {{ s.pagadoEn | date: 'd MMM' }} · {{ s.concepto }}
+                      @if (detalleServicio(s)) {
+                        · {{ detalleServicio(s) }}
+                      }
+                    </span>
+                    <div class="mov-linea">
+                      <span [class]="'etiqueta ' + estadoServicio(s).clase">{{ estadoServicio(s).texto }}</span>
+                      <span class="mov-acciones">
+                        @if (boletaDe(s)) {
+                          <button type="button" class="enlace" (click)="descargarBoleta(s)">PDF</button>
+                          @if (sePuedeAnular(s)) {
+                            <button type="button" class="enlace peligro" [disabled]="guardando()" (click)="anularServicio(s)">
+                              Anular
+                            </button>
+                          }
+                        } @else {
+                          <button type="button" class="enlace peligro" (click)="quitarServicio(s)">Quitar</button>
+                        }
+                      </span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <div class="bloque">
+            <div class="bloque-cabecera">
+              <div>
+                <b>Compras con factura</b>
+                <span class="tenue">
+                  {{ d.compras.length === 0 ? 'Ninguna este mes' : d.compras.length + ' registradas' }}
+                </span>
+              </div>
+              @if (d.estado === 'PENDIENTE') {
+                <button type="button" class="boton secundario chico" (click)="abrirVentana('compra')">Añadir</button>
+              }
+            </div>
+            @if (d.compras.length) {
+              <ul class="movimientos">
+                @for (c of d.compras; track c.id) {
+                  <li>
+                    <div class="mov-linea">
+                      <span class="mov-nombre">{{ c.razonSocial || c.rucProveedor }}</span>
+                      <span class="numero">{{ soles(c.baseCents + c.igvCents) }}</span>
+                    </div>
+                    @if (esExtranjera(c)) {
+                      <span class="tenue">
+                        Extranjero · {{ c.documento }}
+                        @if (c.monedaOriginal === 'USD') {
+                          · US$ {{ ((c.importeOriginalCents ?? 0) / 100).toFixed(2) }} × {{ c.tipoCambio }}
+                        }
+                        · IGV {{ soles(c.igvCents) }} pagado el {{ c.igvPagadoEn | date: 'd MMM' : 'UTC' }}
+                        @if (c.ordenPago) {
+                          (1662 n.º {{ c.ordenPago }})
+                        }
+                      </span>
+                    } @else {
+                      <span class="tenue">
+                        {{ c.fecha | date: 'd MMM' : 'UTC' }} · {{ c.serie }}-{{ c.numero }} · IGV {{ soles(c.igvCents) }}
+                        @if (c.descripcion) {
+                          · {{ c.descripcion }}
+                        }
+                      </span>
+                    }
+                    @if (d.estado === 'PENDIENTE') {
+                      <div class="mov-linea fin">
+                        <button type="button" class="enlace peligro" (click)="borrarCompra(c.id)">Quitar</button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </section>
+
+        @if (d.porPagar1662?.length) {
+          <section class="tarjeta bloque-1662">
+            <div>
+              <h2>IGV del extranjero por pagar</h2>
+              <p class="tenue">
+                {{ soles(porPagar1662Cents(d)) }} con el Formulario 1662 (pagos varios, código 1041). Cuenta
+                como crédito en el mes en que lo pagues.
+              </p>
+            </div>
+            <ul class="movimientos">
+              @for (c of d.porPagar1662; track c.id) {
+                <li>
+                  <div class="mov-linea">
+                    <span class="mov-nombre">{{ c.razonSocial }}</span>
+                    <span class="numero">IGV {{ soles(c.igvCents) }}</span>
+                  </div>
+                  <span class="tenue">
+                    {{ c.fecha | date: 'd MMM y' : 'UTC' }} · {{ c.documento }}
+                    @if (c.monedaOriginal === 'USD') {
+                      · US$ {{ ((c.importeOriginalCents ?? 0) / 100).toFixed(2) }}
+                    }
+                  </span>
+                  <div class="mov-linea fin">
+                    <button type="button" class="enlace peligro" (click)="borrarCompra(c.id)">Quitar</button>
+                    <button type="button" class="enlace" (click)="abrirPago1662(c)">Ya lo pagué</button>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <!-- ── Cómo presentarlo ───────────────────────────────────────── -->
+        <section class="tarjeta">
+          <h2>Cómo presentarlo</h2>
+          @if (d.estado === 'PENDIENTE') {
+            <ol class="pasos">
+              <li>Espera al cierre del mes y revisa las cifras.</li>
+              <li>Entra a SUNAT SOL → Declara Fácil.</li>
+              <li>Copia cada casilla y paga antes del vencimiento.</li>
+              <li>Vuelve aquí y deja el registro de lo declarado.</li>
+            </ol>
+            <button type="button" class="boton secundario bloque-boton" [disabled]="d.enCurso || guardando()" (click)="abrirVentana('declarar')">
+              Registrar como declarado
+            </button>
           } @else {
-            <h2>Declarado</h2>
-            <p>
-              El {{ d.declaradaEn | date: 'd MMM y, HH:mm' }}
+            <p class="tenue">
+              Declarado el {{ d.declaradaEn | date: 'd MMM y, HH:mm' }}
               @if (d.numeroOrden) {
                 · orden {{ d.numeroOrden }}
               }
@@ -215,10 +296,330 @@
                 · pagado IGV {{ soles(d.igvPagadoCents) }} y renta {{ soles(d.rentaPagadaCents) }}
               }
             </p>
-            <button type="button" class="boton secundario" [disabled]="guardando()" (click)="reabrir()">Reabrir</button>
+            <button type="button" class="boton secundario bloque-boton" [disabled]="guardando()" (click)="reabrir()">Reabrir</button>
           }
         </section>
-      }
+      </aside>
     </div>
+
+    <!-- ── Ventanas ─────────────────────────────────────────────────────── -->
+    @if (ventana(); as v) {
+      <div class="ventana-fondo" (click)="cerrarVentana()">
+        <div
+          class="ventana"
+          [class.estrecha]="v === 'ajustes' || v === 'declarar'"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-ventana-dec"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="ventana-cabecera">
+            <h3 id="titulo-ventana-dec">{{ tituloVentana(v) }}@if (v !== 'pago1662') { · {{ d.nombre }}}</h3>
+            <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarVentana()">✕</button>
+          </div>
+
+          @switch (v) {
+            @case ('ajustes') {
+              <form (ngSubmit)="guardarDatos()">
+                <div class="ventana-cuerpo campos">
+                  <div class="campo">
+                    <label for="dec-venc">Vence el</label>
+                    <input id="dec-venc" type="date" name="venc" [(ngModel)]="vencimiento" />
+                    <span class="ayuda">Según el cronograma de SUNAT, RUC terminado en 0.</span>
+                  </div>
+                  <div class="campo">
+                    <label for="dec-saldo">Saldo a favor inicial (S/)</label>
+                    <input id="dec-saldo" inputmode="decimal" name="saldo" [(ngModel)]="saldoInicial" placeholder="El del mes anterior" />
+                  </div>
+                  <div class="campo">
+                    <label for="dec-ajuste">Ventas sin boleta (base, S/)</label>
+                    <input id="dec-ajuste" inputmode="decimal" name="ajuste" [(ngModel)]="ajuste" placeholder="0.00" />
+                  </div>
+                  <div class="campo ancho">
+                    <label for="dec-nota">Por qué</label>
+                    <input id="dec-nota" name="nota" maxlength="255" [(ngModel)]="ajusteNota" placeholder="Ej.: ventas del 1 al 18 de octubre" />
+                  </div>
+                </div>
+                <div class="ventana-pie">
+                  <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                  <button type="submit" class="boton" [disabled]="guardando()">Guardar</button>
+                </div>
+              </form>
+            }
+
+            @case ('compra') {
+              <div class="tipo-compra" role="radiogroup" aria-label="Tipo de compra">
+                <button type="button" role="radio" [attr.aria-checked]="tipoCompra === 'FACTURA'" [class.activo]="tipoCompra === 'FACTURA'" (click)="tipoCompra = 'FACTURA'">
+                  Factura peruana
+                </button>
+                <button type="button" role="radio" [attr.aria-checked]="tipoCompra === 'EXTRANJERO'" [class.activo]="tipoCompra === 'EXTRANJERO'" (click)="tipoCompra = 'EXTRANJERO'">
+                  Servicio del extranjero
+                </button>
+              </div>
+              @if (tipoCompra === 'EXTRANJERO') {
+                <form (ngSubmit)="agregarExtranjera()">
+                  <div class="ventana-cuerpo campos">
+                    <p class="tenue ancho-total">
+                      Claude, Google, Canva, Hostinger… Pon tu RUC en la plataforma para que no te cobre
+                      IGV. Tú pagas el 18 % a SUNAT con el Formulario 1662 y cuenta como crédito en el mes
+                      en que lo pagas. Confírmalo con el contador.
+                    </p>
+                    <div class="campo">
+                      <label for="e-fecha">Día del pago al proveedor</label>
+                      <input id="e-fecha" type="date" name="efecha" required [(ngModel)]="extranjera.fecha" />
+                    </div>
+                    <div class="campo">
+                      <label for="e-prov">Proveedor</label>
+                      <input id="e-prov" name="eprov" maxlength="200" required [(ngModel)]="extranjera.proveedor" placeholder="Anthropic" />
+                    </div>
+                    <div class="campo">
+                      <label for="e-doc">N.º de factura o recibo</label>
+                      <input id="e-doc" name="edoc" maxlength="60" required [(ngModel)]="extranjera.documento" placeholder="INV-2026-0001" />
+                    </div>
+                    <div class="campo corto">
+                      <label for="e-moneda">Moneda</label>
+                      <select id="e-moneda" name="emoneda" [(ngModel)]="extranjera.moneda">
+                        <option value="USD">Dólares</option>
+                        <option value="PEN">Soles</option>
+                      </select>
+                    </div>
+                    <div class="campo corto">
+                      <label for="e-monto">Monto</label>
+                      <input id="e-monto" name="emonto" inputmode="decimal" required [(ngModel)]="extranjera.monto" placeholder="20.00" />
+                    </div>
+                    @if (extranjera.moneda === 'USD') {
+                      <div class="campo corto">
+                        <label for="e-tc">Tipo de cambio</label>
+                        <input id="e-tc" name="etc" inputmode="decimal" required [(ngModel)]="extranjera.tipoCambio" placeholder="3.431" />
+                      </div>
+                    }
+                    <div class="campo ancho">
+                      <label for="e-desc">Qué es</label>
+                      <input id="e-desc" name="edesc" maxlength="200" [(ngModel)]="extranjera.descripcion" placeholder="Suscripción de Claude, octubre" />
+                    </div>
+                    @if (calculoExtranjera(); as cal) {
+                      <p class="tenue ancho-total">
+                        Base {{ soles(cal.base) }} · IGV a pagar con el 1662: <b>{{ soles(cal.igv) }}</b>
+                      </p>
+                    }
+                    @if (extranjera.moneda === 'USD') {
+                      <span class="ayuda ancho-total">El tipo de cambio venta de SUNAT del día del pago.</span>
+                    }
+                    <label class="marcar ancho-total">
+                      <input type="checkbox" name="eyapagado" [(ngModel)]="extranjera.yaPagado" />
+                      Ya pagué el IGV con el 1662
+                    </label>
+                    @if (extranjera.yaPagado) {
+                      <div class="campo">
+                        <label for="e-orden">N.º de orden del 1662</label>
+                        <input id="e-orden" name="eorden" maxlength="30" [(ngModel)]="extranjera.orden" />
+                      </div>
+                      <div class="campo">
+                        <label for="e-fpago">Día en que lo pagaste</label>
+                        <input id="e-fpago" type="date" name="efpago" required [(ngModel)]="extranjera.fechaPago" />
+                      </div>
+                    }
+                  </div>
+                  <div class="ventana-pie">
+                    <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                    <button type="submit" class="boton" [disabled]="guardando()">Añadir servicio</button>
+                  </div>
+                </form>
+              } @else {
+              <form (ngSubmit)="agregarCompra()">
+                <div class="ventana-cuerpo campos">
+                  <p class="tenue ancho-total">Solo cuentan las facturas a tu RUC.</p>
+                  <div class="campo">
+                    <label for="c-fecha">Fecha</label>
+                    <input id="c-fecha" type="date" name="fecha" required [(ngModel)]="compra.fecha" />
+                  </div>
+                  <div class="campo">
+                    <label for="c-ruc">RUC del proveedor</label>
+                    <input id="c-ruc" name="ruc" inputmode="numeric" maxlength="11" required [(ngModel)]="compra.rucProveedor" />
+                  </div>
+                  <div class="campo ancho">
+                    <label for="c-razon">Razón social</label>
+                    <input id="c-razon" name="razon" maxlength="200" [(ngModel)]="compra.razonSocial" />
+                  </div>
+                  <div class="campo corto">
+                    <label for="c-serie">Serie</label>
+                    <input id="c-serie" name="serie" maxlength="4" required [(ngModel)]="compra.serie" placeholder="F001" />
+                  </div>
+                  <div class="campo corto">
+                    <label for="c-numero">Número</label>
+                    <input id="c-numero" name="numero" inputmode="numeric" required [(ngModel)]="compra.numero" />
+                  </div>
+                  <div class="campo corto">
+                    <label for="c-base">Base (S/)</label>
+                    <input id="c-base" name="base" inputmode="decimal" required [(ngModel)]="compra.base" (blur)="proponerIgv()" />
+                  </div>
+                  <div class="campo corto">
+                    <label for="c-igv">IGV (S/)</label>
+                    <input id="c-igv" name="igv" inputmode="decimal" required [(ngModel)]="compra.igv" />
+                  </div>
+                  <div class="campo ancho">
+                    <label for="c-desc">Qué es</label>
+                    <input id="c-desc" name="desc" maxlength="200" [(ngModel)]="compra.descripcion" />
+                  </div>
+                </div>
+                <div class="ventana-pie">
+                  <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                  <button type="submit" class="boton" [disabled]="guardando()">Añadir compra</button>
+                </div>
+              </form>
+              }
+            }
+
+            @case ('pago1662') {
+              <form (ngSubmit)="guardarPago1662()">
+                <div class="ventana-cuerpo campos">
+                  @if (compra1662(); as c) {
+                    <p class="tenue ancho-total">
+                      {{ c.razonSocial }} · {{ c.documento }}. Desde el día del pago cuenta como crédito
+                      fiscal de ese mes.
+                    </p>
+                  }
+                  <div class="campo ancho">
+                    <label for="p-orden">N.º de orden del 1662</label>
+                    <input id="p-orden" name="porden" maxlength="30" [(ngModel)]="pago1662.orden" />
+                  </div>
+                  <div class="campo">
+                    <label for="p-fecha">Día en que lo pagaste</label>
+                    <input id="p-fecha" type="date" name="pfecha" required [(ngModel)]="pago1662.fecha" />
+                  </div>
+                  <div class="campo">
+                    <label for="p-igv">IGV pagado (S/)</label>
+                    <input id="p-igv" name="pigv" inputmode="decimal" [(ngModel)]="pago1662.igv" />
+                  </div>
+                </div>
+                <div class="ventana-pie">
+                  <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                  <button type="submit" class="boton" [disabled]="guardando()">Guardar</button>
+                </div>
+              </form>
+            }
+
+            @case ('servicio') {
+              <form (ngSubmit)="registrarServicio()">
+                <div class="ventana-cuerpo campos">
+                  <p class="tenue ancho-total">
+                    Asesorías, correcciones, Turnitin o estadística cobrados por WhatsApp. Cada pago
+                    lleva su boleta con IGV, que sale en unos minutos con la fecha de hoy y entra sola
+                    en las casillas. Si el cliente paga en partes, registra cada pago.
+                  </p>
+                  <div class="campo">
+                    <label for="s-concepto">Servicio</label>
+                    <select id="s-concepto" name="concepto" [(ngModel)]="servicio.concepto">
+                      @for (c of conceptos; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                      <option value="otro">Otro…</option>
+                    </select>
+                  </div>
+                  @if (servicio.concepto === 'otro') {
+                    <div class="campo ancho">
+                      <label for="s-otro">¿Qué servicio?</label>
+                      <input id="s-otro" name="otro" maxlength="200" required [(ngModel)]="servicio.otroConcepto" />
+                    </div>
+                  }
+                  <div class="campo corto">
+                    <label for="s-monto">Monto</label>
+                    <input id="s-monto" name="monto" inputmode="decimal" required [(ngModel)]="servicio.monto" placeholder="150.00" />
+                  </div>
+                  <div class="campo corto">
+                    <label for="s-moneda">Moneda</label>
+                    <select id="s-moneda" name="moneda" [(ngModel)]="servicio.moneda">
+                      <option value="PEN">Soles</option>
+                      <option value="USD">Dólares</option>
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label for="s-fecha">Día del pago</label>
+                    <input id="s-fecha" type="date" name="fecha" required [(ngModel)]="servicio.fecha" />
+                  </div>
+                  <div class="campo">
+                    <label for="s-medio">Medio</label>
+                    <select id="s-medio" name="medio" [(ngModel)]="servicio.medio">
+                      <option value="">—</option>
+                      <option>Yape</option>
+                      <option>Plin</option>
+                      <option>Transferencia</option>
+                      <option>Efectivo</option>
+                      <option>PayPal</option>
+                      <option>Western Union</option>
+                    </select>
+                  </div>
+                  <div class="campo ancho">
+                    <label for="s-nombre">Nombre del cliente</label>
+                    <input id="s-nombre" name="nombre" maxlength="200" required [(ngModel)]="servicio.nombre" />
+                  </div>
+                  <div class="campo">
+                    <label for="s-tipodoc">Documento</label>
+                    <select id="s-tipodoc" name="tipodoc" [(ngModel)]="servicio.tipoDoc">
+                      <option value="-">Sin documento (hasta S/ 700)</option>
+                      <option value="1">DNI</option>
+                      <option value="4">Carné de extranjería</option>
+                      <option value="7">Pasaporte</option>
+                      <option value="0">Extranjero sin documento</option>
+                    </select>
+                  </div>
+                  @if (pideNumero()) {
+                    <div class="campo">
+                      <label for="s-numdoc">Número</label>
+                      <input id="s-numdoc" name="numdoc" maxlength="12" required [(ngModel)]="servicio.numDoc" />
+                    </div>
+                  }
+                  @if (servicio.tipoDoc === '0') {
+                    <div class="campo corto">
+                      <label for="s-pais">País</label>
+                      <input id="s-pais" name="pais" maxlength="2" required [(ngModel)]="servicio.pais" placeholder="EC" />
+                    </div>
+                  }
+                  <div class="campo">
+                    <label for="s-email">Correo (para mandarle la boleta)</label>
+                    <input id="s-email" type="email" name="email" maxlength="191" [(ngModel)]="servicio.email" />
+                  </div>
+                  <div class="campo ancho">
+                    <label for="s-nota">Nota interna</label>
+                    <input id="s-nota" name="nota" maxlength="255" [(ngModel)]="servicio.nota" placeholder="Ej.: adelanto 1 de 2" />
+                  </div>
+                </div>
+                <div class="ventana-pie">
+                  <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                  <button type="submit" class="boton" [disabled]="guardando()">Registrar y emitir boleta</button>
+                </div>
+              </form>
+            }
+
+            @case ('declarar') {
+              <form (ngSubmit)="declarar()">
+                <div class="ventana-cuerpo campos">
+                  <p class="tenue ancho-total">
+                    Hazlo después de presentar el 621 en Declara Fácil. Se guarda el cálculo tal como
+                    está y dejan de llegar los avisos de este mes.
+                  </p>
+                  <div class="campo ancho">
+                    <label for="dec-orden">N.º de orden de SUNAT</label>
+                    <input id="dec-orden" name="orden" maxlength="30" [(ngModel)]="numeroOrden" />
+                  </div>
+                  <div class="campo">
+                    <label for="dec-igv">IGV pagado (S/)</label>
+                    <input id="dec-igv" name="igvp" inputmode="decimal" [(ngModel)]="igvPagado" />
+                  </div>
+                  <div class="campo">
+                    <label for="dec-renta">Renta pagada (S/)</label>
+                    <input id="dec-renta" name="rentap" inputmode="decimal" [(ngModel)]="rentaPagada" />
+                  </div>
+                </div>
+                <div class="ventana-pie">
+                  <button type="button" class="boton secundario" (click)="cerrarVentana()">Cancelar</button>
+                  <button type="submit" class="boton" [disabled]="guardando()">Ya declaré</button>
+                </div>
+              </form>
+            }
+          }
+        </div>
+      </div>
+    }
   }
 </div>

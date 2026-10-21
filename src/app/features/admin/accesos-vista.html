@@ -279,23 +279,21 @@
         }
       </section>
 
-      <!-- ── Ficha de un acceso (20-oct-2026) ──────────────────────────────────
-         Dos columnas: a la izquierda la venta (importe, membresía, captura y sus
-         ajustes); a la derecha su comprobante electrónico con el detalle y el
-         seguimiento. Las boletas viven aquí desde que se quitó la sección
-         «Boletas» del panel. En el móvil se apila. -->
+      <!-- ── Ficha de un acceso (21-oct-2026) ──────────────────────────────────
+         Una sola columna, de arriba abajo: quién y cuándo, el importe, la boleta
+         con sus totales y, plegado, «Editar la venta» con los ajustes y las
+         acciones que se usan poco (XML, CDR, anular). Abajo, lo de siempre:
+         descargar, reenviar y cerrar. -->
       @if (accionesAccesos().accesoAbierto(); as acceso) {
         <div class="ventana-fondo">
           <div class="ventana ficha-venta" role="dialog" aria-modal="true" aria-labelledby="titulo-acceso">
             <header class="fv-cabecera">
-              <span class="fv-avatar" aria-hidden="true">{{ acceso.comprador.charAt(0).toUpperCase() }}</span>
               <div class="fv-quien">
                 <h3 id="titulo-acceso">{{ acceso.comprador }}</h3>
                 <span class="tenue">
-                  Venta · Ref. {{ acceso.referencia ?? '—' }} · {{ acceso.fecha | date: 'd MMM y, HH:mm' }}
+                  {{ acceso.fecha | date: 'd MMM y, HH:mm' }} · {{ acceso.canalNombre }} · Ref. {{ acceso.referencia ?? '—' }}
                 </span>
               </div>
-              <span class="canal" [class]="acceso.canal">{{ acceso.canalNombre }}</span>
               <span
                 class="pastilla"
                 [class.buena]="acceso.tono === 'buena'"
@@ -311,445 +309,399 @@
 
             <div class="fv-cuerpo">
               <!-- ── La venta ───────────────────────────────────────────────── -->
-              <aside class="fv-venta">
-                <div class="fv-importe">
-                  <span class="fv-rotulo">Importe</span>
-                  <strong class="fv-cifra">
-                    @if (acceso.amountCents) {
-                      {{ importe()(acceso.amountCents, acceso.moneda) }}
-                    } @else {
-                      Cortesía
-                    }
-                  </strong>
-                  <!-- Un código guarda el código del producto: ahí se traduce. -->
-                  <span>
-                    {{
-                      acceso.producto === acceso.productCode
-                        ? accionesAccesos().nombreDeProducto(acceso.productCode)
-                        : acceso.producto
-                    }}
-                  </span>
-                  @if (acceso.productoActual) {
-                    <span class="tenue">Tiene ahora: {{ accionesAccesos().nombreDeProducto(acceso.productoActual) }}</span>
+              <div class="fv-importe">
+                <strong class="fv-cifra">
+                  @if (acceso.amountCents) {
+                    {{ importe()(acceso.amountCents, acceso.moneda) }}
+                  } @else {
+                    Cortesía
                   }
-                  @if (acceso.licenseId) {
-                    <dl class="fv-datos">
-                      <div>
-                        <dt>Membresía</dt>
-                        <dd>
-                          @if (accionesAccesos().vigencia(); as vig) {
-                            @if (vig.expiresAt) {
-                              Vence {{ vig.expiresAt | date: 'd MMM y' }}
-                            } @else {
-                              Sin caducidad
-                            }
-                          } @else {
-                            —
-                          }
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Tesis</dt>
-                        <dd>{{ accionesAccesos().variasTesis() ? 'Varias' : 'Una sola' }}</dd>
-                      </div>
-                    </dl>
-                  }
-                </div>
-
-                @if (acceso.tieneComprobante) {
-                  <div class="ficha-captura">
-                    @if (accionesAccesos().cargandoCaptura()) {
-                      <p class="tenue">Cargando la captura…</p>
-                    } @else if (accionesAccesos().capturaAbierta(); as imagen) {
-                      <a [href]="imagen" target="_blank" rel="noopener">
-                        <img [src]="imagen" alt="Comprobante de {{ acceso.comprador }}" />
-                      </a>
-                      <p class="tenue">Pulsa la imagen para verla a tamaño completo.</p>
-                    } @else {
-                      <p class="tenue">No se pudo cargar la captura.</p>
-                    }
-                  </div>
+                </strong>
+                <!-- Un código guarda el código del producto: ahí se traduce. -->
+                <span class="fv-producto">
+                  {{
+                    acceso.producto === acceso.productCode
+                      ? accionesAccesos().nombreDeProducto(acceso.productCode)
+                      : acceso.producto
+                  }}
+                </span>
+                @if (acceso.productoActual) {
+                  <span class="tenue">Tiene ahora: {{ accionesAccesos().nombreDeProducto(acceso.productoActual) }}</span>
                 }
-
                 @if (acceso.licenseId) {
-                  <span class="fv-rotulo">Ajustes de la venta</span>
-                }
-              @if (acceso.licenseId) {
-                <div class="acciones-acceso">
-                  <div class="accion">
-                    <div class="accion-fila">
-                      <span class="accion-texto">
-                        <span class="accion-titulo" id="rotulo-varias-tesis">Varias tesis</span>
-                        <span
-                          class="accion-nota"
-                          [class.encendido]="accionesAccesos().variasTesis()"
-                          role="status"
-                          title="Que pueda abrir más de una tesis de este método desde su perfil y elegir con cuál trabaja Claude. Su URL no cambia."
-                        >
-                          @if (accionesAccesos().guardandoVariasTesis()) {
-                            Guardando…
-                          } @else if (accionesAccesos().avisoVariasTesis(); as mensaje) {
-                            {{ mensaje }}
-                          } @else if (accionesAccesos().variasTesis() === true) {
-                            Puede abrir varias tesis desde su perfil
-                          } @else if (accionesAccesos().variasTesis() === false) {
-                            Una sola tesis, como se vende
-                          } @else if (!accionesAccesos().errorVariasTesis()) {
-                            Consultando…
-                          }
-                        </span>
-                      </span>
-
-                      @if (accionesAccesos().variasTesis() !== null) {
-                        <button
-                          type="button"
-                          role="switch"
-                          class="interruptor"
-                          aria-labelledby="rotulo-varias-tesis"
-                          [attr.aria-checked]="accionesAccesos().variasTesis()"
-                          [disabled]="accionesAccesos().guardandoVariasTesis()"
-                          data-solo-casa
-                          (click)="accionesAccesos().cambiarVariasTesis()"
-                        >
-                          <span class="interruptor-bola" aria-hidden="true"></span>
-                        </button>
+                  <span class="tenue">
+                    @if (accionesAccesos().variasTesis() !== null) {
+                      {{ accionesAccesos().variasTesis() ? 'Varias tesis' : 'Una tesis' }} ·
+                    }
+                    @if (accionesAccesos().vigencia(); as vig) {
+                      @if (vig.expiresAt) {
+                        Membresía hasta el {{ vig.expiresAt | date: 'd MMM y' }}
+                      } @else {
+                        Membresía sin caducidad
                       }
-                    </div>
-                    <app-aviso-flotante [(error)]="accionesAccesos().errorVariasTesis" />
-                  </div>
+                    } @else {
+                      Consultando la membresía…
+                    }
+                  </span>
+                }
+              </div>
 
-                  <!-- Días desde el canje, como al vender el método. Vacío = que
-                     no caduque. Sale tras consultar la licencia. -->
-                  @if (accionesAccesos().vigencia(); as vig) {
-                    <div class="accion">
+              <!-- ── Su comprobante electrónico ─────────────────────────────── -->
+              @if (accionesAccesos().boletas.cargando() && accionesAccesos().boletas.comprobantes().length === 0) {
+                <p class="tenue">Cargando su boleta…</p>
+              } @else if (accionesAccesos().boletas.actual(); as c) {
+                @if (accionesAccesos().boletas.comprobantes().length > 1) {
+                  <div class="fv-pestanas" role="tablist" aria-label="Comprobantes de esta venta">
+                    @for (otro of accionesAccesos().boletas.comprobantes(); track otro.id) {
                       <button
                         type="button"
-                        class="accion-fila accion-boton"
-                        [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'duracion'"
-                        data-solo-casa
-                        (click)="accionesAccesos().alternarAccion('duracion')"
+                        role="tab"
+                        [attr.aria-selected]="otro.id === c.id"
+                        [class.activa]="otro.id === c.id"
+                        (click)="accionesAccesos().boletas.elegir(otro)"
                       >
-                        <span class="accion-texto">
-                          <span class="accion-titulo">Duración de la membresía</span>
-                          <span class="accion-nota" role="status">
-                            @if (vig.expiresAt) {
-                              Vence el {{ vig.expiresAt | date: 'd MMM y' }}
-                            } @else {
-                              Sin caducidad
-                            }
-                          </span>
-                        </span>
-                        <span class="accion-flecha" aria-hidden="true"></span>
+                        {{ accionesAccesos().boletas.etiqueta(otro) }}
                       </button>
-
-                      @if (accionesAccesos().accionAbierta() === 'duracion') {
-                        <div class="accion-cuerpo">
-                          <div class="mover-fila">
-                            <input
-                              type="number"
-                              min="1"
-                              max="3650"
-                              step="1"
-                              inputmode="numeric"
-                              aria-label="Duración en días desde el canje"
-                              placeholder="Sin caducidad"
-                              [value]="accionesAccesos().diasDuracion()"
-                              (input)="accionesAccesos().diasDuracion.set($any($event.target).value)"
-                              (keyup.enter)="accionesAccesos().cambiarDuracionDelAcceso()"
-                            />
-                            <button
-                              type="button"
-                              class="boton"
-                              [disabled]="!accionesAccesos().duracionCambia() || accionesAccesos().guardandoDuracion()"
-                              (click)="accionesAccesos().cambiarDuracionDelAcceso()"
-                            >
-                              {{ accionesAccesos().guardandoDuracion() ? 'Guardando…' : 'Guardar' }}
-                            </button>
-                          </div>
-                          <p class="accion-ayuda">
-                            Días desde el canje ({{ vig.createdAt | date: 'd MMM y' }}).
-                            @if (accionesAccesos().vencimientoPrevisto(); as fecha) {
-                              Vencería el {{ fecha | date: 'd MMM y' }}.
-                            } @else if (!accionesAccesos().diasDuracion().trim()) {
-                              Vacío: no caduca.
-                            }
-                            Su URL no cambia.
-                          </p>
-                          <app-aviso-flotante [(error)]="accionesAccesos().errorDuracion" [(aviso)]="accionesAccesos().avisoDuracion" />
-                        </div>
-                      }
-                    </div>
-                  }
-
-                  <div class="accion">
-                    <button
-                      type="button"
-                      class="accion-fila accion-boton"
-                      [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'correo'"
-                      data-solo-casa
-                      (click)="accionesAccesos().alternarAccion('correo')"
-                    >
-                      <span class="accion-texto">
-                        <span class="accion-titulo">Cambiar el correo</span>
-                        <span class="accion-nota">Con el que entra y le llegan los códigos</span>
-                      </span>
-                      <span class="accion-flecha" aria-hidden="true"></span>
-                    </button>
-
-                    @if (accionesAccesos().accionAbierta() === 'correo') {
-                      <div class="accion-cuerpo">
-                        <div class="mover-fila">
-                          <input
-                            type="email"
-                            aria-label="Correo nuevo"
-                            placeholder="correo.nuevo@gmail.com"
-                            autocomplete="off"
-                            spellcheck="false"
-                            [value]="accionesAccesos().correoNuevo()"
-                            (input)="accionesAccesos().correoNuevo.set($any($event.target).value)"
-                            (keyup.enter)="accionesAccesos().cambiarCorreoDelAcceso()"
-                          />
-                          <button
-                            type="button"
-                            class="boton"
-                            [disabled]="!accionesAccesos().correoNuevo().trim() || accionesAccesos().cambiandoCorreo()"
-                            (click)="accionesAccesos().cambiarCorreoDelAcceso()"
-                          >
-                            {{ accionesAccesos().cambiandoCorreo() ? 'Cambiando…' : 'Cambiar' }}
-                          </button>
-                        </div>
-                        <p class="accion-ayuda">
-                          Avisamos al correo viejo y al nuevo. Su URL, su licencia y su tesis siguen
-                          igual.
-                        </p>
-                        <app-aviso-flotante [(error)]="accionesAccesos().errorCorreo" [(aviso)]="accionesAccesos().avisoCorreo" />
-                      </div>
                     }
                   </div>
+                }
 
-                  @if (accionesAccesos().productosDestino().length > 0) {
-                    <div class="accion">
-                      <button
-                        type="button"
-                        class="accion-fila accion-boton"
-                        [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'producto'"
-                        data-solo-casa
-                        (click)="accionesAccesos().alternarAccion('producto')"
-                      >
-                        <span class="accion-texto">
-                          <span class="accion-titulo">Ampliar o cambiar el producto</span>
-                          <span class="accion-nota">Sin cobrarle de nuevo</span>
-                        </span>
-                        <span class="accion-flecha" aria-hidden="true"></span>
-                      </button>
-
-                      @if (accionesAccesos().accionAbierta() === 'producto') {
-                        <div class="accion-cuerpo">
-                          <div class="mover-fila">
-                            <select
-                              aria-label="Producto de destino"
-                              [value]="accionesAccesos().productoElegido()"
-                              (change)="accionesAccesos().productoElegido.set($any($event.target).value)"
-                            >
-                              <option value="">Elige el producto…</option>
-                              @for (destino of accionesAccesos().productosDestino(); track destino.productCode) {
-                                <option [value]="destino.productCode">{{ destino.nombre }}</option>
-                              }
-                            </select>
-                            <button
-                              type="button"
-                              class="boton"
-                              [disabled]="!accionesAccesos().productoElegido() || accionesAccesos().moviendoProducto()"
-                              (click)="accionesAccesos().cambiarProductoDelAcceso()"
-                            >
-                              {{ accionesAccesos().moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
-                            </button>
-                          </div>
-                          <p class="accion-ayuda">
-                            Le llega un correo avisándole, y la URL que ya tiene instalada sigue
-                            funcionando.
-                          </p>
+                <section class="fv-boleta">
+                  <div class="fv-boleta-cabecera">
+                    <strong>{{ accionesAccesos().boletas.titulo(c) }}</strong>
+                    <span [class]="'fv-estado ' + accionesAccesos().boletas.estado(c).clase">
+                      {{ accionesAccesos().boletas.estadoFicha(c) }}
+                    </span>
+                  </div>
+                  <dl class="fv-totales">
+                    @if (c.items.length > 1) {
+                      @for (item of c.items; track $index) {
+                        <div>
+                          <dt>{{ item.descripcion }}</dt>
+                          <dd class="numero">{{ ((item.precioUnitario * item.cantidad) / 100).toFixed(2) }}</dd>
                         </div>
                       }
+                    }
+                    <div>
+                      <dt>Op. gravada</dt>
+                      <dd class="numero">{{ ((c.valorCents ?? 0) / 100).toFixed(2) }}</dd>
                     </div>
+                    <div>
+                      <dt>IGV 18 %</dt>
+                      <dd class="numero">{{ ((c.igvCents ?? 0) / 100).toFixed(2) }}</dd>
+                    </div>
+                    <div class="fv-total">
+                      <dt>Total</dt>
+                      <dd class="numero">S/ {{ (c.totalCents / 100).toFixed(2) }}</dd>
+                    </div>
+                  </dl>
+                  <p class="fv-boleta-pie">
+                    {{ c.clienteNombre }} · {{ accionesAccesos().boletas.documento(c).toLowerCase() }}.
+                    @if (accionesAccesos().boletas.anula(c); as anula) {
+                      Anula la boleta {{ anula }}.
+                    }
+                    @switch (c.correo) {
+                      @case ('ENVIADO') {
+                        Enviada por correo el {{ c.correoEnviadoEn | date: 'd MMM y, HH:mm' }}
+                        @if (accionesAccesos().boletas.correoDestinatario(); as para) {
+                          a {{ para }}
+                        }.
+                      }
+                      @case ('SIN_DESTINATARIO') {
+                        Sin correo conocido: no se envió.
+                      }
+                      @case ('NO_APLICA') {
+                        No se envió por correo.
+                      }
+                      @default {
+                        El correo sale cuando SUNAT la acepta.
+                      }
+                    }
+                    @if (c.monedaOriginal === 'USD') {
+                      Cobrado US$ {{ (c.importeOriginalCents / 100).toFixed(2) }}, pasado a soles.
+                    }
+                    @if (c.estado === 'RECHAZADO' && c.mensaje) {
+                      SUNAT: {{ c.mensaje }}
+                    }
+                  </p>
+                </section>
+              } @else {
+                <div class="fv-sin-boleta">
+                  <strong>Sin boleta</strong>
+                  <p class="tenue">
+                    Las ventas anteriores al 19 de octubre de 2026 no llevan boleta. Las nuevas la
+                    reciben sola a los pocos minutos del cobro; una venta anulada o sin cobro no la
+                    lleva.
+                  </p>
+                </div>
+              }
+
+              @if (acceso.tieneComprobante) {
+                <div class="ficha-captura">
+                  @if (accionesAccesos().cargandoCaptura()) {
+                    <p class="tenue">Cargando la captura del pago…</p>
+                  } @else if (accionesAccesos().capturaAbierta(); as imagen) {
+                    <a [href]="imagen" target="_blank" rel="noopener">
+                      <img [src]="imagen" alt="Comprobante de {{ acceso.comprador }}" />
+                    </a>
+                    <p class="tenue">Captura del pago. Pulsa para verla a tamaño completo.</p>
+                  } @else {
+                    <p class="tenue">No se pudo cargar la captura.</p>
                   }
                 </div>
               }
-              </aside>
 
-              <!-- ── Su comprobante electrónico ─────────────────────────────── -->
-              <section class="fv-comprobante">
-                @if (accionesAccesos().boletas.cargando() && accionesAccesos().boletas.comprobantes().length === 0) {
-                  <p class="tenue">Cargando su boleta…</p>
-                } @else if (accionesAccesos().boletas.actual(); as c) {
-                  @if (accionesAccesos().boletas.comprobantes().length > 1) {
-                    <div class="fv-pestanas" role="tablist" aria-label="Comprobantes de esta venta">
-                      @for (otro of accionesAccesos().boletas.comprobantes(); track otro.id) {
+              <!-- ── Editar la venta: ajustes plegados; anular, siempre a la vista ── -->
+              <div class="fv-editar">
+                @if (acceso.licenseId) {
+                <button
+                  type="button"
+                  class="fv-editar-boton"
+                  [attr.aria-expanded]="edicionAbierta() === acceso.id"
+                  (click)="alternarEdicion(acceso.id)"
+                >
+                  <span>Editar la venta</span>
+                  <span class="tenue">{{ edicionAbierta() === acceso.id ? 'Ocultar' : 'Mostrar' }}</span>
+                </button>
+                }
+
+                @if (edicionAbierta() === acceso.id) {
+                  @if (acceso.licenseId) {
+                    <div class="acciones-acceso">
+                      <div class="accion">
+                        <div class="accion-fila">
+                          <span class="accion-texto">
+                            <span class="accion-titulo" id="rotulo-varias-tesis">Varias tesis</span>
+                            <span
+                              class="accion-nota"
+                              [class.encendido]="accionesAccesos().variasTesis()"
+                              role="status"
+                              title="Que pueda abrir más de una tesis de este método desde su perfil y elegir con cuál trabaja Claude. Su URL no cambia."
+                            >
+                              @if (accionesAccesos().guardandoVariasTesis()) {
+                                Guardando…
+                              } @else if (accionesAccesos().avisoVariasTesis(); as mensaje) {
+                                {{ mensaje }}
+                              } @else if (accionesAccesos().variasTesis() === true) {
+                                Puede abrir varias tesis desde su perfil
+                              } @else if (accionesAccesos().variasTesis() === false) {
+                                Una sola tesis, como se vende
+                              } @else if (!accionesAccesos().errorVariasTesis()) {
+                                Consultando…
+                              }
+                            </span>
+                          </span>
+
+                          @if (accionesAccesos().variasTesis() !== null) {
+                            <button
+                              type="button"
+                              role="switch"
+                              class="interruptor"
+                              aria-labelledby="rotulo-varias-tesis"
+                              [attr.aria-checked]="accionesAccesos().variasTesis()"
+                              [disabled]="accionesAccesos().guardandoVariasTesis()"
+                              data-solo-casa
+                              (click)="accionesAccesos().cambiarVariasTesis()"
+                            >
+                              <span class="interruptor-bola" aria-hidden="true"></span>
+                            </button>
+                          }
+                        </div>
+                        <app-aviso-flotante [(error)]="accionesAccesos().errorVariasTesis" />
+                      </div>
+
+                      <!-- Días desde el canje, como al vender el método. Vacío = que
+                         no caduque. Sale tras consultar la licencia. -->
+                      @if (accionesAccesos().vigencia(); as vig) {
+                        <div class="accion">
+                          <button
+                            type="button"
+                            class="accion-fila accion-boton"
+                            [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'duracion'"
+                            data-solo-casa
+                            (click)="accionesAccesos().alternarAccion('duracion')"
+                          >
+                            <span class="accion-texto">
+                              <span class="accion-titulo">Duración de la membresía</span>
+                              <span class="accion-nota" role="status">
+                                @if (vig.expiresAt) {
+                                  Vence el {{ vig.expiresAt | date: 'd MMM y' }}
+                                } @else {
+                                  Sin caducidad
+                                }
+                              </span>
+                            </span>
+                            <span class="accion-flecha" aria-hidden="true"></span>
+                          </button>
+
+                          @if (accionesAccesos().accionAbierta() === 'duracion') {
+                            <div class="accion-cuerpo">
+                              <div class="mover-fila">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="3650"
+                                  step="1"
+                                  inputmode="numeric"
+                                  aria-label="Duración en días desde el canje"
+                                  placeholder="Sin caducidad"
+                                  [value]="accionesAccesos().diasDuracion()"
+                                  (input)="accionesAccesos().diasDuracion.set($any($event.target).value)"
+                                  (keyup.enter)="accionesAccesos().cambiarDuracionDelAcceso()"
+                                />
+                                <button
+                                  type="button"
+                                  class="boton"
+                                  [disabled]="!accionesAccesos().duracionCambia() || accionesAccesos().guardandoDuracion()"
+                                  (click)="accionesAccesos().cambiarDuracionDelAcceso()"
+                                >
+                                  {{ accionesAccesos().guardandoDuracion() ? 'Guardando…' : 'Guardar' }}
+                                </button>
+                              </div>
+                              <p class="accion-ayuda">
+                                Días desde el canje ({{ vig.createdAt | date: 'd MMM y' }}).
+                                @if (accionesAccesos().vencimientoPrevisto(); as fecha) {
+                                  Vencería el {{ fecha | date: 'd MMM y' }}.
+                                } @else if (!accionesAccesos().diasDuracion().trim()) {
+                                  Vacío: no caduca.
+                                }
+                                Su URL no cambia.
+                              </p>
+                              <app-aviso-flotante [(error)]="accionesAccesos().errorDuracion" [(aviso)]="accionesAccesos().avisoDuracion" />
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      <div class="accion">
                         <button
                           type="button"
-                          role="tab"
-                          [attr.aria-selected]="otro.id === c.id"
-                          [class.activa]="otro.id === c.id"
-                          (click)="accionesAccesos().boletas.elegir(otro)"
+                          class="accion-fila accion-boton"
+                          [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'correo'"
+                          data-solo-casa
+                          (click)="accionesAccesos().alternarAccion('correo')"
                         >
-                          {{ accionesAccesos().boletas.etiqueta(otro) }}
+                          <span class="accion-texto">
+                            <span class="accion-titulo">Cambiar el correo</span>
+                            <span class="accion-nota">Con el que entra y le llegan los códigos</span>
+                          </span>
+                          <span class="accion-flecha" aria-hidden="true"></span>
                         </button>
+
+                        @if (accionesAccesos().accionAbierta() === 'correo') {
+                          <div class="accion-cuerpo">
+                            <div class="mover-fila">
+                              <input
+                                type="email"
+                                aria-label="Correo nuevo"
+                                placeholder="correo.nuevo@gmail.com"
+                                autocomplete="off"
+                                spellcheck="false"
+                                [value]="accionesAccesos().correoNuevo()"
+                                (input)="accionesAccesos().correoNuevo.set($any($event.target).value)"
+                                (keyup.enter)="accionesAccesos().cambiarCorreoDelAcceso()"
+                              />
+                              <button
+                                type="button"
+                                class="boton"
+                                [disabled]="!accionesAccesos().correoNuevo().trim() || accionesAccesos().cambiandoCorreo()"
+                                (click)="accionesAccesos().cambiarCorreoDelAcceso()"
+                              >
+                                {{ accionesAccesos().cambiandoCorreo() ? 'Cambiando…' : 'Cambiar' }}
+                              </button>
+                            </div>
+                            <p class="accion-ayuda">
+                              Avisamos al correo viejo y al nuevo. Su URL, su licencia y su tesis siguen
+                              igual.
+                            </p>
+                            <app-aviso-flotante [(error)]="accionesAccesos().errorCorreo" [(aviso)]="accionesAccesos().avisoCorreo" />
+                          </div>
+                        }
+                      </div>
+
+                      @if (accionesAccesos().productosDestino().length > 0) {
+                        <div class="accion">
+                          <button
+                            type="button"
+                            class="accion-fila accion-boton"
+                            [attr.aria-expanded]="accionesAccesos().accionAbierta() === 'producto'"
+                            data-solo-casa
+                            (click)="accionesAccesos().alternarAccion('producto')"
+                          >
+                            <span class="accion-texto">
+                              <span class="accion-titulo">Ampliar o cambiar el producto</span>
+                              <span class="accion-nota">Sin cobrarle de nuevo</span>
+                            </span>
+                            <span class="accion-flecha" aria-hidden="true"></span>
+                          </button>
+
+                          @if (accionesAccesos().accionAbierta() === 'producto') {
+                            <div class="accion-cuerpo">
+                              <div class="mover-fila">
+                                <select
+                                  aria-label="Producto de destino"
+                                  [value]="accionesAccesos().productoElegido()"
+                                  (change)="accionesAccesos().productoElegido.set($any($event.target).value)"
+                                >
+                                  <option value="">Elige el producto…</option>
+                                  @for (destino of accionesAccesos().productosDestino(); track destino.productCode) {
+                                    <option [value]="destino.productCode">{{ destino.nombre }}</option>
+                                  }
+                                </select>
+                                <button
+                                  type="button"
+                                  class="boton"
+                                  [disabled]="!accionesAccesos().productoElegido() || accionesAccesos().moviendoProducto()"
+                                  (click)="accionesAccesos().cambiarProductoDelAcceso()"
+                                >
+                                  {{ accionesAccesos().moviendoProducto() ? 'Moviendo…' : 'Mover y avisar' }}
+                                </button>
+                              </div>
+                              <p class="accion-ayuda">
+                                Le llega un correo avisándole, y la URL que ya tiene instalada sigue
+                                funcionando.
+                              </p>
+                            </div>
+                          }
+                        </div>
                       }
                     </div>
                   }
-
-                  <div class="fv-titulo-comprobante">
-                    <span class="fv-icono" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <path d="M6 2h9l5 5v15H6z M14 2v6h6 M9 13h8 M9 17h8" />
-                      </svg>
-                    </span>
-                    <div class="fv-titulo-texto">
-                      <span class="fv-rotulo">Comprobante electrónico</span>
-                      <strong>{{ accionesAccesos().boletas.titulo(c) }}</strong>
-                    </div>
-                    <span [class]="'pastilla ' + accionesAccesos().boletas.estado(c).clase">
-                      {{ accionesAccesos().boletas.estado(c).texto }}
-                    </span>
-                  </div>
-
-                  <dl class="fv-ficha-sunat">
-                    <div>
-                      <dt>Cliente</dt>
-                      <dd>{{ c.clienteNombre }}</dd>
-                    </div>
-                    <div>
-                      <dt>Documento</dt>
-                      <dd>{{ accionesAccesos().boletas.documento(c) }}</dd>
-                    </div>
-                    <div>
-                      <dt>Moneda</dt>
-                      <dd>Soles (PEN)</dd>
-                    </div>
-                    <div>
-                      <dt>Emitida</dt>
-                      <dd>{{ c.fechaEmision | date: 'd MMM y, HH:mm' }}</dd>
-                    </div>
-                    <div class="fv-ancha">
-                      <dt>Correo destinatario</dt>
-                      <dd>{{ accionesAccesos().boletas.correoDestinatario() ?? 'Sin correo conocido' }}</dd>
-                    </div>
-                    @if (accionesAccesos().boletas.anula(c); as anula) {
-                      <div>
-                        <dt>Anula</dt>
-                        <dd>Boleta {{ anula }}</dd>
-                      </div>
-                    }
-                  </dl>
-
-                  <div class="fv-detalle-y-seguimiento">
-                    <div class="fv-detalle">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Descripción</th>
-                            <th class="derecha">Cant.</th>
-                            <th class="derecha">P. unit.</th>
-                            <th class="derecha">Importe</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (item of c.items; track $index) {
-                            <tr>
-                              <td>{{ item.descripcion }}</td>
-                              <td class="numero derecha">{{ item.cantidad }}</td>
-                              <td class="numero derecha">{{ (item.precioUnitario / 100).toFixed(2) }}</td>
-                              <td class="numero derecha">{{ ((item.precioUnitario * item.cantidad) / 100).toFixed(2) }}</td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
-                      <dl class="fv-totales">
-                        <div>
-                          <dt>Op. gravada</dt>
-                          <dd class="numero">{{ ((c.valorCents ?? 0) / 100).toFixed(2) }}</dd>
-                        </div>
-                        <div>
-                          <dt>IGV 18%</dt>
-                          <dd class="numero">{{ ((c.igvCents ?? 0) / 100).toFixed(2) }}</dd>
-                        </div>
-                        <div class="fv-total">
-                          <dt>Total</dt>
-                          <dd class="numero">S/ {{ (c.totalCents / 100).toFixed(2) }}</dd>
-                        </div>
-                      </dl>
-                      @if (c.monedaOriginal === 'USD') {
-                        <p class="tenue">Cobrado US$ {{ (c.importeOriginalCents / 100).toFixed(2) }}, pasado a soles.</p>
-                      }
-                    </div>
-
-                    <div class="fv-seguimiento">
-                      <span class="fv-rotulo">Seguimiento</span>
-                      <ol>
-                        @for (paso of accionesAccesos().boletas.seguimiento(c); track $index) {
-                          <li [attr.data-tono]="paso.tono">
-                            <strong>{{ paso.titulo }}</strong>
-                            <span class="tenue">
-                              @if (paso.fecha) {
-                                {{ paso.fecha | date: 'd MMM y, HH:mm' }}
-                              } @else {
-                                {{ paso.detalle }}
-                              }
-                            </span>
-                          </li>
-                        }
-                      </ol>
-                    </div>
-                  </div>
-                } @else {
-                  <div class="fv-sin-boleta">
-                    <strong>Sin boleta</strong>
-                    <p class="tenue">
-                      Las ventas anteriores al 19 de octubre de 2026 no llevan boleta. Las nuevas la
-                      reciben sola a los pocos minutos del cobro; una venta anulada o sin cobro no la
-                      lleva.
-                    </p>
-                  </div>
                 }
-              </section>
+
+                <div class="fv-mas">
+                    <!-- Un solo «Anular» (21-oct): pregunta si es solo la boleta o
+                       toda la venta. Aquí NO se borra: el historial es el rastro de
+                       lo que pasó. El de país solo anula códigos sin canjear. -->
+                    @let boletaFicha = accionesAccesos().boletas.actual();
+                    @let hayBoleta = !!boletaFicha && accionesAccesos().boletas.sePuedeAnular(boletaFicha);
+                    @if (acceso.anulable || acceso.ventaAnulable || hayBoleta) {
+                      <button
+                        type="button"
+                        class="boton destructivo"
+                        [attr.data-solo-casa]="acceso.anulable ? null : ''"
+                        [disabled]="accionesAccesos().boletas.ocupado()"
+                        (click)="accionesAccesos().anularDesdeFicha(acceso)"
+                      >
+                        Anular
+                      </button>
+                    }
+                </div>
+              </div>
             </div>
 
             <footer class="fv-pie">
               @if (accionesAccesos().boletas.actual(); as c) {
-                <div class="fv-pie-boleta">
-                  <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.descargar(c, 'pdf')">
-                    ↓ PDF
-                  </button>
-                  <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.descargar(c, 'xml')">
-                    XML
-                  </button>
-                  @if (c.estado !== 'PENDIENTE') {
-                    <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.descargar(c, 'cdr')">
-                      CDR
-                    </button>
-                  }
-                  @if (accionesAccesos().boletas.aceptado(c)) {
-                    <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.reenviar(c)">
-                      Reenviar {{ accionesAccesos().boletas.esNota(c) ? 'nota' : 'boleta' }}
-                    </button>
-                  }
-                  @if (accionesAccesos().boletas.sePuedeAnular(c)) {
-                    <button type="button" class="boton fv-peligro" data-solo-casa [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.anular(c)">
-                      Anular boleta
-                    </button>
-                  }
-                </div>
-              }
-              <div class="fv-pie-fin">
-                <!-- Aquí NO se borra: el historial es el rastro de lo que pasó.
-                   Anular un código sin canjear deja la fila marcada. -->
-                @if (acceso.anulable) {
-                  <button type="button" class="boton destructivo" (click)="accionesAccesos().anularDesdeFicha(acceso)">
-                    Anular acceso
+                <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.descargar(c, 'pdf')">
+                  ↓ Descargar
+                </button>
+                @if (accionesAccesos().boletas.aceptado(c)) {
+                  <button type="button" class="boton secundario" [disabled]="accionesAccesos().boletas.ocupado()" (click)="accionesAccesos().boletas.reenviar(c)">
+                    Reenviar {{ accionesAccesos().boletas.esNota(c) ? 'nota' : 'boleta' }}
                   </button>
                 }
-                <button type="button" class="boton fv-cerrar" (click)="accionesAccesos().cerrarAcceso()">Cerrar</button>
-              </div>
+              }
+              <button type="button" class="boton fv-cerrar" (click)="accionesAccesos().cerrarAcceso()">Cerrar</button>
             </footer>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, input, Signal } from '@angular/core';
+import { Component, computed, input, signal, Signal } from '@angular/core';
 import { Acceso } from './accesos';
 import { PagosManualesAdmin } from './pagos-manuales';
 import { VentasManualesAdmin } from './ventas-manuales';
@@ -24,4 +24,9 @@ export class AccesosVista {
   readonly fallidos = computed(() =>
     this.accesos()().filter((acceso) => this.accionesAccesos().esFallido(acceso)),
   );
+  /** De qué venta está abierto «Editar la venta» en la ficha: al abrir otra, sale plegado. */
+  readonly edicionAbierta = signal<string | null>(null);
+  alternarEdicion(id: string): void {
+    this.edicionAbierta.set(this.edicionAbierta() === id ? null : id);
+  }
 }

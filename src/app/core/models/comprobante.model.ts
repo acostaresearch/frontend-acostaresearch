@@ -54,3 +54,42 @@ export interface ResultadoAnulacion {
   nota: string;
   estado: string;
 }
+
+/** Tipo de documento del cliente de un servicio (catálogo 06 de SUNAT). */
+export type DocumentoServicio = '-' | '0' | '1' | '4' | '7';
+
+/** Un servicio cobrado fuera de la web (asesoría…), registrado para que lleve boleta. */
+export interface ServicioRegistrado {
+  id: string;
+  concepto: string;
+  importeCents: number;
+  moneda: 'PEN' | 'USD';
+  pagadoEn: string;
+  medio: string | null;
+  clienteTipoDoc: DocumentoServicio;
+  clienteNumDoc: string;
+  clienteNombre: string;
+  clientePais: string | null;
+  clienteEmail: string | null;
+  nota: string | null;
+  /** ANULADO cuando se anula su boleta. */
+  estado: 'VIGENTE' | 'ANULADO';
+  creadoEn: string;
+  /** Su boleta (y la nota que la anula, si la hay); vacío mientras se emite. */
+  comprobantes: Comprobante[];
+}
+
+export interface NuevoServicio {
+  concepto: string;
+  importeCents: number;
+  moneda: 'PEN' | 'USD';
+  /** ISO con zona. */
+  pagadoEn: string;
+  medio?: string;
+  clienteTipoDoc: DocumentoServicio;
+  clienteNumDoc?: string;
+  clienteNombre: string;
+  clientePais?: string;
+  clienteEmail?: string;
+  nota?: string;
+}
