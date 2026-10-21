@@ -31,8 +31,11 @@ export interface MesDeclaracion {
   nombre: string;
   enCurso: boolean;
   estado: EstadoDeclaracion;
-  /** `aaaa-mm-dd`. */
+  /** `aaaa-mm-dd`: la escrita en el panel o, si no hay, la del cronograma de SUNAT. */
   vencimiento: string | null;
+  vencimientoOrigen: 'manual' | 'cronograma' | null;
+  /** La del cronograma, aunque se haya escrito otra. */
+  vencimientoCronograma: string | null;
   diasParaVencer: number | null;
   ajusteBaseCents: number;
   ajusteNota: string | null;

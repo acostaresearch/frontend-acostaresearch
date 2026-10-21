@@ -219,7 +219,8 @@ export class DeclaracionesAdmin implements OnInit {
     this.abierto.set(d);
     if (otroMes) this.servicios.set([]);
     this.cargarServicios(d);
-    this.vencimiento = d.vencimiento ?? '';
+    // Vacío = la del cronograma de SUNAT; solo se escribe la que se cambió a mano.
+    this.vencimiento = d.vencimientoOrigen === 'manual' ? (d.vencimiento ?? '') : '';
     this.ajuste = d.ajusteBaseCents ? aSoles(d.ajusteBaseCents) : '';
     this.ajusteNota = d.ajusteNota ?? '';
     this.saldoInicial = aSoles(d.saldoFavorInicialCents);

@@ -62,6 +62,8 @@
           <span class="cifra-pie">
             @if (d.estado !== 'PENDIENTE') {
               Ya declarado
+            } @else if (d.vencimientoOrigen === 'cronograma' && d.diasParaVencer !== null && d.diasParaVencer >= 0) {
+              Cronograma SUNAT · faltan {{ d.diasParaVencer }} días
             } @else if (d.diasParaVencer !== null && d.diasParaVencer >= 0) {
               Faltan {{ d.diasParaVencer }} días
             } @else if (d.diasParaVencer !== null) {
@@ -325,7 +327,14 @@
                   <div class="campo">
                     <label for="dec-venc">Vence el</label>
                     <input id="dec-venc" type="date" name="venc" [(ngModel)]="vencimiento" />
-                    <span class="ayuda">Según el cronograma de SUNAT, RUC terminado en 0.</span>
+                    <span class="ayuda">
+                      @if (d.vencimientoCronograma) {
+                        Vacío: la del cronograma de SUNAT, el {{ d.vencimientoCronograma | date: 'd MMM y' : 'UTC' }}.
+                        Escribe otra solo si el contador te indica otra fecha.
+                      } @else {
+                        Según el cronograma de SUNAT, RUC terminado en 0.
+                      }
+                    </span>
                   </div>
                   <div class="campo">
                     <label for="dec-saldo">Saldo a favor inicial (S/)</label>
