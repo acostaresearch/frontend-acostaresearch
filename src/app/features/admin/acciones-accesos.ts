@@ -375,13 +375,36 @@ export class AccionesAccesosAdmin {
     });
   }
 
-  /** Anula desde la ficha y la cierra: lo que se estaba mirando ya cambió. */
+  /**
+   * El único «Anular» de la ficha (21-oct-2026; antes eran «Anular boleta» y
+   * «Anular acceso»). Si hay boleta que anular y también venta, pregunta qué
+   * pasó: la boleta salió mal (se anula y se vuelve a facturar) o la venta no
+   * va (se anulan la venta y su boleta). Cerrar esa pregunta lleva a anular la
+   * venta, que igual pide escribir ANULAR: nada se anula por un clic perdido.
+   */
   async anularDesdeFicha(acceso: Acceso): Promise<void> {
-    const codigo = this.codigos().find((c) => c.id === acceso.id);
-    if (!codigo) return;
+    const actual = this.boletas.actual();
+    const boleta = actual && this.boletas.sePuedeAnular(actual) ? actual : null;
+    const hayVenta = acceso.anulable || acceso.ventaAnulable;
 
-    await this.anularCodigo(codigo);
-    this.cerrarAcceso();
+    if (boleta && hayVenta) {
+      const soloBoleta = await this.dialogos.confirmar({
+        titulo: '¿Qué hay que anular?',
+        mensaje:
+          `Solo la boleta: la venta es buena pero la boleta ${this.boletas.numero(boleta)} salió mal ` +
+          '(por ejemplo, el producto). Se anula y se emite una nueva en minutos.\n' +
+          'Toda la venta: no fue una venta (no pagó, se devolvió el dinero). Se anulan ' +
+          (acceso.anulable ? 'el código' : 'la venta') + ' y su boleta.',
+        confirmar: 'Solo la boleta',
+        cancelar: 'Toda la venta',
+        tono: 'peligro',
+      });
+      if (soloBoleta) return this.boletas.anular(boleta, true);
+    } else if (boleta) {
+      return this.boletas.anular(boleta);
+    }
+
+    if (await this.anularVenta(acceso, boleta !== null)) this.cerrarAcceso();
   }
   /** Abre la captura, venga de un código o de un comprobante de Yape. */
   verCaptura(acceso: Acceso): void {
@@ -398,13 +421,18 @@ export class AccionesAccesosAdmin {
    * una venta ya hecha (código canjeado o pago aprobado) deja de contar como
    * venta, el cliente conserva su acceso y, si tenía boleta, se anula con nota
    * de crédito. Hay que escribir ANULAR para confirmarlo.
+   *
+   * `conBoleta`: el código sin canjear ya tiene boleta (lo sabe la ficha). Va
+   * por la anulación de venta, que también anula la boleta; la de código no.
+   * Devuelve si se llegó a pedir la anulación.
    */
-  async anularVenta(acceso: Acceso): Promise<void> {
+  async anularVenta(acceso: Acceso, conBoleta = false): Promise<boolean> {
     const sinCanjear = acceso.anulable;
     const texto = await this.dialogos.pedirTexto({
       titulo: sinCanjear ? 'Anular este código' : 'Anular esta venta',
       mensaje: sinCanjear
-        ? 'El código dejará de poder canjearse y no contará como venta.'
+        ? 'El código dejará de poder canjearse y no contará como venta.' +
+          (conBoleta ? '\nSu boleta se anula con nota de crédito ante SUNAT.' : '')
         : 'Deja de contar como venta (ingresos, cierre del mes y declaración). El cliente conserva ' +
           'su acceso; para quitárselo, revoca su licencia.\nSi la venta tiene boleta, se anula ' +
           'con nota de crédito ante SUNAT.',
@@ -413,13 +441,13 @@ export class AccionesAccesosAdmin {
       confirmar: 'Anular',
       tono: 'peligro',
     });
-    if (texto === null) return;
+    if (texto === null) return false;
     if (texto.trim().toUpperCase() !== 'ANULAR') {
       this.error.set('No se anuló: para confirmar hay que escribir ANULAR.');
-      return;
+      return false;
     }
 
-    if (sinCanjear) {
+    if (sinCanjear && !conBoleta) {
       this.admin.anularCodigo(acceso.id).subscribe({
         next: () => {
           this.aviso.set('Código anulado.');
@@ -427,7 +455,7 @@ export class AccionesAccesosAdmin {
         },
         error: (e: unknown) => this.error.set(mensajeDeError(e)),
       });
-      return;
+      return true;
     }
 
     this.admin.anularVenta(acceso.canal === 'codigo' ? 'codigo' : 'pago', acceso.id).subscribe({
@@ -441,6 +469,7 @@ export class AccionesAccesosAdmin {
       },
       error: (e: unknown) => this.error.set(mensajeDeError(e)),
     });
+    return true;
   }
 
   anularAcceso(acceso: Acceso): void {

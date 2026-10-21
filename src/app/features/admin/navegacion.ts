@@ -237,7 +237,8 @@ interface EntradaDelMenu {
 /**
  * La barra lateral, agrupada por lo que se viene a hacer. «Revisiones» y
  * «Asesores» no salen —el piloto está parado—, pero sus direcciones siguen
- * funcionando.
+ * funcionando. Tampoco salen (21-oct-2026) «Universidades y asesores»,
+ * «WhatsApp» ni «Bibliografía»: están comentadas abajo y sus direcciones abren.
  */
 export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
   {
@@ -266,12 +267,13 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         icono: 'M4 4h16v16H4z M8 8h8 M8 12h8 M8 16h4',
         enciende: ['declaraciones'],
       },
-      {
-        seccion: 'instituciones',
-        texto: 'Universidades y asesores',
-        icono: 'M3 10 12 4l9 6 M5 10v8 M9.5 10v8 M14.5 10v8 M19 10v8 M3 20h18',
-        enciende: ['instituciones'],
-      },
+      // Oculto del menú (21-oct-2026); /admin/universidades-y-asesores sigue abriendo.
+      // {
+      //   seccion: 'instituciones',
+      //   texto: 'Universidades y asesores',
+      //   icono: 'M3 10 12 4l9 6 M5 10v8 M9.5 10v8 M14.5 10v8 M19 10v8 M3 20h18',
+      //   enciende: ['instituciones'],
+      // },
       {
         seccion: 'descuentos',
         texto: 'Descuentos',
@@ -299,17 +301,18 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
       },
     ],
   },
-  {
-    grupo: 'Atención',
-    entradas: [
-      {
-        seccion: 'whatsapp',
-        texto: 'WhatsApp',
-        icono: 'M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z M8.5 9.5h7 M8.5 13h4.5',
-        enciende: ['whatsapp'],
-      },
-    ],
-  },
+  // Oculto del menú (21-oct-2026); /admin/whatsapp sigue abriendo.
+  // {
+  //   grupo: 'Atención',
+  //   entradas: [
+  //     {
+  //       seccion: 'whatsapp',
+  //       texto: 'WhatsApp',
+  //       icono: 'M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z M8.5 9.5h7 M8.5 13h4.5',
+  //       enciende: ['whatsapp'],
+  //     },
+  //   ],
+  // },
   {
     grupo: 'Catálogo',
     entradas: [
@@ -324,12 +327,13 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
   {
     grupo: 'Contenido',
     entradas: [
-      {
-        seccion: 'corpus',
-        texto: 'Bibliografía',
-        icono: 'M5 4h13v16H5z M5 16h13 M9 4v12',
-        enciende: ['corpus'],
-      },
+      // Oculto del menú (21-oct-2026); /admin/bibliografia sigue abriendo.
+      // {
+      //   seccion: 'corpus',
+      //   texto: 'Bibliografía',
+      //   icono: 'M5 4h13v16H5z M5 16h13 M9 4v12',
+      //   enciende: ['corpus'],
+      // },
       {
         seccion: 'tutoriales',
         texto: 'Tutoriales y guías',
