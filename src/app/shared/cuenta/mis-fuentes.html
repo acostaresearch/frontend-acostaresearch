@@ -154,6 +154,70 @@
                   [attr.aria-label]="'Seleccionar «' + f.titulo + '»'"
                 />
                 <div class="lista-texto">
+                @if (editando(); as ficha) {
+                  @if (ficha.clave === f.clave) {
+                    <!-- Corregir esta fuente: los mismos campos que la ficha a mano. -->
+                    <fieldset class="ficha-a-mano lista-ficha">
+                      <legend>Corregir {{ ficha.clave }}</legend>
+                      <label class="campo ancho">
+                        <span>Título</span>
+                        <input
+                          type="text"
+                          [value]="ficha.titulo"
+                          (input)="escribirEnEdicion('titulo', $event)"
+                          autocomplete="off"
+                        />
+                      </label>
+                      <label class="campo ancho">
+                        <span>Autores</span>
+                        <input
+                          type="text"
+                          [value]="ficha.autores"
+                          (input)="escribirEnEdicion('autores', $event)"
+                          placeholder="Quispe, R.; Flores, M."
+                          autocomplete="off"
+                        />
+                      </label>
+                      <label class="campo">
+                        <span>Tipo</span>
+                        <select [value]="ficha.tipo" (change)="escribirEnEdicion('tipo', $event)">
+                          @for (tipo of tipos; track tipo.clave) {
+                            <option [value]="tipo.clave" [selected]="tipo.clave === ficha.tipo">
+                              {{ tipo.texto }}
+                            </option>
+                          }
+                        </select>
+                      </label>
+                      <label class="campo">
+                        <span>Año</span>
+                        <input
+                          type="text"
+                          inputmode="numeric"
+                          maxlength="4"
+                          [value]="ficha.anio"
+                          (input)="escribirEnEdicion('anio', $event)"
+                          placeholder="2021"
+                          autocomplete="off"
+                        />
+                      </label>
+                      <label class="campo ancho">
+                        <span>{{ rotuloDeFuente(ficha.tipo) }}</span>
+                        <input
+                          type="text"
+                          [value]="ficha.fuente"
+                          (input)="escribirEnEdicion('fuente', $event)"
+                          autocomplete="off"
+                        />
+                      </label>
+                      <div class="lista-ficha-botones">
+                        <button type="button" class="boton" [disabled]="guardandoFuente()" (click)="guardarEdicion()">
+                          {{ guardandoFuente() ? 'Guardando…' : 'Guardar' }}
+                        </button>
+                        <button type="button" class="lista-accion" (click)="editando.set(null)">Cancelar</button>
+                      </div>
+                    </fieldset>
+                  }
+                }
                 <p class="lista-titulo">{{ f.titulo }}</p>
                 <p class="lista-datos">
                   {{ f.autores || 'Sin autores' }} ({{ f.anio ?? 's. f.' }})@if (f.fuente) {. <em>{{ f.fuente }}</em>}
@@ -169,6 +233,17 @@
                   }
                   @if (!f.resumen) {
                     <span class="lista-sin-resumen">sin resumen</span>
+                  }
+                  @if (editable(f) && editando()?.clave !== f.clave) {
+                    <button type="button" class="lista-accion" (click)="editar(f)">Corregir</button>
+                    <button
+                      type="button"
+                      class="lista-accion lista-accion-borrar"
+                      [disabled]="guardandoFuente()"
+                      (click)="borrarFuente(f)"
+                    >
+                      Borrar
+                    </button>
                   }
                 </p>
                 </div>

@@ -71,6 +71,24 @@ const TIPOS: { clave: TipoDeFuente; texto: string; fuente: string }[] = [
   { clave: 'otro', texto: 'Otro', fuente: 'Quién lo publica' },
 ];
 
+/** De tipo de la ficha a tipo de Zotero, como `TIPOS_A_MANO` en `propias.service`. */
+const TIPOS_DE_ITEM: Record<TipoDeFuente, string> = {
+  articulo: 'journalArticle',
+  tesis: 'thesis',
+  libro: 'book',
+  informe: 'report',
+  otro: 'document',
+};
+
+/** Y al revés, para abrir la ficha de una fuente guardada al corregirla. */
+const TIPO_POR_ITEM: Record<string, TipoDeFuente> = {
+  journalArticle: 'articulo',
+  article: 'articulo',
+  thesis: 'tesis',
+  book: 'libro',
+  report: 'informe',
+};
+
 /**
  * Las fuentes que el tesista sube de su propio export.
  *
@@ -544,7 +562,117 @@ export class MisFuentesPanel {
     });
   }
 
+  // ── Corregir o borrar una sola ───────────────────────────────────────────
+  /**
+   * La ficha que se está corrigiendo dentro de «Ver fuentes». Pedido de un
+   * cliente (22-oct): escribió mal el nombre de dos fuentes sin DOI y solo
+   * podía borrarlas todas. Null = ninguna.
+   */
+  readonly editando = signal<(FichaPendiente & { clave: string }) | null>(null);
+  readonly guardandoFuente = signal(false);
+
+  /** Lo de su Zotero o Mendeley se corrige allí; lo demás, aquí. */
+  editable(f: FuenteGuardada): boolean {
+    return Boolean(f.clave) && f.origen !== 'ZOTERO' && f.origen !== 'MENDELEY';
+  }
+
+  editar(f: FuenteGuardada): void {
+    if (!f.clave) return;
+    const tipo = TIPO_POR_ITEM[f.tipo] ?? 'otro';
+    this.editando.set({
+      clave: f.clave,
+      archivo: '',
+      titulo: f.titulo,
+      autores: f.autores,
+      anio: f.anio ? String(f.anio) : '',
+      fuente: f.fuente ?? '',
+      tipo,
+    });
+  }
+
+  escribirEnEdicion(campo: keyof FichaPendiente, evento: Event): void {
+    const valor = (evento.target as HTMLInputElement | HTMLSelectElement).value;
+    this.editando.update((ficha) => (ficha ? { ...ficha, [campo]: valor } : ficha));
+  }
+
+  guardarEdicion(): void {
+    const ficha = this.editando();
+    if (!ficha || this.guardandoFuente()) return;
+
+    if (ficha.titulo.trim().length < 5) {
+      this.error.set('Escribe el título completo, como sale en la portada.');
+      return;
+    }
+    if (ficha.anio.trim() && !/^(1[5-9]|20)\d{2}$/.test(ficha.anio.trim())) {
+      this.error.set('El año va con cuatro cifras, por ejemplo 2021. Si no lo tiene, déjalo vacío.');
+      return;
+    }
+
+    const datos = {
+      titulo: ficha.titulo.trim(),
+      autores: ficha.autores.trim(),
+      anio: ficha.anio.trim() ? Number(ficha.anio.trim()) : null,
+      fuente: ficha.fuente.trim(),
+      tipo: ficha.tipo,
+    };
+
+    this.guardandoFuente.set(true);
+    this.error.set(null);
+    this.fuentes.corregir(ficha.clave, datos).subscribe({
+      next: () => {
+        this.guardandoFuente.set(false);
+        this.editando.set(null);
+        const itemType = TIPOS_DE_ITEM[datos.tipo];
+        this.lista.update((lista) =>
+          (lista ?? []).map((f) =>
+            f.clave === ficha.clave
+              ? { ...f, titulo: datos.titulo, autores: datos.autores, anio: datos.anio, fuente: datos.fuente || null, tipo: itemType }
+              : f,
+          ),
+        );
+      },
+      error: (error: unknown) => {
+        this.error.set(toApiError(error).message);
+        this.guardandoFuente.set(false);
+      },
+    });
+  }
+
+  async borrarFuente(f: FuenteGuardada): Promise<void> {
+    if (!f.clave || this.guardandoFuente()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: 'Borrar esta fuente',
+      mensaje: `Se borrará «${f.titulo}».`,
+      nota: 'Si la citas en tus capítulos no se borra, para que esa cita no se rompa en tu Word.',
+      confirmar: 'Borrar',
+      tono: 'peligro',
+    });
+    if (!seguro || this.guardandoFuente()) return;
+
+    this.guardandoFuente.set(true);
+    this.error.set(null);
+    this.fuentes.borrarUna(f.clave).subscribe({
+      next: () => {
+        this.guardandoFuente.set(false);
+        if (this.editando()?.clave === f.clave) this.editando.set(null);
+        this.lista.update((lista) => (lista ?? []).filter((x) => x.clave !== f.clave));
+        this.elegidas.update((antes) => {
+          const despues = new Set(antes);
+          despues.delete(f);
+          return despues;
+        });
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.error.set(toApiError(error).message);
+        this.guardandoFuente.set(false);
+      },
+    });
+  }
+
   cerrarLista(): void {
+    this.editando.set(null);
     this.menuLista.set(false);
     this.elegidas.set(new Set());
     this.lista.set(null);

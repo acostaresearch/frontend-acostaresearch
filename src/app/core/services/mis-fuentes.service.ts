@@ -182,6 +182,23 @@ export class MisFuentesService {
       .pipe(map((res) => res.data.fuentes));
   }
 
+  /** Corrige la ficha de una fuente. La clave de cita no cambia. */
+  corregir(
+    clave: string,
+    ficha: Pick<FuenteAMano, 'titulo' | 'autores' | 'anio' | 'fuente' | 'tipo'>,
+  ): Observable<{ clave: string }> {
+    return this.http
+      .patch<ApiResponse<{ clave: string }>>(`${this.base}/${encodeURIComponent(clave)}`, ficha)
+      .pipe(map((res) => res.data));
+  }
+
+  /** Borra una sola. El servidor la niega si la cita en sus capítulos. */
+  borrarUna(clave: string): Observable<{ clave: string }> {
+    return this.http
+      .delete<ApiResponse<{ clave: string }>>(`${this.base}/${encodeURIComponent(clave)}`)
+      .pipe(map((res) => res.data));
+  }
+
   /** `conservadas`: las que se quedan porque están citadas en sus capítulos. */
   vaciar(): Observable<{ borradas: number; conservadas: number }> {
     return this.http
