@@ -235,7 +235,9 @@
                     <span class="lista-sin-resumen">sin resumen</span>
                   }
                   @if (editable(f) && editando()?.clave !== f.clave) {
-                    <button type="button" class="lista-accion" (click)="editar(f)">Corregir</button>
+                    @if (corregible(f)) {
+                      <button type="button" class="lista-accion" (click)="editar(f)">Corregir</button>
+                    }
                     <button
                       type="button"
                       class="lista-accion lista-accion-borrar"

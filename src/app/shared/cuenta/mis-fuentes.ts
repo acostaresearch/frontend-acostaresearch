@@ -576,8 +576,13 @@ export class MisFuentesPanel {
     return Boolean(f.clave) && f.origen !== 'ZOTERO' && f.origen !== 'MENDELEY';
   }
 
+  /** Corregir, solo las que no tienen DOI (22-oct): las otras traen la ficha del catálogo. */
+  corregible(f: FuenteGuardada): boolean {
+    return this.editable(f) && !f.doi;
+  }
+
   editar(f: FuenteGuardada): void {
-    if (!f.clave) return;
+    if (!f.clave || !this.corregible(f)) return;
     const tipo = TIPO_POR_ITEM[f.tipo] ?? 'otro';
     this.editando.set({
       clave: f.clave,
