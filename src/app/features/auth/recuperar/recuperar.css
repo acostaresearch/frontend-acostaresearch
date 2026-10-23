@@ -1,0 +1,60 @@
+.codigo {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-align: center;
+  /* Compensa el espaciado de la última cifra para que el texto quede centrado. */
+  text-indent: 0.42em;
+  font-variant-numeric: tabular-nums;
+}
+
+.entrada {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.entrada input {
+  width: 100%;
+  padding-right: 72px;
+}
+
+.ojo {
+  position: absolute;
+  right: 8px;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: var(--color-fondo);
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--transicion),
+    border-color var(--transicion),
+    background-color var(--transicion);
+}
+
+.ojo:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.ojo:focus-visible {
+  outline: 2px solid var(--color-primario);
+  outline-offset: 1px;
+}
+
+.reenvio {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  font-size: 13.5px;
+}
+
+.tenue {
+  color: var(--color-texto-tenue);
+}

@@ -187,4 +187,19 @@ export class AuthService {
       .post<ApiResponse<null>>(`${this.base}/resend-verification`, { email })
       .pipe(map((res) => res.message ?? 'Correo reenviado.'));
   }
+
+  // ── Olvidé mi contraseña ──────────────────────────────────────────────────
+
+  /** Pide el código al correo. El servidor responde igual exista o no la cuenta. */
+  forgotPassword(email: string): Observable<string> {
+    return this.http
+      .post<ApiResponse<null>>(`${this.base}/forgot-password`, { email })
+      .pipe(map((res) => res.message ?? 'Te enviamos un código.'));
+  }
+
+  resetPassword(email: string, code: string, newPassword: string): Observable<void> {
+    return this.http
+      .post<ApiResponse<null>>(`${this.base}/reset-password`, { email, code, newPassword })
+      .pipe(map(() => undefined));
+  }
 }

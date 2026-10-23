@@ -1,0 +1,127 @@
+@if (paso() === 3) {
+  <app-auth-card titulo="Contraseña cambiada" subtitulo="Ya puedes volver a entrar.">
+    <p class="aviso exito">
+      Cerramos tus sesiones abiertas por seguridad. Entra con tu contraseña nueva.
+    </p>
+    <button type="button" class="boton" (click)="irALogin()">Iniciar sesión</button>
+  </app-auth-card>
+} @else {
+  <app-auth-card
+    titulo="Recupera tu contraseña"
+    [subtitulo]="
+      paso() === 1
+        ? 'Te enviamos un código de 6 dígitos al correo de tu cuenta.'
+        : 'Escribe el código que te enviamos y elige tu contraseña nueva.'
+    "
+  >
+    <app-aviso-flotante [(error)]="errorGeneral" [(aviso)]="mensaje" />
+
+    @if (errorGeneral() && codigoQuemado()) {
+      <p class="nota">Pide uno nuevo para continuar.</p>
+    }
+
+    @if (paso() === 1) {
+      <form [formGroup]="formulario" (ngSubmit)="pedirCodigo()" novalidate>
+        <div class="campo" [class.invalido]="errorCorreo">
+          <label for="email">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="tu@correo.com"
+            autofocus
+            [attr.aria-invalid]="!!errorCorreo"
+          />
+          @if (errorCorreo; as error) {
+            <span class="error">{{ error }}</span>
+          }
+        </div>
+
+        <button type="submit" class="boton" [disabled]="enviando()">
+          @if (enviando()) {
+            <span class="girando" aria-hidden="true"></span>
+            <span>Enviando…</span>
+          } @else {
+            <span>Enviarme el código</span>
+          }
+        </button>
+      </form>
+    } @else {
+      <form [formGroup]="formulario" (ngSubmit)="cambiar()" novalidate>
+        <div class="campo">
+          <label for="email">Correo electrónico</label>
+          <input id="email" type="email" formControlName="email" autocomplete="email" />
+        </div>
+
+        <div class="campo" [class.invalido]="errorCodigo">
+          <label for="code">Código</label>
+          <input
+            id="code"
+            class="codigo"
+            formControlName="code"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            aria-describedby="ayuda-codigo"
+            (input)="alEscribirCodigo($event)"
+          />
+          @if (errorCodigo; as error) {
+            <span class="error">{{ error }}</span>
+          } @else {
+            <span class="ayuda" id="ayuda-codigo">Caduca a los 15 minutos.</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="errorContrasena">
+          <label for="newPassword">Contraseña nueva</label>
+          <div class="entrada">
+            <input
+              id="newPassword"
+              [type]="verContrasena() ? 'text' : 'password'"
+              formControlName="newPassword"
+              autocomplete="new-password"
+              [attr.aria-invalid]="!!errorContrasena"
+            />
+            <button
+              type="button"
+              class="ojo"
+              [attr.aria-label]="verContrasena() ? 'Ocultar la contraseña' : 'Mostrar la contraseña'"
+              [attr.aria-pressed]="verContrasena()"
+              (click)="alternarContrasena()"
+            >
+              {{ verContrasena() ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+          @if (errorContrasena; as error) {
+            <span class="error">{{ error }}</span>
+          } @else {
+            <span class="ayuda">Mínimo 10 caracteres, con mayúscula, minúscula y número.</span>
+          }
+        </div>
+
+        <button type="submit" class="boton" [disabled]="enviando()">
+          @if (enviando()) {
+            <span class="girando" aria-hidden="true"></span>
+            <span>Cambiando…</span>
+          } @else {
+            <span>Cambiar contraseña</span>
+          }
+        </button>
+      </form>
+
+      <div class="reenvio">
+        @if (esperaReenvio() > 0) {
+          <span class="tenue">Puedes pedir otro código en {{ esperaReenvio() }} s</span>
+        } @else {
+          <button type="button" class="boton enlace" [disabled]="enviando()" (click)="pedirCodigo()">
+            Reenviar código
+          </button>
+        }
+      </div>
+    }
+
+    <p pie>¿La recordaste? <a routerLink="/auth/login">Volver a iniciar sesión</a></p>
+  </app-auth-card>
+}

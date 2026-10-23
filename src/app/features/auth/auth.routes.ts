@@ -21,5 +21,11 @@ export const authRoutes: Routes = [
     title: 'Confirmar correo · Acosta Research',
     loadComponent: () => import('./verify-email/verify-email').then((m) => m.VerifyEmail),
   },
+  {
+    path: 'recuperar',
+    canActivate: [guestGuard],
+    title: 'Recuperar contraseña · Acosta Research',
+    loadComponent: () => import('./recuperar/recuperar').then((m) => m.Recuperar),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 ];

@@ -70,6 +70,13 @@
           Bloq Mayús está activado: la contraseña distingue mayúsculas.
         </span>
       }
+      <a
+        class="olvide"
+        routerLink="/auth/recuperar"
+        [queryParams]="emailListo() ? { email: formulario.controls.email.value } : {}"
+      >
+        ¿Olvidaste tu contraseña?
+      </a>
     </div>
 
     <button type="submit" class="boton" [disabled]="enviando()">
