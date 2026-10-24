@@ -86,6 +86,16 @@ export class PaymentService {
       .pipe(map((res) => res.data.payments));
   }
 
+  /**
+   * Retira el comprobante en revisión del propio comprador. Solo se admite uno
+   * por producto: para mandar otro, primero se cancela este.
+   */
+  cancelarComprobante(paymentId: string): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(`${this.base}/manual/${paymentId}/cancelar`, {})
+      .pipe(map(() => undefined));
+  }
+
   // ── Pago manual por Yape ───────────────────────────────────────────────
 
   /** Titular y número que se enseñan junto al QR. */

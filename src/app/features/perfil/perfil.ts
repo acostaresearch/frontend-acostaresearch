@@ -489,6 +489,41 @@ export class Perfil implements OnInit {
     });
   }
 
+  /** El comprobante que se está cancelando, para no pedirlo dos veces. */
+  readonly cancelandoComprobante = signal<string | null>(null);
+
+  /**
+   * Cancela el comprobante en revisión. Solo se admite uno por producto: quien
+   * se equivocó de captura lo cancela aquí y vuelve a enviar desde el pago.
+   */
+  async cancelarComprobante(pago: Payment): Promise<void> {
+    if (pago.status !== 'IN_REVIEW' || this.cancelandoComprobante()) return;
+
+    const seguro = await this.dialogos.confirmar({
+      titulo: '¿Cancelar este comprobante?',
+      mensaje: `Dejaremos de revisar el comprobante de «${pago.plan.name}». Después podrás enviar otro.`,
+      nota: 'Hazlo solo si te equivocaste de captura o de número. Si el pago está bien, solo espera: te avisamos por correo.',
+      confirmar: 'Cancelar comprobante',
+      cancelar: 'Volver',
+      tono: 'peligro',
+    });
+    if (!seguro) return;
+
+    this.cancelandoComprobante.set(pago.id);
+    this.errorConstancia.set(null);
+    this.pagos.cancelarComprobante(pago.id).subscribe({
+      next: () => {
+        // Un carrito se cancela entero: comparte la captura.
+        this.pagos.mine().subscribe({ next: (lista) => this.compras.set(lista) });
+        this.cancelandoComprobante.set(null);
+      },
+      error: (error: unknown) => {
+        this.errorConstancia.set(toApiError(error).message);
+        this.cancelandoComprobante.set(null);
+      },
+    });
+  }
+
   /** Porcentaje consumido de una bolsa, para la barra de progreso. */
   consumido(usadas: number, totales: number): number {
     return totales > 0 ? Math.min(100, Math.round((usadas / totales) * 100)) : 0;

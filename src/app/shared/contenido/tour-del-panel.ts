@@ -182,7 +182,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     texto:
       'Todos tus pagos, del más reciente al más antiguo, con su estado. Los cobrados traen su ' +
       'boleta electrónica en PDF para descargar (las compras anteriores al 19 de octubre de 2026, ' +
-      'su constancia de pago).',
+      'su constancia de pago). Un comprobante en revisión se puede cancelar aquí para enviar otro: ' +
+      'se admite uno por producto.',
   },
   {
     ruta: '/perfil',

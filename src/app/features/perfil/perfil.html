@@ -363,6 +363,15 @@
                         >
                           {{ bajandoConstancia() === pago.id ? 'Descargando…' : 'Constancia (PDF)' }}
                         </button>
+                      } @else if (pago.status === 'IN_REVIEW') {
+                        <button
+                          type="button"
+                          class="constancia"
+                          [disabled]="cancelandoComprobante() === pago.id"
+                          (click)="cancelarComprobante(pago)"
+                        >
+                          {{ cancelandoComprobante() === pago.id ? 'Cancelando…' : 'Cancelar comprobante' }}
+                        </button>
                       }
                     </td>
                   </tr>
