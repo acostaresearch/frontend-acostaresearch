@@ -239,6 +239,12 @@ export class Humanizar implements OnInit, OnDestroy {
     this.router.navigate([], { relativeTo: this.ruta, queryParams: {} });
   }
 
+  /** La barra de abajo de la conversación: elegir otro Word lleva a empezar uno nuevo con él. */
+  adjuntarOtro(): void {
+    this.nueva();
+    this.abrirSelector();
+  }
+
   buscar(evento: Event): void {
     this.busqueda.set((evento.target as HTMLInputElement).value);
   }
