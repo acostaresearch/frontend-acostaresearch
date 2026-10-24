@@ -10,6 +10,7 @@ import {
   IdiomaPreparar,
   PanelPreparar,
   Preparacion,
+  ReporteIaSubido,
   ServicioPreparar,
 } from '../models/preparar.model';
 
@@ -41,15 +42,31 @@ export class PrepararService {
     servicio: ServicioPreparar,
     archivo: File,
     idioma?: IdiomaPreparar,
+    reporteId?: string,
   ): Observable<EncargoAceptado> {
-    const conIdioma = idioma ? `?idioma=${idioma}` : '';
+    const parametros = new URLSearchParams();
+    if (idioma) parametros.set('idioma', idioma);
+    if (reporteId) parametros.set('reporte', reporteId);
+    const consulta = parametros.toString() ? `?${parametros}` : '';
 
     return this.http
-      .post<ApiResponse<EncargoAceptado>>(`${this.base}/${servicio.toLowerCase()}${conIdioma}`, archivo, {
+      .post<ApiResponse<EncargoAceptado>>(`${this.base}/${servicio.toLowerCase()}${consulta}`, archivo, {
         headers: {
           'Content-Type': 'application/octet-stream',
           'X-Nombre-Archivo': encodeURIComponent(archivo.name).slice(0, 200),
         },
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * El PDF del reporte de IA de Turnitin, para «Humanizar». El servidor lo lee
+   * y lo guarda una hora; con su `reporteId` el encargo rehace solo lo marcado.
+   */
+  subirReporte(archivo: File): Observable<ReporteIaSubido> {
+    return this.http
+      .post<ApiResponse<ReporteIaSubido>>(`${this.base}/reporte-ia`, archivo, {
+        headers: { 'Content-Type': 'application/pdf' },
       })
       .pipe(map((res) => res.data));
   }

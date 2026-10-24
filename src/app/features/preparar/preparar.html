@@ -4,6 +4,13 @@
 <!-- El campo de archivo, una sola vez: lo abren el recuadro, «Reintentar» y
      «Volver a procesar», que viven en vistas distintas. -->
 <input #selector type="file" accept=".docx" hidden (change)="desdeElBoton($event)" />
+<input
+  #selectorReporte
+  type="file"
+  accept=".pdf,application/pdf"
+  hidden
+  (change)="desdeElReporte($event)"
+/>
 
 <main class="pagina preparar-fondo">
   <section class="seccion">
@@ -485,6 +492,40 @@
                           (click)="elegirIdioma(i.codigo)"
                         >
                           {{ i.nombre }}
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  @if (elegida() === 'HUMANIZAR') {
+                    <!-- El reporte de IA de Turnitin (24-oct-2026): con él solo se rehace lo marcado. -->
+                    <div class="reporte-ia">
+                      <p class="reporte-ia-titulo">
+                        Reporte de IA de Turnitin <span class="reporte-ia-opcional">(recomendado)</span>
+                      </p>
+                      @if (reporte(); as r) {
+                        <p class="reporte-ia-listo">
+                          {{ nombreReporte() }} · {{ r.porcentaje ?? '¿?' }} % de IA ·
+                          {{ r.palabrasMarcadas | number: '1.0-0' }} palabras marcadas
+                          <button type="button" class="enlace" (click)="quitarReporte()">Quitar</button>
+                        </p>
+                        <p class="reporte-ia-nota">
+                          Sube ahora el mismo Word que pasaste por Turnitin: rehacemos solo lo que el reporte
+                          marcó y lo demás queda como está.
+                        </p>
+                      } @else {
+                        <p class="reporte-ia-nota">
+                          Si ya pasaste tu Word por Turnitin, sube el PDF del reporte de IA antes que el Word.
+                          Así rehacemos solo lo marcado y no tocamos lo que salió limpio. Sin reporte, se
+                          humaniza todo el texto.
+                        </p>
+                        <button
+                          type="button"
+                          class="boton secundario"
+                          [disabled]="subiendoReporte() || subiendo()"
+                          (click)="abrirSelectorReporte()"
+                        >
+                          {{ subiendoReporte() ? 'Leyendo el reporte…' : 'Subir el reporte de IA (PDF)' }}
                         </button>
                       }
                     </div>

@@ -24,6 +24,7 @@ import {
   PanelPreparar,
   ParrafoComparado,
   Preparacion,
+  ReporteIaSubido,
   ServicioPreparar,
 } from '../../core/models/preparar.model';
 import { PrepararService } from '../../core/services/preparar.service';
@@ -168,6 +169,10 @@ export class Preparar implements OnInit, OnDestroy {
   readonly idioma = signal<IdiomaPreparar>('en');
   readonly subiendo = signal(false);
   readonly encima = signal(false);
+  /** El reporte de IA de Turnitin para «Humanizar», si lo subió (24-oct-2026). */
+  readonly reporte = signal<ReporteIaSubido | null>(null);
+  readonly nombreReporte = signal<string | null>(null);
+  readonly subiendoReporte = signal(false);
 
   // ── La lista ─────────────────────────────────────────────────────────────
 
@@ -182,6 +187,7 @@ export class Preparar implements OnInit, OnDestroy {
 
   /** El campo de archivo, escondido. Se abre desde el recuadro, «Reintentar» y «Volver a procesar». */
   private readonly selector = viewChild<ElementRef<HTMLInputElement>>('selector');
+  private readonly selectorReporte = viewChild<ElementRef<HTMLInputElement>>('selectorReporte');
 
   private reloj: ReturnType<typeof setInterval> | null = null;
 
@@ -580,10 +586,13 @@ export class Preparar implements OnInit, OnDestroy {
 
     const servicio = this.elegida();
     const idioma = servicio === 'TRADUCCION' ? this.idioma() : undefined;
+    const reporteId = servicio === 'HUMANIZAR' ? this.reporte()?.reporteId : undefined;
 
-    this.api.encargar(servicio, archivo, idioma).subscribe({
+    this.api.encargar(servicio, archivo, idioma, reporteId).subscribe({
       next: ({ preparacion }) => {
         this.subiendo.set(false);
+        // Un reporte sirve para un encargo: el servidor ya lo usó.
+        this.quitarReporte();
         // Se mete ya en la lista para que «Procesando…» se pinte sin esperar al sondeo.
         this.panel.update((p) => (p ? { ...p, trabajos: [preparacion, ...p.trabajos] } : p));
         this.abrir(preparacion);
@@ -594,6 +603,47 @@ export class Preparar implements OnInit, OnDestroy {
         this.error.set(mensajeDeError(e));
         // Puede ser un «se te acabó el cupo»: se recarga para que la cabecera diga la verdad.
         this.cargar();
+      },
+    });
+  }
+
+  // ── El reporte de IA (Humanizar) ─────────────────────────────────────────
+
+  abrirSelectorReporte(): void {
+    this.selectorReporte()?.nativeElement.click();
+  }
+
+  quitarReporte(): void {
+    this.reporte.set(null);
+    this.nombreReporte.set(null);
+  }
+
+  /**
+   * Sube el PDF del reporte de IA. Se lee en el servidor antes de mandar el
+   * Word, para que un PDF que no sirve («*%», el de similitud) se diga ya y no
+   * después de esperar el humanizado.
+   */
+  desdeElReporte(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo || this.subiendoReporte()) return;
+    if (!archivo.name.toLowerCase().endsWith('.pdf')) {
+      this.error.set('El reporte va en PDF: en Turnitin, abre «Escritura con IA» y descárgalo.');
+      return;
+    }
+    this.subiendoReporte.set(true);
+    this.error.set(null);
+    this.api.subirReporte(archivo).subscribe({
+      next: (leido) => {
+        this.subiendoReporte.set(false);
+        this.reporte.set(leido);
+        this.nombreReporte.set(archivo.name);
+      },
+      error: (e: unknown) => {
+        this.subiendoReporte.set(false);
+        this.quitarReporte();
+        this.error.set(mensajeDeError(e));
       },
     });
   }

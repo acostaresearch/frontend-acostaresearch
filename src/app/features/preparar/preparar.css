@@ -332,6 +332,43 @@
   margin: -2px 0 16px;
 }
 
+/* El reporte de IA de Turnitin en «Humanizar» (24-oct-2026). */
+.reporte-ia {
+  max-width: 460px;
+  margin: -2px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-primario-suave);
+}
+
+.reporte-ia-titulo {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-texto);
+}
+
+.reporte-ia-opcional {
+  font-weight: 400;
+  color: var(--color-texto-suave);
+}
+
+.reporte-ia-nota {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-texto-suave);
+}
+
+.reporte-ia-listo {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-exito);
+  overflow-wrap: anywhere;
+}
+
 .idiomas-rotulo {
   margin-right: 4px;
   font-size: 13px;

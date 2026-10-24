@@ -147,6 +147,14 @@ export interface PanelPreparar {
 }
 
 /** Lo que devuelve el servidor al aceptar un encargo. */
+/** El reporte de IA de Turnitin ya leído, listo para usarse en «Humanizar» durante una hora. */
+export interface ReporteIaSubido {
+  reporteId: string;
+  /** El porcentaje que dice el reporte; null si no se pudo leer. */
+  porcentaje: number | null;
+  palabrasMarcadas: number;
+}
+
 export interface EncargoAceptado {
   preparacion: Preparacion;
   /** Null para el usuario beta, que no tiene cupo. */
