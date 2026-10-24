@@ -1,0 +1,326 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+<app-site-header />
+
+<input #selector type="file" accept=".docx" hidden (change)="desdeElBoton($event)" />
+<input #selectorReporte type="file" accept="application/pdf,.pdf" hidden (change)="desdeElReporte($event)" />
+<input #selectorRonda type="file" accept="application/pdf,.pdf" hidden (change)="desdeElReporteDeRonda($event)" />
+
+<main class="hz">
+  <aside class="hz-lateral" aria-label="Tus documentos humanizados">
+    <button type="button" class="boton hz-nueva" (click)="nueva()">
+      <span aria-hidden="true">+</span> Nueva humanización
+    </button>
+    <label class="hz-buscar">
+      <span class="visualmente-oculto">Buscar documento</span>
+      <input type="search" placeholder="Buscar documento" [value]="busqueda()" (input)="buscar($event)" />
+    </label>
+
+    @for (grupo of grupos(); track grupo.titulo) {
+      <p class="hz-grupo">{{ grupo.titulo }}</p>
+      <ul class="hz-lista">
+        @for (t of grupo.trabajos; track t.id) {
+          <li>
+            <button
+              type="button"
+              class="hz-item"
+              [class.activo]="t.id === docId()"
+              [attr.aria-current]="t.id === docId() ? 'true' : null"
+              (click)="abrir(t)"
+            >
+              <span class="hz-item-nombre">{{ t.nombre }}</span>
+              <span class="hz-item-meta">
+                {{ t.palabras | number: '1.0-0' }} palabras ·
+                {{ t.createdAt | date: 'HH:mm' }} ·
+                @switch (t.estado) {
+                  @case ('LISTO') { Listo }
+                  @case ('FALLIDO') { <span class="mal">Con error</span> }
+                  @default { En marcha }
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @empty {
+      @if (!cargando()) {
+        <p class="hz-lateral-vacio">
+          {{ busqueda() ? 'Ningún documento con ese nombre.' : 'Aquí saldrán los documentos que humanices.' }}
+        </p>
+      }
+    }
+
+    <a class="hz-otros" routerLink="/preparar-documento">Edición y Traducción →</a>
+  </aside>
+
+  <section class="hz-principal">
+    @if (cargando()) {
+      <p class="hz-cargando">Cargando…</p>
+    } @else if (!puede()) {
+      <div class="hz-bienvenida">
+        <h1>El humanizador está en prueba</h1>
+        <p>Todavía no se puede encargar desde tu cuenta. Si te interesa, escríbenos.</p>
+        <a class="boton secundario" routerLink="/humanizador-academico">Ver el Humanizador Académico</a>
+      </div>
+    } @else if (abierto(); as t) {
+      <!-- La conversación del documento abierto. -->
+      <div class="hz-conversacion">
+        <div class="hz-pedido">
+          <div class="hz-adjuntos">
+            <span class="hz-adjunto">
+              <span class="hz-icono doc" aria-hidden="true"></span>
+              <span>
+                <strong>{{ t.nombre }}</strong>
+                <small>Word · {{ t.palabras | number: '1.0-0' }} palabras</small>
+              </span>
+            </span>
+            @if (t.detalle?.conReporte) {
+              <span class="hz-adjunto">
+                <span class="hz-icono pdf" aria-hidden="true"></span>
+                <span><strong>Reporte de IA de Turnitin</strong><small>PDF</small></span>
+              </span>
+            }
+          </div>
+          <p class="hz-burbuja">{{ pedidoDe(t) }}</p>
+        </div>
+
+        <div class="hz-respuesta">
+          <div class="hz-avatar" aria-hidden="true">A</div>
+          <div class="hz-respuesta-cuerpo">
+            <p class="hz-quien">Humanizador Acosta</p>
+            <p>{{ introDe(t) }}</p>
+
+            <ol class="hz-pasos" aria-label="Pasos">
+              @for (paso of pasosDe(t); track paso.texto) {
+                <li [class]="paso.estado">
+                  <span class="hz-marca" aria-hidden="true"></span>
+                  {{ paso.texto }}
+                  @if (paso.estado === 'actual' && seccionDe(t); as seccion) {
+                    <small>· {{ seccion }}</small>
+                  }
+                  <span class="visualmente-oculto">
+                    ({{ paso.estado === 'hecho' ? 'hecho' : paso.estado === 'actual' ? 'en curso' : 'pendiente' }})
+                  </span>
+                </li>
+              }
+            </ol>
+            @if (t.estado === 'EN_COLA') {
+              <p class="hz-nota-suave">En cola: empieza en cuanto termine el documento anterior.</p>
+            } @else if (t.estado === 'EN_CURSO') {
+              <p class="hz-nota-suave" aria-live="polite">Trabajando… puedes cerrar esta página: te avisamos por correo.</p>
+            }
+
+            @if (t.estado === 'FALLIDO') {
+              <p class="hz-fallo" role="alert">{{ t.error || 'No se pudo humanizar el documento.' }}</p>
+              <button type="button" class="boton secundario" (click)="nueva()">Subirlo otra vez</button>
+            }
+
+            @if (t.estado === 'LISTO') {
+              <p>Listo. Aquí tienes tu documento:</p>
+              <div class="hz-entrega">
+                <span class="hz-icono doc grande" aria-hidden="true"></span>
+                <span class="hz-entrega-nombre">
+                  <strong>{{ nombreDeDescarga(t) }}</strong>
+                  <small class="ok">● Listo · {{ t.tocados }} párrafo{{ t.tocados === 1 ? '' : 's' }} humanizado{{ t.tocados === 1 ? '' : 's' }}</small>
+                </span>
+                <a class="boton secundario" routerLink="/preparar-documento" [queryParams]="{ doc: t.id }">Ver cambios</a>
+                <button type="button" class="boton" (click)="descargar(t)">Descargar Word</button>
+              </div>
+
+              @if (t.intactos > 0) {
+                <details class="hz-intactos">
+                  <summary>{{ t.intactos }} párrafo{{ t.intactos === 1 ? '' : 's' }} quedaron como estaban</summary>
+                  <ul>
+                    @for (a of t.avisos; track $index) {
+                      <li>
+                        <strong>{{ a.cuantos }}</strong> en {{ a.donde }}, porque {{ a.motivo }}.
+                        <em>«{{ a.ejemplo }}»</em>
+                      </li>
+                    }
+                  </ul>
+                </details>
+              }
+
+              <p class="hz-revision">
+                <strong>Revisión recomendada.</strong> El resultado se genera con IA. Revísalo antes de entregarlo o
+                enviarlo a una revista; la responsabilidad del texto es del autor.
+              </p>
+
+              @if (sinMarcas()) {
+                <div class="hz-sin-marcas" role="status">
+                  <p>
+                    Ese reporte no trae nada resaltado: cuando Turnitin da «*%» no enseña qué detectó. Podemos
+                    humanizar todo el documento otra vez, partiendo de esta versión.
+                  </p>
+                  <button type="button" class="boton" [disabled]="pidiendoRonda()" (click)="todoOtraVez()">
+                    Humanizar todo otra vez
+                  </button>
+                </div>
+              }
+
+              <div class="hz-acciones">
+                <button type="button" class="hz-chip" [disabled]="pidiendoRonda()" (click)="abrirSelectorRonda()">
+                  {{ pidiendoRonda() ? 'Preparando la ronda…' : 'Subir un nuevo reporte de Turnitin' }}
+                </button>
+                <button type="button" class="hz-chip" [disabled]="pidiendoRonda()" (click)="abrirParrafos()">
+                  Rehacer un párrafo
+                </button>
+              </div>
+
+              @if (eligiendoParrafo()) {
+                <div class="hz-parrafos" role="region" aria-label="Elige el párrafo que quieres rehacer">
+                  <div class="hz-parrafos-cabeza">
+                    <strong>¿Qué párrafo rehacemos?</strong>
+                    <button type="button" class="boton enlace" (click)="cerrarParrafos()">Cerrar</button>
+                  </div>
+                  <label>
+                    <span class="visualmente-oculto">Buscar en los párrafos</span>
+                    <input type="search" placeholder="Busca una frase del párrafo" (input)="buscarParrafo($event)" />
+                  </label>
+                  @if (!parrafos()) {
+                    <p class="hz-nota-suave">Cargando los párrafos…</p>
+                  } @else {
+                    <ul>
+                      @for (p of parrafosElegibles(); track p.clave) {
+                        <li>
+                          <p>{{ inicio(p.resultado) }}</p>
+                          <button type="button" class="boton secundario" [disabled]="pidiendoRonda()" (click)="rehacer(p)">
+                            Rehacer este
+                          </button>
+                        </li>
+                      } @empty {
+                        <li class="hz-nota-suave">Ningún párrafo con esa frase.</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+
+              @if (t.detalle?.deId; as deId) {
+                <button type="button" class="boton enlace hz-anterior" (click)="abrir({ id: deId })">
+                  ← Ver la versión anterior
+                </button>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Empezar uno. -->
+      <div class="hz-bienvenida">
+        <div class="hz-avatar grande" aria-hidden="true">A</div>
+        <h1>¿Qué texto humanizamos hoy?</h1>
+        <p>
+          Sube tu Word redactado con ayuda de IA. Quito la redacción de modelo con el método del Humanizador
+          Académico y te lo devuelvo limpio, listo para Turnitin.
+        </p>
+
+        <div class="hz-modos" role="radiogroup" aria-label="Qué humanizar">
+          <button
+            type="button"
+            role="radio"
+            class="hz-modo"
+            [class.elegido]="modo() === 'TODO'"
+            [attr.aria-checked]="modo() === 'TODO'"
+            (click)="elegirModo('TODO')"
+          >
+            <strong>Humanizar todo el documento</strong>
+            <span>Solo subes el Word. Se trabaja el texto completo.</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            class="hz-modo"
+            [class.elegido]="modo() === 'MARCADO'"
+            [attr.aria-checked]="modo() === 'MARCADO'"
+            (click)="elegirModo('MARCADO')"
+          >
+            <strong>Solo lo que marcó Turnitin</strong>
+            <span>Subes también el PDF del reporte de IA. No toco lo que salió limpio.</span>
+          </button>
+        </div>
+
+        <div class="hz-redactor">
+          <div
+            class="hz-soltar"
+            [class.encima]="encima()"
+            (dragover)="arrastrar($event, true)"
+            (dragleave)="arrastrar($event, false)"
+            (drop)="soltar($event)"
+          >
+            @if (archivo(); as a) {
+              <span class="hz-adjunto">
+                <span class="hz-icono doc" aria-hidden="true"></span>
+                <span><strong>{{ a.name }}</strong><small>Word</small></span>
+                <button type="button" class="hz-quitar" aria-label="Quitar el Word" (click)="quitarArchivo()">×</button>
+              </span>
+            } @else {
+              <span>
+                Arrastra tu <strong>.docx</strong> aquí o
+                <button type="button" class="boton enlace" (click)="abrirSelector()">búscalo en tu equipo</button>
+              </span>
+            }
+            @if (reporte(); as r) {
+              <span class="hz-adjunto">
+                <span class="hz-icono pdf" aria-hidden="true"></span>
+                <span>
+                  <strong>{{ nombreReporte() }}</strong>
+                  <small>{{ r.porcentaje ?? '¿?' }} % de IA · {{ r.palabrasMarcadas | number: '1.0-0' }} palabras marcadas</small>
+                </span>
+                <button type="button" class="hz-quitar" aria-label="Quitar el reporte" (click)="quitarReporte()">×</button>
+              </span>
+            }
+          </div>
+
+          @if (leyendoCapitulos()) {
+            <p class="hz-nota-suave">Leyendo los capítulos de tu Word…</p>
+          } @else if (capitulos().length > 0) {
+            <fieldset class="hz-capitulos">
+              <legend>¿Algún capítulo que no quieras que toque? <small>(opcional)</small></legend>
+              @for (c of capitulos(); track c.clave) {
+                <label>
+                  <input type="checkbox" [checked]="noTocar().has(c.clave)" (change)="alternarCapitulo(c.clave)" />
+                  {{ c.titulo }} <small>· {{ c.palabras | number: '1.0-0' }} palabras</small>
+                </label>
+              }
+            </fieldset>
+          }
+
+          @if (modo() === 'MARCADO' && !reporte()) {
+            <p class="hz-nota-suave">
+              Sube el PDF del reporte de IA (en Turnitin: «Escritura con IA» → descargar). Si Turnitin te dio «*%»,
+              no trae nada marcado: elige «Humanizar todo el documento».
+            </p>
+          }
+
+          <div class="hz-redactor-pie">
+            <button type="button" class="hz-chip" (click)="abrirSelector()">Word (.docx)</button>
+            @if (modo() === 'MARCADO') {
+              <button type="button" class="hz-chip" [disabled]="subiendoReporte()" (click)="abrirSelectorReporte()">
+                {{ subiendoReporte() ? 'Leyendo el reporte…' : 'Reporte de IA (PDF)' }}
+              </button>
+            }
+            <button
+              type="button"
+              class="hz-enviar"
+              [disabled]="!listoParaMandar()"
+              [attr.aria-label]="enviando() ? 'Enviando' : 'Humanizar'"
+              (click)="mandar()"
+            >
+              ↑
+            </button>
+          </div>
+        </div>
+
+        <ul class="hz-promesas">
+          <li>Citas, cifras y bibliografía protegidas</li>
+          <li>Word limpio, sin marcas</li>
+          <li>Hasta {{ panel()?.maxPalabras | number: '1.0-0' }} palabras de cuerpo</li>
+        </ul>
+        <p class="hz-pie">
+          El resultado se genera con IA. Revísalo antes de entregarlo o enviarlo a una revista; la responsabilidad del
+          texto es del autor. La bibliografía y las tablas no cuentan para el límite.
+        </p>
+      </div>
+    }
+  </section>
+</main>

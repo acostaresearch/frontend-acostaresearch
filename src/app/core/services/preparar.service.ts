@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
 import {
+  CapituloWord,
   ComparacionPreparacion,
   EncargoAceptado,
   IdiomaPreparar,
@@ -43,10 +44,12 @@ export class PrepararService {
     archivo: File,
     idioma?: IdiomaPreparar,
     reporteId?: string,
+    noTocar?: string[],
   ): Observable<EncargoAceptado> {
     const parametros = new URLSearchParams();
     if (idioma) parametros.set('idioma', idioma);
     if (reporteId) parametros.set('reporte', reporteId);
+    if (noTocar?.length) parametros.set('noTocar', noTocar.join(','));
     const consulta = parametros.toString() ? `?${parametros}` : '';
 
     return this.http
@@ -68,6 +71,25 @@ export class PrepararService {
       .post<ApiResponse<ReporteIaSubido>>(`${this.base}/reporte-ia`, archivo, {
         headers: { 'Content-Type': 'application/pdf' },
       })
+      .pipe(map((res) => res.data));
+  }
+
+  /** Los capítulos de un Word antes de humanizarlo. El servidor no guarda nada. */
+  capitulos(archivo: File): Observable<{ palabras: number; capitulos: CapituloWord[] }> {
+    return this.http
+      .post<ApiResponse<{ palabras: number; capitulos: CapituloWord[] }>>(`${this.base}/capitulos`, archivo, {
+        headers: { 'Content-Type': 'application/octet-stream' },
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Otra ronda sobre un Word ya humanizado: con `reporteId`, lo que marcó el
+   * reporte nuevo; con `clave`, un párrafo; sin nada, todo otra vez.
+   */
+  ronda(id: string, pedido: { reporteId?: string; clave?: string } = {}): Observable<EncargoAceptado> {
+    return this.http
+      .post<ApiResponse<EncargoAceptado>>(`${this.base}/trabajos/${id}/ronda`, pedido)
       .pipe(map((res) => res.data));
   }
 

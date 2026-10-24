@@ -67,6 +67,26 @@ export interface Preparacion {
   entregadoAt: string | null;
   /** Por dónde va mientras está EN_CURSO. Null en cola, terminado o tras un reinicio. */
   progreso?: ProgresoPreparacion | null;
+  /** Solo en «Humanizar» y solo al pedir un trabajo suelto (`ver`). */
+  detalle?: DetalleHumanizado;
+}
+
+/** Lo que se pidió en un trabajo de «Humanizar» además del Word (24-oct-2026). */
+export interface DetalleHumanizado {
+  conReporte: boolean;
+  /** Títulos de los capítulos que no se tocaron. */
+  noTocar: string[];
+  /** Fue «Rehacer un párrafo». */
+  parrafo: boolean;
+  /** El trabajo del que sale esta ronda, o null si es la primera. */
+  deId: string | null;
+}
+
+/** Un capítulo del Word, para elegir los que no se humanizan. */
+export interface CapituloWord {
+  clave: string;
+  titulo: string;
+  palabras: number;
 }
 
 /** Los cuatro pasos de la pantalla de «Procesando…», en orden. */

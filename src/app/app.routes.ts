@@ -221,6 +221,16 @@ export const routes: Routes = [
    * hay enlace firmado que valga como llave, porque la membresía cuelga de la
    * cuenta y hay que saber de quién es el cupo del mes.
    */
+  /*
+   * «Humanizar» como conversación (24-oct-2026). En prueba: la página dice a
+   * quien no puede encargarlo que aún no está abierto (ver `puedeHumanizar`).
+   */
+  {
+    path: 'humanizar',
+    canActivate: [authGuard],
+    title: 'Humanizar · Acosta Research',
+    loadComponent: () => import('./features/humanizar/humanizar').then((m) => m.Humanizar),
+  },
   { path: 'preparar-documento/:clave', redirectTo: '/preparar-documento' },
   {
     path: 'preparar-documento',
