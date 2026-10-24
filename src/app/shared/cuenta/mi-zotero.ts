@@ -132,6 +132,13 @@ export class MiZoteroPanel implements OnInit {
     return colecciones.filter((coleccion) => normalizar(coleccion.nombre).includes(texto));
   });
 
+  /** Algo de la lista tiene PDFs sin ficha: se explica por qué no cuentan. */
+  readonly hayPdfsSinFicha = computed(() => {
+    const puede = this.colecciones();
+    if (!puede) return false;
+    return Boolean(puede.biblioteca.sinFicha) || puede.colecciones.some((c) => c.sinFicha);
+  });
+
   ngOnInit(): void {
     const resultado = this.ruta.snapshot.queryParamMap.get('zotero');
     if (resultado) {
@@ -270,8 +277,17 @@ export class MiZoteroPanel implements OnInit {
     this.zotero.sincronizar().subscribe({
       next: (resultado) => {
         this.trayendo.set(false);
+        // Si quedó en 0, no se dice «ya estaba al día»: lo explica el aviso
+        // de los PDF sin ficha, que sale al recargar el estado.
+        const fuera = resultado.sinFicha
+          ? ` ${resultado.sinFicha} PDF sin ficha se quedaron fuera.`
+          : '';
         this.parte.set(
-          resultado.guardadas > 0 ? `${resultado.guardadas} fuentes nuevas.` : 'Ya estaba al día.',
+          resultado.guardadas > 0
+            ? `${resultado.guardadas} fuentes nuevas.${fuera}`
+            : resultado.total > 0
+              ? `Ya estaba al día.${fuera}`
+              : null,
         );
         this.cargar();
       },

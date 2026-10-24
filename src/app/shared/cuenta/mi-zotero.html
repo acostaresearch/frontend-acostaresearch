@@ -88,6 +88,24 @@
         <p class="zotero-aviso zotero-mal">{{ fallo }}</p>
       }
 
+      <!-- Se trajo y no entró nada. Sin esto se leía «ya estaba al día» y la
+           tesista esperaba a la noche algo que no iba a llegar. -->
+      @if (datos.coleccion && datos.ultima && !datos.fuentes && !datos.trayendo && !datos.error) {
+        <p class="zotero-aviso zotero-mal">
+          @if (datos.sinFicha) {
+            No entró ninguna fuente: lo que elegiste tiene
+            <strong>{{ datos.sinFicha }} PDF sueltos, sin autor ni fecha</strong>, y así no se
+            pueden citar. Abre tu <strong>Zotero de escritorio</strong> (la web de Zotero no
+            tiene esta opción), selecciónalos, clic derecho →
+            <strong>Recuperar metadatos del PDF</strong>, sincroniza y pulsa «Actualizar ahora».
+            Los que no se resuelvan, súbelos en «Mis fuentes» y llena la ficha a mano.
+          } @else {
+            No entró ninguna fuente: lo que elegiste no tiene artículos en tu Zotero. Elige otra
+            colección con «Cambiar qué se trae».
+          }
+        </p>
+      }
+
       @if (parte(); as texto) {
         <p class="zotero-parte">{{ texto }}</p>
       }
@@ -108,7 +126,12 @@
               (click)="elegir(puede.biblioteca.clave)"
             >
               <span class="zotero-opcion-nombre">Toda tu biblioteca</span>
-              <span class="zotero-opcion-cuantas">{{ puede.biblioteca.cuantas ?? '—' }}</span>
+              <span class="zotero-opcion-cuantas">
+                {{ puede.biblioteca.cuantas ?? '—' }}
+                @if (puede.biblioteca.sinFicha) {
+                  · {{ puede.biblioteca.sinFicha }} PDF sin ficha
+                }
+              </span>
             </button>
           </li>
 
@@ -121,11 +144,24 @@
                 (click)="elegir(coleccion.clave)"
               >
                 <span class="zotero-opcion-nombre">{{ coleccion.nombre }}</span>
-                <span class="zotero-opcion-cuantas">{{ coleccion.cuantas }}</span>
+                <span class="zotero-opcion-cuantas">
+                  {{ coleccion.cuantas }}
+                  @if (coleccion.sinFicha) {
+                    · {{ coleccion.sinFicha }} PDF sin ficha
+                  }
+                </span>
               </button>
             </li>
           }
         </ul>
+
+        @if (hayPdfsSinFicha()) {
+          <p class="nota">
+            Los PDF sin ficha no tienen autor ni fecha y no se pueden citar, así que no se traen.
+            Para que entren, en tu Zotero de escritorio selecciónalos, clic derecho →
+            <strong>Recuperar metadatos del PDF</strong>.
+          </p>
+        }
 
         @if (puede.colecciones.length > 0 && encontradas().length === 0) {
           <p class="nota">Ninguna colección se llama «{{ busqueda().trim() }}».</p>

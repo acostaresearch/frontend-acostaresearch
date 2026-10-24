@@ -12,6 +12,8 @@ export interface ColeccionDeZotero {
   nombre: string;
   /** Nulo cuando el servicio no lo dice: Mendeley no cuenta por carpeta. */
   cuantas: number | null;
+  /** PDFs sueltos, sin ficha: están en Zotero pero no se traen. Solo Zotero. */
+  sinFicha?: number;
 }
 
 /**
@@ -28,6 +30,8 @@ export interface EstadoDeZotero {
   coleccion?: { clave: string; nombre: string | null } | null;
   /** Cuántas fuentes suyas vinieron de esta colección. */
   fuentes?: number;
+  /** PDFs sin ficha en lo elegido. Solo se cuenta cuando se trajo y entró 0. */
+  sinFicha?: number;
   ultima?: string | null;
   /** Hay una pasada en marcha ahora mismo. */
   trayendo?: boolean;
@@ -43,7 +47,7 @@ export interface EstadoDeZotero {
  * nadie. Mezclarla en el array obligaría a distinguirla por su nombre.
  */
 export interface QuePuedeTraer {
-  biblioteca: { clave: string; cuantas: number | null };
+  biblioteca: { clave: string; cuantas: number | null; sinFicha?: number };
   colecciones: ColeccionDeZotero[];
 }
 
@@ -51,6 +55,8 @@ export interface ResultadoDeSincronizar {
   guardadas: number;
   retiradas: number;
   total: number;
+  /** PDFs sin ficha que se quedaron fuera. Solo Zotero. */
+  sinFicha?: number;
 }
 
 /**

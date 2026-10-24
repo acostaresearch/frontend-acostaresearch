@@ -170,8 +170,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="panel-zotero"]',
     titulo: 'Por ejemplo, tu Zotero',
     texto:
-      'Eliges una colección y sus fuentes quedan listas para citar, al día cada noche. Las demás ' +
-      'pestañas funcionan igual.',
+      'Eliges una colección y sus fuentes entran al momento, listas para citar; luego se ponen al ' +
+      'día solas cada noche. Los PDF sueltos, sin ficha, no entran. Las demás pestañas funcionan igual.',
   },
   {
     ruta: '/perfil',
