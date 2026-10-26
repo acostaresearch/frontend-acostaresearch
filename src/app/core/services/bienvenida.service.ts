@@ -26,6 +26,24 @@ export interface CanjeReciente {
 export class BienvenidaService {
   readonly pendiente = signal<CanjeReciente | null>(null);
 
+  /**
+   * El código que alguien pulsó «Canjear» sin sesión (26-oct). Al volver del
+   * acceso o del registro, /planes lo canjea solo. En memoria también: abrir el
+   * enlace del correo, sin más, sigue sin gastar el código.
+   */
+  private codigoTrasEntrar: string | null = null;
+
+  recordarCanje(codigo: string): void {
+    this.codigoTrasEntrar = codigo;
+  }
+
+  /** Si este es el código que se pidió canjear antes de entrar. Lo olvida al mirarlo. */
+  tomarCanje(codigo: string): boolean {
+    const era = this.codigoTrasEntrar === codigo;
+    this.codigoTrasEntrar = null;
+    return era;
+  }
+
   anunciar(canje: CanjeReciente): void {
     this.pendiente.set(canje);
   }

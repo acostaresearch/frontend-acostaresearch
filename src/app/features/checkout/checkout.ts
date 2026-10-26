@@ -673,6 +673,11 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     // con un enlace abierto por error o compartido.
     const traido = this.ruta.snapshot.queryParamMap.get('codigo')?.trim();
     if (traido) this.codigoCanje.setValue(traido);
+    // Salvo que ya lo pulsara antes de entrar o de crear la cuenta: entonces se
+    // canjea sin pedírselo otra vez y va a /perfil/ayuda (26-oct).
+    if (traido && this.auth.isAuthenticated() && this.bienvenida.tomarCanje(traido)) {
+      this.canjear();
+    }
 
     // El saldo solo existe si hay sesión; sin ella la página sigue siendo útil
     // como escaparate de precios.
@@ -1413,6 +1418,8 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     this.errorCanje.set(null);
 
     if (!this.auth.isAuthenticated()) {
+      // Ya pulsó Canjear: al volver con sesión se canjea solo (ver ngOnInit).
+      this.bienvenida.recordarCanje(codigo);
       const vuelta = `/planes?codigo=${encodeURIComponent(codigo)}`;
       void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: vuelta } });
       return;

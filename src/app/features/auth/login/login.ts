@@ -70,6 +70,15 @@ export class Login {
   /** Adónde vuelve quien entró por Google. El mismo destino que el formulario. */
   readonly destinoTrasEntrar = this.ruta.snapshot.queryParamMap.get('returnUrl') ?? '/';
 
+  /**
+   * El mismo destino, solo si es de esta web, para el enlace «Crear una cuenta»:
+   * quien llegó aquí al canjear un código vuelve a /planes también tras
+   * registrarse (26-oct).
+   */
+  readonly vueltaInterna = ((v: string | null) => (v?.startsWith('/') && !v.startsWith('//') ? v : null))(
+    this.ruta.snapshot.queryParamMap.get('returnUrl'),
+  );
+
   errorDe(campo: 'email' | 'password'): string | null {
     const control = this.formulario.controls[campo];
     const delServidor = this.erroresServidor()[campo];

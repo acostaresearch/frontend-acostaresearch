@@ -91,7 +91,12 @@
 
   <app-boton-google texto="continue_with" [destino]="destinoTrasEntrar" />
 
-  <p pie>¿No tienes cuenta? <a routerLink="/auth/registro">Crear una cuenta</a></p>
+  <p pie>
+    ¿No tienes cuenta?
+    <a routerLink="/auth/registro" [queryParams]="vueltaInterna ? { returnUrl: vueltaInterna } : {}"
+      >Crear una cuenta</a
+    >
+  </p>
 
   <!-- ── El panel ──────────────────────────────────────────────
        Quien llega aquí desde un anuncio no siempre sabe todavía qué hay al
