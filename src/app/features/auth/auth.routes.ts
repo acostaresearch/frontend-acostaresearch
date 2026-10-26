@@ -27,5 +27,13 @@ export const authRoutes: Routes = [
     title: 'Recuperar contraseña · Acosta Research',
     loadComponent: () => import('./recuperar/recuperar').then((m) => m.Recuperar),
   },
+  {
+    // El botón «Activar mi acceso» del correo del código (26-oct). Sin
+    // guestGuard: quien ya tiene la sesión abierta activa en su cuenta. Debe
+    // coincidir con `activationCode` en `emailTemplates.js` del backend.
+    path: 'activar',
+    title: 'Activa tu acceso · Acosta Research',
+    loadComponent: () => import('./activar/activar').then((m) => m.Activar),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 ];

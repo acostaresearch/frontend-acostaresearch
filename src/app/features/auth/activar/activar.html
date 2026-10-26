@@ -1,0 +1,151 @@
+<app-auth-card
+  titulo="Activa tu acceso"
+  [subtitulo]="vista()?.producto ? 'Tu compra: ' + vista()!.producto : ''"
+>
+  <app-aviso-flotante [(error)]="errorGeneral" />
+
+  @if (cargando()) {
+    <p class="nota">Comprobando tu código…</p>
+  } @else if (errorCodigo(); as error) {
+    <!-- El código no sirve: se dice claro y se ofrece una salida. -->
+    <p class="aviso error">{{ error }}</p>
+    <p class="nota">
+      Si ya lo activaste, tu acceso está en tu panel.
+      @if (whatsappUrl) {
+        Si no, <a [href]="whatsappUrl" target="_blank" rel="noopener">escríbenos por WhatsApp</a> y
+        lo revisamos.
+      }
+    </p>
+    <a class="boton secundario" routerLink="/auth/login">Ir a mi cuenta</a>
+  } @else if (conSesion()) {
+    <!-- Ya tenía la sesión abierta: se activa en esa cuenta. -->
+    <p class="correo-fijo">
+      Vas a activar el acceso en tu cuenta <strong>{{ correoDeLaSesion() }}</strong>.
+    </p>
+    <button type="button" class="boton" [disabled]="enviando()" (click)="activarEnMiCuenta()">
+      @if (enviando()) {
+        <span class="girando" aria-hidden="true"></span>
+        <span>Activando…</span>
+      } @else {
+        <span>Activar en mi cuenta</span>
+      }
+    </button>
+  } @else if (vista(); as v) {
+    @if (!v.email) {
+      <!-- Código sin correo: el camino de siempre, y al volver se canjea solo. -->
+      <p class="nota">
+        Para activar tu acceso necesitas una cuenta. Al entrar, tu código se activa solo.
+      </p>
+      <a class="boton" routerLink="/auth/registro" [queryParams]="{ returnUrl: vuelta() }"
+        >Crear mi cuenta</a
+      >
+      <p pie>
+        ¿Ya tienes cuenta?
+        <a routerLink="/auth/login" [queryParams]="{ returnUrl: vuelta() }">Entrar</a>
+      </p>
+    } @else if (v.tieneCuenta) {
+      <!-- Ese correo ya tiene cuenta: entra con ella y se activa al volver. -->
+      <p class="correo-fijo">
+        Ya tienes una cuenta con <strong>{{ v.email }}</strong>. Entra con ella y tu acceso se
+        activa solo.
+      </p>
+      <a class="boton" routerLink="/auth/login" [queryParams]="{ returnUrl: vuelta() }"
+        >Entrar y activar</a
+      >
+      <app-boton-google texto="continue_with" [destino]="vuelta()" />
+    } @else {
+      <!-- Cuenta nueva: el correo es el del código y no se cambia aquí. -->
+      <p class="correo-fijo">
+        Vas a activar el acceso para <strong>{{ v.email }}</strong>
+      </p>
+
+      <form [formGroup]="formulario" (ngSubmit)="activar()" novalidate>
+        <div class="fila">
+          <div class="campo" [class.invalido]="errorDe('firstName')">
+            <label for="firstName">Nombre</label>
+            <input id="firstName" formControlName="firstName" autocomplete="given-name" autofocus />
+            @if (errorDe('firstName'); as error) {
+              <span class="error">{{ error }}</span>
+            }
+          </div>
+          <div class="campo" [class.invalido]="errorDe('lastName')">
+            <label for="lastName">Apellido</label>
+            <input id="lastName" formControlName="lastName" autocomplete="family-name" />
+            @if (errorDe('lastName'); as error) {
+              <span class="error">{{ error }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="campo" [class.invalido]="errorDe('password')">
+          <label for="password">Crea una contraseña</label>
+          <div class="entrada">
+            <input
+              id="password"
+              [type]="verContrasena() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="ojo"
+              [attr.aria-label]="verContrasena() ? 'Ocultar la contraseña' : 'Mostrar la contraseña'"
+              [attr.aria-pressed]="verContrasena()"
+              (click)="verContrasena.set(!verContrasena())"
+            >
+              {{ verContrasena() ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+          @if (mostrarRequisitos()) {
+            <ul class="requisitos" aria-live="polite">
+              @for (r of requisitos(); track r.texto) {
+                <li [class.cumple]="r.cumple">
+                  <span class="marca" aria-hidden="true">{{ r.cumple ? '✓' : '○' }}</span>
+                  {{ r.texto }}
+                </li>
+              }
+            </ul>
+          } @else if (errorDe('password'); as error) {
+            <span class="error">{{ error }}</span>
+          } @else {
+            <span class="ayuda">Mínimo 10 caracteres, con mayúscula, minúscula y número.</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="errorDe('confirmPassword')">
+          <label for="confirmPassword">Repite la contraseña</label>
+          <input
+            id="confirmPassword"
+            [type]="verContrasena() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+          />
+          @if (errorDe('confirmPassword'); as error) {
+            <span class="error">{{ error }}</span>
+          }
+        </div>
+
+        <button type="submit" class="boton" [disabled]="enviando()">
+          @if (enviando()) {
+            <span class="girando" aria-hidden="true"></span>
+            <span>Activando…</span>
+          } @else {
+            <span>Activar</span>
+          }
+        </button>
+      </form>
+
+      <app-boton-google texto="continue_with" [destino]="vuelta()" />
+
+      <p pie>
+        <a routerLink="/auth/registro" [queryParams]="{ returnUrl: vuelta() }"
+          >¿Quieres usar otro correo?</a
+        >
+      </p>
+      <p pie class="legal">
+        Al activar aceptas la <a routerLink="/privacidad">Política de Privacidad</a>, conforme a la
+        Ley N.° 29733 de Protección de Datos Personales del Perú.
+      </p>
+    }
+  }
+</app-auth-card>

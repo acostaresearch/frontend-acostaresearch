@@ -260,8 +260,9 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
       ancla: '[data-tour="planes-canje"]',
       titulo: 'Si pagaste por Yape o transferencia',
       texto:
-        'Aquí se canjea el código que te llega al correo. Es el único sitio donde se hace. Al ' +
-        'canjearlo te llevamos a tu panel, con tu URL del conector y un recorrido para empezar.',
+        'Lo más fácil es pulsar «Activar mi acceso» en el correo. Si el botón no te funciona, ' +
+        'pega aquí el código que trae ese correo. Al activarlo te llevamos a tu panel, con tu URL ' +
+        'del conector y un recorrido para empezar.',
     },
 
     // ── Lo que hace falta DESPUÉS de comprar ───────────────────────────────

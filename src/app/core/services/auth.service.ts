@@ -4,6 +4,7 @@ import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api.model';
+import { CanjeHecho } from '../models/payment.model';
 import {
   LoginRequest,
   LoginResponse,
@@ -13,6 +14,17 @@ import {
   Role,
   User,
 } from '../models/user.model';
+
+/** Lo que dice el servidor de un código antes de activarlo. */
+export interface VistaDeActivacion {
+  /** El correo al que se mandó el código. Nulo si el panel no puso ninguno. */
+  email: string | null;
+  producto: string;
+  /** Si entrega el conector (con URL) o una membresía de documentos. */
+  conector: boolean;
+  /** Ese correo ya tiene cuenta: hay que entrar con ella. */
+  tieneCuenta: boolean;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -74,6 +86,35 @@ export class AuthService {
       }),
       map(({ user }) => user),
     );
+  }
+
+  /** La página del botón «Activar mi acceso»: qué entrega el código y a qué correo. */
+  verActivacion(codigo: string): Observable<VistaDeActivacion> {
+    return this.http
+      .post<ApiResponse<VistaDeActivacion>>(`${this.base}/activar/ver`, { codigo })
+      .pipe(map((res) => res.data));
+  }
+
+  /**
+   * Activa con una cuenta nueva en un solo paso: el servidor crea la cuenta con
+   * el correo del código, abre la sesión y canjea. Devuelve lo canjeado.
+   */
+  activar(datos: {
+    codigo: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+  }): Observable<CanjeHecho> {
+    return this.http
+      .post<ApiResponse<LoginResponse & { canje: CanjeHecho }>>(`${this.base}/activar`, datos)
+      .pipe(
+        map((res) => res.data),
+        tap(({ user, accessToken }) => {
+          this.accessTokenSignal.set(accessToken);
+          this.userSignal.set(user);
+        }),
+        map(({ canje }) => canje),
+      );
   }
 
   logout(): Observable<void> {

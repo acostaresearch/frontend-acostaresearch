@@ -1,0 +1,17 @@
+/* El correo del código: fijo, como texto, para que se vea que no se cambia aquí. */
+.correo-fijo {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  border-radius: var(--radio);
+  overflow-wrap: anywhere;
+}
+
+a.boton {
+  display: flex;
+  justify-content: center;
+  text-decoration: none;
+}
