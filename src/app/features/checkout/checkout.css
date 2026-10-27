@@ -1738,6 +1738,19 @@ h1 {
   text-decoration-thickness: 2px;
 }
 
+/* Título y cuenta atrás en una fila: la cabecera mide lo mismo en todas las
+   pestañas (en Culqi y Hotmart no hay cuenta atrás). */
+.pago-barra-texto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+}
+
+.pago-barra-texto .pago-tiempo {
+  margin: 0;
+}
+
 .pago-resumen {
   display: flex;
   flex-wrap: wrap;

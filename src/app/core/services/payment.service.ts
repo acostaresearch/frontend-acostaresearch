@@ -80,10 +80,23 @@ export class PaymentService {
     );
   }
 
+  /**
+   * Las compras del cliente. Sin las órdenes de Hotmart que no llegaron a
+   * pagarse (27-oct-2026): se abren con solo entrar en la pestaña Hotmart del
+   * pago, así que no son compras a medias sino alguien que miró. El servidor
+   * ya quita así las de PayPal y Culqi (`listForUser`).
+   */
   mine(): Observable<Payment[]> {
     return this.http
       .get<ApiResponse<{ payments: Payment[] }>>(this.base)
-      .pipe(map((res) => res.data.payments));
+      .pipe(
+        map((res) =>
+          res.data.payments.filter(
+            (pago) =>
+              !(pago.provider === 'HOTMART' && (pago.status === 'PENDING' || pago.status === 'CANCELLED')),
+          ),
+        ),
+      );
   }
 
   /**

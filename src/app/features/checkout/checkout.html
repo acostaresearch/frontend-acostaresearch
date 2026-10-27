@@ -744,15 +744,16 @@
           aria-labelledby="titulo-pago"
         >
           <div class="pago-barra">
-            <div>
-              <!-- Compacta desde el 27-oct-2026: el total va en el título. -->
+            <div class="pago-barra-texto">
+              <!-- Compacta desde el 27-oct-2026: el total va en el título y la
+                   cuenta atrás en la misma fila. -->
               <h2 id="titulo-pago" class="pago-titulo">
                 Pagar <strong>{{ total() }}</strong>
                 @if (totalTachado(); as antes) {
                   <span class="tachado">{{ antes }}</span>
                 }
               </h2>
-              @if (!pagoIncrustado() && cierraEn(); as limite) {
+              @if (cierraEn(); as limite) {
                 <p class="pago-tiempo" role="status">
                   <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" />

@@ -220,9 +220,16 @@ function dePasarela(pago: PagoAdmin): Acceso {
  * abrir la ventana de PayPal y cerrarla sin pagar dejaba una fila «Cancelado»
  * que parecía una venta perdida. Las abiertas (PENDING) sí se enseñan: son
  * compradores que se quedaron a medias y a los que conviene escribir.
+ *
+ * Salvo las de Hotmart (27-oct-2026): su orden se abre con solo entrar en la
+ * pestaña Hotmart del pago, porque su página va dentro y necesita la
+ * referencia, así que una abierta no dice que alguien intentó pagar. Cuando
+ * Hotmart avisa del pago pasa a PAID y sale como cualquier venta.
  */
 function seCobro(pago: PagoAdmin): boolean {
-  return pago.status !== 'CANCELLED';
+  if (pago.status === 'CANCELLED') return false;
+  if (pago.provider === 'HOTMART' && pago.status === 'PENDING') return false;
+  return true;
 }
 
 /**

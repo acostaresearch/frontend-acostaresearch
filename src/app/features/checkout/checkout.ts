@@ -868,9 +868,6 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
    */
   cerrarPorTiempo(): void {
     if (this.procesando() || this.enviandoComprobante()) return;
-    // Con Culqi o Hotmart el formulario de pago está DENTRO de la ventana:
-    // cerrarla dejaría al cliente a mitad del pago.
-    if (this.pagoIncrustado()) return;
     this.cambiarPlan();
     this.cerradaPorTiempo.set(true);
   }
@@ -1728,10 +1725,6 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
 
   readonly abriendoHotmart = signal(false);
   readonly errorHotmart = signal<string | null>(null);
-  /** La pestaña abierta lleva el pago de la pasarela dentro (Culqi o Hotmart): sin cuenta atrás. */
-  readonly pagoIncrustado = computed(
-    () => this.metodoPago() === 'culqi' || this.metodoPago() === 'hotmart',
-  );
 
   /** Los productos del carrito que Hotmart ya cobró (lo confirma nuestro servidor). */
   readonly hotmartAbiertos = signal<readonly string[]>([]);
