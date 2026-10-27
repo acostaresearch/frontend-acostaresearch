@@ -104,21 +104,30 @@ export class CulqiSdkService {
   }
 
   /**
-   * Abre el formulario de Culqi.
+   * Pinta el formulario de Culqi DENTRO de `contenedor` (modo embebido: sin
+   * ventana encima). Lo que hubiera dentro se borra antes, así que volver a
+   * llamarlo con otro importe lo sustituye.
    *
    * `alResultado` se llama cada vez que el formulario termina algo: con el
    * token cuando el cliente paga, o con el error si Culqi rechaza lo escrito
    * (el cliente puede corregirlo y volver a intentar en el mismo formulario,
-   * y entonces llega otra llamada). Culqi no avisa cuando se cierra sin pagar:
-   * por eso no hay promesa que esperar ni pantalla que bloquear.
+   * y entonces llega otra llamada).
+   *
+   * Probado el 27-oct-2026 con la llave de prueba: `modal: false` más
+   * `container` incrusta un iframe al 100 % del contenedor, que necesita
+   * alto propio. `rules` anula `defaultStyle`, por eso no se usa.
    */
-  abrir(
+  incrustar(
     publicKey: string,
+    contenedor: HTMLElement,
     datos: { amountCents: number; email: string | null },
     alResultado: (resultado: ResultadoCheckout) => void,
   ): void {
     const Ctor = this.ventana.CulqiCheckout;
     if (!Ctor) throw new Error('Culqi no está cargado.');
+    if (!contenedor.id) throw new Error('El contenedor de Culqi necesita id.');
+
+    contenedor.replaceChildren();
 
     const config = {
       settings: {
@@ -130,12 +139,19 @@ export class CulqiSdkService {
       options: {
         lang: 'auto',
         installments: false,
-        modal: true,
+        modal: false,
+        container: `#${contenedor.id}`,
         paymentMethods: { tarjeta: true, yape: true },
         paymentMethodsSort: ['tarjeta', 'yape'],
       },
       appearance: {
-        menuType: 'sidebar',
+        // Nuestra ventana ya enseña el título, el logo y el importe.
+        hiddenCulqiLogo: true,
+        hiddenBanner: true,
+        hiddenBannerContent: true,
+        hiddenToolBarAmount: true,
+        menuType: 'sliderTop',
+        // Culqi le añade el importe: queda «Pagar S/ 59.90».
         buttonCardPayText: 'Pagar',
         defaultStyle: {
           bannerColor: AZUL,
@@ -153,7 +169,6 @@ export class CulqiSdkService {
       if (culqi.token?.id) {
         const token = culqi.token.id;
         const email = culqi.token.email ?? null;
-        culqi.close();
         alResultado({ tipo: 'token', token, email });
         return;
       }

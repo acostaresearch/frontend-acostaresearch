@@ -151,6 +151,27 @@ export class InvitacionPlanes implements OnInit {
     this.saludar(codigo, true);
   }
 
+  /**
+   * Prueba un código como de compañero, sin enseñar error: lo usa el campo
+   * único «Escribe tu código» del pago cuando el código no es de descuento.
+   * True si valía (queda apuntado y se enseña el saludo).
+   */
+  probar(codigo: string): Promise<boolean> {
+    const limpio = codigo.trim().toUpperCase();
+    if (limpio.length < 5 || !this.auth.isAuthenticated()) return Promise.resolve(false);
+    return new Promise((resolver) => {
+      this.api.apuntarse(limpio).subscribe({
+        next: (r) => {
+          guardar(REFERIDO, limpio);
+          this.invitador.set({ nombre: r.nombre, dias: r.dias });
+          this.apuntado.set(true);
+          resolver(true);
+        },
+        error: () => resolver(false),
+      });
+    });
+  }
+
   private contarVisita(origen: string | null): void {
     let visitante = leer(VISITANTE);
     if (!visitante) {

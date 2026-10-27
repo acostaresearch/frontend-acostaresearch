@@ -9,10 +9,12 @@ import {
   effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -345,7 +347,7 @@ export class Checkout implements OnInit {
   /**
    * Hotmart: si todos los productos del carrito tienen su página de pago allí.
    * Hotmart cobra un producto por pago, así que con varios se pagan uno tras
-   * otro (ver `pagarConHotmart`).
+   * otro (ver `comprobarHotmart`).
    */
   readonly pasarelaHotmart = computed(
     () => this.pasarelas().find((p) => p.code === 'HOTMART') ?? null,
@@ -575,8 +577,13 @@ export class Checkout implements OnInit {
   );
 
   // ── Pago con Culqi (tarjeta o Yape) ───────────────────────────────────
+  /** Mientras se cargan los scripts de Culqi y se pinta su formulario. */
   readonly abriendoCulqi = signal(false);
   readonly errorCulqi = signal<string | null>(null);
+  /** El hueco de la pestaña donde va el formulario de Culqi. */
+  private readonly hostCulqi = viewChild<ElementRef<HTMLDivElement>>('culqiHost');
+  /** Qué hay pintado en ese hueco (el elemento y el importe), para no repintar de más. */
+  private culqiMontado: { elemento: HTMLElement; centimos: number } | null = null;
 
   /** El botón necesita las tres cosas: pasarela, client id y sesión. */
   readonly pagoEnLinea = computed(
@@ -630,6 +637,44 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
       }
     });
 
+    // El formulario de Culqi se pinta en cuanto aparece su pestaña, y se
+    // vuelve a pintar si cambia el importe (un código de descuento, otro
+    // producto). Mientras se cobra no se toca.
+    effect(() => {
+      const elemento = this.hostCulqi()?.nativeElement ?? null;
+      const centimos = this.totalCents();
+      if (!elemento) {
+        this.culqiMontado = null;
+        return;
+      }
+      if (this.procesando()) return;
+      const montado = this.culqiMontado;
+      if (montado && montado.elemento === elemento && montado.centimos === centimos) return;
+      void this.montarCulqi(elemento, centimos);
+    });
+
+    // La página de Hotmart se carga en cuanto se abre su pestaña: la orden
+    // del producto que toca, una sola vez por producto. Tras un error no se
+    // reintenta sola (el aviso lo explica y el botón «Reintentar» lo hace).
+    effect(() => {
+      if (this.metodoPago() !== 'hotmart' || !this.ofreceHotmart()) return;
+      const actual = this.hotmartActual();
+      if (!actual || this.enlacesHotmart()[actual.code]) return;
+      if (this.abriendoHotmart() || this.errorHotmart()) return;
+      void this.cargarHotmart(actual);
+    });
+
+    // Mientras se ve la página de Hotmart, cada 5 s se pregunta al servidor si
+    // ese producto ya se cobró, para pasar solo al siguiente.
+    effect((alLimpiar) => {
+      if (this.metodoPago() !== 'hotmart') return;
+      const actual = this.hotmartActual();
+      const pagina = this.hotmartPagina();
+      if (!actual || !pagina) return;
+      const vuelta = setInterval(() => void this.comprobarHotmart(actual, pagina.orderId), 5000);
+      alLimpiar(() => clearInterval(vuelta));
+    });
+
     // Si el medio abierto deja de ofrecerse —se detectó o se eligió otro país—,
     // se pasa al que toca: la billetera de ese país primero, que es por lo que
     // se pregunta el país, y si no la hay, el primero de los que son para todos.
@@ -663,6 +708,9 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     effect(() => this.fondo.fijar('carrito', this.cajonAbierto()));
     // Salir de /planes con el cajón abierto no puede dejar el resto del sitio congelado.
     this.destruir.onDestroy(() => this.fondo.fijar('carrito', false));
+
+    window.addEventListener('message', this.alMensajeDeHotmart);
+    this.destruir.onDestroy(() => window.removeEventListener('message', this.alMensajeDeHotmart));
 
   }
 
@@ -820,6 +868,9 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
    */
   cerrarPorTiempo(): void {
     if (this.procesando() || this.enviandoComprobante()) return;
+    // Con Culqi o Hotmart el formulario de pago está DENTRO de la ventana:
+    // cerrarla dejaría al cliente a mitad del pago.
+    if (this.pagoIncrustado()) return;
     this.cambiarPlan();
     this.cerradaPorTiempo.set(true);
   }
@@ -1186,6 +1237,41 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
     const codigo = this.codigoPromo.value.trim();
     if (!codigo || !this.faltaCodigo() || this.comprobandoPromo()) return;
     void this.aplicarCodigo(codigo, this.enPago());
+  }
+
+  /** La copia de «¿Te invitó alguien?» que va bajo el campo del pago. */
+  private readonly invitacion = viewChild<InvitacionPlanes>('invitacion');
+  /** Mientras se prueba como código de compañero, el error del descuento no se enseña. */
+  readonly probandoCompanero = signal(false);
+
+  /**
+   * El campo único «Escribe tu código»: primero como código de descuento (no
+   * cambia nada si no vale) y, si no lo es, como código de un compañero. Si
+   * no vale como ninguno, se enseña el error del descuento.
+   */
+  async aplicarCodigoEscrito(): Promise<void> {
+    const codigo = this.codigoPromo.value.trim();
+    if (!codigo || this.comprobandoPromo()) return;
+
+    this.probandoCompanero.set(true);
+    try {
+      if (this.faltaCodigo()) {
+        await this.aplicarCodigo(codigo, this.enPago());
+        if (!this.errorPromo()) return;
+      }
+      const invitacion = this.invitacion();
+      this.comprobandoPromo.set(true);
+      const valio = invitacion ? await invitacion.probar(codigo) : false;
+      this.comprobandoPromo.set(false);
+      if (valio) {
+        this.errorPromo.set(null);
+        this.codigoPromo.reset();
+      } else if (!this.errorPromo()) {
+        this.errorPromo.set('Ese código no es válido.');
+      }
+    } finally {
+      this.probandoCompanero.set(false);
+    }
   }
 
   /**
@@ -1642,70 +1728,142 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
 
   readonly abriendoHotmart = signal(false);
   readonly errorHotmart = signal<string | null>(null);
-  /** Los productos cuya pestaña de Hotmart ya se abrió, en orden. */
-  readonly hotmartAbiertos = signal<readonly string[]>([]);
-  readonly hotmartAbierto = computed(() => this.hotmartAbiertos().length > 0);
+  /** La pestaña abierta lleva el pago de la pasarela dentro (Culqi o Hotmart): sin cuenta atrás. */
+  readonly pagoIncrustado = computed(
+    () => this.metodoPago() === 'culqi' || this.metodoPago() === 'hotmart',
+  );
 
-  /** El que toca pagar ahora: el primero del carrito que aún no se abrió. */
+  /** Los productos del carrito que Hotmart ya cobró (lo confirma nuestro servidor). */
+  readonly hotmartAbiertos = signal<readonly string[]>([]);
+
+  /** El que toca pagar ahora: el primero del carrito que aún no se pagó. */
   readonly hotmartSiguiente = computed(
     () => this.enPago().find((plan) => !this.hotmartAbiertos().includes(plan.code)) ?? null,
   );
 
-  /** «Pago 2 de 3»: el número del que toca pagar. */
-  readonly hotmartPaso = computed(() => {
-    const siguiente = this.hotmartSiguiente();
-    return siguiente ? this.enPago().indexOf(siguiente) + 1 : this.enPago().length;
+  /** El que enseña la pestaña (null cuando ya se pagó todo). */
+  readonly hotmartActual = computed(() => this.hotmartSiguiente());
+
+  /** Ya se pagó todo lo de la ventana por Hotmart. */
+  readonly hotmartTodoPagado = computed(
+    () => this.enPago().length > 0 && this.hotmartSiguiente() === null,
+  );
+
+  /**
+   * La página de pago de Hotmart de cada producto, ya con su orden: se pinta
+   * DENTRO de la pestaña, en un iframe con `checkoutMode=2`.
+   *
+   * Es el modo que usa el botón oficial de Hotmart (`widget.min.js`, que lo
+   * mete en un fancybox con jQuery). Se hace aquí sin sus scripts, que además
+   * borran los enlaces a Hotmart de la página si su comprobación falla.
+   * pay.hotmart.com no prohíbe el iframe (probado el 27-oct-2026) y la CSP del
+   * Worker lo permite en `frame-src`. Se guarda por producto para no abrir una
+   * orden nueva cada vez que se vuelve a la pestaña.
+   */
+  readonly enlacesHotmart = signal<
+    Readonly<Record<string, { iframe: SafeResourceUrl; enlace: string; orderId: string }>>
+  >({});
+  private readonly sanitizer = inject(DomSanitizer);
+
+  /** La página de Hotmart del producto que se enseña, o null mientras se abre la orden. */
+  readonly hotmartPagina = computed(() => {
+    const actual = this.hotmartActual();
+    return actual ? (this.enlacesHotmart()[actual.code] ?? null) : null;
   });
 
-  /** El último que se abrió, para volver a abrirlo si cerró la pestaña. */
-  readonly hotmartUltimo = computed(() => {
-    const codigo = this.hotmartAbiertos().at(-1);
-    return this.enPago().find((plan) => plan.code === codigo) ?? null;
-  });
+  /**
+   * El alto de la página de Hotmart, en px, o null hasta su primer aviso.
+   * Hotmart lo manda por `postMessage` desde pay.hotmart.com
+   * (`{"action":"elements_document_height_update","data":"2046px"}`, visto el
+   * 27-oct-2026) cada vez que su página cambia. Se le suma un margen porque su
+   * cifra se queda corta por la barra fija de «Comprar ahora».
+   */
+  readonly altoHotmart = signal<number | null>(null);
+
+  private alMensajeDeHotmart = (evento: MessageEvent): void => {
+    if (evento.origin !== 'https://pay.hotmart.com') return;
+    try {
+      const mensaje = typeof evento.data === 'string' ? JSON.parse(evento.data) : evento.data;
+      if (mensaje?.action !== 'elements_document_height_update') return;
+      const alto = Number.parseInt(String(mensaje.data), 10);
+      if (Number.isFinite(alto) && alto > 200 && alto < 20000) this.altoHotmart.set(alto + 90);
+    } catch {
+      // Otro mensaje de Hotmart que no es JSON: no es el del alto.
+    }
+  };
+
+  /** El enlace de pago con el modo ventana de Hotmart, o null si no es de Hotmart. */
+  private urlHotmartEnVentana(enlace: string): string | null {
+    try {
+      const url = new URL(enlace);
+      if (url.protocol !== 'https:' || url.hostname !== 'pay.hotmart.com') return null;
+      url.searchParams.set('checkoutMode', '2');
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
 
   /** Lo que cobra Hotmart por un producto: su precio de lista, sin nuestros códigos. */
   precioHotmart(plan: Plan): string {
     return soles(plan.priceCents);
   }
 
+  /** Tras un error, vuelve a pedir la orden (el `effect` la pide al quitar el error). */
+  reintentarHotmart(): void {
+    this.errorHotmart.set(null);
+  }
+
   /**
-   * Abre la página de pago de Hotmart en otra pestaña.
-   *
-   * La orden se abre primero en nuestro servidor, que pone su referencia en el
-   * enlace: así el aviso de Hotmart sabe de quién es la compra. Se manda solo
-   * el plan, sin código: Hotmart cobra su precio y no admite los nuestros.
-   *
-   * La pestaña se abre en blanco ANTES de esperar al servidor: abierta después
-   * del `await` ya no cuenta como respuesta al clic y el navegador la bloquea.
-   * Si aun así la bloquea, se va a Hotmart en esta misma pestaña.
-   *
-   * Con varios productos se paga uno cada vez, en el orden del carrito: cada
-   * clic abre el siguiente. Sin `plan`, el que toca; con él, se reabre ese.
+   * ¿Ya cobró Hotmart el producto que se enseña? Lo pregunta a NUESTRO
+   * servidor (la lista de pagos del cliente), que lo sabe por el aviso de
+   * Hotmart. Si está pagado, se pasa solo al siguiente; con el último, la
+   * pestaña enseña que todo quedó pagado.
    */
-  async pagarConHotmart(plan: Plan | null = this.hotmartSiguiente()): Promise<void> {
-    if (!plan || !this.ofreceHotmart() || this.abriendoHotmart()) return;
+  private async comprobarHotmart(plan: Plan, orderId: string): Promise<void> {
+    try {
+      const pagos = await firstValueFrom(this.payments.mine());
+      const pago = pagos.find((p) => p.provider === 'HOTMART' && p.providerOrderId === orderId);
+      if (pago?.status !== 'PAID') return;
+      this.hotmartAbiertos.update((pagados) => (pagados.includes(plan.code) ? pagados : [...pagados, plan.code]));
+      if (this.hotmartTodoPagado()) {
+        this.cierraEn.set(null);
+        this.sacarDelCarrito(this.enPago().map((p) => p.code));
+      }
+    } catch {
+      // Sin red o servidor ocupado: se vuelve a preguntar en la siguiente vuelta.
+    }
+  }
+
+  /**
+   * Abre la orden de un producto en nuestro servidor, que pone su referencia
+   * en el enlace (`sck`): así el aviso de Hotmart sabe de quién es la compra.
+   * Se manda solo el plan, sin código: Hotmart cobra su precio y no admite
+   * los nuestros. La llama el `effect` de la pestaña al abrirla.
+   */
+  private async cargarHotmart(plan: Plan): Promise<void> {
+    if (this.abriendoHotmart()) return;
 
     this.errorHotmart.set(null);
     this.abriendoHotmart.set(true);
-    const pestana = window.open('', '_blank');
 
     try {
       const orden = await firstValueFrom(
         this.payments.createOrder([{ planCode: plan.code }], 'HOTMART'),
       );
       if (!orden.approveUrl) throw new Error('Sin enlace de pago');
+      const enVentana = this.urlHotmartEnVentana(orden.approveUrl);
+      if (!enVentana) throw new Error('Enlace de pago inesperado');
 
-      if (pestana) {
-        pestana.opener = null;
-        pestana.location.href = orden.approveUrl;
-        this.hotmartAbiertos.update((abiertos) =>
-          abiertos.includes(plan.code) ? abiertos : [...abiertos, plan.code],
-        );
-      } else {
-        window.location.href = orden.approveUrl;
-      }
+      this.enlacesHotmart.update((enlaces) => ({
+        ...enlaces,
+        [plan.code]: {
+          iframe: this.sanitizer.bypassSecurityTrustResourceUrl(enVentana),
+          enlace: orden.approveUrl!,
+          orderId: orden.orderId,
+        },
+      }));
     } catch (error: unknown) {
-      pestana?.close();
       this.errorHotmart.set(
         error instanceof HttpErrorResponse
           ? toApiError(error).message
@@ -1717,61 +1875,82 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
   }
 
   /**
-   * Abre el formulario de Culqi.
-   *
-   * La orden se abre en NUESTRO servidor primero: ahí se fija el importe, con
-   * el descuento si lo hay, y ese es el que se cobra. El formulario solo
-   * enseña la cifra; el navegador nunca decide cuánto se paga.
+   * Pinta el formulario de Culqi dentro de la pestaña, con el importe que
+   * enseña la ventana. Abrir la pestaña no crea nada en el servidor: la orden
+   * se abre al pagar (`alResultadoCulqi`).
    */
-  async pagarConCulqi(): Promise<void> {
-    const lineas = this.lineas();
-    const clave = this.pasarelaCulqi()?.publicKey;
-    if (lineas.length === 0 || !clave || this.abriendoCulqi() || this.procesando()) return;
+  private async montarCulqi(elemento: HTMLElement, centimos: number): Promise<void> {
+    const clave = untracked(() => this.pasarelaCulqi()?.publicKey);
+    if (!clave || centimos <= 0) return;
 
-    this.error.set(null);
+    this.culqiMontado = { elemento, centimos };
     this.errorCulqi.set(null);
     this.abriendoCulqi.set(true);
 
     try {
       await this.culqi.preparar();
-      const orden = await firstValueFrom(
-        this.payments.createOrder(lineas, 'CULQI', this.codigoDelTotal()),
-      );
-      this.culqi.abrir(
+      // Otro repintado (u otra pestaña) pudo adelantarse mientras cargaba.
+      if (this.culqiMontado?.elemento !== elemento || this.culqiMontado.centimos !== centimos) return;
+      this.culqi.incrustar(
         clave,
-        { amountCents: orden.amountCents, email: this.auth.user()?.email ?? null },
-        (resultado) => void this.alResultadoCulqi(resultado, clave, orden),
+        elemento,
+        { amountCents: centimos, email: untracked(() => this.auth.user()?.email) ?? null },
+        (resultado) => void this.alResultadoCulqi(resultado, clave, centimos),
       );
-    } catch (error: unknown) {
+    } catch {
+      this.culqiMontado = null;
       this.errorCulqi.set(
-        error instanceof HttpErrorResponse
-          ? toApiError(error).message
-          : 'No pudimos abrir el pago con tarjeta o Yape. Inténtalo de nuevo o paga con Yape y tu captura.',
+        'No pudimos cargar el pago con tarjeta o Yape. Recarga la página o paga con Yape y tu captura.',
       );
     } finally {
       this.abriendoCulqi.set(false);
     }
   }
 
+  /** Vuelve a pintar el formulario: tras un cobro fallido, el token ya se gastó. */
+  private repintarCulqi(): void {
+    const elemento = this.hostCulqi()?.nativeElement;
+    if (elemento) void this.montarCulqi(elemento, this.totalCents());
+  }
+
   /**
-   * El formulario devolvió el token: se cobra en el servidor. Si el banco pide
-   * su verificación (3-D Secure), se pasa y se vuelve a confirmar con los
-   * mismos datos más los del banco, como pide Culqi.
+   * El formulario devolvió el token: se abre la orden y se cobra en el
+   * servidor. Si el banco pide su verificación (3-D Secure), se pasa y se
+   * vuelve a confirmar con los mismos datos más los del banco, como pide
+   * Culqi.
+   *
+   * La orden se abre en NUESTRO servidor: ahí se fija el importe, con el
+   * descuento si lo hay, y ese es el que se cobra. Si no coincide con el que
+   * enseñó el formulario (el token de Yape va atado a esa cifra), no se cobra
+   * y se repinta con la cifra buena.
    */
   private async alResultadoCulqi(
     resultado: ResultadoCheckout,
     clave: string,
-    orden: PaymentOrder,
+    centimos: number,
   ): Promise<void> {
     if (resultado.tipo === 'error') {
       this.errorCulqi.set(resultado.mensaje);
       return;
     }
+    if (this.procesando()) return;
 
+    this.error.set(null);
     this.procesando.set(true);
     this.errorCulqi.set(null);
 
+    let cobrado = false;
     try {
+      const orden = await firstValueFrom(
+        this.payments.createOrder(this.lineas(), 'CULQI', this.codigoDelTotal()),
+      );
+      if (orden.amountCents !== centimos) {
+        this.errorCulqi.set(
+          `El total cambió a ${soles(orden.amountCents)}. No se te cobró nada: recarga la página y vuelve a intentarlo.`,
+        );
+        return;
+      }
+
       const huella = await this.culqi.huella(clave);
       const correo = resultado.email && resultado.email.length <= 50 ? resultado.email : null;
       const datos: DatosDelCobro = {
@@ -1801,11 +1980,14 @@ plan => this.ahorro(plan), () => this.pasarelaCulqi(), () => this.pasarelaHotmar
         );
       }
 
+      cobrado = true;
       this.mostrarCompra(cobro, orden);
     } catch (error: unknown) {
       this.errorCulqi.set(toApiError(error).message);
     } finally {
       this.procesando.set(false);
+      // El token no sirve para otro intento: formulario limpio.
+      if (!cobrado) this.repintarCulqi();
     }
   }
 

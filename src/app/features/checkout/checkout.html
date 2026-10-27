@@ -291,7 +291,9 @@
     <!-- Los avisos flotan arriba: se ven aunque la ventana de pago tape la página. -->
     <app-aviso-flotante [(error)]="error" />
     <app-aviso-flotante [(error)]="errorCanje" />
-    <app-aviso-flotante [(error)]="errorPromo" />
+    @if (!probandoCompanero()) {
+      <app-aviso-flotante [(error)]="errorPromo" />
+    }
     <app-aviso-flotante [(error)]="errorComprobante" />
     <app-aviso-flotante [(error)]="errorCulqi" />
     <app-aviso-flotante [(error)]="errorHotmart" />
@@ -735,19 +737,22 @@
          despistado con la captura a medio subir la perdía. -->
     @if (enPago().length > 0) {
       <div class="pago-fondo">
-        <div class="pago-ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-pago">
+        <div
+          class="pago-ventana"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-pago"
+        >
           <div class="pago-barra">
             <div>
-              <h2 id="titulo-pago">
-                {{
-                  metodoPago() === 'culqi'
-                    ? 'Paga con tarjeta o Yape'
-                    : metodoPago() === 'hotmart'
-                      ? 'Paga con Hotmart'
-                      : 'Paga con Yape o Plin'
-                }}
+              <!-- Compacta desde el 27-oct-2026: el total va en el título. -->
+              <h2 id="titulo-pago" class="pago-titulo">
+                Pagar <strong>{{ total() }}</strong>
+                @if (totalTachado(); as antes) {
+                  <span class="tachado">{{ antes }}</span>
+                }
               </h2>
-              @if (cierraEn(); as limite) {
+              @if (!pagoIncrustado() && cierraEn(); as limite) {
                 <p class="pago-tiempo" role="status">
                   <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" />
@@ -769,34 +774,35 @@
           <div class="pago-cuerpo">
             <!-- ── Cuánto se paga ─────────────────────────────────────────── -->
             <div class="pago-importe">
-              <p class="pago-importe-rotulo">
-                @if (seleccionado(); as plan) {
-                  Total a pagar · {{ plan.name }}
-                } @else {
-                  Total a pagar · {{ enPago().length }} productos
-                }
-                ·
-                <button type="button" class="pago-enlace" (click)="volverAlCarrito()">
-                  Cambiar
-                </button>
-              </p>
-              <div class="pago-importe-fila">
-                <p class="pago-total grande">
-                  <strong>{{ total() }}</strong>
-                  @if (totalTachado(); as antes) {
-                    <span class="tachado">{{ antes }}</span>
+              <!-- Una línea: qué se paga, «Cambiar», el código y el país. -->
+              <div class="pago-resumen">
+                <p class="pago-importe-rotulo">
+                  @if (seleccionado(); as plan) {
+                    {{ plan.name }}
+                  } @else {
+                    {{ enPago().length }} productos
+                  }
+                  ·
+                  <button type="button" class="pago-enlace" (click)="volverAlCarrito()">
+                    Cambiar
+                  </button>
+                  <!-- Con Hotmart los cupones se escriben en su página de pago. -->
+                  @if (auth.isAuthenticated() && !comprobanteEnviado() && metodoPago() !== 'hotmart') {
+                    ·
+                    <button
+                      type="button"
+                      class="pago-enlace"
+                      [attr.aria-expanded]="verCodigos()"
+                      (click)="verCodigos.set(!verCodigos())"
+                    >
+                      ¿Tienes un código?
+                    </button>
                   }
                 </p>
-                <!-- Con Hotmart los cupones se escriben en su página de pago. -->
-                @if (auth.isAuthenticated() && !comprobanteEnviado() && metodoPago() !== 'hotmart') {
-                  <button
-                    type="button"
-                    class="pago-enlace"
-                    [attr.aria-expanded]="verCodigos()"
-                    (click)="verCodigos.set(!verCodigos())"
-                  >
-                    ¿Tienes un código?
-                  </button>
+                <!-- Desde qué país se paga, con su bandera: viene detectado y se
+                     puede cambiar. Los medios de debajo salen según él. -->
+                @if (auth.isAuthenticated()) {
+                  <app-selector-de-pais [(codigo)]="paisDePago" [compacto]="true" />
                 }
               </div>
 
@@ -855,34 +861,33 @@
                 </p>
               }
 
-              <!-- Plegados tras «¿Tienes un código?»: el de descuento y el de
-                   un compañero, que antes estaba en la cabecera de la página. -->
+              <!-- Plegado tras «¿Tienes un código?»: UN solo campo (27-oct-2026).
+                   Se prueba como código de descuento y, si no lo es, como código
+                   de un compañero (`aplicarCodigoEscrito`). Debajo, el saludo de
+                   quien lo invitó, si lo hay. -->
               @if (verCodigos() && auth.isAuthenticated() && metodoPago() !== 'hotmart') {
                 <div class="pago-codigos">
-                  @if (faltaCodigo()) {
-                    <div class="promo-fila">
-                      <input
-                        id="promo"
-                        type="text"
-                        [formControl]="codigoPromo"
-                        [placeholder]="
-                          esCarrito() ? 'Código de descuento (al total)' : 'Código de descuento'
-                        "
-                        aria-label="Código de descuento"
-                        autocomplete="off"
-                        (keyup.enter)="aplicarDescuento()"
-                      />
-                      <button
-                        type="button"
-                        class="boton secundario"
-                        [disabled]="comprobandoPromo()"
-                        (click)="aplicarDescuento()"
-                      >
-                        {{ comprobandoPromo() ? '…' : 'Aplicar' }}
-                      </button>
-                    </div>
-                  }
-                  <app-invitacion-planes [contar]="false" />
+                  <div class="promo-fila">
+                    <input
+                      id="promo"
+                      type="text"
+                      [formControl]="codigoPromo"
+                      placeholder="Escribe tu código"
+                      aria-label="Código de descuento o de un compañero"
+                      autocomplete="off"
+                      maxlength="40"
+                      (keyup.enter)="aplicarCodigoEscrito()"
+                    />
+                    <button
+                      type="button"
+                      class="boton secundario"
+                      [disabled]="comprobandoPromo()"
+                      (click)="aplicarCodigoEscrito()"
+                    >
+                      {{ comprobandoPromo() ? '…' : 'Aplicar' }}
+                    </button>
+                  </div>
+                  <app-invitacion-planes #invitacion [contar]="false" [conCampo]="false" />
                 </div>
               }
             </div>
@@ -898,9 +903,6 @@
               <!-- Con Culqi o Western Union activos, pestañas; sin ellos, directo
                    al QR. PayPal está oculto (5-oct) por las fallas de cobro: su
                    pestaña y su botón (`#paypalHost`) volverían aquí. -->
-              <!-- Desde qué país se paga, con su bandera: viene detectado y se
-                   puede cambiar. Los medios de debajo salen según él. -->
-              <app-selector-de-pais [(codigo)]="paisDePago" />
               @if (variosMedios()) {
                 <div class="pago-medios" role="tablist">
                   @if (ofreceYape()) {
@@ -922,7 +924,7 @@
                       [class.activa]="metodoPago() === 'culqi'"
                       (click)="metodoPago.set('culqi')"
                     >
-                      Tarjeta o Yape al instante
+                      Tarjeta o Yape
                     </button>
                   }
                   @if (ofreceHotmart()) {
@@ -963,118 +965,68 @@
               }
 
               <!-- ── Pago con Culqi ─────────────────────────────────────────
-                   El formulario de Culqi se abre encima: la tarjeta o el código
-                   de Yape se escriben ahí y nunca pasan por esta web. -->
+                   El formulario de Culqi se pinta aquí dentro (iframe de Culqi):
+                   la tarjeta o el código de Yape se escriben ahí y nunca pasan
+                   por esta web. Lo monta el `effect` de `hostCulqi`. -->
               @if (metodoPago() === 'culqi') {
-                <section class="pasarela">
+                <section class="pasarela culqi">
                   <p class="pasarela-nota">
                     Tarjeta de débito o crédito, o Yape con el código de aprobación de tu app. El
                     acceso se activa en cuanto se confirma el pago.
                   </p>
-                  <button
-                    type="button"
-                    class="boton oro grande bloque"
-                    [disabled]="abriendoCulqi() || procesando()"
-                    (click)="pagarConCulqi()"
-                  >
+                  <div class="culqi-hueco" [class.ocupado]="procesando()">
+                    <div id="culqi-incrustado" #culqiHost></div>
                     @if (abriendoCulqi()) {
-                      Abriendo el pago…
+                      <p class="culqi-estado">Cargando el formulario de pago…</p>
                     } @else if (procesando()) {
-                      Confirmando el pago…
-                    } @else {
-                      Pagar {{ total() }}
+                      <p class="culqi-estado">Confirmando el pago…</p>
                     }
-                  </button>
+                  </div>
                   <p class="pasarela-pie">Procesado por Culqi · Pago seguro</p>
                 </section>
               }
 
               <!-- ── Pago con Hotmart ───────────────────────────────────────
-                   Se paga en la página de Hotmart; el acceso lo activa su aviso
-                   a nuestro servidor, no esta página. -->
+                   La página de pago de Hotmart se pinta aquí dentro (iframe con
+                   `checkoutMode=2`); el acceso lo activa su aviso a nuestro
+                   servidor, no esta página. La orden la abre el `effect` de la
+                   pestaña. Con varios productos, uno por pago. -->
               @if (metodoPago() === 'hotmart' && ofreceHotmart()) {
-                <section class="pasarela hotmart">
-                  <p class="hotmart-cabecera">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <rect x="5" y="11" width="14" height="10" rx="2" />
-                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                    </svg>
-                    Página segura de Hotmart
-                  </p>
-                  <ul class="hotmart-medios">
-                    <li>
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="3" y="5" width="18" height="14" rx="2" />
-                        <path d="M3 10h18M7 15h3" />
-                      </svg>
-                      Tarjeta
-                    </li>
-                    <li>
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V6" />
-                        <path d="M17 13.5h.01" />
-                      </svg>
-                      PayPal
-                    </li>
-                    <li>
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-                      </svg>
-                      Medio de tu país
-                    </li>
-                  </ul>
-                  <p class="hotmart-check">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-                    Tu acceso se activa solo en esta cuenta en cuanto Hotmart aprueba el pago.
-                  </p>
-                  @if (hotmartConCodigo()) {
-                    <p class="pasarela-nota">
-                      Los códigos de esta web no se aplican en Hotmart. Si tienes un cupón de
-                      Hotmart, escríbelo en su página de pago.
-                    </p>
-                  }
-                  @if (enPago().length > 1 && !hotmartAbierto()) {
-                    <p class="pasarela-nota">
-                      Hotmart cobra un producto por pago: harás {{ enPago().length }} pagos, uno
-                      tras otro. El descuento por llevar varios solo se aplica con Yape o Plin.
-                    </p>
-                  }
-                  @if (hotmartAbierto()) {
-                    <p class="pasarela-nota" role="status">
-                      @if (hotmartSiguiente(); as siguiente) {
-                        Te abrimos Hotmart en otra pestaña. Cuando termines ese pago, vuelve aquí
-                        para pagar el siguiente: <strong>{{ siguiente.name }}</strong>.
+                <section class="pasarela hotmart-incrustado">
+                  @if (hotmartTodoPagado()) {
+                    <div class="hotmart-listo" role="status">
+                      <p class="hotmart-listo-titulo">¡Pago aprobado!</p>
+                      <p>
+                        Tu acceso ya está activo en esta cuenta y te llegó un correo con los detalles.
+                      </p>
+                      <a class="boton" routerLink="/perfil">Ir a mi perfil</a>
+                    </div>
+                  } @else {
+                    <div
+                      class="hotmart-hueco"
+                      [class.a-su-alto]="altoHotmart() !== null"
+                      [style.height.px]="altoHotmart()"
+                    >
+                      @if (hotmartPagina(); as pagina) {
+                        <iframe [src]="pagina.iframe" title="Pago con Hotmart" allow="payment"></iframe>
+                      } @else if (errorHotmart()) {
+                        <div class="hotmart-estado">
+                          <p>No pudimos abrir el pago con Hotmart.</p>
+                          <button type="button" class="boton secundario" (click)="reintentarHotmart()">
+                            Reintentar
+                          </button>
+                        </div>
                       } @else {
-                        Te abrimos Hotmart en otra pestaña. Cuando termines de pagar, tu acceso se
-                        activa solo en esta cuenta y te llega un correo.
+                        <p class="hotmart-estado">Cargando el pago de Hotmart…</p>
                       }
-                    </p>
-                  }
-                  @if (enPago().length > 1 && hotmartSiguiente(); as siguiente) {
-                    <p class="hotmart-paso">
-                      Pago {{ hotmartPaso() }} de {{ enPago().length }} ·
-                      <strong>{{ siguiente.name }}</strong>
-                    </p>
-                  }
-                  <button
-                    type="button"
-                    class="boton oro grande bloque hotmart-boton"
-                    [disabled]="abriendoHotmart()"
-                    (click)="hotmartSiguiente() ? pagarConHotmart() : pagarConHotmart(hotmartUltimo())"
-                  >
-                    @if (abriendoHotmart()) {
-                      Abriendo Hotmart…
-                    } @else {
-                      @if (hotmartSiguiente(); as siguiente) {
-                        {{ 'Pagar ' + precioHotmart(siguiente) + ' con' }}
-                      } @else {
-                        Volver a abrir
-                      }
-                      <span class="hotmart-logo"><img src="/iconos/hotmart.png" alt="Hotmart" /></span>
+                    </div>
+                    @if (hotmartPagina(); as pagina) {
+                      <p class="pasarela-pie">
+                        ¿No carga?
+                        <a [href]="pagina.enlace" target="_blank" rel="noopener">Ábrelo en otra pestaña</a>
+                      </p>
                     }
-                  </button>
-                  <p class="pasarela-pie">Procesado por Hotmart · Pago seguro</p>
+                  }
                 </section>
               }
 

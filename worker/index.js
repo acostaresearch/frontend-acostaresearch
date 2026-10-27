@@ -236,7 +236,8 @@ const CSP = [
   // Culqi: su API y la verificación del banco (3-D Secure), que hace Cardinal
   // Commerce. Los dominios salen de los propios scripts de Culqi (21-sep-2026).
   "connect-src 'self' https://accounts.google.com https://cloudflareinsights.com https://*.paypal.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
-  "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com",
+  // pay.hotmart.com: su página de pago en nuestra ventana (`checkoutMode=2`, 27-oct-2026).
+  "frame-src https://accounts.google.com https://*.paypal.com https://www.youtube-nocookie.com https://*.culqi.com https://*.cardinalcommerce.com https://*.cardinaltrusted.com https://pay.hotmart.com",
   // El visor de VOSviewer calcula la disposición y los clústeres en un Worker
   // que crea desde un `blob:`. Sin esto, con la CSP activa el mapa no se pinta.
   "worker-src 'self' blob:",

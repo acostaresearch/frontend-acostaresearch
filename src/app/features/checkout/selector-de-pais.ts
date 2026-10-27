@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, model, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, input, model, signal } from '@angular/core';
 
 import { PAISES_DE_PAGO, PaisDePago } from './pais-de-pago';
 
@@ -17,7 +17,7 @@ const OPCIONES = PAISES_DE_PAGO;
 @Component({
   selector: 'app-selector-de-pais',
   template: `
-    <div class="selector">
+    <div class="selector" [class.compacto]="compacto()">
       <span class="rotulo" id="rotulo-pais">Pagas desde</span>
       <button
         type="button"
@@ -83,6 +83,30 @@ const OPCIONES = PAISES_DE_PAGO;
       font-size: 13px;
       font-weight: 600;
       color: var(--color-texto-suave);
+    }
+
+    /* Compacto: solo el botón, al lado de otro texto. El rótulo sigue para
+       los lectores de pantalla. */
+    .selector.compacto {
+      margin-bottom: 0;
+    }
+
+    .selector.compacto .rotulo {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    .selector.compacto .elegido {
+      padding: 5px 8px;
+      font-size: 13px;
+    }
+
+    .selector.compacto .lista {
+      width: 240px;
     }
 
     .elegido {
@@ -190,6 +214,8 @@ export class SelectorDePais {
   readonly opciones = OPCIONES;
   /** El país elegido, por su código. Vacío = «Otro país»; `null` = sin elegir. */
   readonly codigo = model<PaisDePago>(null);
+  /** Sin el rótulo visible ni margen: para ir en una línea con otro texto. */
+  readonly compacto = input(false);
   readonly abierto = signal(false);
 
   readonly elegido = computed(() => OPCIONES.find((pais) => pais.codigo === this.codigo()) ?? null);
