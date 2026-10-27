@@ -390,6 +390,28 @@
   border-radius: 9px;
 }
 
+/* El carrito de móvil: cuadrado como la luna y la brújula, con el número
+   colgando de la esquina. En escritorio no se ve (ya está el de las acciones). */
+.carrito-movil {
+  position: relative;
+  display: none;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  color: var(--color-primario);
+  text-decoration: none;
+  background: none;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-sm);
+}
+
+.carrito-movil .carrito-numero {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+}
+
 /* ── Menú de móvil ──────────────────────────────────────────────────────────
  *
  * En escritorio este envoltorio NO existe: display:contents hace que la
@@ -597,5 +619,15 @@
   .carrito {
     justify-content: center;
     height: 44px;
+  }
+
+  /* En móvil el carrito sale fuera del menú, junto a la luna (27-oct): el de
+     dentro sobra. */
+  .carrito-movil {
+    display: grid;
+  }
+
+  .acciones .carrito {
+    display: none;
   }
 }
