@@ -131,7 +131,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     titulo: 'Por dónde va tu tesis',
     texto:
       'Un tramo por fase. Lo va anotando Claude mientras trabajan: no tienes que apuntar nada ni ' +
-      'volver a explicarle tu tema en cada conversación.',
+      'volver a explicarle tu tema en cada conversación. Si una fase ya la tienes lista (por ejemplo, ' +
+      'la subiste en tu avance), pulsa «Dar por terminada» debajo de su nombre.',
   },
   {
     ruta: '/perfil',

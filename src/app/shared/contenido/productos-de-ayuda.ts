@@ -102,9 +102,16 @@ export const SIN_PRODUCTO: ProductoDeAyuda = { codigo: 'producto', nombre: 'Tu c
  * las de apartado que traigan algo. Sin nada asignado a un producto, lo de uso
  * va junto en una sola, para que no se quede sin pestaña.
  */
-export function pestanasDelCurso(elementos: readonly EnApartado[]): readonly ProductoDeAyuda[] {
+export function pestanasDelCurso(
+  elementos: readonly EnApartado[],
+  suyos: readonly string[] | null = null,
+): readonly ProductoDeAyuda[] {
   const deUso = elementos.filter((e) => e.apartado === 'producto');
-  const lista: ProductoDeAyuda[] = [...pestanasDeProducto(deUso)];
+  // Solo las de lo que compró (28-oct): un video marcado para Tesis y TSP le
+  // abría la pestaña de TSP a quien solo tiene Tesis. Sin filtro (null), todas.
+  const lista: ProductoDeAyuda[] = pestanasDeProducto(deUso).filter(
+    (p) => suyos === null || suyos.includes(p.codigo),
+  );
   if (lista.length === 0 && deUso.length > 0) lista.push(SIN_PRODUCTO);
   for (const apartado of APARTADOS_DEL_CURSO) {
     if (elementos.some((e) => e.apartado === apartado.codigo)) lista.push(apartado);

@@ -308,6 +308,16 @@ export class ProyectoService {
       .pipe(map(() => undefined));
   }
 
+  /** Da una fase por terminada (`true`) o la reabre (`false`). */
+  marcarFase(productCode: string, capitulo: string, terminada: boolean): Observable<void> {
+    return this.http
+      .patch<ApiResponse<null>>(
+        `${this.base}/${encodeURIComponent(productCode)}/fases/${encodeURIComponent(capitulo)}/estado`,
+        { terminada },
+      )
+      .pipe(map(() => undefined));
+  }
+
   /** Cambia quién firma la portada. Vacío devuelve al nombre de la cuenta. */
   cambiarAutor(productCode: string, autor: string): Observable<string> {
     return this.http

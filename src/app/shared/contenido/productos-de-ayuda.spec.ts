@@ -70,6 +70,19 @@ describe('pestañas del video curso: producto, instalación y herramientas (21-o
     expect(pestanasDelCurso(suyo).map((p) => p.codigo)).toEqual(['informe', 'instalacion']);
   });
 
+  it('un video de Tesis y TSP no le abre la pestaña de TSP a quien solo compró Tesis (28-oct)', () => {
+    const compartido = [
+      ...CURSO,
+      { titulo: 'Humanizar párrafos', apartado: 'producto', productos: ['tesis', 'tsp'] },
+    ];
+    const suyo = loQueLeToca(compartido, ['tesis']);
+    expect(pestanasDelCurso(suyo, ['tesis']).map((p) => p.codigo)).toEqual([
+      'tesis', 'instalacion', 'herramientas',
+    ]);
+    // Sin filtro (administrador) siguen todas.
+    expect(pestanasDelCurso(compartido).map((p) => p.codigo)).toContain('tsp');
+  });
+
   it('sin nada asignado a un producto, lo de uso va junto en «Tu curso»', () => {
     const sinAsignar = [{ apartado: 'producto', productos: [] }, { apartado: 'instalacion', productos: [] }];
     expect(pestanasDelCurso(sinAsignar).map((p) => p.codigo)).toEqual(['producto', 'instalacion']);

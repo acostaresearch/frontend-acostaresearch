@@ -440,7 +440,11 @@ export class MiTesis implements OnInit {
 
   /** Lo que se le escribe a Claude para seguir por donde lo dejó. */
   frase(p: Proyecto): string {
-    return p.siguiente ? `Sigamos con «${p.siguiente.displayName}», con el método.` : '';
+    // Nombra la herramienta del conector: «con el método» solo era una pista y
+    // a veces la IA contestaba por su cuenta sin usarlo (27-oct).
+    return p.siguiente
+      ? `Usa el conector de Acosta Research: llama a «continuar» y sigamos con «${p.siguiente.displayName}».`
+      : '';
   }
 
   copiarFrase(p: Proyecto): void {
@@ -454,7 +458,7 @@ export class MiTesis implements OnInit {
 
   /** Lo que se le escribe a Claude para usar una herramienta de apoyo. */
   fraseDeApoyo(h: EtapaDelProyecto): string {
-    return `Quiero usar «${h.displayName}», con el método.`;
+    return `Usa el conector de Acosta Research: abre «${h.displayName}» con «redactar».`;
   }
 
   copiarFraseDeApoyo(h: EtapaDelProyecto): void {
@@ -911,6 +915,34 @@ export class MiTesis implements OnInit {
   @HostListener('document:visibilitychange')
   alVolver(): void {
     if (document.visibilityState === 'visible' && !this.cargando()) this.recargar();
+  }
+
+  /**
+   * «Dar por terminada» o «Reabrir» una fase (27-oct). Antes solo la cerraba
+   * Claude si el tesista se lo decía en el chat, y quien subía su avance veía
+   * «0 de 9 terminadas» sin saber por qué. La clave de la fase en curso de
+   * guardar, para desactivar solo su botón.
+   */
+  readonly marcandoFase = signal<string | null>(null);
+
+  marcarFase(p: Proyecto, e: EtapaDelProyecto): void {
+    if (this.marcandoFase()) return;
+    this.marcandoFase.set(e.code);
+    this.errorRetomar.set(null);
+    this.proyectos.marcarFase(p.productCode, e.code, e.estado !== 'LISTO').subscribe({
+      next: () =>
+        this.proyectos.mios().subscribe({
+          next: (datos) => {
+            this.lista.set(datos);
+            this.marcandoFase.set(null);
+          },
+          error: () => this.marcandoFase.set(null),
+        }),
+      error: (err: unknown) => {
+        this.marcandoFase.set(null);
+        this.errorRetomar.set(toApiError(err).message);
+      },
+    });
   }
 
   /** Vuelve a pedir los proyectos, para que la pantalla diga lo que hay. */

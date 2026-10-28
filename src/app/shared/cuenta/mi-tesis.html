@@ -189,8 +189,10 @@
                   </a>
                 </div>
                 <p class="retomar-nota">
-                  El conector le cuenta solo por dónde vas. Si le hablas sin mencionar el método, Claude
-                  contesta por su cuenta y no lo usa.
+                  Antes de pegarla, activa el conector en ese chat (en Claude, en el menú de
+                  herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no muestra que usó el
+                  conector, actívalo y pega la frase otra vez. Al cerrar cada fase, Claude te ofrece
+                  seguir con la siguiente en el mismo chat.
                 </p>
               </div>
             }
@@ -237,8 +239,10 @@
                   </ul>
                 }
                 <p class="retomar-nota">
-                  El conector le cuenta solo por dónde vas. Si le hablas sin mencionar el método, Claude
-                  contesta por su cuenta y no lo usa.
+                  Antes de pegarla, activa el conector en ese chat (en Claude, en el menú de
+                  herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no muestra que usó el
+                  conector, actívalo y pega la frase otra vez. Al cerrar cada fase, Claude te ofrece
+                  seguir con la siguiente en el mismo chat.
                 </p>
               </div>
             }
@@ -469,6 +473,18 @@
                       <span class="estado">{{ etiqueta(e.estado) }}@if (e.palabras > 0) { · {{ e.palabras }} palabras }</span>
                     }
                   </div>
+                }
+                <!-- Cerrarla o reabrirla desde aquí, sin pedírselo a Claude. Solo
+                     en las empezadas: una sin nada no se da por terminada. -->
+                @if (e.estado !== 'PENDIENTE') {
+                  <button
+                    type="button"
+                    class="marcar-fase"
+                    [disabled]="marcandoFase() !== null"
+                    (click)="marcarFase(p, e)"
+                  >
+                    {{ marcandoFase() === e.code ? 'Guardando…' : e.estado === 'LISTO' ? 'Reabrir' : 'Dar por terminada' }}
+                  </button>
                 }
               </li>
             }

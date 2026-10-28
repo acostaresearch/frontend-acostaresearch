@@ -618,6 +618,27 @@
   color: var(--color-primario);
 }
 
+/* «Dar por terminada» / «Reabrir»: discreto, bajo el nombre de la fase. */
+.marcar-fase {
+  margin: -6px 0 8px 32px;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-primario);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.marcar-fase:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.marcar-fase:disabled {
+  color: var(--color-texto-tenue);
+  cursor: default;
+}
+
 .flecha {
   flex-shrink: 0;
   width: 12px;

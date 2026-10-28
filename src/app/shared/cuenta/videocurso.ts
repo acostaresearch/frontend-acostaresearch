@@ -91,6 +91,8 @@ export class Videocurso implements OnInit {
   readonly cargando = signal(true);
   /** Todo lo que le toca, de todos sus productos. */
   private readonly publicados = signal<Tutorial[]>([]);
+  /** Los productos que compró; null = sin filtro (administrador o sin compras). */
+  private readonly suyos = signal<string[] | null>(null);
   private readonly pedido = signal<string | null>(
     this.ruta.snapshot.queryParamMap.get('producto'),
   );
@@ -101,10 +103,13 @@ export class Videocurso implements OnInit {
    * tiene algo que enseñar a esta persona; la barra, solo con dos o más.
    */
   readonly pestanas = computed(() =>
-    pestanasDelCurso([
-      ...this.publicados(),
-      ...(this.conGuias() ? this.todasLasGuias().map(Videocurso.enApartado) : []),
-    ]),
+    pestanasDelCurso(
+      [
+        ...this.publicados(),
+        ...(this.conGuias() ? this.todasLasGuias().map(Videocurso.enApartado) : []),
+      ],
+      this.suyos(),
+    ),
   );
 
   /** La elegida: la pedida (`?producto=`), o la primera. Null = no hay ninguna. */
@@ -226,6 +231,7 @@ export class Videocurso implements OnInit {
       guias,
       mios: this.auth.isAuthenticated() ? this.tutoriales.misProductos() : of(null),
     }).subscribe(({ videos, guias, mios }) => {
+      this.suyos.set(mios);
       this.publicados.set(loQueLeToca(videos, mios));
       this.todasLasGuias.set(loQueLeToca(guias, mios));
       this.cargando.set(false);
