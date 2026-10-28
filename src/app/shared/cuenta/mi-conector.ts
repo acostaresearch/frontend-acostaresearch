@@ -27,8 +27,8 @@ import { MiAtlasTi } from './mi-atlas-ti';
 import { MiZoteroPanel } from './mi-zotero';
 import { MiMendeleyPanel } from './mi-mendeley';
 import { PasosDeArranque } from './pasos-de-arranque';
-import { BienvenidaCanje } from './bienvenida-canje';
 import { Videocurso } from './videocurso';
+import { AvisosService } from '../../core/services/avisos.service';
 
 /**
  * El conector de Claude de quien está mirando: sus licencias, la URL y la guía.
@@ -57,7 +57,6 @@ import { Videocurso } from './videocurso';
     MiMendeleyPanel,
     MiMapaVosviewer,
     PasosDeArranque,
-    BienvenidaCanje,
     Videocurso,
   ],
   templateUrl: './mi-conector.html',
@@ -68,6 +67,7 @@ export class MiConector implements OnInit {
   private readonly tour = inject(TourService);
   private readonly recorrido = inject(RecorridoWeb);
   private readonly bienvenida = inject(BienvenidaService);
+  private readonly avisos = inject(AvisosService);
 
   /** Quién lo está mirando. Ver la nota de la clase. */
   readonly modo = input<'comprador' | 'administrador'>('comprador');
@@ -226,35 +226,32 @@ export class MiConector implements OnInit {
    */
   private ofrecerElRecorrido(): void {
     if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
-    // Quien acaba de canjear tiene delante la ventana de bienvenida: el
-    // recorrido arranca cuando la cierra. Ver `trasLaBienvenida`.
-    if (this.bienvenida.pendiente()) return;
+
+    // Quien acaba de canjear (28-oct: sin ventana ni tarjeta de bienvenida, y
+    // sin enseñarle la URL; la pide en «Por dónde vas» cuando va a conectar).
+    // Un aviso corto y el recorrido: a quien canjea un acceso nuevo se le
+    // enseña SIEMPRE, lo haya visto antes o no (pedido del 13-oct). A quien
+    // solo renovó, como cualquier otro día: una vez, si no lo ha visto.
+    const canje = this.bienvenida.pendiente();
+    if (canje) {
+      this.bienvenida.cerrar();
+      this.avisos.exito(
+        canje.renovada
+          ? `Tu acceso a ${canje.producto} está renovado.`
+          : `Tu acceso a ${canje.producto} está activo.`,
+      );
+      setTimeout(() => {
+        if (canje.renovada) this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
+        else this.tour.empezar(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
+      }, 900);
+      return;
+    }
+
     if (!this.tour.leToca(TOUR_PANEL)) return;
 
     setTimeout(
       () => this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true }),
       900,
-    );
-  }
-
-  /**
-   * Se cerró la bienvenida del canje: ahora sí, el recorrido.
-   *
-   * A quien canjea un acceso nuevo se le enseña SIEMPRE, lo haya visto antes o
-   * no: acaba de llegar con una URL que pegar y es cuando hace falta (pedido
-   * del 13-oct). A quien solo renovó, como al entrar cualquier otro día: una
-   * vez, si no lo ha visto.
-   *
-   * La espera, si el servidor aún no contestó, es la misma de arriba.
-   */
-  trasLaBienvenida(renovada: boolean): void {
-    setTimeout(
-      () => {
-        if (this.modo() !== 'comprador' || !this.tieneAccesoVigente()) return;
-        if (renovada) this.tour.ofrecer(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
-        else this.tour.empezar(TOUR_PANEL, TOUR_DEL_PANEL, { obligatorio: true });
-      },
-      this.cargando() ? 900 : 0,
     );
   }
 }

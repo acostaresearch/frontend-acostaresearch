@@ -301,7 +301,7 @@
 
             @if (puedeRotar(licencia)) {
               <button type="button" class="boton" [disabled]="rotando()" (click)="generarUrl(p, licencia)">
-                {{ rotando() ? 'Generando…' : 'Generar nueva URL' }}
+                {{ rotando() ? 'Generando…' : yaConectada(licencia) ? 'Generar nueva URL' : 'Obtener mi URL' }}
               </button>
             }
           </div>
@@ -720,7 +720,11 @@
         </button>
       </div>
 
-      <p class="url-pie">Pégala en Claude: Configuración → Conectores → Añadir personalizado.</p>
+      <p class="url-pie">
+        Pégala en Claude (Personalización → Conectores → Agregar → Agregar conector
+        personalizado), ChatGPT (Complementos → Agregar → Agregar servidor MCP personalizado) o
+        Grok (Complementos → Nuevo conector → Personalizado).
+      </p>
 
 
       <!-- Se cierra solo con el botón: ni con Escape ni pulsando fuera. Un roce

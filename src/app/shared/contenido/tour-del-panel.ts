@@ -120,8 +120,8 @@ export const TOUR_DEL_PANEL: PasoDelTour[] = [
     ancla: '[data-tour="acceso"]',
     titulo: 'Tu acceso a Claude',
     texto:
-      'Aquí está el acceso de la tesis que estás mirando y lo que llevas consultado hoy. La URL ' +
-      'se pega una sola vez en Claude, en Configuración → Conectores.',
+      'Aquí está el acceso de la tesis que estás mirando y lo que llevas consultado hoy. Con ' +
+      '«Obtener mi URL» sacas la URL que se pega una sola vez en Claude, ChatGPT o Grok.',
   },
   {
     ruta: '/perfil',

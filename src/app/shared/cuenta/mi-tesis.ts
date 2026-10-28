@@ -390,14 +390,18 @@ export class MiTesis implements OnInit {
     if (this.rotando()) return;
 
     const nombre = this.nombreCorto(p);
-    const seguro = await this.dialogos.confirmar({
-      titulo: `Generar una URL nueva de ${nombre}`,
-      mensaje: 'La anterior dejará de funcionar en el acto.',
-      nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
-      confirmar: 'Generar URL nueva',
-      tono: 'aviso',
-    });
-    if (!seguro || this.rotando()) return;
+    // Desde el 28-oct la URL no se enseña al canjear ni va en el correo: quien
+    // aún no ha conectado la pide aquí, y a ese no hay nada que avisarle.
+    if (this.yaConectada(licencia)) {
+      const seguro = await this.dialogos.confirmar({
+        titulo: `Generar una URL nueva de ${nombre}`,
+        mensaje: 'La anterior dejará de funcionar en el acto.',
+        nota: 'Tendrás que pegar la nueva en Claude para seguir usando el conector.',
+        confirmar: 'Generar URL nueva',
+        tono: 'aviso',
+      });
+      if (!seguro || this.rotando()) return;
+    }
 
     this.rotando.set(true);
     this.errorLicencia.set(null);
@@ -413,6 +417,15 @@ export class MiTesis implements OnInit {
         this.rotando.set(false);
       },
     });
+  }
+
+  /**
+   * ¿Esta licencia ya se usó desde Claude, ChatGPT o Grok? Si nunca hizo una
+   * consulta, su URL no está pegada en ningún sitio: el botón dice «Obtener mi
+   * URL» y no pregunta, porque no hay nada que deje de funcionar.
+   */
+  yaConectada(licencia: License): boolean {
+    return licencia.callsTotal > 0 || licencia.lastUsedAt !== null;
   }
 
   async copiarUrl(): Promise<void> {

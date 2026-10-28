@@ -57,8 +57,8 @@ export class PasosDeArranque {
       {
         titulo: 'Conectaste el conector a Claude',
         texto:
-          'Copia tu URL de aquí abajo y pégala en Claude: Configuración → Conectores → Añadir ' +
-          'personalizado. Se hace una vez.',
+          'Pulsa «Obtener mi URL» aquí abajo y pégala en Claude, ChatGPT o Grok. Se hace una ' +
+          'vez; el video te lo enseña paso a paso.',
         hecho: p.conectado,
         accion: { texto: 'Ver cómo se hace', ruta: '/perfil/ayuda' },
       },
