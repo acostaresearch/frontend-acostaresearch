@@ -276,6 +276,15 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
         'tu producto, «Instalación» o «Herramientas». Igual que los videos: con tu sesión ' +
         'abierta solo salen las de lo que compraste.',
     },
+    {
+      seccion: 'Conecta tu método',
+      ruta: '/conectar/claude',
+      ancla: '[data-tour="conectar-ias"]',
+      titulo: 'Conéctalo a tu IA',
+      texto:
+        'Elige la que usas —Claude, ChatGPT o Grok— y sigue sus pasos, con video y guía en PDF. ' +
+        'Gemini todavía no permite conectores en Perú.',
+    },
 
     // ── El panel, solo si hay algo que enseñar en él ───────────────────────
     ...(quien.tieneConector

@@ -1,0 +1,109 @@
+<app-site-header />
+
+<main class="pagina conectar-fondo">
+  <section class="seccion">
+    <div class="conectar-pagina">
+      <header class="presentacion">
+        <h1>Conecta tu método</h1>
+        <p class="entrada">Elige la IA que usas. Se hace una sola vez, en la computadora.</p>
+      </header>
+
+      <nav class="asistentes" aria-label="Elige tu IA" data-tour="conectar-ias">
+        @for (a of asistentes; track a.codigo) {
+          <a
+            class="asistente"
+            [routerLink]="['/conectar', a.codigo]"
+            [class.activo]="actual().codigo === a.codigo"
+            [attr.aria-current]="actual().codigo === a.codigo ? 'page' : null"
+          >
+            {{ a.nombre }}
+          </a>
+        }
+      </nav>
+
+      @if (actual().codigo === 'gemini') {
+        <div class="tarjeta aviso">
+          <h2>Gemini todavía no permite conectar el método</h2>
+          <p>
+            Google solo deja añadir conectores propios en Estados Unidos, en inglés y con cuenta
+            personal. Desde Perú y Latinoamérica no aparece la opción, ni en Gemini gratis ni en
+            Gemini Pro.
+          </p>
+          <p>
+            Usa <a routerLink="/conectar/claude">Claude</a>,
+            <a routerLink="/conectar/chatgpt">ChatGPT</a> o
+            <a routerLink="/conectar/grok">Grok</a>: tu avance es el mismo en los tres. Te avisaremos
+            cuando Gemini lo abra.
+          </p>
+        </div>
+      } @else {
+        <!-- Antes de nada, la URL: sin ella no hay nada que pegar. -->
+        <div class="tarjeta antes">
+          <p class="rotulo">Antes de empezar</p>
+          <p>
+            Ten a mano <strong>tu URL del conector</strong>: en tu panel, <strong>Por dónde vas →
+            Obtener mi URL</strong> y pulsa <strong>«Copiar»</strong>. No va por correo.
+          </p>
+          @if (conSesion) {
+            <a class="boton secundario" [routerLink]="panel">Ir a copiar mi URL</a>
+          } @else {
+            <a class="boton secundario" routerLink="/auth/login">Entrar a mi panel</a>
+          }
+        </div>
+
+        <div class="tarjeta">
+          @if (embed(); as url) {
+            <div class="video">
+              <iframe
+                [src]="url"
+                [title]="video()?.titulo ?? 'Conectar en ' + actual().nombre"
+                allow="encrypted-media; picture-in-picture; fullscreen"
+                allowfullscreen
+              ></iframe>
+            </div>
+          } @else {
+            <p class="sin-video">
+              El video de {{ actual().nombre }} está en preparación. Mientras tanto, sigue estos
+              pasos o la guía en PDF.
+            </p>
+          }
+
+          <h2>En {{ actual().sitio }}</h2>
+          <ol class="pasos">
+            @for (paso of actual().pasos; track $index) {
+              <li>{{ paso }}</li>
+            }
+          </ol>
+          <p class="ojo">{{ actual().ojo }}</p>
+
+          <div class="acciones">
+            <a class="boton" [href]="actual().pdf" target="_blank" rel="noopener">
+              Guía en PDF con capturas
+            </a>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <p class="rotulo">Para comprobar que funciona</p>
+          <p>En un chat nuevo, con el conector activado, escribe:</p>
+          <p class="frase">{{ primeraFrase }}</p>
+          <button type="button" class="boton secundario" (click)="copiarFrase()">
+            {{ copiada() ? 'Copiada' : 'Copiar la frase' }}
+          </button>
+          <p class="nota">
+            Si la respuesta no muestra que usó el conector, actívalo en ese chat y vuelve a
+            pegarla.
+          </p>
+        </div>
+      }
+
+      <p class="ayuda">
+        ¿Te trabaste?
+        <a [href]="whatsappUrl" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
+        · <a routerLink="/guias-de-instalacion">Todas las guías</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<app-site-footer />

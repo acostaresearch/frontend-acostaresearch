@@ -1,0 +1,180 @@
+/* «Conecta tu método»: una columna centrada sobre el gris del sitio, como las guías. */
+.conectar-fondo {
+  background: var(--color-fondo);
+}
+
+.seccion {
+  padding: 52px 0 72px;
+}
+
+.conectar-pagina {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.presentacion {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.presentacion h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  line-height: 1.2;
+  color: var(--color-texto);
+}
+
+.entrada {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-texto-suave);
+}
+
+/* ── Pestañas por IA ── */
+.asistentes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.asistente {
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+}
+
+.asistente:hover {
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+.asistente.activo {
+  color: #fff;
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+/* ── Tarjetas ── */
+.tarjeta {
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.tarjeta h2 {
+  margin: 18px 0 10px;
+  font-size: 18px;
+  color: var(--color-texto);
+}
+
+.tarjeta p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-texto-suave);
+}
+
+.tarjeta.antes {
+  background: var(--color-primario-suave);
+  border-color: transparent;
+}
+
+.tarjeta.aviso {
+  background: var(--color-aviso-suave);
+  border-color: transparent;
+}
+
+.tarjeta.aviso h2 {
+  margin-top: 0;
+}
+
+.rotulo {
+  font-size: 12px !important;
+  font-weight: 700;
+  color: var(--color-primario) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  border-radius: var(--radio-sm);
+}
+
+.video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.sin-video {
+  padding: 12px 14px;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.pasos {
+  padding-left: 22px;
+  margin: 0 0 12px;
+}
+
+.pasos li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-texto);
+}
+
+.ojo {
+  font-weight: 600;
+  color: var(--color-aviso) !important;
+}
+
+.frase {
+  padding: 12px 14px;
+  font-weight: 600;
+  color: var(--color-texto) !important;
+  background: var(--color-fondo);
+  border-radius: var(--radio-sm);
+}
+
+.nota {
+  margin-top: 12px !important;
+  font-size: 13px !important;
+}
+
+.ayuda {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .seccion {
+    padding: 32px 0 48px;
+  }
+
+  .presentacion h1 {
+    font-size: 26px;
+  }
+
+  .tarjeta {
+    padding: 18px 16px;
+  }
+}

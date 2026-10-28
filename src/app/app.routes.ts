@@ -92,6 +92,13 @@ export const routes: Routes = [
     title: 'Guías en PDF · Acosta Research',
     loadComponent: () => import('./features/guias/guias').then((m) => m.Guias),
   },
+  // Cómo conectar el método a cada IA (28-oct): la enlazan el correo y el panel.
+  { path: 'conectar', pathMatch: 'full', redirectTo: 'conectar/claude' },
+  {
+    path: 'conectar/:ia',
+    title: 'Conecta tu método · Acosta Research',
+    loadComponent: () => import('./features/conectar/conectar').then((m) => m.Conectar),
+  },
   // Todas las reseñas aprobadas. Aparte de la portada a propósito: allí salen
   // tres o cuatro elegidas a mano, y esta página es la que hace que aquellas se
   // puedan creer. Pública, como todo lo que se enseña antes de comprar.
