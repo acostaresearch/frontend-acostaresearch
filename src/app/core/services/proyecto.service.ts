@@ -257,6 +257,26 @@ export class ProyectoService {
       .pipe(map((r) => r.message ?? ''));
   }
 
+  /** Reemplaza UN capítulo con un Word: todo su texto va a esa fase (28-oct). */
+  reemplazarCapitulo(productCode: string, capitulo: string, archivo: File): Observable<string> {
+    return this.http
+      .post<ApiResponse<unknown>>(
+        `${this.base}/${encodeURIComponent(productCode)}/avance/capitulo/${encodeURIComponent(capitulo)}`,
+        archivo,
+        { headers: { 'Content-Type': 'application/octet-stream' } },
+      )
+      .pipe(map((r) => r.message ?? ''));
+  }
+
+  /** Vacía UN capítulo del avance (28-oct). */
+  quitarCapitulo(productCode: string, capitulo: string): Observable<string> {
+    return this.http
+      .delete<ApiResponse<unknown>>(
+        `${this.base}/${encodeURIComponent(productCode)}/avance/capitulo/${encodeURIComponent(capitulo)}`,
+      )
+      .pipe(map((r) => r.message ?? ''));
+  }
+
   /**
    * Devuelve el proyecto al comienzo: borra avance, capítulos, análisis y
    * documento subido, y el método queda con sus fases en blanco.

@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, HostListener, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 
 import { toApiError } from '../../core/http/api-error';
 import { License } from '../../core/models/payment.model';
@@ -657,6 +658,48 @@ export class MiTesis implements OnInit {
       error: (e) => {
         this.subiendoAvance.set(false);
         // Mensajes escritos para el tesista —«no reconocimos ningún capítulo»—: tal cual.
+        this.errorAvance.set(toApiError(e).message);
+      },
+    });
+  }
+
+  /**
+   * Un solo capítulo del avance (28-oct): «Reemplazar» con un Word entero, que va
+   * todo a esa fase aunque no traiga el título, o «Quitar» su texto. Usan los
+   * mismos avisos que la subida del avance.
+   */
+  elegirCapitulo(evento: Event, p: Proyecto, f: EtapaDelProyecto): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!archivo) return;
+    this.cambiarCapitulo(this.proyectos.reemplazarCapitulo(p.productCode, f.code, archivo));
+  }
+
+  async quitarCapitulo(p: Proyecto, f: EtapaDelProyecto): Promise<void> {
+    const si = await this.dialogos.confirmar({
+      titulo: `Quitar «${f.displayName}»`,
+      mensaje:
+        `Se borra el texto de este capítulo (${f.palabras} palabras). Los demás no cambian.\n` +
+        'Si quieres conservarlo, descarga antes tu Word.',
+      tono: 'peligro',
+      confirmar: 'Quitar',
+    });
+    if (si) this.cambiarCapitulo(this.proyectos.quitarCapitulo(p.productCode, f.code));
+  }
+
+  private cambiarCapitulo(peticion: Observable<string>): void {
+    this.subiendoAvance.set(true);
+    this.avanceSubido.set(null);
+    this.errorAvance.set(null);
+    peticion.subscribe({
+      next: (mensaje) => {
+        this.subiendoAvance.set(false);
+        this.avanceSubido.set(mensaje || 'Listo.');
+        this.recargar();
+      },
+      error: (e) => {
+        this.subiendoAvance.set(false);
         this.errorAvance.set(toApiError(e).message);
       },
     });

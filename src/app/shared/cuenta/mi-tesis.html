@@ -614,6 +614,27 @@
                 <li>
                   <strong>{{ f.displayName }}</strong> — {{ f.palabras }} palabras ·
                   {{ etiqueta(f.estado) }}
+                  <!-- Uno solo (28-oct): el Word entero va a este capítulo, o se vacía. -->
+                  <span class="avance-capitulo">
+                    <label class="avance-accion" [class.inactivo]="subiendoAvance()">
+                      Reemplazar
+                      <input
+                        type="file"
+                        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        hidden
+                        [disabled]="subiendoAvance()"
+                        (change)="elegirCapitulo($event, p, f)"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      class="avance-accion"
+                      [disabled]="subiendoAvance()"
+                      (click)="quitarCapitulo(p, f)"
+                    >
+                      Quitar
+                    </button>
+                  </span>
                 </li>
               }
             </ul>
@@ -646,7 +667,7 @@
                capítulos sin pisar lo más largo, que es lo de siempre. -->
           @if (capitulosDelAvance(p).length > 0) {
             <label class="boton secundario" [class.inactivo]="subiendoAvance()">
-              Reemplazar mi avance
+              Reemplazar todo mi avance
               <input
                 type="file"
                 accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
