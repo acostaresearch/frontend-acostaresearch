@@ -641,8 +641,23 @@
           <!-- El <label> hace de botón porque el <input type="file"> va oculto:
                es la única forma de que abra el diálogo sin enseñar el control
                gris del navegador. -->
+          <!-- Con avance ya subido, dos caminos (28-oct): reemplazarlo entero por
+               otro archivo, sin que se cruce con el anterior, o solo añadir
+               capítulos sin pisar lo más largo, que es lo de siempre. -->
+          @if (capitulosDelAvance(p).length > 0) {
+            <label class="boton secundario" [class.inactivo]="subiendoAvance()">
+              Reemplazar mi avance
+              <input
+                type="file"
+                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                hidden
+                [disabled]="subiendoAvance()"
+                (change)="elegirAvance($event, p, true)"
+              />
+            </label>
+          }
           <label class="boton secundario" [class.inactivo]="subiendoAvance()">
-            {{ capitulosDelAvance(p).length > 0 ? 'Subir una versión nueva' : 'Subir mi avance' }}
+            {{ capitulosDelAvance(p).length > 0 ? 'Añadir capítulos' : 'Subir mi avance' }}
             <input
               type="file"
               accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"

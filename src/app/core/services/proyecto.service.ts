@@ -244,9 +244,11 @@ export class ProyectoService {
    * No es el Word que Claude cita o humaniza: ese se sube por el enlace que da
    * Claude en la conversación.
    */
-  subirAvance(productCode: string, archivo: File): Observable<string> {
+  subirAvance(productCode: string, archivo: File, reemplazar = false): Observable<string> {
+    // Reemplazar (28-oct): el archivo pasa a ser su avance y lo que no trae se vacía.
+    const modo = reemplazar ? '?reemplazar=1' : '';
     return this.http
-      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/avance`, archivo, {
+      .post<ApiResponse<unknown>>(`${this.base}/${encodeURIComponent(productCode)}/avance${modo}`, archivo, {
         headers: {
           'Content-Type': 'application/octet-stream',
           'X-Nombre-Archivo': encodeURIComponent(archivo.name).slice(0, 200),

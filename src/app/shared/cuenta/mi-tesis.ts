@@ -615,21 +615,39 @@ export class MiTesis implements OnInit {
   readonly avanceSubido = signal<string | null>(null);
   readonly errorAvance = signal<string | null>(null);
 
-  elegirAvance(evento: Event, p: Proyecto): void {
+  async elegirAvance(evento: Event, p: Proyecto, reemplazar = false): Promise<void> {
     const entrada = evento.target as HTMLInputElement;
     const archivo = entrada.files?.[0];
     // Se limpia el input para que elegir el MISMO archivo otra vez —tras
     // corregirlo en Word— vuelva a disparar el evento.
     entrada.value = '';
-    if (archivo) this.subirAvance(archivo, p);
+    if (!archivo) return;
+
+    // Reemplazar vacía lo que el archivo no traiga: se confirma antes (28-oct).
+    if (reemplazar) {
+      const si = await this.dialogos.confirmar({
+        titulo: 'Reemplazar tu avance',
+        mensaje:
+          `«${archivo.name}» pasará a ser tu avance: cada capítulo que traiga sustituye al que ` +
+          'tenías, y las fases con texto que no vengan en él quedarán vacías.\n' +
+          'Si quieres conservar lo de antes, descarga primero tu Word.',
+        nota:
+          'Tu tema, tus fuentes, tus análisis y las fases que diste por terminadas se quedan. ' +
+          'No gasta ninguna de tus veces de «empezar de cero».',
+        tono: 'peligro',
+        confirmar: 'Reemplazar',
+      });
+      if (!si) return;
+    }
+    this.subirAvance(archivo, p, reemplazar);
   }
 
-  private subirAvance(archivo: File, p: Proyecto): void {
+  private subirAvance(archivo: File, p: Proyecto, reemplazar = false): void {
     this.subiendoAvance.set(true);
     this.avanceSubido.set(null);
     this.errorAvance.set(null);
 
-    this.proyectos.subirAvance(p.productCode, archivo).subscribe({
+    this.proyectos.subirAvance(p.productCode, archivo, reemplazar).subscribe({
       next: (mensaje) => {
         this.subiendoAvance.set(false);
         // El servidor dice a qué fases fue cada capítulo.
