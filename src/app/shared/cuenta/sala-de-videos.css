@@ -345,7 +345,7 @@
 
 /* ── En la media pantalla del perfil (11-oct) ───────────────────────────────
  * Comprimida, para que el video y la lista quepan sin bajar: las pestañas de
- * producto en un solo renglón que se desliza, nada bajo el video, y la lista por bloques con desplazamiento
+ * producto en los renglones que hagan falta, nada bajo el video, y la lista por bloques con desplazamiento
  * propio —el video se queda quieto arriba y solo se mueve ella—. */
 :host(.estrecha) {
   display: flex;
@@ -359,13 +359,12 @@
   font-size: 13px;
 }
 
+/* Las pestañas bajan a otro renglón si no caben (29-oct): en un renglón que se
+   deslizaba sin barra, la última quedaba cortada y no se veía que había más. */
 :host(.estrecha) .productos {
   flex: none;
-  flex-wrap: nowrap;
   gap: 6px;
   margin-bottom: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
 :host(.estrecha) .producto {
