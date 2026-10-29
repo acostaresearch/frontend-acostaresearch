@@ -14,9 +14,10 @@
     <p class="de-lo-tuyo">Los videos de lo que compraste: <b>{{ deLoTuyo() }}</b></p>
   }
 
-  <!-- Una pestaña por producto con videos propios, solo si hay dos o más.
-       Quien compró ve nada más que las suyas. Lo que es de todos (conectar
-       Claude) sale en cada una. -->
+  <!-- Una pestaña por producto con videos propios y, detrás, «Instalación» y
+       «Herramientas» (29-oct, como en el video curso). Solo si hay dos o más.
+       Quien compró ve nada más que las suyas. Lo de uso que es de todos sale
+       en cada una de producto. -->
   @if (pestanas().length > 1) {
     <div class="productos" role="group" aria-label="Videos por producto">
       @for (pestana of pestanas(); track pestana.codigo) {

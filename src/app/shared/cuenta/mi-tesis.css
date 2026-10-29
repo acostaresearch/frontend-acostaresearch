@@ -43,7 +43,7 @@
  * leían como dos cosas que habían caído juntas. La tarjeta es de este
  * envoltorio; el recuadro de dentro pierde su fondo.
  *
- * Dos botones y dos colores: «Cómo retomarlo en Claude» en el azul de siempre
+ * Dos botones y dos colores: «Cómo retomarlo en la IA» en el azul de siempre
  * y «Generar nueva URL» en dorado, para que se vea.
  *
  * Si no caben juntos —un teléfono, o la media pantalla con el video— el
@@ -53,7 +53,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 14px 22px;
-  /* Arriba, no centrado: al abrir «Cómo retomarlo» el recuadro crece. */
+  /* Arriba, no centrado: al abrir «Cómo retomarlo en la IA» el recuadro crece. */
   align-items: flex-start;
   width: 100%;
   padding: 18px 20px 18px 22px;

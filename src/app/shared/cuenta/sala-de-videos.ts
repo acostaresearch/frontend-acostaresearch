@@ -18,8 +18,8 @@ import {
   loQueLeToca,
   nombreDeProducto,
   pestanaElegida,
-  pestanasDeProducto,
-  saleEn,
+  pestanasDelCurso,
+  saleEnLaPestana,
 } from '../contenido/productos-de-ayuda';
 
 /** Un bloque de la lista: su rótulo y los videos que lleva, con su posición. */
@@ -102,23 +102,26 @@ export class SalaDeVideos implements OnInit {
   /** Lo que le toca: todo, o solo lo de lo que compró más lo que es de todos. */
   private readonly visibles = computed(() => loQueLeToca(this.publicados(), this.mios()));
 
-  /** Los productos con algún video propio entre los que le tocan. */
-  readonly pestanas = computed(() => {
-    const mios = this.mios();
-    return pestanasDeProducto(this.visibles()).filter((p) => !mios || mios.includes(p.codigo));
-  });
+  /**
+   * Los productos con algún video propio entre los que le tocan y, detrás,
+   * «Instalación» y «Herramientas», como en el video curso (`Videocurso`).
+   * Antes aquí solo salían las de producto y los videos de instalación y de
+   * herramientas no tenían dónde verse en la media pantalla (29-oct).
+   */
+  readonly pestanas = computed(() => pestanasDelCurso(this.visibles(), this.mios()));
 
   readonly producto = computed(() => pestanaElegida(this.pestanas(), this.pedido()));
 
   /** Los nombres de lo que compró, para decirle de qué son los videos. Vacío si ve todo. */
   readonly deLoTuyo = computed(() => (this.mios() ?? []).map(nombreDeProducto).join(' · '));
 
-  /** Lo que se ve: lo de la pestaña elegida más lo que es de todos. */
-  readonly tutoriales = computed(() => {
-    const producto = this.producto();
-    const lista = this.visibles();
-    return producto ? lista.filter((t) => saleEn(t.productos, producto)) : lista;
-  });
+  /**
+   * Lo que se ve: en la de un producto, lo de uso suyo más lo de uso que es de
+   * todos; en «Instalación» y «Herramientas», lo de ese apartado.
+   */
+  readonly tutoriales = computed(() =>
+    this.visibles().filter((t) => saleEnLaPestana(t, this.producto())),
+  );
 
   /** El video que está en la pantalla, por su posición en la lista. */
   readonly actual = signal(0);

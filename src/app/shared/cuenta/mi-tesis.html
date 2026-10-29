@@ -130,7 +130,7 @@
                 [attr.aria-expanded]="retomarAbierto()"
                 (click)="retomarAbierto.set(!retomarAbierto())"
               >
-                Cómo retomarlo en Claude
+                Cómo retomarlo en la IA
               </button>
             </div>
 
@@ -178,21 +178,29 @@
 
             @if (retomarAbierto()) {
               <div class="retomar-como">
-                <p>Abre una conversación nueva en Claude y escríbele:</p>
+                <p>Abre una conversación nueva en Claude, ChatGPT o Grok y escríbele:</p>
                 <p class="frase">{{ frase(p) }}</p>
                 <div class="retomar-acciones">
                   <button type="button" class="boton secundario" (click)="copiarFrase(p)">
                     {{ copiado() ? 'Copiada' : 'Copiar la frase' }}
                   </button>
-                  <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
-                    Abrir Claude
-                  </a>
+                  @for (ia of ias; track ia.codigo) {
+                    <a class="boton enlace" [href]="chatCon(ia, frase(p))" target="_blank" rel="noopener">
+                      Abrir {{ ia.nombre }}
+                    </a>
+                  }
                 </div>
                 <p class="retomar-nota">
-                  Antes de pegarla, activa el conector en ese chat (en Claude, en el menú de
-                  herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no muestra que usó el
-                  conector, actívalo y pega la frase otra vez. Al cerrar cada fase, Claude te ofrece
+                  Con «Abrir…» la frase ya sale escrita en el chat. Antes de enviarla, activa el conector
+                  (en Claude, en el menú de herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no
+                  muestra que usó el conector, actívalo y escribe la frase otra vez. Al cerrar cada fase, la IA te ofrece
                   seguir con la siguiente en el mismo chat.
+                </p>
+                <p class="retomar-nota">
+                  ¿Aún no tienes el conector? Instálalo en
+                  @for (ia of ias; track ia.codigo; let i = $index) {
+                    <a [routerLink]="['/conectar', ia.codigo]" target="_blank">{{ ia.nombre }}</a>{{ i === 2 ? '.' : i === 1 ? ' o ' : ', ' }}
+                  }
                 </p>
               </div>
             }
@@ -214,15 +222,17 @@
                 </div>
               </div>
               <div class="retomar-como">
-                <p>Abre una conversación nueva en Claude y escríbele:</p>
+                <p>Abre una conversación nueva en Claude, ChatGPT o Grok y escríbele:</p>
                 <p class="frase">{{ fraseDeApoyo(h) }}</p>
                 <div class="retomar-acciones">
                   <button type="button" class="boton secundario" (click)="copiarFraseDeApoyo(h)">
                     {{ apoyoCopiado() ? 'Copiada' : 'Copiar la frase' }}
                   </button>
-                  <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
-                    Abrir Claude
-                  </a>
+                  @for (ia of ias; track ia.codigo) {
+                    <a class="boton enlace" [href]="chatCon(ia, fraseDeApoyo(h))" target="_blank" rel="noopener">
+                      Abrir {{ ia.nombre }}
+                    </a>
+                  }
                 </div>
                 @if (frasesMas(p).length > 0) {
                   <p class="frases-mas-titulo">O dile directamente lo que necesitas:</p>
@@ -239,10 +249,16 @@
                   </ul>
                 }
                 <p class="retomar-nota">
-                  Antes de pegarla, activa el conector en ese chat (en Claude, en el menú de
-                  herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no muestra que usó el
-                  conector, actívalo y pega la frase otra vez. Al cerrar cada fase, Claude te ofrece
+                  Con «Abrir…» la frase ya sale escrita en el chat. Antes de enviarla, activa el conector
+                  (en Claude, en el menú de herramientas; en ChatGPT y Grok, con «+»). Si la respuesta no
+                  muestra que usó el conector, actívalo y escribe la frase otra vez. Al cerrar cada fase, la IA te ofrece
                   seguir con la siguiente en el mismo chat.
+                </p>
+                <p class="retomar-nota">
+                  ¿Aún no tienes el conector? Instálalo en
+                  @for (ia of ias; track ia.codigo; let i = $index) {
+                    <a [routerLink]="['/conectar', ia.codigo]" target="_blank">{{ ia.nombre }}</a>{{ i === 2 ? '.' : i === 1 ? ' o ' : ', ' }}
+                  }
                 </p>
               </div>
             }
@@ -250,7 +266,7 @@
             <p class="retomar-listo">Tienes todas las fases terminadas.</p>
           }
 
-          <!-- Empezar de cero. Va aquí, debajo de «Cómo retomarlo en Claude»,
+          <!-- Empezar de cero. Va aquí, debajo de «Cómo retomarlo en la IA»,
                porque es la otra respuesta a la misma pregunta —«¿sigo o vuelvo a
                empezar?»— y al final de la pantalla no lo encontraba quien acababa
                de enterarse de que le cambiaron el tema. En pequeño y a un lado: no
@@ -515,22 +531,30 @@
               </ul>
 
               <!-- Qué escribirle a Claude para usar la herramienta pulsada. Mismo
-                   recuadro que «Cómo retomarlo en Claude»: sin la frase, quien
+                   recuadro que «Cómo retomarlo en la IA»: sin la frase, quien
                    veía «Humanizador académico» aquí no sabía cómo se pedía. -->
               @if (apoyoElegido(); as h) {
                 <div class="retomar-como">
-                  <p>Para usarla, abre una conversación nueva en Claude y escríbele:</p>
+                  <p>Para usarla, abre una conversación nueva en Claude, ChatGPT o Grok y escríbele:</p>
                   <p class="frase">{{ fraseDeApoyo(h) }}</p>
                   <div class="retomar-acciones">
                     <button type="button" class="boton secundario" (click)="copiarFraseDeApoyo(h)">
                       {{ apoyoCopiado() ? 'Copiada' : 'Copiar la frase' }}
                     </button>
-                    <a class="boton enlace" href="https://claude.ai/new" target="_blank" rel="noopener">
-                      Abrir Claude
-                    </a>
+                    @for (ia of ias; track ia.codigo) {
+                      <a class="boton enlace" [href]="chatCon(ia, fraseDeApoyo(h))" target="_blank" rel="noopener">
+                        Abrir {{ ia.nombre }}
+                      </a>
+                    }
                   </div>
                   <p class="retomar-nota">
-                    No hace falta haber terminado las fases. Claude te dirá qué necesita para empezar.
+                    No hace falta haber terminado las fases. La IA te dirá qué necesita para empezar.
+                  </p>
+                  <p class="retomar-nota">
+                    ¿Aún no tienes el conector? Instálalo en
+                    @for (ia of ias; track ia.codigo; let i = $index) {
+                      <a [routerLink]="['/conectar', ia.codigo]" target="_blank">{{ ia.nombre }}</a>{{ i === 2 ? '.' : i === 1 ? ' o ' : ', ' }}
+                    }
                   </p>
                 </div>
               }

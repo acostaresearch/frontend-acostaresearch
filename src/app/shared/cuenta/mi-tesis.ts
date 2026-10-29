@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Component, HostListener, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -169,7 +170,7 @@ const TEXTOS_DE_DOCUMENTO: TextosDeVarias = {
  */
 @Component({
   selector: 'app-mi-tesis',
-  imports: [AvisoFlotante, DatePipe],
+  imports: [AvisoFlotante, DatePipe, RouterLink],
   templateUrl: './mi-tesis.html',
   styleUrl: './mi-tesis.css',
 })
@@ -232,7 +233,7 @@ export class MiTesis implements OnInit {
       .map((trozo) => ({ rotulo: this.rotulo(trozo), fases: trozo }));
   });
 
-  /** Si se ve el recuadro de cómo retomarlo en Claude. */
+  /** Si se ve el recuadro de «Cómo retomarlo en la IA». */
   readonly retomarAbierto = signal(false);
   readonly copiado = signal(false);
 
@@ -450,6 +451,22 @@ export class MiTesis implements OnInit {
   /** «Método de Tesis · 9 Capítulos + …» → «Método de Tesis», para la pestaña. */
   nombreCorto(p: Proyecto): string {
     return (p.productName ?? p.productCode).split(' · ')[0];
+  }
+
+  /**
+   * «Abrir Claude / ChatGPT / Grok» (29-oct): cada uno abre un chat nuevo con
+   * la frase ya escrita (?q=). Ninguna de las tres deja encender el conector
+   * desde un enlace: eso lo hace el usuario con el menú de herramientas o «+»,
+   * y para quien aún no lo instaló va debajo el enlace a /conectar/<ia>.
+   */
+  readonly ias = [
+    { codigo: 'claude', nombre: 'Claude', chat: 'https://claude.ai/new?q=' },
+    { codigo: 'chatgpt', nombre: 'ChatGPT', chat: 'https://chatgpt.com/?q=' },
+    { codigo: 'grok', nombre: 'Grok', chat: 'https://grok.com/?q=' },
+  ] as const;
+
+  chatCon(ia: { chat: string }, frase: string): string {
+    return ia.chat + encodeURIComponent(frase);
   }
 
   /** Lo que se le escribe a Claude para seguir por donde lo dejó. */
