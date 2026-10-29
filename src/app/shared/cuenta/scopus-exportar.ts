@@ -116,12 +116,18 @@ const COLUMNAS: readonly { titulo: string; valor: (r: ResultadoDeScopus) => stri
   { titulo: 'Acceso abierto', valor: (r) => (r.accesoAbierto ? 'Sí' : 'No') },
   { titulo: 'EID', valor: (r) => (esDeScielo(r) ? '' : r.eid) },
   { titulo: 'Enlace', valor: (r) => r.enlace ?? '' },
-  { titulo: 'Base', valor: (r) => (esDeScielo(r) ? 'SciELO' : 'Scopus') },
+  { titulo: 'Base', valor: (r) => nombreDeLaBase(r) },
 ];
 
-/** Lo que entró en la lista desde SciELO: no tiene EID de Scopus. */
+/** Lo que entró en la lista desde SciELO u OpenAlex: no tiene EID de Scopus. */
 function esDeScielo(r: ResultadoDeScopus): boolean {
-  return r.base === 'scielo';
+  return Boolean(r.base) && r.base !== 'scopus';
+}
+
+/** De qué base viene, con su nombre. */
+function nombreDeLaBase(r: ResultadoDeScopus): string {
+  if (r.baseNombre) return r.baseNombre;
+  return r.base === 'scielo' ? 'SciELO' : r.base === 'openalex' ? 'OpenAlex' : 'Scopus';
 }
 
 /**
@@ -190,7 +196,7 @@ export function comoRis(resultados: readonly ResultadoDeScopus[]): string {
     // El identificador de Scopus, en la nota: es lo que permite volver al
     // registro exacto cuando el DOI falta o la editorial lo cambió.
     if (!esDeScielo(r)) lineas.push(['N1', `EID: ${r.eid}`]);
-    lineas.push(['DB', esDeScielo(r) ? 'SciELO' : 'Scopus']);
+    lineas.push(['DB', nombreDeLaBase(r)]);
     lineas.push(['ER', '']);
 
     return lineas.map(([etiqueta, valor]) => `${etiqueta}  - ${sinSaltos(valor)}`).join('\r\n');

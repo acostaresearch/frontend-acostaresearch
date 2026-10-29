@@ -22,7 +22,13 @@ import {
   ResumenConIa,
   ScopusService,
 } from '../../core/services/scopus.service';
-import { PaginaDeScielo, ResultadoDeScielo, ScieloService } from '../../core/services/scielo.service';
+import {
+  BaseExterna,
+  BusquedaEnScielo,
+  PaginaDeScielo,
+  ResultadoDeScielo,
+  ScieloService,
+} from '../../core/services/scielo.service';
 import { AvisoFlotante } from '../layout/aviso-flotante';
 import { MiAlicia } from './mi-alicia';
 import { ExportacionScopus } from './scopus-exportacion';
@@ -105,6 +111,14 @@ interface Faceta {
   visibles?: number;
   /** El texto de muestra del campo, en las de escribir. */
   ejemplo?: string;
+}
+
+/** Una opción del menú «Ver». `primeraExterna` pinta encima «Más bases». */
+interface OpcionDeVer {
+  valor: string;
+  texto: string;
+  detalle?: string;
+  primeraExterna?: boolean;
 }
 
 @Component({
@@ -732,6 +746,28 @@ export class MiScopusPanel implements OnInit {
    */
   private static readonly POR_PAGINA_SCIELO = 10;
 
+  /**
+   * Si la búsqueda trae también el resto de OpenAlex: Redalyc, Latindex, DOAJ,
+   * repositorios y tesis, lo que no está ni en Scopus ni en SciELO. Encendido
+   * por defecto, como SciELO. Lo repetido por DOI con las otras dos no sale.
+   */
+  readonly conOpenAlex = signal(true);
+
+  /** Cuántos del resto de OpenAlex por página: 25 + 10 + 15 = 50 por página. */
+  private static readonly POR_PAGINA_OPENALEX = 15;
+
+  /** Los catálogos abiertos encendidos, para los textos: «SciELO y OpenAlex». */
+  readonly nombreDeLasAbiertas = computed(() =>
+    [this.conScielo() ? 'SciELO' : '', this.conOpenAlex() ? 'OpenAlex' : '']
+      .filter(Boolean)
+      .join(' y '),
+  );
+
+  /** Si la lista que se ve junta Scopus con SciELO u OpenAlex. */
+  esMezclada(lista: BusquedaDeScopus): boolean {
+    return lista.totalScielo !== undefined || lista.totalOpenAlex !== undefined || Boolean(lista.baseUnica);
+  }
+
   /** Cuántas páginas tiene la parte de Scopus de la búsqueda que se ve. */
   private paginasDeScopus = Number.POSITIVE_INFINITY;
 
@@ -746,12 +782,14 @@ export class MiScopusPanel implements OnInit {
    * cuadra con lo marcado.
    */
   readonly motivoSinScielo = computed<string | null>(() => {
-    if (!this.conScielo()) return null;
+    const abiertas = this.nombreDeLasAbiertas();
+    if (!abiertas) return null;
+    const entra = abiertas.includes(' y ') ? 'entran' : 'entra';
     if (this.conceptosParaContar().length === 0) {
-      return 'SciELO entra solo con la búsqueda normal en título, resumen y palabras clave.';
+      return `${abiertas} ${entra} solo con la búsqueda normal en título, resumen y palabras clave.`;
     }
     if (this.filtrosSoloDeScopus()) {
-      return 'Con filtros de Scopus puestos (aparte de los años), SciELO no entra.';
+      return `Con filtros de Scopus puestos (aparte de los años), ${abiertas} no ${entra}.`;
     }
     return null;
   });
@@ -770,7 +808,133 @@ export class MiScopusPanel implements OnInit {
 
   /** La página de SciELO que va con esta de Scopus, o nada si no toca. */
   private paginaDeScielo(pagina: number): Observable<PaginaDeScielo | null> {
-    if (!this.conScielo() || this.motivoSinScielo()) return of(null);
+    if (!this.conScielo() || this.motivoSinScielo() || !this.seVe('scielo')) return of(null);
+    return this.paginaAbierta(pagina, 'scielo');
+  }
+
+  // ── «Ver: Todo / Scopus / SciELO / OpenAlex / Tesis / Más bases» ────────────
+
+  /**
+   * De qué base se ven los resultados. Con una sola, se vuelve a buscar solo en
+   * ella (y no se filtra la página mezclada): así salen páginas enteras de esa
+   * base, 25 por página, y se pagina por todo lo que tiene. Además de las de
+   * aquí, la clave de una base externa («pubmed»): ver `basesExternas`.
+   */
+  readonly verBase = signal<string>('todo');
+  readonly menuVerBase = signal(false);
+
+  /** Cuántos tiene cada base, de la última búsqueda con «Todo». */
+  readonly totalesPorBase = signal<{ todo: number; scopus: number; scielo: number; openalex: number } | null>(
+    null,
+  );
+
+  /** La búsqueda a la que corresponden esos números. */
+  private ecuacionDeLosTotales = '';
+
+  /**
+   * Las bases externas que ofrece el servidor y están encendidas (Semantic
+   * Scholar, PubMed, ERIC, Tesis de Latinoamérica…). Se piden una vez, al abrir.
+   */
+  readonly basesExternas = signal<readonly BaseExterna[]>([]);
+
+  private readonly opcionesPrincipales: readonly OpcionDeVer[] = [
+    { valor: 'todo', texto: 'Todo' },
+    { valor: 'scopus', texto: 'Solo Scopus' },
+    { valor: 'scielo', texto: 'Solo SciELO' },
+    { valor: 'openalex', texto: 'Solo OpenAlex' },
+    // Las de ALICIA: otra lista, ya cargada; elegirla no vuelve a buscar.
+    { valor: 'tesis', texto: 'Tesis peruanas' },
+  ];
+
+  /**
+   * El menú entero. Cuando la búsqueda solo va a Scopus (avanzada o filtros de
+   * Scopus) quedan «Todo» y las tesis: las demás bases buscan por conceptos.
+   */
+  readonly opcionesDeVerBase = computed<readonly OpcionDeVer[]>(() => {
+    if (this.motivoSinScielo()) {
+      return this.opcionesPrincipales.filter((o) => o.valor === 'todo' || o.valor === 'tesis');
+    }
+    const externas = this.basesExternas().map(
+      (b, i): OpcionDeVer => ({ valor: b.clave, texto: b.nombre, detalle: b.detalle, primeraExterna: i === 0 }),
+    );
+    return [...this.opcionesPrincipales, ...externas];
+  });
+
+  /** Lo que se está viendo, con la opción de las tesis incluida. */
+  readonly verActual = computed(() => (this.vista() === 'alicia' ? 'tesis' : this.verBase()));
+
+  readonly textoDeVerBase = computed(
+    () =>
+      [...this.opcionesPrincipales, ...this.basesExternas().map((b) => ({ valor: b.clave, texto: b.nombre }))].find(
+        (o) => o.valor === this.verActual(),
+      )?.texto ?? 'Todo',
+  );
+
+  /** Si lo que se ve es una base externa sola. */
+  private esExterna(valor: string): boolean {
+    return this.basesExternas().some((b) => b.clave === valor);
+  }
+
+  /** El número de cada opción del menú, si se sabe. */
+  cuantosEnVer(valor: string): number | null {
+    if (valor === 'tesis') return this.totalAlicia();
+    if (this.esExterna(valor)) {
+      const lista = this.busqueda();
+      return lista?.baseUnica === valor ? lista.total : null;
+    }
+    const totales = this.totalesPorBase() as Record<string, number> | null;
+    return totales?.[valor] ?? null;
+  }
+
+  elegirVerBase(valor: string): void {
+    this.menuVerBase.set(false);
+    if (valor === 'tesis') {
+      this.vista.set('alicia');
+      return;
+    }
+    this.vista.set('scopus');
+    if (valor === this.verBase()) return;
+    this.verBase.set(valor);
+    if (this.busqueda()) this.buscar(1);
+  }
+
+  /** Si esta base entra en lo que se ve. */
+  private seVe(base: 'scopus' | 'scielo' | 'openalex'): boolean {
+    const ver = this.verBase();
+    return ver === 'todo' || ver === base;
+  }
+
+  /** Cuántos por página trae cada base: 25 si se ve sola. */
+  private porPaginaDe(base: 'scielo' | 'openalex'): number {
+    if (this.verBase() === base) return 25;
+    return base === 'scielo' ? MiScopusPanel.POR_PAGINA_SCIELO : MiScopusPanel.POR_PAGINA_OPENALEX;
+  }
+
+  /** La página del resto de OpenAlex que va con esta de Scopus, o nada. */
+  private paginaDeOpenAlex(pagina: number): Observable<PaginaDeScielo | null> {
+    if (!this.conOpenAlex() || this.motivoSinScielo() || !this.seVe('openalex')) return of(null);
+    return this.paginaAbierta(pagina, 'openalex');
+  }
+
+  /** La página de la base externa elegida en «Ver», o nada si no hay una. */
+  private paginaExterna(pagina: number): Observable<PaginaDeScielo | null> {
+    const base = this.verBase();
+    if (!this.esExterna(base) || this.motivoSinScielo()) return of(null);
+    const nombre = this.textoDeVerBase();
+    return this.scielo.buscarEnExterna(base, this.busquedaAbierta(pagina, 25)).pipe(
+      map((r) => r.pagina),
+      catchError((fallo: unknown) => {
+        this.mostrarError(toApiError(fallo).message || `${nombre} no respondió esta vez.`);
+        return of({ resultados: [], total: 0, porPagina: 25 });
+      }),
+    );
+  }
+
+  /**
+   * Lo que se manda a SciELO, OpenAlex y las bases externas: los conceptos de
+   * la búsqueda normal, no la ecuación de Scopus.
+   */
+  private busquedaAbierta(pagina: number, porPagina: number): BusquedaEnScielo {
     const orden = this.orden();
     const desde = this.anio(this.anioDesde());
     const hasta = this.anio(this.anioHasta());
@@ -785,37 +949,79 @@ export class MiScopusPanel implements OnInit {
       sinonimos: [...c.sinonimos, ...(espanol[c.nombre.toLowerCase()] ?? [])],
     }));
     const porConceptos = this.enConceptos() || conceptos.some((c) => c.sinonimos.length > 0);
-    return this.scielo
-      .buscar({
-        ...(porConceptos ? { conceptos } : { tema: conceptos.map((c) => c.nombre).join(' ') }),
-        pagina,
-        porPagina: MiScopusPanel.POR_PAGINA_SCIELO,
-        // Por significado es de Scopus: lo de SciELO va por su relevancia, intercalado.
-        orden: orden === 'significado' ? 'relevancia' : orden,
-        ...(desde ? { desdeAnio: desde } : {}),
-        ...(hasta ? { hastaAnio: hasta } : {}),
-      })
-      .pipe(
-        map((r) => r.pagina),
-        // Si SciELO falla, la lista sale con lo de Scopus y se dice.
-        catchError(() => {
-          this.mostrarError('SciELO no respondió esta vez: ves solo lo de Scopus.');
-          return of(null);
-        }),
-      );
+    return {
+      ...(porConceptos ? { conceptos } : { tema: conceptos.map((c) => c.nombre).join(' ') }),
+      pagina,
+      porPagina,
+      // Por significado es de Scopus: lo de SciELO va por su relevancia, intercalado.
+      orden: orden === 'significado' ? 'relevancia' : orden,
+      ...(desde ? { desdeAnio: desde } : {}),
+      ...(hasta ? { hastaAnio: hasta } : {}),
+    };
+  }
+
+  /** Lo común a SciELO y al resto de OpenAlex: los dos salen de OpenAlex. */
+  private paginaAbierta(pagina: number, base: 'scielo' | 'openalex'): Observable<PaginaDeScielo | null> {
+    const busqueda = this.busquedaAbierta(pagina, this.porPaginaDe(base));
+    const peticion =
+      base === 'scielo' ? this.scielo.buscar(busqueda) : this.scielo.buscarEnOpenAlex(busqueda);
+    return peticion.pipe(
+      map((r) => r.pagina),
+      // Si SciELO falla, la lista sale con lo de Scopus y se dice.
+      catchError(() => {
+        this.mostrarError(
+          base === 'scielo'
+            ? 'SciELO no respondió esta vez: ves solo lo de Scopus.'
+            : 'OpenAlex no respondió esta vez: ves lo de Scopus y SciELO.',
+        );
+        return of(null);
+      }),
+    );
+  }
+
+  /** La lista de UNA base externa, con la forma de la de Scopus. */
+  private soloExterna(pagina: number, externa: PaginaDeScielo): BusquedaDeScopus {
+    const base = this.verBase();
+    const nombre = this.textoDeVerBase();
+    const porPagina = externa.porPagina || 25;
+    let resultados = externa.resultados.map((art) => ({ ...this.comoFila(art, base), baseNombre: nombre }));
+    const orden = this.orden();
+    if (orden === 'citas') resultados = [...resultados].sort((a, b) => b.citas - a.citas);
+    if (orden === 'recientes' || orden === 'antiguos') {
+      const signo = orden === 'recientes' ? -1 : 1;
+      resultados = [...resultados].sort((a, b) => signo * ((a.anio ?? 0) - (b.anio ?? 0)));
+    }
+    return {
+      total: externa.total,
+      pagina,
+      paginas: Math.min(200, Math.ceil(Math.min(externa.total, 10_000) / porPagina)),
+      desde: (pagina - 1) * porPagina + 1,
+      porPagina,
+      conResumenes: true,
+      resultados,
+      baseUnica: base,
+    };
+  }
+
+  /** De qué base es una fila, con su nombre. */
+  nombreDeBase(resultado: ResultadoDeScopus): string {
+    if (resultado.baseNombre) return resultado.baseNombre;
+    if (resultado.base === 'scielo') return 'SciELO';
+    if (resultado.base === 'openalex') return 'OpenAlex';
+    return 'Scopus';
   }
 
   /** Un artículo de SciELO, con la forma de una fila de la tabla. */
-  private comoFila(art: ResultadoDeScielo): ResultadoDeScopus {
+  private comoFila(art: ResultadoDeScielo, base: string = 'scielo'): ResultadoDeScopus {
     return {
-      eid: `scielo:${art.id}`,
+      eid: `${base}:${art.id}`,
       scopusId: null,
       titulo: art.titulo,
       autores: art.autores,
       anio: art.anio,
       revista: art.revista,
       doi: art.doi,
-      tipo: 'Article',
+      tipo: MiScopusPanel.TIPOS_DE_OPENALEX[art.tipo ?? ''] ?? 'Article',
       citas: art.citas,
       accesoAbierto: Boolean(art.pdfLibre),
       enlace: art.enlace,
@@ -832,10 +1038,21 @@ export class MiScopusPanel implements OnInit {
             mismoQueEditorial: false,
           }
         : null,
-      base: 'scielo',
+      base,
       resumen: art.resumen,
     };
   }
+
+  /** El tipo de OpenAlex con el nombre que usa Scopus en la tabla. */
+  private static readonly TIPOS_DE_OPENALEX: Record<string, string> = {
+    article: 'Article',
+    review: 'Review',
+    dissertation: 'Tesis',
+    preprint: 'Preprint',
+    book: 'Libro',
+    chapter: 'Capítulo',
+    other: 'Documento',
+  };
 
   /**
    * Las dos listas en una. Lo de SciELO con el mismo DOI que algo de Scopus no
@@ -847,19 +1064,28 @@ export class MiScopusPanel implements OnInit {
     scopus: BusquedaDeScopus,
     scielo: PaginaDeScielo | null,
     pagina: number,
+    openalex: PaginaDeScielo | null = null,
   ): BusquedaDeScopus {
-    if (!scielo) return scopus;
+    if (!scielo && !openalex) return scopus;
 
     const porDoi = new Map(
       scopus.resultados.filter((r) => r.doi).map((r) => [r.doi!.toLowerCase(), r.eid]),
     );
     const enLasDos = new Set<string>();
     const deScielo: ResultadoDeScopus[] = [];
-    for (const art of scielo.resultados) {
+    for (const art of scielo?.resultados ?? []) {
       const igual = art.doi ? porDoi.get(art.doi.toLowerCase()) : undefined;
       if (igual) enLasDos.add(igual);
       else deScielo.push(this.comoFila(art));
     }
+    // Lo del resto de OpenAlex que ya está arriba (mismo DOI) no se repite.
+    const yaEstan = new Set([
+      ...porDoi.keys(),
+      ...(scielo?.resultados ?? []).filter((a) => a.doi).map((a) => a.doi!.toLowerCase()),
+    ]);
+    const deOpenAlex = (openalex?.resultados ?? [])
+      .filter((art) => !art.doi || !yaEstan.has(art.doi.toLowerCase()))
+      .map((art) => this.comoFila(art, 'openalex'));
     const deScopus = scopus.resultados.map(
       (r): ResultadoDeScopus => ({ ...r, base: 'scopus', tambienEnScielo: enLasDos.has(r.eid) }),
     );
@@ -867,32 +1093,38 @@ export class MiScopusPanel implements OnInit {
     const orden = this.orden();
     let resultados: ResultadoDeScopus[];
     if (orden === 'citas') {
-      resultados = [...deScopus, ...deScielo].sort((a, b) => b.citas - a.citas);
+      resultados = [...deScopus, ...deScielo, ...deOpenAlex].sort((a, b) => b.citas - a.citas);
     } else if (orden === 'recientes' || orden === 'antiguos') {
       const signo = orden === 'recientes' ? -1 : 1;
-      resultados = [...deScopus, ...deScielo].sort(
+      resultados = [...deScopus, ...deScielo, ...deOpenAlex].sort(
         (a, b) => signo * ((a.anio ?? 0) - (b.anio ?? 0)),
       );
     } else {
       resultados = [];
-      for (let i = 0; i < Math.max(deScopus.length, deScielo.length); i++) {
+      const largo = Math.max(deScopus.length, deScielo.length, deOpenAlex.length);
+      for (let i = 0; i < largo; i++) {
         if (deScopus[i]) resultados.push(deScopus[i]);
         if (deScielo[i]) resultados.push(deScielo[i]);
+        if (deOpenAlex[i]) resultados.push(deOpenAlex[i]);
       }
     }
 
     // OpenAlex no deja pasar de 10.000 resultados; Scopus, de 200 páginas.
-    const paginasDeScielo = scielo.porPagina
-      ? Math.ceil(Math.min(scielo.total, 10_000) / scielo.porPagina)
-      : 0;
+    const paginasDe = (p: PaginaDeScielo | null) =>
+      p?.porPagina ? Math.ceil(Math.min(p.total, 10_000) / p.porPagina) : 0;
+    const porPagina =
+      (this.seVe('scopus') ? scopus.porPagina : 0) +
+      (scielo ? this.porPaginaDe('scielo') : 0) +
+      (openalex ? this.porPaginaDe('openalex') : 0);
     return {
       ...scopus,
       pagina,
-      total: scopus.total + scielo.total,
+      total: scopus.total + (scielo?.total ?? 0) + (openalex?.total ?? 0),
       totalScopus: scopus.total,
-      totalScielo: scielo.total,
-      paginas: Math.min(200, Math.max(scopus.paginas, paginasDeScielo)),
-      desde: (pagina - 1) * (scopus.porPagina + MiScopusPanel.POR_PAGINA_SCIELO) + 1,
+      ...(scielo ? { totalScielo: scielo.total } : {}),
+      ...(openalex ? { totalOpenAlex: openalex.total } : {}),
+      paginas: Math.min(200, Math.max(scopus.paginas, paginasDe(scielo), paginasDe(openalex))),
+      desde: (pagina - 1) * porPagina + 1,
       resultados,
     };
   }
@@ -941,11 +1173,18 @@ export class MiScopusPanel implements OnInit {
     if (modo === this.modo()) return;
     // Pasar a avanzada con palabras escritas se lleva la ecuación ya armada:
     // es la forma natural de aprender a escribirla, partiendo de la suya.
-    if (modo === 'avanzada' && !this.ecuacion().trim() && this.ecuacionNormal()) {
-      this.ecuacion.set(this.ecuacionNormal());
+    // Si cambió lo escrito desde la última vez, la avanzada se rehace con lo
+    // nuevo; si no, se respeta lo que editara allí.
+    const normal = this.ecuacionNormal();
+    if (modo === 'avanzada' && normal && (normal !== this.ultimaConvertida || !this.ecuacion().trim())) {
+      this.ecuacion.set(normal);
+      this.ultimaConvertida = normal;
     }
     this.modo.set(modo);
   }
+
+  /** La búsqueda normal que se pasó a avanzada la última vez. */
+  private ultimaConvertida = '';
 
   /**
    * Lo que tiene marcado, por EID.
@@ -1005,12 +1244,33 @@ export class MiScopusPanel implements OnInit {
   /**
    * Las secciones de la columna de filtros que están abiertas.
    *
-   * Empiezan abiertas el año —con sus barras— y el área; las demás plegadas.
+   * Empieza abierto solo el año, con sus barras; las demás plegadas.
    * No es solo por espacio: cada sección abierta pide sus números, y los
    * exactos gastan una consulta a Scopus por opción (el tipo, doce). Se
    * cuentan cuando el tesista abre la sección, no en cada búsqueda.
    */
-  readonly abiertas = signal<ReadonlySet<string>>(new Set(['anio', 'area']));
+  readonly abiertas = signal<ReadonlySet<string>>(new Set(['anio']));
+
+  /**
+   * Si se ven todas las secciones de filtros o solo las de siempre: el año y
+   * el tipo de documento (28-oct, Benicio: «más básico»). Una sección con algo
+   * marcado se ve siempre, para que un filtro puesto no quede escondido.
+   */
+  readonly masFiltros = signal(false);
+
+  readonly facetasVisibles = computed(() => {
+    const todas = this.masFiltros();
+    return this.facetas.filter(
+      (f) =>
+        todas ||
+        f.clave === 'tipo' ||
+        this.valoresDe(f).length > 0 ||
+        this.valoresExcluidosDe(f).length > 0,
+    );
+  });
+
+  /** Cuántas secciones quedan detrás de «Más filtros». */
+  readonly facetasEscondidas = computed(() => this.facetas.length - this.facetasVisibles().length);
 
   /** En el móvil la columna de filtros se abre con un botón, encima de la lista. */
   readonly filtrosAbiertos = signal(false);
@@ -2181,7 +2441,7 @@ export class MiScopusPanel implements OnInit {
 
   /** El texto del botón: «PDF» si es el archivo, «Leer gratis» si es la página. */
   textoDelEnlaceAbierto(enlace: EnlaceAbierto): string {
-    return enlace.esPdf ? 'Descargar PDF gratis' : 'Leer gratis';
+    return enlace.esPdf ? 'PDF gratis' : 'Leer gratis';
   }
 
   /**
@@ -2199,6 +2459,12 @@ export class MiScopusPanel implements OnInit {
   }
 
   ngOnInit(): void {
+    // Las bases del «Más bases» del menú «Ver». Si no contesta, el menú sale
+    // sin ellas y todo lo demás sigue igual.
+    this.scielo.basesExternas().subscribe({
+      next: (bases) => this.basesExternas.set(bases.filter((b) => b.activa)),
+      error: () => this.basesExternas.set([]),
+    });
     const resultado = this.ruta.snapshot.queryParamMap.get('scopus');
     if (resultado) {
       this.vuelta.set(resultado);
@@ -2284,22 +2550,45 @@ export class MiScopusPanel implements OnInit {
     // Las dos a la vez. Pasada la última página de Scopus, si SciELO tiene
     // más, se sigue solo con SciELO sin volver a preguntar a Elsevier.
     if (pagina === 1) this.paginasDeScopus = Number.POSITIVE_INFINITY;
-    const deScopus = porSignificado
+    // Con «Solo SciELO» u «Solo OpenAlex» no se pregunta a Elsevier.
+    const deScopus = !this.seVe('scopus')
+      ? of(this.paginaVaciaDeScopus(pagina))
+      : porSignificado
       ? this.scopus.semantica(ecuacion, pregunta)
       : pagina > this.paginasDeScopus
         ? of(this.paginaVaciaDeScopus(pagina))
         : this.scopus.buscar(ecuacion, pagina, this.orden() === 'significado' ? 'citas' : this.orden());
-    const peticion = forkJoin([deScopus, this.paginaDeScielo(pagina)]);
+    const peticion = forkJoin([
+      deScopus,
+      this.paginaDeScielo(pagina),
+      this.paginaDeOpenAlex(pagina),
+      this.paginaExterna(pagina),
+    ]);
 
     peticion.subscribe({
-      next: ([soloScopus, deScielo]) => {
+      next: ([soloScopus, deScielo, deOpenAlex, deExterna]) => {
         if (pagina === 1 || soloScopus.paginas > 0) this.paginasDeScopus = soloScopus.paginas;
-        const resultado = this.mezclar(soloScopus, deScielo, pagina);
+        const resultado = deExterna
+          ? this.soloExterna(pagina, deExterna)
+          : this.mezclar(soloScopus, deScielo, pagina, deOpenAlex);
         this.busqueda.set(resultado);
         this.ecuacionDeLosResultados.set(ecuacion);
         this.buscando.set(false);
-        if (pagina === 1) this.anotarEnHistorial(ecuacion, soloScopus.total);
-        if (pagina === 1 && resultado.total === 0 && !esRescate && this.modo() === 'normal') {
+        const todo = this.verBase() === 'todo';
+        if (pagina === 1 && todo) {
+          this.anotarEnHistorial(ecuacion, soloScopus.total);
+          this.totalesPorBase.set({
+            todo: resultado.total,
+            scopus: resultado.totalScopus ?? resultado.total,
+            scielo: resultado.totalScielo ?? 0,
+            openalex: resultado.totalOpenAlex ?? 0,
+          });
+          this.ecuacionDeLosTotales = ecuacion;
+        } else if (pagina === 1 && ecuacion !== this.ecuacionDeLosTotales) {
+          // Otra búsqueda con una sola base: los números de las demás ya no valen.
+          this.totalesPorBase.set(null);
+        }
+        if (pagina === 1 && todo && resultado.total === 0 && !esRescate && this.modo() === 'normal') {
           this.rescatar();
         }
         if (hiloGuardado?.length) this.hilo.set(hiloGuardado);
@@ -2547,8 +2836,13 @@ export class MiScopusPanel implements OnInit {
     // Cada uno por su puerta: lo de Scopus por su EID, lo de SciELO por su
     // identificador de OpenAlex. Uno detrás del otro, para que el total de la
     // biblioteca del segundo parte ya cuente lo que guardó el primero.
-    const deScielo = eids.filter((eid) => eid.startsWith('scielo:')).map((eid) => eid.slice(7));
-    const deScopus = eids.filter((eid) => !eid.startsWith('scielo:'));
+    // Lo del resto de OpenAlex entra por la misma puerta que lo de SciELO; lo
+    // de las bases externas, por la suya, con su «<base>:<id>» entero.
+    const abierto = (eid: string) => eid.startsWith('scielo:') || eid.startsWith('openalex:');
+    const externo = (eid: string) => this.esExterna(eid.slice(0, eid.indexOf(':')));
+    const deScielo = eids.filter(abierto).map((eid) => eid.slice(eid.indexOf(':') + 1));
+    const deExternas = eids.filter(externo);
+    const deScopus = eids.filter((eid) => !abierto(eid) && !externo(eid));
     const primero: Observable<ImportacionDeScopus | null> = deScopus.length
       ? this.scopus.importar(deScopus)
       : of(null);
@@ -2556,6 +2850,13 @@ export class MiScopusPanel implements OnInit {
       switchMap((a) =>
         deScielo.length
           ? this.scielo.guardar(deScielo).pipe(map(({ resultado: b }) => (a ? sumarPartes(a, b) : b)))
+          : of(a),
+      ),
+      switchMap((a) =>
+        deExternas.length
+          ? this.scielo
+              .guardarDeExternas(deExternas)
+              .pipe(map(({ resultado: b }) => (a ? sumarPartes(a, b) : b)))
           : of(a!),
       ),
     );

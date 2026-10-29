@@ -70,15 +70,8 @@
 
         <div class="sc-buscador-cabecera">
           <span class="sc-buscador-izquierda">
-            <span class="sc-buscador-titulo">
-              Buscar en Scopus{{ conScielo() ? ' y SciELO' : '' }}
-            </span>
-            <!-- SciELO en la misma lista, con su etiqueta. Encendido por
-                 defecto; ver `conScielo`. -->
-            <label class="sc-incluir-scielo" title="Revistas de Perú y Latinoamérica, en español y portugués">
-              <input type="checkbox" [checked]="conScielo()" (change)="alternarScielo()" />
-              Incluir SciELO
-            </label>
+            <!-- Sin título ni interruptores de base: siempre se busca en Scopus,
+                 SciELO y OpenAlex (28-oct, Benicio). -->
             <!-- La columna de la IA de Scopus: las búsquedas guardadas y las
                  conversaciones del copiloto, por fechas. En un cajón que sale
                  por la izquierda, para no quitarle ancho a la tabla. -->
@@ -328,6 +321,7 @@
                   </button>
                 }
               </label>
+              <ng-container [ngTemplateOutlet]="botonBuscar" />
             </div>
 
             <!-- Las filas de más: Y / O / Y NO, cada una con su «Buscar
@@ -392,6 +386,7 @@
           } @else {
             <!-- Varias líneas: una ecuación real, con sus sinónimos, no cabe
                  en una. Enter busca; Mayúsculas+Enter parte la línea. -->
+            <div class="sc-campos">
             <textarea
               class="sc-ecuacion"
               rows="3"
@@ -404,33 +399,12 @@
               (input)="ecuacion.set($any($event.target).value)"
               (keydown.enter)="enterEnEcuacion($any($event))"
             ></textarea>
+              <ng-container [ngTemplateOutlet]="botonBuscar" />
+            </div>
           }
 
-          @if (!iaAbierta()) {
-          <div class="sc-caja-pie">
-            @if (modo() === 'normal') {
-              <button type="button" class="sc-accion" (click)="cambiarModo('avanzada')">
-                <span aria-hidden="true">✎</span> Editar en la búsqueda avanzada
-              </button>
-            }
-            @if (modo() === 'normal') {
-              <button type="button" class="sc-accion" (click)="agregarFila()">
-                <span aria-hidden="true">＋</span> Agregar campo de búsqueda
-              </button>
-            }
-            <button type="button" class="sc-accion" (click)="usarEjemplo()">
-              Poner un ejemplo
-            </button>
-            @if (busqueda()) {
-              <button type="button" class="sc-accion" (click)="guardarBusqueda()">
-                <span aria-hidden="true">🔖</span> Guardar búsqueda
-              </button>
-            }
-            @if (busqueda() || texto() || ecuacion() || hayFiltros()) {
-              <button type="button" class="sc-accion" (click)="reiniciar()">
-                Reiniciar
-              </button>
-            }
+          <!-- «Buscar» va al lado de los campos, no debajo. -->
+          <ng-template #botonBuscar>
             <button
               type="button"
               class="boton sc-buscar"
@@ -439,18 +413,14 @@
             >
               {{ buscando() ? 'Buscando…' : 'Buscar' }}
             </button>
-          </div>
-          }
+          </ng-template>
+
+          <!-- Sin pie: «Guardar búsqueda» y «Reiniciar» se quitaron (28-oct,
+               Benicio). Vaciar el campo es la × de dentro. -->
         </div>
 
-        <!-- Lo que de verdad se manda. Enseñarlo es lo que evita la sorpresa de
-             «¿por qué me salen tan pocos?», y de paso enseña a escribirlo. En la
-             avanzada sin filtros sería repetir el campo, así que no sale. -->
-        @if (!iaAbierta() && ecuacionCompleta() && (hayFiltros() || modo() === 'normal')) {
-          <p class="scopus-anadido">
-            Se busca: <code>{{ ecuacionCompleta() }}</code>
-          </p>
-        }
+        <!-- Sin la línea «Se busca: …» (28-oct, Benicio). La ecuación se ve
+             al pasar a «Consulta avanzada». -->
 
 
       </div>
@@ -600,7 +570,7 @@
             }
           </section>
 
-          @for (faceta of facetas; track faceta.clave) {
+          @for (faceta of facetasVisibles(); track faceta.clave) {
             <section class="sc-faceta">
               <button
                 type="button"
@@ -741,44 +711,77 @@
             </section>
           }
 
-          <p class="sc-filtros-nota">
-            Dentro de una sección se suman las opciones; entre secciones se combinan. ⊘ excluye:
-            todo menos eso. Los números sin «≈» son exactos de Scopus; los que llevan «≈» son del
-            catálogo abierto (OpenAlex) y solo orientan: cuenta más obras que Scopus.
-          </p>
+          <!-- Las demás secciones (área, idioma, país…), detrás de un botón. -->
+          @if (masFiltros() || facetasEscondidas() > 0) {
+            <button type="button" class="sc-enlace sc-mas-filtros" (click)="masFiltros.set(!masFiltros())">
+              {{ masFiltros() ? 'Menos filtros' : 'Más filtros (' + facetasEscondidas() + ')' }}
+            </button>
+          }
+
+          @if (masFiltros()) {
+            <p class="sc-filtros-nota">
+              Dentro de una sección se suman las opciones; entre secciones se combinan. ⊘ excluye:
+              todo menos eso. Los números sin «≈» son exactos de Scopus; los que llevan «≈» son del
+              catálogo abierto (OpenAlex) y solo orientan: cuenta más obras que Scopus.
+            </p>
+          }
         </aside>
         }
 
         <div class="sc-resultados">
-          <!-- Dos pestañas: Scopus y SciELO, o las tesis y revistas peruanas de
-               ALICIA. Las dos listas están cargadas; la pestaña solo elige cuál
-               se ve. -->
-          @if (busqueda(); as lista) {
-            <div class="sc-pestanas" role="tablist" aria-label="Dónde buscar">
+          <!-- Sin pestañas (28-oct, Benicio): qué se ve se elige en «Ver», a la
+               derecha de la cabecera. Las dos listas están cargadas; «Tesis
+               peruanas» solo cambia cuál se ve. -->
+          <ng-template #menuVer>
+            <div class="sc-orden sc-ver-base">
+              <span>Ver</span>
               <button
                 type="button"
-                role="tab"
-                class="sc-pestana"
-                [class.activa]="vista() === 'scopus'"
-                [attr.aria-selected]="vista() === 'scopus'"
-                (click)="vista.set('scopus')"
+                class="sc-orden-boton"
+                aria-haspopup="listbox"
+                [attr.aria-expanded]="menuVerBase()"
+                [disabled]="buscando()"
+                (click)="menuVerBase.set(!menuVerBase())"
               >
-                Scopus y SciELO
-                <span class="sc-pestana-cifra">{{ lista.total | number }}</span>
+                {{ textoDeVerBase() }}
+                <span class="sc-orden-flecha" aria-hidden="true"></span>
               </button>
-              <button
-                type="button"
-                role="tab"
-                class="sc-pestana"
-                [class.activa]="vista() === 'alicia'"
-                [attr.aria-selected]="vista() === 'alicia'"
-                (click)="vista.set('alicia')"
-              >
-                Tesis peruanas
-                @if (totalAlicia() !== null) {
-                  <span class="sc-pestana-cifra">{{ totalAlicia() | number }}</span>
-                }
-              </button>
+              @if (menuVerBase()) {
+                <div class="sc-orden-capa" (click)="menuVerBase.set(false)"></div>
+                <ul class="sc-orden-lista" role="listbox" aria-label="Ver resultados de">
+                  @for (opcion of opcionesDeVerBase(); track opcion.valor) {
+                    @if (opcion.primeraExterna) {
+                      <li class="sc-exportar-titulo" role="presentation">Más bases</li>
+                    }
+                    <li>
+                      <button
+                        type="button"
+                        role="option"
+                        [attr.title]="opcion.detalle ?? null"
+                        [class.activa]="verActual() === opcion.valor"
+                        [attr.aria-selected]="verActual() === opcion.valor"
+                        (click)="elegirVerBase(opcion.valor)"
+                      >
+                        <span class="sc-orden-marca" aria-hidden="true">{{
+                          verActual() === opcion.valor ? "✓" : ""
+                        }}</span>
+                        {{ opcion.texto }}
+                        @if (cuantosEnVer(opcion.valor); as n) {
+                          <small class="sc-exportar-para">{{ n | number }}</small>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </ng-template>
+
+          <!-- En las tesis la cabecera de arriba no se ve: el menú va aquí,
+               para poder volver. -->
+          @if (busqueda() && vista() === 'alicia') {
+            <div class="sc-ver-arriba">
+              <ng-container [ngTemplateOutlet]="menuVer" />
             </div>
           }
 
@@ -862,7 +865,7 @@
             }
             @if (lista.total === 0 && !rescate()?.buscando) {
               <p class="scopus-aviso">
-                {{ lista.totalScielo !== undefined ? 'Ni Scopus ni SciELO encontraron' : 'Scopus no encontró' }}
+                {{ esMezclada(lista) ? 'Ni Scopus ni ' + nombreDeLasAbiertas() + ' encontraron' : 'Scopus no encontró' }}
                 nada con esa búsqueda. Suele ser por afinar de más: quita un
                 <code>AND</code>, prueba el sinónimo en inglés de tu tema, o amplía los años.
                 @if (hayFiltros()) {
@@ -875,6 +878,9 @@
                    artículos de la página, cada afirmación con sus citas y la
                    columna de referencias al lado. Se pide solo al buscar desde
                    el copiloto; si no, con el botón. -->
+              <!-- La tarjeta solo cuando hay resumen o se está haciendo; para
+                   pedirlo basta el botón «✦ Resumir con IA» junto al total. -->
+              @if (hilo().length > 0 || resumiendo()) {
               <section class="sc-resumen" aria-label="Resumen con IA">
                 <header class="sc-resumen-cabecera">
                   <span class="sc-copiloto-marca" aria-hidden="true">✦</span>
@@ -894,10 +900,6 @@
                     >
                       {{ resumenAbierto() ? 'Ocultar' : 'Mostrar' }}
                       <span class="sc-orden-flecha" aria-hidden="true"></span>
-                    </button>
-                  } @else if (!resumiendo()) {
-                    <button type="button" class="boton sc-resumen-pedir" (click)="resumir()">
-                      Resumir con IA
                     </button>
                   }
                 </header>
@@ -1047,6 +1049,7 @@
                   </div>
                 }
               </section>
+              }
 
               @if (rescate(); as r) {
                 @if (r.rehecha) {
@@ -1061,13 +1064,8 @@
               }
               <div class="sc-resultados-cabecera">
                 <p class="sc-total">
-                  @if (lista.totalScielo !== undefined) {
-                    Se encontraron <strong>{{ lista.totalScopus ?? 0 | number }}</strong> en Scopus y
-                    <strong>{{ lista.totalScielo | number }}</strong> en SciELO.
-                  } @else {
-                    Se encontraron <strong>{{ lista.total | number }}</strong>
-                    {{ lista.total === 1 ? 'documento' : 'documentos' }}.
-                  }
+                  <strong>{{ lista.total | number }}</strong>
+                  {{ lista.total === 1 ? 'resultado' : 'resultados' }}
                   @if (motivoSinScielo(); as motivo) {
                     <small class="sc-sin-scielo">{{ motivo }}</small>
                   }
@@ -1086,6 +1084,11 @@
                     </small>
                   }
                 </p>
+                @if (hilo().length === 0 && !resumiendo() && lista.total > 0) {
+                  <button type="button" class="sc-resumir-chico" (click)="resumir()">
+                    <span aria-hidden="true">✦</span> Resumir con IA
+                  </button>
+                }
                 <div class="sc-orden sc-orden-resultados">
                   <span>Ordenar por</span>
                   <button
@@ -1140,25 +1143,32 @@
                      con lo que ya está en pantalla, sin volver a Elsevier: por
                      eso el botón dice exactamente qué va dentro. Ver
                      `scopus-exportar`. -->
+                <!-- «Ver»: todo, una sola base o las tesis. Ver `verBase`. -->
+                <ng-container [ngTemplateOutlet]="menuVer" />
+
                 <div class="sc-orden sc-exportar">
                   <button
                     type="button"
-                    class="sc-orden-boton"
+                    class="sc-mas-opciones"
                     aria-haspopup="listbox"
                     [attr.aria-expanded]="exportacion.menuExportar()"
                     [disabled]="exportacion.aExportar().length === 0"
                     (click)="exportacion.menuExportar.set(!exportacion.menuExportar())"
                   >
-                    @if (cuantosMarcados() > 0) {
-                      Exportar {{ cuantosMarcados() }} seleccionadas
-                    } @else {
-                      Exportar esta página ({{ exportacion.aExportar().length }})
-                    }
+                    <span class="sc-mas-opciones-icono" aria-hidden="true">⤓</span>
+                    {{ cuantosMarcados() > 0 ? 'Exportar ' + cuantosMarcados() : 'Exportar' }}
                     <span class="sc-orden-flecha" aria-hidden="true"></span>
                   </button>
                   @if (exportacion.menuExportar()) {
                     <div class="sc-orden-capa" (click)="exportacion.menuExportar.set(false)"></div>
                     <ul class="sc-orden-lista" role="listbox" aria-label="Formato de exportación">
+                      <li class="sc-exportar-titulo" role="presentation">
+                        @if (cuantosMarcados() > 0) {
+                          Exportar {{ cuantosMarcados() }} seleccionadas
+                        } @else {
+                          Exportar esta página ({{ exportacion.aExportar().length }})
+                        }
+                      </li>
                       @for (formato of exportacion.formatos; track formato.valor) {
                         <li>
                           <button type="button" role="option" (click)="exportacion.exportar(formato.valor)">
@@ -1238,7 +1248,7 @@
                       </p>
                     }
                     <small class="sc-mapeo-nota">
-                      Va la búsqueda de estos resultados{{ busqueda()?.totalScielo !== undefined ? ' en Scopus (lo de SciELO no entra en el mapeo)' : '' }}
+                      Va la búsqueda de estos resultados{{ busqueda() && esMezclada(busqueda()!) ? ' en Scopus (lo de ' + nombreDeLasAbiertas() + ' no entra en el mapeo)' : '' }}
                       @if (ecuacionDeLosResultados(); as ecuacion) {
                         (<code class="sc-mapeo-ecuacion">{{ ecuacion }}</code>)
                       }
@@ -1266,11 +1276,7 @@
                           (change)="marcarTodo()"
                         />
                       </th>
-                      <th>Título del documento</th>
-                      <th class="sc-col-autores">Autores</th>
-                      <th class="sc-col-fuente">Fuente</th>
-                      <th class="sc-col-anio">Año</th>
-                      <th class="sc-col-citas">Citas</th>
+                      <th>Marcar toda la página</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1289,7 +1295,28 @@
                           />
                           <span class="sc-numero">{{ lista.desde + i }}</span>
                         </td>
+                        <!-- Fila simple (28-oct, Benicio): el título abre el
+                             artículo; debajo, quién, cuándo y dónde; luego la
+                             base y las citas, y solo dos acciones. -->
                         <td class="sc-col-titulo">
+                          @if (resultado.enlace || resultado.doi) {
+                            <a
+                              class="sc-titulo"
+                              [href]="resultado.enlace || 'https://doi.org/' + resultado.doi"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              >{{ resultado.titulo }}</a
+                            >
+                          } @else {
+                            <span class="sc-titulo">{{ resultado.titulo }}</span>
+                          }
+                          <span class="sc-datos">
+                            {{ resultado.autores || '(Autor no consignado)' }} ·
+                            {{ resultado.anio ?? 's. f.' }}
+                            @if (resultado.revista) {
+                              · {{ resultado.revista }}
+                            }
+                          </span>
                           <span class="sc-meta">
                             @if (cercania(resultado); as cerca) {
                               <span class="sc-cercania" [attr.data-nivel]="cerca.nivel">
@@ -1298,40 +1325,23 @@
                               </span>
                               ·
                             }
-                            @if (lista.totalScielo !== undefined) {
+                            @if (esMezclada(lista)) {
                               <span class="sc-base" [attr.data-base]="resultado.base">
-                                {{ resultado.base === 'scielo' ? 'SciELO' : 'Scopus' }}
+                                {{ nombreDeBase(resultado) }}
                               </span>
                               @if (resultado.tambienEnScielo) {
                                 <span class="sc-base" data-base="scielo">SciELO</span>
                               }
                               ·
                             }
-                            {{ resultado.tipo || 'Documento' }}
-                            @if (resultado.accesoAbierto) {
-                              · <span class="sc-abierto">Acceso abierto</span>
-                            } @else if (resultado.enlaceAbierto) {
-                              <!-- Scopus solo marca lo abierto en la editorial. Cuando la
-                                   copia está en un repositorio no lo marca, y el artículo
-                                   se lee gratis igual: por eso se dice de otra forma y no
-                                   se le llama «acceso abierto», que significa otra cosa. -->
-                              · <span class="sc-abierto">Copia gratuita</span>
+                            @if (resultado.tipo && resultado.tipo !== 'Article') {
+                              {{ resultado.tipo }} ·
                             }
-                            @if (resultado.enlaceAbierto; as abierto) {
-                              @if (avisoDeVersion(abierto); as aviso) {
-                                · <span class="sc-version">{{ aviso }}</span>
-                              }
-                            }
+                            {{ resultado.citas }} {{ resultado.citas === 1 ? 'cita' : 'citas' }}
                             @if (resultado.yaLaTienes) {
                               · <span class="sc-ya">Ya la tienes</span>
                             }
-                            <!-- Solo cuando no hay forma de completarlo: sin DOI
-                                 no se le puede preguntar al catálogo abierto. -->
-                            @if (!resultado.conResumen && !resultado.doi) {
-                              · <span class="sc-flojo">Sin resumen</span>
-                            }
                           </span>
-                          <span class="sc-titulo">{{ resultado.titulo }}</span>
                           <span class="sc-enlaces">
                             @if (resultado.doi || resultado.resumen) {
                               <button
@@ -1344,11 +1354,7 @@
                                 <span class="sc-orden-flecha" aria-hidden="true"></span>
                               </button>
                             }
-                            <!-- Primero el que se puede leer ya. Scopus dice SI un
-                                 artículo es abierto pero no DÓNDE está la copia, y sin el
-                                 dónde el cartel no servía de nada. Lo dan los catálogos
-                                 abiertos; aquí no se aloja ningún PDF. -->
-                            @if (enlaceAbiertoAparte(resultado); as abierto) {
+                            @if (resultado.enlaceAbierto; as abierto) {
                               <a
                                 class="sc-abierto-enlace"
                                 [href]="abierto.url"
@@ -1358,41 +1364,7 @@
                                 >{{ textoDelEnlaceAbierto(abierto) }} ↗</a
                               >
                             }
-                            @if (resultado.enlace) {
-                              <a [href]="resultado.enlace" target="_blank" rel="noopener noreferrer"
-                                >{{ resultado.base === 'scielo' ? 'Ver en la revista' : 'Ver en Scopus' }} ↗</a
-                              >
-                            }
-                            @if (resultado.doi) {
-                              <a
-                                [href]="'https://doi.org/' + resultado.doi"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                >Ver en la editorial ↗</a
-                              >
-                            }
                           </span>
-                          <!-- El DOI, entero y a la vista. Antes solo estaba
-                               detrás de «Ver en la editorial», y el DOI no es
-                               un enlace que se pulsa: es el dato que se pega en
-                               la matriz de antecedentes, en el correo al asesor
-                               o en otra base. Con el botón se copia de un clic,
-                               sin seleccionar a mano una cadena que se corta
-                               mal. -->
-                          @if (resultado.doi; as doi) {
-                            <span class="sc-doi">
-                              <span class="sc-doi-etiqueta">DOI</span>
-                              <code class="sc-doi-valor">{{ doi }}</code>
-                              <button
-                                type="button"
-                                class="sc-doi-copiar"
-                                [attr.aria-label]="'Copiar el DOI ' + doi"
-                                (click)="exportacion.copiarDoi(doi)"
-                              >
-                                {{ exportacion.doiCopiado() === doi ? '✓ Copiado' : 'Copiar' }}
-                              </button>
-                            </span>
-                          }
                           @if (resumenesAbiertos().has(resultado.eid)) {
                             <span class="sc-abstract">
                               @if (cargandoResumenes()) {
@@ -1401,25 +1373,12 @@
                                 {{ texto }}
                                 <small>Resumen del catálogo abierto (OpenAlex).</small>
                               } @else {
-                                <em>El catálogo abierto no tiene el resumen de este artículo. Ábrelo en la
-                                  editorial para leerlo.</em>
+                                <em>El catálogo abierto no tiene el resumen de este artículo. Toca el título
+                                  para leerlo en su página.</em>
                               }
                             </span>
                           }
                         </td>
-                        <td class="sc-col-autores" data-titulo="Autores">
-                          {{ resultado.autores || '(Autor no consignado)' }}
-                        </td>
-                        <td class="sc-col-fuente" data-titulo="Fuente">
-                          @if (resultado.revista) {
-                            <span class="sc-revista">{{ resultado.revista }}</span>
-                          }
-                          @if (detalleDeFuente(resultado); as detalle) {
-                            <span class="sc-detalle">{{ detalle }}</span>
-                          }
-                        </td>
-                        <td class="sc-col-anio" data-titulo="Año">{{ resultado.anio ?? 's. f.' }}</td>
-                        <td class="sc-col-citas" data-titulo="Citas">{{ resultado.citas }}</td>
                       </tr>
                     }
                   </tbody>

@@ -137,3 +137,41 @@ describe('un artículo de SciELO', () => {
     expect(csv).toContain('"SciELO"');
   });
 });
+
+/** Del resto de OpenAlex: igual que SciELO, con su propia base. */
+describe('un artículo del resto de OpenAlex', () => {
+  const DE_OPENALEX: ResultadoDeScopus = {
+    ...ARTICULO,
+    eid: 'openalex:W4390000001',
+    scopusId: null,
+    enlace: 'https://www.redalyc.org/articulo',
+    base: 'openalex',
+  };
+
+  it('no lleva un EID inventado y dice que es de OpenAlex', () => {
+    const ris = comoRis([DE_OPENALEX]);
+    expect(ris).not.toContain('EID');
+    expect(ris).toContain('DB  - OpenAlex');
+    expect(comoBibtex([DE_OPENALEX])).not.toContain('Scopus EID');
+    const csv = comoCsv([DE_OPENALEX]);
+    expect(csv).not.toContain('openalex:W4390000001');
+    expect(csv).toContain('"OpenAlex"');
+  });
+});
+
+/** De una base externa (PubMed…): sin EID y con el nombre de su base. */
+describe('un artículo de una base externa', () => {
+  const DE_PUBMED: ResultadoDeScopus = {
+    ...ARTICULO,
+    eid: 'pubmed:41797731',
+    scopusId: null,
+    base: 'pubmed',
+    baseNombre: 'PubMed',
+  };
+
+  it('dice que es de PubMed y no lleva EID', () => {
+    expect(comoRis([DE_PUBMED])).toContain('DB  - PubMed');
+    expect(comoRis([DE_PUBMED])).not.toContain('EID');
+    expect(comoCsv([DE_PUBMED])).toContain('"PubMed"');
+  });
+});

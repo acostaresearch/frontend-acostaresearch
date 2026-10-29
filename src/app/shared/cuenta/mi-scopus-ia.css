@@ -374,16 +374,8 @@
   min-width: 0;
 }
 
-.sc-resumen-plegar,
-.sc-resumen-pedir {
+.sc-resumen-plegar {
   flex: none;
-}
-
-.sc-resumen-pedir {
-  width: auto;
-  padding-top: 7px;
-  padding-bottom: 7px;
-  font-size: 13px;
 }
 
 .sc-resumen-cuerpo {

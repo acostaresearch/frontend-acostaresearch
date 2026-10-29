@@ -96,9 +96,12 @@ export interface ResultadoDeScopus {
   /**
    * De qué base viene, en la lista mezclada con SciELO. Sin esto, de Scopus.
    * Los de SciELO llevan `eid = 'scielo:W…'` (su identificador de OpenAlex):
-   * no tienen EID y al guardarlos van por `ScieloService`.
+   * no tienen EID y al guardarlos van por `ScieloService`. Los del resto de
+   * OpenAlex, igual con `eid = 'openalex:W…'`.
    */
-  base?: 'scopus' | 'scielo';
+  base?: string;
+  /** El nombre de la base para verlo y exportarlo («PubMed»). Sin esto, por `base`. */
+  baseNombre?: string;
   /** De Scopus, y SciELO también lo tiene (mismo DOI): sale una sola vez. */
   tambienEnScielo?: boolean;
   /** El resumen, cuando ya llega con el resultado (los de SciELO). */
@@ -197,6 +200,9 @@ export interface BusquedaDeScopus {
    */
   totalScopus?: number;
   totalScielo?: number;
+  totalOpenAlex?: number;
+  /** Si la lista es de UNA base externa sola («pubmed»). */
+  baseUnica?: string;
 }
 
 /** Un proyecto al que puede ir el mapeo bibliométrico. */

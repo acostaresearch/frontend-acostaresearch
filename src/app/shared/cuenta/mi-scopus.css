@@ -87,11 +87,6 @@
   margin-bottom: 10px;
 }
 
-.sc-buscador-titulo {
-  font-size: 14px;
-  font-weight: 700;
-}
-
 /* El interruptor de «Consulta avanzada». Una casilla de verdad debajo, para
    que el teclado y el lector de pantalla lo traten como lo que es. */
 .sc-interruptor {
@@ -301,56 +296,21 @@
   resize: vertical;
 }
 
-.sc-caja-pie {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 18px;
-  margin-top: 12px;
-}
-
-.sc-accion {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0;
-  font: inherit;
-  font-size: 12.5px;
-  color: var(--color-primario);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.sc-accion:hover {
-  color: var(--color-primario-oscuro);
-}
-
-.sc-accion span {
-  text-decoration: none;
-}
-
 .sc-buscar {
   width: auto;
   min-width: 104px;
   margin-left: auto;
 }
 
-/* Lo que de verdad se manda, debajo de la caja. */
-.scopus-anadido {
-  margin: 10px 0 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--color-texto-tenue);
+/* «Buscar» al lado de los campos, a su misma altura. */
+.sc-campos > .sc-buscar {
+  flex: none;
+  align-self: stretch;
 }
 
-.scopus-anadido code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--color-texto-suave);
-  overflow-wrap: anywhere;
+.sc-campos > .sc-ecuacion {
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── Filtros a la izquierda, resultados a la derecha ───────────────────── */
@@ -576,14 +536,83 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 18px;
+  gap: 10px 14px;
   margin-bottom: 12px;
+}
+
+/* Todo lo de la derecha junto: solo el total empuja (su `margin-right:
+   auto`). Sin esto, el `margin-left: auto` de cada `.sc-orden` repartía el
+   hueco entre ellos y quedaban sueltos por la fila. */
+.sc-resultados-cabecera > .sc-orden {
+  margin-left: 0;
 }
 
 .sc-total {
   margin: 0 auto 0 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+/* «✦ Resumir con IA», pequeño, junto al total. */
+.sc-resumir-chico {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sc-resumir-chico:hover {
+  filter: brightness(0.97);
+}
+
+/* «⤓ Exportar ▾»: el menú de exportar, con borde, al final de la fila. */
+.sc-mas-opciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primario);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde-fuerte);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sc-mas-opciones:hover:not(:disabled) {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.sc-mas-opciones-icono {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.sc-mas-opciones:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sc-exportar-titulo {
+  padding: 6px 12px 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-texto-tenue);
+}
+
+.sc-mas-filtros {
+  margin-top: 12px;
 }
 
 .sc-total strong {
@@ -605,55 +634,25 @@
   width: auto;
 }
 
-/* Las pestañas Scopus y SciELO / ALICIA, encima de los resultados. */
-.sc-pestanas {
+/* «Ver» encima de la lista de tesis, a la derecha, para poder volver. */
+.sc-ver-arriba {
   display: flex;
-  gap: 4px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--color-borde);
-  overflow-x: auto;
-}
-
-.sc-pestana {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  margin-bottom: -1px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: var(--color-texto-suave);
-  background: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-}
-
-.sc-pestana:hover {
-  color: var(--color-texto);
-}
-
-.sc-pestana.activa {
-  color: var(--color-primario);
-  border-bottom-color: var(--color-primario);
-}
-
-.sc-pestana-cifra {
-  padding: 1px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 999px;
-  background: var(--color-primario-suave);
-  color: var(--color-primario);
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 /* Exportar: reaprovecha el desplegable del orden, pero sin su `margin-left:
    auto` —con dos en la misma fila, el hueco libre se repartía entre los dos y
    el orden se despegaba del total—. */
-.sc-exportar {
+.sc-exportar,
+.sc-ver-base {
   margin-left: 0;
+}
+
+/* Con «Más bases» el menú es largo: que se desplace dentro. */
+.sc-ver-base .sc-orden-lista {
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
 }
 
 .sc-exportar-para {
@@ -861,6 +860,25 @@
   color: var(--color-texto);
 }
 
+/* El título abre el artículo; sin subrayado hasta pasar por encima. */
+a.sc-titulo {
+  text-decoration: none;
+}
+
+a.sc-titulo:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Quién, cuándo y dónde, en una línea debajo del título. */
+.sc-datos {
+  display: block;
+  margin: 2px 0 3px;
+  font-size: 12.5px;
+  color: var(--color-texto-suave);
+}
+
 .sc-enlaces {
   display: flex;
   flex-wrap: wrap;
@@ -868,85 +886,10 @@
   margin-top: 5px;
 }
 
-.sc-enlaces a,
-.sc-revista {
+.sc-enlaces a {
   font-size: 12px;
   color: var(--color-primario);
   text-underline-offset: 2px;
-}
-
-/* ── El DOI de la fila ─────────────────────────────────────────────────── */
-.sc-doi {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--color-texto-tenue);
-}
-
-.sc-doi-etiqueta {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-/* Monoespaciada y seleccionable: es un identificador, y se lee carácter a
-   carácter cuando alguien lo compara con el de su lista. */
-.sc-doi-valor {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--color-texto-suave);
-  overflow-wrap: anywhere;
-  user-select: all;
-}
-
-.sc-doi-copiar {
-  padding: 0;
-  font: inherit;
-  font-size: 11.5px;
-  color: var(--color-primario);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.sc-col-autores {
-  width: 17%;
-}
-
-.sc-col-fuente {
-  width: 19%;
-}
-
-.sc-revista {
-  display: inline;
-  text-decoration: underline;
-}
-
-.sc-detalle {
-  display: block;
-  font-size: 12px;
-  color: var(--color-texto-suave);
-}
-
-.sc-col-anio,
-.sc-col-citas {
-  width: 48px;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-texto);
-}
-
-.sc-col-citas {
-  padding-right: 4px !important;
-  text-align: right;
-}
-
-.sc-tabla th.sc-col-citas {
-  text-align: right;
 }
 
 /* Lo que ya tiene se apaga un poco, pero SIGUE EN LA LISTA y se puede marcar:
@@ -1410,30 +1353,6 @@
     display: none;
   }
 
-  .sc-col-autores,
-  .sc-col-fuente,
-  .sc-col-anio,
-  .sc-col-citas {
-    width: auto;
-    margin-top: 4px;
-    text-align: left !important;
-  }
-
-  .sc-col-autores::before,
-  .sc-col-fuente::before,
-  .sc-col-anio::before,
-  .sc-col-citas::before {
-    content: attr(data-titulo) ': ';
-    font-size: 11.5px;
-    color: var(--color-texto-tenue);
-  }
-
-  .sc-col-anio,
-  .sc-col-citas {
-    display: inline-block !important;
-    margin-right: 16px;
-  }
-
   .sc-importar {
     width: 100%;
   }
@@ -1479,17 +1398,9 @@
   word-break: break-word;
 }
 
-/* ── SciELO en la misma lista ─────────────────────────────────────────────────
-   El interruptor junto al título, y la etiqueta de la base en cada fila: en la
-   lista mezclada hay que saber de un vistazo de dónde viene cada artículo. */
-.sc-incluir-scielo {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-texto-suave);
-  cursor: pointer;
-}
+/* ── SciELO y OpenAlex en la misma lista ──────────────────────────────────────
+   La etiqueta de la base en cada fila: en la lista mezclada hay que saber de
+   un vistazo de dónde viene cada artículo. */
 
 .sc-base {
   display: inline-block;
@@ -1506,6 +1417,11 @@
 .sc-base[data-base='scielo'] {
   background: var(--color-aviso-suave);
   color: var(--color-aviso);
+}
+
+.sc-base[data-base='openalex'] {
+  background: var(--color-exito-suave);
+  color: var(--color-exito);
 }
 
 .sc-sin-scielo {
