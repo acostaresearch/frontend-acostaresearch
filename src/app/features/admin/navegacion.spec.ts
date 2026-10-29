@@ -40,6 +40,14 @@ describe('Enlaces guardados del administrador', () => {
     expect(visibles).not.toContain('Avance de clientes');
   });
 
+  it('«Formatos de universidad» (28-oct) tiene su dirección y su entrada, y no es del administrador de país', () => {
+    expect(seccionDe('formatos-de-universidad')).toBe('formatos');
+    const visibles = MENU.flatMap((grupo) => grupo.entradas.map((entrada) => entrada.seccion));
+    expect(visibles).toContain('formatos');
+    // El servidor solo deja entrar al ADMIN: al de país no se le enseña.
+    expect(SECCIONES_DE_PAIS).not.toContain('formatos');
+  });
+
   it('una sección desconocida queda sin resolver para que el panel vuelva al resumen', () => {
     expect(seccionDe('no-existe')).toBeUndefined();
     expect(seccionDe('toString')).toBeUndefined();

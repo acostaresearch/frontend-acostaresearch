@@ -1,0 +1,313 @@
+<app-aviso-flotante [(error)]="error" [(aviso)]="aviso" />
+
+<!-- La biblioteca de formatos de universidad. «Por aprobar» son las plantillas
+     que subieron los tesistas: no se ofrecen a nadie hasta aprobarlas. -->
+<section class="tarjeta" data-tour="admin-formatos">
+  <div class="barra-formatos">
+    <div class="filtros" role="group" aria-label="Filtrar formatos">
+      <button
+        type="button"
+        class="filtro"
+        [class.activo]="filtro() === 'porAprobar'"
+        (click)="filtro.set('porAprobar')"
+      >
+        Por aprobar <span class="filtro-cuenta" [class.hay]="porAprobar().length > 0">{{ porAprobar().length }}</span>
+      </button>
+      <button
+        type="button"
+        class="filtro"
+        [class.activo]="filtro() === 'biblioteca'"
+        (click)="filtro.set('biblioteca')"
+      >
+        En la biblioteca <span class="filtro-cuenta">{{ enBiblioteca().length }}</span>
+      </button>
+    </div>
+
+    <div class="barra-derecha">
+      <input
+        type="search"
+        class="buscar"
+        placeholder="Universidad o sigla"
+        aria-label="Buscar por universidad"
+        [ngModel]="buscar()"
+        (ngModelChange)="buscar.set($event)"
+      />
+      <button type="button" class="boton" (click)="abrirFicha('nuevo')">Subir formato</button>
+    </div>
+  </div>
+
+  @if (filtro() === 'porAprobar') {
+    <p class="nota">
+      Las subieron tesistas desde el enlace de Claude. Ábrelas en Word antes de aprobarlas: si la
+      portada trae el nombre de una persona, recházala o sube una copia limpia con «Subir formato».
+    </p>
+  }
+
+  @if (cargando()) {
+    <p class="tenue">Cargando…</p>
+  } @else if (visibles().length === 0) {
+    <p class="tenue">
+      @if (buscar()) {
+        Ningún formato coincide con lo que buscas.
+      } @else if (filtro() === 'porAprobar') {
+        No hay plantillas esperando revisión.
+      } @else {
+        Todavía no hay formatos. Sube el .docx de una universidad y se le pondrá solo a sus tesistas.
+      }
+    </p>
+  } @else {
+    <div class="tabla-scroll">
+      <table class="tabla-formatos">
+        <thead>
+          <tr>
+            <th>Universidad</th>
+            <th>Capítulos</th>
+            <th>Archivo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of visibles(); track f.id) {
+            <tr>
+              <td>
+                <b>{{ f.universidad || 'Sin universidad' }}</b>
+                @if (f.facultad) {
+                  <span class="tenue"> · {{ f.facultad }}</span>
+                }
+                <span class="bloque">
+                  @if (f.grado !== 'cualquiera') {
+                    <span class="pastilla">{{ f.grado === 'pregrado' ? 'Pregrado' : 'Posgrado' }}</span>
+                  }
+                  @if (f.alias) {
+                    <span class="tenue">También: {{ f.alias }}</span>
+                  }
+                </span>
+                @if (f.notas) {
+                  <span class="bloque tenue pequeno">{{ f.notas }}</span>
+                }
+              </td>
+              <td class="tenue">
+                {{ f.esquema?.capitulos?.length ? f.esquema!.capitulos.length + ' capítulos' : '—' }}
+              </td>
+              <td class="tenue">
+                {{ f.archivoNombre }} · {{ peso(f.bytes) }}
+                @if (f.aprobado) {
+                  <span class="bloque pequeno">Puesto a {{ f.usos }} tesis</span>
+                }
+              </td>
+              <td class="fila-acciones">
+                @if (f.aprobado) {
+                  <button type="button" class="enlace" (click)="abrirFicha('editar', f)">Editar</button>
+                  <app-menu-fila>
+                    <button type="button" (click)="descargar(f)">Descargar el .docx</button>
+                    <button type="button" (click)="abrirCapitulos(f)">Capítulos de la guía</button>
+                    <hr />
+                    <button type="button" class="peligro" (click)="borrar(f)">Borrar</button>
+                  </app-menu-fila>
+                } @else {
+                  <button type="button" class="enlace" (click)="descargar(f)">Revisar</button>
+                  <button type="button" class="enlace" (click)="abrirFicha('aprobar', f)">Aprobar</button>
+                  <app-menu-fila>
+                    <button type="button" class="peligro" (click)="borrar(f)">Rechazar</button>
+                  </app-menu-fila>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<!-- ── La ficha: subir uno nuevo, editarlo o aprobar uno de un tesista ───── -->
+@if (modo(); as m) {
+  <div class="ventana-fondo">
+    <div class="ventana" role="dialog" aria-modal="true" aria-labelledby="titulo-formato">
+      <div class="ventana-cabecera">
+        <h3 id="titulo-formato">
+          {{ m === 'nuevo' ? 'Subir formato' : m === 'aprobar' ? 'Aprobar formato' : 'Editar formato' }}
+        </h3>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarFicha()">✕</button>
+      </div>
+
+      <form (ngSubmit)="guardarFicha()">
+        <div class="ventana-cuerpo">
+          <div class="campo">
+            <label for="formato-archivo">Plantilla (.docx)</label>
+            <input
+              id="formato-archivo"
+              type="file"
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              (change)="elegirArchivo($event)"
+            />
+            <small class="ayuda">
+              @if (abierto(); as a) {
+                Ahora: {{ a.archivoNombre }} ({{ peso(a.bytes) }}). Elige otro solo si quieres cambiarlo;
+                los tesistas que ya lo tienen siguen con el anterior.
+              } @else {
+                El documento de formato de la facultad, con su portada. Del archivo solo se toma el
+                formato: el texto que traiga no le llega a nadie.
+              }
+            </small>
+          </div>
+
+          <div class="campo">
+            <label for="formato-universidad">Universidad</label>
+            <input
+              id="formato-universidad"
+              name="universidad"
+              maxlength="160"
+              placeholder="Universidad César Vallejo"
+              [(ngModel)]="ficha.universidad"
+            />
+            <small class="ayuda">Como se lo enseña Claude al tesista.</small>
+          </div>
+
+          <div class="campo">
+            <label for="formato-alias">Otros nombres</label>
+            <input
+              id="formato-alias"
+              name="alias"
+              maxlength="500"
+              placeholder="UCV, César Vallejo"
+              [(ngModel)]="ficha.alias"
+            />
+            <small class="ayuda">
+              Separados por comas. Las siglas van aquí: «UCV» solo encuentra esta universidad si está
+              escrita.
+            </small>
+          </div>
+
+          <div class="campo">
+            <label for="formato-facultad">Facultad o escuela (opcional)</label>
+            <input
+              id="formato-facultad"
+              name="facultad"
+              maxlength="160"
+              placeholder="Solo si esa facultad tiene su propio formato"
+              [(ngModel)]="ficha.facultad"
+            />
+          </div>
+
+          <fieldset class="grados">
+            <legend>Para quién</legend>
+            @for (g of grados; track g.codigo) {
+              <label class="chip">
+                <input type="radio" name="grado" [value]="g.codigo" [(ngModel)]="ficha.grado" />
+                <span>{{ g.nombre }}</span>
+              </label>
+            }
+            <small class="ayuda">
+              Si una universidad tiene uno para pregrado y otro para posgrado, sube los dos: Claude le
+              pregunta al tesista cuál es el suyo.
+            </small>
+          </fieldset>
+
+          <div class="campo">
+            <label for="formato-notas">Notas (solo las ves tú)</label>
+            <textarea
+              id="formato-notas"
+              name="notas"
+              rows="2"
+              maxlength="600"
+              placeholder="Guía 2026, descargada del repositorio"
+              [(ngModel)]="ficha.notas"
+            ></textarea>
+          </div>
+
+          @if (m === 'aprobar') {
+            <p class="aviso-revisar">
+              Antes de aprobarlo, ábrelo con «Revisar»: si la portada trae el nombre de un tesista,
+              saldrá en la de otros.
+            </p>
+          }
+        </div>
+
+        <div class="ventana-pie">
+          <button type="button" class="boton secundario" (click)="cerrarFicha()">Cancelar</button>
+          <button type="submit" class="boton" [disabled]="!puedeGuardar()">
+            {{ guardando() ? 'Guardando…' : m === 'aprobar' ? 'Aprobar' : m === 'nuevo' ? 'Subir' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ── Los capítulos de su guía ──────────────────────────────────────────── -->
+@if (conCapitulos(); as f) {
+  <div class="ventana-fondo">
+    <div class="ventana ancha" role="dialog" aria-modal="true" aria-labelledby="titulo-capitulos">
+      <div class="ventana-cabecera">
+        <h3 id="titulo-capitulos">Capítulos de la guía · {{ f.universidad }}</h3>
+        <button type="button" class="cerrar" aria-label="Cerrar" (click)="cerrarCapitulos()">✕</button>
+      </div>
+
+      <div class="ventana-cuerpo">
+        <p class="nota">
+          Los capítulos como los numera su guía. Marca de qué fases del método sale el texto de cada
+          uno; un capítulo sin fases es propio de su reglamento (Hipótesis, por ejemplo). Se copian a
+          la tesis del tesista si todavía no tiene los suyos, y solo en el método elegido.
+        </p>
+
+        <div class="campo">
+          <label for="capitulos-metodo">Método</label>
+          <select id="capitulos-metodo" [ngModel]="metodoElegido()" (ngModelChange)="elegirMetodo($event)">
+            @for (m of metodos(); track m.productCode) {
+              <option [value]="m.productCode">{{ m.nombre }} ({{ m.productCode }})</option>
+            }
+          </select>
+        </div>
+
+        <ol class="capitulos">
+          @for (c of capitulos(); track $index; let i = $index) {
+            <li>
+              <div class="capitulo-cabeza">
+                <input
+                  class="capitulo-titulo"
+                  maxlength="120"
+                  placeholder="Capítulo I: Introducción"
+                  [attr.aria-label]="'Título del capítulo ' + (i + 1)"
+                  [value]="c.titulo"
+                  (input)="ponerTitulo(i, $any($event.target).value)"
+                />
+                <button type="button" class="enlace" aria-label="Subir" (click)="mover(i, -1)" [disabled]="i === 0">↑</button>
+                <button
+                  type="button"
+                  class="enlace"
+                  aria-label="Bajar"
+                  (click)="mover(i, 1)"
+                  [disabled]="i === capitulos().length - 1"
+                >
+                  ↓
+                </button>
+                <button type="button" class="enlace peligro" (click)="quitarCapitulo(i)">Quitar</button>
+              </div>
+              <div class="fases">
+                @for (fase of fasesDelMetodo(); track fase.code) {
+                  <label class="chip">
+                    <input
+                      type="checkbox"
+                      [checked]="c.de?.includes(fase.code)"
+                      (change)="alternarFase(i, fase.code)"
+                    />
+                    <span>{{ fase.nombre }}</span>
+                  </label>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+        <button type="button" class="boton secundario" (click)="anadirCapitulo()">Añadir capítulo</button>
+      </div>
+
+      <div class="ventana-pie">
+        <button type="button" class="boton secundario" (click)="cerrarCapitulos()">Cancelar</button>
+        <button type="button" class="boton" [disabled]="guardando()" (click)="guardarCapitulos()">
+          {{ guardando() ? 'Guardando…' : 'Guardar capítulos' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

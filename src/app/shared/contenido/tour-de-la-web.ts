@@ -363,6 +363,16 @@ export function recorridoDeLaWeb(quien: QuienMira): PasoDelTour[] {
               'IGV, que se envía a SUNAT en minutos, le llega al cliente por correo y suma en las ' +
               'casillas del mes.',
           },
+          {
+            seccion: 'Formatos de universidad',
+            ruta: '/admin/formatos-de-universidad',
+            ancla: '[data-tour="admin-formatos"]',
+            titulo: 'El formato de cada universidad',
+            texto:
+              'Sube aquí la plantilla de una universidad, con sus siglas en «Otros nombres»: al ' +
+              'tesista que le dice a Claude de dónde es se le pone sola. Las que suben los ' +
+              'tesistas esperan en «Por aprobar»; ábrelas antes de aprobarlas.',
+          },
         ]
       : []),
 

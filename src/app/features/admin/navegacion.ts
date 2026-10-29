@@ -18,6 +18,7 @@ export type Seccion =
   | 'corpus'
   | 'tutoriales'
   | 'guias'
+  | 'formatos'
   | 'admins'
   | 'usuarios'
   | 'perfil';
@@ -139,6 +140,13 @@ export const PAGINAS: Record<Seccion, { titulo: string; nota: string }> = {
       'Los videos del video curso del perfil (/perfil/ayuda) y los PDF de ' +
       'acostaresearch.com/guias-de-instalacion. Se publican al instante, sin desplegar.',
   },
+  formatos: {
+    titulo: 'Formatos de universidad',
+    nota:
+      'La plantilla de cada universidad. Cuando un tesista le dice a Claude de dónde es, se le ' +
+      'pone sola, con los capítulos de su guía si los tiene. Las que suben los tesistas esperan ' +
+      'en «Por aprobar» hasta que las revises.',
+  },
   admins: {
     titulo: 'Usuarios',
     nota:
@@ -172,6 +180,7 @@ export const DIRECCIONES: Record<Seccion, string> = {
   corpus: 'bibliografia',
   tutoriales: 'tutoriales',
   guias: 'guias',
+  formatos: 'formatos-de-universidad',
   alertas: 'alertas',
   resenas: 'resenas',
   reclamos: 'reclamaciones',
@@ -339,6 +348,12 @@ export const MENU: { grupo: string | null; entradas: EntradaDelMenu[] }[] = [
         texto: 'Tutoriales y guías',
         icono: 'M8 5v14l11-7z',
         enciende: ['tutoriales', 'guias'],
+      },
+      {
+        seccion: 'formatos',
+        texto: 'Formatos de universidad',
+        icono: 'M6 2h9l5 5v15H6z M14 2v6h6 M9 13h8 M9 17h6',
+        enciende: ['formatos'],
       },
     ],
   },

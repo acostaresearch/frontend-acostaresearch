@@ -433,6 +433,13 @@
       <app-sorteos-admin />
     }
 
+    <!-- ══ FORMATOS DE UNIVERSIDAD ════════════════════════════════════════════
+       La biblioteca de plantillas: se le pone sola al tesista que dice de qué
+       universidad es. En su propio componente, que carga lo suyo al abrirse. -->
+    @if (seccion() === 'formatos') {
+      <app-formatos-universidad-admin />
+    }
+
     <!-- ══ TUTORIALES ═════════════════════════════════════════════════════════
        Los videos de acostaresearch.com/ayuda.tutoriales. Se editan aquí y no en el
        código porque quien los graba no despliega: antes había que tocar
