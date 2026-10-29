@@ -97,7 +97,7 @@ export class SorteosAdmin implements OnInit, OnDestroy {
   private readonly ruedaFija = signal<InscritoSorteo[] | null>(null);
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
-  nombreNuevo = 'Sorteo: matrícula de tesis por 3 meses';
+  nombreNuevo = 'Sorteo: matrícula de tesis por 4 meses';
 
   readonly quien = quien;
 
